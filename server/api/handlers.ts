@@ -10,6 +10,7 @@ import {
   MAX_SPLIT_ITEMS,
   type RowSize,
 } from "../data/schema";
+import { attachHistory, recordEvent } from "../history/recorder";
 import {
   cancelJob,
   getJob,
@@ -39,9 +40,12 @@ import {
   type CreateChartRequest,
   type CreateChartResponse,
   type GridRequest,
+  type HistoryDetail,
+  type HistoryListResponse,
   type ItemJobResponse,
   type ItemMeta,
   type ItemPropsRequest,
+  type ItemRestore,
   isHexColor,
   isTerminal,
   type JobStateResponse,
@@ -134,6 +138,22 @@ function idleChart(chartId: string) {
     } as const;
   }
   return { chart, items: chart.items } as const;
+}
+
+function validRestore(
+  restore: unknown,
+): restore is Record<string, ItemRestore> {
+  if (restore === undefined) return true;
+  if (typeof restore !== "object" || restore === null) return false;
+  return Object.values(restore as Record<string, ItemRestore>).every(
+    (r) =>
+      Array.isArray(r.shapes) &&
+      r.shapes.every(isValidShape) &&
+      (r.color === undefined || isHexColor(r.color)) &&
+      (r.view === undefined ||
+        [...(r.view.x ?? []), ...(r.view.y ?? [])].filter(Number.isFinite)
+          .length === 4),
+  );
 }
 
 function validateChartRequest(body: CreateChartRequest): string | undefined {
@@ -231,13 +251,17 @@ export const handlers = [
     const body = (await request.json()) as CreateChartRequest;
     const invalid = validateChartRequest(body);
     if (invalid) return apiError(400, invalid);
-    const chart = createChart(body.spec, {
-      width: Math.round(body.itemSize.width),
-      height: Math.round(body.itemSize.height),
-    });
+    if (!validRestore(body.restore)) return apiError(400, "invalid restore");
+    const chart = createChart(
+      body.spec,
+      roundSize(body.itemSize),
+      body.restore,
+    );
+    // draw마다 history 한 건. history에서 불러온 차트면 그 건에 이어서 기록한다.
+    await attachHistory(chart, body.historyId);
     const job = startJob(chart);
     return HttpResponse.json<CreateChartResponse>(
-      { chartId: chart.id, jobId: job.id },
+      { chartId: chart.id, jobId: job.id, historyId: chart.history?.id ?? "" },
       { status: 202 },
     );
   }),
@@ -314,6 +338,7 @@ export const handlers = [
     } else {
       return apiError(400, "unknown view action");
     }
+    recordEvent(chart, "zoom", item.key);
     return redraw(chart, item.key);
   }),
 
@@ -323,6 +348,7 @@ export const handlers = [
     const body = (await request.json()) as AddShapeRequest;
     if (!isValidShape(body.shape)) return apiError(400, "invalid shape");
     target.item.shapes.push(body.shape);
+    recordEvent(target.chart, "shape", target.item.key);
     return redraw(target.chart, target.item.key);
   }),
 
@@ -332,6 +358,7 @@ export const handlers = [
     if ("error" in target) return target.error;
     if (target.item.shapes.length === 0) return apiError(409, "no shapes");
     target.item.shapes.pop();
+    recordEvent(target.chart, "undo", target.item.key);
     return redraw(target.chart, target.item.key);
   }),
 
@@ -340,6 +367,7 @@ export const handlers = [
     if ("error" in target) return target.error;
     if (target.item.shapes.length === 0) return apiError(409, "no shapes");
     target.item.shapes = [];
+    recordEvent(target.chart, "clearShapes", target.item.key);
     return redraw(target.chart, target.item.key);
   }),
 
@@ -352,6 +380,7 @@ export const handlers = [
     const { chart, items } = target;
     chart.spec = { ...chart.spec, common: { ...body.common } };
     for (const item of items) item.props = undefined;
+    recordEvent(chart, "common");
     const job = startItemJob(
       chart,
       items.map((i) => i.key),
@@ -377,6 +406,7 @@ export const handlers = [
     const { chart, items } = target;
     chart.spec = { ...chart.spec, grid: { rows: n, cols: n } };
     chart.itemSize = roundSize(body.itemSize);
+    recordEvent(chart, "grid");
     const job = startItemJob(
       chart,
       items.map((i) => i.key),
@@ -404,6 +434,7 @@ export const handlers = [
     const job = startItemJob(
       chart,
       targets.map((i) => i.key),
+      { record: false },
     );
     return HttpResponse.json<ItemJobResponse>(
       { jobId: job.id },
@@ -418,7 +449,21 @@ export const handlers = [
     if (body.color !== null && !isHexColor(body.color))
       return apiError(400, "invalid color");
     target.item.props = body.color === null ? undefined : { color: body.color };
+    recordEvent(target.chart, "color", target.item.key);
     return redraw(target.chart, target.item.key);
+  }),
+
+  http.get("/api/history", async () => {
+    const entries = await getRuntime().db.call("historyList", undefined);
+    return HttpResponse.json<HistoryListResponse>({ entries });
+  }),
+
+  http.get("/api/history/:id", async ({ params }) => {
+    const entry = await getRuntime().db.call("historyGet", {
+      id: String(params.id),
+    });
+    if (!entry) return apiError(404, "unknown history");
+    return HttpResponse.json<HistoryDetail>(entry);
   }),
 
   // 툴팁용 metadata. 화면이 item에 처음 커서를 올릴 때 받아 캐시한다.

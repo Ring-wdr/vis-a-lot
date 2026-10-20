@@ -1,6 +1,13 @@
 // 서버 쪽 차트 상태. 이후 단계에서 PGlite에 영속화해 history의 원천이 된다.
 
-import type { ChartImage, ChartSpec, ItemMeta, ItemSize } from "../api/types";
+import type {
+  ChartImage,
+  ChartSpec,
+  HistoryEvent,
+  ItemMeta,
+  ItemRestore,
+  ItemSize,
+} from "../api/types";
 import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
 import type { ItemView } from "../render/scatter";
@@ -32,6 +39,10 @@ export type ChartRecord = {
   itemSize: ItemSize;
   /** 데이터 조회가 끝나야 정해진다. */
   items: ChartItem[] | null;
+  /** history 복원이나 공유 링크로 열었을 때, 조회 후 키별로 덮어쓸 item 상태 */
+  restore?: Record<string, ItemRestore>;
+  /** 이 차트가 기록 중인 history */
+  history?: { id: string; createdAt: number; events: HistoryEvent[] };
   /** draw로 만든 job. item 단위 다시 그리기 결과도 이 job의 item 상태에 반영한다. */
   primaryJobId?: string;
   createdAt: number;
@@ -47,11 +58,16 @@ const charts = new Map<string, ChartRecord>();
 const dataCache = new Map<string, CachedChartData>();
 const DATA_CACHE_SIZE = 3;
 
-export function createChart(spec: ChartSpec, itemSize: ItemSize): ChartRecord {
+export function createChart(
+  spec: ChartSpec,
+  itemSize: ItemSize,
+  restore?: Record<string, ItemRestore>,
+): ChartRecord {
   const chart: ChartRecord = {
     id: crypto.randomUUID(),
     spec,
     itemSize,
+    restore,
     items: null,
     createdAt: Date.now(),
   };

@@ -22,6 +22,7 @@ import {
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { COLUMNS, MAX_SPLIT_ITEMS } from "../data/schema";
+import { saveHistory } from "../history/recorder";
 import { putPng } from "../png-store";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -83,7 +84,10 @@ export function startJob(chart: ChartRecord): Job {
         job.status = "failed";
       }
     })
-    .finally(() => touch(job));
+    .finally(() => {
+      touch(job);
+      if (isTerminal(job.status)) persistHistory(chart);
+    });
   return job;
 }
 
@@ -206,13 +210,20 @@ async function run(job: Job) {
   const data = await loadChartData(chart);
   throwIfCancelled();
 
-  chart.items = data.groups.map((g) => ({
-    key: itemKeyOf(g.values),
-    label: itemLabelOf(g.values, spec.splitSeparator),
-    values: g.values,
-    version: 0,
-    shapes: [],
-  }));
+  chart.items = data.groups.map((g) => {
+    const key = itemKeyOf(g.values);
+    // history 복원/공유 링크: 같은 split 조합이면 확대·도형·개별 색을 되살린다.
+    const restored = chart.restore?.[key];
+    return {
+      key,
+      label: itemLabelOf(g.values, spec.splitSeparator),
+      values: g.values,
+      version: 0,
+      view: restored?.view,
+      shapes: restored?.shapes ?? [],
+      props: restored?.color ? { color: restored.color } : undefined,
+    };
+  });
   for (const item of chart.items)
     job.items.set(item.key, initialState(chart, item));
   job.order = chart.items.map((i) => i.key);
@@ -223,6 +234,17 @@ async function run(job: Job) {
   job.status = finalStatus(job);
 }
 
+/** 차트의 현재 상태를 history에 저장한다. item 상태는 grid가 보는 primary job 기준이다. */
+function persistHistory(chart: ChartRecord) {
+  const primary = chart.primaryJobId ? jobs.get(chart.primaryJobId) : undefined;
+  const statuses = new Map(
+    [...(primary?.items.values() ?? [])].map((s) => [s.key, s.status]),
+  );
+  saveHistory(chart, primary?.status ?? "init", statuses).catch((err) =>
+    console.error("history save failed", err),
+  );
+}
+
 /**
  * item 일부만 다시 그리는 job (확대/축소, 도형, 개별 속성, resize).
  * 결과는 draw job의 item 상태에도 반영해 grid가 새 PNG를 보게 한다.
@@ -230,7 +252,14 @@ async function run(job: Job) {
 export function startItemJob(
   chart: ChartRecord,
   keys: string[],
-  { primary = false }: { primary?: boolean } = {},
+  {
+    primary = false,
+    record = true,
+  }: {
+    primary?: boolean;
+    /** history에 남길지. resize는 남기지 않는다. */
+    record?: boolean;
+  } = {},
 ): Job {
   const items = keys
     .map((k) => getItem(chart, k))
@@ -266,6 +295,7 @@ export function startItemJob(
         if (item.busyJobId === job.id) item.busyJobId = undefined;
       }
       touch(job);
+      if (record) persistHistory(chart);
     });
   return job;
 }
