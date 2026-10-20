@@ -9,6 +9,7 @@ import {
 } from "@/shared/api/queries";
 import type { RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
+import { Select } from "@/shared/ui/Select";
 import styles from "./DatasetPanel.module.css";
 
 export function DatasetPanel({
@@ -34,23 +35,18 @@ export function DatasetPanel({
 
   return (
     <section className={styles.panel}>
-      <label className={styles.field}>
-        <span>데이터 규모</span>
-        <select
-          value={rows}
-          onChange={(e) => onRowsChange(Number(e.target.value) as RowSize)}
-        >
-          {ROW_SIZES.map((size) => {
-            const s = datasets.data?.datasets.find((d) => d.rows === size);
-            return (
-              <option key={size} value={size}>
-                {ROW_LABELS[size]}
-                {s?.state === "ready" ? " · 준비됨" : ""}
-              </option>
-            );
-          })}
-        </select>
-      </label>
+      <Select
+        label="데이터 규모"
+        value={rows}
+        options={ROW_SIZES.map((size) => {
+          const s = datasets.data?.datasets.find((d) => d.rows === size);
+          return {
+            value: size,
+            label: `${ROW_LABELS[size]}${s?.state === "ready" ? " · 준비됨" : ""}`,
+          };
+        })}
+        onChange={onRowsChange}
+      />
 
       {status?.state === "generating" && (
         <div className={styles.progress}>

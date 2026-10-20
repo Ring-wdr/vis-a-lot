@@ -18,6 +18,7 @@ import {
   LEGEND_COLUMNS,
 } from "@/shared/config/dataset";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
+import { Select, type SelectOption } from "@/shared/ui/Select";
 import styles from "@/shared/ui/workspace.module.css";
 
 const CHART_LABELS: Record<ChartType, string> = {
@@ -44,6 +45,24 @@ const NUMBER_COLUMNS = COLUMNS.filter((c) => c.type === "number");
 const LEGEND_OPTIONS = COLUMNS.filter((c) =>
   (LEGEND_COLUMNS as readonly string[]).includes(c.name),
 );
+/** legend 없음. select 값은 null을 담지 못해 빈 문자열로 대신한다. */
+const NO_LEGEND = "";
+const LEGEND_SELECT_OPTIONS: SelectOption<LegendColumn | typeof NO_LEGEND>[] = [
+  { value: NO_LEGEND, label: "없음" },
+  ...LEGEND_OPTIONS.map((c) => ({
+    value: c.name as LegendColumn,
+    label: c.label,
+  })),
+];
+const AGG_OPTIONS: SelectOption<AggFn>[] = AGG_FNS.map((fn) => ({
+  value: fn,
+  label: AGG_LABELS[fn],
+}));
+
+function toOptions(columns: readonly { name: ColumnName; label: string }[]) {
+  return columns.map((c) => ({ value: c.name, label: c.label }));
+}
+
 const COLUMN_OPTIONS: Option<ColumnName>[] = COLUMNS.map((c) => ({
   value: c.name,
   label: c.label,
@@ -114,70 +133,38 @@ export function ControlPanel() {
 
       <GridPicker />
 
-      <label className={styles.field}>
-        <span>x</span>
-        <select
-          value={draft.x}
-          onChange={(e) => updateDraft({ x: e.target.value as ColumnName })}
-        >
-          {(draft.chartType === "scatter"
-            ? AXIS_COLUMNS
-            : CATEGORY_COLUMNS
-          ).map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label="x"
+        value={draft.x}
+        options={toOptions(
+          draft.chartType === "scatter" ? AXIS_COLUMNS : CATEGORY_COLUMNS,
+        )}
+        onChange={(x) => updateDraft({ x })}
+      />
 
-      <label className={styles.field}>
-        <span>y</span>
-        <select
-          value={draft.y}
-          onChange={(e) => updateDraft({ y: e.target.value as ColumnName })}
-        >
-          {NUMBER_COLUMNS.map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label="y"
+        value={draft.y}
+        options={toOptions(NUMBER_COLUMNS)}
+        onChange={(y) => updateDraft({ y })}
+      />
 
-      <label className={styles.field}>
-        <span>legend</span>
-        <select
-          value={draft.legend ?? ""}
-          onChange={(e) =>
-            updateDraft({
-              legend: (e.target.value || null) as LegendColumn | null,
-            })
-          }
-        >
-          <option value="">없음</option>
-          {LEGEND_OPTIONS.map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label="legend"
+        value={draft.legend ?? NO_LEGEND}
+        options={LEGEND_SELECT_OPTIONS}
+        onChange={(legend) =>
+          updateDraft({ legend: legend === NO_LEGEND ? null : legend })
+        }
+      />
 
       {draft.chartType === "bar" && (
-        <label className={styles.field}>
-          <span>통계 함수</span>
-          <select
-            value={draft.agg}
-            onChange={(e) => updateDraft({ agg: e.target.value as AggFn })}
-          >
-            {AGG_FNS.map((fn) => (
-              <option key={fn} value={fn}>
-                {AGG_LABELS[fn]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label="통계 함수"
+          value={draft.agg}
+          options={AGG_OPTIONS}
+          onChange={(agg) => updateDraft({ agg })}
+        />
       )}
 
       <OrderedSelect
