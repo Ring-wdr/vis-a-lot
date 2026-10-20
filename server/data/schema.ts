@@ -5,6 +5,9 @@ export const GENERATOR_VERSION = 1;
 export const SEED = 20261020;
 
 export const ROW_SIZES = [100_000, 500_000, 1_000_000] as const;
+
+/** split by 조합(= item)의 최대 개수 */
+export const MAX_SPLIT_ITEMS = 30_000;
 export type RowSize = (typeof ROW_SIZES)[number];
 
 export function isRowSize(n: number): n is RowSize {

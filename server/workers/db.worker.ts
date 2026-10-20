@@ -66,6 +66,11 @@ serveRpc<DbMethods>({
     return datasets.columns(rows);
   },
 
+  async splitCount({ rows, cols, limit }) {
+    const { datasets } = await ready;
+    return datasets.splitCount(rows, cols, limit);
+  },
+
   async chartData(params) {
     const { db } = await ready;
     const data = await queryChartData(db, params);
