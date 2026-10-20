@@ -5,10 +5,10 @@ import type { HistoryEventType, HistorySummary } from "@server/api/types";
 import { AGG_LABELS } from "@server/data/schema";
 import { useQuery } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
 import { columnLabel } from "@/shared/lib/format";
-import { Popover } from "@/shared/ui/Popover";
 import styles from "@/shared/ui/workspace.module.css";
 
 const CHART_LABELS = {
@@ -70,65 +70,60 @@ function eventsOf(entry: HistorySummary) {
     .join(" · ");
 }
 
-/** history 목록. 고르면 저장된 설정과 item 상태로 다시 그리고, 이후 변경은 그 건에 이어서 기록한다. */
-export function HistoryPanel() {
+/**
+ * history 화면의 왼쪽 목록. 고르면 저장된 설정과 item 상태로 다시 그려 보여준다.
+ * 다시 보기는 history에 기록하지 않으므로 목록 순서와 썸네일이 바뀌지 않는다.
+ */
+export function HistoryList() {
   const list = useQuery({ queryKey: ["history"], queryFn: api.history });
   const open = useOpenChart();
+  const viewing = useWorkspace((s) => s.current?.historyId);
+
+  if (list.error) {
+    return (
+      <p role="alert" className={styles.error}>
+        {list.error.message}
+      </p>
+    );
+  }
+  if (list.data?.entries.length === 0) {
+    return <p className={styles.muted}>아직 그린 차트가 없습니다.</p>;
+  }
 
   return (
-    <Popover
-      triggerClassName={styles.secondaryButton}
-      trigger="History"
-      width={360}
-      panelClassName={styles.historyPanel}
-      onOpen={() => list.refetch()}
-    >
-      {(close) => (
-        <div className={styles.popoverBody}>
-          <strong>History</strong>
-          {list.data?.entries.length === 0 && (
-            <p className={styles.muted}>아직 그린 차트가 없습니다.</p>
-          )}
-          <ul className={styles.historyList}>
-            {list.data?.entries.map((entry) => (
-              <li key={entry.id}>
-                <button
-                  type="button"
-                  className={styles.historyEntry}
-                  disabled={open.isPending}
-                  onClick={async () => {
-                    const detail = await api.historyDetail(entry.id);
-                    open.mutate({
-                      spec: detail.spec,
-                      restore: restoreOf(detail),
-                      historyId: detail.id,
-                    });
-                    close();
-                  }}
-                >
-                  {entry.thumbnail ? (
-                    <img src={entry.thumbnail} alt="" width={96} height={60} />
-                  ) : (
-                    <span className={styles.historyThumbEmpty} />
-                  )}
-                  <span className={styles.historyText}>
-                    <span className={styles.historyTitle}>
-                      {titleOf(entry)}
-                    </span>
-                    <span className={styles.muted}>{detailOf(entry)}</span>
-                    {eventsOf(entry) && (
-                      <span className={styles.muted}>+ {eventsOf(entry)}</span>
-                    )}
-                    <span className={styles.muted}>
-                      {timeAgo(entry.updatedAt)}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </Popover>
+    <ul className={styles.historyList}>
+      {list.data?.entries.map((entry) => (
+        <li key={entry.id}>
+          <button
+            type="button"
+            className={styles.historyEntry}
+            aria-current={viewing === entry.id || undefined}
+            disabled={open.isPending}
+            onClick={async () => {
+              const detail = await api.historyDetail(entry.id);
+              open.mutate({
+                spec: detail.spec,
+                restore: restoreOf(detail),
+                historyId: detail.id,
+              });
+            }}
+          >
+            {entry.thumbnail ? (
+              <img src={entry.thumbnail} alt="" width={72} height={45} />
+            ) : (
+              <span className={styles.historyThumbEmpty} />
+            )}
+            <span className={styles.historyText}>
+              <span className={styles.historyTitle}>{titleOf(entry)}</span>
+              <span className={styles.muted}>{detailOf(entry)}</span>
+              {eventsOf(entry) && (
+                <span className={styles.muted}>+ {eventsOf(entry)}</span>
+              )}
+              <span className={styles.muted}>{timeAgo(entry.updatedAt)}</span>
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

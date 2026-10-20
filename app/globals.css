@@ -1,6 +1,15 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* 작업 화면 토큰. body 밖에 뜨는 팝업(overlay)에서도 같은 값을 쓰도록 :root에 둔다. */
+  --ws-border: #e7e6e2;
+  --ws-surface: #fcfcfb;
+  --ws-panel: #f6f6f4;
+  --ws-text-secondary: #52514e;
+  --ws-text-muted: #8a8984;
+  --ws-accent: #2a78d6;
+  --ws-accent-soft: #eef5fd;
 }
 
 @media (prefers-color-scheme: dark) {

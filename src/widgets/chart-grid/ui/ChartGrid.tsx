@@ -7,7 +7,7 @@ import {
   GRID_GAP,
   itemSizeFor,
 } from "@/entities/chart/lib/grid-layout";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -98,6 +98,7 @@ export function ChartGrid() {
   const areaRef = useRef<HTMLDivElement>(null);
   const setGridArea = useWorkspace((s) => s.setGridArea);
   const current = useWorkspace((s) => s.current);
+  const readOnly = useWorkspace((s) => s.readOnly);
   const page = useWorkspace((s) => s.page);
   const setPage = useWorkspace((s) => s.setPage);
   const lastWheel = useRef(0);
@@ -147,7 +148,11 @@ export function ChartGrid() {
   return (
     <div ref={areaRef} className={styles.gridArea}>
       {!current && (
-        <p className={styles.empty}>왼쪽에서 설정을 고르고 draw를 누르세요.</p>
+        <p className={styles.empty}>
+          {readOnly
+            ? "왼쪽 목록에서 다시 볼 차트를 고르세요."
+            : "왼쪽에서 설정을 고르고 draw를 누르세요."}
+        </p>
       )}
       {current && (
         <>

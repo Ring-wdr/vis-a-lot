@@ -1,6 +1,7 @@
 "use client";
 
 import type { ItemState } from "@server/api/types";
+import { Eraser, RotateCcw, Undo2, ZoomOut } from "lucide-react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { colorName } from "@/shared/lib/palette";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
@@ -46,7 +47,7 @@ export function ItemToolbar({
           })
         }
       >
-        −
+        <ZoomOut size={13} aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -55,7 +56,7 @@ export function ItemToolbar({
         disabled={disabled || !item.zoomed}
         onClick={() => onAction({ type: "view", body: { type: "reset" } })}
       >
-        ⟲
+        <RotateCcw size={13} aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -64,7 +65,7 @@ export function ItemToolbar({
         disabled={disabled || undoCount === 0 || item.shapeCount === 0}
         onClick={() => onAction({ type: "undoShape" })}
       >
-        ↶
+        <Undo2 size={13} aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -73,7 +74,7 @@ export function ItemToolbar({
         disabled={disabled || item.shapeCount === 0}
         onClick={() => onAction({ type: "clearShapes" })}
       >
-        ⌫
+        <Eraser size={13} aria-hidden="true" />
       </button>
       {!hasLegend && (
         <Popover

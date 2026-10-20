@@ -2,7 +2,7 @@
 
 import type { Shape, ViewRequest } from "@server/api/types";
 import { useMutation } from "@tanstack/react-query";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { showAlert } from "@/shared/ui/AlertDialog";
 

@@ -6,7 +6,7 @@ import {
   type JobStateResponse,
 } from "@server/api/types";
 import { useEffect, useRef, useState } from "react";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useDebounced } from "@/shared/lib/use-debounced";
 

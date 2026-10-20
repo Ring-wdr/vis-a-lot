@@ -4,7 +4,7 @@ import { isTerminal } from "@server/api/types";
 import { MAX_SPLIT_ITEMS } from "@server/data/schema";
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import {
   useCancelJob,

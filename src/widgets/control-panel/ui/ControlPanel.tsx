@@ -10,11 +10,9 @@ import {
   LEGEND_COLUMNS,
   type LegendColumn,
 } from "@server/data/schema";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
-import { GridSelect } from "@/features/change-grid/ui/GridSelect";
-import { CommonPropsPopover } from "@/features/common-props/ui/CommonPropsPopover";
-import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
-import { DatasetPanel } from "@/features/register-dataset/ui/DatasetPanel";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import { GridPicker } from "@/features/change-grid/ui/GridPicker";
+import { DatasetSelect } from "@/features/register-dataset/ui/DatasetSelect";
 import {
   type Option,
   OrderedMultiSelect,
@@ -79,13 +77,18 @@ function ChartIcon({ type }: { type: ChartType }) {
   );
 }
 
+/**
+ * 차트 설정. draw를 눌러야 반영된다. 다시 보기 전용 화면(history)에서는 그 차트의 설정을 보여주기만 하고
+ * fieldset disabled로 안의 입력을 모두 막는다.
+ */
 export function ControlPanel() {
   const draft = useWorkspace((s) => s.draft);
   const updateDraft = useWorkspace((s) => s.updateDraft);
+  const readOnly = useWorkspace((s) => s.readOnly);
 
   return (
-    <div className={styles.controls}>
-      <DatasetPanel
+    <fieldset className={styles.controls} disabled={readOnly}>
+      <DatasetSelect
         rows={draft.rows}
         onRowsChange={(rows) => updateDraft({ rows })}
       />
@@ -108,7 +111,7 @@ export function ControlPanel() {
         </div>
       </fieldset>
 
-      <GridSelect />
+      <GridPicker />
 
       <label className={styles.field}>
         <span>x</span>
@@ -208,10 +211,6 @@ export function ControlPanel() {
         placeholder="x, y 외 컬럼 추가…"
         onChange={(tooltip) => updateDraft({ tooltip })}
       />
-
-      <CommonPropsPopover />
-
-      <DrawButton />
-    </div>
+    </fieldset>
   );
 }

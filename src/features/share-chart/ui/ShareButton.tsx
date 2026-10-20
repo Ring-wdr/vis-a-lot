@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { restoreOf, shareUrl } from "@/entities/chart/lib/share";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";

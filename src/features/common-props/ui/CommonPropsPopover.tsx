@@ -3,7 +3,7 @@
 import type { CommonProps } from "@server/api/types";
 import { defaultLegendColor } from "@server/render/theme";
 import { useMutation } from "@tanstack/react-query";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useDatasetStatus, useLegendValues } from "@/shared/api/queries";
 import { columnLabel } from "@/shared/lib/format";

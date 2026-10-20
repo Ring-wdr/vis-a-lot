@@ -2,20 +2,13 @@
 
 import { ROW_SIZES, type RowSize } from "@server/data/schema";
 import { useEffect } from "react";
+import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
 import {
   useColumns,
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
 import styles from "./DatasetPanel.module.css";
-
-const ROW_LABELS: Record<RowSize, string> = {
-  100000: "10만 행",
-  500000: "50만 행",
-  1000000: "100만 행",
-};
-
-const TYPE_LABELS = { time: "시계열", string: "문자", number: "숫자" } as const;
 
 export function DatasetPanel({
   rows,
@@ -92,7 +85,7 @@ export function DatasetPanel({
             {columns.data.columns.map((c) => (
               <tr key={c.name}>
                 <td title={c.name}>{c.label}</td>
-                <td>{TYPE_LABELS[c.type]}</td>
+                <td>{COLUMN_TYPE_LABELS[c.type]}</td>
                 <td>{c.distinct.toLocaleString()}</td>
               </tr>
             ))}

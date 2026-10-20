@@ -10,7 +10,7 @@ import type { ColumnName } from "@server/data/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { ITEM_TOOLBAR_HEIGHT } from "@/entities/chart/lib/grid-layout";
-import { useWorkspace } from "@/entities/workspace/model/workspace-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useItemAction } from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
@@ -72,6 +72,7 @@ function DrawnItem({
   displaySize: ItemSize;
 }) {
   const mode = useWorkspace((s) => s.mode);
+  const readOnly = useWorkspace((s) => s.readOnly);
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
   const setItemJob = useWorkspace((s) => s.setItemJob);
@@ -114,13 +115,16 @@ function DrawnItem({
         <span className={styles.itemLabel} title={item.label}>
           {item.label}
         </span>
-        <ItemToolbar
-          item={item}
-          busy={busy}
-          undoCount={undoCount}
-          hasLegend={hasLegend}
-          onAction={action.mutate}
-        />
+        {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
+        {!readOnly && (
+          <ItemToolbar
+            item={item}
+            busy={busy}
+            undoCount={undoCount}
+            hasLegend={hasLegend}
+            onAction={action.mutate}
+          />
+        )}
       </div>
       <div className={styles.itemBody}>
         {mode === "normal" ? (
@@ -131,8 +135,11 @@ function DrawnItem({
             itemKey={item.key}
             columns={tooltipColumns}
             display={displaySize}
-            onLegendColor={(value, color) =>
-              action.mutate({ type: "legendColor", value, color })
+            onLegendColor={
+              readOnly
+                ? undefined
+                : (value, color) =>
+                    action.mutate({ type: "legendColor", value, color })
             }
           />
         ) : (

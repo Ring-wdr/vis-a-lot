@@ -276,7 +276,8 @@ export const handlers = [
       body.restore,
     );
     // draw마다 history 한 건. history에서 불러온 차트면 그 건에 이어서 기록한다.
-    await attachHistory(chart, body.historyId);
+    // 다시 보기(record: false)는 기록하지 않아 history 목록 순서와 썸네일이 그대로다.
+    if (body.record !== false) await attachHistory(chart, body.historyId);
     const job = startJob(chart);
     return HttpResponse.json<CreateChartResponse>(
       { chartId: chart.id, jobId: job.id, historyId: chart.history?.id ?? "" },
