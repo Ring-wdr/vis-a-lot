@@ -1,7 +1,13 @@
 // 화면 ↔ mock 서버 REST API의 요청/응답 타입. 실서버로 옮겨도 이 계약은 유지한다.
 
 import type { BoxStats } from "../data/category-data";
-import type { AggFn, ColumnDef, ColumnName, RowSize } from "../data/schema";
+import type {
+  AggFn,
+  ColumnDef,
+  ColumnName,
+  LegendColumn,
+  RowSize,
+} from "../data/schema";
 import type { CategoryMeta } from "../render/category";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
@@ -62,7 +68,18 @@ export type ApiError = { error: string };
 export const CHART_TYPES = ["scatter", "bar", "boxplot"] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
-export type CommonProps = { color: string };
+export type CommonProps = {
+  /** legend가 없을 때의 색 */
+  color: string;
+  /** legend 값별 색. 없는 값은 팔레트 순서대로 기본 색을 쓴다. */
+  legendColors?: Record<string, string>;
+};
+
+/** item 개별 속성. 공통 속성보다 우선한다. */
+export type ItemProps = {
+  color?: string;
+  legendColors?: Record<string, string>;
+};
 
 export type ChartSpec = {
   rows: RowSize;
@@ -71,6 +88,8 @@ export type ChartSpec = {
   y: ColumnName;
   /** bar의 통계 함수 */
   agg: AggFn;
+  /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
+  legend: LegendColumn | null;
   /** 클릭한 순서가 곧 조합 순서다. */
   splitBy: ColumnName[];
   splitSeparator: string;
@@ -86,6 +105,7 @@ export type ItemRestore = {
   view?: ItemView;
   shapes: Shape[];
   color?: string;
+  legendColors?: Record<string, string>;
 };
 
 export type CreateChartRequest = {
@@ -133,8 +153,15 @@ export type GridRequest = { grid: ChartSpec["grid"]; itemSize: ItemSize };
 /** 화면 크기 변경. 요청한 item만 새 크기로 다시 그린다. */
 export type ResizeRequest = { itemSize: ItemSize; keys: string[] };
 
-/** 개별 색상. null이면 공통 속성을 따르도록 되돌린다. */
-export type ItemPropsRequest = { color: string | null };
+/**
+ * 개별 색상. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색이다.
+ * 색이 null이면 공통 속성을 따르도록 되돌린다.
+ */
+export type ItemPropsRequest =
+  | { color: string | null }
+  | { legendColor: { value: string; color: string | null } };
+
+export type LegendValuesResponse = { column: LegendColumn; values: string[] };
 
 export function isHexColor(value: unknown): value is string {
   return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);

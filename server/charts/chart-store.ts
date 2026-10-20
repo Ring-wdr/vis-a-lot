@@ -5,6 +5,7 @@ import type {
   ChartSpec,
   HistoryEvent,
   ItemMeta,
+  ItemProps,
   ItemRestore,
   ItemSize,
 } from "../api/types";
@@ -28,7 +29,7 @@ export type ChartItem = {
   /** 데이터 좌표로 저장한 도형. 그린 순서대로 쌓이고 undo는 마지막 것을 뺀다. */
   shapes: Shape[];
   /** 개별 속성. split 조합 키에 붙어 있어 다시 불러와도 유지된다. 없으면 공통 속성을 따른다. */
-  props?: { color?: string };
+  props?: ItemProps;
   /** item 단위 다시 그리기가 진행 중이면 그 job id */
   busyJobId?: string;
 };

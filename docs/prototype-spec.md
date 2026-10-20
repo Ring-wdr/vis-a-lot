@@ -157,7 +157,17 @@ PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같�
 - 그린 뒤에는 수정할 수 없다. undo(마지막 도형 삭제)와 전체 삭제만 있다.
 - undo는 서버에서 마지막 도형을 삭제(`DELETE .../shapes/last`)하고 다시 그리는 방식이다. 이력은 세션 안에서만 유지하고, redo는 없다.
 
-### 4.7 공통 속성 / 개별 속성
+### 4.7 legend
+- 왼쪽 패널의 `legend` select로 색을 나눌 범주 컬럼을 고른다. 팔레트 8색을 돌려쓰지 않도록 고유값이 8개 이하인 컬럼(공장, 라인, 센서 종류, 근무조, 상태)만 고를 수 있다.
+- legend 값 목록은 전체 데이터 기준이다. 어느 item에서든 같은 값은 같은 색을 받는다 (색은 순위가 아니라 값을 따른다).
+- scatter는 점을 legend 값별로 색칠하고, bar/boxplot은 범주 안에 legend 값별 막대/상자를 나란히 놓는다 (사이 2px 간격).
+- 서버가 PNG 안에 legend 상자 `[● 값 ● 값 …]`를 그리고, 각 항목의 위치를 metadata로 넘긴다. 넘치면 `+N`으로 줄인다.
+- 색 결정 순서: item 개별 legend 색 → 공통 속성의 legend 색 → 팔레트 기본 색(legend 값 순서).
+- 개별 속성: item에 커서를 올리면 PNG의 legend 항목 자리에 버튼이 겹쳐지고, ●를 누르면 네이티브 color picker가 열린다. 고르기를 마친 최종 색(`change` 이벤트)으로 한 번만 서버에 요청해 그 item을 다시 그린다.
+- 공통 속성: legend 값별 색을 바꾸면 전체를 다시 그리고 item 개별 색을 덮어쓴다.
+- legend 상자 위에서는 툴팁 대신 색 선택이 동작하고, 툴팁에는 가리킨 점/막대/상자의 legend 값이 함께 나온다.
+
+### 4.8 공통 속성 / 개별 속성
 - 모든 item은 기본적으로 공통 속성을 따른다.
 - 개별 속성은 split 조합을 키로 서버에 저장한다. 다시 불러와도 유지된다.
 - 공통 속성을 바꾸면 개별 속성까지 덮어쓰고 전체를 다시 그린다.
@@ -233,7 +243,8 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
 | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
 | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
-| 개별 색상 | `PATCH .../items/:key/props` | `{ color }`, `null`이면 공통 색으로 |
+| 개별 색상 | `PATCH .../items/:key/props` | `{ color }` 또는 `{ legendColor: { value, color } }`, `null`이면 공통 색으로 |
+| legend 값 목록 | `GET /datasets/:id/legend-values?rows=&column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
 | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
 | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |

@@ -56,6 +56,7 @@ export async function saveHistory(
       view: item.view,
       shapes: item.shapes,
       color: item.props?.color,
+      legendColors: item.props?.legendColors,
     };
   }
   const entry: HistoryDetail = {

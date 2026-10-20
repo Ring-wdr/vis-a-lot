@@ -1,9 +1,16 @@
 // bar / boxplot 렌더러. x축은 범주 인덱스(0, 1, 2 …)를 연속 좌표로 쓴다.
 // 그래서 확대(인덱스 범위)와 데이터 좌표 도형이 scatter와 같은 방식으로 동작한다.
+// legend가 있으면 범주 하나 안에 legend 값별 막대/상자를 나란히 놓는다.
 
 import { scaleLinear } from "d3-scale";
 import type { BoxStats } from "../data/category-data";
 import { AGG_LABELS, type AggFn } from "../data/schema";
+import {
+  drawLegend,
+  LEGEND_SPACE,
+  type LegendInput,
+  type LegendMeta,
+} from "./legend";
 import type { AxisMeta, ItemView, ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
@@ -15,12 +22,16 @@ export type CategoryMeta = {
   x: AxisMeta;
   y: AxisMeta;
   categories: string[];
-  /** 막대/상자 하나의 픽셀 너비 */
+  /** 범주 하나에 놓인 막대/상자 묶음의 픽셀 너비 */
   markWidth: number;
+  /** 범주 하나에 나란히 놓는 막대/상자 수 (legend 값 수, 없으면 1) */
+  groupCount: number;
   agg?: AggFn;
-  bars?: number[];
+  /** [범주][legend 값] */
+  bars?: (number | null)[][];
   /** 툴팁용 통계. 이상치 값 목록은 빼고 개수만 둔다. */
-  boxes?: Omit<BoxStats, "outliers">[];
+  boxes?: (Omit<BoxStats, "outliers"> | null)[][];
+  legend?: LegendMeta;
 };
 
 export type CategoryInput = {
@@ -29,10 +40,11 @@ export type CategoryInput = {
   height: number;
   title: string;
   categories: string[];
-  bars?: number[];
-  boxes?: BoxStats[];
+  bars?: (number | null)[][];
+  boxes?: (BoxStats | null)[][];
   agg?: AggFn;
   color: string;
+  legend?: LegendInput;
   view?: ItemView;
   shapes: readonly Shape[];
 };
@@ -41,6 +53,8 @@ type Ctx = OffscreenCanvasRenderingContext2D;
 
 const RADIUS = 4;
 const MARK_RATIO = 0.7;
+/** 나란히 놓은 막대 사이 배경색 간격 */
+const GROUP_GAP = 2;
 
 function valueExtent(input: CategoryInput): [number, number] {
   let min = Number.POSITIVE_INFINITY;
@@ -49,14 +63,20 @@ function valueExtent(input: CategoryInput): [number, number] {
     // 막대는 0에서 시작해야 길이가 값을 정직하게 나타낸다.
     min = 0;
     max = 0;
-    for (const v of input.bars ?? []) {
-      min = Math.min(min, v);
-      max = Math.max(max, v);
+    for (const row of input.bars ?? []) {
+      for (const v of row) {
+        if (v === null) continue;
+        min = Math.min(min, v);
+        max = Math.max(max, v);
+      }
     }
   } else {
-    for (const b of input.boxes ?? []) {
-      min = Math.min(min, b.lo, ...b.outliers);
-      max = Math.max(max, b.hi, ...b.outliers);
+    for (const row of input.boxes ?? []) {
+      for (const b of row) {
+        if (!b) continue;
+        min = Math.min(min, b.lo, ...b.outliers);
+        max = Math.max(max, b.hi, ...b.outliers);
+      }
     }
   }
   if (!Number.isFinite(min)) return [0, 1];
@@ -72,6 +92,20 @@ function truncate(ctx: Ctx, text: string, maxWidth: number) {
   return `${text.slice(0, end)}…`;
 }
 
+/** 범주 i 안에서 g번째 막대/상자의 가운데 x와 너비 */
+export function groupSlot(
+  center: number,
+  markWidth: number,
+  groupCount: number,
+  g: number,
+) {
+  const slot = markWidth / groupCount;
+  return {
+    cx: center - markWidth / 2 + slot * (g + 0.5),
+    width: Math.max(1, slot - (groupCount > 1 ? GROUP_GAP : 0)),
+  };
+}
+
 export function renderCategory(
   ctx: Ctx,
   input: CategoryInput,
@@ -79,6 +113,8 @@ export function renderCategory(
 ): CategoryMeta {
   const { width, height, categories, view } = input;
   const n = categories.length;
+  const groupCount = input.legend?.values.length ?? 1;
+  const colorOf = (g: number) => input.legend?.colors[g] ?? input.color;
 
   ctx.fillStyle = THEME.surface;
   ctx.fillRect(0, 0, width, height);
@@ -95,7 +131,7 @@ export function renderCategory(
   );
   const plot = {
     left: Math.ceil(yLabelWidth + 14),
-    top: 28,
+    top: 28 + (input.legend ? LEGEND_SPACE : 0),
     width: 0,
     height: 0,
   };
@@ -171,66 +207,79 @@ export function renderCategory(
     17,
   );
 
+  // ── legend ────────────────────────────────────────────────────
+  const legendMeta = input.legend
+    ? drawLegend(ctx, input.legend, plot.left, 24, plot.width)
+    : undefined;
+
   // ── 막대 / 상자 (render) ─────────────────────────────────────
   ctx.save();
   ctx.beginPath();
   ctx.rect(plot.left, plot.top, plot.width, plot.height);
   ctx.clip();
-  const half = markWidth / 2;
   if (input.chartType === "bar") {
     const zero = y(0);
-    ctx.fillStyle = input.color;
-    (input.bars ?? []).forEach((v, i) => {
-      const top = Math.min(y(v), zero);
-      const h = Math.abs(y(v) - zero);
-      const r = Math.min(RADIUS, half, h);
-      // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
-      const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
-      ctx.beginPath();
-      ctx.roundRect(x(i) - half, top, markWidth, Math.max(h, 1), radii);
-      ctx.fill();
+    (input.bars ?? []).forEach((row, i) => {
+      row.forEach((v, g) => {
+        if (v === null) return;
+        const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
+        const top = Math.min(y(v), zero);
+        const h = Math.abs(y(v) - zero);
+        const r = Math.min(RADIUS, w / 2, h);
+        // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
+        const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
+        ctx.fillStyle = colorOf(g);
+        ctx.beginPath();
+        ctx.roundRect(cx - w / 2, top, w, Math.max(h, 1), radii);
+        ctx.fill();
+      });
       if (i % 200 === 0) progress("render", i / n);
     });
   } else {
-    (input.boxes ?? []).forEach((b, i) => {
-      const cx = x(i);
-      ctx.strokeStyle = input.color;
-      ctx.lineWidth = 1.5;
-      // 수염
-      ctx.beginPath();
-      ctx.moveTo(cx, y(b.hi));
-      ctx.lineTo(cx, y(b.q3));
-      ctx.moveTo(cx, y(b.q1));
-      ctx.lineTo(cx, y(b.lo));
-      ctx.moveTo(cx - half / 2, y(b.hi));
-      ctx.lineTo(cx + half / 2, y(b.hi));
-      ctx.moveTo(cx - half / 2, y(b.lo));
-      ctx.lineTo(cx + half / 2, y(b.lo));
-      ctx.stroke();
-      // 상자
-      const top = y(b.q3);
-      const h = Math.max(1, y(b.q1) - top);
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = input.color;
-      ctx.fillRect(cx - half, top, markWidth, h);
-      ctx.globalAlpha = 1;
-      ctx.strokeRect(cx - half, top, markWidth, h);
-      // 중앙값
-      ctx.strokeStyle = THEME.textPrimary;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx - half, y(b.median));
-      ctx.lineTo(cx + half, y(b.median));
-      ctx.stroke();
-      // 이상치
-      ctx.fillStyle = input.color;
-      ctx.globalAlpha = 0.6;
-      for (const o of b.outliers) {
+    (input.boxes ?? []).forEach((row, i) => {
+      row.forEach((b, g) => {
+        if (!b) return;
+        const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
+        const half = w / 2;
+        const color = colorOf(g);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        // 수염
         ctx.beginPath();
-        ctx.arc(cx, y(o), 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
+        ctx.moveTo(cx, y(b.hi));
+        ctx.lineTo(cx, y(b.q3));
+        ctx.moveTo(cx, y(b.q1));
+        ctx.lineTo(cx, y(b.lo));
+        ctx.moveTo(cx - half / 2, y(b.hi));
+        ctx.lineTo(cx + half / 2, y(b.hi));
+        ctx.moveTo(cx - half / 2, y(b.lo));
+        ctx.lineTo(cx + half / 2, y(b.lo));
+        ctx.stroke();
+        // 상자
+        const top = y(b.q3);
+        const h = Math.max(1, y(b.q1) - top);
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = color;
+        ctx.fillRect(cx - half, top, w, h);
+        ctx.globalAlpha = 1;
+        ctx.strokeRect(cx - half, top, w, h);
+        // 중앙값
+        ctx.strokeStyle = THEME.textPrimary;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - half, y(b.median));
+        ctx.lineTo(cx + half, y(b.median));
+        ctx.stroke();
+        // 이상치
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.6;
+        for (const o of b.outliers) {
+          ctx.beginPath();
+          ctx.arc(cx, y(o), 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      });
       if (i % 50 === 0) progress("render", i / n);
     });
   }
@@ -250,8 +299,16 @@ export function renderCategory(
     y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },
     categories,
     markWidth,
+    groupCount,
     agg: input.agg,
     bars: input.bars,
-    boxes: input.boxes?.map(({ outliers: _outliers, ...rest }) => rest),
+    boxes: input.boxes?.map((row) =>
+      row.map((b) => {
+        if (!b) return null;
+        const { outliers: _outliers, ...rest } = b;
+        return rest;
+      }),
+    ),
+    legend: legendMeta,
   };
 }

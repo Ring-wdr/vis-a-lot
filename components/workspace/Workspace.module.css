@@ -608,3 +608,49 @@
 .historyText .muted {
   font-size: 11px;
 }
+
+.legendHitLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* PNG에 그려진 legend 항목 위에 겹치는 투명 버튼 */
+.legendHit {
+  position: absolute;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.legendHit:hover,
+.legendHit:focus-visible {
+  outline: 2px solid var(--ws-accent);
+  outline-offset: 1px;
+  background: rgb(42 120 214 / 8%);
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.legendList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legendSwatch {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--ws-border);
+  cursor: pointer;
+}

@@ -24,6 +24,7 @@ import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { COLUMNS, MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { putPng } from "../png-store";
+import { defaultLegendColor } from "../render/theme";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
 
@@ -221,7 +222,10 @@ async function run(job: Job) {
       version: 0,
       view: restored?.view,
       shapes: restored?.shapes ?? [],
-      props: restored?.color ? { color: restored.color } : undefined,
+      props:
+        restored?.color || restored?.legendColors
+          ? { color: restored.color, legendColors: restored.legendColors }
+          : undefined,
     };
   });
   for (const item of chart.items)
@@ -311,13 +315,35 @@ function initialState(chart: ChartRecord, item: ChartItem): ItemState {
     zoomed: item.view !== undefined,
     shapeCount: item.shapes.length,
     color: itemColor(chart, item),
-    customColor: item.props?.color !== undefined,
+    customColor: hasCustomColor(item),
   };
 }
 
 /** 개별 색이 있으면 그 색, 없으면 공통 색 */
 export function itemColor(chart: ChartRecord, item: ChartItem) {
   return item.props?.color ?? chart.spec.common.color;
+}
+
+/** legend 값별 색: item 개별 색 → 공통 속성의 legend 색 → 팔레트 기본 색 순서로 고른다. */
+export function legendColors(
+  chart: ChartRecord,
+  item: ChartItem,
+  values: string[],
+) {
+  return values.map(
+    (v, i) =>
+      item.props?.legendColors?.[v] ??
+      chart.spec.common.legendColors?.[v] ??
+      defaultLegendColor(i),
+  );
+}
+
+/** 개별 색이나 legend 개별 색을 하나라도 지정했는지 */
+export function hasCustomColor(item: ChartItem) {
+  return (
+    item.props?.color !== undefined ||
+    Object.keys(item.props?.legendColors ?? {}).length > 0
+  );
 }
 
 function finalStatus(job: Job): JobStatus {
@@ -344,6 +370,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
             x: spec.x,
             y: spec.y,
             splitBy: spec.splitBy,
+            legend: spec.legend,
           })),
           groupOf: new Map(),
         }
@@ -356,6 +383,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
             y: spec.y,
             agg: spec.agg,
             splitBy: spec.splitBy,
+            legend: spec.legend,
           })),
           groupOf: new Map(),
         };
@@ -378,6 +406,7 @@ function renderItem(
   const { render } = getRuntime();
   const { spec, itemSize } = chart;
   const index = data.groupOf.get(item.key);
+  const legendTitle = COLUMNS.find((c) => c.name === spec.legend)?.label ?? "";
   const common = {
     width: itemSize.width,
     height: itemSize.height,
@@ -400,6 +429,12 @@ function renderItem(
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),
+        legend: data.legend && {
+          title: legendTitle,
+          values: data.legend.values,
+          colors: legendColors(chart, item, data.legend.values),
+          index: data.legend.index.slice(group.start, group.end),
+        },
       },
       options,
     );
@@ -414,6 +449,11 @@ function renderItem(
       bars: group?.bars,
       boxes: group?.boxes,
       agg: spec.chartType === "bar" ? spec.agg : undefined,
+      legend: data.legendValues && {
+        title: legendTitle,
+        values: data.legendValues,
+        colors: legendColors(chart, item, data.legendValues),
+      },
     },
     options,
   );
@@ -455,7 +495,7 @@ async function renderItems(
           }
           state.image = item.image;
           state.color = itemColor(chart, item);
-          state.customColor = item.props?.color !== undefined;
+          state.customColor = hasCustomColor(item);
           state.status = "success";
           syncPrimary(chart, item);
         })
@@ -485,7 +525,7 @@ function syncPrimary(chart: ChartRecord, item: ChartItem) {
   state.zoomed = item.view !== undefined;
   state.shapeCount = item.shapes.length;
   state.color = itemColor(chart, item);
-  state.customColor = item.props?.color !== undefined;
+  state.customColor = hasCustomColor(item);
   touch(primary);
 }
 

@@ -8,6 +8,7 @@ import { strategyFor } from "@/lib/tooltip/strategies";
 import { useDebounced } from "@/lib/use-debounced";
 import type { ChartImage as ChartImageData } from "@/server/api/types";
 import type { ColumnName } from "@/server/data/schema";
+import { ColorPickerButton } from "./ColorPickerButton";
 import styles from "./Workspace.module.css";
 
 type Cursor = { x: number; y: number };
@@ -26,8 +27,11 @@ export function ItemTooltip({
   itemKey,
   columns,
   display,
+  onLegendColor,
 }: {
   image: ChartImageData;
+  /** PNG 안 legend 상자의 [● 값]을 눌러 고른 최종 색 */
+  onLegendColor?: (value: string, color: string) => void;
   /** 화면에 보이는 크기. resize 대기 중에는 PNG 크기와 다를 수 있다. */
   display: { width: number; height: number };
   alt: string;
@@ -81,6 +85,26 @@ export function ItemTooltip({
       onMouseLeave={() => setCursor(undefined)}
     >
       <ChartImage data={image} alt={alt} />
+      {meta.data?.legend && onLegendColor && (
+        // PNG에 그려진 legend 항목 자리에 색 선택 버튼을 겹친다 (위치는 metadata).
+        <div className={styles.legendHitLayer}>
+          {meta.data.legend.entries.map((entry) => (
+            <ColorPickerButton
+              key={entry.value}
+              className={styles.legendHit}
+              style={{
+                left: entry.rect.x * sx,
+                top: entry.rect.y * sy,
+                width: entry.rect.width * sx,
+                height: entry.rect.height * sy,
+              }}
+              color={entry.color}
+              label={`${alt} · ${entry.value} 색 바꾸기`}
+              onCommit={(color) => onLegendColor(entry.value, color)}
+            />
+          ))}
+        </div>
+      )}
       {hit?.marker && (
         <span
           className={styles.hitMarker}

@@ -36,6 +36,7 @@ export function useAutoResize(
   // 요청이 실패하면 잠시 뒤 다시 확인하도록 effect를 깨운다.
   const [retryTick, setRetryTick] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryTick은 실패한 요청을 다시 확인하게 하는 트리거다.
   useEffect(() => {
     if (!chartId || !job || !sizeKey || !jobStatus || !isTerminal(jobStatus))
       return;

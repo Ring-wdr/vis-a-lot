@@ -19,6 +19,22 @@ export const AGG_LABELS: Record<AggFn, string> = {
   median: "중앙값",
 };
 
+/**
+ * legend로 쓸 수 있는 컬럼. 팔레트 8색을 돌려쓰지 않도록 고유값이 8개 이하인 범주 컬럼만 허용한다.
+ */
+export const LEGEND_COLUMNS = [
+  "factory",
+  "line",
+  "sensor_type",
+  "shift",
+  "status",
+] as const satisfies readonly ColumnName[];
+export type LegendColumn = (typeof LEGEND_COLUMNS)[number];
+
+export function isLegendColumn(name: unknown): name is LegendColumn {
+  return (LEGEND_COLUMNS as readonly unknown[]).includes(name);
+}
+
 /** split by 조합(= item)의 최대 개수 */
 export const MAX_SPLIT_ITEMS = 30_000;
 export type RowSize = (typeof ROW_SIZES)[number];

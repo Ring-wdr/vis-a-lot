@@ -4,6 +4,12 @@
 import { extent } from "d3-array";
 import { scaleLinear, scaleUtc } from "d3-scale";
 import { utcFormat } from "d3-time-format";
+import {
+  drawLegend,
+  LEGEND_SPACE,
+  type LegendInput,
+  type LegendMeta,
+} from "./legend";
 import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
 
@@ -31,8 +37,11 @@ export type ScatterMeta = {
     x: number[];
     y: number[];
     id: number[];
+    /** legend 인덱스 (legend가 있을 때만) */
+    g?: number[];
   };
   total: number;
+  legend?: LegendMeta;
 };
 
 export type ScatterInput = {
@@ -44,6 +53,8 @@ export type ScatterInput = {
   ys: Float64Array;
   ids: Float64Array;
   color: string;
+  /** legend가 있으면 점마다 legend 인덱스로 색을 고른다. */
+  legend?: LegendInput & { index: Uint8Array };
   /** 확대한 범위. 없으면 데이터 전체 범위를 보기 좋게 맞춘다. */
   view?: ItemView;
   shapes: readonly Shape[];
@@ -101,7 +112,7 @@ export function renderScatter(
   );
   const plot = {
     left: Math.ceil(yLabelWidth + 14),
-    top: 28,
+    top: 28 + (input.legend ? LEGEND_SPACE : 0),
     width: 0,
     height: 0,
   };
@@ -134,6 +145,7 @@ export function renderScatter(
   const keptX: number[] = [];
   const keptY: number[] = [];
   const keptId: number[] = [];
+  const keptG: number[] = [];
   const sx = new Float32Array(n);
   const sy = new Float32Array(n);
   for (let i = 0; i < n; i++) {
@@ -152,6 +164,7 @@ export function renderScatter(
         keptX.push(xs[i]);
         keptY.push(ys[i]);
         keptId.push(input.ids[i]);
+        if (input.legend) keptG.push(input.legend.index[i]);
       }
     }
     if (i % CHUNK === 0) progress("aggregate", i / n);
@@ -196,6 +209,11 @@ export function renderScatter(
   ctx.textAlign = "right";
   ctx.fillText(`${n.toLocaleString()} pts`, plot.left + plot.width, 17);
 
+  // ── legend ────────────────────────────────────────────────
+  const legendMeta = input.legend
+    ? drawLegend(ctx, input.legend, plot.left, 24, plot.width)
+    : undefined;
+
   // ── 점 (render) ───────────────────────────────────────────────
   ctx.save();
   ctx.beginPath();
@@ -209,27 +227,36 @@ export function renderScatter(
       plot.left + plot.width / 2,
       plot.top + plot.height / 2,
     );
-  } else if (n <= 400) {
-    // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 한다.
-    ctx.fillStyle = input.color;
-    ctx.strokeStyle = THEME.surface;
-    ctx.lineWidth = 2;
-    for (let i = 0; i < n; i++) {
-      ctx.beginPath();
-      ctx.arc(sx[i], sy[i], 4, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fill();
-    }
   } else {
-    // 점이 많으면 작은 반투명 점으로 밀도를 보여준다.
+    // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (fillStyle 전환을 줄인다).
+    const { legend } = input;
+    const passes = legend ? legend.colors : [input.color];
+    const small = n <= 400;
     const size = n > 50_000 ? 1.5 : 2.5;
-    ctx.fillStyle = input.color;
-    ctx.globalAlpha = n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6;
     const half = size / 2;
-    for (let i = 0; i < n; i++) {
-      ctx.fillRect(sx[i] - half, sy[i] - half, size, size);
-      if (i % CHUNK === 0) progress("render", i / n);
-    }
+    passes.forEach((color, g) => {
+      ctx.fillStyle = color;
+      if (small) {
+        // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 한다.
+        ctx.strokeStyle = THEME.surface;
+        ctx.lineWidth = 2;
+      } else {
+        // 점이 많으면 작은 반투명 점으로 밀도를 보여준다.
+        ctx.globalAlpha = n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6;
+      }
+      for (let i = 0; i < n; i++) {
+        if (legend && legend.index[i] !== g) continue;
+        if (small) {
+          ctx.beginPath();
+          ctx.arc(sx[i], sy[i], 4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fill();
+        } else {
+          ctx.fillRect(sx[i] - half, sy[i] - half, size, size);
+        }
+        if (i % CHUNK === 0) progress("render", (g + i / n) / passes.length);
+      }
+    });
   }
   // 도형은 점 위에, 같은 그림 영역 clip 안에 그린다.
   ctx.globalAlpha = 1;
@@ -247,7 +274,15 @@ export function renderScatter(
     plot,
     x: { kind: input.xKind, domain: [+x.domain()[0], +x.domain()[1]] },
     y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },
-    points: { px, py, x: keptX, y: keptY, id: keptId },
+    points: {
+      px,
+      py,
+      x: keptX,
+      y: keptY,
+      id: keptId,
+      ...(input.legend ? { g: keptG } : {}),
+    },
     total: n,
+    legend: legendMeta,
   };
 }

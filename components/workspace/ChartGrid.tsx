@@ -164,6 +164,7 @@ export function ChartGrid() {
                 item={item}
                 chartId={current.chartId}
                 primaryJobId={current.jobId}
+                hasLegend={current.spec.legend !== null}
                 displaySize={displaySize}
                 tooltipColumns={current.spec.tooltip}
               />
