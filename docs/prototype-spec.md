@@ -219,8 +219,9 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 
 | 용도 | 요청 | 응답 / 설명 |
 |---|---|---|
-| 컬럼 목록 | `GET /datasets/:id/columns` | 이름, 타입, 고유값 수 |
-| 데이터 상태 | `GET /datasets/:id/status?rows=` | 생성 여부, 생성 진행률 |
+| 데이터셋 상태 | `GET /datasets/:id` | 행 수별 상태(`missing` / `generating` / `ready`), 단계(`copy` / `analyze`), 진행률, 생성 시간 |
+| 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
+| 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
 | split 개수 확인 | `GET /datasets/:id/split-count?cols=a,b,c` | 조합 수 (30,000개 초과 검사) |
 | 그리기 시작 | `POST /charts` | 요청: 차트 종류, x, y, 통계 함수, split by(순서 포함), 구분 기호, tooltip 컬럼, grid 크기, 공통 속성, 행 수<br>응답: `chartId`, `jobId`, `historyId`, 전체 item 목록 |
 | 진행 상태 | `GET /jobs/:jobId?items=k1,k2,...` | long polling. 전체 진행률 + 요청한 item의 상태·단계·진행률·`{ url, width, height }` |
