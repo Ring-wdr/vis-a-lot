@@ -467,7 +467,11 @@ async function renderItems(
             state.error = err instanceof Error ? err.message : String(err);
           }
         })
-        .finally(() => touch(job));
+        .finally(() => {
+          // job 전체를 기다리지 않고 이 item이 끝나는 즉시 다음 조작(다음 resize 등)을 받는다.
+          if (item.busyJobId === job.id) item.busyJobId = undefined;
+          touch(job);
+        });
     }),
   );
 }

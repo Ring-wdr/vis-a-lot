@@ -10,6 +10,15 @@ import { isTerminal, type JobStateResponse } from "@/server/api/types";
 import type { ColumnName, RowSize } from "@/server/data/schema";
 import { api } from "./api";
 
+/**
+ * long polling 요청은 한 번 실패해도 멈추면 안 된다 (service worker 재시작 등).
+ * 짧은 간격으로 계속 다시 시도한다.
+ */
+const LONG_POLL_RETRY = {
+  retry: true,
+  retryDelay: (attempt: number) => Math.min(250 * 2 ** attempt, 3000),
+} as const;
+
 export const queryKeys = {
   health: ["health"] as const,
   datasets: ["datasets"] as const,
@@ -98,6 +107,7 @@ export function useJob(
     enabled: jobId !== undefined,
     refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
     refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
   });
 }
 
@@ -118,6 +128,7 @@ export function useJobProgress(jobId: string | undefined) {
     refetchInterval: (query) =>
       query.state.data && isTerminal(query.state.data.status) ? false : 1,
     refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
   });
 }
 
@@ -134,6 +145,7 @@ export function useJobItem(jobId: string | undefined, key: string) {
     enabled: jobId !== undefined,
     refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
     refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
   });
 }
 
