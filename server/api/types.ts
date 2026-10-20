@@ -109,6 +109,12 @@ export type AddShapeRequest = { shape: Shape };
 /** 공통 속성 변경. 개별 속성을 모두 덮어쓰고 전체를 다시 그린다. */
 export type CommonPropsRequest = { common: CommonProps };
 
+/** grid 크기 변경. item 크기가 바뀌므로 전체를 다시 그린다. */
+export type GridRequest = { grid: ChartSpec["grid"]; itemSize: ItemSize };
+
+/** 화면 크기 변경. 요청한 item만 새 크기로 다시 그린다. */
+export type ResizeRequest = { itemSize: ItemSize; keys: string[] };
+
 /** 개별 색상. null이면 공통 속성을 따르도록 되돌린다. */
 export type ItemPropsRequest = { color: string | null };
 

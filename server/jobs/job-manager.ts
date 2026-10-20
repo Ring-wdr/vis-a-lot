@@ -98,16 +98,24 @@ export function cancelJob(job: Job) {
   touch(job);
 }
 
-function pageKeys(job: Job, page: number, pageSize: number) {
+/** 응답에 담을 item: 페이지 단위, 또는 키를 지정하면 그 item들 */
+export type ItemSelection =
+  | { page: number; pageSize: number }
+  | { keys: string[] };
+
+function selectedKeys(job: Job, selection: ItemSelection) {
+  if ("keys" in selection)
+    return selection.keys.filter((k) => job.items.has(k));
+  const { page, pageSize } = selection;
   return job.order.slice(page * pageSize, (page + 1) * pageSize);
 }
 
-function pageSettled(job: Job, page: number, pageSize: number) {
+/** 고른 item이 없으면(pageSize 0) job 전체 진행 상태만 받는 요청이다. job이 끝나야 더 기다릴 게 없다. */
+function selectionSettled(job: Job, selection: ItemSelection) {
   if (isTerminal(job.status)) return true;
-  if (job.phase !== "render") return false;
-  return pageKeys(job, page, pageSize).every((k) =>
-    isTerminal((job.items.get(k) as ItemState).status),
-  );
+  const keys = selectedKeys(job, selection);
+  if (keys.length === 0 || job.phase !== "render") return false;
+  return keys.every((k) => isTerminal((job.items.get(k) as ItemState).status));
 }
 
 /**
@@ -117,11 +125,10 @@ function pageSettled(job: Job, page: number, pageSize: number) {
 export async function waitForUpdate(
   job: Job,
   since: number,
-  page: number,
-  pageSize: number,
+  selection: ItemSelection,
   timeoutMs: number,
 ) {
-  if (job.version > since || pageSettled(job, page, pageSize)) return;
+  if (job.version > since || selectionSettled(job, selection)) return;
   await new Promise<void>((resolve) => {
     const wake = () => {
       clearTimeout(timer);
@@ -136,12 +143,8 @@ export async function waitForUpdate(
   await sleep(BATCH_MS);
 }
 
-export function jobState(
-  job: Job,
-  page: number,
-  pageSize: number,
-): JobStateResponse {
-  const items = pageKeys(job, page, pageSize).map((k) => ({
+export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
+  const items = selectedKeys(job, selection).map((k) => ({
     ...(job.items.get(k) as ItemState),
   }));
   const done = [...job.items.values()].filter((i) =>
@@ -158,8 +161,8 @@ export function jobState(
         ? { ...job.dataset }
         : { done, total: job.order.length },
     totalItems: job.phase === "render" ? job.order.length : null,
-    page,
-    pageSize,
+    page: "page" in selection ? selection.page : 0,
+    pageSize: "pageSize" in selection ? selection.pageSize : 0,
     items,
     error: job.error,
   };
