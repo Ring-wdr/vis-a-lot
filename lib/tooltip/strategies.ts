@@ -1,7 +1,13 @@
 // 차트 종류별 툴팁 전략. 각 전략은 metadata만으로 커서 위치를 해석하고(hitTest),
 // 툴팁에 보여줄 줄(rows)을 만든다. 서버 호출이 필요한 추가 컬럼은 rowId로 넘긴다.
 
-import type { AxisMeta, ItemMeta, ScatterMeta } from "@/server/api/types";
+import type {
+  AxisMeta,
+  CategoryMeta,
+  ItemMeta,
+  ScatterMeta,
+} from "@/server/api/types";
+import { AGG_LABELS } from "@/server/data/schema";
 import { formatValue } from "./format";
 import { PointIndex } from "./point-index";
 
@@ -84,16 +90,92 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
   },
 };
 
+/** 범주 인덱스 축에서 커서가 가리키는 막대/상자. 표식 너비 안에 있을 때만 맞힌 것으로 본다. */
+function hitCategory(meta: CategoryMeta, px: number, py: number) {
+  const { plot } = meta;
+  if (
+    px < plot.left ||
+    px > plot.left + plot.width ||
+    py < plot.top ||
+    py > plot.top + plot.height
+  ) {
+    return undefined;
+  }
+  const index = Math.round(
+    invertAxis(meta.x, plot.left, plot.width, px, false),
+  );
+  if (index < 0 || index >= meta.categories.length) return undefined;
+  const center =
+    plot.left +
+    ((index - meta.x.domain[0]) / (meta.x.domain[1] - meta.x.domain[0])) *
+      plot.width;
+  if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX)
+    return undefined;
+  return { index, center };
+}
+
+function yToPx(meta: CategoryMeta, v: number) {
+  const { plot } = meta;
+  const [d0, d1] = meta.y.domain;
+  return plot.top + plot.height - ((v - d0) / (d1 - d0)) * plot.height;
+}
+
+const HIT_SLOP_PX = 3;
+
+export const barStrategy: TooltipStrategy<CategoryMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const hit = hitCategory(meta, px, py);
+    const value = hit && meta.bars?.[hit.index];
+    if (!hit || value === undefined) return null;
+    return {
+      marker: { px: hit.center, py: yToPx(meta, value) },
+      rows: [
+        { label: "범주", value: meta.categories[hit.index] },
+        {
+          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          value: formatValue(value, "number"),
+          emphasis: true,
+        },
+      ],
+    };
+  },
+};
+
+export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const hit = hitCategory(meta, px, py);
+    const box = hit && meta.boxes?.[hit.index];
+    if (!hit || !box) return null;
+    const num = (v: number) => formatValue(v, "number");
+    return {
+      marker: { px: hit.center, py: yToPx(meta, box.median) },
+      rows: [
+        { label: "범주", value: meta.categories[hit.index] },
+        { label: "개수", value: num(box.n) },
+        { label: "최댓값(수염)", value: num(box.hi) },
+        { label: "Q3", value: num(box.q3) },
+        { label: "중앙값", value: num(box.median), emphasis: true },
+        { label: "Q1", value: num(box.q1) },
+        { label: "최솟값(수염)", value: num(box.lo) },
+        { label: "평균", value: num(box.mean) },
+        { label: "이상치", value: `${num(box.outlierCount)}개` },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
-  [K in ItemMeta["chartType"]]: TooltipStrategy<
-    Extract<ItemMeta, { chartType: K }>
-  >;
+  scatter: TooltipStrategy<ScatterMeta>;
+  bar: TooltipStrategy<CategoryMeta>;
+  boxplot: TooltipStrategy<CategoryMeta>;
 } = {
   scatter: scatterStrategy,
+  bar: barStrategy,
+  boxplot: boxplotStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {
-  return STRATEGIES[
-    meta.chartType as M["chartType"]
-  ] as unknown as TooltipStrategy<M>;
+  return STRATEGIES[meta.chartType] as unknown as TooltipStrategy<M>;
 }

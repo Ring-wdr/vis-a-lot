@@ -2,8 +2,18 @@
 
 import { DatasetPanel } from "@/components/DatasetPanel";
 import { useWorkspace } from "@/lib/workspace-store";
-import { CHART_TYPES, type ChartType } from "@/server/api/types";
-import { COLUMNS, type ColumnName } from "@/server/data/schema";
+import {
+  CHART_TYPES,
+  type ChartSpec,
+  type ChartType,
+} from "@/server/api/types";
+import {
+  AGG_FNS,
+  AGG_LABELS,
+  type AggFn,
+  COLUMNS,
+  type ColumnName,
+} from "@/server/data/schema";
 import { DrawButton } from "./DrawButton";
 import { type Option, OrderedMultiSelect } from "./OrderedMultiSelect";
 import styles from "./Workspace.module.css";
@@ -14,10 +24,19 @@ const CHART_LABELS: Record<ChartType, string> = {
   boxplot: "Boxplot",
 };
 
-const IMPLEMENTED = new Set<ChartType>(["scatter"]);
+/** 차트 종류를 바꿀 때 그 종류에 맞지 않는 x 축 컬럼은 기본값으로 바꾼다. */
+function switchChartType(
+  draft: ChartSpec,
+  chartType: ChartType,
+): Partial<ChartSpec> {
+  const allowed = chartType === "scatter" ? AXIS_COLUMNS : CATEGORY_COLUMNS;
+  if (allowed.some((c) => c.name === draft.x)) return { chartType };
+  return { chartType, x: chartType === "scatter" ? "ts" : "sensor_type" };
+}
 
 const GRID_SIZES = Array.from({ length: 10 }, (_, i) => i + 1);
 
+const CATEGORY_COLUMNS = COLUMNS.filter((c) => c.type === "string");
 const AXIS_COLUMNS = COLUMNS.filter(
   (c) => c.type === "number" || c.type === "time",
 );
@@ -75,9 +94,8 @@ export function ControlPanel() {
               key={type}
               type="button"
               aria-pressed={draft.chartType === type}
-              disabled={!IMPLEMENTED.has(type)}
               title={CHART_LABELS[type]}
-              onClick={() => updateDraft({ chartType: type })}
+              onClick={() => updateDraft(switchChartType(draft, type))}
             >
               <ChartIcon type={type} />
               <span>{CHART_LABELS[type]}</span>
@@ -109,7 +127,10 @@ export function ControlPanel() {
           value={draft.x}
           onChange={(e) => updateDraft({ x: e.target.value as ColumnName })}
         >
-          {AXIS_COLUMNS.map((c) => (
+          {(draft.chartType === "scatter"
+            ? AXIS_COLUMNS
+            : CATEGORY_COLUMNS
+          ).map((c) => (
             <option key={c.name} value={c.name}>
               {c.label}
             </option>
@@ -130,6 +151,22 @@ export function ControlPanel() {
           ))}
         </select>
       </label>
+
+      {draft.chartType === "bar" && (
+        <label className={styles.field}>
+          <span>통계 함수</span>
+          <select
+            value={draft.agg}
+            onChange={(e) => updateDraft({ agg: e.target.value as AggFn })}
+          >
+            {AGG_FNS.map((fn) => (
+              <option key={fn} value={fn}>
+                {AGG_LABELS[fn]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <OrderedMultiSelect
         label="split by"

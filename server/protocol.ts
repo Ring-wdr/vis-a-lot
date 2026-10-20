@@ -1,8 +1,10 @@
 // Worker별 RPC 메서드 정의.
 
 import type { ColumnInfo, DatasetStatus } from "./api/types";
+import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
 import type { ColumnName, RowSize } from "./data/schema";
+import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 
 export type DbMethods = {
@@ -25,6 +27,8 @@ export type DbMethods = {
   };
   /** job 하나에 필요한 데이터를 한 번에 조회해 split 조합별로 나눈다. */
   chartData: { params: ChartDataParams; result: ChartData };
+  /** bar / boxplot: SQL로 집계한 split 조합 × 범주 값 */
+  categoryData: { params: CategoryDataParams; result: CategoryData };
   /** 툴팁 추가 컬럼 조회 */
   rowValues: {
     params: { rows: RowSize; rowId: number; columns: ColumnName[] };
@@ -41,6 +45,16 @@ export type RenderMethods = {
   renderScatter: {
     params: ScatterInput;
     result: { png: ArrayBuffer; meta: ScatterMeta; worker: string; ms: number };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderCategory: {
+    params: CategoryInput;
+    result: {
+      png: ArrayBuffer;
+      meta: CategoryMeta;
+      worker: string;
+      ms: number;
+    };
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
 };

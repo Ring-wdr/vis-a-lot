@@ -2,6 +2,7 @@ import { HttpResponse, http } from "msw";
 import { createChart, getChart, getItem } from "../charts/chart-store";
 import { zoomIn, zoomOut } from "../charts/item-view";
 import {
+  AGG_FNS,
   COLUMNS,
   type ColumnName,
   DATASET_ID,
@@ -90,7 +91,6 @@ const ZOOM_OUT_MAX_RATIO = 10;
 const COLUMN_TYPE = new Map<string, string>(
   COLUMNS.map((c) => [c.name, c.type]),
 );
-const IMPLEMENTED_CHART_TYPES = new Set(["scatter"]);
 const MAX_ITEM_PX = 2000;
 const LONG_POLL_TIMEOUT_MS = 25_000;
 
@@ -99,12 +99,18 @@ function validateChartRequest(body: CreateChartRequest): string | undefined {
   if (!spec || !itemSize) return "spec and itemSize are required";
   if (!isRowSize(spec.rows)) return "rows must be one of the supported sizes";
   if (!CHART_TYPES.includes(spec.chartType)) return "unknown chartType";
-  if (!IMPLEMENTED_CHART_TYPES.has(spec.chartType))
-    return `${spec.chartType} is not implemented yet`;
-  for (const axis of [spec.x, spec.y]) {
-    const type = COLUMN_TYPE.get(axis);
-    if (type !== "number" && type !== "time")
-      return `${axis} cannot be a scatter axis`;
+  if (spec.chartType === "scatter") {
+    for (const axis of [spec.x, spec.y]) {
+      const type = COLUMN_TYPE.get(axis);
+      if (type !== "number" && type !== "time")
+        return `${axis} cannot be a scatter axis`;
+    }
+  } else {
+    // bar / boxplot: x는 범주(문자) 컬럼, y는 숫자 컬럼
+    if (COLUMN_TYPE.get(spec.x) !== "string")
+      return `${spec.x} is not categorical`;
+    if (COLUMN_TYPE.get(spec.y) !== "number") return `${spec.y} is not numeric`;
+    if (!AGG_FNS.includes(spec.agg)) return "unknown agg";
   }
   if (new Set(spec.splitBy).size !== spec.splitBy.length)
     return "duplicate splitBy column";
