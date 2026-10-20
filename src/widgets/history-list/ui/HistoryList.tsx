@@ -1,16 +1,21 @@
 /* biome-ignore-all lint/performance/noImgElement: 썸네일은 history에 저장된 data URL이다. */
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { useOpenChart } from "@/features/open-chart/model/open-chart";
+import type { WorkspaceTab } from "@/entities/workspace/model/tabs-store";
+import {
+  useWorkspace,
+  useWorkspaceStore,
+} from "@/entities/workspace/model/workspace-scope";
+import { openChartIn } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
 import { useDatasetSchemas } from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
 import { columnLabel } from "@/shared/lib/format";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
@@ -69,7 +74,23 @@ function eventsOf(entry: HistorySummary) {
 export function HistoryList() {
   const list = useQuery({ queryKey: ["history"], queryFn: api.history });
   const openHistory = useTabs((s) => s.openHistory);
-  const open = useOpenChart();
+  const close = useTabs((s) => s.close);
+  const scoped = useWorkspaceStore();
+  const load = useMutation({
+    mutationFn: async ({ id, tab }: { id: string; tab: WorkspaceTab }) => {
+      const detail = await api.historyDetail(id);
+      await openChartIn(
+        tab.store,
+        { spec: detail.spec, restore: restoreOf(detail), historyId: detail.id },
+        scoped.getState().gridArea,
+      );
+    },
+    // 열지 못한 건을 빈 탭으로 남기면 다시 눌러도 이미 열린 탭으로 보고 불러오지 않는다.
+    onError: (err, { tab }) => {
+      close(tab.id);
+      showAlert(err.message);
+    },
+  });
   const viewing = useWorkspace((s) => s.current?.historyId);
   // 컬럼 라벨은 데이터셋 스키마에 있으므로, 목록에 나오는 데이터셋의 스키마를 함께 받는다.
   useDatasetSchemas(list.data?.entries.map((e) => e.rows) ?? []);
@@ -93,18 +114,11 @@ export function HistoryList() {
             type="button"
             className={styles.historyEntry}
             aria-current={viewing === entry.id || undefined}
-            disabled={open.isPending}
-            onClick={async () => {
+            disabled={load.isPending}
+            onClick={() => {
               // 이미 열린 건이면 그 탭으로 가고, 처음 여는 건이면 새 탭에 다시 그린다.
               const { tab, created } = openHistory(entry.id);
-              if (!created) return;
-              const detail = await api.historyDetail(entry.id);
-              open.mutate({
-                store: tab.store,
-                spec: detail.spec,
-                restore: restoreOf(detail),
-                historyId: detail.id,
-              });
+              if (created) load.mutate({ id: entry.id, tab });
             }}
           >
             {entry.thumbnail ? (
