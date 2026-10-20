@@ -34,10 +34,14 @@ import {
   type AddShapeRequest,
   type ApiError,
   CHART_TYPES,
+  type CommonPropsRequest,
   type CreateChartRequest,
   type CreateChartResponse,
   type ItemJobResponse,
   type ItemMeta,
+  type ItemPropsRequest,
+  isHexColor,
+  isTerminal,
   type JobStateResponse,
   type SplitCountResponse,
   type TooltipRequest,
@@ -98,6 +102,7 @@ function validateChartRequest(body: CreateChartRequest): string | undefined {
   const { spec, itemSize } = body;
   if (!spec || !itemSize) return "spec and itemSize are required";
   if (!isRowSize(spec.rows)) return "rows must be one of the supported sizes";
+  if (!isHexColor(spec.common?.color)) return "invalid common color";
   if (!CHART_TYPES.includes(spec.chartType)) return "unknown chartType";
   if (spec.chartType === "scatter") {
     for (const axis of [spec.x, spec.y]) {
@@ -300,6 +305,45 @@ export const handlers = [
     if ("error" in target) return target.error;
     if (target.item.shapes.length === 0) return apiError(409, "no shapes");
     target.item.shapes = [];
+    return redraw(target.chart, target.item.key);
+  }),
+
+  // 공통 속성 변경: 개별 속성을 모두 덮어쓰고, 다시 조회하지 않고 전체를 다시 그린다.
+  http.patch("/api/charts/:chartId/common", async ({ params, request }) => {
+    const chart = getChart(String(params.chartId));
+    if (!chart) return apiError(404, "unknown chart");
+    const body = (await request.json()) as CommonPropsRequest;
+    if (!isHexColor(body.common?.color)) return apiError(400, "invalid color");
+    const primary = chart.primaryJobId ? getJob(chart.primaryJobId) : undefined;
+    if (!chart.items || (primary && !isTerminal(primary.status))) {
+      return apiError(
+        409,
+        "차트를 그리는 중에는 공통 속성을 바꿀 수 없습니다.",
+      );
+    }
+    if (chart.items.some((i) => i.busyJobId)) {
+      return apiError(409, "다시 그리는 중인 item이 있습니다.");
+    }
+    chart.spec = { ...chart.spec, common: { ...body.common } };
+    for (const item of chart.items) item.props = undefined;
+    const job = startItemJob(
+      chart,
+      chart.items.map((i) => i.key),
+      { primary: true },
+    );
+    return HttpResponse.json<ItemJobResponse>(
+      { jobId: job.id },
+      { status: 202 },
+    );
+  }),
+
+  http.patch(itemPath("/props"), async ({ params, request }) => {
+    const target = editableItem(params);
+    if ("error" in target) return target.error;
+    const body = (await request.json()) as ItemPropsRequest;
+    if (body.color !== null && !isHexColor(body.color))
+      return apiError(400, "invalid color");
+    target.item.props = body.color === null ? undefined : { color: body.color };
     return redraw(target.chart, target.item.key);
   }),
 
