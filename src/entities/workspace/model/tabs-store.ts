@@ -5,6 +5,7 @@
 // 탭은 로그인한 세션의 것이라 store를 모듈 전역에 두지 않고 세션마다 TabsScope가 새로 만든다.
 
 import { createStore } from "zustand/vanilla";
+import { api } from "@/shared/api/api";
 import type { ChartSpec } from "@/shared/api/types";
 import {
   createWorkspaceStore,
@@ -97,24 +98,27 @@ export function createTabsStore() {
       }));
       return { tab, created: true };
     },
-    close: (id) =>
-      set((s) => {
-        const tab = s.tabs.find((t) => t.id === id);
-        if (!tab) return {};
-        const siblings = s.tabs.filter((t) => t.view === tab.view);
-        // gallery는 작업 공간이 하나는 있어야 한다.
-        if (tab.view === "gallery" && siblings.length === 1) return {};
-        const index = siblings.indexOf(tab);
-        const rest = siblings.filter((t) => t.id !== id);
-        const next =
-          s.active[tab.view] === id
-            ? (rest[Math.min(index, rest.length - 1)]?.id ?? undefined)
-            : s.active[tab.view];
-        return {
-          tabs: s.tabs.filter((t) => t.id !== id),
-          active: { ...s.active, [tab.view]: next },
-        };
-      }),
+    close: (id) => {
+      const s = get();
+      const tab = s.tabs.find((t) => t.id === id);
+      if (!tab) return;
+      const siblings = s.tabs.filter((t) => t.view === tab.view);
+      // gallery는 작업 공간이 하나는 있어야 한다.
+      if (tab.view === "gallery" && siblings.length === 1) return;
+      const index = siblings.indexOf(tab);
+      const rest = siblings.filter((t) => t.id !== id);
+      const next =
+        s.active[tab.view] === id
+          ? (rest[Math.min(index, rest.length - 1)]?.id ?? undefined)
+          : s.active[tab.view];
+      set({
+        tabs: s.tabs.filter((t) => t.id !== id),
+        active: { ...s.active, [tab.view]: next },
+      });
+      // 아무도 보지 않을 차트를 계속 그리지 않도록 남은 item을 취소한다. 끝난 job이면 서버가 무시한다.
+      const jobId = tab.store.getState().current?.jobId;
+      if (jobId) api.cancelJob(jobId).catch(() => {});
+    },
   }));
 }
 
