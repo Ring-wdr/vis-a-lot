@@ -22,7 +22,7 @@ const AXIS_COLUMNS = COLUMNS.filter(
   (c) => c.type === "number" || c.type === "time",
 );
 const NUMBER_COLUMNS = COLUMNS.filter((c) => c.type === "number");
-const SPLIT_OPTIONS: Option<ColumnName>[] = COLUMNS.map((c) => ({
+const COLUMN_OPTIONS: Option<ColumnName>[] = COLUMNS.map((c) => ({
   value: c.name,
   label: c.label,
 }));
@@ -133,7 +133,7 @@ export function ControlPanel() {
 
       <OrderedMultiSelect
         label="split by"
-        options={SPLIT_OPTIONS}
+        options={COLUMN_OPTIONS}
         value={draft.splitBy}
         onChange={(splitBy) => updateDraft({ splitBy })}
       />
@@ -154,12 +154,15 @@ export function ControlPanel() {
         </span>
       </label>
 
-      <label className={styles.field}>
-        <span>tooltip</span>
-        <select disabled>
-          <option>x, y</option>
-        </select>
-      </label>
+      <OrderedMultiSelect
+        label="tooltip"
+        options={COLUMN_OPTIONS.filter(
+          (o) => o.value !== draft.x && o.value !== draft.y,
+        )}
+        value={draft.tooltip}
+        placeholder="x, y 외 컬럼 추가…"
+        onChange={(tooltip) => updateDraft({ tooltip })}
+      />
 
       <button type="button" className={styles.secondaryButton} disabled>
         공통 속성

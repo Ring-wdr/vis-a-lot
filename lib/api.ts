@@ -9,8 +9,11 @@ import type {
   DatasetStatus,
   GenerateDatasetRequest,
   HealthResponse,
+  ItemMeta,
   JobStateResponse,
   SplitCountResponse,
+  TooltipRequest,
+  TooltipResponse,
 } from "@/server/api/types";
 import {
   type ColumnName,
@@ -73,6 +76,16 @@ export const api = {
     fetch(`/api/jobs/${jobId}/cancel`, { method: "POST" }).then((res) => {
       if (!res.ok) throw new ApiRequestError(res.status, `HTTP ${res.status}`);
     }),
+
+  /** PNG URL과 같은 버전의 metadata */
+  itemMeta: (pngUrl: string) =>
+    request<ItemMeta>(pngUrl.replace("/png?", "/meta?")),
+
+  tooltip: (chartId: string, itemKey: string, body: TooltipRequest) =>
+    request<TooltipResponse>(
+      `/api/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(itemKey)}/tooltip`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
 
   splitCount: (rows: RowSize, cols: ColumnName[]) =>
     request<SplitCountResponse>(

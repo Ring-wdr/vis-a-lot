@@ -1,8 +1,9 @@
 "use client";
 
-import { ChartImage } from "@/components/ChartImage";
 import { ITEM_TOOLBAR_HEIGHT } from "@/lib/grid-layout";
 import type { ItemStage, ItemState } from "@/server/api/types";
+import type { ColumnName } from "@/server/data/schema";
+import { ItemTooltip } from "./ItemTooltip";
 import styles from "./Workspace.module.css";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
@@ -41,8 +42,12 @@ function Pending({
 export function ChartItemCard({
   item,
   placeholder,
+  chartId,
+  tooltipColumns = [],
 }: {
   item?: ItemState;
+  chartId?: string;
+  tooltipColumns?: ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
 }) {
@@ -57,8 +62,14 @@ export function ChartItemCard({
         </span>
       </div>
       <div className={styles.itemBody}>
-        {item?.status === "success" && item.image ? (
-          <ChartImage data={item.image} alt={item.label} />
+        {item?.status === "success" && item.image && chartId ? (
+          <ItemTooltip
+            image={item.image}
+            alt={item.label}
+            chartId={chartId}
+            itemKey={item.key}
+            columns={tooltipColumns}
+          />
         ) : item?.status === "failed" ? (
           <p role="alert" className={styles.error}>
             렌더 실패: {item.error}

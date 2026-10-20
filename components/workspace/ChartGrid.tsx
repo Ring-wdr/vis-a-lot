@@ -152,7 +152,12 @@ export function ChartGrid() {
             }}
           >
             {job.data?.items.map((item) => (
-              <ChartItemCard key={item.key} item={item} />
+              <ChartItemCard
+                key={item.key}
+                item={item}
+                chartId={current.chartId}
+                tooltipColumns={current.spec.tooltip}
+              />
             ))}
             {job.data?.totalItems === null &&
               !isTerminal(job.data.status) &&
