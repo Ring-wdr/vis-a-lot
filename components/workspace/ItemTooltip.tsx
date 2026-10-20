@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChartImage } from "@/components/ChartImage";
 import { useItemMeta, useTooltipValues } from "@/lib/queries";
 import { columnLabel, columnType, formatValue } from "@/lib/tooltip/format";
@@ -40,6 +41,7 @@ export function ItemTooltip({
   /** x, y 외에 툴팁에 보여줄 컬럼 (서버 조회) */
   columns: ColumnName[];
 }) {
+  const layerRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [cursor, setCursor] = useState<Cursor>();
   const meta = useItemMeta(image.url, hovered);
@@ -72,13 +74,22 @@ export function ItemTooltip({
   const sx = display.width / image.width;
   const sy = display.height / image.height;
   const screen = cursor && { x: cursor.x * sx, y: cursor.y * sy };
-  const flip =
-    screen && screen.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH > display.width;
+  // 툴팁은 item 카드의 overflow에 잘리지 않도록 body에 portal로 띄우고 화면 좌표로 놓는다.
+  const layerRect = layerRef.current?.getBoundingClientRect();
+  const client = screen &&
+    layerRect && { x: layerRect.left + screen.x, y: layerRect.top + screen.y };
+  const extraRows = hit?.rowId !== undefined ? columns.length : 0;
+  const tooltipPosition =
+    client && placeTooltip(client, (hit?.rows.length ?? 1) + extraRows);
+  const isCategory =
+    meta.data !== undefined && meta.data.chartType !== "scatter";
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: 마우스 위치를 읽는 시각 보조 레이어. 같은 정보는 이후 표 보기로 제공한다.
     <div
+      ref={layerRef}
       className={styles.tooltipLayer}
+      data-hover={isCategory ? "box" : "point"}
       style={{ width: display.width, height: display.height }}
       onMouseEnter={() => setHovered(true)}
       onMouseMove={onMove}
@@ -105,56 +116,91 @@ export function ItemTooltip({
           ))}
         </div>
       )}
-      {hit?.marker && (
+      {cursor && hit?.marker && (
         <span
           className={styles.hitMarker}
           style={{ left: hit.marker.px * sx, top: hit.marker.py * sy }}
         />
       )}
-      {screen && hit && (
-        <div
-          role="tooltip"
-          className={styles.tooltip}
+      {cursor && hit?.highlight && (
+        // bar/boxplot: 가리킨 막대/상자를 감싸는 사각형
+        <span
+          className={styles.hitBox}
           style={{
-            top: Math.min(screen.y + TOOLTIP_OFFSET, display.height - 40),
-            ...(flip
-              ? { right: display.width - screen.x + TOOLTIP_OFFSET }
-              : { left: screen.x + TOOLTIP_OFFSET }),
-            width: TOOLTIP_WIDTH,
+            left: hit.highlight.x * sx,
+            top: hit.highlight.y * sy,
+            width: hit.highlight.width * sx,
+            height: hit.highlight.height * sy,
           }}
-        >
-          <dl>
-            {hit.rows.map((row) => (
-              <div
-                key={row.label}
-                className={row.emphasis ? styles.emphasis : undefined}
-              >
-                <dt>{row.label}</dt>
-                <dd>{row.value}</dd>
-              </div>
-            ))}
-            {hit.rowId !== undefined &&
-              columns.map((c) => (
-                <div key={c} className={styles.emphasis}>
-                  <dt>{columnLabel(c)}</dt>
-                  <dd>
-                    {extra.data && rowId === hit.rowId
-                      ? formatValue(extra.data.values[c], columnType(c))
-                      : "…"}
-                  </dd>
+        />
+      )}
+      {tooltipPosition &&
+        hit &&
+        createPortal(
+          <div
+            role="tooltip"
+            className={`${styles.tooltip} ${styles.tooltipPortal}`}
+            style={{ ...tooltipPosition, width: TOOLTIP_WIDTH }}
+          >
+            <dl>
+              {hit.rows.map((row) => (
+                <div
+                  key={row.label}
+                  className={row.emphasis ? styles.emphasis : undefined}
+                >
+                  <dt>{row.label}</dt>
+                  <dd>{row.value}</dd>
                 </div>
               ))}
-          </dl>
-        </div>
-      )}
-      {screen && hovered && meta.isPending && (
-        <div
-          className={styles.tooltip}
-          style={{ left: screen.x + TOOLTIP_OFFSET, top: screen.y }}
-        >
-          불러오는 중…
-        </div>
-      )}
+              {hit.rowId !== undefined &&
+                columns.map((c) => (
+                  <div key={c} className={styles.emphasis}>
+                    <dt>{columnLabel(c)}</dt>
+                    <dd>
+                      {extra.data && rowId === hit.rowId
+                        ? formatValue(extra.data.values[c], columnType(c))
+                        : "…"}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+          </div>,
+          document.body,
+        )}
+      {tooltipPosition &&
+        hovered &&
+        meta.isPending &&
+        createPortal(
+          <div
+            className={`${styles.tooltip} ${styles.tooltipPortal}`}
+            style={tooltipPosition}
+          >
+            불러오는 중…
+          </div>,
+          document.body,
+        )}
     </div>
   );
+}
+
+const ROW_HEIGHT = 18;
+const TOOLTIP_PADDING = 20;
+const VIEWPORT_MARGIN = 8;
+
+/** 커서 오른쪽 아래에 두고, 화면 오른쪽/아래 끝을 넘으면 반대쪽으로 뒤집는다. */
+function placeTooltip(client: { x: number; y: number }, rowCount: number) {
+  const height = rowCount * ROW_HEIGHT + TOOLTIP_PADDING;
+  const left =
+    client.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH >
+    window.innerWidth - VIEWPORT_MARGIN
+      ? client.x - TOOLTIP_OFFSET - TOOLTIP_WIDTH
+      : client.x + TOOLTIP_OFFSET;
+  const top =
+    client.y + TOOLTIP_OFFSET + height > window.innerHeight - VIEWPORT_MARGIN
+      ? client.y - TOOLTIP_OFFSET - height
+      : client.y + TOOLTIP_OFFSET;
+  return {
+    left: Math.max(VIEWPORT_MARGIN, left),
+    top: Math.max(VIEWPORT_MARGIN, top),
+  };
 }
