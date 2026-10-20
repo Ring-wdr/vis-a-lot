@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChartImage } from "@/components/ChartImage";
+import { DatasetPanel } from "@/components/DatasetPanel";
+import { useHealth } from "@/lib/queries";
 import type {
   DebugRenderRequest,
   DebugRenderResponse,
-  HealthResponse,
-} from "@/server/api/handlers";
+} from "@/server/api/types";
+import type { RowSize } from "@/server/data/schema";
 import styles from "./page.module.css";
 
 const ITEM_COUNT = 8;
@@ -15,22 +17,13 @@ const HEIGHT = 200;
 
 type Item = { key: string; result?: DebugRenderResponse; error?: string };
 
-/** 1단계 검증: DB Worker 부팅, Render Worker 병렬 렌더, `<img>` → MSW → Cache API 경로. */
+/** 구조 검증 페이지: DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더, `<img>` → MSW → Cache API 경로. */
 export function BootCheck() {
-  const [health, setHealth] = useState<HealthResponse>();
-  const [healthError, setHealthError] = useState<string>();
+  const { data: health, error: healthError } = useHealth();
+  const [rows, setRows] = useState<RowSize>(100_000);
   const [items, setItems] = useState<Item[]>([]);
   const [points, setPoints] = useState(50_000);
   const [totalMs, setTotalMs] = useState<number>();
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<HealthResponse>;
-      })
-      .then(setHealth, (err: Error) => setHealthError(err.message));
-  }, []);
 
   async function renderAll() {
     const keys = Array.from({ length: ITEM_COUNT }, (_, i) => `item-${i + 1}`);
@@ -70,11 +63,11 @@ export function BootCheck() {
 
   return (
     <main className={styles.main}>
-      <h1>1단계 · 기본 구조 확인</h1>
+      <h1>구조 확인</h1>
 
       <section>
         <h2>DB Worker (PGlite)</h2>
-        {healthError && <p role="alert">실패: {healthError}</p>}
+        {healthError && <p role="alert">실패: {healthError.message}</p>}
         {!health && !healthError && <p>PGlite 부팅 중…</p>}
         {health && (
           <ul>
@@ -86,6 +79,11 @@ export function BootCheck() {
             <li>Render Worker {health.renderWorkers}개</li>
           </ul>
         )}
+      </section>
+
+      <section>
+        <h2>데이터셋 (절차적 생성 → COPY 적재)</h2>
+        <DatasetPanel rows={rows} onRowsChange={setRows} />
       </section>
 
       <section>
