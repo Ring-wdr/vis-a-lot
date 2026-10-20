@@ -117,8 +117,9 @@ export function HistoryList() {
             disabled={load.isPending}
             onClick={() => {
               // 이미 열린 건이면 그 탭으로 가고, 처음 여는 건이면 새 탭에 다시 그린다.
-              const { tab, created } = openHistory(entry.id);
-              if (created) load.mutate({ id: entry.id, tab });
+              const opened = openHistory(entry.id);
+              if (opened?.created)
+                load.mutate({ id: entry.id, tab: opened.tab });
             }}
           >
             {entry.thumbnail ? (

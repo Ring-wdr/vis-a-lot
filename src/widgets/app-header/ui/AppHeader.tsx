@@ -2,7 +2,7 @@
 
 import { Database, History, LayoutGrid } from "lucide-react";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
-import { VIEWS } from "@/entities/workspace/model/tabs-store";
+import { TABS_LOCKED_HINT, VIEWS } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
 import { openDataDialog } from "@/features/register-dataset/ui/DataDialog";
 import { ModeBar } from "@/features/select-mode/ui/ModeBar";
@@ -19,6 +19,7 @@ const TAB_UI = {
 export function AppHeader() {
   const view = useTabs((s) => s.view);
   const tabs = useTabsStore();
+  const locked = useTabs((s) => s.locked);
   return (
     <header className={styles.header}>
       <span className={styles.brand}>vis-a-lot</span>
@@ -32,7 +33,11 @@ export function AppHeader() {
           <Database size={14} aria-hidden="true" />
           data
         </button>
-        <div role="tablist" className={headerStyles.tabs}>
+        <div
+          role="tablist"
+          className={headerStyles.tabs}
+          title={locked ? TABS_LOCKED_HINT : undefined}
+        >
           {VIEWS.map((t) => {
             const { label, Icon } = TAB_UI[t];
             return (
@@ -42,6 +47,7 @@ export function AppHeader() {
                 role="tab"
                 className={headerStyles.navButton}
                 aria-selected={view === t}
+                disabled={locked && view !== t}
                 onClick={() => tabs.getState().setView(t)}
               >
                 <Icon size={14} aria-hidden="true" />

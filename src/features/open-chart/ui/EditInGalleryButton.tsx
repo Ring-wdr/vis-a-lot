@@ -21,6 +21,7 @@ export function EditInGalleryButton() {
     mutationFn: (id: string) => api.historyDetail(id),
     onSuccess: (detail) => {
       const tab = openGallery(detail.spec);
+      if (!tab) return;
       open.mutate({
         store: tab.store,
         spec: detail.spec,

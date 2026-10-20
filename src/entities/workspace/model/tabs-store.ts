@@ -24,6 +24,10 @@ export type WorkspaceTab = {
   historyId?: string;
 };
 
+/** 탭을 잠갔을 때 탭·화면 전환 버튼에 보여주는 안내 */
+export const TABS_LOCKED_HINT =
+  "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.";
+
 export type TabsState = {
   view: View;
   tabs: WorkspaceTab[];
@@ -31,12 +35,23 @@ export type TabsState = {
   active: Record<View, string | undefined>;
   /** history 탭이 하나도 없을 때 화면이 쓰는 빈 보기 전용 작업 상태 */
   emptyHistory: WorkspaceStore;
+  /**
+   * 보고 있는 gallery 탭이 그리는 중이다. 이때는 cancel하거나 끝나기 전까지 탭을 열고 닫거나 바꿀 수 없다.
+   * 그리는 중인 탭을 두고 떠나면 진행 상황을 놓치고, 다른 탭의 draw와 render worker를 나눠 쓰게 된다.
+   */
+  locked: boolean;
+  setLocked: (locked: boolean) => void;
   setView: (view: View) => void;
   activate: (id: string) => void;
-  /** 새 gallery 탭을 열고 그 탭으로 간다. */
-  openGallery: (draft?: Partial<ChartSpec>) => WorkspaceTab;
-  /** history 한 건을 탭으로 연다. 이미 열려 있으면 그 탭으로 간다. created면 새로 그려야 한다. */
-  openHistory: (historyId: string) => { tab: WorkspaceTab; created: boolean };
+  /** 새 gallery 탭을 열고 그 탭으로 간다. 잠겨 있으면 열지 않는다. */
+  openGallery: (draft?: Partial<ChartSpec>) => WorkspaceTab | undefined;
+  /**
+   * history 한 건을 탭으로 연다. 이미 열려 있으면 그 탭으로 간다. created면 새로 그려야 한다.
+   * 잠겨 있으면 열지 않는다.
+   */
+  openHistory: (
+    historyId: string,
+  ) => { tab: WorkspaceTab; created: boolean } | undefined;
   close: (id: string) => void;
   /** 오른쪽 필터 패널. 탭을 바꿔도 열고 닫은 상태는 그대로 둔다. */
   filterPanelOpen: boolean;
@@ -58,11 +73,16 @@ export function createTabsStore() {
     tabs: [first],
     active: { gallery: first.id, history: undefined },
     emptyHistory: createWorkspaceStore({ readOnly: true }),
-    setView: (view) => set({ view }),
+    locked: false,
+    setLocked: (locked) => set({ locked }),
+    setView: (view) => {
+      if (!get().locked) set({ view });
+    },
     filterPanelOpen: false,
     toggleFilterPanel: () =>
       set((s) => ({ filterPanelOpen: !s.filterPanelOpen })),
     activate: (id) => {
+      if (get().locked) return;
       const tab = get().tabs.find((t) => t.id === id);
       if (tab)
         set((s) => ({
@@ -71,6 +91,7 @@ export function createTabsStore() {
         }));
     },
     openGallery: (draft) => {
+      if (get().locked) return undefined;
       const tab = galleryTab(draft);
       set((s) => ({
         tabs: [...s.tabs, tab],
@@ -80,6 +101,7 @@ export function createTabsStore() {
       return tab;
     },
     openHistory: (historyId) => {
+      if (get().locked) return undefined;
       const existing = get().tabs.find((t) => t.historyId === historyId);
       if (existing) {
         get().activate(existing.id);
@@ -100,6 +122,7 @@ export function createTabsStore() {
     },
     close: (id) => {
       const s = get();
+      if (s.locked) return;
       const tab = s.tabs.find((t) => t.id === id);
       if (!tab) return;
       const siblings = s.tabs.filter((t) => t.view === tab.view);

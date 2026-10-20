@@ -9,6 +9,7 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
+import { useDrawState } from "@/features/draw-chart/model/draw-state";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
@@ -55,6 +56,17 @@ function TabNotices() {
     flush();
     return store.subscribe(flush);
   }, [store]);
+  return null;
+}
+
+/** 보고 있는 gallery 탭이 그리는 중이면 cancel하거나 끝날 때까지 탭 전환을 잠근다. */
+function DrawLock() {
+  const readOnly = useWorkspace((s) => s.readOnly);
+  const drawing = useDrawState() !== "draw";
+  const setLocked = useTabs((s) => s.setLocked);
+  const locked = !readOnly && drawing;
+
+  useEffect(() => setLocked(locked), [locked, setLocked]);
   return null;
 }
 
@@ -111,6 +123,7 @@ export function Workspace() {
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
       <TabNotices />
+      <DrawLock />
       <div className={styles.workspace}>
         <AppHeader />
         <TabBar view={view} />
