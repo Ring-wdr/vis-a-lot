@@ -21,8 +21,20 @@ type Payload = SharedChart & { v: number };
 export function restoreOf(detail: HistoryDetail): Record<string, ItemRestore> {
   const restore: Record<string, ItemRestore> = {};
   for (const [key, item] of Object.entries(detail.items)) {
-    if (!item.view && item.shapes.length === 0 && !item.color) continue;
-    restore[key] = { view: item.view, shapes: item.shapes, color: item.color };
+    const hasLegendColors = Object.keys(item.legendColors ?? {}).length > 0;
+    if (
+      !item.view &&
+      item.shapes.length === 0 &&
+      !item.color &&
+      !hasLegendColors
+    )
+      continue;
+    restore[key] = {
+      view: item.view,
+      shapes: item.shapes,
+      color: item.color,
+      ...(hasLegendColors ? { legendColors: item.legendColors } : {}),
+    };
   }
   return restore;
 }

@@ -13,6 +13,8 @@ import {
   type AggFn,
   COLUMNS,
   type ColumnName,
+  LEGEND_COLUMNS,
+  type LegendColumn,
 } from "@/server/data/schema";
 import { CommonPropsPopover } from "./CommonPropsPopover";
 import { DrawButton } from "./DrawButton";
@@ -41,6 +43,9 @@ const AXIS_COLUMNS = COLUMNS.filter(
   (c) => c.type === "number" || c.type === "time",
 );
 const NUMBER_COLUMNS = COLUMNS.filter((c) => c.type === "number");
+const LEGEND_OPTIONS = COLUMNS.filter((c) =>
+  (LEGEND_COLUMNS as readonly string[]).includes(c.name),
+);
 const COLUMN_OPTIONS: Option<ColumnName>[] = COLUMNS.map((c) => ({
   value: c.name,
   label: c.label,
@@ -130,6 +135,25 @@ export function ControlPanel() {
           onChange={(e) => updateDraft({ y: e.target.value as ColumnName })}
         >
           {NUMBER_COLUMNS.map((c) => (
+            <option key={c.name} value={c.name}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className={styles.field}>
+        <span>legend</span>
+        <select
+          value={draft.legend ?? ""}
+          onChange={(e) =>
+            updateDraft({
+              legend: (e.target.value || null) as LegendColumn | null,
+            })
+          }
+        >
+          <option value="">없음</option>
+          {LEGEND_OPTIONS.map((c) => (
             <option key={c.name} value={c.name}>
               {c.label}
             </option>

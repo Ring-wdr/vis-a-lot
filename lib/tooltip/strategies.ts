@@ -8,6 +8,7 @@ import type {
   ScatterMeta,
 } from "@/server/api/types";
 import { AGG_LABELS } from "@/server/data/schema";
+import { groupSlot } from "@/server/render/category";
 import { formatValue } from "./format";
 import { PointIndex } from "./point-index";
 
@@ -53,6 +54,7 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
 
   hitTest(meta, prepared, px, py) {
     const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
     if (
       px < plot.left ||
       px > plot.left + plot.width ||
@@ -82,6 +84,14 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
         emphasis: true,
       },
     );
+    const g = points.g?.[index];
+    if (meta.legend && g !== undefined) {
+      rows.push({
+        label: meta.legend.title,
+        value: meta.legend.values[g],
+        emphasis: true,
+      });
+    }
     return {
       marker: { px: points.px[index], py: points.py[index] },
       rows,
@@ -90,7 +100,22 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
   },
 };
 
-/** 범주 인덱스 축에서 커서가 가리키는 막대/상자. 표식 너비 안에 있을 때만 맞힌 것으로 본다. */
+/** legend 상자 위에서는 툴팁 대신 legend 색 선택이 동작한다. */
+export function inLegendBox(meta: ItemMeta, px: number, py: number) {
+  const box = meta.legend?.box;
+  return (
+    !!box &&
+    px >= box.x &&
+    px <= box.x + box.width &&
+    py >= box.y &&
+    py <= box.y + box.height
+  );
+}
+
+/**
+ * 범주 인덱스 축에서 커서가 가리키는 막대/상자.
+ * 범주 안에 legend 값별로 나란히 놓였으면 그중 어느 칸인지까지 찾는다.
+ */
 function hitCategory(meta: CategoryMeta, px: number, py: number) {
   const { plot } = meta;
   if (
@@ -111,7 +136,13 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
       plot.width;
   if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX)
     return undefined;
-  return { index, center };
+  const left = center - meta.markWidth / 2;
+  const g = Math.min(
+    meta.groupCount - 1,
+    Math.max(0, Math.floor(((px - left) / meta.markWidth) * meta.groupCount)),
+  );
+  const { cx } = groupSlot(center, meta.markWidth, meta.groupCount, g);
+  return { index, g, cx };
 }
 
 function yToPx(meta: CategoryMeta, v: number) {
@@ -120,18 +151,28 @@ function yToPx(meta: CategoryMeta, v: number) {
   return plot.top + plot.height - ((v - d0) / (d1 - d0)) * plot.height;
 }
 
+/** 범주 줄과, legend가 있으면 legend 값 줄 */
+function categoryRows(meta: CategoryMeta, index: number, g: number) {
+  const rows: TooltipRow[] = [{ label: "범주", value: meta.categories[index] }];
+  if (meta.legend) {
+    rows.push({ label: meta.legend.title, value: meta.legend.values[g] });
+  }
+  return rows;
+}
+
 const HIT_SLOP_PX = 3;
 
 export const barStrategy: TooltipStrategy<CategoryMeta> = {
   prepare: () => undefined,
   hitTest(meta, _prepared, px, py) {
+    if (inLegendBox(meta, px, py)) return null;
     const hit = hitCategory(meta, px, py);
-    const value = hit && meta.bars?.[hit.index];
-    if (!hit || value === undefined) return null;
+    const value = hit && meta.bars?.[hit.index]?.[hit.g];
+    if (!hit || value === undefined || value === null) return null;
     return {
-      marker: { px: hit.center, py: yToPx(meta, value) },
+      marker: { px: hit.cx, py: yToPx(meta, value) },
       rows: [
-        { label: "범주", value: meta.categories[hit.index] },
+        ...categoryRows(meta, hit.index, hit.g),
         {
           label: meta.agg ? AGG_LABELS[meta.agg] : "값",
           value: formatValue(value, "number"),
@@ -145,14 +186,15 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
 export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
   prepare: () => undefined,
   hitTest(meta, _prepared, px, py) {
+    if (inLegendBox(meta, px, py)) return null;
     const hit = hitCategory(meta, px, py);
-    const box = hit && meta.boxes?.[hit.index];
+    const box = hit && meta.boxes?.[hit.index]?.[hit.g];
     if (!hit || !box) return null;
     const num = (v: number) => formatValue(v, "number");
     return {
-      marker: { px: hit.center, py: yToPx(meta, box.median) },
+      marker: { px: hit.cx, py: yToPx(meta, box.median) },
       rows: [
-        { label: "범주", value: meta.categories[hit.index] },
+        ...categoryRows(meta, hit.index, hit.g),
         { label: "개수", value: num(box.n) },
         { label: "최댓값(수염)", value: num(box.hi) },
         { label: "Q3", value: num(box.q3) },

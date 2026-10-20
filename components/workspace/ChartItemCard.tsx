@@ -61,8 +61,11 @@ function DrawnItem({
   primaryJobId,
   tooltipColumns,
   displaySize,
+  hasLegend,
 }: {
   item: ItemState & { image: NonNullable<ItemState["image"]> };
+  /** legend가 있으면 색은 legend 항목별로 바꾼다. */
+  hasLegend: boolean;
   chartId: string;
   primaryJobId: string;
   tooltipColumns: ColumnName[];
@@ -117,6 +120,7 @@ function DrawnItem({
           item={item}
           busy={busy}
           undoCount={undoCount}
+          hasLegend={hasLegend}
           onAction={action.mutate}
         />
       </div>
@@ -129,6 +133,9 @@ function DrawnItem({
             itemKey={item.key}
             columns={tooltipColumns}
             display={displaySize}
+            onLegendColor={(value, color) =>
+              action.mutate({ type: "legendColor", value, color })
+            }
           />
         ) : (
           <DrawLayer
@@ -157,8 +164,10 @@ export function ChartItemCard({
   primaryJobId,
   tooltipColumns = [],
   displaySize,
+  hasLegend = false,
 }: {
   item?: ItemState;
+  hasLegend?: boolean;
   chartId?: string;
   primaryJobId?: string;
   /** 칸 크기. 없으면 PNG 원래 크기로 보여준다. */
@@ -175,6 +184,7 @@ export function ChartItemCard({
         primaryJobId={primaryJobId}
         tooltipColumns={tooltipColumns}
         displaySize={displaySize ?? item.image}
+        hasLegend={hasLegend}
       />
     );
   }

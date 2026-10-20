@@ -14,9 +14,12 @@ export function ItemToolbar({
   item,
   busy,
   undoCount,
+  hasLegend = false,
   onAction,
 }: {
   item: ItemState;
+  /** legend가 있으면 개별 색은 PNG 안 legend 항목에서 바꾼다. */
+  hasLegend?: boolean;
   busy: boolean;
   /** 이 세션에서 그린 도형 수 */
   undoCount: number;
@@ -72,43 +75,45 @@ export function ItemToolbar({
       >
         ⌫
       </button>
-      <Popover
-        triggerClassName={styles.colorButton}
-        triggerLabel={`개별 색상: ${colorName(item.color)}${item.customColor ? " (개별)" : ""}`}
-        disabled={disabled}
-        trigger={
-          <span
-            className={styles.colorDot}
-            data-custom={item.customColor || undefined}
-            style={{ background: item.color }}
-          />
-        }
-      >
-        {(close) => (
-          <div className={styles.popoverBody}>
-            <strong>{item.label} 색상</strong>
-            <ColorSwatches
-              value={item.color}
-              onSelect={(color) => {
-                onAction({ type: "color", color });
-                close();
-              }}
+      {!hasLegend && (
+        <Popover
+          triggerClassName={styles.colorButton}
+          triggerLabel={`개별 색상: ${colorName(item.color)}${item.customColor ? " (개별)" : ""}`}
+          disabled={disabled}
+          trigger={
+            <span
+              className={styles.colorDot}
+              data-custom={item.customColor || undefined}
+              style={{ background: item.color }}
             />
-            {item.customColor && (
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() => {
-                  onAction({ type: "color", color: null });
+          }
+        >
+          {(close) => (
+            <div className={styles.popoverBody}>
+              <strong>{item.label} 색상</strong>
+              <ColorSwatches
+                value={item.color}
+                onSelect={(color) => {
+                  onAction({ type: "color", color });
                   close();
                 }}
-              >
-                공통 색 따르기
-              </button>
-            )}
-          </div>
-        )}
-      </Popover>
+              />
+              {item.customColor && (
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={() => {
+                    onAction({ type: "color", color: null });
+                    close();
+                  }}
+                >
+                  공통 색 따르기
+                </button>
+              )}
+            </div>
+          )}
+        </Popover>
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ export type ItemAction =
   | { type: "addShape"; shape: Shape }
   | { type: "undoShape" }
   | { type: "color"; color: string | null }
+  | { type: "legendColor"; value: string; color: string | null }
   | { type: "clearShapes" };
 
 /**
@@ -33,6 +34,13 @@ export function useItemAction(chartId: string, itemKey: string) {
           return api.undoShape(chartId, itemKey);
         case "color":
           return api.setItemColor(chartId, itemKey, action.color);
+        case "legendColor":
+          return api.setItemLegendColor(
+            chartId,
+            itemKey,
+            action.value,
+            action.color,
+          );
         case "clearShapes":
           return api.clearShapes(chartId, itemKey);
       }

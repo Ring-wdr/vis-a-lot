@@ -49,6 +49,7 @@ export const DEFAULT_SPEC: ChartSpec = {
   x: "ts",
   y: "value",
   agg: "avg",
+  legend: null,
   splitBy: [],
   splitSeparator: "-",
   tooltip: [],

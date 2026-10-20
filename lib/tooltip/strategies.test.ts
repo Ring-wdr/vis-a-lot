@@ -78,6 +78,7 @@ describe("barStrategy / boxplotStrategy", () => {
     y: { kind: "number" as const, domain: [0, 10] as [number, number] },
     categories: ["A", "B", "C"],
     markWidth: 70,
+    groupCount: 1,
   };
 
   it("막대 너비 안에서만 범주와 집계값을 보여준다", () => {
@@ -85,7 +86,7 @@ describe("barStrategy / boxplotStrategy", () => {
       ...base,
       chartType: "bar" as const,
       agg: "avg" as const,
-      bars: [2, 5, 8],
+      bars: [[2], [5], [8]],
     };
     const hit = barStrategy.hitTest(meta, undefined, 150, 50);
     expect(hit?.rows).toEqual([
@@ -111,10 +112,53 @@ describe("barStrategy / boxplotStrategy", () => {
     const meta = {
       ...base,
       chartType: "boxplot" as const,
-      boxes: [box, box, box],
+      boxes: [[box], [box], [box]],
     };
     const hit = boxplotStrategy.hitTest(meta, undefined, 50, 50);
     expect(hit?.rows.find((r) => r.label === "중앙값")?.value).toBe("5");
     expect(hit?.rows.find((r) => r.label === "이상치")?.value).toBe("2개");
+  });
+});
+
+describe("legend가 있는 bar", () => {
+  const meta = {
+    chartType: "bar" as const,
+    plot: { left: 0, top: 30, width: 300, height: 100 },
+    x: { kind: "number" as const, domain: [-0.5, 2.5] as [number, number] },
+    y: { kind: "number" as const, domain: [0, 10] as [number, number] },
+    categories: ["A", "B", "C"],
+    markWidth: 80,
+    groupCount: 2,
+    agg: "avg" as const,
+    bars: [
+      [1, 2],
+      [3, null],
+      [5, 6],
+    ],
+    legend: {
+      title: "근무조",
+      values: ["야간", "주간"],
+      colors: ["#2a78d6", "#eb6834"],
+      box: { x: 0, y: 4, width: 120, height: 20 },
+      entries: [],
+      hidden: 0,
+    },
+  };
+
+  it("범주 안에서 legend 값별 막대를 구분한다", () => {
+    // 범주 B 가운데(150) 기준 왼쪽 칸 = 야간
+    const left = barStrategy.hitTest(meta, undefined, 130, 80);
+    expect(left?.rows).toEqual([
+      { label: "범주", value: "B" },
+      { label: "근무조", value: "야간" },
+      { label: "평균", value: "3", emphasis: true },
+    ]);
+    expect(left?.marker?.px).toBe(130);
+    // 오른쪽 칸(주간)은 데이터가 없다
+    expect(barStrategy.hitTest(meta, undefined, 170, 80)).toBeNull();
+  });
+
+  it("legend 상자 위에서는 툴팁을 띄우지 않는다", () => {
+    expect(barStrategy.hitTest(meta, undefined, 50, 10)).toBeNull();
   });
 });

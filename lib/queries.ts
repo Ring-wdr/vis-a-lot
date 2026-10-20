@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { isTerminal, type JobStateResponse } from "@/server/api/types";
-import type { ColumnName, RowSize } from "@/server/data/schema";
+import type { ColumnName, LegendColumn, RowSize } from "@/server/data/schema";
 import { api } from "./api";
 
 /**
@@ -176,6 +176,20 @@ export function useTooltipValues(
     queryFn: () =>
       api.tooltip(chartId, itemKey, { rowId: rowId as number, columns }),
     enabled: rowId !== undefined && columns.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/** legend 값 목록. 데이터셋이 준비된 뒤에만 받을 수 있다. */
+export function useLegendValues(
+  rows: RowSize,
+  column: LegendColumn | null,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["legend-values", rows, column],
+    queryFn: () => api.legendValues(rows, column as LegendColumn),
+    enabled: enabled && column !== null,
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

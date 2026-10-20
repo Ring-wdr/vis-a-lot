@@ -18,6 +18,7 @@ import type {
   ItemMeta,
   ItemSize,
   JobStateResponse,
+  LegendValuesResponse,
   SplitCountResponse,
   TooltipRequest,
   TooltipResponse,
@@ -26,6 +27,7 @@ import type {
 import {
   type ColumnName,
   DATASET_ID,
+  type LegendColumn,
   type RowSize,
 } from "@/server/data/schema";
 
@@ -127,6 +129,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  setItemLegendColor: (
+    chartId: string,
+    itemKey: string,
+    value: string,
+    color: string | null,
+  ) =>
+    request<ItemJobResponse>(itemPath(chartId, itemKey, "/props"), {
+      method: "PATCH",
+      body: JSON.stringify({ legendColor: { value, color } }),
+    }),
+
+  legendValues: (rows: RowSize, column: LegendColumn) =>
+    request<LegendValuesResponse>(
+      `/api/datasets/${DATASET_ID}/legend-values?rows=${rows}&column=${column}`,
+    ),
 
   setItemColor: (chartId: string, itemKey: string, color: string | null) =>
     request<ItemJobResponse>(itemPath(chartId, itemKey, "/props"), {

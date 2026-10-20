@@ -36,6 +36,7 @@
 | 렌더 job | 모든 렌더를 job + long polling으로 처리. 단계별 진행률, 취소, `draw → pending → cancel` |
 | 툴팁 | 처음 hover 때 metadata를 받아 이후 서버 호출 없이 좌표값·가장 가까운 점 표시, 추가 컬럼만 서버 조회. 차트별 strategy pattern |
 | 확대 · 도형 | 영역 확대/축소/초기화, 사각형·선·자유곡선·텍스트를 데이터 좌표로 저장해 서버가 PNG에 그림 |
+| legend | 범주 컬럼으로 색 나누기 (scatter 점 / bar·boxplot 나란히 배치). PNG 안 legend 상자의 ●를 눌러 item별 색 변경 |
 | 속성 | 공통 속성(전체 다시 그리기, 개별 속성 덮어쓰기), item 개별 색상 |
 | 화면 크기 | resize 300ms 뒤 현재 페이지만 다시 그림, grid 크기 즉시 반영 |
 | history | draw마다 1건 + 이후 변경 덧붙임, 썸네일, 복원, URL 공유 (lz-string) |
