@@ -3,7 +3,7 @@
 
 import createClient, { type Middleware } from "openapi-fetch";
 import type { ChartFilter } from "../../../data/filters";
-import type { ColumnName, RowSize } from "../../../data/schema";
+import type { RowSize } from "../../../data/schema";
 import type { paths as AuthPaths } from "../generated/auth";
 import type { paths as DataPaths } from "../generated/data";
 
@@ -69,16 +69,20 @@ export const dataService = {
       }),
       "generate",
     ),
-  splitCount: async (
-    rows: RowSize,
-    cols: ColumnName[],
-    filters?: ChartFilter[],
-  ) =>
+  splitCount: async (rows: RowSize, cols: string[], filters?: ChartFilter[]) =>
     unwrap(
       await data.POST("/datasets/{datasetId}/split-count", {
         params: { path: { datasetId: "iot" } },
         body: { rows, cols, filters },
       }),
       "split-count",
+    ),
+  /** 데이터셋 스키마. job이 데이터 준비 뒤 컬럼과 타입을 확인하는 데 쓴다. */
+  schema: async (rows: RowSize) =>
+    unwrap(
+      await data.GET("/datasets/{datasetId}/schema", {
+        params: { path: { datasetId: "iot" }, query: { rows } },
+      }),
+      "schema",
     ),
 };

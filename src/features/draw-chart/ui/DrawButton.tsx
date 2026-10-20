@@ -6,6 +6,7 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import {
   useCancelJob,
+  useDatasetSchema,
   useDatasetStatus,
   useJobProgress,
 } from "@/shared/api/queries";
@@ -26,6 +27,10 @@ export function DrawButton() {
   const job = useJobProgress(current?.jobId);
   const cancel = useCancelJob();
   const dataset = useDatasetStatus(draft.rows);
+
+  // 컬럼은 데이터셋 스키마에서 고르므로, 스키마를 받고 x·y가 정해져야 그릴 수 있다.
+  const schema = useDatasetSchema(draft.rows);
+  const ready = schema.data !== undefined && draft.x !== "" && draft.y !== "";
 
   const draw = useMutation({
     mutationFn: async () => {
@@ -75,7 +80,12 @@ export function DrawButton() {
         <button
           type="button"
           className={styles.drawButton}
-          disabled={state === "pending" || !gridArea}
+          disabled={state === "pending" || !gridArea || !ready}
+          title={
+            ready
+              ? undefined
+              : "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
+          }
           aria-busy={state === "pending"}
           onClick={() => draw.mutate()}
         >

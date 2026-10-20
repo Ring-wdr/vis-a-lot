@@ -2,13 +2,12 @@
 
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
+import { COLUMN_TYPE_LABELS } from "@/entities/dataset/lib/labels";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { filterOf, sameFilters } from "@/features/data-filter/model/filters";
 import { ColumnFilter } from "@/features/data-filter/ui/ColumnFilter";
-import { COLUMNS } from "@/shared/config/dataset";
+import { useDatasetSchema } from "@/shared/api/queries";
 import styles from "./FilterPanel.module.css";
-
-const TYPE_LABELS = { time: "시계열", number: "숫자", string: "범주" } as const;
 
 /**
  * 오른쪽 필터 패널. 컬럼마다 아코디언 하나이고, 열기 전에는 컬럼 이름만 보여준다.
@@ -21,6 +20,10 @@ export function FilterPanel() {
   const drawn = useWorkspace((s) => s.current !== undefined);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
+  const rows = useWorkspace((s) => s.draft.rows);
+  // 컬럼은 데이터마다 달라 고른 데이터셋의 스키마에서 받는다.
+  const schema = useDatasetSchema(rows);
+  const columns = schema.data?.columns ?? [];
   const count = filters?.length ?? 0;
   const pending = drawn && !readOnly && !sameFilters(filters, applied);
 
@@ -46,15 +49,20 @@ export function FilterPanel() {
             ? "바뀐 필터는 draw를 눌러야 적용됩니다."
             : "필터는 draw할 때 적용됩니다."}
       </p>
+      {!schema.data && (
+        <p className={styles.note}>데이터를 등록하면 컬럼이 나타납니다.</p>
+      )}
       <Accordion.Root multiple className={styles.list}>
-        {COLUMNS.map((c) => {
+        {columns.map((c) => {
           const active = filterOf(filters, c.name) !== undefined;
           return (
             <Accordion.Item key={c.name} value={c.name} className={styles.item}>
               <Accordion.Header className={styles.itemHeader}>
                 <Accordion.Trigger className={styles.trigger}>
                   <span className={styles.name}>{c.label}</span>
-                  <span className={styles.type}>{TYPE_LABELS[c.type]}</span>
+                  <span className={styles.type}>
+                    {COLUMN_TYPE_LABELS[c.type]}
+                  </span>
                   {active && (
                     <>
                       <span className={styles.activeDot} aria-hidden="true" />

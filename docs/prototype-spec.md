@@ -80,11 +80,25 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 | `temperature_env` | 숫자 | — | 주변 온도. `value`와 상관관계가 있다 |
 | `load_pct` | 숫자 | — | 설비 부하율 |
 
-### 3.3 행 수 전환
+### 3.3 스키마 기반 컬럼
+- 공장마다 raw data의 컬럼 이름이 제각각이므로, 컬럼 이름과 타입을 코드에 정해 두지 않는다. 적재된 테이블의 스키마(information_schema)에서 읽는다.
+- DB 타입으로 논리 타입을 정한다: 숫자형(smallint, integer, bigint, numeric, real, double precision) → `numeric`, 시각형(timestamp, timestamptz, date) → `datetime`, 그 밖(text, boolean, uuid …) → `categorical`.
+- 화면 라벨은 컬럼 주석(comment)을 쓰고, 없으면 컬럼 이름을 그대로 쓴다. IoT 생성기는 테이블을 만들 때 라벨을 주석으로 남긴다.
+- 컬럼의 쓰임은 타입으로 정한다.
+  - scatter x: datetime·numeric, y: numeric
+  - bar/boxplot x: categorical, y: numeric
+  - legend: categorical이면서 고유값 8개 이하 (팔레트 8색)
+  - split by·tooltip: 모든 컬럼
+  - 필터: datetime·numeric은 범위, categorical은 값 목록
+- 스키마는 적재를 시작하면(테이블 생성 직후) 알 수 있고, 고유값 수는 적재가 끝나야 알 수 있다. 등록하지 않은 데이터셋은 스키마가 없어 컬럼을 고를 수 없다.
+- 서버는 SQL에 컬럼 이름을 넣을 때 항상 스키마로 확인하고 식별자를 인용한다(공백·한글·특수문자 이름도 안전). job은 데이터가 준비된 뒤 스키마로 차트 설정을 검증하고, 맞지 않으면 사유를 알려 준다.
+- 다른 데이터셋으로 바꾸면 화면이 스키마에 맞지 않는 설정(x, y, legend, split, tooltip, 필터)을 타입에 맞는 기본값으로 바로잡는다.
+
+### 3.4 행 수 전환
 - 행 수(10만 / 50만 / 100만)는 상단 `data` 팝업에서 등록한다(mock: 업로드 대신 서버가 시드로 생성). 한 번 만든 데이터는 IndexedDB에 남는다.
 - 왼쪽 패널의 데이터 select에서는 등록한 규모만 고를 수 있다.
 - history에는 몇 건짜리 데이터였는지 함께 저장한다. 불러올 때 그 데이터가 없으면 생성한다.
-- 데이터가 아직 없어도 draw 버튼은 누를 수 있다. 이때 job은 `init` 상태(spinner만 표시)로 기다리고, 데이터 생성이 끝난 뒤부터 `progress`로 넘어간다.
+- 컬럼은 스키마에서 고르므로 draw하려면 데이터를 등록해야 한다. 적재 중에 draw하면 job은 `init` 상태(spinner만 표시)로 기다리고, 적재가 끝난 뒤부터 `progress`로 넘어간다.
 
 ---
 
@@ -296,7 +310,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | auth | 공개 키 | `GET /.well-known/jwks.json` | JWK Set |
 | data | 데이터셋 상태 | `GET /datasets/:id` | 행 수별 상태(`missing` / `generating` / `ready`), 단계(`copy` / `analyze`), 진행률, 생성 시간 |
 | data | 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
-| data | 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
+| data | 스키마 | `GET /datasets/:id/schema?rows=` | 적재된 테이블의 컬럼: 이름, 라벨(주석), 타입(categorical / numeric / datetime), null 허용, 고유값 수(적재 후). 등록 전이면 409 |
 | data | split 개수 확인 | `POST /datasets/:id/split-count` | `{ rows, cols, filters }` → 조합 수 (30,000개 초과 검사, 필터 적용) |
 | data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary?rows=` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
 | chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |

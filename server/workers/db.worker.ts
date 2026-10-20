@@ -7,6 +7,7 @@ import {
 } from "../data/chart-data";
 import { queryColumnSummary } from "../data/column-summary";
 import { DatasetManager } from "../data/datasets";
+import { type RowSize, readingsTable } from "../data/schema";
 import {
   getHistory,
   listHistory,
@@ -44,6 +45,14 @@ const ready = PGlite.create("idb://vis-a-lot", {
   return { db, datasets, bootMs: performance.now() - started };
 });
 
+/** 행 수 → 테이블과 스키마. 등록하지 않은 데이터셋이면 던진다. */
+async function datasetOf(rows: RowSize) {
+  const { db, datasets } = await ready;
+  const schema = await datasets.schema(rows);
+  if (!schema) throw new Error("dataset is not registered");
+  return { db, schema, table: readingsTable(rows) };
+}
+
 serveRpc<DbMethods>({
   async ping() {
     const { db, bootMs } = await ready;
@@ -76,7 +85,12 @@ serveRpc<DbMethods>({
 
   async datasetColumns({ rows }) {
     const { datasets } = await ready;
-    return datasets.columns(rows);
+    return datasets.columnInfo(rows);
+  },
+
+  async datasetReady({ rows }) {
+    const { datasets } = await ready;
+    return datasets.ready(rows);
   },
 
   async splitCount({ rows, cols, limit, filters }) {
@@ -85,13 +99,13 @@ serveRpc<DbMethods>({
   },
 
   async columnSummary({ rows, column }) {
-    const { db } = await ready;
-    return queryColumnSummary(db, rows, column);
+    const { db, schema, table } = await datasetOf(rows);
+    return queryColumnSummary(db, table, schema, column);
   },
 
-  async chartData(params) {
-    const { db } = await ready;
-    const data = await queryChartData(db, params);
+  async chartData({ rows, ...params }) {
+    const { db, schema, table } = await datasetOf(rows);
+    const data = await queryChartData(db, schema, { ...params, table });
     return transfer(data, [
       data.xs.buffer,
       data.ys.buffer,
@@ -101,8 +115,8 @@ serveRpc<DbMethods>({
   },
 
   async legendValues({ rows, column }) {
-    const { db } = await ready;
-    return queryLegendValues(db, rows, column);
+    const { db, schema, table } = await datasetOf(rows);
+    return queryLegendValues(db, table, schema, column);
   },
 
   async historySave(entry) {
@@ -121,15 +135,16 @@ serveRpc<DbMethods>({
     return getHistory(db, id);
   },
 
-  async categoryData(params) {
-    const { db } = await ready;
+  async categoryData({ rows, ...params }) {
+    const { db, schema, table } = await datasetOf(rows);
+    const input = { ...params, table };
     return params.chartType === "bar"
-      ? queryBarData(db, params)
-      : queryBoxData(db, params);
+      ? queryBarData(db, schema, input)
+      : queryBoxData(db, schema, input);
   },
 
   async rowValues({ rows, rowId, columns }) {
-    const { db } = await ready;
-    return queryRowValues(db, rows, rowId, columns);
+    const { db, schema, table } = await datasetOf(rows);
+    return queryRowValues(db, table, schema, rowId, columns);
   },
 });

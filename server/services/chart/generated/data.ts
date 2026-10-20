@@ -87,91 +87,6 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  "/datasets/{datasetId}/columns": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** 컬럼 타입과 고유값 수 */
-    get: {
-      parameters: {
-        query: {
-          rows: 100000 | 500000 | 1000000;
-        };
-        header?: never;
-        path: {
-          datasetId: components["schemas"]["DatasetId"];
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description 컬럼 목록 */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ColumnsResponse"];
-          };
-        };
-        /** @description 요청 형식 오류 */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 토큰 없음, 만료, 위조 */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description scope 부족 */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 모르는 데이터셋 */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 데이터셋이 아직 준비되지 않음 */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/datasets/{datasetId}/generate": {
     parameters: {
       query?: never;
@@ -297,7 +212,7 @@ export type paths = {
       parameters: {
         query: {
           rows: 100000 | 500000 | 1000000;
-          column: components["schemas"]["LegendColumn"];
+          column: components["schemas"]["ColumnName"];
         };
         header?: never;
         path: {
@@ -445,6 +360,91 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/datasets/{datasetId}/schema": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 데이터셋 스키마: 적재된 테이블에서 읽은 컬럼과 타입(categorical / numeric / datetime). 적재 중에도 알 수 있다 */
+    get: {
+      parameters: {
+        query: {
+          rows: 100000 | 500000 | 1000000;
+        };
+        header?: never;
+        path: {
+          datasetId: components["schemas"]["DatasetId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 컬럼 목록 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["DatasetSchema"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 등록하지 않은 데이터셋 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/datasets/{datasetId}/split-count": {
     parameters: {
       query?: never;
@@ -542,7 +542,7 @@ export type components = {
           kind: "range";
           column: components["schemas"]["ColumnName"];
           /** @enum {string} */
-          type: "number" | "time";
+          type: "numeric" | "datetime";
           min: number | null;
           max: number | null;
           nullCount: number;
@@ -559,38 +559,14 @@ export type components = {
           nullCount: number;
           count: number;
         };
-    /** @enum {string} */
-    ColumnName:
-      | "ts"
-      | "factory"
-      | "line"
-      | "machine"
-      | "sensor_type"
-      | "shift"
-      | "lot_id"
-      | "status"
-      | "value"
-      | "temperature_env"
-      | "load_pct";
+    /** @example factory */
+    ColumnName: string;
     ApiError: {
       /** @example unknown chart */
       error: string;
     };
     /** @enum {string} */
     DatasetId: "iot";
-    ColumnsResponse: {
-      rows: components["schemas"]["RowSize"];
-      columns: components["schemas"]["ColumnInfo"][];
-    };
-    RowSize: 100000 | 500000 | 1000000;
-    ColumnInfo: {
-      name: string;
-      type: components["schemas"]["ColumnType"];
-      label: string;
-      distinct: number;
-    };
-    /** @enum {string} */
-    ColumnType: "time" | "string" | "number";
     DatasetStatus: {
       rows: components["schemas"]["RowSize"];
       /** @enum {string} */
@@ -601,6 +577,7 @@ export type components = {
       total: number;
       generateMs?: number;
     };
+    RowSize: 100000 | 500000 | 1000000;
     GenerateDatasetRequest: {
       rows: components["schemas"]["RowSize"];
     };
@@ -614,14 +591,26 @@ export type components = {
       };
     };
     LegendValuesResponse: {
-      column: components["schemas"]["LegendColumn"];
+      column: components["schemas"]["ColumnName"];
       values: string[];
     };
-    /** @enum {string} */
-    LegendColumn: "factory" | "line" | "sensor_type" | "shift" | "status";
     DatasetListResponse: {
       datasets: components["schemas"]["DatasetStatus"][];
     };
+    DatasetSchema: {
+      rows: components["schemas"]["RowSize"];
+      ready: boolean;
+      columns: components["schemas"]["ColumnInfo"][];
+    };
+    ColumnInfo: {
+      name: components["schemas"]["ColumnName"];
+      label: string;
+      type: components["schemas"]["ColumnType"];
+      nullable: boolean;
+      distinct: number | null;
+    };
+    /** @enum {string} */
+    ColumnType: "categorical" | "numeric" | "datetime";
     SplitCountResponse: {
       count: number;
       exact: boolean;

@@ -5,15 +5,14 @@ import { BEARER, requireAuth } from "../common/auth";
 import {
   ColumnNameSchema,
   DatasetPathSchema,
-  LegendColumnSchema,
   RowSizeQuerySchema,
 } from "../common/dataset";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
   ColumnSummarySchema,
-  ColumnsResponseSchema,
   DataHealthSchema,
   DatasetListResponseSchema,
+  DatasetSchemaResponseSchema,
   DatasetStatusSchema,
   GenerateDatasetRequestSchema,
   LegendValuesResponseSchema,
@@ -65,22 +64,23 @@ export const generateDataset = createRoute({
   },
 });
 
-export const columns = createRoute({
+export const schema = createRoute({
   method: "get",
-  path: "/datasets/{datasetId}/columns",
+  path: "/datasets/{datasetId}/schema",
   tags,
-  summary: "컬럼 타입과 고유값 수",
+  summary:
+    "데이터셋 스키마: 적재된 테이블에서 읽은 컬럼과 타입(categorical / numeric / datetime). 적재 중에도 알 수 있다",
   ...read,
   request: {
     params: DatasetPathSchema,
     query: z.object({ rows: RowSizeQuerySchema }),
   },
   responses: {
-    200: jsonResponse(ColumnsResponseSchema, "컬럼 목록"),
+    200: jsonResponse(DatasetSchemaResponseSchema, "컬럼 목록"),
     ...badRequest,
     ...authErrors,
     ...notFound,
-    ...notReady,
+    409: errorResponse("등록하지 않은 데이터셋"),
   },
 });
 
@@ -137,7 +137,7 @@ export const legendValues = createRoute({
     params: DatasetPathSchema,
     query: z.object({
       rows: RowSizeQuerySchema,
-      column: LegendColumnSchema.openapi({
+      column: ColumnNameSchema.openapi({
         param: { name: "column", in: "query" },
       }),
     }),

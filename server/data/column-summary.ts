@@ -2,17 +2,18 @@
 
 import type { PGlite } from "@electric-sql/pglite";
 import {
-  COLUMNS,
-  type ColumnName,
-  type RowSize,
-  readingsTable,
-} from "./schema";
+  columnOf,
+  type DatasetSchema,
+  ident,
+  numericSql,
+  textSql,
+} from "./dataset-schema";
 
 export type ColumnSummary =
   | {
       kind: "range";
-      column: ColumnName;
-      type: "number" | "time";
+      column: string;
+      type: "numeric" | "datetime";
       /** 값이 하나도 없으면 null. 시계열은 epoch ms */
       min: number | null;
       max: number | null;
@@ -21,29 +22,25 @@ export type ColumnSummary =
     }
   | {
       kind: "values";
-      column: ColumnName;
+      column: string;
       /** 값 순서대로, 값마다 행 수 */
       values: { value: string; count: number }[];
       nullCount: number;
       count: number;
     };
 
-const COLUMN_TYPE = new Map<string, string>(
-  COLUMNS.map((c) => [c.name, c.type]),
-);
-
 export async function queryColumnSummary(
   db: PGlite,
-  rows: RowSize,
-  column: ColumnName,
+  table: string,
+  schema: DatasetSchema,
+  name: string,
 ): Promise<ColumnSummary> {
-  const type = COLUMN_TYPE.get(column);
-  if (!type) throw new Error(`unknown column ${column}`);
-  const table = readingsTable(rows);
-  if (type === "string") {
+  const column = columnOf(schema, name);
+  const col = ident(column.name);
+  if (column.type === "categorical") {
     const res = await db.query<{ value: string | null; count: number }>(
-      `select ${column}::text as value, count(*)::int as count
-       from ${table} group by ${column} order by ${column}`,
+      `select ${textSql(column)} as value, count(*)::int as count
+       from ${table} group by ${col} order by ${col}`,
     );
     const nullCount = res.rows.find((r) => r.value === null)?.count ?? 0;
     const values = res.rows
@@ -51,13 +48,13 @@ export async function queryColumnSummary(
       .map(({ value, count }) => ({ value, count }));
     return {
       kind: "values",
-      column,
+      column: column.name,
       values,
       nullCount,
       count: values.reduce((n, v) => n + v.count, nullCount),
     };
   }
-  const v = type === "time" ? `(extract(epoch from ${column}) * 1000)` : column;
+  const v = numericSql(column);
   const res = await db.query<{
     min: number | null;
     max: number | null;
@@ -65,14 +62,14 @@ export async function queryColumnSummary(
     count: number;
   }>(
     `select min(${v})::float8 as min, max(${v})::float8 as max,
-       count(*) filter (where ${column} is null)::int as null_count, count(*)::int as count
+       count(*) filter (where ${col} is null)::int as null_count, count(*)::int as count
      from ${table}`,
   );
   const r = res.rows[0];
   return {
     kind: "range",
-    column,
-    type: type as "number" | "time",
+    column: column.name,
+    type: column.type,
     min: r.min,
     max: r.max,
     nullCount: r.null_count,

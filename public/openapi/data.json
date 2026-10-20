@@ -33,7 +33,7 @@
               },
               "type": {
                 "type": "string",
-                "enum": ["number", "time"]
+                "enum": ["numeric", "datetime"]
               },
               "min": {
                 "type": ["number", "null"]
@@ -96,19 +96,9 @@
       },
       "ColumnName": {
         "type": "string",
-        "enum": [
-          "ts",
-          "factory",
-          "line",
-          "machine",
-          "sensor_type",
-          "shift",
-          "lot_id",
-          "status",
-          "value",
-          "temperature_env",
-          "load_pct"
-        ]
+        "minLength": 1,
+        "maxLength": 63,
+        "example": "factory"
       },
       "ApiError": {
         "type": "object",
@@ -123,59 +113,6 @@
       "DatasetId": {
         "type": "string",
         "enum": ["iot"]
-      },
-      "ColumnsResponse": {
-        "type": "object",
-        "properties": {
-          "rows": {
-            "$ref": "#/components/schemas/RowSize"
-          },
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ColumnInfo"
-            }
-          }
-        },
-        "required": ["rows", "columns"]
-      },
-      "RowSize": {
-        "anyOf": [
-          {
-            "type": "number",
-            "enum": [100000]
-          },
-          {
-            "type": "number",
-            "enum": [500000]
-          },
-          {
-            "type": "number",
-            "enum": [1000000]
-          }
-        ]
-      },
-      "ColumnInfo": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/ColumnType"
-          },
-          "label": {
-            "type": "string"
-          },
-          "distinct": {
-            "type": "number"
-          }
-        },
-        "required": ["name", "type", "label", "distinct"]
-      },
-      "ColumnType": {
-        "type": "string",
-        "enum": ["time", "string", "number"]
       },
       "DatasetStatus": {
         "type": "object",
@@ -202,6 +139,22 @@
           }
         },
         "required": ["rows", "state", "done", "total"]
+      },
+      "RowSize": {
+        "anyOf": [
+          {
+            "type": "number",
+            "enum": [100000]
+          },
+          {
+            "type": "number",
+            "enum": [500000]
+          },
+          {
+            "type": "number",
+            "enum": [1000000]
+          }
+        ]
       },
       "GenerateDatasetRequest": {
         "type": "object",
@@ -241,7 +194,7 @@
         "type": "object",
         "properties": {
           "column": {
-            "$ref": "#/components/schemas/LegendColumn"
+            "$ref": "#/components/schemas/ColumnName"
           },
           "values": {
             "type": "array",
@@ -251,10 +204,6 @@
           }
         },
         "required": ["column", "values"]
-      },
-      "LegendColumn": {
-        "type": "string",
-        "enum": ["factory", "line", "sensor_type", "shift", "status"]
       },
       "DatasetListResponse": {
         "type": "object",
@@ -267,6 +216,49 @@
           }
         },
         "required": ["datasets"]
+      },
+      "DatasetSchema": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "$ref": "#/components/schemas/RowSize"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnInfo"
+            }
+          }
+        },
+        "required": ["rows", "ready", "columns"]
+      },
+      "ColumnInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ColumnType"
+          },
+          "nullable": {
+            "type": "boolean"
+          },
+          "distinct": {
+            "type": ["number", "null"]
+          }
+        },
+        "required": ["name", "label", "type", "nullable", "distinct"]
+      },
+      "ColumnType": {
+        "type": "string",
+        "enum": ["categorical", "numeric", "datetime"]
       },
       "SplitCountResponse": {
         "type": "object",
@@ -300,7 +292,7 @@
             "items": {
               "$ref": "#/components/schemas/ChartFilter"
             },
-            "maxItems": 11
+            "maxItems": 200
           }
         },
         "required": ["rows", "cols"]
@@ -407,98 +399,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ColumnSummary"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "요청 형식 오류",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "토큰 없음, 만료, 위조",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "scope 부족",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "모르는 데이터셋",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "데이터셋이 아직 준비되지 않음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/datasets/{datasetId}/columns": {
-      "get": {
-        "tags": ["datasets"],
-        "summary": "컬럼 타입과 고유값 수",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "$ref": "#/components/schemas/DatasetId"
-            },
-            "required": true,
-            "name": "datasetId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "enum": [100000, 500000, 1000000]
-            },
-            "required": true,
-            "name": "rows",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "컬럼 목록",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ColumnsResponse"
                 }
               }
             }
@@ -685,7 +585,7 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/LegendColumn"
+              "$ref": "#/components/schemas/ColumnName"
             },
             "required": true,
             "name": "column",
@@ -818,6 +718,98 @@
           },
           "404": {
             "description": "모르는 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets/{datasetId}/schema": {
+      "get": {
+        "tags": ["datasets"],
+        "summary": "데이터셋 스키마: 적재된 테이블에서 읽은 컬럼과 타입(categorical / numeric / datetime). 적재 중에도 알 수 있다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/DatasetId"
+            },
+            "required": true,
+            "name": "datasetId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "enum": [100000, 500000, 1000000]
+            },
+            "required": true,
+            "name": "rows",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "컬럼 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "등록하지 않은 데이터셋",
             "content": {
               "application/json": {
                 "schema": {

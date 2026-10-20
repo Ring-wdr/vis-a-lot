@@ -14,6 +14,7 @@ export type SelectOption<T> = { value: T; label: string; disabled?: boolean };
 export function Select<T extends string | number>({
   label,
   value,
+  placeholder,
   options,
   onChange,
   disabled = false,
@@ -22,7 +23,9 @@ export function Select<T extends string | number>({
   label: string;
   /** 라벨 줄 오른쪽에 붙는 상태 (진행률 등). 새 줄을 만들지 않아 아래 필드를 밀지 않는다. */
   aside?: ReactNode;
-  value: T;
+  /** null이면 아직 고르지 않은 상태로 placeholder를 보여준다. */
+  value: T | null;
+  placeholder?: ReactNode;
   options: readonly SelectOption<T>[];
   onChange: (next: T) => void;
   disabled?: boolean;
@@ -42,7 +45,12 @@ export function Select<T extends string | number>({
           {aside}
         </div>
         <BaseSelect.Trigger className={styles.trigger}>
-          <BaseSelect.Value className={styles.value} />
+          <BaseSelect.Value
+            className={styles.value}
+            placeholder={
+              <span className={styles.placeholder}>{placeholder}</span>
+            }
+          />
           <BaseSelect.Icon className={styles.chevron}>
             <ChevronDown size={14} aria-hidden="true" />
           </BaseSelect.Icon>

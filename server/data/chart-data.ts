@@ -1,15 +1,14 @@
 // 차트 job 하나에 필요한 데이터를 한 번의 쿼리로 가져와 split 조합별로 나눈다.
 
 import type { PGlite } from "@electric-sql/pglite";
-import { type ChartFilter, filterSql } from "./filters";
 import {
-  COLUMNS,
-  type ColumnName,
-  isLegendColumn,
-  type LegendColumn,
-  type RowSize,
-  readingsTable,
-} from "./schema";
+  columnOf,
+  type DatasetSchema,
+  ident,
+  numericSql,
+  textSql,
+} from "./dataset-schema";
+import { type ChartFilter, filterSql } from "./filters";
 
 export type SplitGroup = {
   /** split 컬럼 순서대로의 값 (text) */
@@ -31,15 +30,14 @@ export type ChartData = {
 export type LegendData = { values: string[]; index: Uint8Array };
 
 export type ChartDataParams = {
-  rows: RowSize;
-  x: ColumnName;
-  y: ColumnName;
-  splitBy: ColumnName[];
-  legend: LegendColumn | null;
+  /** 읽을 테이블 (데이터셋 하나) */
+  table: string;
+  x: string;
+  y: string;
+  splitBy: string[];
+  legend: string | null;
   filters?: ChartFilter[];
 };
-
-const COLUMN_TYPE = new Map(COLUMNS.map((c) => [c.name, c.type]));
 
 /** ctid → 숫자. 테이블을 다시 만들기 전까지 행을 가리키는 값으로 안정적이다. */
 const ROW_ID_EXPR =
@@ -51,12 +49,13 @@ const ROW_ID_EXPR =
  */
 export async function queryLegendValues(
   db: PGlite,
-  rows: RowSize,
-  column: LegendColumn,
+  table: string,
+  schema: DatasetSchema,
+  name: string,
 ): Promise<string[]> {
-  if (!isLegendColumn(column)) throw new Error(`${column} cannot be a legend`);
+  const column = columnOf(schema, name, "categorical");
   const res = await db.query<{ v: string }>(
-    `select distinct ${column}::text as v, ${column} from ${readingsTable(rows)} order by ${column}`,
+    `select distinct ${textSql(column)} as v, ${ident(column.name)} from ${table} order by ${ident(column.name)}`,
   );
   return res.rows.map((r) => r.v);
 }
@@ -65,60 +64,61 @@ export function rowIdToTid(id: number) {
   return `(${Math.floor(id / 65536)},${id % 65536})`;
 }
 
-/** 툴팁 추가 컬럼: 행 식별자로 한 행의 값들을 가져온다. 시계열은 epoch ms로 돌려준다. */
+/** 툴팁 추가 컬럼: 행 식별자로 한 행의 값들을 가져온다. 시각은 epoch ms로 돌려준다. */
 export async function queryRowValues(
   db: PGlite,
-  rows: RowSize,
+  table: string,
+  schema: DatasetSchema,
   rowId: number,
-  columns: ColumnName[],
+  names: string[],
 ): Promise<Record<string, string | number | null>> {
-  for (const name of columns) {
-    if (!COLUMN_TYPE.has(name)) throw new Error(`unknown column ${name}`);
-  }
-  if (columns.length === 0) return {};
+  if (names.length === 0) return {};
+  const columns = names.map((n) => columnOf(schema, n));
+  // 결과 키는 컬럼 순서대로 c0, c1 …로 받아 원래 이름으로 되돌린다 (이름에 무엇이 들어 있어도 된다).
   const select = columns
-    .map((c) =>
-      COLUMN_TYPE.get(c) === "time"
-        ? `(extract(epoch from ${c}) * 1000)::float8 as ${c}`
-        : c,
+    .map((c, i) =>
+      c.type === "datetime"
+        ? `${numericSql(c)}::float8 as c${i}`
+        : `${ident(c.name)} as c${i}`,
     )
     .join(", ");
   const res = await db.query<Record<string, string | number | null>>(
-    `select ${select} from ${readingsTable(rows)} where ctid = $1::tid`,
+    `select ${select} from ${table} where ctid = $1::tid`,
     [rowIdToTid(rowId)],
   );
-  return res.rows[0] ?? {};
-}
-
-/** 숫자 축으로 쓸 값. 시계열은 epoch ms로 바꾼다. */
-function numericExpr(name: ColumnName) {
-  const type = COLUMN_TYPE.get(name);
-  if (type === "time") return `extract(epoch from ${name}) * 1000`;
-  if (type === "number") return name;
-  throw new Error(`column ${name} is not numeric`);
+  const row = res.rows[0];
+  if (!row) return {};
+  return Object.fromEntries(
+    columns.map((c, i) => [c.name, row[`c${i}`] ?? null]),
+  );
 }
 
 export async function queryChartData(
   db: PGlite,
-  { rows, x, y, splitBy, legend, filters }: ChartDataParams,
+  schema: DatasetSchema,
+  { table, x, y, splitBy, legend, filters }: ChartDataParams,
 ): Promise<ChartData> {
-  for (const name of [x, y, ...splitBy]) {
-    if (!COLUMN_TYPE.has(name)) throw new Error(`unknown column ${name}`);
-  }
-  const split = splitBy.map((c) => `${c}::text`);
+  const xCol = columnOf(schema, x, "numeric", "datetime");
+  const yCol = columnOf(schema, y, "numeric", "datetime");
+  const splitCols = splitBy.map((c) => columnOf(schema, c));
   const select = [
-    ...split,
-    `${numericExpr(x)}::float8`,
-    `${numericExpr(y)}::float8`,
+    ...splitCols.map(textSql),
+    `${numericSql(xCol)}::float8`,
+    `${numericSql(yCol)}::float8`,
     ROW_ID_EXPR,
-    ...(legend ? [`${legend}::text`] : []),
+    ...(legend ? [textSql(columnOf(schema, legend, "categorical"))] : []),
   ];
-  const legendValues = legend ? await queryLegendValues(db, rows, legend) : [];
+  const legendValues = legend
+    ? await queryLegendValues(db, table, schema, legend)
+    : [];
   const legendIndexOf = new Map(legendValues.map((v, i) => [v, i]));
-  const order = splitBy.length > 0 ? `order by ${splitBy.join(", ")}` : "";
-  const filter = filterSql(filters);
-  const sql = `select ${select.join(", ")} from ${readingsTable(rows)}
-    where ${x} is not null and ${y} is not null${filter.sql} ${order}`;
+  const order =
+    splitCols.length > 0
+      ? `order by ${splitCols.map((c) => ident(c.name)).join(", ")}`
+      : "";
+  const filter = filterSql(schema, filters);
+  const sql = `select ${select.join(", ")} from ${table}
+    where ${ident(xCol.name)} is not null and ${ident(yCol.name)} is not null${filter.sql} ${order}`;
 
   const res = await db.query<unknown[]>(sql, filter.params, {
     rowMode: "array",

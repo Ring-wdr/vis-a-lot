@@ -3,16 +3,18 @@
 import {
   queryOptions,
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import {
   type ColumnName,
+  type DatasetStatus,
   isTerminal,
   type JobStateResponse,
-  type LegendColumn,
   type RowSize,
 } from "@/shared/api/types";
+import { registerColumns } from "@/shared/lib/format";
 import { api } from "./api";
 
 /**
@@ -27,7 +29,8 @@ const LONG_POLL_RETRY = {
 export const queryKeys = {
   health: ["health"] as const,
   datasets: ["datasets"] as const,
-  columns: (rows: RowSize) => ["datasets", rows, "columns"] as const,
+  schema: (rows: RowSize, ready: boolean) =>
+    ["datasets", rows, "schema", ready] as const,
   columnSummary: (rows: RowSize, column: ColumnName) =>
     ["datasets", rows, "summary", column] as const,
   job: (jobId: string, page: number, pageSize: number) =>
@@ -80,12 +83,42 @@ export function useGenerateDataset() {
   });
 }
 
-export function useColumns(rows: RowSize, enabled: boolean) {
-  return useQuery({
-    queryKey: queryKeys.columns(rows),
-    queryFn: () => api.columns(rows),
-    enabled,
+/** 데이터셋 스키마 query. 적재가 끝나면 고유값 수가 생기므로 ready를 키에 넣어 그때 한 번 더 받는다. */
+export function datasetSchemaQuery(
+  rows: RowSize,
+  state: DatasetStatus["state"] | undefined,
+) {
+  return queryOptions({
+    queryKey: queryKeys.schema(rows, state === "ready"),
+    queryFn: async () => {
+      const schema = await api.schema(rows);
+      registerColumns(schema.columns);
+      return schema;
+    },
+    enabled: state !== undefined && state !== "missing",
     staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/**
+ * 데이터셋 스키마(컬럼과 타입). 등록한 데이터셋만 받을 수 있다. 받으면 컬럼 라벨·타입을 등록해
+ * 스키마를 직접 들고 있지 않은 화면(history 목록, 툴팁)도 이름으로 찾아 쓰게 한다.
+ */
+export function useDatasetSchema(rows: RowSize) {
+  const status = useDatasetStatus(rows);
+  return useQuery(datasetSchemaQuery(rows, status.data?.state));
+}
+
+/** 여러 데이터셋의 스키마를 함께 받는다 (history 목록처럼 데이터셋이 섞인 곳의 컬럼 라벨용). */
+export function useDatasetSchemas(rowsList: readonly RowSize[]) {
+  const datasets = useDatasets();
+  return useQueries({
+    queries: [...new Set(rowsList)].map((rows) =>
+      datasetSchemaQuery(
+        rows,
+        datasets.data?.datasets.find((d) => d.rows === rows)?.state,
+      ),
+    ),
   });
 }
 
@@ -212,12 +245,12 @@ export function useTooltipValues(
 /** legend 값 목록. 데이터셋이 준비된 뒤에만 받을 수 있다. */
 export function useLegendValues(
   rows: RowSize,
-  column: LegendColumn | null,
+  column: ColumnName | null,
   enabled: boolean,
 ) {
   return useQuery({
     queryKey: ["legend-values", rows, column],
-    queryFn: () => api.legendValues(rows, column as LegendColumn),
+    queryFn: () => api.legendValues(rows, column as ColumnName),
     enabled: enabled && column !== null,
     staleTime: Number.POSITIVE_INFINITY,
   });

@@ -1414,7 +1414,7 @@ export type components = {
       x: components["schemas"]["ColumnName"];
       y: components["schemas"]["ColumnName"];
       agg: components["schemas"]["AggFn"];
-      legend: components["schemas"]["LegendColumn"] | null;
+      legend: components["schemas"]["ColumnName"] | null;
       splitBy: components["schemas"]["ColumnName"][];
       splitSeparator: string;
       tooltip: components["schemas"]["ColumnName"][];
@@ -1425,23 +1425,10 @@ export type components = {
     RowSize: 100000 | 500000 | 1000000;
     /** @enum {string} */
     ChartType: "scatter" | "bar" | "boxplot";
-    /** @enum {string} */
-    ColumnName:
-      | "ts"
-      | "factory"
-      | "line"
-      | "machine"
-      | "sensor_type"
-      | "shift"
-      | "lot_id"
-      | "status"
-      | "value"
-      | "temperature_env"
-      | "load_pct";
+    /** @example factory */
+    ColumnName: string;
     /** @enum {string} */
     AggFn: "avg" | "sum" | "count" | "min" | "max" | "median";
-    /** @enum {string} */
-    LegendColumn: "factory" | "line" | "sensor_type" | "shift" | "status";
     ChartFilter:
       | components["schemas"]["RangeFilter"]
       | components["schemas"]["ExcludeFilter"];

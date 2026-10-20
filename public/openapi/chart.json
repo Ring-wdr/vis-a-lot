@@ -380,7 +380,7 @@
           "legend": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/LegendColumn"
+                "$ref": "#/components/schemas/ColumnName"
               },
               {
                 "type": "null"
@@ -414,7 +414,7 @@
             "items": {
               "$ref": "#/components/schemas/ChartFilter"
             },
-            "maxItems": 11
+            "maxItems": 200
           }
         },
         "required": [
@@ -453,27 +453,13 @@
       },
       "ColumnName": {
         "type": "string",
-        "enum": [
-          "ts",
-          "factory",
-          "line",
-          "machine",
-          "sensor_type",
-          "shift",
-          "lot_id",
-          "status",
-          "value",
-          "temperature_env",
-          "load_pct"
-        ]
+        "minLength": 1,
+        "maxLength": 63,
+        "example": "factory"
       },
       "AggFn": {
         "type": "string",
         "enum": ["avg", "sum", "count", "min", "max", "median"]
-      },
-      "LegendColumn": {
-        "type": "string",
-        "enum": ["factory", "line", "sensor_type", "shift", "status"]
       },
       "ChartFilter": {
         "anyOf": [

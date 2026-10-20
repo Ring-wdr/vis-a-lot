@@ -13,7 +13,6 @@ import type {
   HistoryDetail,
   ItemMeta,
   ItemSize,
-  LegendColumn,
   RowSize,
   Shape,
   TooltipRequest,
@@ -84,9 +83,10 @@ export const api = {
       }),
     ),
 
-  columns: (rows: RowSize) =>
+  /** 데이터셋 스키마: 적재된 테이블의 컬럼과 타입. 등록 전이면 409 */
+  schema: (rows: RowSize) =>
     unwrap(
-      dataClient.GET("/datasets/{datasetId}/columns", {
+      dataClient.GET("/datasets/{datasetId}/schema", {
         params: { path: dataset, query: { rows } },
       }),
     ),
@@ -107,7 +107,7 @@ export const api = {
       }),
     ),
 
-  legendValues: (rows: RowSize, column: LegendColumn) =>
+  legendValues: (rows: RowSize, column: ColumnName) =>
     unwrap(
       dataClient.GET("/datasets/{datasetId}/legend-values", {
         params: { path: dataset, query: { rows, column } },

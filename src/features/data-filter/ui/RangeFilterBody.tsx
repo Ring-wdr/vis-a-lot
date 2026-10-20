@@ -17,7 +17,7 @@ const timeFormat = new Intl.DateTimeFormat("ko", {
 const numberFormat = new Intl.NumberFormat("ko", { maximumFractionDigits: 2 });
 
 function format(type: RangeSummary["type"], value: number) {
-  return type === "time"
+  return type === "datetime"
     ? timeFormat.format(value)
     : numberFormat.format(value);
 }
@@ -26,7 +26,9 @@ function format(type: RangeSummary["type"], value: number) {
 function stepOf(summary: RangeSummary & { min: number; max: number }) {
   const span = summary.max - summary.min;
   if (span <= 0) return 1;
-  return summary.type === "time" ? Math.max(60_000, span / 1000) : span / 1000;
+  return summary.type === "datetime"
+    ? Math.max(60_000, span / 1000)
+    : span / 1000;
 }
 
 /**

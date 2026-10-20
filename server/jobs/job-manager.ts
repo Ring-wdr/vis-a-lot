@@ -21,7 +21,8 @@ import {
   pngUrl,
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
-import { COLUMNS, MAX_SPLIT_ITEMS } from "../data/schema";
+import { specError } from "../charts/validate-spec";
+import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { putPng } from "../png-store";
 import { defaultLegendColor } from "../render/theme";
@@ -203,11 +204,17 @@ async function run(job: Job) {
     await sleep(DATASET_POLL_MS);
   }
 
-  // ── 데이터 조회: split 조합이 곧 item 목록이다 ─────────────────
+  // ── 스키마 확인: 컬럼 이름과 타입은 데이터마다 다르므로 데이터가 준비된 뒤에 본다 ──
   throwIfCancelled();
   job.status = "progress";
   job.phase = "query";
   touch(job);
+  const schema = await dataService.schema(spec.rows);
+  const invalid = specError(spec, schema.columns);
+  if (invalid) throw new JobError(invalid);
+  chart.columns = schema.columns;
+
+  // ── 데이터 조회: split 조합이 곧 item 목록이다 ─────────────────
   // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
   const split = await dataService.splitCount(
     spec.rows,
@@ -423,7 +430,9 @@ function renderItem(
   const { render } = getRuntime();
   const { spec, itemSize } = chart;
   const index = data.groupOf.get(item.key);
-  const legendTitle = COLUMNS.find((c) => c.name === spec.legend)?.label ?? "";
+  const columnOf = (name: string | null) =>
+    chart.columns?.find((c) => c.name === name);
+  const legendTitle = columnOf(spec.legend)?.label ?? spec.legend ?? "";
   const common = {
     width: itemSize.width,
     height: itemSize.height,
@@ -439,10 +448,7 @@ function renderItem(
       "renderScatter",
       {
         ...common,
-        xKind:
-          COLUMNS.find((c) => c.name === spec.x)?.type === "time"
-            ? "time"
-            : "number",
+        xKind: columnOf(spec.x)?.type === "datetime" ? "time" : "number",
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),

@@ -1,7 +1,10 @@
-// 데이터셋 정의. 화면, API, 생성기가 모두 이 정의를 공유한다.
+// IoT 센서 데이터 생성기의 raw data 정의와 데이터셋 공통 상수.
+// 컬럼 정의(COLUMNS)는 생성기가 테이블을 만들 때만 쓴다. 나머지 코드는 적재된 테이블의 스키마를
+// 읽어(dataset-schema.ts) 컬럼과 타입을 안다. 그래야 컬럼 이름이 다른 데이터가 들어와도 그대로 동작한다.
 
 export const DATASET_ID = "iot";
-export const GENERATOR_VERSION = 1;
+/** 2: 컬럼 라벨을 컬럼 주석(comment)으로 남긴다. */
+export const GENERATOR_VERSION = 2;
 export const SEED = 20261020;
 
 export const ROW_SIZES = [100_000, 500_000, 1_000_000] as const;
@@ -18,22 +21,6 @@ export const AGG_LABELS: Record<AggFn, string> = {
   max: "최댓값",
   median: "중앙값",
 };
-
-/**
- * legend로 쓸 수 있는 컬럼. 팔레트 8색을 돌려쓰지 않도록 고유값이 8개 이하인 범주 컬럼만 허용한다.
- */
-export const LEGEND_COLUMNS = [
-  "factory",
-  "line",
-  "sensor_type",
-  "shift",
-  "status",
-] as const satisfies readonly ColumnName[];
-export type LegendColumn = (typeof LEGEND_COLUMNS)[number];
-
-export function isLegendColumn(name: unknown): name is LegendColumn {
-  return (LEGEND_COLUMNS as readonly unknown[]).includes(name);
-}
 
 /** split by 조합(= item)의 최대 개수 */
 export const MAX_SPLIT_ITEMS = 30_000;
@@ -75,9 +62,15 @@ export function readingsTable(rows: RowSize) {
   return `readings_${rows}`;
 }
 
+/** 테이블과, 화면에 보일 컬럼 라벨(컬럼 주석)을 만든다. */
 export function createReadingsSql(rows: RowSize) {
+  const table = readingsTable(rows);
   const cols = COLUMNS.map((c) => `${c.name} ${SQL_TYPES[c.type]}`).join(
     ",\n  ",
   );
-  return `create table ${readingsTable(rows)} (\n  ${cols}\n)`;
+  const comments = COLUMNS.map(
+    (c) =>
+      `comment on column ${table}.${c.name} is '${c.label.replaceAll("'", "''")}'`,
+  ).join(";\n");
+  return `create table ${table} (\n  ${cols}\n);\n${comments}`;
 }

@@ -16,7 +16,7 @@ const STATE_SUFFIX = {
 
 /**
  * 그릴 데이터 고르기. 등록한 규모만 고를 수 있고, 등록은 상단 data 팝업에서 한다.
- * 미등록 규모로 draw하면 서버가 데이터를 만들 때까지 job이 기다린다.
+ * 컬럼은 데이터의 스키마에서 정해지므로, 등록하지 않은 규모로는 그릴 수 없다.
  */
 export function DatasetSelect({
   rows,
@@ -49,7 +49,7 @@ export function DatasetSelect({
             {status?.state === "generating"
               ? `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
               : status?.state === "missing"
-                ? "미등록 · draw하면 바로 만듦"
+                ? "미등록 · data에서 등록"
                 : ""}
           </span>
         }

@@ -13,6 +13,7 @@ import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
 import type { ItemView } from "../render/scatter";
 import type { Shape } from "../render/shapes";
+import type { SpecColumn } from "./validate-spec";
 
 export type ChartItem = {
   key: string;
@@ -47,6 +48,8 @@ export type ChartRecord = {
   /** draw로 만든 job. item 단위 다시 그리기 결과도 이 job의 item 상태에 반영한다. */
   primaryJobId?: string;
   createdAt: number;
+  /** 데이터가 준비된 뒤 받은 데이터셋 스키마. 축 종류와 legend 제목을 여기서 정한다. */
+  columns?: SpecColumn[];
 };
 
 /** item 단위 다시 그리기에 재사용할 조회 결과. 최근 차트 몇 개만 메모리에 둔다. */

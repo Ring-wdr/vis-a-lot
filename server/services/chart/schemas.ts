@@ -3,7 +3,6 @@ import {
   AggFnSchema,
   ColumnNameSchema,
   FiltersSchema,
-  LegendColumnSchema,
   RowSizeSchema,
 } from "../common/dataset";
 
@@ -56,7 +55,7 @@ export const ChartSpecSchema = z
     /** bar의 통계 함수 */
     agg: AggFnSchema,
     /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
-    legend: orNull(LegendColumnSchema),
+    legend: orNull(ColumnNameSchema),
     /** 클릭한 순서가 곧 조합 순서다. */
     splitBy: z.array(ColumnNameSchema),
     splitSeparator: z.string().max(5),

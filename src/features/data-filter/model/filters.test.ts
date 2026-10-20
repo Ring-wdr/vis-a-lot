@@ -4,7 +4,7 @@ import { rangeFilter, sameFilters, withFilter } from "./filters";
 const summary = {
   kind: "range" as const,
   column: "value" as const,
-  type: "number" as const,
+  type: "numeric" as const,
   min: 0,
   max: 100,
   nullCount: 3,

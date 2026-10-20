@@ -48,8 +48,9 @@ export type WorkspaceState = {
 export const DEFAULT_SPEC: ChartSpec = {
   rows: 100_000,
   chartType: "scatter",
-  x: "ts",
-  y: "value",
+  // 컬럼은 데이터마다 달라 비워 두고, 데이터셋 스키마를 받으면 타입에 맞는 첫 컬럼으로 채운다.
+  x: "",
+  y: "",
   agg: "avg",
   legend: null,
   splitBy: [],

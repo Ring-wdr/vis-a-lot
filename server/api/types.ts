@@ -2,14 +2,13 @@
 
 import type { z } from "@hono/zod-openapi";
 import type { BoxStats } from "../data/category-data";
+import type { ColumnInfo } from "../data/datasets";
 import type { ChartFilter } from "../data/filters";
-import type {
-  AggFn,
-  ColumnDef,
-  ColumnName,
-  LegendColumn,
-  RowSize,
-} from "../data/schema";
+import type { AggFn, RowSize } from "../data/schema";
+
+/** 컬럼 이름. 데이터셋마다 다르며 스키마로 확인한다. */
+type ColumnName = string;
+
 import type { CategoryMeta } from "../render/category";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
@@ -37,7 +36,7 @@ export type DatasetListResponse = { datasets: DatasetStatus[] };
 
 export type GenerateDatasetRequest = { rows: RowSize };
 
-export type ColumnInfo = ColumnDef & { distinct: number };
+export type { ColumnInfo };
 
 export type ColumnsResponse = { rows: RowSize; columns: ColumnInfo[] };
 
@@ -92,7 +91,7 @@ export type ChartSpec = {
   /** bar의 통계 함수 */
   agg: AggFn;
   /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
-  legend: LegendColumn | null;
+  legend: ColumnName | null;
   /** 클릭한 순서가 곧 조합 순서다. */
   splitBy: ColumnName[];
   splitSeparator: string;
@@ -168,7 +167,7 @@ export type ItemPropsRequest =
   | { color: string | null }
   | { legendColor: { value: string; color: string | null } };
 
-export type LegendValuesResponse = { column: LegendColumn; values: string[] };
+export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
 export function isHexColor(value: unknown): value is string {
   return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);

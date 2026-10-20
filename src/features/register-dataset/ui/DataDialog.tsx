@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
 import { tabsStore } from "@/entities/workspace/model/tabs-store";
 import {
-  useColumns,
+  useDatasetSchema,
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
@@ -51,7 +51,7 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
     datasets.data?.datasets.find((d) => d.rows === rows);
   const pickedReady =
     picked !== undefined && statusOf(picked)?.state === "ready";
-  const columns = useColumns(picked ?? ROW_SIZES[0], pickedReady);
+  const columns = useDatasetSchema(picked ?? ROW_SIZES[0]);
 
   return (
     <div className={styles.body}>
@@ -88,6 +88,16 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
                   <StatusCell status={status} />
                 </td>
                 <td className={styles.action}>
+                  {/* 적재 중에도 버튼 자리를 남겨 행 높이가 바뀌지 않게 한다. */}
+                  {state === "generating" && (
+                    <button
+                      type="button"
+                      className={dialogStyles.primary}
+                      disabled
+                    >
+                      등록 중
+                    </button>
+                  )}
                   {state === "missing" && (
                     <button
                       type="button"
@@ -136,7 +146,9 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
               <tr key={c.name}>
                 <td title={c.name}>{c.label}</td>
                 <td>{COLUMN_TYPE_LABELS[c.type]}</td>
-                <td className={styles.number}>{c.distinct.toLocaleString()}</td>
+                <td className={styles.number}>
+                  {c.distinct?.toLocaleString() ?? "–"}
+                </td>
               </tr>
             ))}
           </tbody>
