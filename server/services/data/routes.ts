@@ -3,19 +3,20 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { BEARER, requireAuth } from "../common/auth";
 import {
+  ColumnNameSchema,
   DatasetPathSchema,
-  LegendColumnSchema,
   RowSizeQuerySchema,
 } from "../common/dataset";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
-  ColumnsResponseSchema,
+  ColumnSummarySchema,
   DataHealthSchema,
   DatasetListResponseSchema,
+  DatasetSchemaResponseSchema,
   DatasetStatusSchema,
   GenerateDatasetRequestSchema,
   LegendValuesResponseSchema,
-  SplitColumnsQuerySchema,
+  SplitCountRequestSchema,
   SplitCountResponseSchema,
 } from "./schemas";
 
@@ -63,18 +64,39 @@ export const generateDataset = createRoute({
   },
 });
 
-export const columns = createRoute({
+export const schema = createRoute({
   method: "get",
-  path: "/datasets/{datasetId}/columns",
+  path: "/datasets/{datasetId}/schema",
   tags,
-  summary: "컬럼 타입과 고유값 수",
+  summary:
+    "데이터셋 스키마: 적재된 테이블에서 읽은 컬럼과 타입(categorical / numeric / datetime). 적재 중에도 알 수 있다",
   ...read,
   request: {
     params: DatasetPathSchema,
     query: z.object({ rows: RowSizeQuerySchema }),
   },
   responses: {
-    200: jsonResponse(ColumnsResponseSchema, "컬럼 목록"),
+    200: jsonResponse(DatasetSchemaResponseSchema, "컬럼 목록"),
+    ...badRequest,
+    ...authErrors,
+    ...notFound,
+    409: errorResponse("등록하지 않은 데이터셋"),
+  },
+});
+
+export const splitCount = createRoute({
+  method: "post",
+  path: "/datasets/{datasetId}/split-count",
+  tags,
+  summary:
+    "split 조합 개수 (최대 개수 초과 검사). 필터가 있으면 필터를 적용해 센다",
+  ...read,
+  request: {
+    params: DatasetPathSchema,
+    body: jsonBody(SplitCountRequestSchema),
+  },
+  responses: {
+    200: jsonResponse(SplitCountResponseSchema, "조합 개수"),
     ...badRequest,
     ...authErrors,
     ...notFound,
@@ -82,21 +104,22 @@ export const columns = createRoute({
   },
 });
 
-export const splitCount = createRoute({
+export const columnSummary = createRoute({
   method: "get",
-  path: "/datasets/{datasetId}/split-count",
+  path: "/datasets/{datasetId}/columns/{column}/summary",
   tags,
-  summary: "split 조합 개수 (최대 개수 초과 검사)",
+  summary: "필터용 컬럼 요약: 숫자·시계열은 범위와 null 수, 범주는 값별 행 수",
   ...read,
   request: {
-    params: DatasetPathSchema,
-    query: z.object({
-      rows: RowSizeQuerySchema,
-      cols: SplitColumnsQuerySchema,
+    params: DatasetPathSchema.extend({
+      column: ColumnNameSchema.openapi({
+        param: { name: "column", in: "path" },
+      }),
     }),
+    query: z.object({ rows: RowSizeQuerySchema }),
   },
   responses: {
-    200: jsonResponse(SplitCountResponseSchema, "조합 개수"),
+    200: jsonResponse(ColumnSummarySchema, "컬럼 요약"),
     ...badRequest,
     ...authErrors,
     ...notFound,
@@ -114,7 +137,7 @@ export const legendValues = createRoute({
     params: DatasetPathSchema,
     query: z.object({
       rows: RowSizeQuerySchema,
-      column: LegendColumnSchema.openapi({
+      column: ColumnNameSchema.openapi({
         param: { name: "column", in: "query" },
       }),
     }),

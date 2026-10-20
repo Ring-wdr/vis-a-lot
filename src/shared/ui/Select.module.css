@@ -8,8 +8,16 @@
   font-size: 13px;
 }
 
-.label {
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
   margin-bottom: 2px;
+}
+
+.label {
   color: var(--ws-text-secondary);
   font-size: 12px;
 }
@@ -143,4 +151,13 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.aside {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-text-muted);
 }

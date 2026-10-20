@@ -48,8 +48,9 @@ export type WorkspaceState = {
 export const DEFAULT_SPEC: ChartSpec = {
   rows: 100_000,
   chartType: "scatter",
-  x: "ts",
-  y: "value",
+  // 컬럼은 데이터마다 달라 비워 두고, 데이터셋 스키마를 받으면 타입에 맞는 첫 컬럼으로 채운다.
+  x: "",
+  y: "",
   agg: "avg",
   legend: null,
   splitBy: [],
@@ -59,10 +60,16 @@ export const DEFAULT_SPEC: ChartSpec = {
   common: { color: DEFAULT_SERIES_COLOR },
 };
 
-export function createWorkspaceStore({ readOnly = false } = {}) {
+export function createWorkspaceStore({
+  readOnly = false,
+  draft = DEFAULT_SPEC,
+}: {
+  readOnly?: boolean;
+  draft?: ChartSpec;
+} = {}) {
   return createStore<WorkspaceState>((set) => ({
     readOnly,
-    draft: DEFAULT_SPEC,
+    draft,
     page: 0,
     mode: "normal",
     itemJobs: {},
@@ -106,12 +113,3 @@ export function createWorkspaceStore({ readOnly = false } = {}) {
 }
 
 export type WorkspaceStore = ReturnType<typeof createWorkspaceStore>;
-
-/**
- * 화면(tab)별 작업 상태. tab을 오가도 각자 그리던 차트를 그대로 들고 있도록 모듈에 하나씩 둔다.
- * gallery는 그리고 편집하는 곳, history는 그린 차트를 다시 보는 곳이다.
- */
-export const workspaceStores = {
-  gallery: createWorkspaceStore(),
-  history: createWorkspaceStore({ readOnly: true }),
-} as const;

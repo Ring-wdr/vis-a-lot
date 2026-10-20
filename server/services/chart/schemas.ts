@@ -2,7 +2,7 @@ import { z } from "@hono/zod-openapi";
 import {
   AggFnSchema,
   ColumnNameSchema,
-  LegendColumnSchema,
+  FiltersSchema,
   RowSizeSchema,
 } from "../common/dataset";
 
@@ -55,13 +55,15 @@ export const ChartSpecSchema = z
     /** bar의 통계 함수 */
     agg: AggFnSchema,
     /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
-    legend: orNull(LegendColumnSchema),
+    legend: orNull(ColumnNameSchema),
     /** 클릭한 순서가 곧 조합 순서다. */
     splitBy: z.array(ColumnNameSchema),
     splitSeparator: z.string().max(5),
     tooltip: z.array(ColumnNameSchema),
     grid: GridSchema,
     common: CommonPropsSchema,
+    /** draw할 때 적용하는 데이터 필터. 예전 history에는 없을 수 있다. */
+    filters: FiltersSchema.optional(),
   })
   .openapi("ChartSpec");
 
@@ -195,6 +197,24 @@ export const JobStateResponseSchema = z
     items: z.array(ItemStateSchema),
     /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
     error: z.string().optional(),
+    /** draw(조회부터) 또는 redraw(그린 item 다시 그리기) */
+    kind: z.enum(["draw", "redraw"]),
+    /** job 전체의 상태별 item 수 */
+    counts: z.object({
+      queued: z.number(),
+      running: z.number(),
+      success: z.number(),
+      failed: z.number(),
+      cancelled: z.number(),
+    }),
+    /** epoch ms. 경과 시간, 처리 속도, 남은 시간 계산용 */
+    timing: z.object({
+      createdAt: z.number(),
+      renderStartedAt: z.number().optional(),
+      endedAt: z.number().optional(),
+    }),
+    /** 병렬로 그리는 Render Worker 수 */
+    renderWorkers: z.number(),
   })
   .openapi("JobStateResponse");
 

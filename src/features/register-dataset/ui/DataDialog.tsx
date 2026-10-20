@@ -3,8 +3,9 @@
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
+import { tabsStore } from "@/entities/workspace/model/tabs-store";
 import {
-  useColumns,
+  useDatasetSchema,
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
@@ -39,7 +40,7 @@ function StatusCell({ status }: { status: DatasetStatus | undefined }) {
 
 /**
  * 데이터 등록 팝업. 실제 업로드 대신 mock 서버가 시드로 IoT 센서 데이터를 만들어 브라우저 DB(PGlite)에 적재한다.
- * 등록한 규모만 왼쪽 패널에서 고를 수 있다.
+ * 준비된 데이터를 선택하고 'gallery에서 열기'를 누르면 그 데이터로 새 gallery 탭을 연다.
  */
 function DataDialogBody({ onClose }: { onClose: () => void }) {
   const titleId = useId();
@@ -50,7 +51,7 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
     datasets.data?.datasets.find((d) => d.rows === rows);
   const pickedReady =
     picked !== undefined && statusOf(picked)?.state === "ready";
-  const columns = useColumns(picked ?? ROW_SIZES[0], pickedReady);
+  const columns = useDatasetSchema(picked ?? ROW_SIZES[0]);
 
   return (
     <div className={styles.body}>
@@ -64,6 +65,11 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
       </p>
 
       <table className={styles.table}>
+        <colgroup>
+          <col className={styles.colSize} />
+          <col />
+          <col className={styles.colAction} />
+        </colgroup>
         <thead>
           <tr>
             <th>규모</th>
@@ -82,6 +88,16 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
                   <StatusCell status={status} />
                 </td>
                 <td className={styles.action}>
+                  {/* 적재 중에도 버튼 자리를 남겨 행 높이가 바뀌지 않게 한다. */}
+                  {state === "generating" && (
+                    <button
+                      type="button"
+                      className={dialogStyles.primary}
+                      disabled
+                    >
+                      등록 중
+                    </button>
+                  )}
                   {state === "missing" && (
                     <button
                       type="button"
@@ -100,11 +116,9 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
                       type="button"
                       className={styles.secondary}
                       aria-pressed={picked === rows}
-                      onClick={() =>
-                        setPicked(picked === rows ? undefined : rows)
-                      }
+                      onClick={() => setPicked(rows)}
                     >
-                      컬럼
+                      {picked === rows ? "선택됨" : "선택"}
                     </button>
                   )}
                 </td>
@@ -132,7 +146,9 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
               <tr key={c.name}>
                 <td title={c.name}>{c.label}</td>
                 <td>{COLUMN_TYPE_LABELS[c.type]}</td>
-                <td className={styles.number}>{c.distinct.toLocaleString()}</td>
+                <td className={styles.number}>
+                  {c.distinct?.toLocaleString() ?? "–"}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -142,6 +158,20 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
       <div className={dialogStyles.actions}>
         <button type="button" className={styles.secondary} onClick={onClose}>
           닫기
+        </button>
+        <button
+          type="button"
+          className={dialogStyles.primary}
+          disabled={!pickedReady}
+          title={pickedReady ? undefined : "준비된 데이터를 선택하세요"}
+          onClick={() => {
+            if (picked === undefined) return;
+            // 고른 데이터로 새 gallery 탭(작업 공간)을 연다.
+            tabsStore.getState().openGallery({ rows: picked });
+            onClose();
+          }}
+        >
+          gallery에서 열기
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
 import styles from "./Select.module.css";
 
 export type SelectOption<T> = { value: T; label: string; disabled?: boolean };
@@ -13,12 +14,18 @@ export type SelectOption<T> = { value: T; label: string; disabled?: boolean };
 export function Select<T extends string | number>({
   label,
   value,
+  placeholder,
   options,
   onChange,
   disabled = false,
+  aside,
 }: {
   label: string;
-  value: T;
+  /** 라벨 줄 오른쪽에 붙는 상태 (진행률 등). 새 줄을 만들지 않아 아래 필드를 밀지 않는다. */
+  aside?: ReactNode;
+  /** null이면 아직 고르지 않은 상태로 placeholder를 보여준다. */
+  value: T | null;
+  placeholder?: ReactNode;
   options: readonly SelectOption<T>[];
   onChange: (next: T) => void;
   disabled?: boolean;
@@ -33,9 +40,17 @@ export function Select<T extends string | number>({
           if (next !== null) onChange(next as T);
         }}
       >
-        <BaseSelect.Label className={styles.label}>{label}</BaseSelect.Label>
+        <div className={styles.labelRow}>
+          <BaseSelect.Label className={styles.label}>{label}</BaseSelect.Label>
+          {aside}
+        </div>
         <BaseSelect.Trigger className={styles.trigger}>
-          <BaseSelect.Value className={styles.value} />
+          <BaseSelect.Value
+            className={styles.value}
+            placeholder={
+              <span className={styles.placeholder}>{placeholder}</span>
+            }
+          />
           <BaseSelect.Icon className={styles.chevron}>
             <ChevronDown size={14} aria-hidden="true" />
           </BaseSelect.Icon>

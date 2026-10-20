@@ -1,0 +1,138 @@
+.bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--ws-border);
+  background: var(--ws-panel);
+}
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다. */
+.tab {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: 200px;
+  height: 30px;
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  color: var(--ws-text-secondary);
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--ws-panel), var(--ws-text) 5%);
+}
+
+.tab[data-active] {
+  border-color: var(--ws-border);
+  background: var(--ws-surface);
+  color: var(--ws-text);
+}
+
+.select {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px 0 12px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tab[data-active] .select {
+  font-weight: 600;
+}
+
+.label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.close,
+.add {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+}
+
+.close {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+}
+
+.add {
+  width: 26px;
+  height: 26px;
+  margin-bottom: 2px;
+}
+
+.close:hover,
+.add:hover {
+  background: color-mix(in srgb, var(--ws-panel), var(--ws-text) 10%);
+  color: var(--ws-text);
+}
+
+.hint {
+  align-self: center;
+  padding: 0 4px 6px;
+  font-size: 12px;
+  color: var(--ws-text-muted);
+}
+
+.filterToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  margin: 0 0 4px auto;
+  padding: 3px 10px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filterToggle[aria-pressed="true"] {
+  border-color: var(--ws-accent);
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--ws-accent);
+  color: var(--ws-on-accent);
+  font-size: 10px;
+}

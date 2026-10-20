@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
 import {
-  useColumns,
+  useDatasetSchema,
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
@@ -25,7 +25,7 @@ export function DatasetPanel({
   const datasets = useDatasets();
   const generate = useGenerateDataset();
   const status = datasets.data?.datasets.find((d) => d.rows === rows);
-  const columns = useColumns(rows, showColumns && status?.state === "ready");
+  const columns = useDatasetSchema(rows);
   const { mutate } = generate;
 
   // 행 수를 고르면 그 규모의 데이터가 없을 때 바로 생성을 시작한다.
@@ -83,7 +83,7 @@ export function DatasetPanel({
               <tr key={c.name}>
                 <td title={c.name}>{c.label}</td>
                 <td>{COLUMN_TYPE_LABELS[c.type]}</td>
-                <td>{c.distinct.toLocaleString()}</td>
+                <td>{c.distinct?.toLocaleString() ?? "–"}</td>
               </tr>
             ))}
           </tbody>

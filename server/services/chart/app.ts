@@ -2,11 +2,9 @@
 // 요청 형식은 routes의 zod 스키마가 검증하고, 여기서는 필드 사이의 규칙과 상태만 확인한다.
 
 import type { Context } from "hono";
-import type { ChartSpec } from "../../api/types";
 import { isTerminal } from "../../api/types";
 import { createChart, getChart, getItem } from "../../charts/chart-store";
 import { zoomIn, zoomOut } from "../../charts/item-view";
-import { COLUMNS } from "../../data/schema";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
@@ -23,32 +21,11 @@ import { apiError, createServiceApp } from "../common/http";
 import * as routes from "./routes";
 
 const LONG_POLL_TIMEOUT_MS = 25_000;
-const COLUMN_TYPE = new Map<string, string>(
-  COLUMNS.map((c) => [c.name, c.type]),
-);
 
 let pngVersion = 0;
 
 function roundSize(size: { width: number; height: number }) {
   return { width: Math.round(size.width), height: Math.round(size.height) };
-}
-
-/** 컬럼 타입에 따른 축 규칙. 스키마만으로는 표현하기 어려운 필드 사이 규칙이다. */
-function axisError(spec: ChartSpec): string | undefined {
-  if (spec.chartType === "scatter") {
-    for (const axis of [spec.x, spec.y]) {
-      const type = COLUMN_TYPE.get(axis);
-      if (type !== "number" && type !== "time")
-        return `${axis} cannot be a scatter axis`;
-    }
-    return;
-  }
-  // bar / boxplot: x는 범주(문자) 컬럼, y는 숫자 컬럼
-  if (COLUMN_TYPE.get(spec.x) !== "string")
-    return `${spec.x} is not categorical`;
-  if (COLUMN_TYPE.get(spec.y) !== "number") return `${spec.y} is not numeric`;
-  if (new Set(spec.splitBy).size !== spec.splitBy.length)
-    return "duplicate splitBy column";
 }
 
 type Rejected = { status: 404 | 409; error: string };
@@ -99,8 +76,7 @@ function redrawJob(
 export const chartApp = createServiceApp()
   .openapi(routes.createChart, async (c) => {
     const body = c.req.valid("json");
-    const invalid = axisError(body.spec);
-    if (invalid) return apiError(c, 400, invalid);
+    // 컬럼과 타입은 데이터셋마다 달라 job이 데이터 준비 뒤 스키마로 확인한다.
     const chart = createChart(
       body.spec,
       roundSize(body.itemSize),

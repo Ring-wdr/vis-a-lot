@@ -15,39 +15,44 @@ export type OpenChartInput = {
   historyId?: string;
 };
 
-/**
- * 저장된 설정으로 차트를 다시 그린다 (history 복원, 공유 링크).
- * 데이터는 시드로 다시 만들 수 있으므로 설정과 item 상태만 있으면 같은 차트가 된다.
- * store를 주면 그 화면에 연다 (history에서 gallery로 넘길 때). 다시 보기 전용 store면 history에 기록하지 않는다.
- */
-export function useOpenChart(target?: WorkspaceStore) {
-  const scoped = useWorkspaceStore();
-  const store = target ?? scoped;
+type Size = { width: number; height: number };
 
+/**
+ * 저장된 설정으로 차트를 다시 그려 store(탭)에 연다 (history 복원, 공유 링크, gallery에서 편집).
+ * 데이터는 시드로 다시 만들 수 있으므로 설정과 item 상태만 있으면 같은 차트가 된다.
+ * 아직 한 번도 보이지 않은 탭이면 지금 보이는 grid 영역 크기를 쓴다. 다르면 열린 뒤 resize가 맞춘다.
+ * 다시 보기 전용 store면 history에 기록하지 않는다.
+ */
+export async function openChartIn(
+  store: WorkspaceStore,
+  { spec, restore, historyId }: OpenChartInput,
+  fallbackArea?: Size,
+) {
+  const { gridArea, readOnly } = store.getState();
+  const area = gridArea ?? fallbackArea;
+  if (!area) throw new Error("grid 영역 크기를 아직 모릅니다.");
+  const res = await api.createChart({
+    spec,
+    itemSize: itemSizeFor(area, spec.grid),
+    restore,
+    historyId: readOnly ? undefined : historyId,
+    record: !readOnly,
+  });
+  const { setDraft, setCurrent } = store.getState();
+  setDraft(spec);
+  // 다시 보기는 history를 새로 만들지 않으므로 보고 있는 건의 id를 들고 있는다 (공유 링크용).
+  setCurrent({ ...res, historyId: res.historyId || historyId || "", spec });
+}
+
+/** 지금 보이는 탭 또는 지정한 탭(store)에 차트를 연다. */
+export function useOpenChart() {
+  const scoped = useWorkspaceStore();
   return useMutation({
-    mutationFn: async ({ spec, restore, historyId }: OpenChartInput) => {
-      const { gridArea, readOnly } = store.getState();
-      // 아직 한 번도 보지 않은 화면이면 지금 보이는 grid 영역 크기를 쓴다. 다르면 열린 뒤 resize가 맞춘다.
-      const area = gridArea ?? scoped.getState().gridArea;
-      if (!area) throw new Error("grid 영역 크기를 아직 모릅니다.");
-      const res = await api.createChart({
-        spec,
-        itemSize: itemSizeFor(area, spec.grid),
-        restore,
-        historyId: readOnly ? undefined : historyId,
-        record: !readOnly,
-      });
-      // 다시 보기는 history를 새로 만들지 않으므로 보고 있는 건의 id를 들고 있는다 (공유 링크용).
-      return {
-        res: { ...res, historyId: res.historyId || historyId || "" },
-        spec,
-      };
-    },
-    onSuccess: ({ res, spec }) => {
-      const { setDraft, setCurrent } = store.getState();
-      setDraft(spec);
-      setCurrent({ ...res, spec });
-    },
+    mutationFn: ({
+      store = scoped,
+      ...input
+    }: OpenChartInput & { store?: WorkspaceStore }) =>
+      openChartIn(store, input, scoped.getState().gridArea),
     onError: (err) => showAlert(err.message),
   });
 }

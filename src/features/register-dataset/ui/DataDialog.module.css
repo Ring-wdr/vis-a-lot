@@ -21,6 +21,7 @@
 
 .table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -71,6 +72,7 @@
 
 .progress progress {
   width: 96px;
+  height: 1em;
 }
 
 .secondary {
@@ -85,4 +87,12 @@
 .secondary[aria-pressed="true"] {
   border-color: var(--ws-accent);
   color: var(--ws-accent);
+}
+
+.colSize {
+  width: 28%;
+}
+
+.colAction {
+  width: 6.5em;
 }

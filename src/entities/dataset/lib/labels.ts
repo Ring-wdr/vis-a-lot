@@ -1,4 +1,4 @@
-import type { RowSize } from "@/shared/api/types";
+import type { ColumnType, RowSize } from "@/shared/api/types";
 
 export const ROW_LABELS: Record<RowSize, string> = {
   100000: "10만 행",
@@ -6,8 +6,9 @@ export const ROW_LABELS: Record<RowSize, string> = {
   1000000: "100만 행",
 };
 
-export const COLUMN_TYPE_LABELS = {
-  time: "시계열",
-  string: "문자",
-  number: "숫자",
-} as const;
+/** 데이터셋 스키마의 논리 타입 이름표 */
+export const COLUMN_TYPE_LABELS: Record<ColumnType, string> = {
+  categorical: "범주",
+  numeric: "숫자",
+  datetime: "시계열",
+};
