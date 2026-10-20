@@ -16,14 +16,17 @@ const TYPE_LABELS = { time: "시계열", string: "문자", number: "숫자" } as
 export function DatasetPanel({
   rows,
   onRowsChange,
+  showColumns = false,
 }: {
   rows: RowSize;
   onRowsChange: (rows: RowSize) => void;
+  /** 컬럼 타입과 고유값 표를 함께 보여준다. */
+  showColumns?: boolean;
 }) {
   const datasets = useDatasets();
   const generate = useGenerateDataset();
   const status = datasets.data?.datasets.find((d) => d.rows === rows);
-  const columns = useColumns(rows, status?.state === "ready");
+  const columns = useColumns(rows, showColumns && status?.state === "ready");
   const { mutate } = generate;
 
   // 행 수를 고르면 그 규모의 데이터가 없을 때 바로 생성을 시작한다.
@@ -72,7 +75,7 @@ export function DatasetPanel({
       {datasets.error && <p role="alert">{datasets.error.message}</p>}
       {generate.error && <p role="alert">{generate.error.message}</p>}
 
-      {columns.data && (
+      {showColumns && columns.data && (
         <table className={styles.columns}>
           <thead>
             <tr>

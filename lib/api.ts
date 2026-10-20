@@ -3,10 +3,13 @@
 import type {
   ApiError,
   ColumnsResponse,
+  CreateChartRequest,
+  CreateChartResponse,
   DatasetListResponse,
   DatasetStatus,
   GenerateDatasetRequest,
   HealthResponse,
+  JobStateResponse,
 } from "@/server/api/types";
 import { DATASET_ID, type RowSize } from "@/server/data/schema";
 
@@ -41,6 +44,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ rows } satisfies GenerateDatasetRequest),
     }),
+
+  createChart: (body: CreateChartRequest) =>
+    request<CreateChartResponse>("/api/charts", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  job: (jobId: string, page: number, pageSize: number) =>
+    request<JobStateResponse>(
+      `/api/jobs/${jobId}?page=${page}&pageSize=${pageSize}`,
+    ),
 
   columns: (rows: RowSize) =>
     request<ColumnsResponse>(

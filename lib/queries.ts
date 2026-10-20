@@ -6,6 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { isTerminal } from "@/server/api/types";
 import type { RowSize } from "@/server/data/schema";
 import { api } from "./api";
 
@@ -13,6 +14,8 @@ export const queryKeys = {
   health: ["health"] as const,
   datasets: ["datasets"] as const,
   columns: (rows: RowSize) => ["datasets", rows, "columns"] as const,
+  job: (jobId: string, page: number, pageSize: number) =>
+    ["jobs", jobId, page, pageSize] as const,
 };
 
 const datasetsQuery = queryOptions({
@@ -54,5 +57,26 @@ export function useColumns(rows: RowSize, enabled: boolean) {
     queryFn: () => api.columns(rows),
     enabled,
     staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/** 현재 페이지 item이 모두 끝난 상태가 될 때까지 진행 상태를 받아온다. */
+export function useJob(
+  jobId: string | undefined,
+  page: number,
+  pageSize: number,
+) {
+  return useQuery({
+    queryKey: queryKeys.job(jobId ?? "", page, pageSize),
+    queryFn: () => api.job(jobId as string, page, pageSize),
+    enabled: jobId !== undefined,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return 250;
+      const pageDone =
+        data.totalItems !== null &&
+        data.items.every((i) => isTerminal(i.status));
+      return pageDone ? false : 250;
+    },
   });
 }
