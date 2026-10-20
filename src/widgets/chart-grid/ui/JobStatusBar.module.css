@@ -1,4 +1,5 @@
 .bar {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -55,12 +56,14 @@
   width: 140px;
 }
 
+/* 묶음은 줄어들지 않는다. 줄어들면 내용이 넘쳐 뒤 묶음과 겹친다.
+   폭이 모자라면 하단 바(.bar)가 끝에서 잘라낸다. */
 .counts,
 .meta {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
 }
 
 .meta > span {

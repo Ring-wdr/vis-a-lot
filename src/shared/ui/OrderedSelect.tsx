@@ -20,6 +20,7 @@ import {
   releaseValue,
   toggleValue,
 } from "@/shared/lib/drag-select";
+import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import styles from "./OrderedSelect.module.css";
 import selectStyles from "./Select.module.css";
 
@@ -312,16 +313,22 @@ function useDragSelect<T>({
   const state = useRef<DragState<T>>(IDLE);
   const pointer = useRef({ id: -1, x: 0, y: 0 });
   const raf = useRef(0);
-  const latest = useRef({ value, visible, onPreview, onCommit });
+  const preview = useCallbackRef(onPreview);
+  const commitValue = useCallbackRef(onCommit);
+  // 콜백이 아닌 최신 값은 포인터 이벤트에서 읽도록 ref에 둔다.
+  const latest = useRef({ value, visible });
   useEffect(() => {
-    latest.current = { value, visible, onPreview, onCommit };
+    latest.current = { value, visible };
   });
 
-  const setState = useCallback((next: DragState<T>) => {
-    if (next === state.current) return;
-    state.current = next;
-    latest.current.onPreview(dragPreview(next));
-  }, []);
+  const setState = useCallback(
+    (next: DragState<T>) => {
+      if (next === state.current) return;
+      state.current = next;
+      preview(dragPreview(next));
+    },
+    [preview],
+  );
 
   /** 포인터 세로 위치의 항목 index. 목록 밖(위/아래/좌우)이면 보이는 가장자리 항목으로 본다. */
   const indexAt = useCallback(
@@ -384,11 +391,11 @@ function useDragSelect<T>({
       raf.current = 0;
       setState(dragReducer(prev, { type: commit ? "end" : "cancel" }));
       const next = commit ? releaseValue(prev) : null;
-      if (next) latest.current.onCommit(next);
+      if (next) commitValue(next);
       const el = listRef.current;
       if (el?.hasPointerCapture(pointerId)) el.releasePointerCapture(pointerId);
     },
-    [listRef, setState],
+    [listRef, setState, commitValue],
   );
 
   // 드래그 중 Esc: 시작 전 값으로 되돌리고 드래그만 끝낸다. Base UI의 Esc 닫기(document keydown)까지

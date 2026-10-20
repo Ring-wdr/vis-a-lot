@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
+import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import styles from "./ColorPickerButton.module.css";
 
 /**
@@ -26,19 +27,17 @@ export function ColorPickerButton({
   children?: ReactNode;
 }) {
   const input = useRef<HTMLInputElement>(null);
-  const commit = useRef(onCommit);
-  commit.current = onCommit;
+  const commit = useCallbackRef(onCommit);
 
   useEffect(() => {
     const el = input.current;
     if (!el) return;
     const onChange = () => {
-      if (el.value.toLowerCase() !== color.toLowerCase())
-        commit.current(el.value);
+      if (el.value.toLowerCase() !== color.toLowerCase()) commit(el.value);
     };
     el.addEventListener("change", onChange);
     return () => el.removeEventListener("change", onChange);
-  }, [color]);
+  }, [color, commit]);
 
   return (
     <>
