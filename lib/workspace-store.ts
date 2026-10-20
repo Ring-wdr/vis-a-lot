@@ -32,6 +32,7 @@ type WorkspaceState = {
   /** 이 세션에서 추가한 도형 수. undo는 이 범위 안에서만 된다. */
   undoCounts: Record<string, number>;
   updateDraft: (patch: Partial<ChartSpec>) => void;
+  setDraft: (spec: ChartSpec) => void;
   setCurrent: (chart: DrawnChart) => void;
   /** 같은 차트를 새 job으로 다시 그릴 때 (공통 속성 변경). 페이지와 undo 이력은 유지한다. */
   replaceJob: (jobId: string, spec: ChartSpec, page?: number) => void;
@@ -62,6 +63,7 @@ export const useWorkspace = create<WorkspaceState>((set) => ({
   itemJobs: {},
   undoCounts: {},
   updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
+  setDraft: (draft) => set({ draft }),
   setCurrent: (current) =>
     set({ current, page: 0, itemJobs: {}, undoCounts: {} }),
   replaceJob: (jobId, spec, page) =>

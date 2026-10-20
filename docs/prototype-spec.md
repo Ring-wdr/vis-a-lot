@@ -223,18 +223,21 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
 | 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
 | split 개수 확인 | `GET /datasets/:id/split-count?cols=a,b,c` | 조합 수 (30,000개 초과 검사) |
-| 그리기 시작 | `POST /charts` | 요청: 차트 종류, x, y, 통계 함수, split by(순서 포함), 구분 기호, tooltip 컬럼, grid 크기, 공통 속성, 행 수<br>응답: `chartId`, `jobId`, `historyId`, 전체 item 목록 |
-| 진행 상태 | `GET /jobs/:jobId?items=k1,k2,...` | long polling. 전체 진행률 + 요청한 item의 상태·단계·진행률·`{ url, width, height }` |
+| 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`<br>응답: `chartId`, `jobId`, `historyId` |
+| 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }` |
+| 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
+| 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
 | 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |
 | PNG | `GET /charts/:chartId/items/:key/png?v=` | `image/png` |
-| metadata | `GET /charts/:chartId/items/:key/meta` | 4.4 참고 |
+| metadata | `GET /charts/:chartId/items/:key/meta?v=` | 4.4 참고 |
 | 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
-| 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', rect }` \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
+| 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
 | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
-| 개별 색상 | `PATCH .../items/:key/props` | `{ color }` |
-| grid 변경 | `PATCH /charts/:chartId/grid` | 전체 다시 그리기 job |
-| resize | `POST /charts/:chartId/resize` | 요청한 item만 다시 그리기 job |
-| history | `GET /history`, `GET /history/:id` | 목록(썸네일 포함), 저장된 상태로 복원 |
+| 개별 색상 | `PATCH .../items/:key/props` | `{ color }`, `null`이면 공통 색으로 |
+| 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
+| grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
+| resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
+| history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
 
 ---
 

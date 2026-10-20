@@ -1,6 +1,11 @@
 // Worker별 RPC 메서드 정의.
 
-import type { ColumnInfo, DatasetStatus } from "./api/types";
+import type {
+  ColumnInfo,
+  DatasetStatus,
+  HistoryDetail,
+  HistorySummary,
+} from "./api/types";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
 import type { ColumnName, RowSize } from "./data/schema";
@@ -29,6 +34,9 @@ export type DbMethods = {
   chartData: { params: ChartDataParams; result: ChartData };
   /** bar / boxplot: SQL로 집계한 split 조합 × 범주 값 */
   categoryData: { params: CategoryDataParams; result: CategoryData };
+  historySave: { params: HistoryDetail; result: undefined };
+  historyList: { params: undefined; result: HistorySummary[] };
+  historyGet: { params: { id: string }; result: HistoryDetail | null };
   /** 툴팁 추가 컬럼 조회 */
   rowValues: {
     params: { rows: RowSize; rowId: number; columns: ColumnName[] };

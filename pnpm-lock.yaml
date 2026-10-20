@@ -181,6 +181,9 @@ importers:
       d3-time-format:
         specifier: 4.1.0
         version: 4.1.0
+      lz-string:
+        specifier: 1.5.0
+        version: 1.5.0
       msw:
         specifier: 3.0.3
         version: 3.0.3(@types/node@20.19.43)(typescript@5.9.3)(vite@8.3.4(@types/node@20.19.43))
@@ -948,6 +951,10 @@ packages:
   lightningcss@1.33.0:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
+
+  lz-string@1.5.0:
+    resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
+    hasBin: true
 
   magic-string@1.4.3:
     resolution: {integrity: sha512-z12OxmaPGE0F4xlpGdjuAUckipLpQlTAuAmyGhNoD7ODpYUzvDfvtxUbjM/jwznyP178oju/KDdyi220wNJ0RQ==}
@@ -1757,6 +1764,8 @@ snapshots:
       lightningcss-linux-x64-musl: 1.33.0
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
+
+  lz-string@1.5.0: {}
 
   magic-string@1.4.3:
     dependencies:

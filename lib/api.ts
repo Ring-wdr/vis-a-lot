@@ -12,6 +12,8 @@ import type {
   DatasetStatus,
   GenerateDatasetRequest,
   HealthResponse,
+  HistoryDetail,
+  HistoryListResponse,
   ItemJobResponse,
   ItemMeta,
   ItemSize,
@@ -93,6 +95,11 @@ export const api = {
       `/api/jobs/${jobId}?items=${keys.map(encodeURIComponent).join(",")}&since=${since}`,
       { signal },
     ),
+
+  history: () => request<HistoryListResponse>("/api/history"),
+
+  historyDetail: (id: string) =>
+    request<HistoryDetail>(`/api/history/${encodeURIComponent(id)}`),
 
   cancelJob: (jobId: string) =>
     fetch(`/api/jobs/${jobId}/cancel`, { method: "POST" }).then((res) => {
