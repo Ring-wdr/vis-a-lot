@@ -3,13 +3,18 @@
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
-import { useItemMeta, useTooltipValues } from "@/shared/api/queries";
+import {
+  useColumns,
+  useItemMeta,
+  useTooltipValues,
+} from "@/shared/api/queries";
 import type {
   ChartImage as ChartImageData,
   ColumnName,
 } from "@/shared/api/types";
-import { columnLabel, columnType, formatValue } from "@/shared/lib/format";
+import { formatValue } from "@/shared/lib/format";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import styles from "@/shared/ui/workspace.module.css";
@@ -48,6 +53,9 @@ export function ItemTooltip({
   const [hovered, setHovered] = useState(false);
   const [cursor, setCursor] = useState<Cursor>();
   const meta = useItemMeta(image.url, hovered);
+  // 컬럼 라벨·타입은 그린 차트의 데이터셋 스키마에서 찾는다.
+  const rows = useWorkspace((s) => s.current?.spec.rows ?? s.draft.rows);
+  const columnInfo = useColumns(rows);
 
   const strategy = meta.data ? strategyFor(meta.data) : undefined;
   const prepared = useMemo(
@@ -158,10 +166,10 @@ export function ItemTooltip({
               {hit.rowId !== undefined &&
                 columns.map((c) => (
                   <div key={c} className={styles.emphasis}>
-                    <dt>{columnLabel(c)}</dt>
+                    <dt>{columnInfo.label(c)}</dt>
                     <dd>
                       {extra.data && rowId === hit.rowId
-                        ? formatValue(extra.data.values[c], columnType(c))
+                        ? formatValue(extra.data.values[c], columnInfo.type(c))
                         : "…"}
                     </dd>
                   </div>

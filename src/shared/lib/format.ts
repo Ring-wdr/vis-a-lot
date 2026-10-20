@@ -22,21 +22,19 @@ export function formatValue(
   return String(value);
 }
 
-/**
- * 받은 데이터셋 스키마의 컬럼 라벨과 타입. 컬럼은 데이터마다 다르므로 스키마를 받을 때마다 채우고,
- * history 목록이나 툴팁처럼 스키마를 직접 들고 있지 않은 곳이 이름으로 찾아 쓴다.
- */
-const known = new Map<string, Pick<ColumnInfo, "label" | "type">>();
-
-export function registerColumns(columns: readonly ColumnInfo[]) {
-  for (const c of columns) known.set(c.name, { label: c.label, type: c.type });
-}
+/** 컬럼 이름으로 라벨과 타입을 찾는다. 컬럼은 데이터셋마다 다르므로 그 데이터셋의 스키마로 만든다. */
+export type ColumnLookup = {
+  label: (name: string) => string;
+  type: (name: string) => ColumnType;
+};
 
 /** 스키마를 아직 받지 않았으면 컬럼 이름을 그대로 쓴다. */
-export function columnLabel(name: string) {
-  return known.get(name)?.label ?? name;
-}
-
-export function columnType(name: string): ColumnType {
-  return known.get(name)?.type ?? "categorical";
+export function columnLookup(
+  columns: readonly ColumnInfo[] = [],
+): ColumnLookup {
+  const byName = new Map(columns.map((c) => [c.name, c]));
+  return {
+    label: (name) => byName.get(name)?.label ?? name,
+    type: (name) => byName.get(name)?.type ?? "categorical",
+  };
 }

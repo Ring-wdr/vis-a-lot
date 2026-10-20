@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { columnLabel } from "@/shared/lib/format";
+import { useColumns } from "@/shared/api/queries";
 import styles from "@/shared/ui/workspace.module.css";
 import settingsStyles from "./SettingsDialog.module.css";
 
@@ -10,9 +10,10 @@ export function SplitSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
+  const columns = useColumns(draft.rows);
   const names =
     draft.splitBy.length > 0
-      ? draft.splitBy.map(columnLabel)
+      ? draft.splitBy.map(columns.label)
       : ["공장", "라인", "설비"];
 
   return (

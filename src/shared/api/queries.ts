@@ -7,6 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   type ColumnName,
   type DatasetStatus,
@@ -14,7 +15,7 @@ import {
   type JobStateResponse,
   type RowSize,
 } from "@/shared/api/types";
-import { registerColumns } from "@/shared/lib/format";
+import { columnLookup } from "@/shared/lib/format";
 import { api } from "./api";
 
 /**
@@ -90,35 +91,37 @@ export function datasetSchemaQuery(
 ) {
   return queryOptions({
     queryKey: queryKeys.schema(rows, state === "ready"),
-    queryFn: async () => {
-      const schema = await api.schema(rows);
-      registerColumns(schema.columns);
-      return schema;
-    },
+    queryFn: () => api.schema(rows),
     enabled: state !== undefined && state !== "missing",
     staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
-/**
- * 데이터셋 스키마(컬럼과 타입). 등록한 데이터셋만 받을 수 있다. 받으면 컬럼 라벨·타입을 등록해
- * 스키마를 직접 들고 있지 않은 화면(history 목록, 툴팁)도 이름으로 찾아 쓰게 한다.
- */
+/** 데이터셋 스키마(컬럼과 타입). 등록한 데이터셋만 받을 수 있다. */
 export function useDatasetSchema(rows: RowSize) {
   const status = useDatasetStatus(rows);
   return useQuery(datasetSchemaQuery(rows, status.data?.state));
 }
 
-/** 여러 데이터셋의 스키마를 함께 받는다 (history 목록처럼 데이터셋이 섞인 곳의 컬럼 라벨용). */
-export function useDatasetSchemas(rowsList: readonly RowSize[]) {
+/** 이 데이터셋의 컬럼 라벨·타입. 같은 이름의 컬럼이라도 데이터셋마다 다를 수 있어 데이터셋별로 찾는다. */
+export function useColumns(rows: RowSize) {
+  const columns = useDatasetSchema(rows).data?.columns;
+  return useMemo(() => columnLookup(columns), [columns]);
+}
+
+/** 여러 데이터셋의 컬럼 라벨·타입 (history 목록처럼 데이터셋이 섞인 곳). 데이터셋으로 찾아 쓴다. */
+export function useColumnsByRows(rowsList: readonly RowSize[]) {
   const datasets = useDatasets();
+  const unique = [...new Set(rowsList)];
   return useQueries({
-    queries: [...new Set(rowsList)].map((rows) =>
+    queries: unique.map((rows) =>
       datasetSchemaQuery(
         rows,
         datasets.data?.datasets.find((d) => d.rows === rows)?.state,
       ),
     ),
+    combine: (results) => (rows: RowSize) =>
+      columnLookup(results[unique.indexOf(rows)]?.data?.columns),
   });
 }
 
