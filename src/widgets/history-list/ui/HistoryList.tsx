@@ -12,9 +12,9 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import { openChartIn } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
-import { useDatasetSchemas } from "@/shared/api/queries";
+import { useColumnsByRows } from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
-import { columnLabel } from "@/shared/lib/format";
+import type { ColumnLookup } from "@/shared/lib/format";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
@@ -42,15 +42,11 @@ function timeAgo(ms: number) {
   return relative.format(Math.round(diff / 86_400), "day");
 }
 
-function titleOf({ spec }: HistorySummary) {
-  return chartTitle(spec);
-}
-
-function detailOf(entry: HistorySummary) {
+function detailOf(entry: HistorySummary, columns: ColumnLookup) {
   const parts = [
     `${(entry.rows / 10_000).toLocaleString()}만 행`,
     entry.spec.splitBy.length > 0
-      ? `split ${entry.spec.splitBy.map(columnLabel).join(entry.spec.splitSeparator)}`
+      ? `split ${entry.spec.splitBy.map(columns.label).join(entry.spec.splitSeparator)}`
       : "split 없음",
     `${entry.itemCount.toLocaleString()} item`,
   ];
@@ -93,7 +89,9 @@ export function HistoryList() {
   });
   const viewing = useWorkspace((s) => s.current?.historyId);
   // 컬럼 라벨은 데이터셋 스키마에 있으므로, 목록에 나오는 데이터셋의 스키마를 함께 받는다.
-  useDatasetSchemas(list.data?.entries.map((e) => e.rows) ?? []);
+  const columnsOf = useColumnsByRows(
+    list.data?.entries.map((e) => e.rows) ?? [],
+  );
 
   if (list.error) {
     return (
@@ -128,8 +126,12 @@ export function HistoryList() {
               <span className={styles.historyThumbEmpty} />
             )}
             <span className={styles.historyText}>
-              <span className={styles.historyTitle}>{titleOf(entry)}</span>
-              <span className={styles.muted}>{detailOf(entry)}</span>
+              <span className={styles.historyTitle}>
+                {chartTitle(entry.spec, columnsOf(entry.rows))}
+              </span>
+              <span className={styles.muted}>
+                {detailOf(entry, columnsOf(entry.rows))}
+              </span>
               {eventsOf(entry) && (
                 <span className={styles.muted}>+ {eventsOf(entry)}</span>
               )}

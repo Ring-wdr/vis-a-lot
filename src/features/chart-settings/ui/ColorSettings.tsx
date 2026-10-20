@@ -3,9 +3,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
-import { useDatasetStatus, useLegendValues } from "@/shared/api/queries";
+import {
+  useColumns,
+  useDatasetStatus,
+  useLegendValues,
+} from "@/shared/api/queries";
 import type { CommonProps } from "@/shared/api/types";
-import { columnLabel } from "@/shared/lib/format";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
@@ -25,6 +28,7 @@ export function ColorSettings() {
   const notify = useWorkspace((s) => s.notify);
   const readOnly = useWorkspace((s) => s.readOnly);
   const dataset = useDatasetStatus(draft.rows);
+  const columns = useColumns(draft.rows);
   const legendValues = useLegendValues(
     draft.rows,
     draft.legend,
@@ -70,7 +74,7 @@ export function ColorSettings() {
       ) : (
         <>
           <h3 className={settingsStyles.heading}>
-            legend 색상 · {columnLabel(draft.legend)}
+            legend 색상 · {columns.label(draft.legend)}
           </h3>
           {legendValues.isPending && (
             <p className={styles.muted}>
