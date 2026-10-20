@@ -1,5 +1,5 @@
-import type { AxisMeta } from "@server/api/types";
-import { COLUMNS, type ColumnType } from "@server/data/schema";
+import type { AxisMeta, ColumnType } from "@/shared/api/types";
+import { COLUMNS } from "@/shared/config/dataset";
 
 const KST_OFFSET_MS = 9 * 3_600_000;
 

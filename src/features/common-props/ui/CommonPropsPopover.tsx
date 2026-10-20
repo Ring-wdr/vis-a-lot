@@ -1,13 +1,12 @@
 "use client";
 
-import type { CommonProps } from "@server/api/types";
-import { defaultLegendColor } from "@server/render/theme";
 import { useMutation } from "@tanstack/react-query";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useDatasetStatus, useLegendValues } from "@/shared/api/queries";
+import type { CommonProps } from "@/shared/api/types";
 import { columnLabel } from "@/shared/lib/format";
-import { colorName } from "@/shared/lib/palette";
+import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";

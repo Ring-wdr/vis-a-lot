@@ -1,6 +1,7 @@
 "use client";
 
 import { Database, History, LayoutGrid } from "lucide-react";
+import { UserMenu } from "@/features/auth/ui/UserMenu";
 import { openDataDialog } from "@/features/register-dataset/ui/DataDialog";
 import { ModeBar } from "@/features/select-mode/ui/ModeBar";
 import { ShareButton } from "@/features/share-chart/ui/ShareButton";
@@ -58,6 +59,7 @@ export function AppHeader({
       <ModeBar />
       <div className={styles.headerActions}>
         <ShareButton />
+        <UserMenu />
       </div>
     </header>
   );

@@ -1,6 +1,6 @@
-import type { HistoryDetail } from "@server/api/types";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SPEC } from "@/entities/workspace/model/workspace-store";
+import type { HistoryDetail } from "@/shared/api/types";
 import { encodeShareHash, readShareHash, restoreOf } from "./share";
 
 describe("공유 링크", () => {

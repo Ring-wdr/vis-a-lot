@@ -1,14 +1,11 @@
 "use client";
 
-import type {
-  DebugRenderRequest,
-  DebugRenderResponse,
-} from "@server/api/types";
-import type { RowSize } from "@server/data/schema";
 import { useState } from "react";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { DatasetPanel } from "@/features/register-dataset/ui/DatasetPanel";
+import { api } from "@/shared/api/api";
 import { useHealth } from "@/shared/api/queries";
+import type { DebugRenderResponse, RowSize } from "@/shared/api/types";
 import styles from "./page.module.css";
 
 const ITEM_COUNT = 8;
@@ -34,19 +31,13 @@ export function BootCheck() {
     await Promise.all(
       keys.map(async (key) => {
         try {
-          const res = await fetch("/api/debug/render", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              chartId: "boot-check",
-              itemKey: key,
-              width: WIDTH,
-              height: HEIGHT,
-              points,
-            } satisfies DebugRenderRequest),
+          const result = await api.debugRender({
+            chartId: "boot-check",
+            itemKey: key,
+            width: WIDTH,
+            height: HEIGHT,
+            points,
           });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const result = (await res.json()) as DebugRenderResponse;
           setItems((prev) =>
             prev.map((it) => (it.key === key ? { ...it, result } : it)),
           );

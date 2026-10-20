@@ -583,8 +583,25 @@
 
 .headerActions {
   display: flex;
+  align-items: center;
   gap: 8px;
   margin-left: auto;
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--ws-border);
+  font-size: 13px;
+  color: var(--ws-text-secondary);
+}
+
+.userMenu .secondaryButton {
+  display: inline-grid;
+  place-items: center;
+  height: 28px;
 }
 
 .historyList {

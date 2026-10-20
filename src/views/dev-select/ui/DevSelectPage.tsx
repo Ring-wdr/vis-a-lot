@@ -1,7 +1,8 @@
 "use client";
 
-import { COLUMNS, type ColumnName } from "@server/data/schema";
 import { useState } from "react";
+import type { ColumnName } from "@/shared/api/types";
+import { COLUMNS } from "@/shared/config/dataset";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import styles from "./DevSelectPage.module.css";
 

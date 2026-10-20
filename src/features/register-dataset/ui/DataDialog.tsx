@@ -1,7 +1,5 @@
 "use client";
 
-import type { DatasetStatus } from "@server/api/types";
-import { ROW_SIZES, type RowSize } from "@server/data/schema";
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
@@ -10,6 +8,8 @@ import {
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
+import type { DatasetStatus, RowSize } from "@/shared/api/types";
+import { ROW_SIZES } from "@/shared/config/dataset";
 import { Dialog } from "@/shared/ui/Dialog";
 import dialogStyles from "@/shared/ui/Dialog.module.css";
 import styles from "./DataDialog.module.css";

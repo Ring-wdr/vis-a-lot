@@ -1,6 +1,5 @@
 "use client";
 
-import { ROW_SIZES, type RowSize } from "@server/data/schema";
 import { useEffect } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
 import {
@@ -8,6 +7,8 @@ import {
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
+import type { RowSize } from "@/shared/api/types";
+import { ROW_SIZES } from "@/shared/config/dataset";
 import styles from "./DatasetPanel.module.css";
 
 export function DatasetPanel({

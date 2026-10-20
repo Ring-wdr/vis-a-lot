@@ -1,12 +1,14 @@
 "use client";
 
-import type { ChartImage as ChartImageData } from "@server/api/types";
-import type { ColumnName } from "@server/data/schema";
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
 import { useItemMeta, useTooltipValues } from "@/shared/api/queries";
+import type {
+  ChartImage as ChartImageData,
+  ColumnName,
+} from "@/shared/api/types";
 import { columnLabel, columnType, formatValue } from "@/shared/lib/format";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";

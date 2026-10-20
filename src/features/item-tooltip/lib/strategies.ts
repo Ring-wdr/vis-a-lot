@@ -6,10 +6,10 @@ import type {
   CategoryMeta,
   ItemMeta,
   ScatterMeta,
-} from "@server/api/types";
-import { AGG_LABELS } from "@server/data/schema";
-import { groupSlot } from "@server/render/category";
+} from "@/shared/api/types";
+import { AGG_LABELS } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
+import { groupSlot } from "./group-slot";
 import { PointIndex } from "./point-index";
 
 export type TooltipRow = { label: string; value: string; emphasis?: boolean };
@@ -143,7 +143,13 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
     meta.groupCount - 1,
     Math.max(0, Math.floor(((px - left) / meta.markWidth) * meta.groupCount)),
   );
-  const { cx, width } = groupSlot(center, meta.markWidth, meta.groupCount, g);
+  const { cx, width } = groupSlot(
+    center,
+    meta.markWidth,
+    meta.groupCount,
+    g,
+    meta.groupGap,
+  );
   return { index, g, cx, width };
 }
 

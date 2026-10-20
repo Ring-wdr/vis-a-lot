@@ -1,13 +1,13 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import { api } from "@/shared/api/api";
 import {
   type ItemSize,
   isTerminal,
   type JobStateResponse,
-} from "@server/api/types";
-import { useEffect, useRef, useState } from "react";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { api } from "@/shared/api/api";
+} from "@/shared/api/types";
 import { useDebounced } from "@/shared/lib/use-debounced";
 
 const RESIZE_DEBOUNCE_MS = 300;

@@ -1,8 +1,8 @@
 "use client";
 
-import type { ItemState } from "@server/api/types";
 import { Eraser, RotateCcw, Undo2, ZoomOut } from "lucide-react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
+import type { ItemState } from "@/shared/api/types";
 import { colorName } from "@/shared/lib/palette";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { Popover } from "@/shared/ui/Popover";

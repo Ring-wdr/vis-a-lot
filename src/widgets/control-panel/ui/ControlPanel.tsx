@@ -1,18 +1,22 @@
 "use client";
 
-import { CHART_TYPES, type ChartSpec, type ChartType } from "@server/api/types";
-import {
-  AGG_FNS,
-  AGG_LABELS,
-  type AggFn,
-  COLUMNS,
-  type ColumnName,
-  LEGEND_COLUMNS,
-  type LegendColumn,
-} from "@server/data/schema";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { GridPicker } from "@/features/change-grid/ui/GridPicker";
 import { DatasetSelect } from "@/features/register-dataset/ui/DatasetSelect";
+import {
+  type AggFn,
+  CHART_TYPES,
+  type ChartSpec,
+  type ChartType,
+  type ColumnName,
+  type LegendColumn,
+} from "@/shared/api/types";
+import {
+  AGG_FNS,
+  AGG_LABELS,
+  COLUMNS,
+  LEGEND_COLUMNS,
+} from "@/shared/config/dataset";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import styles from "@/shared/ui/workspace.module.css";
 

@@ -1,4 +1,4 @@
-import type { RowSize } from "@server/data/schema";
+import type { RowSize } from "@/shared/api/types";
 
 export const ROW_LABELS: Record<RowSize, string> = {
   100000: "10만 행",

@@ -1,8 +1,9 @@
 "use client";
 
-import { ROW_SIZES, type RowSize } from "@server/data/schema";
 import { ROW_LABELS } from "@/entities/dataset/lib/labels";
 import { useDatasets } from "@/shared/api/queries";
+import type { RowSize } from "@/shared/api/types";
+import { ROW_SIZES } from "@/shared/config/dataset";
 import styles from "@/shared/ui/workspace.module.css";
 import { openDataDialog } from "./DataDialog";
 
