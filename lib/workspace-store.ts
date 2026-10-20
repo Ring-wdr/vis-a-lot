@@ -34,7 +34,7 @@ type WorkspaceState = {
   updateDraft: (patch: Partial<ChartSpec>) => void;
   setCurrent: (chart: DrawnChart) => void;
   /** 같은 차트를 새 job으로 다시 그릴 때 (공통 속성 변경). 페이지와 undo 이력은 유지한다. */
-  replaceJob: (jobId: string, spec: ChartSpec) => void;
+  replaceJob: (jobId: string, spec: ChartSpec, page?: number) => void;
   setPage: (page: number) => void;
   setMode: (mode: Mode) => void;
   setGridArea: (size: Size) => void;
@@ -64,9 +64,15 @@ export const useWorkspace = create<WorkspaceState>((set) => ({
   updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
   setCurrent: (current) =>
     set({ current, page: 0, itemJobs: {}, undoCounts: {} }),
-  replaceJob: (jobId, spec) =>
+  replaceJob: (jobId, spec, page) =>
     set((s) =>
-      s.current ? { current: { ...s.current, jobId, spec }, itemJobs: {} } : {},
+      s.current
+        ? {
+            current: { ...s.current, jobId, spec },
+            itemJobs: {},
+            page: page ?? s.page,
+          }
+        : {},
     ),
   setPage: (page) => set({ page }),
   setMode: (mode) => set({ mode }),

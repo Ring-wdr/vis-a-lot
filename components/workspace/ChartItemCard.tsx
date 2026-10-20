@@ -5,9 +5,14 @@ import { useEffect } from "react";
 import { useAlert } from "@/lib/alert-store";
 import { ITEM_TOOLBAR_HEIGHT } from "@/lib/grid-layout";
 import { useItemAction } from "@/lib/item-actions";
-import { useJob } from "@/lib/queries";
+import { useJobItem } from "@/lib/queries";
 import { useWorkspace } from "@/lib/workspace-store";
-import { type ItemStage, type ItemState, isTerminal } from "@/server/api/types";
+import {
+  type ItemSize,
+  type ItemStage,
+  type ItemState,
+  isTerminal,
+} from "@/server/api/types";
 import type { ColumnName } from "@/server/data/schema";
 import { DrawLayer } from "./DrawLayer";
 import { ItemToolbar } from "./ItemToolbar";
@@ -55,11 +60,13 @@ function DrawnItem({
   chartId,
   primaryJobId,
   tooltipColumns,
+  displaySize,
 }: {
   item: ItemState & { image: NonNullable<ItemState["image"]> };
   chartId: string;
   primaryJobId: string;
   tooltipColumns: ColumnName[];
+  displaySize: ItemSize;
 }) {
   const mode = useWorkspace((s) => s.mode);
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
@@ -68,11 +75,12 @@ function DrawnItem({
   const showAlert = useAlert((s) => s.show);
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
-  const itemJob = useJob(itemJobId, 0, 1);
+  const itemJob = useJobItem(itemJobId, item.key);
   const redrawing = itemJob.data?.items[0];
   const busy = action.isPending || itemJobId !== undefined;
 
-  const jobStatus = itemJob.data?.status;
+  // 같은 job에 다른 item이 함께 있어도(resize) 이 item이 끝났는지로 판단한다.
+  const jobStatus = redrawing?.status;
   const redrawnUrl = redrawing?.image?.url;
   useEffect(() => {
     if (!jobStatus || !isTerminal(jobStatus)) return;
@@ -120,11 +128,13 @@ function DrawnItem({
             chartId={chartId}
             itemKey={item.key}
             columns={tooltipColumns}
+            display={displaySize}
           />
         ) : (
           <DrawLayer
             mode={mode}
             image={item.image}
+            display={displaySize}
             alt={item.label}
             onAction={action.mutate}
           />
@@ -146,10 +156,13 @@ export function ChartItemCard({
   chartId,
   primaryJobId,
   tooltipColumns = [],
+  displaySize,
 }: {
   item?: ItemState;
   chartId?: string;
   primaryJobId?: string;
+  /** 칸 크기. 없으면 PNG 원래 크기로 보여준다. */
+  displaySize?: ItemSize;
   tooltipColumns?: ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
@@ -161,6 +174,7 @@ export function ChartItemCard({
         chartId={chartId}
         primaryJobId={primaryJobId}
         tooltipColumns={tooltipColumns}
+        displaySize={displaySize ?? item.image}
       />
     );
   }

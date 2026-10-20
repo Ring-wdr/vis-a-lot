@@ -541,3 +541,10 @@
   cursor: pointer;
   padding: 0;
 }
+
+/* resize 대기 중에는 기존 PNG를 칸 크기에 맞게 늘리거나 줄여 보여준다. */
+.tooltipLayer img,
+.drawLayer img {
+  width: 100%;
+  height: 100%;
+}

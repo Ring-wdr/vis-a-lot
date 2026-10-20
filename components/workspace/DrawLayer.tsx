@@ -31,11 +31,14 @@ const FREEHAND_STEP_PX = 2;
 export function DrawLayer({
   mode,
   image,
+  display,
   alt,
   onAction,
 }: {
   mode: DrawMode;
   image: ChartImageData;
+  /** 화면에 보이는 크기. resize 대기 중에는 PNG 크기와 다를 수 있다. */
+  display: { width: number; height: number };
   alt: string;
   onAction: (action: ItemAction) => void;
 }) {
@@ -139,7 +142,7 @@ export function DrawLayer({
       ref={ref}
       className={styles.drawLayer}
       data-mode={mode}
-      style={{ width: image.width, height: image.height }}
+      style={{ width: display.width, height: display.height }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -150,6 +153,7 @@ export function DrawLayer({
       <svg
         className={styles.drawPreview}
         viewBox={`0 0 ${image.width} ${image.height}`}
+        preserveAspectRatio="none"
         aria-hidden="true"
       >
         {draft?.kind === "drag" && mode === "line" && (
@@ -178,7 +182,10 @@ export function DrawLayer({
       {draft?.kind === "text" && (
         <input
           className={styles.textInput}
-          style={{ left: draft.at.x, top: draft.at.y }}
+          style={{
+            left: (draft.at.x * display.width) / image.width,
+            top: (draft.at.y * display.height) / image.height,
+          }}
           // biome-ignore lint/a11y/noAutofocus: 클릭한 자리에 바로 글을 쓰는 입력이다.
           autoFocus
           value={text}
