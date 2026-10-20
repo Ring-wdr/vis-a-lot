@@ -7,6 +7,10 @@
   color: var(--ws-text);
 }
 
+.workspace[data-filter-open] {
+  grid-template-columns: 260px minmax(0, 1fr) 300px;
+}
+
 .header {
   grid-column: 1 / -1;
   display: flex;

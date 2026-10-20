@@ -8,6 +8,8 @@ import type {
 } from "./api/types";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
+import type { ColumnSummary } from "./data/column-summary";
+import type { ChartFilter } from "./data/filters";
 import type { ColumnName, LegendColumn, RowSize } from "./data/schema";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
@@ -27,7 +29,12 @@ export type DbMethods = {
   datasetColumns: { params: { rows: RowSize }; result: ColumnInfo[] | null };
   /** split 조합 개수. exact가 false면 고유값 곱으로 낸 상한이다. */
   splitCount: {
-    params: { rows: RowSize; cols: ColumnName[]; limit: number };
+    params: {
+      rows: RowSize;
+      cols: ColumnName[];
+      limit: number;
+      filters?: ChartFilter[];
+    };
     result: { count: number; exact: boolean };
   };
   /** job 하나에 필요한 데이터를 한 번에 조회해 split 조합별로 나눈다. */
@@ -40,6 +47,11 @@ export type DbMethods = {
   legendValues: {
     params: { rows: RowSize; column: LegendColumn };
     result: string[];
+  };
+  /** 필터 패널: 컬럼 하나의 범위(숫자·시계열) 또는 값별 개수(범주) */
+  columnSummary: {
+    params: { rows: RowSize; column: ColumnName };
+    result: ColumnSummary;
   };
   /** 툴팁 추가 컬럼 조회 */
   rowValues: {

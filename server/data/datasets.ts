@@ -2,6 +2,7 @@
 
 import type { PGlite } from "@electric-sql/pglite";
 import type { ColumnInfo, DatasetStatus } from "../api/types";
+import { type ChartFilter, filterSql } from "./filters";
 import { generateCsvChunks } from "./generator";
 import {
   COLUMNS,
@@ -96,10 +97,24 @@ export class DatasetManager {
    * split 조합 개수. 컬럼별 고유값의 곱이 상한이므로, 곱이 limit 이하면 쿼리 없이 그 값을 쓰고
    * 넘을 때만 실제 조합 수를 센다.
    */
-  async splitCount(rows: RowSize, cols: ColumnName[], limit: number) {
+  async splitCount(
+    rows: RowSize,
+    cols: ColumnName[],
+    limit: number,
+    filters?: ChartFilter[],
+  ) {
     if (cols.length === 0) return { count: 1, exact: true };
     const columns = await this.columns(rows);
     if (!columns) throw new Error("dataset is not ready");
+    // 필터가 있으면 고유값 곱으로 어림할 수 없으니 실제로 센다.
+    if (filters && filters.length > 0) {
+      const filter = filterSql(filters);
+      const res = await this.#db.query<{ count: number }>(
+        `select count(*)::int as count from (select distinct ${cols.join(", ")} from ${readingsTable(rows)} where true${filter.sql}) s`,
+        filter.params,
+      );
+      return { count: res.rows[0].count, exact: true };
+    }
     const distinct = new Map(columns.map((c) => [c.name, c.distinct]));
     const upper = cols.reduce(
       (acc, c) => acc * (distinct.get(c) ?? Infinity),

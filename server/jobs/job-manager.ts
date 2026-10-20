@@ -209,7 +209,11 @@ async function run(job: Job) {
   job.phase = "query";
   touch(job);
   // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
-  const split = await dataService.splitCount(spec.rows, spec.splitBy);
+  const split = await dataService.splitCount(
+    spec.rows,
+    spec.splitBy,
+    spec.filters,
+  );
   if (split.count > MAX_SPLIT_ITEMS) {
     throw new JobError(
       `split 조합이 ${split.count.toLocaleString()}개로 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개를 넘습니다.`,
@@ -382,6 +386,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
             y: spec.y,
             splitBy: spec.splitBy,
             legend: spec.legend,
+            filters: spec.filters,
           })),
           groupOf: new Map(),
         }
@@ -395,6 +400,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
             agg: spec.agg,
             splitBy: spec.splitBy,
             legend: spec.legend,
+            filters: spec.filters,
           })),
           groupOf: new Map(),
         };

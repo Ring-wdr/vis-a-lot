@@ -2,6 +2,7 @@
 
 import type { z } from "@hono/zod-openapi";
 import type { BoxStats } from "../data/category-data";
+import type { ChartFilter } from "../data/filters";
 import type {
   AggFn,
   ColumnDef,
@@ -98,6 +99,8 @@ export type ChartSpec = {
   tooltip: ColumnName[];
   grid: { rows: number; cols: number };
   common: CommonProps;
+  /** draw할 때 적용하는 데이터 필터. 예전 history에는 없을 수 있다. */
+  filters?: ChartFilter[];
 };
 
 export type ItemSize = { width: number; height: number };

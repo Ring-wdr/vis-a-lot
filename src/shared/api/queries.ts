@@ -28,6 +28,8 @@ export const queryKeys = {
   health: ["health"] as const,
   datasets: ["datasets"] as const,
   columns: (rows: RowSize) => ["datasets", rows, "columns"] as const,
+  columnSummary: (rows: RowSize, column: ColumnName) =>
+    ["datasets", rows, "summary", column] as const,
   job: (jobId: string, page: number, pageSize: number) =>
     ["jobs", jobId, page, pageSize] as const,
   jobProgress: (jobId: string) => ["jobs", jobId, "progress"] as const,
@@ -217,6 +219,15 @@ export function useLegendValues(
     queryKey: ["legend-values", rows, column],
     queryFn: () => api.legendValues(rows, column as LegendColumn),
     enabled: enabled && column !== null,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+/** 필터 아코디언을 열 때 그 컬럼의 범위나 값 목록을 서버에서 받는다. 데이터는 바뀌지 않으므로 다시 받지 않는다. */
+export function useColumnSummary(rows: RowSize, column: ColumnName) {
+  return useQuery({
+    queryKey: queryKeys.columnSummary(rows, column),
+    queryFn: () => api.columnSummary(rows, column),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

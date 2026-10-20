@@ -408,6 +408,13 @@
           },
           "common": {
             "$ref": "#/components/schemas/CommonProps"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartFilter"
+            },
+            "maxItems": 11
           }
         },
         "required": [
@@ -467,6 +474,61 @@
       "LegendColumn": {
         "type": "string",
         "enum": ["factory", "line", "sensor_type", "shift", "status"]
+      },
+      "ChartFilter": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RangeFilter"
+          },
+          {
+            "$ref": "#/components/schemas/ExcludeFilter"
+          }
+        ]
+      },
+      "RangeFilter": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["range"]
+          },
+          "column": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "inverse": {
+            "type": "boolean"
+          },
+          "includeNull": {
+            "type": "boolean"
+          }
+        },
+        "required": ["kind", "column", "min", "max", "inverse", "includeNull"]
+      },
+      "ExcludeFilter": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["exclude"]
+          },
+          "column": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50000
+          }
+        },
+        "required": ["kind", "column", "values"]
       },
       "ItemRestore": {
         "type": "object",

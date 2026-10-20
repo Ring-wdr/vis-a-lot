@@ -1,6 +1,92 @@
 // 자동 생성 파일. 직접 고치지 말고 `pnpm gen:api`로 다시 만든다.
 
 export type paths = {
+  "/datasets/{datasetId}/columns/{column}/summary": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 필터용 컬럼 요약: 숫자·시계열은 범위와 null 수, 범주는 값별 행 수 */
+    get: {
+      parameters: {
+        query: {
+          rows: 100000 | 500000 | 1000000;
+        };
+        header?: never;
+        path: {
+          datasetId: components["schemas"]["DatasetId"];
+          column: components["schemas"]["ColumnName"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 컬럼 요약 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ColumnSummary"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 데이터셋이 아직 준비되지 않음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/datasets/{datasetId}/columns": {
     parameters: {
       query?: never;
@@ -366,21 +452,23 @@ export type paths = {
       path?: never;
       cookie?: never;
     };
-    /** split 조합 개수 (최대 개수 초과 검사) */
-    get: {
+    get?: never;
+    put?: never;
+    /** split 조합 개수 (최대 개수 초과 검사). 필터가 있으면 필터를 적용해 센다 */
+    post: {
       parameters: {
-        query: {
-          rows: 100000 | 500000 | 1000000;
-          /** @description 쉼표로 구분한 split 컬럼 */
-          cols?: string;
-        };
+        query?: never;
         header?: never;
         path: {
           datasetId: components["schemas"]["DatasetId"];
         };
         cookie?: never;
       };
-      requestBody?: never;
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SplitCountRequest"];
+        };
+      };
       responses: {
         /** @description 조합 개수 */
         200: {
@@ -438,8 +526,6 @@ export type paths = {
         };
       };
     };
-    put?: never;
-    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -450,6 +536,48 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    ColumnSummary:
+      | {
+          /** @enum {string} */
+          kind: "range";
+          column: components["schemas"]["ColumnName"];
+          /** @enum {string} */
+          type: "number" | "time";
+          min: number | null;
+          max: number | null;
+          nullCount: number;
+          count: number;
+        }
+      | {
+          /** @enum {string} */
+          kind: "values";
+          column: components["schemas"]["ColumnName"];
+          values: {
+            value: string;
+            count: number;
+          }[];
+          nullCount: number;
+          count: number;
+        };
+    /** @enum {string} */
+    ColumnName:
+      | "ts"
+      | "factory"
+      | "line"
+      | "machine"
+      | "sensor_type"
+      | "shift"
+      | "lot_id"
+      | "status"
+      | "value"
+      | "temperature_env"
+      | "load_pct";
+    ApiError: {
+      /** @example unknown chart */
+      error: string;
+    };
+    /** @enum {string} */
+    DatasetId: "iot";
     ColumnsResponse: {
       rows: components["schemas"]["RowSize"];
       columns: components["schemas"]["ColumnInfo"][];
@@ -463,12 +591,6 @@ export type components = {
     };
     /** @enum {string} */
     ColumnType: "time" | "string" | "number";
-    ApiError: {
-      /** @example unknown chart */
-      error: string;
-    };
-    /** @enum {string} */
-    DatasetId: "iot";
     DatasetStatus: {
       rows: components["schemas"]["RowSize"];
       /** @enum {string} */
@@ -504,6 +626,29 @@ export type components = {
       count: number;
       exact: boolean;
       limit: number;
+    };
+    SplitCountRequest: {
+      rows: components["schemas"]["RowSize"];
+      cols: components["schemas"]["ColumnName"][];
+      filters?: components["schemas"]["ChartFilter"][];
+    };
+    ChartFilter:
+      | components["schemas"]["RangeFilter"]
+      | components["schemas"]["ExcludeFilter"];
+    RangeFilter: {
+      /** @enum {string} */
+      kind: "range";
+      column: components["schemas"]["ColumnName"];
+      min: number;
+      max: number;
+      inverse: boolean;
+      includeNull: boolean;
+    };
+    ExcludeFilter: {
+      /** @enum {string} */
+      kind: "exclude";
+      column: components["schemas"]["ColumnName"];
+      values: string[];
     };
   };
   responses: never;

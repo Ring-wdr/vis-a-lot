@@ -2,6 +2,7 @@
 
 import type { PGlite } from "@electric-sql/pglite";
 import { queryLegendValues } from "./chart-data";
+import { type ChartFilter, filterSql } from "./filters";
 import {
   type AggFn,
   COLUMNS,
@@ -49,6 +50,7 @@ export type CategoryDataParams = {
   agg: AggFn;
   splitBy: ColumnName[];
   legend: LegendColumn | null;
+  filters?: ChartFilter[];
 };
 
 const COLUMN_TYPE = new Map(COLUMNS.map((c) => [c.name, c.type]));
@@ -118,14 +120,17 @@ export async function queryBarData(
 ): Promise<CategoryData> {
   check(params);
   const { rows, y, agg, splitBy, legend } = params;
+  const filter = filterSql(params.filters);
   const legendValues = legend
     ? await queryLegendValues(db, rows, legend)
     : undefined;
   const keys = keyColumns(params);
   const sql = `select ${keys.map((c) => `${c}::text`).join(", ")}, ${AGG_SQL[agg](y)}::float8
-    from ${readingsTable(rows)} where ${y} is not null
+    from ${readingsTable(rows)} where ${y} is not null${filter.sql}
     group by ${keys.join(", ")} order by ${keys.join(", ")}`;
-  const res = await db.query<unknown[]>(sql, [], { rowMode: "array" });
+  const res = await db.query<unknown[]>(sql, filter.params, {
+    rowMode: "array",
+  });
   return {
     legendValues,
     groups: groupRows(
@@ -148,6 +153,7 @@ export async function queryBoxData(
 ): Promise<CategoryData> {
   check(params);
   const { rows, y, splitBy, legend } = params;
+  const filter = filterSql(params.filters);
   const legendValues = legend
     ? await queryLegendValues(db, rows, legend)
     : undefined;
@@ -167,7 +173,7 @@ export async function queryBoxData(
   const sql = `
     with s as (
       select ${select.join(", ")}, ${y}::float8 as v
-      from ${readingsTable(rows)} where ${y} is not null
+      from ${readingsTable(rows)} where ${y} is not null${filter.sql}
     ),
     q as (
       select ${aliases.join(", ")}, ${aliases.map((c) => `min(${c}_o) as ${c}_o`).join(", ")},
@@ -185,7 +191,9 @@ export async function queryBoxData(
     from q join s on ${join}
     group by ${aliases.map((c) => `q.${c}`).join(", ")}, ${orderAliases.join(", ")}, q.n, q.mean, q.q1, q.median, q.q3
     order by ${orderAliases.join(", ")}`;
-  const res = await db.query<unknown[]>(sql, [], { rowMode: "array" });
+  const res = await db.query<unknown[]>(sql, filter.params, {
+    rowMode: "array",
+  });
   return {
     legendValues,
     groups: groupRows(res.rows, splitBy.length, legendValues, (row, o) => ({

@@ -5,6 +5,7 @@ import {
   queryLegendValues,
   queryRowValues,
 } from "../data/chart-data";
+import { queryColumnSummary } from "../data/column-summary";
 import { DatasetManager } from "../data/datasets";
 import {
   getHistory,
@@ -78,9 +79,14 @@ serveRpc<DbMethods>({
     return datasets.columns(rows);
   },
 
-  async splitCount({ rows, cols, limit }) {
+  async splitCount({ rows, cols, limit, filters }) {
     const { datasets } = await ready;
-    return datasets.splitCount(rows, cols, limit);
+    return datasets.splitCount(rows, cols, limit, filters);
+  },
+
+  async columnSummary({ rows, column }) {
+    const { db } = await ready;
+    return queryColumnSummary(db, rows, column);
   },
 
   async chartData(params) {

@@ -36,6 +36,7 @@ export function DrawButton() {
         const { count, limit } = await api.splitCount(
           draft.rows,
           draft.splitBy,
+          draft.filters,
         );
         if (count > limit) {
           showAlert(

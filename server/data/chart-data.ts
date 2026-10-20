@@ -1,6 +1,7 @@
 // 차트 job 하나에 필요한 데이터를 한 번의 쿼리로 가져와 split 조합별로 나눈다.
 
 import type { PGlite } from "@electric-sql/pglite";
+import { type ChartFilter, filterSql } from "./filters";
 import {
   COLUMNS,
   type ColumnName,
@@ -35,6 +36,7 @@ export type ChartDataParams = {
   y: ColumnName;
   splitBy: ColumnName[];
   legend: LegendColumn | null;
+  filters?: ChartFilter[];
 };
 
 const COLUMN_TYPE = new Map(COLUMNS.map((c) => [c.name, c.type]));
@@ -98,7 +100,7 @@ function numericExpr(name: ColumnName) {
 
 export async function queryChartData(
   db: PGlite,
-  { rows, x, y, splitBy, legend }: ChartDataParams,
+  { rows, x, y, splitBy, legend, filters }: ChartDataParams,
 ): Promise<ChartData> {
   for (const name of [x, y, ...splitBy]) {
     if (!COLUMN_TYPE.has(name)) throw new Error(`unknown column ${name}`);
@@ -114,10 +116,13 @@ export async function queryChartData(
   const legendValues = legend ? await queryLegendValues(db, rows, legend) : [];
   const legendIndexOf = new Map(legendValues.map((v, i) => [v, i]));
   const order = splitBy.length > 0 ? `order by ${splitBy.join(", ")}` : "";
+  const filter = filterSql(filters);
   const sql = `select ${select.join(", ")} from ${readingsTable(rows)}
-    where ${x} is not null and ${y} is not null ${order}`;
+    where ${x} is not null and ${y} is not null${filter.sql} ${order}`;
 
-  const res = await db.query<unknown[]>(sql, [], { rowMode: "array" });
+  const res = await db.query<unknown[]>(sql, filter.params, {
+    rowMode: "array",
+  });
   const n = res.rows.length;
   const xs = new Float64Array(n);
   const ys = new Float64Array(n);

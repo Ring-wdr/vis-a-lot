@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi";
 import {
   AggFnSchema,
   ColumnNameSchema,
+  FiltersSchema,
   LegendColumnSchema,
   RowSizeSchema,
 } from "../common/dataset";
@@ -62,6 +63,8 @@ export const ChartSpecSchema = z
     tooltip: z.array(ColumnNameSchema),
     grid: GridSchema,
     common: CommonPropsSchema,
+    /** draw할 때 적용하는 데이터 필터. 예전 history에는 없을 수 있다. */
+    filters: FiltersSchema.optional(),
   })
   .openapi("ChartSpec");
 

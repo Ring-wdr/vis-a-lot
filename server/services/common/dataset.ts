@@ -48,3 +48,37 @@ export const DatasetPathSchema = z.object({
     param: { name: "datasetId", in: "path" },
   }),
 });
+
+/** 숫자·시계열 컬럼 범위 필터. 시계열 값은 epoch ms. inverse면 범위 밖을 남긴다. */
+export const RangeFilterSchema = z
+  .object({
+    kind: z.literal("range"),
+    column: ColumnNameSchema,
+    min: z.number(),
+    max: z.number(),
+    inverse: z.boolean(),
+    includeNull: z.boolean(),
+  })
+  .refine((f) => f.min <= f.max, "min must be <= max")
+  .openapi("RangeFilter");
+
+/** 범주 컬럼 필터: 고른 값을 뺀다 (기본은 전부 포함). */
+export const ExcludeFilterSchema = z
+  .object({
+    kind: z.literal("exclude"),
+    column: ColumnNameSchema,
+    values: z.array(z.string()).max(50_000),
+  })
+  .openapi("ExcludeFilter");
+
+export const ChartFilterSchema = z
+  .union([RangeFilterSchema, ExcludeFilterSchema])
+  .openapi("ChartFilter");
+
+export const FiltersSchema = z
+  .array(ChartFilterSchema)
+  .max(COLUMNS.length)
+  .refine(
+    (fs) => new Set(fs.map((f) => f.column)).size === fs.length,
+    "one filter per column",
+  );

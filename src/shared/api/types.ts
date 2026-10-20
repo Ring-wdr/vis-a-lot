@@ -24,6 +24,7 @@ export type ColumnInfo = Data["ColumnInfo"];
 export type ColumnsResponse = Data["ColumnsResponse"];
 export type SplitCountResponse = Data["SplitCountResponse"];
 export type LegendValuesResponse = Data["LegendValuesResponse"];
+export type ColumnSummary = Data["ColumnSummary"];
 
 // ── chart ──────────────────────────────────────────────────────
 export type ColumnName = Chart["ColumnName"];
@@ -31,6 +32,9 @@ export type LegendColumn = Chart["LegendColumn"];
 export type AggFn = Chart["AggFn"];
 export type ChartType = Chart["ChartType"];
 export type ChartSpec = Chart["ChartSpec"];
+export type ChartFilter = Chart["ChartFilter"];
+export type RangeFilter = Chart["RangeFilter"];
+export type ExcludeFilter = Chart["ExcludeFilter"];
 export type CommonProps = Chart["CommonProps"];
 export type ItemSize = Chart["ItemSize"];
 export type ItemView = Chart["ItemView"];

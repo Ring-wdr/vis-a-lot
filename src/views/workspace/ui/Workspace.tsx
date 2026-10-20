@@ -18,6 +18,7 @@ import styles from "@/shared/ui/workspace.module.css";
 import { AppHeader } from "@/widgets/app-header/ui/AppHeader";
 import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
 import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
+import { FilterPanel } from "@/widgets/filter-panel/ui/FilterPanel";
 import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
 import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
 
@@ -87,10 +88,14 @@ export function Workspace() {
   const tab = useTabs((s) => s.tabs.find((t) => t.id === s.active[s.view]));
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
   const store = tab?.store ?? emptyHistoryStore;
+  const filterOpen = useTabs((s) => s.filterPanelOpen);
 
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
-      <div className={styles.workspace}>
+      <div
+        className={styles.workspace}
+        data-filter-open={filterOpen || undefined}
+      >
         <AppHeader />
         <TabBar view={view} />
         <aside className={styles.panel}>
@@ -99,6 +104,7 @@ export function Workspace() {
         <main className={styles.main}>
           <ChartGrid />
         </main>
+        {filterOpen && <FilterPanel />}
       </div>
     </WorkspaceScope>
   );

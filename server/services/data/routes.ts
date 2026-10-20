@@ -3,19 +3,21 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { BEARER, requireAuth } from "../common/auth";
 import {
+  ColumnNameSchema,
   DatasetPathSchema,
   LegendColumnSchema,
   RowSizeQuerySchema,
 } from "../common/dataset";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
+  ColumnSummarySchema,
   ColumnsResponseSchema,
   DataHealthSchema,
   DatasetListResponseSchema,
   DatasetStatusSchema,
   GenerateDatasetRequestSchema,
   LegendValuesResponseSchema,
-  SplitColumnsQuerySchema,
+  SplitCountRequestSchema,
   SplitCountResponseSchema,
 } from "./schemas";
 
@@ -83,20 +85,41 @@ export const columns = createRoute({
 });
 
 export const splitCount = createRoute({
-  method: "get",
+  method: "post",
   path: "/datasets/{datasetId}/split-count",
   tags,
-  summary: "split 조합 개수 (최대 개수 초과 검사)",
+  summary:
+    "split 조합 개수 (최대 개수 초과 검사). 필터가 있으면 필터를 적용해 센다",
   ...read,
   request: {
     params: DatasetPathSchema,
-    query: z.object({
-      rows: RowSizeQuerySchema,
-      cols: SplitColumnsQuerySchema,
-    }),
+    body: jsonBody(SplitCountRequestSchema),
   },
   responses: {
     200: jsonResponse(SplitCountResponseSchema, "조합 개수"),
+    ...badRequest,
+    ...authErrors,
+    ...notFound,
+    ...notReady,
+  },
+});
+
+export const columnSummary = createRoute({
+  method: "get",
+  path: "/datasets/{datasetId}/columns/{column}/summary",
+  tags,
+  summary: "필터용 컬럼 요약: 숫자·시계열은 범위와 null 수, 범주는 값별 행 수",
+  ...read,
+  request: {
+    params: DatasetPathSchema.extend({
+      column: ColumnNameSchema.openapi({
+        param: { name: "column", in: "path" },
+      }),
+    }),
+    query: z.object({ rows: RowSizeQuerySchema }),
+  },
+  responses: {
+    200: jsonResponse(ColumnSummarySchema, "컬럼 요약"),
     ...badRequest,
     ...authErrors,
     ...notFound,

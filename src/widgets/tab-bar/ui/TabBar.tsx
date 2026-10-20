@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { Filter, Plus, X } from "lucide-react";
 import { useStore } from "zustand";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { ROW_LABELS } from "@/entities/dataset/lib/labels";
@@ -10,6 +10,7 @@ import {
   type View,
   type WorkspaceTab,
 } from "@/entities/workspace/model/tabs-store";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import styles from "./TabBar.module.css";
 
 /** 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터 */
@@ -82,6 +83,25 @@ export function TabBar({ view }: { view: View }) {
           <Plus size={14} aria-hidden="true" />
         </button>
       )}
+      <FilterToggle />
     </div>
+  );
+}
+
+/** 탭 바 오른쪽: 필터 패널 열기/닫기. 지금 탭에 걸린 필터 수를 보여준다. */
+function FilterToggle() {
+  const open = useTabs((s) => s.filterPanelOpen);
+  const count = useWorkspace((s) => s.draft.filters?.length ?? 0);
+  return (
+    <button
+      type="button"
+      className={styles.filterToggle}
+      aria-pressed={open}
+      onClick={() => tabsStore.getState().toggleFilterPanel()}
+    >
+      <Filter size={13} aria-hidden="true" />
+      필터
+      {count > 0 && <span className={styles.badge}>{count}</span>}
+    </button>
   );
 }

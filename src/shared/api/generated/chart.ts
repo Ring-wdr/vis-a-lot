@@ -1420,6 +1420,7 @@ export type components = {
       tooltip: components["schemas"]["ColumnName"][];
       grid: components["schemas"]["Grid"];
       common: components["schemas"]["CommonProps"];
+      filters?: components["schemas"]["ChartFilter"][];
     };
     RowSize: 100000 | 500000 | 1000000;
     /** @enum {string} */
@@ -1441,6 +1442,24 @@ export type components = {
     AggFn: "avg" | "sum" | "count" | "min" | "max" | "median";
     /** @enum {string} */
     LegendColumn: "factory" | "line" | "sensor_type" | "shift" | "status";
+    ChartFilter:
+      | components["schemas"]["RangeFilter"]
+      | components["schemas"]["ExcludeFilter"];
+    RangeFilter: {
+      /** @enum {string} */
+      kind: "range";
+      column: components["schemas"]["ColumnName"];
+      min: number;
+      max: number;
+      inverse: boolean;
+      includeNull: boolean;
+    };
+    ExcludeFilter: {
+      /** @enum {string} */
+      kind: "exclude";
+      column: components["schemas"]["ColumnName"];
+      values: string[];
+    };
     ItemRestore: {
       view?: components["schemas"]["ItemView"];
       shapes: components["schemas"]["Shape"][];

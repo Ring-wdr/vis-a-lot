@@ -4,6 +4,7 @@
 import { DATASET_ID } from "@/shared/config/dataset";
 import { chartClient, dataClient } from "./clients";
 import type {
+  ChartFilter,
   ChartSpec,
   ColumnName,
   CommonProps,
@@ -90,10 +91,19 @@ export const api = {
       }),
     ),
 
-  splitCount: (rows: RowSize, cols: ColumnName[]) =>
+  splitCount: (rows: RowSize, cols: ColumnName[], filters?: ChartFilter[]) =>
     unwrap(
-      dataClient.GET("/datasets/{datasetId}/split-count", {
-        params: { path: dataset, query: { rows, cols: cols.join(",") } },
+      dataClient.POST("/datasets/{datasetId}/split-count", {
+        params: { path: dataset },
+        body: { rows, cols, filters },
+      }),
+    ),
+
+  /** 필터 패널: 아코디언을 열 때 그 컬럼의 범위나 값 목록을 받는다. */
+  columnSummary: (rows: RowSize, column: ColumnName) =>
+    unwrap(
+      dataClient.GET("/datasets/{datasetId}/columns/{column}/summary", {
+        params: { path: { ...dataset, column }, query: { rows } },
       }),
     ),
 

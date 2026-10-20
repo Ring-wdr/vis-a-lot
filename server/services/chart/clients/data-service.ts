@@ -2,7 +2,8 @@
 // 인증은 auth 서비스에서 받은 서비스 토큰(client credentials)으로 한다.
 
 import createClient, { type Middleware } from "openapi-fetch";
-import type { RowSize } from "../../../data/schema";
+import type { ChartFilter } from "../../../data/filters";
+import type { ColumnName, RowSize } from "../../../data/schema";
 import type { paths as AuthPaths } from "../generated/auth";
 import type { paths as DataPaths } from "../generated/data";
 
@@ -68,13 +69,15 @@ export const dataService = {
       }),
       "generate",
     ),
-  splitCount: async (rows: RowSize, cols: string[]) =>
+  splitCount: async (
+    rows: RowSize,
+    cols: ColumnName[],
+    filters?: ChartFilter[],
+  ) =>
     unwrap(
-      await data.GET("/datasets/{datasetId}/split-count", {
-        params: {
-          path: { datasetId: "iot" },
-          query: { rows, cols: cols.join(",") },
-        },
+      await data.POST("/datasets/{datasetId}/split-count", {
+        params: { path: { datasetId: "iot" } },
+        body: { rows, cols, filters },
       }),
       "split-count",
     ),

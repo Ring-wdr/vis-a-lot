@@ -35,6 +35,9 @@ type TabsState = {
   /** history 한 건을 탭으로 연다. 이미 열려 있으면 그 탭으로 간다. created면 새로 그려야 한다. */
   openHistory: (historyId: string) => { tab: WorkspaceTab; created: boolean };
   close: (id: string) => void;
+  /** 오른쪽 필터 패널. 탭을 바꿔도 열고 닫은 상태는 그대로 둔다. */
+  filterPanelOpen: boolean;
+  toggleFilterPanel: () => void;
 };
 
 function galleryTab(draft?: Partial<ChartSpec>): WorkspaceTab {
@@ -52,6 +55,9 @@ export const tabsStore = createStore<TabsState>((set, get) => ({
   tabs: [first],
   active: { gallery: first.id, history: undefined },
   setView: (view) => set({ view }),
+  filterPanelOpen: false,
+  toggleFilterPanel: () =>
+    set((s) => ({ filterPanelOpen: !s.filterPanelOpen })),
   activate: (id) => {
     const tab = get().tabs.find((t) => t.id === id);
     if (tab)

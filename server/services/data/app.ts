@@ -29,15 +29,23 @@ export const dataApp = createServiceApp()
     return c.json({ rows, columns }, 200);
   })
   .openapi(routes.splitCount, async (c) => {
-    const { rows, cols } = c.req.valid("query");
+    const { rows, cols, filters } = c.req.valid("json");
     if (!(await readyColumns(rows)))
       return apiError(c, 409, "dataset is not ready");
     const result = await db().call("splitCount", {
       rows,
       cols,
       limit: MAX_SPLIT_ITEMS,
+      filters,
     });
     return c.json({ ...result, limit: MAX_SPLIT_ITEMS }, 200);
+  })
+  .openapi(routes.columnSummary, async (c) => {
+    const { column } = c.req.valid("param");
+    const { rows } = c.req.valid("query");
+    if (!(await readyColumns(rows)))
+      return apiError(c, 409, "dataset is not ready");
+    return c.json(await db().call("columnSummary", { rows, column }), 200);
   })
   .openapi(routes.legendValues, async (c) => {
     const { rows, column } = c.req.valid("query");

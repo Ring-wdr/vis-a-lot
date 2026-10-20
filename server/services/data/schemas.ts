@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi";
 import {
   ColumnNameSchema,
   ColumnTypeSchema,
+  FiltersSchema,
   LegendColumnSchema,
   RowSizeSchema,
 } from "../common/dataset";
@@ -52,18 +53,6 @@ export const LegendValuesResponseSchema = z
   .object({ column: LegendColumnSchema, values: z.array(z.string()) })
   .openapi("LegendValuesResponse");
 
-export const SplitColumnsQuerySchema = z
-  .string()
-  .default("")
-  .transform((s) => s.split(",").filter(Boolean))
-  .pipe(z.array(ColumnNameSchema))
-  .openapi({
-    param: { name: "cols", in: "query" },
-    type: "string",
-    example: "factory,line",
-    description: "쉼표로 구분한 split 컬럼",
-  });
-
 export const DataHealthSchema = z
   .object({
     service: z.literal("data"),
@@ -74,3 +63,34 @@ export const DataHealthSchema = z
     }),
   })
   .openapi("DataHealth");
+
+export const SplitCountRequestSchema = z
+  .object({
+    rows: RowSizeSchema,
+    cols: z.array(ColumnNameSchema),
+    filters: FiltersSchema.optional(),
+  })
+  .openapi("SplitCountRequest");
+
+export const ColumnSummarySchema = z
+  .union([
+    z.object({
+      kind: z.literal("range"),
+      column: ColumnNameSchema,
+      type: z.enum(["number", "time"]),
+      /** 값이 하나도 없으면 null. 시계열은 epoch ms */
+      min: z.number().nullable(),
+      max: z.number().nullable(),
+      nullCount: z.number(),
+      count: z.number(),
+    }),
+    z.object({
+      kind: z.literal("values"),
+      column: ColumnNameSchema,
+      /** 값 순서대로, 값마다 행 수 */
+      values: z.array(z.object({ value: z.string(), count: z.number() })),
+      nullCount: z.number(),
+      count: z.number(),
+    }),
+  ])
+  .openapi("ColumnSummary");
