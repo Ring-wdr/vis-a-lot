@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { queryBarData, queryBoxData } from "../data/category-data";
 import { queryChartData, queryRowValues } from "../data/chart-data";
 import { DatasetManager } from "../data/datasets";
 import type { DbMethods } from "../protocol";
@@ -75,6 +76,13 @@ serveRpc<DbMethods>({
     const { db } = await ready;
     const data = await queryChartData(db, params);
     return transfer(data, [data.xs.buffer, data.ys.buffer, data.ids.buffer]);
+  },
+
+  async categoryData(params) {
+    const { db } = await ready;
+    return params.chartType === "bar"
+      ? queryBarData(db, params)
+      : queryBoxData(db, params);
   },
 
   async rowValues({ rows, rowId, columns }) {

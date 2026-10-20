@@ -6,6 +6,19 @@ export const SEED = 20261020;
 
 export const ROW_SIZES = [100_000, 500_000, 1_000_000] as const;
 
+/** bar의 통계 함수 */
+export const AGG_FNS = ["avg", "sum", "count", "min", "max", "median"] as const;
+export type AggFn = (typeof AGG_FNS)[number];
+
+export const AGG_LABELS: Record<AggFn, string> = {
+  avg: "평균",
+  sum: "합계",
+  count: "개수",
+  min: "최솟값",
+  max: "최댓값",
+  median: "중앙값",
+};
+
 /** split by 조합(= item)의 최대 개수 */
 export const MAX_SPLIT_ITEMS = 30_000;
 export type RowSize = (typeof ROW_SIZES)[number];
