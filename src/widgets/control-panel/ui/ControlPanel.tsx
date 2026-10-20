@@ -173,22 +173,6 @@ export function ControlPanel() {
         value={draft.splitBy}
         onChange={(splitBy) => updateDraft({ splitBy })}
       />
-      <label className={styles.inlineField}>
-        구분 기호
-        <input
-          value={draft.splitSeparator}
-          maxLength={5}
-          onChange={(e) => updateDraft({ splitSeparator: e.target.value })}
-        />
-        <span>
-          예:{" "}
-          {draft.splitBy.length > 1
-            ? ["A", "B", "C"]
-                .slice(0, draft.splitBy.length)
-                .join(draft.splitSeparator)
-            : "A"}
-        </span>
-      </label>
 
       <OrderedSelect
         label="tooltip"

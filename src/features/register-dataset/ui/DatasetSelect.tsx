@@ -6,7 +6,6 @@ import type { RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
 import { Select } from "@/shared/ui/Select";
 import styles from "@/shared/ui/workspace.module.css";
-import { openDataDialog } from "./DataDialog";
 
 const STATE_SUFFIX = {
   ready: "",
@@ -55,13 +54,6 @@ export function DatasetSelect({
           등록한 데이터가 없습니다. 그대로 draw하면 이 규모를 바로 만듭니다.
         </p>
       )}
-      <button
-        type="button"
-        className={styles.linkButton}
-        onClick={openDataDialog}
-      >
-        데이터 등록…
-      </button>
     </div>
   );
 }

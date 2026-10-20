@@ -7,7 +7,7 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import { workspaceStores } from "@/entities/workspace/model/workspace-store";
-import { CommonPropsPopover } from "@/features/common-props/ui/CommonPropsPopover";
+import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
@@ -44,7 +44,7 @@ function GallerySidebar() {
         <ControlPanel />
       </div>
       <div className={styles.panelFooter}>
-        <CommonPropsPopover />
+        <SettingsButton />
         <DrawButton />
       </div>
     </>
