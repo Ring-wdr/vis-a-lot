@@ -1,4 +1,5 @@
 import type { RenderMethods } from "../protocol";
+import { renderScatter } from "../render/scatter";
 import { serveRpc, transfer, type WorkerScope } from "../rpc";
 
 const workerName = (globalThis as unknown as WorkerScope).name;
@@ -51,6 +52,25 @@ serveRpc<RenderMethods>({
     const png = await blob.arrayBuffer();
     return transfer(
       { png, worker: workerName, ms: performance.now() - started },
+      [png],
+    );
+  },
+
+  async renderScatter(input, { progress }) {
+    const started = performance.now();
+    const canvas = new OffscreenCanvas(input.width, input.height);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("2d context unavailable");
+    const meta = renderScatter(ctx, input, (stage, ratio) =>
+      progress({ stage, ratio }),
+    );
+    progress({ stage: "encode", ratio: 0 });
+    const png = await (
+      await canvas.convertToBlob({ type: "image/png" })
+    ).arrayBuffer();
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, meta, worker: workerName, ms: performance.now() - started },
       [png],
     );
   },

@@ -1,7 +1,8 @@
 import { PGlite } from "@electric-sql/pglite";
+import { queryChartData } from "../data/chart-data";
 import { DatasetManager } from "../data/datasets";
 import type { DbMethods } from "../protocol";
-import { serveRpc } from "../rpc";
+import { serveRpc, transfer } from "../rpc";
 
 const started = performance.now();
 
@@ -63,5 +64,11 @@ serveRpc<DbMethods>({
   async datasetColumns({ rows }) {
     const { datasets } = await ready;
     return datasets.columns(rows);
+  },
+
+  async chartData(params) {
+    const { db } = await ready;
+    const data = await queryChartData(db, params);
+    return transfer(data, [data.xs.buffer, data.ys.buffer]);
   },
 });
