@@ -7,19 +7,37 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@electric-sql/pglite": "0.5.10",
+    "@tanstack/react-query": "5.104.4",
+    "d3-array": "3.2.4",
+    "d3-scale": "4.0.2",
+    "d3-time-format": "4.1.0",
+    "lz-string": "1.5.0",
+    "msw": "3.0.3",
     "next": "16.4.2",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zustand": "5.0.8"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@types/d3-array": "3.2.2",
+    "@types/d3-scale": "4.0.9",
+    "@types/d3-time-format": "4.0.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "5.0.5"
   },
-  "packageManager": "pnpm@12.14.0"
+  "packageManager": "pnpm@12.14.0",
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }

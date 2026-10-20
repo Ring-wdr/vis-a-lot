@@ -1,0 +1,44 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.main h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.main ul {
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.item figcaption {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #6b7280;
+}

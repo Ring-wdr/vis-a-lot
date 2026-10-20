@@ -1,0 +1,675 @@
+.workspace {
+  --ws-border: #e7e6e2;
+  --ws-surface: #fcfcfb;
+  --ws-panel: #f6f6f4;
+  --ws-text-secondary: #52514e;
+  --ws-text-muted: #8a8984;
+  --ws-accent: #2a78d6;
+
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-rows: 48px minmax(0, 1fr);
+  height: 100vh;
+  background: var(--ws-surface);
+  color: #0b0b0b;
+}
+
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ws-border);
+}
+
+.brand {
+  font-weight: 700;
+  width: 228px;
+}
+
+.modeBar {
+  display: flex;
+  gap: 4px;
+}
+
+.modeBar button,
+.chartTypes button,
+.secondaryButton {
+  border: 1px solid var(--ws-border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.modeBar button[aria-pressed="true"],
+.chartTypes button[aria-pressed="true"] {
+  border-color: var(--ws-accent);
+  color: var(--ws-accent);
+  background: #eef5fd;
+}
+
+.modeBar button:disabled,
+.chartTypes button:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.panel {
+  border-right: 1px solid var(--ws-border);
+  background: var(--ws-panel);
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  border: none;
+}
+
+.field > span,
+.field > legend {
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.field select {
+  padding: 5px 6px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.chartTypes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.chartTypes button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
+.drawButton {
+  border: none;
+  border-radius: 6px;
+  padding: 9px 12px;
+  background: var(--ws-accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton {
+  border: 1px solid #b42318;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #b42318;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.drawButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.main {
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+}
+
+.gridArea {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.empty {
+  color: var(--ws-text-muted);
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--ws-surface);
+}
+
+.itemToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--ws-border);
+  font-size: 12px;
+}
+
+.itemLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemBody {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itemBody img {
+  display: block;
+}
+
+.pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ws-text-muted);
+}
+
+.pending progress {
+  width: 120px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--ws-border);
+  border-top-color: var(--ws-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 32px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+}
+
+.footer progress {
+  flex: 1;
+  max-width: 360px;
+}
+
+.error {
+  color: #b42318;
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--ws-text-muted);
+  font-size: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 2px;
+  border: 1px solid var(--ws-border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+}
+
+.chipOrder {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ws-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.chip button {
+  border: none;
+  background: none;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.inlineField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+}
+
+.inlineField input {
+  width: 48px;
+  padding: 3px 6px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.pager button {
+  border: 1px solid var(--ws-border);
+  background: #fff;
+  border-radius: 6px;
+  width: 28px;
+  height: 26px;
+  cursor: pointer;
+}
+
+.pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tooltipLayer {
+  position: relative;
+  cursor: crosshair;
+}
+
+/* bar/boxplot은 점이 아니라 막대/상자를 고르므로 십자 대신 기본 커서 + 감싸는 사각형 */
+.tooltipLayer[data-hover="box"] {
+  cursor: default;
+}
+
+.hitBox {
+  position: absolute;
+  border: 2px solid #0b0b0b;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--ws-surface);
+  pointer-events: none;
+}
+
+.hitMarker {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 2px solid #0b0b0b;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--ws-surface);
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  padding: 8px 10px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(11 11 11 / 10%);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.tooltip dl {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tooltip dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ws-text-secondary);
+}
+
+.tooltip dd {
+  font-variant-numeric: tabular-nums;
+  color: #0b0b0b;
+}
+
+.tooltip .emphasis dt {
+  color: #0b0b0b;
+}
+
+.tooltip .emphasis dd {
+  font-weight: 600;
+}
+
+.itemActions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.itemActions button {
+  width: 24px;
+  height: 22px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--ws-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.itemActions button:hover:not(:disabled) {
+  border-color: var(--ws-border);
+  background: #fff;
+}
+
+.itemActions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.busyOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(252 252 251 / 70%);
+  cursor: progress;
+}
+
+.drawLayer {
+  position: relative;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.drawLayer[data-mode="text"] {
+  cursor: text;
+}
+
+.drawLayer img {
+  pointer-events: none;
+}
+
+.drawPreview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: rgb(11 11 11 / 6%);
+  stroke: #0b0b0b;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.drawPreview polyline,
+.drawPreview line {
+  fill: none;
+}
+
+.drawPreview .zoomRect {
+  fill: rgb(42 120 214 / 12%);
+  stroke: var(--ws-accent);
+  stroke-width: 1;
+}
+
+.textInput {
+  position: absolute;
+  transform: translateY(-50%);
+  width: 160px;
+  padding: 3px 6px;
+  border: 1px solid var(--ws-accent);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 240px;
+  padding: 12px;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(11 11 11 / 12%);
+}
+
+.popoverBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.swatch {
+  aspect-ratio: 1;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--ws-border);
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px #0b0b0b;
+}
+
+.swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.colorDot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: -1px;
+}
+
+.colorButton .colorDot {
+  margin: 0;
+}
+
+.colorDot[data-custom] {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 3px #0b0b0b;
+}
+
+.itemActions .colorButton {
+  display: inline-grid;
+  place-items: center;
+}
+
+.linkButton {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--ws-accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* resize 대기 중에는 기존 PNG를 칸 크기에 맞게 늘리거나 줄여 보여준다. */
+.tooltipLayer img,
+.drawLayer img {
+  width: 100%;
+  height: 100%;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.historyPanel {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.historyEntry {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.historyEntry:hover:not(:disabled) {
+  border-color: var(--ws-accent);
+}
+
+.historyEntry img,
+.historyThumbEmpty {
+  flex: none;
+  width: 96px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--ws-panel);
+}
+
+.historyText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.historyTitle {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.historyText .muted {
+  font-size: 11px;
+}
+
+.legendHitLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* PNG에 그려진 legend 항목 위에 겹치는 투명 버튼 */
+.legendHit {
+  position: absolute;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.legendHit:hover,
+.legendHit:focus-visible {
+  outline: 2px solid var(--ws-accent);
+  outline-offset: 1px;
+  background: rgb(42 120 214 / 8%);
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.legendList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legendSwatch {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--ws-border);
+  cursor: pointer;
+}
+
+/* body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다 */
+.tooltipPortal {
+  position: fixed;
+  z-index: 1000;
+}

@@ -1,0 +1,83 @@
+// 데이터셋 정의. 화면, API, 생성기가 모두 이 정의를 공유한다.
+
+export const DATASET_ID = "iot";
+export const GENERATOR_VERSION = 1;
+export const SEED = 20261020;
+
+export const ROW_SIZES = [100_000, 500_000, 1_000_000] as const;
+
+/** bar의 통계 함수 */
+export const AGG_FNS = ["avg", "sum", "count", "min", "max", "median"] as const;
+export type AggFn = (typeof AGG_FNS)[number];
+
+export const AGG_LABELS: Record<AggFn, string> = {
+  avg: "평균",
+  sum: "합계",
+  count: "개수",
+  min: "최솟값",
+  max: "최댓값",
+  median: "중앙값",
+};
+
+/**
+ * legend로 쓸 수 있는 컬럼. 팔레트 8색을 돌려쓰지 않도록 고유값이 8개 이하인 범주 컬럼만 허용한다.
+ */
+export const LEGEND_COLUMNS = [
+  "factory",
+  "line",
+  "sensor_type",
+  "shift",
+  "status",
+] as const satisfies readonly ColumnName[];
+export type LegendColumn = (typeof LEGEND_COLUMNS)[number];
+
+export function isLegendColumn(name: unknown): name is LegendColumn {
+  return (LEGEND_COLUMNS as readonly unknown[]).includes(name);
+}
+
+/** split by 조합(= item)의 최대 개수 */
+export const MAX_SPLIT_ITEMS = 30_000;
+export type RowSize = (typeof ROW_SIZES)[number];
+
+export function isRowSize(n: number): n is RowSize {
+  return (ROW_SIZES as readonly number[]).includes(n);
+}
+
+export const COLUMN_TYPES = ["time", "string", "number"] as const;
+export type ColumnType = (typeof COLUMN_TYPES)[number];
+
+export type ColumnDef = { name: string; type: ColumnType; label: string };
+
+/** 순서가 곧 테이블 컬럼 순서이자 COPY CSV의 필드 순서다. */
+export const COLUMNS = [
+  { name: "ts", type: "time", label: "측정 시각" },
+  { name: "factory", type: "string", label: "공장" },
+  { name: "line", type: "string", label: "라인" },
+  { name: "machine", type: "string", label: "설비" },
+  { name: "sensor_type", type: "string", label: "센서 종류" },
+  { name: "shift", type: "string", label: "근무조" },
+  { name: "lot_id", type: "string", label: "LOT" },
+  { name: "status", type: "string", label: "상태" },
+  { name: "value", type: "number", label: "측정값" },
+  { name: "temperature_env", type: "number", label: "주변 온도" },
+  { name: "load_pct", type: "number", label: "부하율(%)" },
+] as const satisfies readonly ColumnDef[];
+
+export type ColumnName = (typeof COLUMNS)[number]["name"];
+
+const SQL_TYPES: Record<ColumnType, string> = {
+  time: "timestamptz not null",
+  string: "text not null",
+  number: "double precision",
+};
+
+export function readingsTable(rows: RowSize) {
+  return `readings_${rows}`;
+}
+
+export function createReadingsSql(rows: RowSize) {
+  const cols = COLUMNS.map((c) => `${c.name} ${SQL_TYPES[c.type]}`).join(
+    ",\n  ",
+  );
+  return `create table ${readingsTable(rows)} (\n  ${cols}\n)`;
+}
