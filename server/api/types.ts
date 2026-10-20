@@ -115,6 +115,8 @@ export type CreateChartRequest = {
   restore?: Record<string, ItemRestore>;
   /** 이어서 기록할 history. 없으면 새로 만든다. */
   historyId?: string;
+  /** false면 history에 남기지 않는다 (history 다시 보기). historyId는 빈 문자열로 온다. */
+  record?: boolean;
 };
 export type CreateChartResponse = {
   chartId: string;

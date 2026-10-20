@@ -81,7 +81,8 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 | `load_pct` | 숫자 | — | 설비 부하율 |
 
 ### 3.3 행 수 전환
-- 행 수(10만 / 50만 / 100만)는 고를 때 그 규모의 데이터를 생성한다. 한 번 만든 데이터는 IndexedDB에 남는다.
+- 행 수(10만 / 50만 / 100만)는 상단 `data` 팝업에서 등록한다(mock: 업로드 대신 서버가 시드로 생성). 한 번 만든 데이터는 IndexedDB에 남는다.
+- 왼쪽 패널의 데이터 select에서는 등록한 규모만 고를 수 있다.
 - history에는 몇 건짜리 데이터였는지 함께 저장한다. 불러올 때 그 데이터가 없으면 생성한다.
 - 데이터가 아직 없어도 draw 버튼은 누를 수 있다. 이때 job은 `init` 상태(spinner만 표시)로 기다리고, 데이터 생성이 끝난 뒤부터 `progress`로 넘어간다.
 
@@ -93,10 +94,11 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [일반] [확대] [사각형] [선] [자유곡선] [텍스트]   ← 모드 바       │
+│ [data] [gallery] [history]   [↖][🔍][□][/][✎][T] ← 모드 바   │
 ├──────────────────┬───────────────────────────────────────────┤
-│ 차트 종류 (아이콘)  │  ┌────────┐ ┌────────┐ ┌────────┐         │
-│ grid 1x1 ~ 10x10 │  │toolbar │ │toolbar │ │toolbar │         │
+│ 데이터    [▼]     │  ┌────────┐ ┌────────┐ ┌────────┐         │
+│ 차트 종류 (아이콘)  │  │toolbar │ │toolbar │ │toolbar │         │
+│ grid [▦ 3 x 3]   │  │        │ │        │ │        │         │
 │ x        [▼]     │  │  PNG   │ │  PNG   │ │  PNG   │         │
 │ y        [▼]     │  └────────┘ └────────┘ └────────┘         │
 │ 통계 함수 [▼]      │                                           │
@@ -108,8 +110,12 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 └──────────────────┴───────────────────────────────────────────┘
 ```
 
-- **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트
-- **왼쪽 패널:** 차트 종류, grid 크기, x, y, 통계 함수(bar일 때만), split by, tooltip, 공통 속성(popover), draw 버튼
+- **상단 바:** `data`(데이터 등록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 모드 바, 링크 복사
+- **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트. 아이콘으로 표시하고 이름은 title로 보여준다
+- **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, 통계 함수(bar일 때만), split by, tooltip. 공통 속성(popover)과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
+- **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
+- **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 고른다. 정사각형이라 올린 칸의 행·열 중 큰 쪽이 n이 된다
+- **팝업:** 모달 팝업(알림, data 등록)은 overlay-kit으로 띄워 본문 상태와 분리한다. 버튼에 붙는 popover는 네이티브 popover API를 쓴다
 - **item 툴바:** 축소, 확대 초기화, 도형 undo, 도형 전체 삭제, 개별 색상
 
 ### 4.2 차트 종류
@@ -233,7 +239,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
 | 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
 | split 개수 확인 | `GET /datasets/:id/split-count?cols=a,b,c` | 조합 수 (30,000개 초과 검사) |
-| 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`<br>응답: `chartId`, `jobId`, `historyId` |
+| 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |
 | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }` |
 | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
 | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
@@ -256,6 +262,9 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - 브라우저(IndexedDB)에만 보관한다. 서버 비용은 0원이다.
 - draw 한 번에 한 건이 생긴다. 그 뒤의 확대, 도형, 개별 색상, grid 변경은 같은 건에 덧붙인다. resize는 기록하지 않는다.
 - 저장 내용: 행 수, 생성기 버전, 차트 설정, 공통/개별 속성, 도형, 확대 상태, item별 최종 상태(`cancelled` 포함), 썸네일.
+- `history` 화면: 왼쪽 목록에서 고르면 그 차트를 다시 그려 보여준다. 설정은 보기 전용(select disabled)이고 모드는 일반(툴팁)만, item 툴바는 숨긴다. 다시 보기는 history에 기록하지 않는다.
+- `gallery에서 편집`을 누르면 그 차트를 gallery로 가져가고, 이후 변경은 그 history 건에 이어서 기록한다.
+- gallery와 history는 작업 상태를 따로 들고 있어 tab을 오가도 각자 보던 차트가 남는다.
 - 공유는 URL에 설정을 담아서 한다. 시드가 고정이라 같은 URL이면 같은 차트가 다시 만들어진다.
 
 ---
