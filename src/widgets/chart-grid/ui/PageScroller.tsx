@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type PointerEvent as ReactPointerEvent,
   type Ref,
   useEffect,
   useImperativeHandle,
@@ -9,14 +10,21 @@ import {
   useState,
 } from "react";
 import { throttle } from "@/shared/lib/throttle";
-import styles from "@/shared/ui/workspace.module.css";
+import {
+  clampPage,
+  createWheelAccumulator,
+  pageAt,
+  thumbSize,
+  thumbTop,
+} from "../lib/page-scroll";
+import styles from "./PageScroller.module.css";
 
-/** 브라우저가 다룰 수 있는 요소 높이를 넘지 않도록 트랙 길이를 제한한다 (Firefox는 약 1,700만 px). */
-const MAX_TRACK_PX = 8_000_000;
-/** 서버에서 페이지를 받아오는 간격. 휙 내려도 이 간격으로만 조회한다. */
+/** 서버에서 페이지를 받아오는 간격. 빠르게 넘겨도 이 간격으로만 조회한다. */
 const FETCH_THROTTLE_MS = 200;
-/** 스크롤이 멈추고 이만큼 지나면 페이지 경계에 맞춘다. */
-const SETTLE_MS = 150;
+/** 화살표·트랙을 누르고 있으면 이만큼 기다린 뒤 */
+const REPEAT_DELAY_MS = 350;
+/** 이 간격으로 계속 넘긴다 (Windows 스크롤바와 같은 감각) */
+const REPEAT_INTERVAL_MS = 60;
 
 export type PageScrollerHandle = {
   /** grid 위에서 굴린 휠을 이 스크롤바로 넘긴다. */
@@ -24,14 +32,21 @@ export type PageScrollerHandle = {
 };
 
 /**
- * grid 오른쪽의 페이지 스크롤바. 트랙 길이가 페이지 수에 비례해 thumb 위치가 곧 페이지다.
- * 스크롤하는 동안 보이는 페이지(onViewPage)는 바로 바꾸고, 서버 조회 페이지(onPage)는
- * throttle로만 바꿔 100페이지를 한 번에 내려도 조회가 100번 일어나지 않게 한다.
+ * grid 오른쪽의 페이지 스크롤바. 네이티브 스크롤 대신 위/아래 화살표, 트랙, thumb을 직접 그린다.
+ * thumb의 한 칸이 곧 한 페이지다.
+ *
+ * - 화살표: 한 페이지. 누르고 있으면 잠시 뒤부터 계속 넘긴다.
+ * - 트랙: 누른 쪽으로 한 페이지씩, thumb이 포인터에 닿을 때까지 계속 넘긴다.
+ * - thumb 끌기: 포인터를 따라가고, 놓으면 페이지 위치에 맞춘다.
+ * - 휠: 굴린 양을 모아 일정량마다 한 페이지. 키보드: ↑↓, PageUp/PageDown, Home/End.
+ *
+ * 보이는 페이지(onViewPage)는 바로 바꾸고, 서버 조회 페이지(onPage)는 throttle로만 바꿔
+ * 한 번에 많이 넘겨도 조회가 몇 번만 일어나게 한다.
  */
 export function PageScroller({
   ref,
   controls,
-  page,
+  viewPage,
   totalPages,
   onPage,
   onViewPage,
@@ -39,102 +54,201 @@ export function PageScroller({
   ref?: Ref<PageScrollerHandle>;
   /** 스크롤바가 넘기는 grid의 id */
   controls: string;
-  page: number;
+  /** 지금 보이는 페이지 */
+  viewPage: number;
   totalPages: number;
   onPage: (page: number) => void;
   onViewPage: (page: number) => void;
 }) {
-  const el = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(0);
-  // 페이지 하나에 해당하는 트랙 길이. 페이지가 아주 많으면 줄인다.
-  const unit = Math.max(1, Math.min(height, MAX_TRACK_PX / totalPages));
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [track, setTrack] = useState(0);
+  /** thumb을 끄는 동안의 위치. 놓으면 페이지 위치로 돌아간다. */
+  const [dragTop, setDragTop] = useState<number | null>(null);
+  const dragOffset = useRef(0);
+  const current = useRef(viewPage);
+  current.current = viewPage;
   const callbacks = useRef({ onPage, onViewPage });
   callbacks.current = { onPage, onViewPage };
-  /** 코드로 옮긴 위치. 그때 나는 scroll 이벤트는 사용자 스크롤이 아니므로 무시한다. */
-  const programmatic = useRef<number | null>(null);
-  const settleTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const repeatTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const wheelPages = useMemo(() => createWheelAccumulator(), []);
 
   const fetchPage = useMemo(
     () =>
       throttle((p: number) => callbacks.current.onPage(p), FETCH_THROTTLE_MS),
     [],
   );
+
+  const stopRepeat = () => {
+    clearTimeout(repeatTimer.current);
+    clearInterval(repeatTimer.current);
+    repeatTimer.current = undefined;
+  };
   useEffect(
     () => () => {
       fetchPage.cancel();
-      clearTimeout(settleTimer.current);
+      clearTimeout(repeatTimer.current);
+      clearInterval(repeatTimer.current);
     },
     [fetchPage],
   );
 
-  const scrollTo = (top: number) => {
-    const s = el.current;
-    if (!s || Math.abs(s.scrollTop - top) < 1) return;
-    programmatic.current = top;
-    s.scrollTop = top;
+  /** 페이지로 옮긴다. 이미 그 페이지면 false (계속 넘기기를 멈추는 신호) */
+  const go = (next: number) => {
+    const page = clampPage(next, totalPages);
+    if (page === current.current) return false;
+    current.current = page;
+    callbacks.current.onViewPage(page);
+    fetchPage(page);
+    return true;
+  };
+
+  /** 한 번 넘기고, 누르고 있으면 잠시 뒤부터 step이 false를 돌려줄 때까지 계속 넘긴다. */
+  const startRepeat = (step: () => boolean) => {
+    stopRepeat();
+    if (!step()) return;
+    repeatTimer.current = setTimeout(() => {
+      repeatTimer.current = setInterval(() => {
+        if (!step()) stopRepeat();
+      }, REPEAT_INTERVAL_MS);
+    }, REPEAT_DELAY_MS);
   };
 
   useImperativeHandle(ref, () => ({
     wheel: (deltaY) => {
-      // 휠 이동량은 화면 높이 기준이므로 줄어든 트랙 길이에 맞춰 환산한다.
-      if (el.current && height > 0)
-        el.current.scrollTop += deltaY * (unit / height);
+      const pages = wheelPages(deltaY);
+      if (pages !== 0) go(current.current + pages);
     },
   }));
 
-  // 페이지가 밖에서 바뀌면(이전/다음 버튼, grid 변경) 스크롤 위치를 맞춘다.
   useEffect(() => {
-    const s = el.current;
-    if (!s) return;
-    if (Math.round(s.scrollTop / unit) !== page) scrollTo(page * unit);
-  });
-
-  useEffect(() => {
-    const s = el.current;
-    if (!s) return;
+    const el = trackRef.current;
+    if (!el) return;
     const observer = new ResizeObserver(([entry]) =>
-      setHeight(entry.contentRect.height),
+      setTrack(entry.contentRect.height),
     );
-    observer.observe(s);
+    observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
+  const disabled = totalPages <= 1;
+  const thumb = thumbSize(track, totalPages);
+  const top = dragTop ?? thumbTop(track, thumb, viewPage, totalPages);
+
+  /** 누르는 동안 pointer를 잡아 버튼 밖에서 떼도 멈추게 한다. */
+  const hold = (e: ReactPointerEvent<HTMLElement>, step: () => boolean) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    startRepeat(step);
+  };
+
+  const onTrackDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget || disabled) return;
+    const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
+    // 누른 쪽으로 한 페이지씩, thumb이 포인터 위치에 닿으면 멈춘다.
+    const target = pageAt(track, thumb, y - thumb / 2, totalPages);
+    const dir = y < top ? -1 : 1;
+    hold(e, () => {
+      const page = current.current;
+      if (dir < 0 ? page <= target : page >= target) return false;
+      return go(page + dir);
+    });
+  };
+
+  const onThumbDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const rect = trackRef.current?.getBoundingClientRect();
+    dragOffset.current = e.clientY - (rect?.top ?? 0) - top;
+    setDragTop(top);
+  };
+
+  const onThumbMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragTop === null) return;
+    const rect = trackRef.current?.getBoundingClientRect();
+    const next = Math.min(
+      track - thumb,
+      Math.max(0, e.clientY - (rect?.top ?? 0) - dragOffset.current),
+    );
+    setDragTop(next);
+    go(pageAt(track, thumb, next, totalPages));
+  };
+
+  const keyStep = Math.max(1, Math.round(totalPages / 10));
+
   return (
     <div
-      ref={el}
-      className={styles.pageScroller}
+      className={styles.scrollbar}
       role="scrollbar"
       aria-controls={controls}
       aria-orientation="vertical"
       aria-label="페이지"
       aria-valuemin={1}
       aria-valuemax={totalPages}
-      aria-valuenow={page + 1}
-      tabIndex={totalPages > 1 ? 0 : -1}
-      onScroll={(e) => {
-        const top = e.currentTarget.scrollTop;
-        if (
-          programmatic.current !== null &&
-          Math.abs(top - programmatic.current) < 1
-        ) {
-          programmatic.current = null;
-          return;
-        }
-        programmatic.current = null;
-        const next = Math.min(
-          totalPages - 1,
-          Math.max(0, Math.round(top / unit)),
-        );
-        callbacks.current.onViewPage(next);
-        fetchPage(next);
-        clearTimeout(settleTimer.current);
-        settleTimer.current = setTimeout(
-          () => scrollTo(next * unit),
-          SETTLE_MS,
-        );
+      aria-valuenow={viewPage + 1}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : 0}
+      onWheel={(e) => {
+        const pages = wheelPages(e.deltaY);
+        if (pages !== 0) go(current.current + pages);
+      }}
+      onKeyDown={(e) => {
+        const moves: Record<string, number> = {
+          ArrowUp: current.current - 1,
+          ArrowDown: current.current + 1,
+          PageUp: current.current - keyStep,
+          PageDown: current.current + keyStep,
+          Home: 0,
+          End: totalPages - 1,
+        };
+        if (!(e.key in moves)) return;
+        e.preventDefault();
+        go(moves[e.key]);
       }}
     >
-      <div style={{ height: totalPages * unit }} />
+      <button
+        type="button"
+        tabIndex={-1}
+        className={styles.arrow}
+        data-dir="up"
+        aria-label="이전 페이지"
+        disabled={disabled || viewPage <= 0}
+        onPointerDown={(e) => hold(e, () => go(current.current - 1))}
+        onPointerUp={stopRepeat}
+        onPointerCancel={stopRepeat}
+      />
+      <div
+        ref={trackRef}
+        className={styles.track}
+        onPointerDown={onTrackDown}
+        onPointerUp={stopRepeat}
+        onPointerCancel={stopRepeat}
+      >
+        {!disabled && (
+          <div
+            className={styles.thumb}
+            data-dragging={dragTop !== null || undefined}
+            // thumb 길이와 위치는 페이지 수와 현재 페이지로 계산한 값이다.
+            style={{ height: thumb, transform: `translateY(${top}px)` }}
+            onPointerDown={onThumbDown}
+            onPointerMove={onThumbMove}
+            onPointerUp={() => setDragTop(null)}
+            onPointerCancel={() => setDragTop(null)}
+          />
+        )}
+      </div>
+      <button
+        type="button"
+        tabIndex={-1}
+        className={styles.arrow}
+        data-dir="down"
+        aria-label="다음 페이지"
+        disabled={disabled || viewPage >= totalPages - 1}
+        onPointerDown={(e) => hold(e, () => go(current.current + 1))}
+        onPointerUp={stopRepeat}
+        onPointerCancel={stopRepeat}
+      />
     </div>
   );
 }

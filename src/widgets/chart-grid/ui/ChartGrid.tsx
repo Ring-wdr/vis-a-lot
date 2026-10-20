@@ -153,7 +153,7 @@ export function ChartGrid() {
             <PageScroller
               ref={scroller}
               controls={gridId}
-              page={page}
+              viewPage={viewPage}
               totalPages={totalPages}
               onPage={setPage}
               onViewPage={setViewPage}

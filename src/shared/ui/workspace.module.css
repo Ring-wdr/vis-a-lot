@@ -356,34 +356,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* grid 오른쪽 페이지 스크롤바. macOS의 사라지는 스크롤바 대신 항상 보이게 그린다. */
-.pageScroller {
-  flex: none;
-  width: 12px;
-  overflow-x: hidden;
-  overflow-y: scroll;
-  border-radius: 6px;
-  background: var(--ws-panel);
-  scrollbar-width: thin;
-  scrollbar-color: var(--ws-text-muted) transparent;
-  outline: none;
-}
-
-.pageScroller:focus-visible {
-  box-shadow: 0 0 0 2px var(--ws-accent);
-}
-
-.pageScroller::-webkit-scrollbar {
-  width: 12px;
-}
-
-.pageScroller::-webkit-scrollbar-thumb {
-  min-height: 24px;
-  border: 3px solid var(--ws-panel);
-  border-radius: 6px;
-  background: var(--ws-text-muted);
-}
-
 .item {
   display: flex;
   flex-direction: column;
