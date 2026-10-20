@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
@@ -58,10 +58,13 @@ export function ChartGrid() {
   const gridId = useId();
   // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라온다.
   const [viewPage, setViewPage] = useState(page);
-  const moving = viewPage !== page;
+  // page는 zustand store 값이라 transition으로 감쌀 수 없어(외부 store 갱신은 항상 동기),
+  // 조회와 item 렌더는 deferred 값으로 해 스크롤바 조작보다 뒤로 미룬다.
+  const deferredPage = useDeferredValue(page);
+  const moving = viewPage !== deferredPage;
   const grid = current?.spec.grid ?? { rows: 1, cols: 1 };
   const pageSize = grid.rows * grid.cols;
-  const job = useJob(current?.jobId, page, pageSize);
+  const job = useJob(current?.jobId, deferredPage, pageSize);
   // 하단 진행률과 job 종료 여부는 job 전체 long polling으로 받는다.
   const progress = useJobProgress(current?.jobId);
   const totalItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;

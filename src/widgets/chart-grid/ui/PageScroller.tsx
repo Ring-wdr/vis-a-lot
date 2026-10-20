@@ -3,6 +3,7 @@
 import {
   type PointerEvent as ReactPointerEvent,
   type Ref,
+  startTransition,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -10,6 +11,7 @@ import {
   useState,
 } from "react";
 import { throttle } from "@/shared/lib/throttle";
+import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import {
   clampPage,
   createWheelAccumulator,
@@ -40,8 +42,9 @@ export type PageScrollerHandle = {
  * - thumb 끌기: 포인터를 따라가고, 놓으면 페이지 위치에 맞춘다.
  * - 휠: 굴린 양을 모아 일정량마다 한 페이지. 키보드: ↑↓, PageUp/PageDown, Home/End.
  *
- * 보이는 페이지(onViewPage)는 바로 바꾸고, 서버 조회 페이지(onPage)는 throttle로만 바꿔
- * 한 번에 많이 넘겨도 조회가 몇 번만 일어나게 한다.
+ * thumb 위치는 이 컴포넌트의 state로 바로 옮기고, 페이지가 바뀌어 grid를 다시 그리는 일
+ * (onViewPage)은 transition으로 미뤄 grid 렌더가 무거워도 thumb이 끊기지 않게 한다.
+ * 서버 조회 페이지(onPage)는 throttle로만 바꿔 한 번에 많이 넘겨도 조회가 몇 번만 일어나게 한다.
  */
 export function PageScroller({
   ref,
@@ -65,17 +68,24 @@ export function PageScroller({
   /** thumb을 끄는 동안의 위치. 놓으면 페이지 위치로 돌아간다. */
   const [dragTop, setDragTop] = useState<number | null>(null);
   const dragOffset = useRef(0);
-  const current = useRef(viewPage);
-  current.current = viewPage;
-  const callbacks = useRef({ onPage, onViewPage });
-  callbacks.current = { onPage, onViewPage };
+  /** thumb과 화살표가 따르는 페이지. grid보다 먼저(긴급하게) 바뀐다. */
+  const [shownPage, setShownPage] = useState(viewPage);
+  const current = useRef(shownPage);
+  current.current = shownPage;
+  // 밖에서 페이지가 바뀌면(이전/다음 버튼, grid 변경) 따라간다.
+  useEffect(() => setShownPage(viewPage), [viewPage]);
+  const onPageRef = useCallbackRef(onPage);
+  const onViewPageRef = useCallbackRef(onViewPage);
   const repeatTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const wheelPages = useMemo(() => createWheelAccumulator(), []);
 
   const fetchPage = useMemo(
     () =>
-      throttle((p: number) => callbacks.current.onPage(p), FETCH_THROTTLE_MS),
-    [],
+      throttle(
+        (p: number) => startTransition(() => onPageRef(p)),
+        FETCH_THROTTLE_MS,
+      ),
+    [onPageRef],
   );
 
   const stopRepeat = () => {
@@ -97,7 +107,8 @@ export function PageScroller({
     const page = clampPage(next, totalPages);
     if (page === current.current) return false;
     current.current = page;
-    callbacks.current.onViewPage(page);
+    setShownPage(page);
+    startTransition(() => onViewPageRef(page));
     fetchPage(page);
     return true;
   };
@@ -132,7 +143,7 @@ export function PageScroller({
 
   const disabled = totalPages <= 1;
   const thumb = thumbSize(track, totalPages);
-  const top = dragTop ?? thumbTop(track, thumb, viewPage, totalPages);
+  const top = dragTop ?? thumbTop(track, thumb, shownPage, totalPages);
 
   /** 누르는 동안 pointer를 잡아 버튼 밖에서 떼도 멈추게 한다. */
   const hold = (e: ReactPointerEvent<HTMLElement>, step: () => boolean) => {
@@ -186,7 +197,7 @@ export function PageScroller({
       aria-label="페이지"
       aria-valuemin={1}
       aria-valuemax={totalPages}
-      aria-valuenow={viewPage + 1}
+      aria-valuenow={shownPage + 1}
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : 0}
       onWheel={(e) => {
@@ -213,7 +224,7 @@ export function PageScroller({
         className={styles.arrow}
         data-dir="up"
         aria-label="이전 페이지"
-        disabled={disabled || viewPage <= 0}
+        disabled={disabled || shownPage <= 0}
         onPointerDown={(e) => hold(e, () => go(current.current - 1))}
         onPointerUp={stopRepeat}
         onPointerCancel={stopRepeat}
@@ -244,7 +255,7 @@ export function PageScroller({
         className={styles.arrow}
         data-dir="down"
         aria-label="다음 페이지"
-        disabled={disabled || viewPage >= totalPages - 1}
+        disabled={disabled || shownPage >= totalPages - 1}
         onPointerDown={(e) => hold(e, () => go(current.current + 1))}
         onPointerUp={stopRepeat}
         onPointerCancel={stopRepeat}
