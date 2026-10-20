@@ -4,6 +4,7 @@
 import { extent } from "d3-array";
 import { scaleLinear, scaleUtc } from "d3-scale";
 import { utcFormat } from "d3-time-format";
+import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
 
 const KST_OFFSET_MS = 9 * 3_600_000;
@@ -43,7 +44,12 @@ export type ScatterInput = {
   ys: Float64Array;
   ids: Float64Array;
   color: string;
+  /** 확대한 범위. 없으면 데이터 전체 범위를 보기 좋게 맞춘다. */
+  view?: ItemView;
+  shapes: readonly Shape[];
 };
+
+export type ItemView = { x: [number, number]; y: [number, number] };
 
 export type RenderStage = "aggregate" | "render";
 export type ProgressFn = (stage: RenderStage, ratio: number) => void;
@@ -80,9 +86,11 @@ export function renderScatter(
   ctx.fillRect(0, 0, width, height);
 
   // ── 축 범위와 눈금 (aggregate) ─────────────────────────────────
-  const xDomain = niceDomain(xs);
-  const yDomain = niceDomain(ys);
-  const y = scaleLinear().domain(yDomain).nice(5);
+  const { view } = input;
+  const xDomain = view?.x ?? niceDomain(xs);
+  const yDomain = view?.y ?? niceDomain(ys);
+  const y = scaleLinear().domain(yDomain);
+  if (!view) y.nice(5);
   const yTicks = y.ticks(5);
   const yFormat = y.tickFormat(5);
 
@@ -108,8 +116,8 @@ export function renderScatter(
           .range([plot.left, plot.left + plot.width])
       : scaleLinear()
           .domain(xDomain)
-          .nice(5)
           .range([plot.left, plot.left + plot.width]);
+  if (!view && input.xKind !== "time") x.nice(5);
   const xTicks = x.ticks(Math.max(2, Math.floor(plot.width / 90))) as (
     | number
     | Date
@@ -223,6 +231,14 @@ export function renderScatter(
       if (i % CHUNK === 0) progress("render", i / n);
     }
   }
+  // 도형은 점 위에, 같은 그림 영역 clip 안에 그린다.
+  ctx.globalAlpha = 1;
+  drawShapes(
+    ctx,
+    input.shapes,
+    (v) => x(v) as number,
+    (v) => y(v),
+  );
   ctx.restore();
   progress("render", 1);
 
