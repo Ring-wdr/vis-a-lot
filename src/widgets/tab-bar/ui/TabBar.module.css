@@ -18,11 +18,12 @@
   scrollbar-width: thin;
 }
 
+/* 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다. */
 .tab {
   display: flex;
   align-items: center;
   flex: none;
-  max-width: 240px;
+  width: 200px;
   height: 30px;
   margin-bottom: -1px;
   border: 1px solid transparent;
@@ -44,6 +45,7 @@
 .select {
   display: flex;
   align-items: center;
+  flex: 1;
   min-width: 0;
   height: 100%;
   padding: 0 4px 0 12px;

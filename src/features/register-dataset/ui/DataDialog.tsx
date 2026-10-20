@@ -65,6 +65,11 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
       </p>
 
       <table className={styles.table}>
+        <colgroup>
+          <col className={styles.colSize} />
+          <col />
+          <col className={styles.colAction} />
+        </colgroup>
         <thead>
           <tr>
             <th>규모</th>

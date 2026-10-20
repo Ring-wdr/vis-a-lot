@@ -92,10 +92,7 @@ export function Workspace() {
 
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
-      <div
-        className={styles.workspace}
-        data-filter-open={filterOpen || undefined}
-      >
+      <div className={styles.workspace}>
         <AppHeader />
         <TabBar view={view} />
         <aside className={styles.panel}>
@@ -104,7 +101,11 @@ export function Workspace() {
         <main className={styles.main}>
           <ChartGrid />
         </main>
-        {filterOpen && <FilterPanel />}
+        {filterOpen && (
+          <div className={styles.filterDrawer}>
+            <FilterPanel />
+          </div>
+        )}
       </div>
     </WorkspaceScope>
   );

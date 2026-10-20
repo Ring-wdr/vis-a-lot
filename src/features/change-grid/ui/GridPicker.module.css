@@ -4,8 +4,10 @@
   gap: 8px;
 }
 
+/* 10 x 10 칸 (GridPicker의 MAX) */
 .cells {
   display: grid;
+  grid-template-columns: repeat(10, 1fr);
   gap: 2px;
 }
 

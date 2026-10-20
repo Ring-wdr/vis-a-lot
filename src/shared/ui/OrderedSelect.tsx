@@ -28,7 +28,6 @@ export type Option<T extends string> = { value: T; label: string };
 /** 항목 높이를 고정해야 clientY만으로 포인터 아래 index를 바로 계산할 수 있다. */
 const ROW_HEIGHT = 28;
 const LIST_PADDING = 4;
-const LIST_MAX_HEIGHT = 280;
 /** 드래그 중 가장자리에서 이 거리 안이면 자동 스크롤한다. */
 const EDGE = 24;
 /** 자동 스크롤 최고 속도(px/frame). 가장자리 밖으로 멀어질수록 이 값에 가까워진다. */
@@ -236,12 +235,10 @@ export function OrderedSelect<T extends string>({
                 aria-label={`${label} 옵션`}
                 className={styles.list}
                 data-dragging={preview ? "" : undefined}
-                style={{
-                  height: Math.min(LIST_MAX_HEIGHT, totalSize),
-                  display: filtered.length === 0 ? "none" : undefined,
-                }}
+                hidden={filtered.length === 0}
                 {...drag.listProps}
               >
+                {/* 전체 높이와 줄 위치는 가상 스크롤이 계산한 값이라 CSS로 정할 수 없다. */}
                 <div
                   role="presentation"
                   className={styles.sizer}
@@ -260,10 +257,7 @@ export function OrderedSelect<T extends string>({
                         className={styles.option}
                         aria-setsize={filtered.length}
                         aria-posinset={row.index + 1}
-                        style={{
-                          height: ROW_HEIGHT,
-                          transform: `translateY(${row.start}px)`,
-                        }}
+                        style={{ transform: `translateY(${row.start}px)` }}
                         // 포인터 선택은 listbox에서 직접 판정하므로 Base UI의 press 선택을 끈다.
                         // detail === 0인 click은 Base UI가 Enter 키로 보내는 것이라 그대로 둔다.
                         onClick={(e) => {

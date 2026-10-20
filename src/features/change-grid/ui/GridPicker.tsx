@@ -96,7 +96,6 @@ export function GridPicker() {
           <div className={styles.picker}>
             <div
               className={styles.cells}
-              style={{ gridTemplateColumns: `repeat(${MAX}, 1fr)` }}
               onPointerLeave={() => setHover(undefined)}
             >
               {CELLS.map(({ row, col }) => {

@@ -75,6 +75,14 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
     );
   }
 
+  const countSlots = [
+    { key: "success", mark: "✓", title: "완료", value: counts.success },
+    { key: "running", mark: "◐", title: "그리는 중", value: counts.running },
+    { key: "queued", mark: "…", title: "대기", value: counts.queued },
+    { key: "failed", mark: "✕", title: "실패", value: counts.failed },
+    { key: "cancelled", mark: "⊘", title: "취소", value: counts.cancelled },
+  ] as const;
+
   return (
     <div className={styles.bar}>
       <span
@@ -97,47 +105,52 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
         {phaseLabel(job)}
       </span>
 
-      {/* 조회 단계에서는 item 수를 아직 모른다. */}
-      {job.phase !== "query" && (
-        <span className={styles.progress}>
+      <span className={styles.progress}>
+        {/* 조회 단계에서는 item 수를 아직 몰라 막대를 움직이는 모양(indeterminate)으로 둔다. */}
+        {job.phase === "query" ? (
+          <progress />
+        ) : (
           <progress value={progress.done} max={progress.total || 1} />
-          <span>
-            {job.phase === "dataset"
-              ? `${progress.done.toLocaleString()} / ${progress.total.toLocaleString()} 행`
-              : `${progress.done.toLocaleString()} / ${progress.total.toLocaleString()} item`}
-            {job.phase !== "dataset" && ` · ${Math.floor(ratio * 100)}%`}
-          </span>
+        )}
+        <span className={styles.progressText}>
+          {job.phase === "query"
+            ? "item 수 세는 중"
+            : `${progress.done.toLocaleString()} / ${progress.total.toLocaleString()} ${job.phase === "dataset" ? "행" : "item"}${job.phase === "dataset" ? "" : ` · ${Math.floor(ratio * 100)}%`}`}
         </span>
-      )}
+      </span>
 
-      {job.phase === "render" && (
-        <span className={styles.counts}>
-          <span title="완료">✓ {counts.success.toLocaleString()}</span>
-          {counts.running > 0 && (
-            <span title="그리는 중">◐ {counts.running}</span>
-          )}
-          {counts.queued > 0 && (
-            <span title="대기">… {counts.queued.toLocaleString()}</span>
-          )}
-          {counts.failed > 0 && (
-            <span title="실패" data-tone="danger">
-              ✕ {counts.failed.toLocaleString()}
-            </span>
-          )}
-          {counts.cancelled > 0 && (
-            <span title="취소">⊘ {counts.cancelled.toLocaleString()}</span>
-          )}
-        </span>
-      )}
+      <span className={styles.counts}>
+        {countSlots.map((c) => (
+          <span
+            key={c.key}
+            title={c.title}
+            data-zero={c.value === 0 || undefined}
+            data-tone={c.key === "failed" && c.value > 0 ? "danger" : undefined}
+            className={styles.count}
+          >
+            {c.mark} {c.value.toLocaleString()}
+          </span>
+        ))}
+      </span>
 
       <span className={styles.meta}>
-        <span title="경과 시간">
+        <span title="경과 시간" className={styles.elapsed}>
           <Clock size={12} aria-hidden="true" /> {seconds(elapsed)}
         </span>
-        {rate > 0 && <span title="처리 속도">{rate.toFixed(1)} item/s</span>}
-        {eta > 0 && (
-          <span title="남은 시간 (어림)">약 {seconds(eta)} 남음</span>
-        )}
+        <span
+          title="처리 속도"
+          className={styles.rate}
+          data-zero={rate === 0 || undefined}
+        >
+          {rate > 0 ? rate.toFixed(1) : "–"} item/s
+        </span>
+        <span
+          title="남은 시간 (어림)"
+          className={styles.eta}
+          data-zero={eta === 0 || undefined}
+        >
+          {eta > 0 ? `약 ${seconds(eta)} 남음` : "남은 시간 –"}
+        </span>
         <span title="Render Worker 수">
           <Cpu size={12} aria-hidden="true" /> {job.renderWorkers}
         </span>

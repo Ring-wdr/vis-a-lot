@@ -32,7 +32,7 @@ function Pager({
       >
         ‹
       </button>
-      <span>
+      <span className={styles.pagerText}>
         {page + 1} / {totalPages}
       </span>
       <button

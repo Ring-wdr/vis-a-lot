@@ -5,6 +5,7 @@ import { useDatasets } from "@/shared/api/queries";
 import type { RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
 import { Select } from "@/shared/ui/Select";
+import selectStyles from "@/shared/ui/Select.module.css";
 import styles from "@/shared/ui/workspace.module.css";
 
 const STATE_SUFFIX = {
@@ -26,8 +27,6 @@ export function DatasetSelect({
 }) {
   const datasets = useDatasets();
   const status = datasets.data?.datasets.find((d) => d.rows === rows);
-  const noneRegistered =
-    datasets.data?.datasets.every((d) => d.state === "missing") ?? false;
 
   return (
     <div className={styles.field}>
@@ -45,15 +44,16 @@ export function DatasetSelect({
           };
         })}
         onChange={onRowsChange}
+        aside={
+          <span className={selectStyles.aside}>
+            {status?.state === "generating"
+              ? `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
+              : status?.state === "missing"
+                ? "미등록 · draw하면 바로 만듦"
+                : ""}
+          </span>
+        }
       />
-      {status?.state === "generating" && (
-        <progress value={status.done} max={status.total} />
-      )}
-      {noneRegistered && (
-        <p className={styles.muted}>
-          등록한 데이터가 없습니다. 그대로 draw하면 이 규모를 바로 만듭니다.
-        </p>
-      )}
     </div>
   );
 }

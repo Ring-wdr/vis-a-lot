@@ -2,6 +2,7 @@
 
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
 import styles from "./Select.module.css";
 
 export type SelectOption<T> = { value: T; label: string; disabled?: boolean };
@@ -16,8 +17,11 @@ export function Select<T extends string | number>({
   options,
   onChange,
   disabled = false,
+  aside,
 }: {
   label: string;
+  /** 라벨 줄 오른쪽에 붙는 상태 (진행률 등). 새 줄을 만들지 않아 아래 필드를 밀지 않는다. */
+  aside?: ReactNode;
   value: T;
   options: readonly SelectOption<T>[];
   onChange: (next: T) => void;
@@ -33,7 +37,10 @@ export function Select<T extends string | number>({
           if (next !== null) onChange(next as T);
         }}
       >
-        <BaseSelect.Label className={styles.label}>{label}</BaseSelect.Label>
+        <div className={styles.labelRow}>
+          <BaseSelect.Label className={styles.label}>{label}</BaseSelect.Label>
+          {aside}
+        </div>
         <BaseSelect.Trigger className={styles.trigger}>
           <BaseSelect.Value className={styles.value} />
           <BaseSelect.Icon className={styles.chevron}>

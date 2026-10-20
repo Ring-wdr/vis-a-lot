@@ -7,8 +7,22 @@
   color: var(--ws-text);
 }
 
-.workspace[data-filter-open] {
-  grid-template-columns: 260px minmax(0, 1fr) 300px;
+/* 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
+   모든 item을 새 크기로 다시 그리게 된다. */
+.filterDrawer {
+  grid-column: -2 / -1;
+  grid-row: 3;
+  justify-self: end;
+  z-index: 10;
+  display: flex;
+  width: min(300px, 100%);
+  min-height: 0;
+  box-shadow: -8px 0 24px rgb(var(--ws-shadow-rgb) / 12%);
+}
+
+.filterDrawer > * {
+  flex: 1;
+  min-width: 0;
 }
 
 .header {
@@ -73,6 +87,8 @@
 
 /* 왼쪽 패널: 설정은 스크롤되고, 공통 속성·draw 같은 동작 버튼은 하단에 고정된다. */
 .panel {
+  grid-column: 1;
+  grid-row: 3;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -207,6 +223,9 @@
 }
 
 .main {
+  /* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */
+  grid-column: 2;
+  grid-row: 3;
   min-width: 0;
   min-height: 0;
   padding: 16px;
@@ -376,7 +395,10 @@
   background: var(--ws-surface);
 }
 
+/* 높이는 grid-layout.ts의 ITEM_TOOLBAR_HEIGHT와 같아야 PNG 크기 계산이 맞는다. */
 .itemToolbar {
+  flex: none;
+  height: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -409,12 +431,14 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  width: min(140px, 90%);
+  text-align: center;
   font-size: 12px;
   color: var(--ws-text-muted);
 }
 
 .pending progress {
-  width: 120px;
+  width: 100%;
 }
 
 .spinner {
@@ -455,6 +479,13 @@
 .muted {
   color: var(--ws-text-muted);
   font-size: 12px;
+}
+
+/* 페이지 수가 30,000까지 가도 번호가 바뀔 때 버튼이 움직이지 않게 자리를 잡아 둔다. */
+.pagerText {
+  min-width: 13ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .pager {
@@ -841,6 +872,8 @@
 
 /* body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다 */
 .tooltipPortal {
+  /* ItemTooltip의 TOOLTIP_WIDTH와 같아야 한다. */
+  width: 200px;
   position: fixed;
   z-index: 1000;
 }
