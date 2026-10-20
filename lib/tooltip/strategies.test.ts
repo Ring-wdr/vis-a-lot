@@ -93,7 +93,8 @@ describe("barStrategy / boxplotStrategy", () => {
       { label: "범주", value: "B" },
       { label: "평균", value: "5", emphasis: true },
     ]);
-    expect(hit?.marker).toEqual({ px: 150, py: 50 });
+    // 막대(가운데 150, 너비 70, 값 5 → 0)를 감싸되 그림 영역 아래로는 나가지 않는다
+    expect(hit?.highlight).toEqual({ x: 112, y: 47, width: 76, height: 53 });
     // 막대 사이 빈 곳
     expect(barStrategy.hitTest(meta, undefined, 100, 50)).toBeNull();
   });
@@ -153,7 +154,8 @@ describe("legend가 있는 bar", () => {
       { label: "근무조", value: "야간" },
       { label: "평균", value: "3", emphasis: true },
     ]);
-    expect(left?.marker?.px).toBe(130);
+    // 가리킨 막대(가운데 130, 너비 38)를 3px 여유로 감싼다
+    expect(left?.highlight).toMatchObject({ x: 108, width: 44 });
     // 오른쪽 칸(주간)은 데이터가 없다
     expect(barStrategy.hitTest(meta, undefined, 170, 80)).toBeNull();
   });

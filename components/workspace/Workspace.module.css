@@ -331,6 +331,19 @@
   cursor: crosshair;
 }
 
+/* bar/boxplot은 점이 아니라 막대/상자를 고르므로 십자 대신 기본 커서 + 감싸는 사각형 */
+.tooltipLayer[data-hover="box"] {
+  cursor: default;
+}
+
+.hitBox {
+  position: absolute;
+  border: 2px solid #0b0b0b;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--ws-surface);
+  pointer-events: none;
+}
+
 .hitMarker {
   position: absolute;
   width: 10px;
@@ -653,4 +666,10 @@
   border-radius: 50%;
   box-shadow: 0 0 0 1px var(--ws-border);
   cursor: pointer;
+}
+
+/* body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다 */
+.tooltipPortal {
+  position: fixed;
+  z-index: 1000;
 }
