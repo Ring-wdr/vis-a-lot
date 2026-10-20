@@ -1,0 +1,34 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 260px;
+  padding: 24px;
+  background: var(--ws-panel);
+  color: #0b0b0b;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 16px;
+}
+
+.instance {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.output {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ws-text-secondary);
+  word-break: break-all;
+}
+
+.disabled {
+  border: 1px dashed var(--ws-border);
+  padding: 8px;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+}

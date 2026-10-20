@@ -1,0 +1,250 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.label {
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+/* 팝업 기준점: 연 순간의 필드 자리. 아래 공간이 모자라 위로 뒤집혀도 필드를 가리지 않는다. */
+.anchor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+/* 트리거 필드: 칩과 여는 버튼이 한 상자 안에 있다. 칩의 ×는 버튼 안에 둘 수 없어 형제로 둔다. */
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 3px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.field:focus-within {
+  border-color: var(--ws-accent);
+}
+
+.field[data-disabled] {
+  background: var(--ws-panel);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+  max-height: 104px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 2px 2px 2px;
+  border: 1px solid var(--ws-border);
+  border-radius: 999px;
+  background: var(--ws-accent-soft);
+  font-size: 12px;
+}
+
+.chipOrder {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ws-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.chipLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipRemove {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+}
+
+.chipRemove:hover {
+  background: var(--ws-border);
+  color: var(--ws-text-secondary);
+}
+
+/* fieldset disabled(다시 보기)에서는 값만 보여 준다 */
+.chipRemove:disabled {
+  display: none;
+}
+
+.trigger {
+  display: flex;
+  flex: 1 0 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 22px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--ws-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.trigger[data-focus-visible] {
+  box-shadow: 0 0 0 2px var(--ws-accent);
+}
+
+.trigger:disabled {
+  cursor: default;
+}
+
+.summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popover {
+  width: var(--trigger-width);
+  min-width: 200px;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  color: #0b0b0b;
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  outline: none;
+}
+
+.search {
+  display: flex;
+  padding: 6px;
+  border-bottom: 1px solid var(--ws-border);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.search input:focus {
+  border-color: var(--ws-accent);
+}
+
+/* 가상 스크롤 영역. 드래그 판정이 clientY로 행을 계산하므로 border/padding은 여기 두지 않는다. */
+.list {
+  height: 280px;
+  overflow-y: auto;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.option {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-size: 13px;
+  cursor: default;
+  outline: none;
+}
+
+.option[data-hovered] {
+  background: var(--ws-panel);
+}
+
+.option[data-focus-visible],
+.option[data-focused] {
+  box-shadow: inset 0 0 0 2px var(--ws-accent);
+}
+
+.check {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ws-border);
+  border-radius: 4px;
+  background: #fff;
+}
+
+.option[data-selected] .check {
+  border-color: var(--ws-accent);
+  background: var(--ws-accent);
+  color: #fff;
+}
+
+.option[data-selected] {
+  background: var(--ws-accent-soft);
+}
+
+.optionLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--ws-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
+.empty {
+  padding: 12px;
+  color: var(--ws-text-muted);
+  font-size: 12px;
+}
