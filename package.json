@@ -8,23 +8,31 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:api": "tsx scripts/gen-api.mts",
+    "gen:api:check": "tsx scripts/gen-api.mts --check"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
     "@electric-sql/pglite": "0.5.10",
+    "@hono/zod-openapi": "1.6.3",
     "@tanstack/react-query": "5.104.4",
     "@tanstack/react-virtual": "3.14.21",
     "d3-array": "3.2.4",
     "d3-scale": "4.0.2",
     "d3-time-format": "4.1.0",
+    "hono": "4.13.13",
+    "idb-keyval": "6.3.0",
+    "jose": "6.2.12",
     "lucide-react": "1.59.0",
     "lz-string": "1.5.0",
     "msw": "3.0.3",
     "next": "16.4.2",
+    "openapi-fetch": "0.17.0",
     "overlay-kit": "1.9.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "zod": "4.6.7",
     "zustand": "5.0.8"
   },
   "devDependencies": {
@@ -35,6 +43,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "openapi-typescript": "7.13.0",
+    "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "5.0.5"
   },
