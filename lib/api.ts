@@ -3,6 +3,7 @@
 import type {
   AddShapeRequest,
   ApiError,
+  ChartSpec,
   ColumnsResponse,
   CommonProps,
   CreateChartRequest,
@@ -13,6 +14,7 @@ import type {
   HealthResponse,
   ItemJobResponse,
   ItemMeta,
+  ItemSize,
   JobStateResponse,
   SplitCountResponse,
   TooltipRequest,
@@ -80,6 +82,18 @@ export const api = {
       { signal },
     ),
 
+  /** 지정한 item들의 상태를 long polling으로 받는다. */
+  jobItems: (
+    jobId: string,
+    keys: string[],
+    since: number,
+    signal?: AbortSignal,
+  ) =>
+    request<JobStateResponse>(
+      `/api/jobs/${jobId}?items=${keys.map(encodeURIComponent).join(",")}&since=${since}`,
+      { signal },
+    ),
+
   cancelJob: (jobId: string) =>
     fetch(`/api/jobs/${jobId}/cancel`, { method: "POST" }).then((res) => {
       if (!res.ok) throw new ApiRequestError(res.status, `HTTP ${res.status}`);
@@ -112,6 +126,24 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ color }),
     }),
+
+  changeGrid: (chartId: string, grid: ChartSpec["grid"], itemSize: ItemSize) =>
+    request<ItemJobResponse>(
+      `/api/charts/${encodeURIComponent(chartId)}/grid`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ grid, itemSize }),
+      },
+    ),
+
+  resizeItems: (chartId: string, itemSize: ItemSize, keys: string[]) =>
+    request<ItemJobResponse>(
+      `/api/charts/${encodeURIComponent(chartId)}/resize`,
+      {
+        method: "POST",
+        body: JSON.stringify({ itemSize, keys }),
+      },
+    ),
 
   updateCommon: (chartId: string, common: CommonProps) =>
     request<ItemJobResponse>(
