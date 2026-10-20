@@ -3,7 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { useItemAction } from "@/features/item-actions/model/item-actions";
+import {
+  useItemAction,
+  useItemActionPending,
+} from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
@@ -82,7 +85,8 @@ function DrawnItem({
   const action = useItemAction(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
   const redrawing = itemJob.data?.items[0];
-  const busy = action.isPending || itemJobId !== undefined;
+  const pending = useItemActionPending(chartId, item.key);
+  const busy = pending || itemJobId !== undefined;
 
   // 같은 job에 다른 item이 함께 있어도(resize) 이 item이 끝났는지로 판단한다.
   const jobStatus = redrawing?.status;

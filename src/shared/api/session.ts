@@ -81,7 +81,8 @@ export function refreshSession() {
   refreshing ??= (async () => {
     const refreshToken = readRefreshToken();
     if (!refreshToken) {
-      signOut();
+      // 방금 만료로 로그아웃된 뒤 401을 받은 요청이 다시 부르면, 만료 안내를 지우지 않는다.
+      if (sessionStore.getState().status !== "anonymous") signOut();
       return false;
     }
     const { data, error } = await auth

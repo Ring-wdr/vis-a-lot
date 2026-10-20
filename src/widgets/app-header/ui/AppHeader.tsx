@@ -1,11 +1,8 @@
 "use client";
 
 import { Database, History, LayoutGrid } from "lucide-react";
-import {
-  tabsStore,
-  useTabs,
-  VIEWS,
-} from "@/entities/workspace/model/tabs-store";
+import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
+import { TABS_LOCKED_HINT, VIEWS } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
 import { openDataDialog } from "@/features/register-dataset/ui/DataDialog";
 import { ModeBar } from "@/features/select-mode/ui/ModeBar";
@@ -21,6 +18,8 @@ const TAB_UI = {
 /** 상단 바: data 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 모드, 공유. 각 view의 탭은 TabBar가 그린다. */
 export function AppHeader() {
   const view = useTabs((s) => s.view);
+  const tabs = useTabsStore();
+  const locked = useTabs((s) => s.locked);
   return (
     <header className={styles.header}>
       <span className={styles.brand}>vis-a-lot</span>
@@ -34,7 +33,11 @@ export function AppHeader() {
           <Database size={14} aria-hidden="true" />
           data
         </button>
-        <div role="tablist" className={headerStyles.tabs}>
+        <div
+          role="tablist"
+          className={headerStyles.tabs}
+          title={locked ? TABS_LOCKED_HINT : undefined}
+        >
           {VIEWS.map((t) => {
             const { label, Icon } = TAB_UI[t];
             return (
@@ -44,7 +47,8 @@ export function AppHeader() {
                 role="tab"
                 className={headerStyles.navButton}
                 aria-selected={view === t}
-                onClick={() => tabsStore.getState().setView(t)}
+                disabled={locked && view !== t}
+                onClick={() => tabs.getState().setView(t)}
               >
                 <Icon size={14} aria-hidden="true" />
                 {label}

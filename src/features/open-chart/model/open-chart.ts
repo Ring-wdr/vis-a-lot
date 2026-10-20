@@ -6,7 +6,6 @@ import { useWorkspaceStore } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemRestore } from "@/shared/api/types";
-import { showAlert } from "@/shared/ui/AlertDialog";
 
 export type OpenChartInput = {
   spec: ChartSpec;
@@ -31,17 +30,23 @@ export async function openChartIn(
   const { gridArea, readOnly } = store.getState();
   const area = gridArea ?? fallbackArea;
   if (!area) throw new Error("grid 영역 크기를 아직 모릅니다.");
-  const res = await api.createChart({
-    spec,
-    itemSize: itemSizeFor(area, spec.grid),
-    restore,
-    historyId: readOnly ? undefined : historyId,
-    record: !readOnly,
-  });
-  const { setDraft, setCurrent } = store.getState();
-  setDraft(spec);
-  // 다시 보기는 history를 새로 만들지 않으므로 보고 있는 건의 id를 들고 있는다 (공유 링크용).
-  setCurrent({ ...res, historyId: res.historyId || historyId || "", spec });
+  // 여는 동안 그 탭에서 따로 draw하면 늦게 온 쪽이 앞의 차트를 덮으므로 막는다.
+  store.setState({ opening: true });
+  try {
+    const res = await api.createChart({
+      spec,
+      itemSize: itemSizeFor(area, spec.grid),
+      restore,
+      historyId: readOnly ? undefined : historyId,
+      record: !readOnly,
+    });
+    const { setDraft, setCurrent } = store.getState();
+    setDraft(spec);
+    // 다시 보기는 history를 새로 만들지 않으므로 보고 있는 건의 id를 들고 있는다 (공유 링크용).
+    setCurrent({ ...res, historyId: res.historyId || historyId || "", spec });
+  } finally {
+    store.setState({ opening: false });
+  }
 }
 
 /** 지금 보이는 탭 또는 지정한 탭(store)에 차트를 연다. */
@@ -53,6 +58,7 @@ export function useOpenChart() {
       ...input
     }: OpenChartInput & { store?: WorkspaceStore }) =>
       openChartIn(store, input, scoped.getState().gridArea),
-    onError: (err) => showAlert(err.message),
+    // 연 탭에 알린다. 그 탭을 보고 있지 않으면 돌아왔을 때 뜬다.
+    onError: (err, { store = scoped }) => store.getState().notify(err.message),
   });
 }

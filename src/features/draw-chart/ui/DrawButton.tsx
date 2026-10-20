@@ -2,19 +2,18 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceMutationKey,
+} from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import {
   useCancelJob,
   useDatasetSchema,
   useDatasetStatus,
-  useJobProgress,
 } from "@/shared/api/queries";
-import { isTerminal } from "@/shared/api/types";
-import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
-
-type ButtonState = "draw" | "pending" | "cancel";
+import { useDrawState } from "../model/draw-state";
 
 /**
  * draw → pending(비활성) → 서버에서 작업 상태를 받으면 cancel → job이 끝나면 다시 draw.
@@ -24,7 +23,7 @@ export function DrawButton() {
   const gridArea = useWorkspace((s) => s.gridArea);
   const current = useWorkspace((s) => s.current);
   const setCurrent = useWorkspace((s) => s.setCurrent);
-  const job = useJobProgress(current?.jobId);
+  const notify = useWorkspace((s) => s.notify);
   const cancel = useCancelJob();
   const dataset = useDatasetStatus(draft.rows);
 
@@ -33,6 +32,7 @@ export function DrawButton() {
   const ready = schema.data !== undefined && draft.x !== "" && draft.y !== "";
 
   const draw = useMutation({
+    mutationKey: useWorkspaceMutationKey("draw"),
     mutationFn: async () => {
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
@@ -44,7 +44,7 @@ export function DrawButton() {
           draft.filters,
         );
         if (count > limit) {
-          showAlert(
+          notify(
             `split 조합이 ${count.toLocaleString()}개입니다. 최대 ${limit.toLocaleString()}개까지 그릴 수 있습니다.`,
           );
           return undefined;
@@ -58,12 +58,8 @@ export function DrawButton() {
     onSuccess: (res) => res && setCurrent({ ...res, spec: draft }),
   });
 
-  const state: ButtonState =
-    draw.isPending || (current && !job.data)
-      ? "pending"
-      : current && job.data && !isTerminal(job.data.status)
-        ? "cancel"
-        : "draw";
+  // 탭을 오가 다시 마운트돼도 이 탭의 draw가 진행 중이면 다시 누를 수 없게 한다.
+  const state = useDrawState();
 
   return (
     <>
