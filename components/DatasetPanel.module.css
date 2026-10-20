@@ -12,6 +12,19 @@
   font-size: 13px;
 }
 
+.field > span {
+  color: #52514e;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.field select {
+  padding: 5px 6px;
+  border: 1px solid #e7e6e2;
+  border-radius: 6px;
+  background: #fff;
+}
+
 .progress {
   display: flex;
   flex-direction: column;

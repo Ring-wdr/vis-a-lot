@@ -83,7 +83,7 @@ export function BootCheck() {
 
       <section>
         <h2>데이터셋 (절차적 생성 → COPY 적재)</h2>
-        <DatasetPanel rows={rows} onRowsChange={setRows} />
+        <DatasetPanel rows={rows} onRowsChange={setRows} showColumns />
       </section>
 
       <section>
