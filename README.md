@@ -39,7 +39,7 @@
 | 데이터 | 제조/IoT 센서 데이터를 시드로 절차적 생성 (10만 / 50만 / 100만 행), 등록 후 IndexedDB 유지. 컬럼과 타입은 고정하지 않고 적재된 테이블의 스키마에서 읽는다 (categorical / numeric / datetime, 라벨은 컬럼 주석) |
 | 차트 | scatter, bar(통계 함수 6종), boxplot(사분위수 · 1.5 IQR 수염 · 이상치). 집계는 서버(PGlite SQL)가 수행 |
 | split by | 여러 컬럼을 클릭 순서대로 조합해 item grid로 분할 (최대 30,000개, 초과 시 팝업). 누른 채 끌어 순서대로 선택 |
-| 화면 | gallery·history 탭(탭마다 작업 상태), 전체 설정 팝업, 오른쪽 페이지 스크롤바(throttle 조회), 자세한 job 하단 바 |
+| 화면 | gallery·history 탭(탭마다 작업 상태, 로그아웃하면 함께 정리, 그리는 중에는 cancel 전까지 탭 전환 잠금), 전체 설정 팝업, 오른쪽 페이지 스크롤바(throttle 조회), 자세한 job 하단 바 |
 | 필터 | 컬럼별 아코디언(열 때 서버에서 범위·값 목록 조회). 숫자·시계열은 범위 + 반전 + null, 범주는 검색 + 가상 목록. draw할 때 적용 |
 | 렌더 job | 모든 렌더를 job + long polling으로 처리. 단계별 진행률, 취소, `draw → pending → cancel` |
 | 툴팁 | 처음 hover 때 metadata를 받아 이후 서버 호출 없이 좌표값·가장 가까운 점 표시, 추가 컬럼만 서버 조회. 차트별 strategy pattern |
@@ -77,6 +77,12 @@ pnpm lint       # Biome
 ```
 
 데모 계정은 `demo` / `demo1234`입니다.
+
+세션 만료를 확인하려면 토큰 수명을 줄여 빌드합니다. refresh token은 쓸 때마다 새로 받으므로, 이 시간 동안 요청이 없으면 세션이 끝납니다.
+
+```bash
+NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm build
+```
 
 `/dev` 페이지에서 DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더 경로를 따로 확인할 수 있습니다.
 
