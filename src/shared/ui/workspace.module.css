@@ -123,8 +123,7 @@
   cursor: default;
 }
 
-.controls:disabled .linkButton,
-.controls:disabled .chip button {
+.controls:disabled .linkButton {
   display: none;
 }
 
@@ -306,45 +305,6 @@
 .muted {
   color: var(--ws-text-muted);
   font-size: 12px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  list-style: none;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 4px 2px 2px;
-  border: 1px solid var(--ws-border);
-  border-radius: 999px;
-  background: #fff;
-  font-size: 12px;
-}
-
-.chipOrder {
-  display: inline-grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--ws-accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.chip button {
-  border: none;
-  background: none;
-  color: var(--ws-text-muted);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
 }
 
 .inlineField {
