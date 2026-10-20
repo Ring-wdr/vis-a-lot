@@ -38,8 +38,12 @@ export const CommonPropsSchema = z
   })
   .openapi("CommonProps");
 
+/** item grid. 행과 열을 따로 고른다 (1..10 x 1..10). */
 export const GridSchema = z
-  .object({ rows: z.number().int(), cols: z.number().int() })
+  .object({
+    rows: z.number().int().min(1).max(10),
+    cols: z.number().int().min(1).max(10),
+  })
   .openapi("Grid");
 
 export const ChartSpecSchema = z
@@ -223,10 +227,6 @@ export const CommonPropsRequestSchema = z
 
 export const GridRequestSchema = z
   .object({ grid: GridSchema, itemSize: ItemSizeSchema })
-  .refine(
-    ({ grid }) => grid.rows === grid.cols && grid.rows >= 1 && grid.rows <= 10,
-    "grid must be n x n (1..10)",
-  )
   .openapi("GridRequest");
 
 export const ResizeRequestSchema = z

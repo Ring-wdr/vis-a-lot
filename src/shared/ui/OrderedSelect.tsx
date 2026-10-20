@@ -2,6 +2,7 @@
 
 import { Combobox } from "@base-ui/react/combobox";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { ChevronDown } from "lucide-react";
 import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
@@ -20,6 +21,7 @@ import {
   toggleValue,
 } from "@/shared/lib/drag-select";
 import styles from "./OrderedSelect.module.css";
+import selectStyles from "./Select.module.css";
 
 export type Option<T extends string> = { value: T; label: string };
 
@@ -84,6 +86,8 @@ export function OrderedSelect<T extends string>({
     () => new Map(options.map((o) => [o.value, o.label])),
     [options],
   );
+  /** 트리거에 보여 줄 고른 순서 그대로의 이름 목록 */
+  const summary = shown.map((v) => labelOf.get(v) ?? v).join(", ");
   const orderOf = useMemo(
     () => new Map(shown.map((v, i) => [v, i + 1])),
     [shown],
@@ -130,8 +134,8 @@ export function OrderedSelect<T extends string>({
   };
 
   return (
-    <div className={styles.field}>
-      <span>{label}</span>
+    <div className={selectStyles.field}>
+      <span className={selectStyles.label}>{label}</span>
       <Combobox.Root
         items={items}
         filteredItems={filtered}
@@ -175,37 +179,28 @@ export function OrderedSelect<T extends string>({
           }
         }}
       >
-        <div ref={anchorRef} className={styles.box}>
-          {shown.length > 0 && (
-            <ol className={styles.chips} aria-label={`${label} 순서`}>
-              {shown.map((v, i) => (
-                <li key={v} className={styles.chip}>
-                  <span className={styles.chipOrder}>{i + 1}</span>
-                  {labelOf.get(v) ?? v}
-                  <button
-                    type="button"
-                    aria-label={`${labelOf.get(v) ?? v} 빼기`}
-                    disabled={disabled}
-                    onClick={() => {
-                      if (isBlocked() || drag.isActive()) return;
-                      onChange(value.filter((x) => x !== v));
-                    }}
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
+        <div ref={anchorRef}>
+          {/* 높이를 아끼려고 고른 값을 한 줄에 순서대로 이어 쓰고, 넘치면 말줄임으로 자른다.
+              빼기는 목록에서 다시 누르거나 끌어서 한다. */}
           <Combobox.Trigger
             ref={triggerRef}
-            className={styles.trigger}
-            aria-label={`${label} 선택, ${shown.length}개 골라짐`}
+            className={selectStyles.trigger}
+            aria-label={`${label}: ${summary || "없음"}`}
+            title={summary || undefined}
           >
-            <span className={styles.placeholder}>
-              {shown.length === 0 ? placeholder : "추가"}
+            <span
+              className={`${selectStyles.value} ${shown.length === 0 ? selectStyles.placeholder : ""}`}
+            >
+              {summary || placeholder}
             </span>
-            <ChevronIcon />
+            {shown.length > 0 && (
+              <span className={selectStyles.count} aria-hidden="true">
+                {shown.length}
+              </span>
+            )}
+            <span className={selectStyles.chevron}>
+              <ChevronDown size={14} aria-hidden="true" />
+            </span>
           </Combobox.Trigger>
         </div>
         <Combobox.Portal>
@@ -483,17 +478,4 @@ function useDragSelect<T>({
     listProps,
     isActive: () => state.current.phase !== "idle",
   };
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-      <path
-        d="M4 6l4 4 4-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-    </svg>
-  );
 }

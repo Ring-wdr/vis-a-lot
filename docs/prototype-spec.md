@@ -113,8 +113,9 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 - **상단 바:** `data`(데이터 등록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 모드 바, 링크 복사
 - **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트. 아이콘으로 표시하고 이름은 title로 보여준다
 - **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, 통계 함수(bar일 때만), split by, tooltip. 공통 속성(popover)과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
+- **선택 필드:** 단일 선택(데이터, x, y, legend, 통계 함수)과 다중 선택(split by, tooltip)은 같은 트리거·팝업 모양을 쓴다(Base UI Select / Combobox). 높이를 아끼려고 다중 선택은 고른 값을 한 줄에 순서대로 쉼표로 이어 쓰고 넘치면 말줄임, 오른쪽에 개수를 보여준다.
 - **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
-- **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 고른다. 정사각형이라 올린 칸의 행·열 중 큰 쪽이 n이 된다
+- **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 행 × 열을 고른다 (1..10 × 1..10, 직사각형 가능)
 - **팝업:** 모달 팝업(알림, data 등록)은 overlay-kit으로 띄워 본문 상태와 분리한다. 버튼에 붙는 popover는 네이티브 popover API를 쓴다
 - **item 툴바:** 축소, 확대 초기화, 도형 undo, 도형 전체 삭제, 개별 색상
 

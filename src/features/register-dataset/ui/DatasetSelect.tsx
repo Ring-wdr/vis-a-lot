@@ -4,6 +4,7 @@ import { ROW_LABELS } from "@/entities/dataset/lib/labels";
 import { useDatasets } from "@/shared/api/queries";
 import type { RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
+import { Select } from "@/shared/ui/Select";
 import styles from "@/shared/ui/workspace.module.css";
 import { openDataDialog } from "./DataDialog";
 
@@ -31,24 +32,21 @@ export function DatasetSelect({
 
   return (
     <div className={styles.field}>
-      <span>데이터</span>
-      <select
-        aria-label="데이터"
+      <Select
+        label="데이터"
         value={rows}
-        onChange={(e) => onRowsChange(Number(e.target.value) as RowSize)}
-      >
-        {ROW_SIZES.map((size) => {
+        options={ROW_SIZES.map((size) => {
           const state =
             datasets.data?.datasets.find((d) => d.rows === size)?.state ??
             "missing";
-          return (
-            <option key={size} value={size} disabled={state === "missing"}>
-              IoT 센서 · {ROW_LABELS[size]}
-              {STATE_SUFFIX[state]}
-            </option>
-          );
+          return {
+            value: size,
+            label: `IoT 센서 · ${ROW_LABELS[size]}${STATE_SUFFIX[state]}`,
+            disabled: state === "missing",
+          };
         })}
-      </select>
+        onChange={onRowsChange}
+      />
       {status?.state === "generating" && (
         <progress value={status.done} max={status.total} />
       )}

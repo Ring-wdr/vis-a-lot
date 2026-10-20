@@ -5,26 +5,6 @@
   max-width: 360px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.field > span {
-  color: var(--ws-text-secondary);
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.field select {
-  padding: 5px 6px;
-  border: 1px solid var(--ws-border);
-  border-radius: 6px;
-  background: var(--ws-elevated);
-}
-
 .progress {
   display: flex;
   flex-direction: column;
