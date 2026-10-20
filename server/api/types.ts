@@ -81,8 +81,26 @@ export type ChartSpec = {
 
 export type ItemSize = { width: number; height: number };
 
-export type CreateChartRequest = { spec: ChartSpec; itemSize: ItemSize };
-export type CreateChartResponse = { chartId: string; jobId: string };
+/** 복원할 item 상태. split 조합 키에 붙는다. */
+export type ItemRestore = {
+  view?: ItemView;
+  shapes: Shape[];
+  color?: string;
+};
+
+export type CreateChartRequest = {
+  spec: ChartSpec;
+  itemSize: ItemSize;
+  /** history 복원이나 공유 링크로 열 때, 키별 확대·도형·개별 색 */
+  restore?: Record<string, ItemRestore>;
+  /** 이어서 기록할 history. 없으면 새로 만든다. */
+  historyId?: string;
+};
+export type CreateChartResponse = {
+  chartId: string;
+  jobId: string;
+  historyId: string;
+};
 
 export type ChartImage = { url: string; width: number; height: number };
 
@@ -184,3 +202,50 @@ export type JobStateResponse = {
   /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
   error?: string;
 };
+
+// ── history ────────────────────────────────────────────────────────
+
+/** draw 뒤에 덧붙는 변경 */
+export const HISTORY_EVENT_TYPES = [
+  "zoom",
+  "shape",
+  "undo",
+  "clearShapes",
+  "color",
+  "common",
+  "grid",
+] as const;
+export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];
+
+export type HistoryEvent = {
+  type: HistoryEventType;
+  at: number;
+  item?: string;
+};
+
+export type HistoryItem = ItemRestore & {
+  label: string;
+  status: ItemStatus;
+};
+
+export type HistorySummary = {
+  id: string;
+  createdAt: number;
+  updatedAt: number;
+  rows: RowSize;
+  generatorVersion: number;
+  spec: ChartSpec;
+  status: JobStatus;
+  itemCount: number;
+  /** 상태별 item 수 (cancelled 포함) */
+  statusCounts: Partial<Record<ItemStatus, number>>;
+  eventCounts: Partial<Record<HistoryEventType, number>>;
+  thumbnail?: string;
+};
+
+export type HistoryDetail = HistorySummary & {
+  items: Record<string, HistoryItem>;
+  events: HistoryEvent[];
+};
+
+export type HistoryListResponse = { entries: HistorySummary[] };

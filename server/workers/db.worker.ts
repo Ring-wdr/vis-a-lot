@@ -2,6 +2,12 @@ import { PGlite } from "@electric-sql/pglite";
 import { queryBarData, queryBoxData } from "../data/category-data";
 import { queryChartData, queryRowValues } from "../data/chart-data";
 import { DatasetManager } from "../data/datasets";
+import {
+  getHistory,
+  listHistory,
+  openHistory,
+  saveHistory,
+} from "../history/history-store";
 import type { DbMethods } from "../protocol";
 import { serveRpc, transfer } from "../rpc";
 
@@ -29,6 +35,7 @@ const ready = PGlite.create("idb://vis-a-lot", {
     insert into boot_log default values;
   `);
   const datasets = await DatasetManager.open(db);
+  await openHistory(db);
   return { db, datasets, bootMs: performance.now() - started };
 });
 
@@ -76,6 +83,22 @@ serveRpc<DbMethods>({
     const { db } = await ready;
     const data = await queryChartData(db, params);
     return transfer(data, [data.xs.buffer, data.ys.buffer, data.ids.buffer]);
+  },
+
+  async historySave(entry) {
+    const { db } = await ready;
+    await saveHistory(db, entry);
+    return undefined;
+  },
+
+  async historyList() {
+    const { db } = await ready;
+    return listHistory(db);
+  },
+
+  async historyGet({ id }) {
+    const { db } = await ready;
+    return getHistory(db, id);
   },
 
   async categoryData(params) {
