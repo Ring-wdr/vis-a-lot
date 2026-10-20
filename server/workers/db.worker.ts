@@ -1,6 +1,10 @@
 import { PGlite } from "@electric-sql/pglite";
 import { queryBarData, queryBoxData } from "../data/category-data";
-import { queryChartData, queryRowValues } from "../data/chart-data";
+import {
+  queryChartData,
+  queryLegendValues,
+  queryRowValues,
+} from "../data/chart-data";
 import { DatasetManager } from "../data/datasets";
 import {
   getHistory,
@@ -82,7 +86,17 @@ serveRpc<DbMethods>({
   async chartData(params) {
     const { db } = await ready;
     const data = await queryChartData(db, params);
-    return transfer(data, [data.xs.buffer, data.ys.buffer, data.ids.buffer]);
+    return transfer(data, [
+      data.xs.buffer,
+      data.ys.buffer,
+      data.ids.buffer,
+      ...(data.legend ? [data.legend.index.buffer] : []),
+    ]);
+  },
+
+  async legendValues({ rows, column }) {
+    const { db } = await ready;
+    return queryLegendValues(db, rows, column);
   },
 
   async historySave(entry) {

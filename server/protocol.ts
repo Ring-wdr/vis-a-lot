@@ -8,7 +8,7 @@ import type {
 } from "./api/types";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
-import type { ColumnName, RowSize } from "./data/schema";
+import type { ColumnName, LegendColumn, RowSize } from "./data/schema";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 
@@ -37,6 +37,10 @@ export type DbMethods = {
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
+  legendValues: {
+    params: { rows: RowSize; column: LegendColumn };
+    result: string[];
+  };
   /** 툴팁 추가 컬럼 조회 */
   rowValues: {
     params: { rows: RowSize; rowId: number; columns: ColumnName[] };
