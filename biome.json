@@ -37,5 +37,27 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/**", "!src/application/MockServerProvider.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@server/**", "**/server/**"],
+                    "message": "화면은 서버 코드를 import하지 않는다. OAS에서 생성한 @/shared/api/types를 쓴다."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

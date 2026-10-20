@@ -1,7 +1,5 @@
 "use client";
 
-import { isTerminal } from "@server/api/types";
-import { MAX_SPLIT_ITEMS } from "@server/data/schema";
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
@@ -11,6 +9,7 @@ import {
   useDatasetStatus,
   useJobProgress,
 } from "@/shared/api/queries";
+import { isTerminal } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
@@ -33,10 +32,14 @@ export function DrawButton() {
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
       if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
-        const { count } = await api.splitCount(draft.rows, draft.splitBy);
-        if (count > MAX_SPLIT_ITEMS) {
+        // 최대 개수는 서버가 정해 응답에 담아 준다.
+        const { count, limit } = await api.splitCount(
+          draft.rows,
+          draft.splitBy,
+        );
+        if (count > limit) {
           showAlert(
-            `split 조합이 ${count.toLocaleString()}개입니다. 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개까지 그릴 수 있습니다.`,
+            `split 조합이 ${count.toLocaleString()}개입니다. 최대 ${limit.toLocaleString()}개까지 그릴 수 있습니다.`,
           );
           return undefined;
         }

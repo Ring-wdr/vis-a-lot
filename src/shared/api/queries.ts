@@ -1,13 +1,18 @@
 "use client";
 
-import { isTerminal, type JobStateResponse } from "@server/api/types";
-import type { ColumnName, LegendColumn, RowSize } from "@server/data/schema";
 import {
   queryOptions,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import {
+  type ColumnName,
+  isTerminal,
+  type JobStateResponse,
+  type LegendColumn,
+  type RowSize,
+} from "@/shared/api/types";
 import { api } from "./api";
 
 /**
@@ -40,8 +45,18 @@ const datasetsQuery = queryOptions({
       : false,
 });
 
+/** data 서비스(DB)와 chart 서비스(Render Worker) 상태를 함께 본다. */
 export function useHealth() {
-  return useQuery({ queryKey: queryKeys.health, queryFn: api.health });
+  return useQuery({
+    queryKey: queryKeys.health,
+    queryFn: async () => {
+      const [data, chart] = await Promise.all([
+        api.health(),
+        api.chartHealth(),
+      ]);
+      return { db: data.db, renderWorkers: chart.renderWorkers };
+    },
+  });
 }
 
 export function useDatasets() {
@@ -120,9 +135,21 @@ export function useJobProgress(jobId: string | undefined) {
   const queryKey = queryKeys.jobProgress(jobId ?? "");
   return useQuery({
     queryKey,
-    queryFn: ({ signal }) => {
+    queryFn: async ({ signal }) => {
       const prev = client.getQueryData<JobStateResponse>(queryKey);
-      return api.job(jobId as string, 0, 0, prev?.version ?? -1, signal);
+      const next = await api.job(
+        jobId as string,
+        0,
+        0,
+        prev?.version ?? -1,
+        signal,
+      );
+      // 데이터가 없으면 chart 서비스가 data 서비스에 적재를 요청한다. 화면이 모르는 사이
+      // 데이터셋 상태가 바뀌므로, 준비 단계에 들어가거나 벗어날 때 데이터셋 목록을 다시 받는다.
+      if ((prev?.phase === "dataset") !== (next.phase === "dataset")) {
+        client.invalidateQueries({ queryKey: queryKeys.datasets });
+      }
+      return next;
     },
     enabled: jobId !== undefined,
     refetchInterval: (query) =>

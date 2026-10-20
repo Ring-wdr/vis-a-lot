@@ -1,13 +1,13 @@
 /* biome-ignore-all lint/performance/noImgElement: 썸네일은 history에 저장된 data URL이다. */
 "use client";
 
-import type { HistoryEventType, HistorySummary } from "@server/api/types";
-import { AGG_LABELS } from "@server/data/schema";
 import { useQuery } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
+import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
+import { AGG_LABELS } from "@/shared/config/dataset";
 import { columnLabel } from "@/shared/lib/format";
 import styles from "@/shared/ui/workspace.module.css";
 

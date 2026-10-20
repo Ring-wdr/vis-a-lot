@@ -1,5 +1,5 @@
-import type { ScatterMeta } from "@server/api/types";
 import { describe, expect, it } from "vitest";
+import type { ScatterMeta } from "@/shared/api/types";
 import { PointIndex } from "./point-index";
 import {
   barStrategy,
@@ -79,6 +79,7 @@ describe("barStrategy / boxplotStrategy", () => {
     categories: ["A", "B", "C"],
     markWidth: 70,
     groupCount: 1,
+    groupGap: 2,
   };
 
   it("막대 너비 안에서만 범주와 집계값을 보여준다", () => {
@@ -130,6 +131,7 @@ describe("legend가 있는 bar", () => {
     categories: ["A", "B", "C"],
     markWidth: 80,
     groupCount: 2,
+    groupGap: 2,
     agg: "avg" as const,
     bars: [
       [1, 2],

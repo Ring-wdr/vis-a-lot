@@ -1,7 +1,7 @@
 // PNG 좌표 ↔ 데이터 좌표. metadata의 그림 영역과 축 범위만으로 계산한다.
 
-import type { ItemMeta } from "@server/api/types";
 import { invertAxis } from "@/features/item-tooltip/lib/strategies";
+import type { ItemMeta } from "@/shared/api/types";
 
 export type Point = { x: number; y: number };
 

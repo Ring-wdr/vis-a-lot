@@ -30,7 +30,7 @@
 
 .item figcaption {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ws-text-muted);
   margin-top: 4px;
 }
 
@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ws-border);
   font-size: 13px;
-  color: #6b7280;
+  color: var(--ws-text-muted);
 }

@@ -18,7 +18,7 @@
   padding: 5px 8px;
   border: 1px solid var(--ws-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--ws-elevated);
   font-size: 13px;
   text-align: left;
   cursor: pointer;
@@ -44,12 +44,12 @@
   aspect-ratio: 1;
   border: 1px solid var(--ws-border);
   border-radius: 2px;
-  background: #fff;
+  background: var(--ws-elevated);
   cursor: pointer;
 }
 
 .cell[data-selected] {
-  border-color: #b9d3f2;
+  border-color: var(--ws-accent-border);
 }
 
 .cell[data-active] {

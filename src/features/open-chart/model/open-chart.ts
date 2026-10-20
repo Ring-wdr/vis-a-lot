@@ -1,11 +1,11 @@
 "use client";
 
-import type { ChartSpec, ItemRestore } from "@server/api/types";
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspaceStore } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
+import type { ChartSpec, ItemRestore } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 
 export type OpenChartInput = {

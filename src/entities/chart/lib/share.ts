@@ -1,11 +1,11 @@
 // 공유 링크. 시드가 고정이라 설정과 item 상태만 있으면 같은 차트가 다시 만들어진다.
 // 상태는 lz-string으로 압축해 URL hash에 담는다 (서버로 보내지 않는다).
 
-import type { ChartSpec, HistoryDetail, ItemRestore } from "@server/api/types";
 import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from "lz-string";
+import type { ChartSpec, HistoryDetail, ItemRestore } from "@/shared/api/types";
 
 const PREFIX = "#s=";
 const SHARE_VERSION = 1;

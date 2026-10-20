@@ -1,6 +1,5 @@
 "use client";
 
-import { isTerminal } from "@server/api/types";
 import { useMutation } from "@tanstack/react-query";
 import { Grid3x3 } from "lucide-react";
 import { useState } from "react";
@@ -8,6 +7,7 @@ import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
+import { isTerminal } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
 import styles from "./GridPicker.module.css";

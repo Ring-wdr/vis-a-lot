@@ -29,7 +29,7 @@
 
 .navButton[aria-selected="true"] {
   border-color: var(--ws-border);
-  background: #fff;
-  color: #0b0b0b;
+  background: var(--ws-elevated);
+  color: var(--ws-text);
   font-weight: 600;
 }

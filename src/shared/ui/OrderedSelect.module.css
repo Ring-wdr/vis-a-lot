@@ -20,7 +20,7 @@
   padding: 3px 4px;
   border: 1px solid var(--ws-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--ws-elevated);
 }
 
 .chips {
@@ -48,7 +48,7 @@
   padding: 0 3px;
   border-radius: 999px;
   background: var(--ws-accent);
-  color: #fff;
+  color: var(--ws-on-accent);
   font-size: 10px;
 }
 
@@ -103,10 +103,10 @@
   max-width: var(--available-width);
   border: 1px solid var(--ws-border);
   border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+  background: var(--ws-elevated);
+  box-shadow: 0 6px 20px rgb(var(--ws-shadow-rgb) / 12%);
   overflow: hidden;
-  color: #171717;
+  color: var(--ws-text);
   font-size: 13px;
 }
 
@@ -176,7 +176,7 @@
   height: 14px;
   border: 1px solid var(--ws-border);
   border-radius: 3px;
-  background: #fff;
+  background: var(--ws-elevated);
   color: var(--ws-accent);
   font-size: 11px;
 }

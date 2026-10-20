@@ -1,6 +1,5 @@
 "use client";
 
-import type { ChartImage as ChartImageData, ItemMeta } from "@server/api/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
@@ -14,6 +13,10 @@ import type { Mode } from "@/entities/workspace/model/workspace-store";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { api } from "@/shared/api/api";
 import { useItemMeta } from "@/shared/api/queries";
+import type {
+  ChartImage as ChartImageData,
+  ItemMeta,
+} from "@/shared/api/types";
 import styles from "@/shared/ui/workspace.module.css";
 
 type DrawMode = Exclude<Mode, "normal">;

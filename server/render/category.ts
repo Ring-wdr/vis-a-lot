@@ -26,6 +26,8 @@ export type CategoryMeta = {
   markWidth: number;
   /** 범주 하나에 나란히 놓는 막대/상자 수 (legend 값 수, 없으면 1) */
   groupCount: number;
+  /** 묶음 안에서 막대/상자 사이 간격(px). 화면이 groupSlot을 같은 값으로 계산한다. */
+  groupGap: number;
   agg?: AggFn;
   /** [범주][legend 값] */
   bars?: (number | null)[][];
@@ -300,6 +302,7 @@ export function renderCategory(
     categories,
     markWidth,
     groupCount,
+    groupGap: GROUP_GAP,
     agg: input.agg,
     bars: input.bars,
     boxes: input.boxes?.map((row) =>

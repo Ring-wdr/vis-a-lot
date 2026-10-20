@@ -1,6 +1,5 @@
 "use client";
 
-import { isTerminal, type JobStateResponse } from "@server/api/types";
 import { useEffect, useRef } from "react";
 import {
   GRID_FOOTER_HEIGHT,
@@ -10,6 +9,7 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
+import { isTerminal, type JobStateResponse } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import { ChartItemCard } from "./ChartItemCard";

@@ -1,8 +1,8 @@
 "use client";
 
-import type { ChartSpec, CreateChartResponse } from "@server/api/types";
-import { DEFAULT_SERIES_COLOR } from "@server/render/theme";
 import { createStore } from "zustand";
+import type { ChartSpec, CreateChartResponse } from "@/shared/api/types";
+import { DEFAULT_SERIES_COLOR } from "@/shared/lib/palette";
 
 export const MODES = [
   "normal",

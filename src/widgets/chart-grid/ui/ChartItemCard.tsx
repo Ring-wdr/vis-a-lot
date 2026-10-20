@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  type ItemSize,
-  type ItemStage,
-  type ItemState,
-  isTerminal,
-} from "@server/api/types";
-import type { ColumnName } from "@server/data/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { ITEM_TOOLBAR_HEIGHT } from "@/entities/chart/lib/grid-layout";
@@ -16,6 +9,13 @@ import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
+import {
+  type ColumnName,
+  type ItemSize,
+  type ItemStage,
+  type ItemState,
+  isTerminal,
+} from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 

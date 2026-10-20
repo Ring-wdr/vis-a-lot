@@ -1,6 +1,5 @@
+import type { ChartSpec, ItemSize } from "@/shared/api/types";
 // item grid의 치수 계산. 화면 배치와 서버에 요청할 PNG 크기가 같은 계산을 쓴다.
-
-import type { ChartSpec, ItemSize } from "@server/api/types";
 
 export const GRID_GAP = 12;
 export const ITEM_TOOLBAR_HEIGHT = 30;
