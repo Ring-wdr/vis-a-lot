@@ -6,6 +6,7 @@ import {
   COLUMNS,
   type ColumnName,
   DATASET_ID,
+  isLegendColumn,
   isRowSize,
   MAX_SPLIT_ITEMS,
   type RowSize,
@@ -49,6 +50,7 @@ import {
   isHexColor,
   isTerminal,
   type JobStateResponse,
+  type LegendValuesResponse,
   type ResizeRequest,
   type SplitCountResponse,
   type TooltipRequest,
@@ -140,6 +142,19 @@ function idleChart(chartId: string) {
   return { chart, items: chart.items } as const;
 }
 
+/** legend 값 → 색 맵. legend 값은 8개 이하라 그 이상은 잘못된 요청으로 본다. */
+function validColorMap(map: unknown) {
+  if (map === undefined) return true;
+  if (typeof map !== "object" || map === null) return false;
+  const entries = Object.entries(map);
+  return entries.length <= 8 && entries.every(([, color]) => isHexColor(color));
+}
+
+function validCommon(common: unknown) {
+  const c = common as { color?: unknown; legendColors?: unknown } | undefined;
+  return !!c && isHexColor(c.color) && validColorMap(c.legendColors);
+}
+
 function validRestore(
   restore: unknown,
 ): restore is Record<string, ItemRestore> {
@@ -150,6 +165,7 @@ function validRestore(
       Array.isArray(r.shapes) &&
       r.shapes.every(isValidShape) &&
       (r.color === undefined || isHexColor(r.color)) &&
+      validColorMap(r.legendColors) &&
       (r.view === undefined ||
         [...(r.view.x ?? []), ...(r.view.y ?? [])].filter(Number.isFinite)
           .length === 4),
@@ -160,7 +176,9 @@ function validateChartRequest(body: CreateChartRequest): string | undefined {
   const { spec, itemSize } = body;
   if (!spec || !itemSize) return "spec and itemSize are required";
   if (!isRowSize(spec.rows)) return "rows must be one of the supported sizes";
-  if (!isHexColor(spec.common?.color)) return "invalid common color";
+  if (!validCommon(spec.common)) return "invalid common color";
+  if (spec.legend !== null && !isLegendColumn(spec.legend))
+    return "column cannot be a legend";
   if (!CHART_TYPES.includes(spec.chartType)) return "unknown chartType";
   if (spec.chartType === "scatter") {
     for (const axis of [spec.x, spec.y]) {
@@ -374,7 +392,7 @@ export const handlers = [
   // 공통 속성 변경: 개별 속성을 모두 덮어쓰고, 다시 조회하지 않고 전체를 다시 그린다.
   http.patch("/api/charts/:chartId/common", async ({ params, request }) => {
     const body = (await request.json()) as CommonPropsRequest;
-    if (!isHexColor(body.common?.color)) return apiError(400, "invalid color");
+    if (!validCommon(body.common)) return apiError(400, "invalid color");
     const target = idleChart(String(params.chartId));
     if ("error" in target) return target.error;
     const { chart, items } = target;
@@ -445,12 +463,46 @@ export const handlers = [
   http.patch(itemPath("/props"), async ({ params, request }) => {
     const target = editableItem(params);
     if ("error" in target) return target.error;
+    const { item } = target;
     const body = (await request.json()) as ItemPropsRequest;
-    if (body.color !== null && !isHexColor(body.color))
-      return apiError(400, "invalid color");
-    target.item.props = body.color === null ? undefined : { color: body.color };
-    recordEvent(target.chart, "color", target.item.key);
-    return redraw(target.chart, target.item.key);
+    const props = { ...item.props };
+    if ("legendColor" in body) {
+      // legend 값 하나의 개별 색. null이면 공통 속성을 따르도록 되돌린다.
+      const { value, color } = body.legendColor ?? {};
+      if (typeof value !== "string")
+        return apiError(400, "legend value is required");
+      if (color !== null && !isHexColor(color))
+        return apiError(400, "invalid color");
+      const legendColors = { ...props.legendColors };
+      if (color === null) delete legendColors[value];
+      else legendColors[value] = color;
+      props.legendColors = Object.keys(legendColors).length
+        ? legendColors
+        : undefined;
+    } else {
+      if (body.color !== null && !isHexColor(body.color))
+        return apiError(400, "invalid color");
+      props.color = body.color ?? undefined;
+    }
+    item.props = props.color || props.legendColors ? props : undefined;
+    recordEvent(target.chart, "color", item.key);
+    return redraw(target.chart, item.key);
+  }),
+
+  // 공통 속성 popover가 legend 값마다 색을 보여줄 수 있도록 전체 legend 값 목록을 준다.
+  http.get(dataset("/legend-values"), async ({ params, request }) => {
+    if (params.datasetId !== DATASET_ID)
+      return apiError(404, "unknown dataset");
+    const search = new URL(request.url).searchParams;
+    const rows = parseRows(search.get("rows"));
+    const column = search.get("column");
+    if (!rows) return apiError(400, "rows must be one of the supported sizes");
+    if (!isLegendColumn(column))
+      return apiError(400, "column cannot be a legend");
+    const ready = await getRuntime().db.call("datasetColumns", { rows });
+    if (!ready) return apiError(409, "dataset is not ready");
+    const values = await getRuntime().db.call("legendValues", { rows, column });
+    return HttpResponse.json<LegendValuesResponse>({ column, values });
   }),
 
   http.get("/api/history", async () => {
