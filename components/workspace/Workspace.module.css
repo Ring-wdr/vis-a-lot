@@ -173,6 +173,7 @@
 .itemToolbar {
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 0 8px;
   border-bottom: 1px solid var(--ws-border);
   font-size: 12px;
@@ -377,4 +378,90 @@
 
 .tooltip .emphasis dd {
   font-weight: 600;
+}
+
+.itemActions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.itemActions button {
+  width: 24px;
+  height: 22px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--ws-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.itemActions button:hover:not(:disabled) {
+  border-color: var(--ws-border);
+  background: #fff;
+}
+
+.itemActions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.busyOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(252 252 251 / 70%);
+  cursor: progress;
+}
+
+.drawLayer {
+  position: relative;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.drawLayer[data-mode="text"] {
+  cursor: text;
+}
+
+.drawLayer img {
+  pointer-events: none;
+}
+
+.drawPreview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: rgb(11 11 11 / 6%);
+  stroke: #0b0b0b;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.drawPreview polyline,
+.drawPreview line {
+  fill: none;
+}
+
+.drawPreview .zoomRect {
+  fill: rgb(42 120 214 / 12%);
+  stroke: var(--ws-accent);
+  stroke-width: 1;
+}
+
+.textInput {
+  position: absolute;
+  transform: translateY(-50%);
+  width: 160px;
+  padding: 3px 6px;
+  border: 1px solid var(--ws-accent);
+  border-radius: 4px;
+  font-size: 12px;
 }

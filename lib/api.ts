@@ -1,6 +1,7 @@
 // mock 서버 REST API 클라이언트. 화면은 이 함수들로만 서버와 통신한다.
 
 import type {
+  AddShapeRequest,
   ApiError,
   ColumnsResponse,
   CreateChartRequest,
@@ -9,17 +10,23 @@ import type {
   DatasetStatus,
   GenerateDatasetRequest,
   HealthResponse,
+  ItemJobResponse,
   ItemMeta,
   JobStateResponse,
   SplitCountResponse,
   TooltipRequest,
   TooltipResponse,
+  ViewRequest,
 } from "@/server/api/types";
 import {
   type ColumnName,
   DATASET_ID,
   type RowSize,
 } from "@/server/data/schema";
+
+function itemPath(chartId: string, itemKey: string, path: string) {
+  return `/api/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(itemKey)}${path}`;
+}
 
 export class ApiRequestError extends Error {
   constructor(
@@ -86,6 +93,28 @@ export const api = {
       `/api/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(itemKey)}/tooltip`,
       { method: "POST", body: JSON.stringify(body) },
     ),
+
+  changeView: (chartId: string, itemKey: string, body: ViewRequest) =>
+    request<ItemJobResponse>(itemPath(chartId, itemKey, "/view"), {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  addShape: (chartId: string, itemKey: string, body: AddShapeRequest) =>
+    request<ItemJobResponse>(itemPath(chartId, itemKey, "/shapes"), {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  undoShape: (chartId: string, itemKey: string) =>
+    request<ItemJobResponse>(itemPath(chartId, itemKey, "/shapes/last"), {
+      method: "DELETE",
+    }),
+
+  clearShapes: (chartId: string, itemKey: string) =>
+    request<ItemJobResponse>(itemPath(chartId, itemKey, "/shapes"), {
+      method: "DELETE",
+    }),
 
   splitCount: (rows: RowSize, cols: ColumnName[]) =>
     request<SplitCountResponse>(
