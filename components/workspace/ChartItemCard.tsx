@@ -12,14 +12,20 @@ const STAGE_LABELS: Record<ItemStage, string> = {
   encode: "PNG 변환",
 };
 
-function Pending({ item }: { item?: ItemState }) {
+function Pending({
+  item,
+  placeholder,
+}: {
+  item?: ItemState;
+  placeholder?: string;
+}) {
   const stage = item?.stage;
   const label =
     item?.status === "queued"
       ? "대기 중"
       : stage
         ? STAGE_LABELS[stage]
-        : "준비 중";
+        : (placeholder ?? "준비 중");
   return (
     <div className={styles.pending}>
       <span className={styles.spinner} aria-hidden="true" />
@@ -32,7 +38,14 @@ function Pending({ item }: { item?: ItemState }) {
 }
 
 /** item 하나. PNG가 있어야만 이미지를 띄우고, 없으면 spinner + progress bar를 보여준다. */
-export function ChartItemCard({ item }: { item?: ItemState }) {
+export function ChartItemCard({
+  item,
+  placeholder,
+}: {
+  item?: ItemState;
+  /** item 목록이 정해지기 전 자리 표시 문구 */
+  placeholder?: string;
+}) {
   return (
     <article className={styles.item}>
       <div
@@ -53,7 +66,7 @@ export function ChartItemCard({ item }: { item?: ItemState }) {
         ) : item?.status === "cancelled" ? (
           <p className={styles.muted}>취소됨</p>
         ) : (
-          <Pending item={item} />
+          <Pending item={item} placeholder={placeholder} />
         )}
       </div>
     </article>

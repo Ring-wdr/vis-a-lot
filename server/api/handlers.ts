@@ -1,7 +1,13 @@
 import { HttpResponse, http } from "msw";
 import { createChart } from "../charts/chart-store";
 import { COLUMNS, DATASET_ID, isRowSize, type RowSize } from "../data/schema";
-import { getJob, jobState, startJob } from "../jobs/job-manager";
+import {
+  cancelJob,
+  getJob,
+  jobState,
+  startJob,
+  waitForUpdate,
+} from "../jobs/job-manager";
 import { matchPng, putPng } from "../png-store";
 import { getRuntime } from "../runtime";
 import type {
@@ -43,6 +49,7 @@ const COLUMN_TYPE = new Map<string, string>(
 );
 const IMPLEMENTED_CHART_TYPES = new Set(["scatter"]);
 const MAX_ITEM_PX = 2000;
+const LONG_POLL_TIMEOUT_MS = 25_000;
 
 function validateChartRequest(body: CreateChartRequest): string | undefined {
   const { spec, itemSize } = body;
@@ -125,7 +132,8 @@ export const handlers = [
     );
   }),
 
-  http.get("/api/jobs/:jobId", ({ params, request }) => {
+  // long polling: since 이후 변화가 있거나 요청한 페이지가 모두 끝난 상태면 응답한다.
+  http.get("/api/jobs/:jobId", async ({ params, request }) => {
     const job = getJob(String(params.jobId));
     if (!job) return apiError(404, "unknown job");
     const search = new URL(request.url).searchParams;
@@ -134,7 +142,16 @@ export const handlers = [
       100,
       Math.max(1, Number(search.get("pageSize") ?? 9) | 0),
     );
+    const since = Number(search.get("since") ?? -1);
+    await waitForUpdate(job, since, page, pageSize, LONG_POLL_TIMEOUT_MS);
     return HttpResponse.json<JobStateResponse>(jobState(job, page, pageSize));
+  }),
+
+  http.post("/api/jobs/:jobId/cancel", ({ params }) => {
+    const job = getJob(String(params.jobId));
+    if (!job) return apiError(404, "unknown job");
+    cancelJob(job);
+    return new HttpResponse(null, { status: 202 });
   }),
 
   // 1단계 검증용 렌더. 이후 job 모델(`POST /api/charts`)로 대체한다.

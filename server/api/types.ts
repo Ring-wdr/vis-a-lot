@@ -106,6 +106,8 @@ export type ItemState = {
 export type JobStateResponse = {
   jobId: string;
   chartId: string;
+  /** 상태가 바뀔 때마다 올라간다. long polling의 since 값으로 돌려보낸다. */
+  version: number;
   status: JobStatus;
   phase: JobPhase;
   /** dataset 단계에서는 생성 행 수, 그 뒤로는 끝난 item 수 */

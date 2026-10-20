@@ -118,6 +118,21 @@
   cursor: pointer;
 }
 
+.cancelButton {
+  border: 1px solid #b42318;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #b42318;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .drawButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
