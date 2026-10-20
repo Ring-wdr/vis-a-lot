@@ -25,6 +25,11 @@ export type DbMethods = {
   };
   /** job 하나에 필요한 데이터를 한 번에 조회해 split 조합별로 나눈다. */
   chartData: { params: ChartDataParams; result: ChartData };
+  /** 툴팁 추가 컬럼 조회 */
+  rowValues: {
+    params: { rows: RowSize; rowId: number; columns: ColumnName[] };
+    result: Record<string, string | number | null>;
+  };
 };
 
 export type RenderMethods = {

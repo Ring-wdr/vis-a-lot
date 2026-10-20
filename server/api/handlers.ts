@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { createChart } from "../charts/chart-store";
+import { createChart, getChart } from "../charts/chart-store";
 import {
   COLUMNS,
   type ColumnName,
@@ -31,8 +31,11 @@ import {
   CHART_TYPES,
   type CreateChartRequest,
   type CreateChartResponse,
+  type ItemMeta,
   type JobStateResponse,
   type SplitCountResponse,
+  type TooltipRequest,
+  type TooltipResponse,
 } from "./types";
 
 let pngVersion = 0;
@@ -75,6 +78,8 @@ function validateChartRequest(body: CreateChartRequest): string | undefined {
     return "duplicate splitBy column";
   if (typeof spec.splitSeparator !== "string" || spec.splitSeparator.length > 5)
     return "splitSeparator must be at most 5 characters";
+  if (spec.tooltip.some((c) => !COLUMN_TYPE.has(c)))
+    return "unknown tooltip column";
   if (spec.splitBy.some((c) => !COLUMN_TYPE.has(c)))
     return "unknown splitBy column";
   const { width, height } = itemSize;
@@ -208,6 +213,35 @@ export const handlers = [
       renderMs: result.ms,
     });
   }),
+
+  // 툴팁용 metadata. 화면이 item에 처음 커서를 올릴 때 받아 캐시한다.
+  http.get("/api/charts/:chartId/items/:itemKey/meta", ({ params }) => {
+    const item = getChart(String(params.chartId))?.items?.find(
+      (i) => i.key === params.itemKey,
+    );
+    if (!item?.meta) return apiError(404, "metadata is not ready");
+    return HttpResponse.json<ItemMeta>(item.meta);
+  }),
+
+  // x, y 외의 툴팁 컬럼은 행 식별자로 서버에서 조회한다.
+  http.post(
+    "/api/charts/:chartId/items/:itemKey/tooltip",
+    async ({ params, request }) => {
+      const chart = getChart(String(params.chartId));
+      if (!chart) return apiError(404, "unknown chart");
+      const body = (await request.json()) as TooltipRequest;
+      if (!Number.isFinite(body.rowId))
+        return apiError(400, "rowId is required");
+      if (body.columns.some((c) => !COLUMN_TYPE.has(c)))
+        return apiError(400, "unknown column");
+      const values = await getRuntime().db.call("rowValues", {
+        rows: chart.spec.rows,
+        rowId: body.rowId,
+        columns: body.columns,
+      });
+      return HttpResponse.json<TooltipResponse>({ values });
+    },
+  ),
 
   // `<img src>` 요청도 service worker를 거쳐 여기로 온다.
   http.get("/api/charts/:chartId/items/:itemKey/png", async ({ request }) => {

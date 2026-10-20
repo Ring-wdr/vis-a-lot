@@ -19,6 +19,8 @@ export type ChartData = {
   groups: SplitGroup[];
   xs: Float64Array;
   ys: Float64Array;
+  /** 행 식별자. ctid(블록, 오프셋)를 block * 65536 + offset 숫자로 인코딩했다. */
+  ids: Float64Array;
 };
 
 export type ChartDataParams = {
@@ -29,6 +31,39 @@ export type ChartDataParams = {
 };
 
 const COLUMN_TYPE = new Map(COLUMNS.map((c) => [c.name, c.type]));
+
+/** ctid → 숫자. 테이블을 다시 만들기 전까지 행을 가리키는 값으로 안정적이다. */
+const ROW_ID_EXPR =
+  "((ctid::text::point)[0] * 65536 + (ctid::text::point)[1])::float8";
+
+export function rowIdToTid(id: number) {
+  return `(${Math.floor(id / 65536)},${id % 65536})`;
+}
+
+/** 툴팁 추가 컬럼: 행 식별자로 한 행의 값들을 가져온다. 시계열은 epoch ms로 돌려준다. */
+export async function queryRowValues(
+  db: PGlite,
+  rows: RowSize,
+  rowId: number,
+  columns: ColumnName[],
+): Promise<Record<string, string | number | null>> {
+  for (const name of columns) {
+    if (!COLUMN_TYPE.has(name)) throw new Error(`unknown column ${name}`);
+  }
+  if (columns.length === 0) return {};
+  const select = columns
+    .map((c) =>
+      COLUMN_TYPE.get(c) === "time"
+        ? `(extract(epoch from ${c}) * 1000)::float8 as ${c}`
+        : c,
+    )
+    .join(", ");
+  const res = await db.query<Record<string, string | number | null>>(
+    `select ${select} from ${readingsTable(rows)} where ctid = $1::tid`,
+    [rowIdToTid(rowId)],
+  );
+  return res.rows[0] ?? {};
+}
 
 /** 숫자 축으로 쓸 값. 시계열은 epoch ms로 바꾼다. */
 function numericExpr(name: ColumnName) {
@@ -50,6 +85,7 @@ export async function queryChartData(
     ...split,
     `${numericExpr(x)}::float8`,
     `${numericExpr(y)}::float8`,
+    ROW_ID_EXPR,
   ];
   const order = splitBy.length > 0 ? `order by ${splitBy.join(", ")}` : "";
   const sql = `select ${select.join(", ")} from ${readingsTable(rows)}
@@ -59,6 +95,7 @@ export async function queryChartData(
   const n = res.rows.length;
   const xs = new Float64Array(n);
   const ys = new Float64Array(n);
+  const ids = new Float64Array(n);
   const groups: SplitGroup[] = [];
   const k = splitBy.length;
   let current: SplitGroup | undefined;
@@ -67,6 +104,7 @@ export async function queryChartData(
     const row = res.rows[i];
     xs[i] = row[k] as number;
     ys[i] = row[k + 1] as number;
+    ids[i] = row[k + 2] as number;
     const values = row.slice(0, k) as string[];
     if (!current || values.some((v, j) => v !== current?.values[j])) {
       if (current) current.end = i;
@@ -77,5 +115,5 @@ export async function queryChartData(
   // 조건에 맞는 행이 없어도 split 없는 차트는 빈 item 하나를 그린다.
   if (groups.length === 0 && k === 0)
     groups.push({ values: [], start: 0, end: 0 });
-  return { groups, xs, ys };
+  return { groups, xs, ys, ids };
 }

@@ -243,6 +243,7 @@ async function run(job: Job) {
             xKind,
             xs: data.xs.slice(group.start, group.end),
             ys: data.ys.slice(group.start, group.end),
+            ids: data.ids.slice(group.start, group.end),
             color: spec.common.color,
           },
           {
