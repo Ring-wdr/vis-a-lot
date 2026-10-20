@@ -1,5 +1,8 @@
 // Worker별 RPC 메서드 정의.
 
+import type { ColumnInfo, DatasetStatus } from "./api/types";
+import type { RowSize } from "./data/schema";
+
 export type DbMethods = {
   ping: {
     params: undefined;
@@ -9,6 +12,10 @@ export type DbMethods = {
     params: { sql: string; params?: unknown[] };
     result: { rows: Record<string, unknown>[] };
   };
+  datasetStatuses: { params: undefined; result: DatasetStatus[] };
+  /** 없으면 생성을 시작하고 바로 현재 상태를 돌려준다. 생성은 한 번에 하나씩 순서대로 한다. */
+  ensureDataset: { params: { rows: RowSize }; result: DatasetStatus };
+  datasetColumns: { params: { rows: RowSize }; result: ColumnInfo[] | null };
 };
 
 export type RenderMethods = {
