@@ -12,12 +12,18 @@ export function Popover({
   triggerClassName,
   triggerLabel,
   disabled,
+  panelClassName,
+  width = 240,
+  onOpen,
   children,
 }: {
   trigger: ReactNode;
   triggerClassName?: string;
   triggerLabel?: string;
   disabled?: boolean;
+  panelClassName?: string;
+  width?: number;
+  onOpen?: () => void;
   children: (close: () => void) => ReactNode;
 }) {
   const id = useId();
@@ -35,7 +41,7 @@ export function Popover({
         disabled={disabled}
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
-          const width = 240;
+          onOpen?.();
           setPosition({
             top: rect.bottom + 6,
             left: Math.min(rect.left, window.innerWidth - width - 8),
@@ -48,8 +54,8 @@ export function Popover({
         ref={ref}
         id={id}
         popover="auto"
-        className={styles.popover}
-        style={{ top: position.top, left: position.left }}
+        className={`${styles.popover} ${panelClassName ?? ""}`}
+        style={{ top: position.top, left: position.left, width }}
       >
         {children(() => ref.current?.hidePopover())}
       </div>
