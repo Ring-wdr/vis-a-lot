@@ -195,6 +195,24 @@ export const JobStateResponseSchema = z
     items: z.array(ItemStateSchema),
     /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
     error: z.string().optional(),
+    /** draw(조회부터) 또는 redraw(그린 item 다시 그리기) */
+    kind: z.enum(["draw", "redraw"]),
+    /** job 전체의 상태별 item 수 */
+    counts: z.object({
+      queued: z.number(),
+      running: z.number(),
+      success: z.number(),
+      failed: z.number(),
+      cancelled: z.number(),
+    }),
+    /** epoch ms. 경과 시간, 처리 속도, 남은 시간 계산용 */
+    timing: z.object({
+      createdAt: z.number(),
+      renderStartedAt: z.number().optional(),
+      endedAt: z.number().optional(),
+    }),
+    /** 병렬로 그리는 Render Worker 수 */
+    renderWorkers: z.number(),
   })
   .openapi("JobStateResponse");
 

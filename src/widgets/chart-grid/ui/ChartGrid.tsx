@@ -5,17 +5,12 @@ import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
-import { isTerminal, type JobStateResponse } from "@/shared/api/types";
+import { isTerminal } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import { ChartItemCard } from "./ChartItemCard";
+import { JobStatusBar } from "./JobStatusBar";
 import { PageScroller, type PageScrollerHandle } from "./PageScroller";
-
-const STATUS_SUFFIX: Partial<Record<JobStateResponse["status"], string>> = {
-  success: " · 완료",
-  failed: " · 일부 실패",
-  cancelled: " · 취소됨",
-};
 
 function Pager({
   page,
@@ -49,42 +44,6 @@ function Pager({
         ›
       </button>
     </nav>
-  );
-}
-
-function JobStatusText({ job }: { job: JobStateResponse | undefined }) {
-  if (!job) return null;
-  const { phase, progress, status } = job;
-  if (job.error) {
-    return (
-      <span role="alert" className={styles.error}>
-        {job.error}
-      </span>
-    );
-  }
-  // init 단계에서는 spinner만 보여주고, 생성 진행률은 왼쪽 데이터 패널이 보여준다.
-  if (phase === "dataset" || phase === "query") {
-    return (
-      <>
-        {!isTerminal(status) && (
-          <span className={styles.spinner} aria-hidden="true" />
-        )}
-        <span>
-          {phase === "dataset" ? "데이터 준비 중" : "데이터 조회 중"}
-          {STATUS_SUFFIX[status]}
-        </span>
-      </>
-    );
-  }
-  return (
-    <>
-      <progress value={progress.done} max={progress.total || 1} />
-      <span>
-        {progress.done.toLocaleString()} / {progress.total.toLocaleString()}{" "}
-        item
-        {STATUS_SUFFIX[status]}
-      </span>
-    </>
   );
 }
 
@@ -206,7 +165,7 @@ export function ChartGrid() {
                 {job.error.message}
               </span>
             ) : (
-              <JobStatusText job={progress.data} />
+              progress.data && <JobStatusBar job={progress.data} />
             )}
             <Pager page={viewPage} totalPages={totalPages} onPage={goToPage} />
           </div>

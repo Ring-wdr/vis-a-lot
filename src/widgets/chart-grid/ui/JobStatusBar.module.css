@@ -1,0 +1,78 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-text-secondary);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+  font-weight: 600;
+}
+
+.status[data-tone="done"] {
+  background: var(--ws-panel);
+  color: var(--ws-text);
+}
+
+.status[data-tone="danger"] {
+  background: color-mix(in srgb, var(--ws-danger) 12%, transparent);
+  color: var(--ws-danger);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.progress progress {
+  width: 140px;
+}
+
+.counts,
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.counts [data-tone="danger"] {
+  color: var(--ws-danger);
+}
+
+.error {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ws-danger);
+}

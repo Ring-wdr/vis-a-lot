@@ -1126,6 +1126,49 @@
           },
           "error": {
             "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["draw", "redraw"]
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "queued": {
+                "type": "number"
+              },
+              "running": {
+                "type": "number"
+              },
+              "success": {
+                "type": "number"
+              },
+              "failed": {
+                "type": "number"
+              },
+              "cancelled": {
+                "type": "number"
+              }
+            },
+            "required": ["queued", "running", "success", "failed", "cancelled"]
+          },
+          "timing": {
+            "type": "object",
+            "properties": {
+              "createdAt": {
+                "type": "number"
+              },
+              "renderStartedAt": {
+                "type": "number"
+              },
+              "endedAt": {
+                "type": "number"
+              }
+            },
+            "required": ["createdAt"]
+          },
+          "renderWorkers": {
+            "type": "number"
           }
         },
         "required": [
@@ -1138,7 +1181,11 @@
           "totalItems",
           "page",
           "pageSize",
-          "items"
+          "items",
+          "kind",
+          "counts",
+          "timing",
+          "renderWorkers"
         ]
       },
       "ItemState": {

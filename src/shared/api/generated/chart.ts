@@ -1628,6 +1628,21 @@ export type components = {
       pageSize: number;
       items: components["schemas"]["ItemState"][];
       error?: string;
+      /** @enum {string} */
+      kind: "draw" | "redraw";
+      counts: {
+        queued: number;
+        running: number;
+        success: number;
+        failed: number;
+        cancelled: number;
+      };
+      timing: {
+        createdAt: number;
+        renderStartedAt?: number;
+        endedAt?: number;
+      };
+      renderWorkers: number;
     };
     ItemState: {
       key: string;

@@ -1,5 +1,6 @@
 // 화면 ↔ mock 서버 REST API의 요청/응답 타입. 실서버로 옮겨도 이 계약은 유지한다.
 
+import type { z } from "@hono/zod-openapi";
 import type { BoxStats } from "../data/category-data";
 import type {
   AggFn,
@@ -11,6 +12,7 @@ import type {
 import type { CategoryMeta } from "../render/category";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
+import type { JobStateResponseSchema } from "../services/chart/schemas";
 
 export type HealthResponse = {
   db: { version: string; bootCount: number; bootMs: number };
@@ -214,23 +216,8 @@ export type ItemState = {
   customColor: boolean;
 };
 
-export type JobStateResponse = {
-  jobId: string;
-  chartId: string;
-  /** 상태가 바뀔 때마다 올라간다. long polling의 since 값으로 돌려보낸다. */
-  version: number;
-  status: JobStatus;
-  phase: JobPhase;
-  /** dataset 단계에서는 생성 행 수, 그 뒤로는 끝난 item 수 */
-  progress: { done: number; total: number };
-  /** 조회가 끝나기 전에는 item 개수를 모른다. */
-  totalItems: number | null;
-  page: number;
-  pageSize: number;
-  items: ItemState[];
-  /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
-  error?: string;
-};
+/** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
+export type JobStateResponse = z.infer<typeof JobStateResponseSchema>;
 
 // ── history ────────────────────────────────────────────────────────
 
