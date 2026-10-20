@@ -25,8 +25,11 @@ export function ItemTooltip({
   chartId,
   itemKey,
   columns,
+  display,
 }: {
   image: ChartImageData;
+  /** 화면에 보이는 크기. resize 대기 중에는 PNG 크기와 다를 수 있다. */
+  display: { width: number; height: number };
   alt: string;
   chartId: string;
   itemKey: string;
@@ -61,14 +64,18 @@ export function ItemTooltip({
     });
   };
 
+  // 계산은 PNG 좌표로 하고, 화면에 놓을 때만 보이는 크기로 환산한다.
+  const sx = display.width / image.width;
+  const sy = display.height / image.height;
+  const screen = cursor && { x: cursor.x * sx, y: cursor.y * sy };
   const flip =
-    cursor && cursor.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH > image.width;
+    screen && screen.x + TOOLTIP_OFFSET + TOOLTIP_WIDTH > display.width;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: 마우스 위치를 읽는 시각 보조 레이어. 같은 정보는 이후 표 보기로 제공한다.
     <div
       className={styles.tooltipLayer}
-      style={{ width: image.width, height: image.height }}
+      style={{ width: display.width, height: display.height }}
       onMouseEnter={() => setHovered(true)}
       onMouseMove={onMove}
       onMouseLeave={() => setCursor(undefined)}
@@ -77,18 +84,18 @@ export function ItemTooltip({
       {hit?.marker && (
         <span
           className={styles.hitMarker}
-          style={{ left: hit.marker.px, top: hit.marker.py }}
+          style={{ left: hit.marker.px * sx, top: hit.marker.py * sy }}
         />
       )}
-      {cursor && hit && (
+      {screen && hit && (
         <div
           role="tooltip"
           className={styles.tooltip}
           style={{
-            top: Math.min(cursor.y + TOOLTIP_OFFSET, image.height - 40),
+            top: Math.min(screen.y + TOOLTIP_OFFSET, display.height - 40),
             ...(flip
-              ? { right: image.width - cursor.x + TOOLTIP_OFFSET }
-              : { left: cursor.x + TOOLTIP_OFFSET }),
+              ? { right: display.width - screen.x + TOOLTIP_OFFSET }
+              : { left: screen.x + TOOLTIP_OFFSET }),
             width: TOOLTIP_WIDTH,
           }}
         >
@@ -116,10 +123,10 @@ export function ItemTooltip({
           </dl>
         </div>
       )}
-      {cursor && hovered && meta.isPending && (
+      {screen && hovered && meta.isPending && (
         <div
           className={styles.tooltip}
-          style={{ left: cursor.x + TOOLTIP_OFFSET, top: cursor.y }}
+          style={{ left: screen.x + TOOLTIP_OFFSET, top: screen.y }}
         >
           불러오는 중…
         </div>

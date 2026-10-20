@@ -16,6 +16,7 @@ import {
 } from "@/server/data/schema";
 import { CommonPropsPopover } from "./CommonPropsPopover";
 import { DrawButton } from "./DrawButton";
+import { GridSelect } from "./GridSelect";
 import { type Option, OrderedMultiSelect } from "./OrderedMultiSelect";
 import styles from "./Workspace.module.css";
 
@@ -34,8 +35,6 @@ function switchChartType(
   if (allowed.some((c) => c.name === draft.x)) return { chartType };
   return { chartType, x: chartType === "scatter" ? "ts" : "sensor_type" };
 }
-
-const GRID_SIZES = Array.from({ length: 10 }, (_, i) => i + 1);
 
 const CATEGORY_COLUMNS = COLUMNS.filter((c) => c.type === "string");
 const AXIS_COLUMNS = COLUMNS.filter(
@@ -105,22 +104,7 @@ export function ControlPanel() {
         </div>
       </fieldset>
 
-      <label className={styles.field}>
-        <span>Grid</span>
-        <select
-          value={draft.grid.rows}
-          onChange={(e) => {
-            const n = Number(e.target.value);
-            updateDraft({ grid: { rows: n, cols: n } });
-          }}
-        >
-          {GRID_SIZES.map((n) => (
-            <option key={n} value={n}>
-              {n} x {n}
-            </option>
-          ))}
-        </select>
-      </label>
+      <GridSelect />
 
       <label className={styles.field}>
         <span>x</span>

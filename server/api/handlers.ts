@@ -13,6 +13,7 @@ import {
 import {
   cancelJob,
   getJob,
+  type ItemSelection,
   jobState,
   startItemJob,
   startJob,
@@ -37,12 +38,14 @@ import {
   type CommonPropsRequest,
   type CreateChartRequest,
   type CreateChartResponse,
+  type GridRequest,
   type ItemJobResponse,
   type ItemMeta,
   type ItemPropsRequest,
   isHexColor,
   isTerminal,
   type JobStateResponse,
+  type ResizeRequest,
   type SplitCountResponse,
   type TooltipRequest,
   type TooltipResponse,
@@ -98,6 +101,41 @@ const COLUMN_TYPE = new Map<string, string>(
 const MAX_ITEM_PX = 2000;
 const LONG_POLL_TIMEOUT_MS = 25_000;
 
+function validItemSize(
+  size: unknown,
+): size is { width: number; height: number } {
+  const s = size as { width?: number; height?: number } | undefined;
+  return (
+    !!s &&
+    Number.isFinite(s.width) &&
+    Number.isFinite(s.height) &&
+    (s.width as number) >= 50 &&
+    (s.height as number) >= 50 &&
+    (s.width as number) <= MAX_ITEM_PX &&
+    (s.height as number) <= MAX_ITEM_PX
+  );
+}
+
+function roundSize(size: { width: number; height: number }) {
+  return { width: Math.round(size.width), height: Math.round(size.height) };
+}
+
+/** 전체를 다시 그리는 변경(공통 속성, grid)은 차트가 다 그려지고 쉬고 있을 때만 받는다. */
+function idleChart(chartId: string) {
+  const chart = getChart(chartId);
+  if (!chart) return { error: apiError(404, "unknown chart") } as const;
+  const primary = chart.primaryJobId ? getJob(chart.primaryJobId) : undefined;
+  if (!chart.items || (primary && !isTerminal(primary.status))) {
+    return { error: apiError(409, "렌더링 중에는 바꿀 수 없습니다.") } as const;
+  }
+  if (chart.items.some((i) => i.busyJobId)) {
+    return {
+      error: apiError(409, "다시 그리는 중인 item이 있습니다."),
+    } as const;
+  }
+  return { chart, items: chart.items } as const;
+}
+
 function validateChartRequest(body: CreateChartRequest): string | undefined {
   const { spec, itemSize } = body;
   if (!spec || !itemSize) return "spec and itemSize are required";
@@ -125,17 +163,7 @@ function validateChartRequest(body: CreateChartRequest): string | undefined {
     return "unknown tooltip column";
   if (spec.splitBy.some((c) => !COLUMN_TYPE.has(c)))
     return "unknown splitBy column";
-  const { width, height } = itemSize;
-  if (
-    !(
-      width >= 50 &&
-      height >= 50 &&
-      width <= MAX_ITEM_PX &&
-      height <= MAX_ITEM_PX
-    )
-  ) {
-    return "itemSize out of range";
-  }
+  if (!validItemSize(itemSize)) return "itemSize out of range";
 }
 
 export const handlers = [
@@ -215,18 +243,25 @@ export const handlers = [
   }),
 
   // long polling: since 이후 변화가 있거나 요청한 페이지가 모두 끝난 상태면 응답한다.
+  // pageSize=0이면 item 없이 job 전체 진행 상태만 주고, job이 끝날 때까지 이어진다.
   http.get("/api/jobs/:jobId", async ({ params, request }) => {
     const job = getJob(String(params.jobId));
     if (!job) return apiError(404, "unknown job");
     const search = new URL(request.url).searchParams;
-    const page = Math.max(0, Number(search.get("page") ?? 0) | 0);
-    const pageSize = Math.min(
-      100,
-      Math.max(1, Number(search.get("pageSize") ?? 9) | 0),
-    );
+    // items=k1,k2: 그 item들만 (item 단위 다시 그리기), 없으면 page/pageSize 단위
+    const keys = search.get("items")?.split(",").filter(Boolean);
+    const selection: ItemSelection = keys
+      ? { keys }
+      : {
+          page: Math.max(0, Number(search.get("page") ?? 0) | 0),
+          pageSize: Math.min(
+            100,
+            Math.max(0, Number(search.get("pageSize") ?? 9) | 0),
+          ),
+        };
     const since = Number(search.get("since") ?? -1);
-    await waitForUpdate(job, since, page, pageSize, LONG_POLL_TIMEOUT_MS);
-    return HttpResponse.json<JobStateResponse>(jobState(job, page, pageSize));
+    await waitForUpdate(job, since, selection, LONG_POLL_TIMEOUT_MS);
+    return HttpResponse.json<JobStateResponse>(jobState(job, selection));
   }),
 
   http.post("/api/jobs/:jobId/cancel", ({ params }) => {
@@ -310,26 +345,65 @@ export const handlers = [
 
   // 공통 속성 변경: 개별 속성을 모두 덮어쓰고, 다시 조회하지 않고 전체를 다시 그린다.
   http.patch("/api/charts/:chartId/common", async ({ params, request }) => {
-    const chart = getChart(String(params.chartId));
-    if (!chart) return apiError(404, "unknown chart");
     const body = (await request.json()) as CommonPropsRequest;
     if (!isHexColor(body.common?.color)) return apiError(400, "invalid color");
-    const primary = chart.primaryJobId ? getJob(chart.primaryJobId) : undefined;
-    if (!chart.items || (primary && !isTerminal(primary.status))) {
-      return apiError(
-        409,
-        "차트를 그리는 중에는 공통 속성을 바꿀 수 없습니다.",
-      );
-    }
-    if (chart.items.some((i) => i.busyJobId)) {
-      return apiError(409, "다시 그리는 중인 item이 있습니다.");
-    }
+    const target = idleChart(String(params.chartId));
+    if ("error" in target) return target.error;
+    const { chart, items } = target;
     chart.spec = { ...chart.spec, common: { ...body.common } };
-    for (const item of chart.items) item.props = undefined;
+    for (const item of items) item.props = undefined;
     const job = startItemJob(
       chart,
-      chart.items.map((i) => i.key),
+      items.map((i) => i.key),
       { primary: true },
+    );
+    return HttpResponse.json<ItemJobResponse>(
+      { jobId: job.id },
+      { status: 202 },
+    );
+  }),
+
+  // grid 크기 변경: item 크기가 바뀌므로 draw 없이 바로 전체를 다시 그린다.
+  http.patch("/api/charts/:chartId/grid", async ({ params, request }) => {
+    const body = (await request.json()) as GridRequest;
+    const n = body.grid?.rows;
+    if (!(Number.isInteger(n) && n >= 1 && n <= 10 && body.grid.cols === n)) {
+      return apiError(400, "grid must be n x n (1..10)");
+    }
+    if (!validItemSize(body.itemSize))
+      return apiError(400, "itemSize out of range");
+    const target = idleChart(String(params.chartId));
+    if ("error" in target) return target.error;
+    const { chart, items } = target;
+    chart.spec = { ...chart.spec, grid: { rows: n, cols: n } };
+    chart.itemSize = roundSize(body.itemSize);
+    const job = startItemJob(
+      chart,
+      items.map((i) => i.key),
+      { primary: true },
+    );
+    return HttpResponse.json<ItemJobResponse>(
+      { jobId: job.id },
+      { status: 202 },
+    );
+  }),
+
+  // 화면 크기 변경: 요청한 item(현재 페이지)만 새 크기로 다시 그린다. history에는 남기지 않는다.
+  http.post("/api/charts/:chartId/resize", async ({ params, request }) => {
+    const chart = getChart(String(params.chartId));
+    if (!chart?.items) return apiError(404, "unknown chart");
+    const body = (await request.json()) as ResizeRequest;
+    if (!validItemSize(body.itemSize))
+      return apiError(400, "itemSize out of range");
+    const keys = new Set(body.keys);
+    const targets = chart.items.filter(
+      (i) => keys.has(i.key) && i.image && !i.busyJobId,
+    );
+    if (targets.length === 0) return apiError(409, "no item to resize");
+    chart.itemSize = roundSize(body.itemSize);
+    const job = startItemJob(
+      chart,
+      targets.map((i) => i.key),
     );
     return HttpResponse.json<ItemJobResponse>(
       { jobId: job.id },

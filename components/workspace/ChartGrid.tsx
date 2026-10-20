@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { useAlert } from "@/lib/alert-store";
-import { GRID_FOOTER_HEIGHT, GRID_GAP } from "@/lib/grid-layout";
-import { useJob } from "@/lib/queries";
+import { GRID_FOOTER_HEIGHT, GRID_GAP, itemSizeFor } from "@/lib/grid-layout";
+import { useJob, useJobProgress } from "@/lib/queries";
+import { useAutoResize } from "@/lib/use-auto-resize";
 import { useWorkspace } from "@/lib/workspace-store";
 import { isTerminal, type JobStateResponse } from "@/server/api/types";
 import { ChartItemCard } from "./ChartItemCard";
@@ -100,10 +101,16 @@ export function ChartGrid() {
   const grid = current?.spec.grid ?? { rows: 1, cols: 1 };
   const pageSize = grid.rows * grid.cols;
   const job = useJob(current?.jobId, page, pageSize);
-  const totalItems = job.data?.totalItems ?? null;
+  // 하단 진행률과 job 종료 여부는 job 전체 long polling으로 받는다.
+  const progress = useJobProgress(current?.jobId);
+  const totalItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;
   const totalPages =
     totalItems === null ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
-  const jobError = job.data?.error;
+  const jobError = progress.data?.error;
+  const gridArea = useWorkspace((s) => s.gridArea);
+  // PNG를 띄울 크기. resize 중에는 이 크기로 기존 PNG를 늘리거나 줄여 보여준다.
+  const displaySize = gridArea ? itemSizeFor(gridArea, grid) : undefined;
+  useAutoResize(current?.chartId, job.data, progress.data?.status, displaySize);
 
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.
   useEffect(() => {
@@ -157,6 +164,7 @@ export function ChartGrid() {
                 item={item}
                 chartId={current.chartId}
                 primaryJobId={current.jobId}
+                displaySize={displaySize}
                 tooltipColumns={current.spec.tooltip}
               />
             ))}
@@ -180,7 +188,7 @@ export function ChartGrid() {
                 {job.error.message}
               </span>
             ) : (
-              <JobStatusText job={job.data} />
+              <JobStatusText job={progress.data} />
             )}
             <Pager page={page} totalPages={totalPages} onPage={goToPage} />
           </div>

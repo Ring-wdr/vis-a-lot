@@ -16,6 +16,9 @@ export const queryKeys = {
   columns: (rows: RowSize) => ["datasets", rows, "columns"] as const,
   job: (jobId: string, page: number, pageSize: number) =>
     ["jobs", jobId, page, pageSize] as const,
+  jobProgress: (jobId: string) => ["jobs", jobId, "progress"] as const,
+  jobItem: (jobId: string, key: string) =>
+    ["jobs", jobId, "item", key] as const,
 };
 
 const datasetsQuery = queryOptions({
@@ -91,6 +94,42 @@ export function useJob(
         prev?.version ?? -1,
         signal,
       );
+    },
+    enabled: jobId !== undefined,
+    refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
+    refetchIntervalInBackground: true,
+  });
+}
+
+/**
+ * job 전체 진행 상태(상태, 단계, 하단 진행률)를 long polling으로 받는다.
+ * 페이지 long polling은 그 페이지가 끝나면 멈추므로, job이 끝났는지는 이 요청으로 안다.
+ */
+export function useJobProgress(jobId: string | undefined) {
+  const client = useQueryClient();
+  const queryKey = queryKeys.jobProgress(jobId ?? "");
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      const prev = client.getQueryData<JobStateResponse>(queryKey);
+      return api.job(jobId as string, 0, 0, prev?.version ?? -1, signal);
+    },
+    enabled: jobId !== undefined,
+    refetchInterval: (query) =>
+      query.state.data && isTerminal(query.state.data.status) ? false : 1,
+    refetchIntervalInBackground: true,
+  });
+}
+
+/** item 단위 다시 그리기에서 그 item 하나의 상태. 그 item이 끝나면 polling을 멈춘다. */
+export function useJobItem(jobId: string | undefined, key: string) {
+  const client = useQueryClient();
+  const queryKey = queryKeys.jobItem(jobId ?? "", key);
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      const prev = client.getQueryData<JobStateResponse>(queryKey);
+      return api.jobItems(jobId as string, [key], prev?.version ?? -1, signal);
     },
     enabled: jobId !== undefined,
     refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
