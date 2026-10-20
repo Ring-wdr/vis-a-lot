@@ -1,4 +1,5 @@
 import type { RenderMethods } from "../protocol";
+import { renderCategory } from "../render/category";
 import { renderScatter } from "../render/scatter";
 import { serveRpc, transfer, type WorkerScope } from "../rpc";
 
@@ -62,6 +63,25 @@ serveRpc<RenderMethods>({
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("2d context unavailable");
     const meta = renderScatter(ctx, input, (stage, ratio) =>
+      progress({ stage, ratio }),
+    );
+    progress({ stage: "encode", ratio: 0 });
+    const png = await (
+      await canvas.convertToBlob({ type: "image/png" })
+    ).arrayBuffer();
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, meta, worker: workerName, ms: performance.now() - started },
+      [png],
+    );
+  },
+
+  async renderCategory(input, { progress }) {
+    const started = performance.now();
+    const canvas = new OffscreenCanvas(input.width, input.height);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("2d context unavailable");
+    const meta = renderCategory(ctx, input, (stage, ratio) =>
       progress({ stage, ratio }),
     );
     progress({ stage: "encode", ratio: 0 });
