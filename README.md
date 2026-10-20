@@ -65,10 +65,15 @@ pnpm lint       # Biome
 ## 디렉터리
 
 ```
-app/                  라우트 (전체를 ssr: false로 불러오는 클라이언트 앱)
-components/workspace/ 작업 화면 (모드 바, 설정 패널, item grid, 툴팁·그리기 레이어)
-lib/                  API 클라이언트, React Query 훅, 툴팁 strategy, 공유 링크
-server/               브라우저 안의 "서버"
+app/                  Next.js 라우트만 둔다 (page, layout). 화면은 src/에서 불러온다
+src/                  FSD를 참고한 클라이언트 코드 (@/* = src/*)
+  application/        provider, mock 서버 부팅, ssr: false 진입점 (FSD의 app 레이어)
+  views/              화면 단위 조립 (FSD의 pages 레이어. Next의 app/pages와 이름이 겹치지 않게)
+  widgets/            설정 패널, item grid, history 목록 같은 큰 블록
+  features/           draw, grid 변경, 공통 속성, item 조작, 툴팁, 공유, 데이터 등록 같은 사용자 동작
+  entities/           작업 상태 store, 차트 좌표·레이아웃·공유 링크
+  shared/             API 클라이언트, React Query 훅, 공통 UI, 유틸
+server/               브라우저 안의 "서버" (@server/*)
   api/                MSW handler와 REST 계약(types.ts)
   jobs/               렌더 job 실행기 (순차 대기열, long polling, 취소)
   data/               데이터 생성기, 데이터셋 적재, 차트 데이터 조회/집계 SQL
