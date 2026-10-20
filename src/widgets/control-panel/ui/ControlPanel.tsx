@@ -13,10 +13,7 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { GridPicker } from "@/features/change-grid/ui/GridPicker";
 import { DatasetSelect } from "@/features/register-dataset/ui/DatasetSelect";
-import {
-  type Option,
-  OrderedMultiSelect,
-} from "@/shared/ui/OrderedMultiSelect";
+import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import styles from "@/shared/ui/workspace.module.css";
 
 const CHART_LABELS: Record<ChartType, string> = {
@@ -179,7 +176,7 @@ export function ControlPanel() {
         </label>
       )}
 
-      <OrderedMultiSelect
+      <OrderedSelect
         label="split by"
         options={COLUMN_OPTIONS}
         value={draft.splitBy}
@@ -202,7 +199,7 @@ export function ControlPanel() {
         </span>
       </label>
 
-      <OrderedMultiSelect
+      <OrderedSelect
         label="tooltip"
         options={COLUMN_OPTIONS.filter(
           (o) => o.value !== draft.x && o.value !== draft.y,
