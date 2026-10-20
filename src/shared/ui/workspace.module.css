@@ -1,7 +1,7 @@
 .workspace {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  grid-template-rows: 48px minmax(0, 1fr);
+  grid-template-rows: 48px 36px minmax(0, 1fr);
   height: 100vh;
   background: var(--ws-surface);
   color: var(--ws-text);

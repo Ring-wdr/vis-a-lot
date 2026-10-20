@@ -3,19 +3,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
+import { chartTitle } from "@/entities/chart/lib/title";
+import { tabsStore } from "@/entities/workspace/model/tabs-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
-import { AGG_LABELS } from "@/shared/config/dataset";
 import { columnLabel } from "@/shared/lib/format";
 import styles from "@/shared/ui/workspace.module.css";
-
-const CHART_LABELS = {
-  scatter: "Scatter",
-  bar: "Bar",
-  boxplot: "Boxplot",
-} as const;
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
   zoom: "확대",
@@ -42,11 +37,7 @@ function timeAgo(ms: number) {
 }
 
 function titleOf({ spec }: HistorySummary) {
-  const measure =
-    spec.chartType === "bar"
-      ? `${AGG_LABELS[spec.agg]}(${columnLabel(spec.y)})`
-      : columnLabel(spec.y);
-  return `${CHART_LABELS[spec.chartType]} · ${columnLabel(spec.x)} × ${measure}`;
+  return chartTitle(spec);
 }
 
 function detailOf(entry: HistorySummary) {
@@ -71,7 +62,7 @@ function eventsOf(entry: HistorySummary) {
 }
 
 /**
- * history 화면의 왼쪽 목록. 고르면 저장된 설정과 item 상태로 다시 그려 보여준다.
+ * history 화면의 왼쪽 목록. 고르면 그 건을 history 탭으로 열어 저장된 설정과 item 상태로 다시 그린다.
  * 다시 보기는 history에 기록하지 않으므로 목록 순서와 썸네일이 바뀌지 않는다.
  */
 export function HistoryList() {
@@ -100,8 +91,14 @@ export function HistoryList() {
             aria-current={viewing === entry.id || undefined}
             disabled={open.isPending}
             onClick={async () => {
+              // 이미 열린 건이면 그 탭으로 가고, 처음 여는 건이면 새 탭에 다시 그린다.
+              const { tab, created } = tabsStore
+                .getState()
+                .openHistory(entry.id);
+              if (!created) return;
               const detail = await api.historyDetail(entry.id);
               open.mutate({
+                store: tab.store,
                 spec: detail.spec,
                 restore: restoreOf(detail),
                 historyId: detail.id,

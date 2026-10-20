@@ -1,21 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { readShareHash } from "@/entities/chart/lib/share";
+import {
+  emptyHistoryStore,
+  useTabs,
+} from "@/entities/workspace/model/tabs-store";
 import {
   useWorkspace,
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
-import { workspaceStores } from "@/entities/workspace/model/workspace-store";
 import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
 import styles from "@/shared/ui/workspace.module.css";
-import { AppHeader, type Tab } from "@/widgets/app-header/ui/AppHeader";
+import { AppHeader } from "@/widgets/app-header/ui/AppHeader";
 import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
 import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
 import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
+import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
 
 // tab을 오가며 gallery가 다시 마운트돼도 공유 링크는 처음 한 번만 연다.
 let sharedLinkHandled = false;
@@ -51,7 +55,7 @@ function GallerySidebar() {
   );
 }
 
-function HistorySidebar({ onEdit }: { onEdit: () => void }) {
+function HistorySidebar() {
   const viewing = useWorkspace((s) => s.current !== undefined);
   return (
     <>
@@ -68,7 +72,7 @@ function HistorySidebar({ onEdit }: { onEdit: () => void }) {
         )}
       </div>
       <div className={styles.panelFooter}>
-        <EditInGalleryButton onOpened={onEdit} />
+        <EditInGalleryButton />
       </div>
     </>
   );
@@ -76,21 +80,21 @@ function HistorySidebar({ onEdit }: { onEdit: () => void }) {
 
 /**
  * 작업 화면. gallery는 그리고 편집하는 곳, history는 그린 차트를 다시 보기만 하는 곳이다.
- * 두 tab은 작업 상태를 따로 들고 있어 오가도 각자 보던 차트가 남는다.
+ * view마다 탭이 있고, 탭마다 작업 상태(store)를 따로 들고 있어 오가도 각자 보던 차트가 남는다.
  */
 export function Workspace() {
-  const [tab, setTab] = useState<Tab>("gallery");
+  const view = useTabs((s) => s.view);
+  const tab = useTabs((s) => s.tabs.find((t) => t.id === s.active[s.view]));
+  // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
+  const store = tab?.store ?? emptyHistoryStore;
 
   return (
-    <WorkspaceScope key={tab} store={workspaceStores[tab]}>
+    <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
       <div className={styles.workspace}>
-        <AppHeader tab={tab} onTabChange={setTab} />
+        <AppHeader />
+        <TabBar view={view} />
         <aside className={styles.panel}>
-          {tab === "gallery" ? (
-            <GallerySidebar />
-          ) : (
-            <HistorySidebar onEdit={() => setTab("gallery")} />
-          )}
+          {view === "gallery" ? <GallerySidebar /> : <HistorySidebar />}
         </aside>
         <main className={styles.main}>
           <ChartGrid />
