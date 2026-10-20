@@ -14,6 +14,7 @@ import {
   COLUMNS,
   type ColumnName,
 } from "@/server/data/schema";
+import { CommonPropsPopover } from "./CommonPropsPopover";
 import { DrawButton } from "./DrawButton";
 import { type Option, OrderedMultiSelect } from "./OrderedMultiSelect";
 import styles from "./Workspace.module.css";
@@ -201,9 +202,7 @@ export function ControlPanel() {
         onChange={(tooltip) => updateDraft({ tooltip })}
       />
 
-      <button type="button" className={styles.secondaryButton} disabled>
-        공통 속성
-      </button>
+      <CommonPropsPopover />
 
       <DrawButton />
     </div>

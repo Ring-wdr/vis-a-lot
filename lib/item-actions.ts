@@ -10,6 +10,7 @@ export type ItemAction =
   | { type: "view"; body: ViewRequest }
   | { type: "addShape"; shape: Shape }
   | { type: "undoShape" }
+  | { type: "color"; color: string | null }
   | { type: "clearShapes" };
 
 /**
@@ -30,6 +31,8 @@ export function useItemAction(chartId: string, itemKey: string) {
           return api.addShape(chartId, itemKey, { shape: action.shape });
         case "undoShape":
           return api.undoShape(chartId, itemKey);
+        case "color":
+          return api.setItemColor(chartId, itemKey, action.color);
         case "clearShapes":
           return api.clearShapes(chartId, itemKey);
       }

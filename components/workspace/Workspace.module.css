@@ -465,3 +465,79 @@
   border-radius: 4px;
   font-size: 12px;
 }
+
+.popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 240px;
+  padding: 12px;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(11 11 11 / 12%);
+}
+
+.popoverBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.swatch {
+  aspect-ratio: 1;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--ws-border);
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px #0b0b0b;
+}
+
+.swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.colorDot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: -1px;
+}
+
+.colorButton .colorDot {
+  margin: 0;
+}
+
+.colorDot[data-custom] {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 3px #0b0b0b;
+}
+
+.itemActions .colorButton {
+  display: inline-grid;
+  place-items: center;
+}
+
+.linkButton {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--ws-accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
