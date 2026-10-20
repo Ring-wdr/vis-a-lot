@@ -16,7 +16,7 @@ import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
@@ -75,7 +75,6 @@ function DrawnItem({
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
   const setItemJob = useWorkspace((s) => s.setItemJob);
-  const showAlert = useAlert((s) => s.show);
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
@@ -104,7 +103,6 @@ function DrawnItem({
     primaryJobId,
     client,
     setItemJob,
-    showAlert,
   ]);
 
   return (

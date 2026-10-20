@@ -8,7 +8,7 @@ import { api } from "@/shared/api/api";
 import { useDatasetStatus, useLegendValues } from "@/shared/api/queries";
 import { columnLabel } from "@/shared/lib/format";
 import { colorName } from "@/shared/lib/palette";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { Popover } from "@/shared/ui/Popover";
@@ -24,7 +24,6 @@ export function CommonPropsPopover() {
   const current = useWorkspace((s) => s.current);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
-  const showAlert = useAlert((s) => s.show);
   const dataset = useDatasetStatus(draft.rows);
   const legendValues = useLegendValues(
     draft.rows,

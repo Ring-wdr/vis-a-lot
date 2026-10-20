@@ -11,7 +11,7 @@ import {
   useDatasetStatus,
   useJobProgress,
 } from "@/shared/api/queries";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
 type ButtonState = "draw" | "pending" | "cancel";
@@ -27,7 +27,6 @@ export function DrawButton() {
   const job = useJobProgress(current?.jobId);
   const cancel = useCancelJob();
   const dataset = useDatasetStatus(draft.rows);
-  const showAlert = useAlert((s) => s.show);
 
   const draw = useMutation({
     mutationFn: async () => {

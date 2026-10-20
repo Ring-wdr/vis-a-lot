@@ -6,7 +6,7 @@ import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
 const GRID_SIZES = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -22,7 +22,6 @@ export function GridSelect() {
   const gridArea = useWorkspace((s) => s.gridArea);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
-  const showAlert = useAlert((s) => s.show);
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
   const job = useJobProgress(current?.jobId);

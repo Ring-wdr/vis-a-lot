@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 
 export type OpenChartInput = {
   spec: ChartSpec;
@@ -21,7 +21,6 @@ export type OpenChartInput = {
 export function useOpenChart() {
   const setDraft = useWorkspace((s) => s.setDraft);
   const setCurrent = useWorkspace((s) => s.setCurrent);
-  const showAlert = useAlert((s) => s.show);
 
   return useMutation({
     mutationFn: async ({ spec, restore, historyId }: OpenChartInput) => {

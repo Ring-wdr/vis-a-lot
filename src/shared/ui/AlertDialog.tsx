@@ -1,28 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import styles from "./AlertDialog.module.css";
-import { useAlert } from "./alert-store";
+import { overlay } from "overlay-kit";
+import { Dialog } from "./Dialog";
+import styles from "./Dialog.module.css";
 
-/** 네이티브 <dialog>로 띄우는 알림. 포커스 가두기와 Esc 닫기를 브라우저가 처리한다. */
-export function AlertDialog() {
-  const message = useAlert((s) => s.message);
-  const close = useAlert((s) => s.close);
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (message && !dialog.open) dialog.showModal();
-    if (!message && dialog.open) dialog.close();
-  }, [message]);
-
-  return (
-    <dialog ref={ref} className={styles.dialog} onClose={close}>
+/**
+ * 화면 어디서든 띄우는 알림 팝업. 팝업 상태는 overlay-kit이 들고 있어 본문 상태와 섞이지 않는다.
+ */
+export function showAlert(message: string) {
+  overlay.open(({ isOpen, close, unmount }) => (
+    <Dialog isOpen={isOpen} onClose={close} onExited={unmount}>
       <p>{message}</p>
-      <form method="dialog">
-        <button type="submit">확인</button>
+      <form method="dialog" className={styles.actions}>
+        <button type="submit" className={styles.primary}>
+          확인
+        </button>
       </form>
-    </dialog>
-  );
+    </Dialog>
+  ));
 }

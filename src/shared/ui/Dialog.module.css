@@ -12,17 +12,23 @@
   background: rgb(11 11 11 / 30%);
 }
 
-.dialog form {
+.actions {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-top: 16px;
 }
 
-.dialog button {
+.primary {
   border: none;
   border-radius: 6px;
   padding: 6px 14px;
   background: #2a78d6;
   color: #fff;
   cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

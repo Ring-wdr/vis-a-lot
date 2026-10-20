@@ -10,7 +10,7 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-store";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import { ChartItemCard } from "./ChartItemCard";
 
@@ -100,7 +100,6 @@ export function ChartGrid() {
   const current = useWorkspace((s) => s.current);
   const page = useWorkspace((s) => s.page);
   const setPage = useWorkspace((s) => s.setPage);
-  const showAlert = useAlert((s) => s.show);
   const lastWheel = useRef(0);
   const grid = current?.spec.grid ?? { rows: 1, cols: 1 };
   const pageSize = grid.rows * grid.cols;
@@ -119,7 +118,7 @@ export function ChartGrid() {
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.
   useEffect(() => {
     if (jobError) showAlert(jobError);
-  }, [jobError, showAlert]);
+  }, [jobError]);
 
   const goToPage = (next: number) => {
     setPage(Math.min(totalPages - 1, Math.max(0, next)));

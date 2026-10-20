@@ -4,7 +4,7 @@ import type { Shape, ViewRequest } from "@server/api/types";
 import { useMutation } from "@tanstack/react-query";
 import { useWorkspace } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
-import { useAlert } from "@/shared/ui/alert-store";
+import { showAlert } from "@/shared/ui/AlertDialog";
 
 export type ItemAction =
   | { type: "view"; body: ViewRequest }
@@ -21,7 +21,6 @@ export type ItemAction =
 export function useItemAction(chartId: string, itemKey: string) {
   const setItemJob = useWorkspace((s) => s.setItemJob);
   const changeUndo = useWorkspace((s) => s.changeUndo);
-  const showAlert = useAlert((s) => s.show);
 
   return useMutation({
     mutationFn: (action: ItemAction) => {
