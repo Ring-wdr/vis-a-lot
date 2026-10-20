@@ -10,8 +10,13 @@ import type {
   GenerateDatasetRequest,
   HealthResponse,
   JobStateResponse,
+  SplitCountResponse,
 } from "@/server/api/types";
-import { DATASET_ID, type RowSize } from "@/server/data/schema";
+import {
+  type ColumnName,
+  DATASET_ID,
+  type RowSize,
+} from "@/server/data/schema";
 
 export class ApiRequestError extends Error {
   constructor(
@@ -68,6 +73,11 @@ export const api = {
     fetch(`/api/jobs/${jobId}/cancel`, { method: "POST" }).then((res) => {
       if (!res.ok) throw new ApiRequestError(res.status, `HTTP ${res.status}`);
     }),
+
+  splitCount: (rows: RowSize, cols: ColumnName[]) =>
+    request<SplitCountResponse>(
+      `/api/datasets/${DATASET_ID}/split-count?rows=${rows}&cols=${cols.join(",")}`,
+    ),
 
   columns: (rows: RowSize) =>
     request<ColumnsResponse>(
