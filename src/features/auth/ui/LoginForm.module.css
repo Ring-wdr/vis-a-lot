@@ -17,8 +17,8 @@
   border: 1px solid var(--ws-border);
   border-radius: 6px;
   font-size: 14px;
-  color: #0b0b0b;
-  background: #fff;
+  color: var(--ws-text);
+  background: var(--ws-elevated);
 }
 
 .field input:focus-visible {
@@ -31,7 +31,7 @@
   border-radius: 6px;
   padding: 10px 12px;
   background: var(--ws-accent);
-  color: #fff;
+  color: var(--ws-on-accent);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -44,7 +44,7 @@
 
 .error {
   font-size: 13px;
-  color: #b42318;
+  color: var(--ws-danger);
 }
 
 .notice {

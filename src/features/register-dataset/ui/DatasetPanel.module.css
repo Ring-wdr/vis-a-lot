@@ -13,16 +13,16 @@
 }
 
 .field > span {
-  color: #52514e;
+  color: var(--ws-text-secondary);
   font-size: 12px;
   margin-bottom: 2px;
 }
 
 .field select {
   padding: 5px 6px;
-  border: 1px solid #e7e6e2;
+  border: 1px solid var(--ws-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--ws-elevated);
 }
 
 .progress {
@@ -30,7 +30,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ws-text-muted);
 }
 
 .progress progress {
@@ -39,7 +39,7 @@
 
 .meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ws-text-muted);
 }
 
 .columns {
@@ -51,7 +51,7 @@
 .columns td {
   text-align: left;
   padding: 4px 8px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--ws-border);
 }
 
 .columns td:last-child,

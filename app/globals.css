@@ -1,21 +1,53 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-
-  /* 작업 화면 토큰. body 밖에 뜨는 팝업(overlay)에서도 같은 값을 쓰도록 :root에 둔다. */
-  --ws-border: #e7e6e2;
+  /* 화면 색은 모두 이 토큰을 쓴다. body 밖에 뜨는 팝업(overlay)에서도 같은 값을 쓰도록 :root에 둔다. */
   --ws-surface: #fcfcfb;
   --ws-panel: #f6f6f4;
+  /* 카드, 입력, 팝업처럼 바탕 위에 떠 있는 면 */
+  --ws-elevated: #ffffff;
+  --ws-border: #e7e6e2;
+  --ws-text: #0b0b0b;
   --ws-text-secondary: #52514e;
   --ws-text-muted: #8a8984;
   --ws-accent: #2a78d6;
+  --ws-accent-rgb: 42 120 214;
   --ws-accent-soft: #eef5fd;
+  --ws-accent-border: #b9d3f2;
+  /* accent 바탕 위 글자 */
+  --ws-on-accent: #ffffff;
+  --ws-danger: #b42318;
+  --ws-shadow-rgb: 11 11 11;
+  --ws-backdrop: rgb(11 11 11 / 30%);
+  /* 다시 그리는 동안 item을 덮는 반투명 막 */
+  --ws-overlay: rgb(252 252 251 / 70%);
+
+  /* 서버가 그린 PNG 위에 겹치는 표시(도형 미리보기, hover 표시).
+     PNG는 테마와 상관없이 밝은 바탕이라 다크 모드에서도 바꾸지 않는다. */
+  --chart-ink: #0b0b0b;
+  --chart-ink-soft: rgb(11 11 11 / 6%);
+  --chart-paper: #ffffff;
+
+  --background: var(--ws-surface);
+  --foreground: var(--ws-text);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --ws-surface: #141413;
+    --ws-panel: #1b1b1a;
+    --ws-elevated: #232322;
+    --ws-border: #363632;
+    --ws-text: #ecebe8;
+    --ws-text-secondary: #b5b4ae;
+    --ws-text-muted: #8a8984;
+    --ws-accent: #4d8fe6;
+    --ws-accent-rgb: 77 143 230;
+    --ws-accent-soft: #1c2a3c;
+    --ws-accent-border: #2f4c72;
+    --ws-on-accent: #ffffff;
+    --ws-danger: #f07a70;
+    --ws-shadow-rgb: 0 0 0;
+    --ws-backdrop: rgb(0 0 0 / 55%);
+    --ws-overlay: rgb(20 20 19 / 70%);
   }
 }
 

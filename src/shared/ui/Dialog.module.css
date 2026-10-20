@@ -2,14 +2,14 @@
   margin: auto;
   max-width: 360px;
   padding: 20px;
-  border: 1px solid #e7e6e2;
+  border: 1px solid var(--ws-border);
   border-radius: 8px;
   font-size: 14px;
   line-height: 1.5;
 }
 
 .dialog::backdrop {
-  background: rgb(11 11 11 / 30%);
+  background: var(--ws-backdrop);
 }
 
 .actions {
@@ -23,8 +23,8 @@
   border: none;
   border-radius: 6px;
   padding: 6px 14px;
-  background: #2a78d6;
-  color: #fff;
+  background: var(--ws-accent);
+  color: var(--ws-on-accent);
   cursor: pointer;
 }
 

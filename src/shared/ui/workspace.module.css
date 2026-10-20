@@ -4,7 +4,7 @@
   grid-template-rows: 48px minmax(0, 1fr);
   height: 100vh;
   background: var(--ws-surface);
-  color: #0b0b0b;
+  color: var(--ws-text);
 }
 
 .header {
@@ -30,7 +30,7 @@
 .chartTypes button,
 .secondaryButton {
   border: 1px solid var(--ws-border);
-  background: #fff;
+  background: var(--ws-elevated);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 13px;
@@ -146,7 +146,7 @@
   padding: 5px 6px;
   border: 1px solid var(--ws-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--ws-elevated);
 }
 
 .chartTypes {
@@ -169,17 +169,17 @@
   border-radius: 6px;
   padding: 9px 12px;
   background: var(--ws-accent);
-  color: #fff;
+  color: var(--ws-on-accent);
   font-weight: 600;
   cursor: pointer;
 }
 
 .cancelButton {
-  border: 1px solid #b42318;
+  border: 1px solid var(--ws-danger);
   border-radius: 6px;
   padding: 8px 12px;
-  background: #fff;
-  color: #b42318;
+  background: var(--ws-elevated);
+  color: var(--ws-danger);
   font-weight: 600;
   cursor: pointer;
 }
@@ -298,7 +298,7 @@
 }
 
 .error {
-  color: #b42318;
+  color: var(--ws-danger);
   font-size: 12px;
 }
 
@@ -331,7 +331,7 @@
 
 .pager button {
   border: 1px solid var(--ws-border);
-  background: #fff;
+  background: var(--ws-elevated);
   border-radius: 6px;
   width: 28px;
   height: 26px;
@@ -355,9 +355,9 @@
 
 .hitBox {
   position: absolute;
-  border: 2px solid #0b0b0b;
+  border: 2px solid var(--chart-ink);
   border-radius: 4px;
-  box-shadow: 0 0 0 2px var(--ws-surface);
+  box-shadow: 0 0 0 2px var(--chart-paper);
   pointer-events: none;
 }
 
@@ -366,9 +366,9 @@
   width: 10px;
   height: 10px;
   margin: -5px 0 0 -5px;
-  border: 2px solid #0b0b0b;
+  border: 2px solid var(--chart-ink);
   border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--ws-surface);
+  box-shadow: 0 0 0 2px var(--chart-paper);
   pointer-events: none;
 }
 
@@ -378,8 +378,8 @@
   padding: 8px 10px;
   border: 1px solid var(--ws-border);
   border-radius: 6px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgb(11 11 11 / 10%);
+  background: var(--ws-elevated);
+  box-shadow: 0 4px 12px rgb(var(--ws-shadow-rgb) / 10%);
   font-size: 12px;
   pointer-events: none;
 }
@@ -399,11 +399,11 @@
 
 .tooltip dd {
   font-variant-numeric: tabular-nums;
-  color: #0b0b0b;
+  color: var(--ws-text);
 }
 
 .tooltip .emphasis dt {
-  color: #0b0b0b;
+  color: var(--ws-text);
 }
 
 .tooltip .emphasis dd {
@@ -431,7 +431,7 @@
 
 .itemActions button:hover:not(:disabled) {
   border-color: var(--ws-border);
-  background: #fff;
+  background: var(--ws-elevated);
 }
 
 .itemActions button:disabled {
@@ -445,7 +445,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(252 252 251 / 70%);
+  background: var(--ws-overlay);
   cursor: progress;
 }
 
@@ -470,8 +470,8 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  fill: rgb(11 11 11 / 6%);
-  stroke: #0b0b0b;
+  fill: var(--chart-ink-soft);
+  stroke: var(--chart-ink);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -483,7 +483,7 @@
 }
 
 .drawPreview .zoomRect {
-  fill: rgb(42 120 214 / 12%);
+  fill: rgb(var(--ws-accent-rgb) / 12%);
   stroke: var(--ws-accent);
   stroke-width: 1;
 }
@@ -506,8 +506,8 @@
   padding: 12px;
   border: 1px solid var(--ws-border);
   border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgb(11 11 11 / 12%);
+  background: var(--ws-elevated);
+  box-shadow: 0 8px 24px rgb(var(--ws-shadow-rgb) / 12%);
 }
 
 .popoverBody {
@@ -525,14 +525,14 @@
 
 .swatch {
   aspect-ratio: 1;
-  border: 2px solid #fff;
+  border: 2px solid var(--ws-elevated);
   border-radius: 50%;
   box-shadow: 0 0 0 1px var(--ws-border);
   cursor: pointer;
 }
 
 .swatch[aria-pressed="true"] {
-  box-shadow: 0 0 0 2px #0b0b0b;
+  box-shadow: 0 0 0 2px var(--ws-text);
 }
 
 .swatch:disabled {
@@ -555,8 +555,8 @@
 
 .colorDot[data-custom] {
   box-shadow:
-    0 0 0 2px #fff,
-    0 0 0 3px #0b0b0b;
+    0 0 0 2px var(--ws-elevated),
+    0 0 0 3px var(--ws-text);
 }
 
 .itemActions .colorButton {
@@ -618,7 +618,7 @@
   padding: 6px;
   border: 1px solid var(--ws-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--ws-elevated);
   text-align: left;
   cursor: pointer;
 }
@@ -678,7 +678,7 @@
 .legendHit:focus-visible {
   outline: 2px solid var(--ws-accent);
   outline-offset: 1px;
-  background: rgb(42 120 214 / 8%);
+  background: rgb(var(--ws-accent-rgb) / 8%);
 }
 
 .legendList {
@@ -698,7 +698,7 @@
 .legendSwatch {
   width: 18px;
   height: 18px;
-  border: 2px solid #fff;
+  border: 2px solid var(--ws-elevated);
   border-radius: 50%;
   box-shadow: 0 0 0 1px var(--ws-border);
   cursor: pointer;
