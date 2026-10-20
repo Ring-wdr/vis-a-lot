@@ -1,5 +1,6 @@
 import { HttpResponse, http } from "msw";
-import { createChart, getChart } from "../charts/chart-store";
+import { createChart, getChart, getItem } from "../charts/chart-store";
+import { zoomIn, zoomOut } from "../charts/item-view";
 import {
   COLUMNS,
   type ColumnName,
@@ -12,10 +13,12 @@ import {
   cancelJob,
   getJob,
   jobState,
+  startItemJob,
   startJob,
   waitForUpdate,
 } from "../jobs/job-manager";
 import { matchPng, putPng } from "../png-store";
+import { isValidShape } from "../render/shapes";
 import { getRuntime } from "../runtime";
 import type {
   ColumnsResponse,
@@ -27,15 +30,18 @@ import type {
   HealthResponse,
 } from "./types";
 import {
+  type AddShapeRequest,
   type ApiError,
   CHART_TYPES,
   type CreateChartRequest,
   type CreateChartResponse,
+  type ItemJobResponse,
   type ItemMeta,
   type JobStateResponse,
   type SplitCountResponse,
   type TooltipRequest,
   type TooltipResponse,
+  type ViewRequest,
 } from "./types";
 
 let pngVersion = 0;
@@ -54,6 +60,32 @@ function parseRows(value: unknown): RowSize | undefined {
 }
 
 const dataset = (path: string) => `/api/datasets/:datasetId${path}`;
+
+const itemPath = (path: string) => `/api/charts/:chartId/items/:itemKey${path}`;
+
+type ItemParams = {
+  chartId?: string | readonly string[];
+  itemKey?: string | readonly string[];
+};
+
+/** item 단위 조작의 공통 전처리. 아직 그려지지 않았거나 다시 그리는 중이면 거절한다. */
+function editableItem(params: ItemParams) {
+  const chart = getChart(String(params.chartId));
+  const item = chart && getItem(chart, String(params.itemKey));
+  if (!chart || !item) return { error: apiError(404, "unknown item") } as const;
+  if (!item.image)
+    return { error: apiError(409, "item is not drawn yet") } as const;
+  if (item.busyJobId)
+    return { error: apiError(409, "item is being redrawn") } as const;
+  return { chart, item } as const;
+}
+
+function redraw(chart: Parameters<typeof startItemJob>[0], key: string) {
+  const job = startItemJob(chart, [key]);
+  return HttpResponse.json<ItemJobResponse>({ jobId: job.id }, { status: 202 });
+}
+
+const ZOOM_OUT_MAX_RATIO = 10;
 
 const COLUMN_TYPE = new Map<string, string>(
   COLUMNS.map((c) => [c.name, c.type]),
@@ -212,6 +244,57 @@ export const handlers = [
       worker: result.worker,
       renderMs: result.ms,
     });
+  }),
+
+  // 확대/축소/초기화. 바뀐 범위로 그 item만 다시 그린다.
+  http.post(itemPath("/view"), async ({ params, request }) => {
+    const target = editableItem(params);
+    if ("error" in target) return target.error;
+    const { chart, item } = target;
+    const body = (await request.json()) as ViewRequest;
+    if (body.type === "zoomIn") {
+      if (![...body.x, ...body.y].every(Number.isFinite))
+        return apiError(400, "invalid range");
+      const view = zoomIn(body.x, body.y);
+      if (!view) return apiError(400, "empty range");
+      item.view = view;
+    } else if (body.type === "zoomOut") {
+      if (!item.view) return apiError(409, "item is not zoomed");
+      if (!(body.ratio > 1 && body.ratio <= ZOOM_OUT_MAX_RATIO))
+        return apiError(400, "invalid ratio");
+      item.view = zoomOut(item.view, item.fullView, body.ratio);
+    } else if (body.type === "reset") {
+      item.view = undefined;
+    } else {
+      return apiError(400, "unknown view action");
+    }
+    return redraw(chart, item.key);
+  }),
+
+  http.post(itemPath("/shapes"), async ({ params, request }) => {
+    const target = editableItem(params);
+    if ("error" in target) return target.error;
+    const body = (await request.json()) as AddShapeRequest;
+    if (!isValidShape(body.shape)) return apiError(400, "invalid shape");
+    target.item.shapes.push(body.shape);
+    return redraw(target.chart, target.item.key);
+  }),
+
+  // undo: 마지막 도형을 뺀다. undo 이력 자체는 화면 세션 안에서만 의미가 있다.
+  http.delete(itemPath("/shapes/last"), ({ params }) => {
+    const target = editableItem(params);
+    if ("error" in target) return target.error;
+    if (target.item.shapes.length === 0) return apiError(409, "no shapes");
+    target.item.shapes.pop();
+    return redraw(target.chart, target.item.key);
+  }),
+
+  http.delete(itemPath("/shapes"), ({ params }) => {
+    const target = editableItem(params);
+    if ("error" in target) return target.error;
+    if (target.item.shapes.length === 0) return apiError(409, "no shapes");
+    target.item.shapes = [];
+    return redraw(target.chart, target.item.key);
   }),
 
   // 툴팁용 metadata. 화면이 item에 처음 커서를 올릴 때 받아 캐시한다.

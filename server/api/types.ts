@@ -1,7 +1,8 @@
 // 화면 ↔ mock 서버 REST API의 요청/응답 타입. 실서버로 옮겨도 이 계약은 유지한다.
 
 import type { ColumnDef, ColumnName, RowSize } from "../data/schema";
-import type { AxisMeta, ScatterMeta } from "../render/scatter";
+import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
+import type { Shape, ShapeType } from "../render/shapes";
 
 export type HealthResponse = {
   db: { version: string; bootCount: number; bootMs: number };
@@ -81,10 +82,20 @@ export type CreateChartResponse = { chartId: string; jobId: string };
 
 export type ChartImage = { url: string; width: number; height: number };
 
-export type { AxisMeta, ScatterMeta };
+export type { AxisMeta, ItemView, ScatterMeta, Shape, ShapeType };
 
 /** 차트 종류별 metadata. 8단계에서 bar, boxplot이 추가된다. */
 export type ItemMeta = ScatterMeta;
+
+export type ViewRequest =
+  | { type: "zoomIn"; x: [number, number]; y: [number, number] }
+  | { type: "zoomOut"; ratio: number }
+  | { type: "reset" };
+
+export type AddShapeRequest = { shape: Shape };
+
+/** item 하나(또는 몇 개)를 다시 그리는 job */
+export type ItemJobResponse = { jobId: string };
 
 export type TooltipRequest = { rowId: number; columns: ColumnName[] };
 export type TooltipResponse = {
@@ -119,6 +130,9 @@ export type ItemState = {
   stageProgress: number;
   image?: ChartImage;
   error?: string;
+  /** 확대 중인지. 축소/초기화 버튼 활성화에 쓴다. */
+  zoomed: boolean;
+  shapeCount: number;
 };
 
 export type JobStateResponse = {
