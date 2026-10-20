@@ -1,7 +1,11 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceMutating,
+  useWorkspaceMutationKey,
+} from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import type { Shape, ViewRequest } from "@/shared/api/types";
 
@@ -23,6 +27,7 @@ export function useItemAction(chartId: string, itemKey: string) {
   const notify = useWorkspace((s) => s.notify);
 
   return useMutation({
+    mutationKey: useWorkspaceMutationKey("item", chartId, itemKey),
     mutationFn: (action: ItemAction) => {
       switch (action.type) {
         case "view":
@@ -52,4 +57,9 @@ export function useItemAction(chartId: string, itemKey: string) {
     },
     onError: (err) => notify(err.message),
   });
+}
+
+/** 이 item의 조작 요청이 아직 응답을 기다리는 중인지. 탭을 오가 다시 마운트돼도 이어진다. */
+export function useItemActionPending(chartId: string, itemKey: string) {
+  return useWorkspaceMutating("item", chartId, itemKey);
 }

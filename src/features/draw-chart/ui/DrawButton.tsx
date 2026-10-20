@@ -2,7 +2,11 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceMutating,
+  useWorkspaceMutationKey,
+} from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import {
   useCancelJob,
@@ -24,6 +28,7 @@ export function DrawButton() {
   const current = useWorkspace((s) => s.current);
   const setCurrent = useWorkspace((s) => s.setCurrent);
   const notify = useWorkspace((s) => s.notify);
+  const opening = useWorkspace((s) => s.opening);
   const job = useJobProgress(current?.jobId);
   const cancel = useCancelJob();
   const dataset = useDatasetStatus(draft.rows);
@@ -33,6 +38,7 @@ export function DrawButton() {
   const ready = schema.data !== undefined && draft.x !== "" && draft.y !== "";
 
   const draw = useMutation({
+    mutationKey: useWorkspaceMutationKey("draw"),
     mutationFn: async () => {
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
@@ -58,8 +64,10 @@ export function DrawButton() {
     onSuccess: (res) => res && setCurrent({ ...res, spec: draft }),
   });
 
+  // 탭을 오가 다시 마운트돼도 이 탭의 draw가 진행 중이면 다시 누를 수 없게 한다.
+  const drawing = useWorkspaceMutating("draw");
   const state: ButtonState =
-    draw.isPending || (current && !job.data)
+    drawing || opening || (current && !job.data)
       ? "pending"
       : current && job.data && !isTerminal(job.data.status)
         ? "cancel"
