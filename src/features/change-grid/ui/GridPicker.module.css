@@ -1,34 +1,3 @@
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.field > span {
-  color: var(--ws-text-secondary);
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border: 1px solid var(--ws-border);
-  border-radius: 6px;
-  background: var(--ws-elevated);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.trigger:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 .picker {
   display: flex;
   flex-direction: column;
