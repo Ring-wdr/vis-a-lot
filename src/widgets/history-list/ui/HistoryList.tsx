@@ -4,7 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
 import { chartTitle } from "@/entities/chart/lib/title";
-import { tabsStore } from "@/entities/workspace/model/tabs-store";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
@@ -68,6 +68,7 @@ function eventsOf(entry: HistorySummary) {
  */
 export function HistoryList() {
   const list = useQuery({ queryKey: ["history"], queryFn: api.history });
+  const openHistory = useTabs((s) => s.openHistory);
   const open = useOpenChart();
   const viewing = useWorkspace((s) => s.current?.historyId);
   // 컬럼 라벨은 데이터셋 스키마에 있으므로, 목록에 나오는 데이터셋의 스키마를 함께 받는다.
@@ -95,9 +96,7 @@ export function HistoryList() {
             disabled={open.isPending}
             onClick={async () => {
               // 이미 열린 건이면 그 탭으로 가고, 처음 여는 건이면 새 탭에 다시 그린다.
-              const { tab, created } = tabsStore
-                .getState()
-                .openHistory(entry.id);
+              const { tab, created } = openHistory(entry.id);
               if (!created) return;
               const detail = await api.historyDetail(entry.id);
               open.mutate({

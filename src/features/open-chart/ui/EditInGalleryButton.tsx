@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
-import { tabsStore } from "@/entities/workspace/model/tabs-store";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -15,11 +15,12 @@ import { useOpenChart } from "../model/open-chart";
  */
 export function EditInGalleryButton() {
   const historyId = useWorkspace((s) => s.current?.historyId);
+  const openGallery = useTabs((s) => s.openGallery);
   const open = useOpenChart();
   const load = useMutation({
     mutationFn: (id: string) => api.historyDetail(id),
     onSuccess: (detail) => {
-      const tab = tabsStore.getState().openGallery(detail.spec);
+      const tab = openGallery(detail.spec);
       open.mutate({
         store: tab.store,
         spec: detail.spec,

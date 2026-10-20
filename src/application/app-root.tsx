@@ -1,14 +1,15 @@
 "use client";
 
-import { Workspace } from "@/views/workspace/ui/Workspace";
+import type { ReactNode } from "react";
 import { Providers } from "./providers";
 import { SessionGate } from "./SessionGate";
+import { SessionScope } from "./SessionScope";
 
-export default function AppRoot() {
+export default function AppRoot({ children }: { children: ReactNode }) {
   return (
     <Providers>
       <SessionGate>
-        <Workspace />
+        <SessionScope>{children}</SessionScope>
       </SessionGate>
     </Providers>
   );

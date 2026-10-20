@@ -2,10 +2,7 @@
 
 import { useEffect } from "react";
 import { readShareHash } from "@/entities/chart/lib/share";
-import {
-  emptyHistoryStore,
-  useTabs,
-} from "@/entities/workspace/model/tabs-store";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import {
   useWorkspace,
   WorkspaceScope,
@@ -87,7 +84,8 @@ export function Workspace() {
   const view = useTabs((s) => s.view);
   const tab = useTabs((s) => s.tabs.find((t) => t.id === s.active[s.view]));
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
-  const store = tab?.store ?? emptyHistoryStore;
+  const emptyHistory = useTabs((s) => s.emptyHistory);
+  const store = tab?.store ?? emptyHistory;
   const filterOpen = useTabs((s) => s.filterPanelOpen);
 
   return (

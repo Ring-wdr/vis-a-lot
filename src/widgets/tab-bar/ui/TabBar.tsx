@@ -4,12 +4,8 @@ import { Filter, Plus, X } from "lucide-react";
 import { useStore } from "zustand";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { ROW_LABELS } from "@/entities/dataset/lib/labels";
-import {
-  tabsStore,
-  useTabs,
-  type View,
-  type WorkspaceTab,
-} from "@/entities/workspace/model/tabs-store";
+import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
+import type { View, WorkspaceTab } from "@/entities/workspace/model/tabs-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import styles from "./TabBar.module.css";
 
@@ -32,7 +28,7 @@ export function TabBar({ view }: { view: View }) {
   const tabs = useTabs((s) => s.tabs);
   const active = useTabs((s) => s.active[view]);
   const mine = tabs.filter((t) => t.view === view);
-  const { activate, close, openGallery } = tabsStore.getState();
+  const { activate, close, openGallery } = useTabsStore().getState();
   const closable = view === "history" || mine.length > 1;
 
   return (
@@ -91,13 +87,14 @@ export function TabBar({ view }: { view: View }) {
 /** 탭 바 오른쪽: 필터 패널 열기/닫기. 지금 탭에 걸린 필터 수를 보여준다. */
 function FilterToggle() {
   const open = useTabs((s) => s.filterPanelOpen);
+  const toggle = useTabs((s) => s.toggleFilterPanel);
   const count = useWorkspace((s) => s.draft.filters?.length ?? 0);
   return (
     <button
       type="button"
       className={styles.filterToggle}
       aria-pressed={open}
-      onClick={() => tabsStore.getState().toggleFilterPanel()}
+      onClick={toggle}
     >
       <Filter size={13} aria-hidden="true" />
       필터

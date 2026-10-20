@@ -3,7 +3,7 @@
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
-import { tabsStore } from "@/entities/workspace/model/tabs-store";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import {
   useDatasetSchema,
   useDatasets,
@@ -44,6 +44,7 @@ function StatusCell({ status }: { status: DatasetStatus | undefined }) {
  */
 function DataDialogBody({ onClose }: { onClose: () => void }) {
   const titleId = useId();
+  const openGallery = useTabs((s) => s.openGallery);
   const datasets = useDatasets();
   const generate = useGenerateDataset();
   const [picked, setPicked] = useState<RowSize>();
@@ -167,7 +168,7 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
           onClick={() => {
             if (picked === undefined) return;
             // 고른 데이터로 새 gallery 탭(작업 공간)을 연다.
-            tabsStore.getState().openGallery({ rows: picked });
+            openGallery({ rows: picked });
             onClose();
           }}
         >
