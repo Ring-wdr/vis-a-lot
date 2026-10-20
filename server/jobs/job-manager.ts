@@ -11,8 +11,12 @@ import {
   type JobStatus,
 } from "../api/types";
 import {
+  type CachedChartData,
   type ChartItem,
   type ChartRecord,
+  cacheChartData,
+  getCachedChartData,
+  getItem,
   pngUrl,
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
@@ -65,6 +69,7 @@ export function startJob(chart: ChartRecord): Job {
     abort: new AbortController(),
   };
   jobs.set(job.id, job);
+  chart.primaryJobId = job.id;
   run(job)
     .catch((err) => {
       if (err instanceof CancelledError) {
@@ -160,7 +165,7 @@ export function jobState(
 }
 
 async function run(job: Job) {
-  const { db, render } = getRuntime();
+  const { db } = getRuntime();
   const { chart } = job;
   const { spec } = chart;
   const { signal } = job.abort;
@@ -194,12 +199,7 @@ async function run(job: Job) {
       `split 조합이 ${split.count.toLocaleString()}개로 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개를 넘습니다.`,
     );
   }
-  const data = await db.call("chartData", {
-    rows: spec.rows,
-    x: spec.x,
-    y: spec.y,
-    splitBy: spec.splitBy,
-  });
+  const data = await loadChartData(chart);
   throwIfCancelled();
 
   chart.items = data.groups.map((g) => ({
@@ -207,26 +207,116 @@ async function run(job: Job) {
     label: itemLabelOf(g.values, spec.splitSeparator),
     values: g.values,
     version: 0,
+    shapes: [],
   }));
-  for (const item of chart.items) {
-    job.items.set(item.key, {
-      key: item.key,
-      label: item.label,
-      status: "queued",
-      stage: "query",
-      stageProgress: 1,
-    });
-  }
+  for (const item of chart.items) job.items.set(item.key, initialState(item));
   job.order = chart.items.map((i) => i.key);
   job.phase = "render";
   touch(job);
 
-  // ── item 렌더: pool에 순서대로 넣는다 ─────────────────────────
+  await renderItems(job, data, chart.items);
+  job.status = finalStatus(job);
+}
+
+/**
+ * item 일부만 다시 그리는 job (확대/축소, 도형, 개별 속성, resize).
+ * 결과는 draw job의 item 상태에도 반영해 grid가 새 PNG를 보게 한다.
+ */
+export function startItemJob(chart: ChartRecord, keys: string[]): Job {
+  const items = keys
+    .map((k) => getItem(chart, k))
+    .filter((i): i is ChartItem => i !== undefined);
+  const job: Job = {
+    id: crypto.randomUUID(),
+    chart,
+    status: "progress",
+    phase: "render",
+    dataset: { done: chart.spec.rows, total: chart.spec.rows },
+    items: new Map(items.map((i) => [i.key, initialState(i)])),
+    order: items.map((i) => i.key),
+    version: 0,
+    waiters: new Set(),
+    abort: new AbortController(),
+  };
+  jobs.set(job.id, job);
+  for (const item of items) item.busyJobId = job.id;
+
+  (async () => {
+    const data = await loadChartData(chart);
+    await renderItems(job, data, items);
+    job.status = finalStatus(job);
+  })()
+    .catch((err) => {
+      console.error(`item job ${job.id} failed`, err);
+      job.status = "failed";
+    })
+    .finally(() => {
+      for (const item of items) {
+        if (item.busyJobId === job.id) item.busyJobId = undefined;
+      }
+      touch(job);
+    });
+  return job;
+}
+
+function initialState(item: ChartItem): ItemState {
+  return {
+    key: item.key,
+    label: item.label,
+    status: "queued",
+    stage: "query",
+    stageProgress: 1,
+    image: item.image,
+    zoomed: item.view !== undefined,
+    shapeCount: item.shapes.length,
+  };
+}
+
+function finalStatus(job: Job): JobStatus {
+  const statuses = [...job.items.values()].map((s) => s.status);
+  return statuses.includes("cancelled")
+    ? "cancelled"
+    : statuses.includes("failed")
+      ? "failed"
+      : "success";
+}
+
+/** 차트 데이터를 메모리 캐시에서 꺼내고, 밀려났으면 다시 조회한다. */
+async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
+  const cached = getCachedChartData(chart.id);
+  if (cached) return cached;
+  const { spec } = chart;
+  const data = await getRuntime().db.call("chartData", {
+    rows: spec.rows,
+    x: spec.x,
+    y: spec.y,
+    splitBy: spec.splitBy,
+  });
+  const groupOf = new Map(data.groups.map((g, i) => [itemKeyOf(g.values), i]));
+  const result = { ...data, groupOf };
+  cacheChartData(chart.id, result);
+  return result;
+}
+
+/** item들을 pool에 순서대로 넣는다. 순서를 당기는 우선순위는 두지 않는다. */
+async function renderItems(
+  job: Job,
+  data: CachedChartData,
+  items: ChartItem[],
+) {
+  const { render } = getRuntime();
+  const { chart } = job;
+  const { spec } = chart;
+  const { signal } = job.abort;
   const xKind =
     COLUMNS.find((c) => c.name === spec.x)?.type === "time" ? "time" : "number";
+
   await Promise.all(
-    chart.items.map((item, i) => {
-      const group = data.groups[i];
+    items.map((item) => {
+      const group = data.groups[data.groupOf.get(item.key) ?? -1] ?? {
+        start: 0,
+        end: 0,
+      };
       const state = job.items.get(item.key) as ItemState;
       const setStage = (stage: ItemStage, ratio: number) => {
         state.stage = stage;
@@ -245,6 +335,8 @@ async function run(job: Job) {
             ys: data.ys.slice(group.start, group.end),
             ids: data.ids.slice(group.start, group.end),
             color: spec.common.color,
+            view: item.view,
+            shapes: item.shapes,
           },
           {
             signal,
@@ -258,8 +350,15 @@ async function run(job: Job) {
         .then(async (result) => {
           await storeResult(chart, item, result.png);
           item.meta = result.meta;
+          if (!item.view) {
+            item.fullView = {
+              x: result.meta.x.domain,
+              y: result.meta.y.domain,
+            };
+          }
           state.image = item.image;
           state.status = "success";
+          syncPrimary(chart, item);
         })
         .catch((err: unknown) => {
           if (err instanceof CancelledError) {
@@ -272,13 +371,17 @@ async function run(job: Job) {
         .finally(() => touch(job));
     }),
   );
+}
 
-  const statuses = [...job.items.values()].map((s) => s.status);
-  job.status = statuses.includes("cancelled")
-    ? "cancelled"
-    : statuses.includes("failed")
-      ? "failed"
-      : "success";
+/** item 단위로 다시 그린 결과를 draw job의 item 상태에 반영한다. */
+function syncPrimary(chart: ChartRecord, item: ChartItem) {
+  const primary = chart.primaryJobId ? jobs.get(chart.primaryJobId) : undefined;
+  const state = primary?.items.get(item.key);
+  if (!primary || !state) return;
+  state.image = item.image;
+  state.zoomed = item.view !== undefined;
+  state.shapeCount = item.shapes.length;
+  touch(primary);
 }
 
 async function storeResult(
