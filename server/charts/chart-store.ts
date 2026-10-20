@@ -1,8 +1,9 @@
 // 서버 쪽 차트 상태. 이후 단계에서 PGlite에 영속화해 history의 원천이 된다.
 
-import type { ChartImage, ChartSpec, ItemSize } from "../api/types";
+import type { ChartImage, ChartSpec, ItemMeta, ItemSize } from "../api/types";
+import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
-import type { ItemView, ScatterMeta } from "../render/scatter";
+import type { ItemView } from "../render/scatter";
 import type { Shape } from "../render/shapes";
 
 export type ChartItem = {
@@ -12,7 +13,7 @@ export type ChartItem = {
   /** 다시 그릴 때마다 올라간다. PNG URL의 v 파라미터가 된다. */
   version: number;
   image?: ChartImage;
-  meta?: ScatterMeta;
+  meta?: ItemMeta;
   /** 확대한 데이터 범위. 없으면 전체 범위 */
   view?: ItemView;
   /** 확대하지 않았을 때의 범위. 축소가 전체 범위를 넘으면 초기화로 본다. */
@@ -35,7 +36,10 @@ export type ChartRecord = {
 };
 
 /** item 단위 다시 그리기에 재사용할 조회 결과. 최근 차트 몇 개만 메모리에 둔다. */
-export type CachedChartData = ChartData & { groupOf: Map<string, number> };
+export type CachedChartData = (
+  | ({ kind: "scatter" } & ChartData)
+  | ({ kind: "category" } & CategoryData)
+) & { groupOf: Map<string, number> };
 
 const charts = new Map<string, ChartRecord>();
 const dataCache = new Map<string, CachedChartData>();

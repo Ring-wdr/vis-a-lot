@@ -1,6 +1,8 @@
 // 화면 ↔ mock 서버 REST API의 요청/응답 타입. 실서버로 옮겨도 이 계약은 유지한다.
 
-import type { ColumnDef, ColumnName, RowSize } from "../data/schema";
+import type { BoxStats } from "../data/category-data";
+import type { AggFn, ColumnDef, ColumnName, RowSize } from "../data/schema";
+import type { CategoryMeta } from "../render/category";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 
@@ -67,6 +69,8 @@ export type ChartSpec = {
   chartType: ChartType;
   x: ColumnName;
   y: ColumnName;
+  /** bar의 통계 함수 */
+  agg: AggFn;
   /** 클릭한 순서가 곧 조합 순서다. */
   splitBy: ColumnName[];
   splitSeparator: string;
@@ -82,10 +86,18 @@ export type CreateChartResponse = { chartId: string; jobId: string };
 
 export type ChartImage = { url: string; width: number; height: number };
 
-export type { AxisMeta, ItemView, ScatterMeta, Shape, ShapeType };
+export type {
+  AxisMeta,
+  BoxStats,
+  CategoryMeta,
+  ItemView,
+  ScatterMeta,
+  Shape,
+  ShapeType,
+};
 
-/** 차트 종류별 metadata. 8단계에서 bar, boxplot이 추가된다. */
-export type ItemMeta = ScatterMeta;
+/** 차트 종류별 metadata */
+export type ItemMeta = ScatterMeta | CategoryMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

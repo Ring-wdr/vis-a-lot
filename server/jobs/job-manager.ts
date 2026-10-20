@@ -3,6 +3,7 @@
 // 상태가 바뀔 때마다 version을 올려 long polling 대기자를 깨운다.
 
 import {
+  type ItemMeta,
   type ItemStage,
   type ItemState,
   isTerminal,
@@ -22,7 +23,7 @@ import {
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { COLUMNS, MAX_SPLIT_ITEMS } from "../data/schema";
 import { putPng } from "../png-store";
-import { CancelledError } from "../render-pool";
+import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
 
 type Job = {
@@ -285,17 +286,90 @@ function finalStatus(job: Job): JobStatus {
 async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const cached = getCachedChartData(chart.id);
   if (cached) return cached;
+  const { db } = getRuntime();
   const { spec } = chart;
-  const data = await getRuntime().db.call("chartData", {
-    rows: spec.rows,
-    x: spec.x,
-    y: spec.y,
-    splitBy: spec.splitBy,
+  const result: CachedChartData =
+    spec.chartType === "scatter"
+      ? {
+          kind: "scatter",
+          ...(await db.call("chartData", {
+            rows: spec.rows,
+            x: spec.x,
+            y: spec.y,
+            splitBy: spec.splitBy,
+          })),
+          groupOf: new Map(),
+        }
+      : {
+          kind: "category",
+          ...(await db.call("categoryData", {
+            rows: spec.rows,
+            chartType: spec.chartType,
+            x: spec.x,
+            y: spec.y,
+            agg: spec.agg,
+            splitBy: spec.splitBy,
+          })),
+          groupOf: new Map(),
+        };
+  result.groups.forEach((g, i) => {
+    result.groupOf.set(itemKeyOf(g.values), i);
   });
-  const groupOf = new Map(data.groups.map((g, i) => [itemKeyOf(g.values), i]));
-  const result = { ...data, groupOf };
   cacheChartData(chart.id, result);
   return result;
+}
+
+type RenderOutput = { png: ArrayBuffer; meta: ItemMeta };
+
+/** 차트 종류에 맞는 렌더러를 골라 item 하나를 그린다. */
+function renderItem(
+  chart: ChartRecord,
+  data: CachedChartData,
+  item: ChartItem,
+  options: PoolCallOptions<"renderScatter" | "renderCategory">,
+): Promise<RenderOutput> {
+  const { render } = getRuntime();
+  const { spec, itemSize } = chart;
+  const index = data.groupOf.get(item.key);
+  const common = {
+    width: itemSize.width,
+    height: itemSize.height,
+    title: item.label,
+    color: spec.common.color,
+    view: item.view,
+    shapes: item.shapes,
+  };
+  if (data.kind === "scatter") {
+    const group =
+      index === undefined ? { start: 0, end: 0 } : data.groups[index];
+    return render.call(
+      "renderScatter",
+      {
+        ...common,
+        xKind:
+          COLUMNS.find((c) => c.name === spec.x)?.type === "time"
+            ? "time"
+            : "number",
+        xs: data.xs.slice(group.start, group.end),
+        ys: data.ys.slice(group.start, group.end),
+        ids: data.ids.slice(group.start, group.end),
+      },
+      options,
+    );
+  }
+  const group = index === undefined ? undefined : data.groups[index];
+  return render.call(
+    "renderCategory",
+    {
+      ...common,
+      chartType: spec.chartType === "bar" ? "bar" : "boxplot",
+      categories: group?.categories ?? [],
+      bars: group?.bars,
+      boxes: group?.boxes,
+      agg: spec.chartType === "bar" ? spec.agg : undefined,
+    },
+    options,
+  );
 }
 
 /** item들을 pool에 순서대로 넣는다. 순서를 당기는 우선순위는 두지 않는다. */
@@ -304,49 +378,25 @@ async function renderItems(
   data: CachedChartData,
   items: ChartItem[],
 ) {
-  const { render } = getRuntime();
   const { chart } = job;
-  const { spec } = chart;
   const { signal } = job.abort;
-  const xKind =
-    COLUMNS.find((c) => c.name === spec.x)?.type === "time" ? "time" : "number";
 
   await Promise.all(
     items.map((item) => {
-      const group = data.groups[data.groupOf.get(item.key) ?? -1] ?? {
-        start: 0,
-        end: 0,
-      };
       const state = job.items.get(item.key) as ItemState;
       const setStage = (stage: ItemStage, ratio: number) => {
         state.stage = stage;
         state.stageProgress = ratio;
         touch(job);
       };
-      return render
-        .call(
-          "renderScatter",
-          {
-            width: chart.itemSize.width,
-            height: chart.itemSize.height,
-            title: item.label,
-            xKind,
-            xs: data.xs.slice(group.start, group.end),
-            ys: data.ys.slice(group.start, group.end),
-            ids: data.ids.slice(group.start, group.end),
-            color: spec.common.color,
-            view: item.view,
-            shapes: item.shapes,
-          },
-          {
-            signal,
-            onStart: () => {
-              state.status = "running";
-              setStage("aggregate", 0);
-            },
-            onProgress: (p) => setStage(p.stage, p.ratio),
-          },
-        )
+      return renderItem(chart, data, item, {
+        signal,
+        onStart: () => {
+          state.status = "running";
+          setStage("aggregate", 0);
+        },
+        onProgress: (p) => setStage(p.stage, p.ratio),
+      })
         .then(async (result) => {
           await storeResult(chart, item, result.png);
           item.meta = result.meta;
