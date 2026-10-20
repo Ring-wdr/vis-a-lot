@@ -210,7 +210,8 @@ async function run(job: Job) {
     version: 0,
     shapes: [],
   }));
-  for (const item of chart.items) job.items.set(item.key, initialState(item));
+  for (const item of chart.items)
+    job.items.set(item.key, initialState(chart, item));
   job.order = chart.items.map((i) => i.key);
   job.phase = "render";
   touch(job);
@@ -223,7 +224,11 @@ async function run(job: Job) {
  * item 일부만 다시 그리는 job (확대/축소, 도형, 개별 속성, resize).
  * 결과는 draw job의 item 상태에도 반영해 grid가 새 PNG를 보게 한다.
  */
-export function startItemJob(chart: ChartRecord, keys: string[]): Job {
+export function startItemJob(
+  chart: ChartRecord,
+  keys: string[],
+  { primary = false }: { primary?: boolean } = {},
+): Job {
   const items = keys
     .map((k) => getItem(chart, k))
     .filter((i): i is ChartItem => i !== undefined);
@@ -233,13 +238,15 @@ export function startItemJob(chart: ChartRecord, keys: string[]): Job {
     status: "progress",
     phase: "render",
     dataset: { done: chart.spec.rows, total: chart.spec.rows },
-    items: new Map(items.map((i) => [i.key, initialState(i)])),
+    items: new Map(items.map((i) => [i.key, initialState(chart, i)])),
     order: items.map((i) => i.key),
     version: 0,
     waiters: new Set(),
     abort: new AbortController(),
   };
   jobs.set(job.id, job);
+  // 전체를 다시 그리는 job(공통 속성 변경)은 grid가 바라보는 primary job이 된다.
+  if (primary) chart.primaryJobId = job.id;
   for (const item of items) item.busyJobId = job.id;
 
   (async () => {
@@ -260,7 +267,7 @@ export function startItemJob(chart: ChartRecord, keys: string[]): Job {
   return job;
 }
 
-function initialState(item: ChartItem): ItemState {
+function initialState(chart: ChartRecord, item: ChartItem): ItemState {
   return {
     key: item.key,
     label: item.label,
@@ -270,7 +277,14 @@ function initialState(item: ChartItem): ItemState {
     image: item.image,
     zoomed: item.view !== undefined,
     shapeCount: item.shapes.length,
+    color: itemColor(chart, item),
+    customColor: item.props?.color !== undefined,
   };
+}
+
+/** 개별 색이 있으면 그 색, 없으면 공통 색 */
+export function itemColor(chart: ChartRecord, item: ChartItem) {
+  return item.props?.color ?? chart.spec.common.color;
 }
 
 function finalStatus(job: Job): JobStatus {
@@ -335,7 +349,7 @@ function renderItem(
     width: itemSize.width,
     height: itemSize.height,
     title: item.label,
-    color: spec.common.color,
+    color: itemColor(chart, item),
     view: item.view,
     shapes: item.shapes,
   };
@@ -407,6 +421,8 @@ async function renderItems(
             };
           }
           state.image = item.image;
+          state.color = itemColor(chart, item);
+          state.customColor = item.props?.color !== undefined;
           state.status = "success";
           syncPrimary(chart, item);
         })
@@ -431,6 +447,8 @@ function syncPrimary(chart: ChartRecord, item: ChartItem) {
   state.image = item.image;
   state.zoomed = item.view !== undefined;
   state.shapeCount = item.shapes.length;
+  state.color = itemColor(chart, item);
+  state.customColor = item.props?.color !== undefined;
   touch(primary);
 }
 

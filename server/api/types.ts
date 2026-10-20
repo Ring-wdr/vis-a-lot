@@ -106,6 +106,16 @@ export type ViewRequest =
 
 export type AddShapeRequest = { shape: Shape };
 
+/** 공통 속성 변경. 개별 속성을 모두 덮어쓰고 전체를 다시 그린다. */
+export type CommonPropsRequest = { common: CommonProps };
+
+/** 개별 색상. null이면 공통 속성을 따르도록 되돌린다. */
+export type ItemPropsRequest = { color: string | null };
+
+export function isHexColor(value: unknown): value is string {
+  return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+}
+
 /** item 하나(또는 몇 개)를 다시 그리는 job */
 export type ItemJobResponse = { jobId: string };
 
@@ -145,6 +155,10 @@ export type ItemState = {
   /** 확대 중인지. 축소/초기화 버튼 활성화에 쓴다. */
   zoomed: boolean;
   shapeCount: number;
+  /** 실제로 그린 색 */
+  color: string;
+  /** 개별 색을 지정했는지 */
+  customColor: boolean;
 };
 
 export type JobStateResponse = {

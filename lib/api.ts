@@ -4,6 +4,7 @@ import type {
   AddShapeRequest,
   ApiError,
   ColumnsResponse,
+  CommonProps,
   CreateChartRequest,
   CreateChartResponse,
   DatasetListResponse,
@@ -105,6 +106,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  setItemColor: (chartId: string, itemKey: string, color: string | null) =>
+    request<ItemJobResponse>(itemPath(chartId, itemKey, "/props"), {
+      method: "PATCH",
+      body: JSON.stringify({ color }),
+    }),
+
+  updateCommon: (chartId: string, common: CommonProps) =>
+    request<ItemJobResponse>(
+      `/api/charts/${encodeURIComponent(chartId)}/common`,
+      { method: "PATCH", body: JSON.stringify({ common }) },
+    ),
 
   undoShape: (chartId: string, itemKey: string) =>
     request<ItemJobResponse>(itemPath(chartId, itemKey, "/shapes/last"), {
