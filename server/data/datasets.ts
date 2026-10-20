@@ -5,6 +5,7 @@ import type { ColumnInfo, DatasetStatus } from "../api/types";
 import { generateCsvChunks } from "./generator";
 import {
   COLUMNS,
+  type ColumnName,
   createReadingsSql,
   GENERATOR_VERSION,
   ROW_SIZES,
@@ -89,6 +90,27 @@ export class DatasetManager {
       [rows],
     );
     return res.rows[0]?.columns ?? null;
+  }
+
+  /**
+   * split 조합 개수. 컬럼별 고유값의 곱이 상한이므로, 곱이 limit 이하면 쿼리 없이 그 값을 쓰고
+   * 넘을 때만 실제 조합 수를 센다.
+   */
+  async splitCount(rows: RowSize, cols: ColumnName[], limit: number) {
+    if (cols.length === 0) return { count: 1, exact: true };
+    const columns = await this.columns(rows);
+    if (!columns) throw new Error("dataset is not ready");
+    const distinct = new Map(columns.map((c) => [c.name, c.distinct]));
+    const upper = cols.reduce(
+      (acc, c) => acc * (distinct.get(c) ?? Infinity),
+      1,
+    );
+    if (cols.length === 1) return { count: upper, exact: true };
+    if (upper <= limit) return { count: upper, exact: false };
+    const res = await this.#db.query<{ count: number }>(
+      `select count(*)::int as count from (select distinct ${cols.join(", ")} from ${readingsTable(rows)}) s`,
+    );
+    return { count: res.rows[0].count, exact: true };
   }
 
   async #generate(rows: RowSize) {

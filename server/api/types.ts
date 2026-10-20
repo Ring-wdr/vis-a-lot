@@ -28,6 +28,13 @@ export type ColumnInfo = ColumnDef & { distinct: number };
 
 export type ColumnsResponse = { rows: RowSize; columns: ColumnInfo[] };
 
+export type SplitCountResponse = {
+  count: number;
+  /** false면 컬럼별 고유값 곱으로 낸 상한이다. */
+  exact: boolean;
+  limit: number;
+};
+
 export type DebugRenderRequest = {
   chartId: string;
   itemKey: string;
@@ -117,4 +124,6 @@ export type JobStateResponse = {
   page: number;
   pageSize: number;
   items: ItemState[];
+  /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
+  error?: string;
 };

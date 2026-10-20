@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useAlert } from "@/lib/alert-store";
 import { GRID_FOOTER_HEIGHT, GRID_GAP } from "@/lib/grid-layout";
 import { useJob } from "@/lib/queries";
 import { useWorkspace } from "@/lib/workspace-store";
@@ -14,13 +15,58 @@ const STATUS_SUFFIX: Partial<Record<JobStateResponse["status"], string>> = {
   cancelled: " · 취소됨",
 };
 
-function JobFooter({ job }: { job: JobStateResponse | undefined }) {
+const WHEEL_THRESHOLD = 20;
+const WHEEL_COOLDOWN_MS = 350;
+
+function Pager({
+  page,
+  totalPages,
+  onPage,
+}: {
+  page: number;
+  totalPages: number;
+  onPage: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <nav className={styles.pager} aria-label="페이지">
+      <button
+        type="button"
+        aria-label="이전 페이지"
+        disabled={page === 0}
+        onClick={() => onPage(page - 1)}
+      >
+        ‹
+      </button>
+      <span>
+        {page + 1} / {totalPages}
+      </span>
+      <button
+        type="button"
+        aria-label="다음 페이지"
+        disabled={page >= totalPages - 1}
+        onClick={() => onPage(page + 1)}
+      >
+        ›
+      </button>
+    </nav>
+  );
+}
+
+function JobStatusText({ job }: { job: JobStateResponse | undefined }) {
   if (!job) return null;
   const { phase, progress, status } = job;
+  if (job.error) {
+    return (
+      <span role="alert" className={styles.error}>
+        {job.error}
+      </span>
+    );
+  }
   // init 단계에서는 spinner만 보여주고, 생성 진행률은 왼쪽 데이터 패널이 보여준다.
   if (phase === "dataset" || phase === "query") {
     return (
-      <div className={styles.footer}>
+      <>
         {!isTerminal(status) && (
           <span className={styles.spinner} aria-hidden="true" />
         )}
@@ -28,18 +74,18 @@ function JobFooter({ job }: { job: JobStateResponse | undefined }) {
           {phase === "dataset" ? "데이터 준비 중" : "데이터 조회 중"}
           {STATUS_SUFFIX[status]}
         </span>
-      </div>
+      </>
     );
   }
   return (
-    <div className={styles.footer}>
+    <>
       <progress value={progress.done} max={progress.total || 1} />
       <span>
         {progress.done.toLocaleString()} / {progress.total.toLocaleString()}{" "}
         item
         {STATUS_SUFFIX[status]}
       </span>
-    </div>
+    </>
   );
 }
 
@@ -48,9 +94,34 @@ export function ChartGrid() {
   const setGridArea = useWorkspace((s) => s.setGridArea);
   const current = useWorkspace((s) => s.current);
   const page = useWorkspace((s) => s.page);
+  const setPage = useWorkspace((s) => s.setPage);
+  const showAlert = useAlert((s) => s.show);
+  const lastWheel = useRef(0);
   const grid = current?.spec.grid ?? { rows: 1, cols: 1 };
   const pageSize = grid.rows * grid.cols;
   const job = useJob(current?.jobId, page, pageSize);
+  const totalItems = job.data?.totalItems ?? null;
+  const totalPages =
+    totalItems === null ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+  const jobError = job.data?.error;
+
+  // job이 실패 사유를 알려 주면 팝업으로도 알린다.
+  useEffect(() => {
+    if (jobError) showAlert(jobError);
+  }, [jobError, showAlert]);
+
+  const goToPage = (next: number) => {
+    setPage(Math.min(totalPages - 1, Math.max(0, next)));
+  };
+
+  // 스크롤 한 번에 한 페이지씩 넘긴다. 페이지 이동은 렌더 job에 영향을 주지 않는다.
+  const onWheel = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaY) < WHEEL_THRESHOLD || totalPages <= 1) return;
+    const now = performance.now();
+    if (now - lastWheel.current < WHEEL_COOLDOWN_MS) return;
+    lastWheel.current = now;
+    goToPage(page + (e.deltaY > 0 ? 1 : -1));
+  };
 
   useEffect(() => {
     const el = areaRef.current;
@@ -72,6 +143,7 @@ export function ChartGrid() {
         <>
           <div
             className={styles.grid}
+            onWheel={onWheel}
             style={{
               gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`,
               gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
@@ -96,8 +168,16 @@ export function ChartGrid() {
                 />
               ))}
           </div>
-          {job.error && <p role="alert">{job.error.message}</p>}
-          <JobFooter job={job.data} />
+          <div className={styles.footer}>
+            {job.error ? (
+              <span role="alert" className={styles.error}>
+                {job.error.message}
+              </span>
+            ) : (
+              <JobStatusText job={job.data} />
+            )}
+            <Pager page={page} totalPages={totalPages} onPage={goToPage} />
+          </div>
         </>
       )}
     </div>

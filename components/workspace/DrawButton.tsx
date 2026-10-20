@@ -1,11 +1,13 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { useAlert } from "@/lib/alert-store";
 import { api } from "@/lib/api";
 import { itemSizeFor } from "@/lib/grid-layout";
-import { useCancelJob, useJob } from "@/lib/queries";
+import { useCancelJob, useDatasetStatus, useJob } from "@/lib/queries";
 import { useWorkspace } from "@/lib/workspace-store";
 import { isTerminal } from "@/server/api/types";
+import { MAX_SPLIT_ITEMS } from "@/server/data/schema";
 import styles from "./Workspace.module.css";
 
 type ButtonState = "draw" | "pending" | "cancel";
@@ -22,16 +24,28 @@ export function DrawButton() {
   const grid = current?.spec.grid;
   const job = useJob(current?.jobId, page, grid ? grid.rows * grid.cols : 1);
   const cancel = useCancelJob();
+  const dataset = useDatasetStatus(draft.rows);
+  const showAlert = useAlert((s) => s.show);
 
   const draw = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
+      // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
+      if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
+        const { count } = await api.splitCount(draft.rows, draft.splitBy);
+        if (count > MAX_SPLIT_ITEMS) {
+          showAlert(
+            `split 조합이 ${count.toLocaleString()}개입니다. 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개까지 그릴 수 있습니다.`,
+          );
+          return undefined;
+        }
+      }
       return api.createChart({
         spec: draft,
         itemSize: itemSizeFor(gridArea, draft.grid),
       });
     },
-    onSuccess: (res) => setCurrent({ ...res, spec: draft }),
+    onSuccess: (res) => res && setCurrent({ ...res, spec: draft }),
   });
 
   const state: ButtonState =

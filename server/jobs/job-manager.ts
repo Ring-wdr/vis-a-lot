@@ -16,7 +16,7 @@ import {
   pngUrl,
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
-import { COLUMNS } from "../data/schema";
+import { COLUMNS, MAX_SPLIT_ITEMS } from "../data/schema";
 import { putPng } from "../png-store";
 import { CancelledError } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -32,7 +32,11 @@ type Job = {
   version: number;
   waiters: Set<() => void>;
   abort: AbortController;
+  error?: string;
 };
+
+/** 사용자에게 그대로 보여줄 수 있는 job 실패 사유 */
+class JobError extends Error {}
 
 const jobs = new Map<string, Job>();
 const DATASET_POLL_MS = 300;
@@ -65,6 +69,9 @@ export function startJob(chart: ChartRecord): Job {
     .catch((err) => {
       if (err instanceof CancelledError) {
         job.status = "cancelled";
+      } else if (err instanceof JobError) {
+        job.status = "failed";
+        job.error = err.message;
       } else {
         console.error(`job ${job.id} failed`, err);
         job.status = "failed";
@@ -148,6 +155,7 @@ export function jobState(
     page,
     pageSize,
     items,
+    error: job.error,
   };
 }
 
@@ -175,6 +183,17 @@ async function run(job: Job) {
   job.status = "progress";
   job.phase = "query";
   touch(job);
+  // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
+  const split = await db.call("splitCount", {
+    rows: spec.rows,
+    cols: spec.splitBy,
+    limit: MAX_SPLIT_ITEMS,
+  });
+  if (split.count > MAX_SPLIT_ITEMS) {
+    throw new JobError(
+      `split 조합이 ${split.count.toLocaleString()}개로 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개를 넘습니다.`,
+    );
+  }
   const data = await db.call("chartData", {
     rows: spec.rows,
     x: spec.x,

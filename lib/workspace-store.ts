@@ -42,7 +42,7 @@ export const DEFAULT_SPEC: ChartSpec = {
   splitBy: [],
   splitSeparator: "-",
   tooltip: [],
-  grid: { rows: 2, cols: 2 },
+  grid: { rows: 3, cols: 3 },
   common: { color: DEFAULT_SERIES_COLOR },
 };
 

@@ -5,6 +5,7 @@ import { useWorkspace } from "@/lib/workspace-store";
 import { CHART_TYPES, type ChartType } from "@/server/api/types";
 import { COLUMNS, type ColumnName } from "@/server/data/schema";
 import { DrawButton } from "./DrawButton";
+import { type Option, OrderedMultiSelect } from "./OrderedMultiSelect";
 import styles from "./Workspace.module.css";
 
 const CHART_LABELS: Record<ChartType, string> = {
@@ -21,6 +22,10 @@ const AXIS_COLUMNS = COLUMNS.filter(
   (c) => c.type === "number" || c.type === "time",
 );
 const NUMBER_COLUMNS = COLUMNS.filter((c) => c.type === "number");
+const SPLIT_OPTIONS: Option<ColumnName>[] = COLUMNS.map((c) => ({
+  value: c.name,
+  label: c.label,
+}));
 
 function ChartIcon({ type }: { type: ChartType }) {
   return (
@@ -126,11 +131,27 @@ export function ControlPanel() {
         </select>
       </label>
 
-      <label className={styles.field}>
-        <span>split by</span>
-        <select disabled>
-          <option>없음</option>
-        </select>
+      <OrderedMultiSelect
+        label="split by"
+        options={SPLIT_OPTIONS}
+        value={draft.splitBy}
+        onChange={(splitBy) => updateDraft({ splitBy })}
+      />
+      <label className={styles.inlineField}>
+        구분 기호
+        <input
+          value={draft.splitSeparator}
+          maxLength={5}
+          onChange={(e) => updateDraft({ splitSeparator: e.target.value })}
+        />
+        <span>
+          예:{" "}
+          {draft.splitBy.length > 1
+            ? ["A", "B", "C"]
+                .slice(0, draft.splitBy.length)
+                .join(draft.splitSeparator)
+            : "A"}
+        </span>
       </label>
 
       <label className={styles.field}>

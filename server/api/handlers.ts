@@ -1,6 +1,13 @@
 import { HttpResponse, http } from "msw";
 import { createChart } from "../charts/chart-store";
-import { COLUMNS, DATASET_ID, isRowSize, type RowSize } from "../data/schema";
+import {
+  COLUMNS,
+  type ColumnName,
+  DATASET_ID,
+  isRowSize,
+  MAX_SPLIT_ITEMS,
+  type RowSize,
+} from "../data/schema";
 import {
   cancelJob,
   getJob,
@@ -25,6 +32,7 @@ import {
   type CreateChartRequest,
   type CreateChartResponse,
   type JobStateResponse,
+  type SplitCountResponse,
 } from "./types";
 
 let pngVersion = 0;
@@ -63,6 +71,10 @@ function validateChartRequest(body: CreateChartRequest): string | undefined {
     if (type !== "number" && type !== "time")
       return `${axis} cannot be a scatter axis`;
   }
+  if (new Set(spec.splitBy).size !== spec.splitBy.length)
+    return "duplicate splitBy column";
+  if (typeof spec.splitSeparator !== "string" || spec.splitSeparator.length > 5)
+    return "splitSeparator must be at most 5 characters";
   if (spec.splitBy.some((c) => !COLUMN_TYPE.has(c)))
     return "unknown splitBy column";
   const { width, height } = itemSize;
@@ -114,6 +126,28 @@ export const handlers = [
     const columns = await getRuntime().db.call("datasetColumns", { rows });
     if (!columns) return apiError(409, "dataset is not ready");
     return HttpResponse.json<ColumnsResponse>({ rows, columns });
+  }),
+
+  http.get(dataset("/split-count"), async ({ params, request }) => {
+    if (params.datasetId !== DATASET_ID)
+      return apiError(404, "unknown dataset");
+    const search = new URL(request.url).searchParams;
+    const rows = parseRows(search.get("rows"));
+    if (!rows) return apiError(400, "rows must be one of the supported sizes");
+    const cols = (search.get("cols") ?? "").split(",").filter(Boolean);
+    if (cols.some((c) => !COLUMN_TYPE.has(c)))
+      return apiError(400, "unknown column");
+    const ready = await getRuntime().db.call("datasetColumns", { rows });
+    if (!ready) return apiError(409, "dataset is not ready");
+    const result = await getRuntime().db.call("splitCount", {
+      rows,
+      cols: cols as ColumnName[],
+      limit: MAX_SPLIT_ITEMS,
+    });
+    return HttpResponse.json<SplitCountResponse>({
+      ...result,
+      limit: MAX_SPLIT_ITEMS,
+    });
   }),
 
   // 그리기 시작. 데이터가 아직 없어도 받아 두고 job이 init 상태로 기다린다.
