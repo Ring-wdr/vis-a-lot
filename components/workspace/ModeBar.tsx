@@ -12,9 +12,6 @@ const LABELS: Record<Mode, string> = {
   text: "텍스트",
 };
 
-/** 아직 구현되지 않은 모드는 비활성화해 둔다. */
-const ENABLED = new Set<Mode>(["normal"]);
-
 export function ModeBar() {
   const mode = useWorkspace((s) => s.mode);
   const setMode = useWorkspace((s) => s.setMode);
@@ -26,7 +23,6 @@ export function ModeBar() {
           key={m}
           type="button"
           aria-pressed={mode === m}
-          disabled={!ENABLED.has(m)}
           onClick={() => setMode(m)}
         >
           {LABELS[m]}

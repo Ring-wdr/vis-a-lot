@@ -156,6 +156,7 @@ export function ChartGrid() {
                 key={item.key}
                 item={item}
                 chartId={current.chartId}
+                primaryJobId={current.jobId}
                 tooltipColumns={current.spec.tooltip}
               />
             ))}
