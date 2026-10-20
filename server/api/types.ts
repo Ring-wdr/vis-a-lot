@@ -1,6 +1,7 @@
 // 화면 ↔ mock 서버 REST API의 요청/응답 타입. 실서버로 옮겨도 이 계약은 유지한다.
 
 import type { ColumnDef, ColumnName, RowSize } from "../data/schema";
+import type { AxisMeta, ScatterMeta } from "../render/scatter";
 
 export type HealthResponse = {
   db: { version: string; bootCount: number; bootMs: number };
@@ -79,6 +80,16 @@ export type CreateChartRequest = { spec: ChartSpec; itemSize: ItemSize };
 export type CreateChartResponse = { chartId: string; jobId: string };
 
 export type ChartImage = { url: string; width: number; height: number };
+
+export type { AxisMeta, ScatterMeta };
+
+/** 차트 종류별 metadata. 8단계에서 bar, boxplot이 추가된다. */
+export type ItemMeta = ScatterMeta;
+
+export type TooltipRequest = { rowId: number; columns: ColumnName[] };
+export type TooltipResponse = {
+  values: Record<string, string | number | null>;
+};
 
 // ── 렌더 job ────────────────────────────────────────────────────────
 

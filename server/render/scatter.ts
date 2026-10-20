@@ -24,7 +24,13 @@ export type ScatterMeta = {
   x: AxisMeta;
   y: AxisMeta;
   /** 같은 픽셀 칸에 겹친 점은 첫 점만 남긴다. px/py는 PNG 좌표, x/y는 데이터 값이다. */
-  points: { px: number[]; py: number[]; x: number[]; y: number[] };
+  points: {
+    px: number[];
+    py: number[];
+    x: number[];
+    y: number[];
+    id: number[];
+  };
   total: number;
 };
 
@@ -35,6 +41,7 @@ export type ScatterInput = {
   xKind: AxisKind;
   xs: Float64Array;
   ys: Float64Array;
+  ids: Float64Array;
   color: string;
 };
 
@@ -118,6 +125,7 @@ export function renderScatter(
   const py: number[] = [];
   const keptX: number[] = [];
   const keptY: number[] = [];
+  const keptId: number[] = [];
   const sx = new Float32Array(n);
   const sy = new Float32Array(n);
   for (let i = 0; i < n; i++) {
@@ -135,6 +143,7 @@ export function renderScatter(
         py.push(Math.round(cy));
         keptX.push(xs[i]);
         keptY.push(ys[i]);
+        keptId.push(input.ids[i]);
       }
     }
     if (i % CHUNK === 0) progress("aggregate", i / n);
@@ -222,7 +231,7 @@ export function renderScatter(
     plot,
     x: { kind: input.xKind, domain: [+x.domain()[0], +x.domain()[1]] },
     y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },
-    points: { px, py, x: keptX, y: keptY },
+    points: { px, py, x: keptX, y: keptY, id: keptId },
     total: n,
   };
 }

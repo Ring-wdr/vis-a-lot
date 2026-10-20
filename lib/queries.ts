@@ -7,7 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { isTerminal, type JobStateResponse } from "@/server/api/types";
-import type { RowSize } from "@/server/data/schema";
+import type { ColumnName, RowSize } from "@/server/data/schema";
 import { api } from "./api";
 
 export const queryKeys = {
@@ -100,4 +100,31 @@ export function useJob(
 
 export function useCancelJob() {
   return useMutation({ mutationFn: api.cancelJob });
+}
+
+/** item에 처음 커서를 올릴 때 받아 오고, 같은 PNG 버전이면 다시 받지 않는다. */
+export function useItemMeta(pngUrl: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["meta", pngUrl],
+    queryFn: () => api.itemMeta(pngUrl),
+    enabled,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 5 * 60_000,
+  });
+}
+
+/** x, y 외의 툴팁 컬럼. 고른 컬럼이 있고 가리킨 행이 있을 때만 서버에 묻는다. */
+export function useTooltipValues(
+  chartId: string,
+  itemKey: string,
+  rowId: number | undefined,
+  columns: ColumnName[],
+) {
+  return useQuery({
+    queryKey: ["tooltip", chartId, itemKey, rowId, columns],
+    queryFn: () =>
+      api.tooltip(chartId, itemKey, { rowId: rowId as number, columns }),
+    enabled: rowId !== undefined && columns.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 }
