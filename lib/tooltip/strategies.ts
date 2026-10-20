@@ -15,8 +15,10 @@ import { PointIndex } from "./point-index";
 export type TooltipRow = { label: string; value: string; emphasis?: boolean };
 
 export type TooltipHit = {
-  /** 하이라이트할 위치 (PNG 좌표) */
+  /** 점 하이라이트 위치 (PNG 좌표). scatter */
   marker?: { px: number; py: number };
+  /** 가리킨 막대/상자를 감싸는 사각형 (PNG 좌표). bar, boxplot */
+  highlight?: { x: number; y: number; width: number; height: number };
   rows: TooltipRow[];
   /** 추가 컬럼을 서버에서 가져올 행. 없으면 서버 호출을 하지 않는다. */
   rowId?: number;
@@ -141,8 +143,8 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
     meta.groupCount - 1,
     Math.max(0, Math.floor(((px - left) / meta.markWidth) * meta.groupCount)),
   );
-  const { cx } = groupSlot(center, meta.markWidth, meta.groupCount, g);
-  return { index, g, cx };
+  const { cx, width } = groupSlot(center, meta.markWidth, meta.groupCount, g);
+  return { index, g, cx, width };
 }
 
 function yToPx(meta: CategoryMeta, v: number) {
@@ -161,6 +163,32 @@ function categoryRows(meta: CategoryMeta, index: number, g: number) {
 }
 
 const HIT_SLOP_PX = 3;
+const HIGHLIGHT_PAD = 3;
+
+/** 막대/상자의 세로 범위(데이터 값)를 감싸는 사각형. 그림 영역 밖으로는 나가지 않는다. */
+function highlightRect(
+  meta: CategoryMeta,
+  cx: number,
+  width: number,
+  from: number,
+  to: number,
+) {
+  const { plot } = meta;
+  const top = Math.max(
+    plot.top,
+    Math.min(yToPx(meta, from), yToPx(meta, to)) - HIGHLIGHT_PAD,
+  );
+  const bottom = Math.min(
+    plot.top + plot.height,
+    Math.max(yToPx(meta, from), yToPx(meta, to)) + HIGHLIGHT_PAD,
+  );
+  return {
+    x: cx - width / 2 - HIGHLIGHT_PAD,
+    y: top,
+    width: width + HIGHLIGHT_PAD * 2,
+    height: Math.max(1, bottom - top),
+  };
+}
 
 export const barStrategy: TooltipStrategy<CategoryMeta> = {
   prepare: () => undefined,
@@ -170,7 +198,7 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
     const value = hit && meta.bars?.[hit.index]?.[hit.g];
     if (!hit || value === undefined || value === null) return null;
     return {
-      marker: { px: hit.cx, py: yToPx(meta, value) },
+      highlight: highlightRect(meta, hit.cx, hit.width, 0, value),
       rows: [
         ...categoryRows(meta, hit.index, hit.g),
         {
@@ -192,7 +220,7 @@ export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
     if (!hit || !box) return null;
     const num = (v: number) => formatValue(v, "number");
     return {
-      marker: { px: hit.cx, py: yToPx(meta, box.median) },
+      highlight: highlightRect(meta, hit.cx, hit.width, box.lo, box.hi),
       rows: [
         ...categoryRows(meta, hit.index, hit.g),
         { label: "개수", value: num(box.n) },
