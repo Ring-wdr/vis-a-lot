@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type ItemSize,
   isTerminal,
@@ -11,6 +11,7 @@ import { useDebounced } from "./use-debounced";
 import { useWorkspace } from "./workspace-store";
 
 const RESIZE_DEBOUNCE_MS = 300;
+const RETRY_MS = 1000;
 
 /**
  * 화면 크기가 바뀌면 크기 변경이 멈추고 300ms 뒤에, 현재 페이지에서 PNG 크기가 칸과 다른 item만 다시 그린다.
@@ -31,12 +32,16 @@ export function useAutoResize(
     desired ? `${desired.width}x${desired.height}` : "",
     RESIZE_DEBOUNCE_MS,
   );
-  const requested = useRef<string>(undefined);
+  const inFlight = useRef(false);
+  // 요청이 실패하면 잠시 뒤 다시 확인하도록 effect를 깨운다.
+  const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
     if (!chartId || !job || !sizeKey || !jobStatus || !isTerminal(jobStatus))
       return;
+    if (inFlight.current) return;
     const [width, height] = sizeKey.split("x").map(Number);
+    // 다시 그리는 중인 item은 빼고, 끝나면(itemJobs가 바뀌면) 다시 확인한다.
     const stale = job.items.filter(
       (i) =>
         i.status === "success" &&
@@ -46,16 +51,18 @@ export function useAutoResize(
     );
     if (stale.length === 0) return;
     const keys = stale.map((i) => i.key);
-    const signature = `${chartId}:${sizeKey}:${keys.join(",")}`;
-    if (requested.current === signature) return;
-    requested.current = signature;
+    inFlight.current = true;
     api
       .resizeItems(chartId, { width, height }, keys)
       .then(({ jobId }) => {
         for (const key of keys) setItemJob(key, jobId);
       })
-      .catch(() => {
-        requested.current = undefined;
+      .catch((err: unknown) => {
+        console.warn("resize 요청 실패, 다시 시도합니다", err);
+        setTimeout(() => setRetryTick((n) => n + 1), RETRY_MS);
+      })
+      .finally(() => {
+        inFlight.current = false;
       });
-  }, [chartId, job, jobStatus, sizeKey, itemJobs, setItemJob]);
+  }, [chartId, job, jobStatus, sizeKey, itemJobs, setItemJob, retryTick]);
 }
