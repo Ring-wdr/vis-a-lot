@@ -80,11 +80,25 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 | `temperature_env` | 숫자 | — | 주변 온도. `value`와 상관관계가 있다 |
 | `load_pct` | 숫자 | — | 설비 부하율 |
 
-### 3.3 행 수 전환
+### 3.3 스키마 기반 컬럼
+- 공장마다 raw data의 컬럼 이름이 제각각이므로, 컬럼 이름과 타입을 코드에 정해 두지 않는다. 적재된 테이블의 스키마(information_schema)에서 읽는다.
+- DB 타입으로 논리 타입을 정한다: 숫자형(smallint, integer, bigint, numeric, real, double precision) → `numeric`, 시각형(timestamp, timestamptz, date) → `datetime`, 그 밖(text, boolean, uuid …) → `categorical`.
+- 화면 라벨은 컬럼 주석(comment)을 쓰고, 없으면 컬럼 이름을 그대로 쓴다. IoT 생성기는 테이블을 만들 때 라벨을 주석으로 남긴다.
+- 컬럼의 쓰임은 타입으로 정한다.
+  - scatter x: datetime·numeric, y: numeric
+  - bar/boxplot x: categorical, y: numeric
+  - legend: categorical이면서 고유값 8개 이하 (팔레트 8색)
+  - split by·tooltip: 모든 컬럼
+  - 필터: datetime·numeric은 범위, categorical은 값 목록
+- 스키마는 적재를 시작하면(테이블 생성 직후) 알 수 있고, 고유값 수는 적재가 끝나야 알 수 있다. 등록하지 않은 데이터셋은 스키마가 없어 컬럼을 고를 수 없다.
+- 서버는 SQL에 컬럼 이름을 넣을 때 항상 스키마로 확인하고 식별자를 인용한다(공백·한글·특수문자 이름도 안전). job은 데이터가 준비된 뒤 스키마로 차트 설정을 검증하고, 맞지 않으면 사유를 알려 준다.
+- 다른 데이터셋으로 바꾸면 화면이 스키마에 맞지 않는 설정(x, y, legend, split, tooltip, 필터)을 타입에 맞는 기본값으로 바로잡는다.
+
+### 3.4 행 수 전환
 - 행 수(10만 / 50만 / 100만)는 상단 `data` 팝업에서 등록한다(mock: 업로드 대신 서버가 시드로 생성). 한 번 만든 데이터는 IndexedDB에 남는다.
 - 왼쪽 패널의 데이터 select에서는 등록한 규모만 고를 수 있다.
 - history에는 몇 건짜리 데이터였는지 함께 저장한다. 불러올 때 그 데이터가 없으면 생성한다.
-- 데이터가 아직 없어도 draw 버튼은 누를 수 있다. 이때 job은 `init` 상태(spinner만 표시)로 기다리고, 데이터 생성이 끝난 뒤부터 `progress`로 넘어간다.
+- 컬럼은 스키마에서 고르므로 draw하려면 데이터를 등록해야 한다. 적재 중에 draw하면 job은 `init` 상태(spinner만 표시)로 기다리고, 적재가 끝난 뒤부터 `progress`로 넘어간다.
 
 ---
 
@@ -93,30 +107,37 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 ### 4.1 레이아웃
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ [data] [gallery] [history]   [↖][🔍][□][/][✎][T] ← 모드 바   │
-├──────────────────┬───────────────────────────────────────────┤
-│ 데이터    [▼]     │  ┌────────┐ ┌────────┐ ┌────────┐         │
-│ 차트 종류 (아이콘)  │  │toolbar │ │toolbar │ │toolbar │         │
-│ grid [▦ 3 x 3]   │  │        │ │        │ │        │         │
-│ x        [▼]     │  │  PNG   │ │  PNG   │ │  PNG   │         │
-│ y        [▼]     │  └────────┘ └────────┘ └────────┘         │
-│ 통계 함수 [▼]      │                                           │
-│   (bar일 때만)     │              ‹ 1 / 3 ›  (스크롤 = 페이지)   │
-│ split by [▼ 다중] │                                           │
-│ tooltip  [▼ 다중] │  ───────────── 전체 진행률 ─────────────     │
-│ [공통 속성 ⧉]      │                                           │
-│ [draw]           │                                           │
-└──────────────────┴───────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [data] [gallery] [history]   [↖][🔍][□][/][✎][T] ← 모드 바   링크 · 사용자 │
+├──────────────────────────────────────────────────────────────────────────┤
+│ [Scatter · 측정 시각 × 측정값 ×] [새 차트 · IoT 10만 행 ×] [+]   [필터 2] │ ← 탭
+├──────────────────┬──────────────────────────────────┬─┬─────────────────┤
+│ 데이터    [▼]     │  ┌────────┐ ┌────────┐ ┌────────┐ │▮│ 필터            │
+│ 차트 종류 (아이콘)  │  │toolbar │ │toolbar │ │toolbar │ │ │ ▸ 측정 시각      │
+│ grid [▦ 3 × 3]   │  │  PNG   │ │  PNG   │ │  PNG   │ │ │ ▾ 공장   ●       │
+│ x / y / legend   │  └────────┘ └────────┘ └────────┘ │ │   [검색]         │
+│ 통계 함수 (bar)    │                                  │ │   ☐ 구미 ☑ 울산  │
+│ split by [다중]   │                       페이지 스크롤바 │ │ ▾ 측정값  ●      │
+│ tooltip  [다중]   │                                  │ │   ●━━━━━━●       │
+│ [전체 설정]        │ ◌ 렌더링 중 ▬▬▬ 531/2,500 · ✓ ◐ … · 2.0초 · 704 item/s │
+│ [draw]           │                                    ‹ 1 / 278 ›        │
+└──────────────────┴──────────────────────────────────┴─┴─────────────────┘
 ```
 
-- **상단 바:** `data`(데이터 등록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 모드 바, 링크 복사
+- **상단 바:** `data`(데이터 등록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 모드 바, 링크 복사, 사용자
+- **탭:** gallery와 history 모두 탭이 있다. 탭마다 작업 상태(데이터·설정·차트·진행)를 따로 가져 오가도 그대로 남는다.
+  - gallery 탭은 작업 공간이다. `+`로 새 탭, data 팝업에서 준비된 데이터를 선택하고 `gallery에서 열기`를 누르면 그 데이터로 새 탭이 열린다. 마지막 하나는 닫을 수 없다.
+  - history는 목록에서 고른 건마다 탭으로 열고(이미 열린 건이면 그 탭으로), `gallery에서 편집`은 새 gallery 탭으로 가져간다.
 - **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트. 아이콘으로 표시하고 이름은 title로 보여준다
-- **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, 통계 함수(bar일 때만), split by, tooltip. 공통 속성(popover)과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
+- **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, legend, 통계 함수(bar일 때만), split by, tooltip. `전체 설정`과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
+- **전체 설정 팝업:** 자주 바꾸지 않는 설정을 모은다. 왼쪽 메뉴로 고른다: 색상(공통 색 또는 legend 값별 색), split by(구분 기호)
 - **선택 필드:** 단일 선택(데이터, x, y, legend, 통계 함수)과 다중 선택(split by, tooltip)은 같은 트리거·팝업 모양을 쓴다(Base UI Select / Combobox). 높이를 아끼려고 다중 선택은 고른 값을 한 줄에 순서대로 쉼표로 이어 쓰고 넘치면 말줄임, 오른쪽에 개수를 보여준다.
 - **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
 - **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 행 × 열을 고른다 (1..10 × 1..10, 직사각형 가능)
-- **팝업:** 모달 팝업(알림, data 등록)은 overlay-kit으로 띄워 본문 상태와 분리한다. 버튼에 붙는 popover는 네이티브 popover API를 쓴다
+- **페이지 이동:** grid 오른쪽 페이지 스크롤바(트랙 길이가 페이지 수에 비례). grid 위 휠도 이 스크롤바로 넘긴다. 스크롤 중에는 보이는 페이지만 즉시 바꾸고 서버 조회 페이지는 throttle(200ms)로만 바꿔, 한 번에 많이 넘겨도 조회가 몇 번만 일어난다. 멈추면 페이지 경계에 맞춘다.
+- **하단 바:** job 단계, 진행률(%), 상태별 item 수(완료·그리는 중·대기·실패·취소), 경과 시간, 처리 속도(item/s), 남은 시간 어림, Render Worker 수
+- **필터 패널(4.9):** 탭 바 오른쪽 `필터` 토글로 오른쪽에 연다
+- **팝업:** 모달 팝업(알림, data 등록, 전체 설정)은 overlay-kit으로 띄워 본문 상태와 분리한다. 버튼에 붙는 popover는 네이티브 popover API를 쓴다
 - **item 툴바:** 축소, 확대 초기화, 도형 undo, 도형 전체 삭제, 개별 색상
 
 ### 4.2 차트 종류
@@ -130,10 +151,10 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같다. 밀도 차트로 바꾸는 처리는 하지 않는다.
 
 ### 4.3 Split by와 grid
-- 여러 컬럼을 고를 수 있는 selectbox이고, 클릭한 순서를 보장한다. 예: `a`(숫자) → `b` → `c` 순서로 고르면 item 이름은 `a-b-c`가 된다. 구분 기호는 설정에서 바꿀 수 있다.
+- 여러 컬럼을 고를 수 있는 selectbox이고, 클릭한 순서를 보장한다. 예: `a`(숫자) → `b` → `c` 순서로 고르면 item 이름은 `a-b-c`가 된다. 구분 기호는 전체 설정에서 바꿀 수 있다.
 - 어떤 컬럼이든 고유값을 그대로 category로 쓴다.
-- item 수는 고른 컬럼 고유값의 조합 수이고, 최대 30,000개다. 넘으면 draw 전에 경고하고 그리지 않는다 (`split-count` API로 미리 확인).
-- grid는 1×1부터 10×10까지 고를 수 있고, pagination으로 보여준다. 예: 3×3 grid에 item이 20개면 3페이지가 된다. 스크롤하면 페이지가 넘어간다.
+- item 수는 고른 컬럼 고유값의 조합 수이고, 최대 30,000개다. 넘으면 draw 전에 경고하고 그리지 않는다 (`split-count` API로 미리 확인, 필터 적용).
+- grid는 1×1부터 10×10까지 행·열을 따로 고를 수 있고, pagination으로 보여준다. 예: 3×3 grid에 item이 20개면 3페이지가 된다. 오른쪽 페이지 스크롤바로 넘긴다.
 - 고해상도(레티나) 화면 대응은 하지 않는다.
 
 ### 4.4 툴팁
@@ -181,6 +202,14 @@ PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같�
 - 이번 범위에서 개별 속성은 색상만 지원한다.
 
 ---
+
+### 4.9 필터
+- 오른쪽 패널에 컬럼마다 아코디언이 있다. 원본처럼 값은 DB에서 가져오므로, 아코디언을 열기 전에는 컬럼 이름만 보이고 여는 순간 서버에서 그 컬럼 요약을 받는다(받는 동안 pending).
+- 숫자·시계열: 범위 슬라이더 + 범위 반전(범위 밖만 남기기) + 값 없음(null) 포함. 전체 범위 그대로이고 반전·null 제외도 없으면 필터를 두지 않는다.
+- 범주: 검색 입력(부분 일치) + 가상 스크롤 목록. 처음엔 전부 포함이고, 체크를 풀어 뺀다. 검색 중에는 보이는 값만 한꺼번에 선택/해제한다.
+- 필터는 draw할 때만 적용된다(grid 변경, 공통 속성 같은 즉시 다시 그리기에는 반영되지 않는다). 바뀐 필터가 아직 반영되지 않았으면 패널에 알린다.
+- 서버는 차트 데이터 조회, bar/boxplot 집계, split 개수 확인에 같은 조건을 건다. 값은 모두 바인딩 파라미터로 넘긴다.
+- history에는 차트 설정과 함께 필터가 남고, history 탭에서는 보기 전용으로 보인다.
 
 ## 5. 렌더링 작업(job)
 
@@ -281,10 +310,11 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | auth | 공개 키 | `GET /.well-known/jwks.json` | JWK Set |
 | data | 데이터셋 상태 | `GET /datasets/:id` | 행 수별 상태(`missing` / `generating` / `ready`), 단계(`copy` / `analyze`), 진행률, 생성 시간 |
 | data | 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
-| data | 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
-| data | split 개수 확인 | `GET /datasets/:id/split-count?cols=a,b,c` | 조합 수 (30,000개 초과 검사) |
+| data | 스키마 | `GET /datasets/:id/schema?rows=` | 적재된 테이블의 컬럼: 이름, 라벨(주석), 타입(categorical / numeric / datetime), null 허용, 고유값 수(적재 후). 등록 전이면 409 |
+| data | split 개수 확인 | `POST /datasets/:id/split-count` | `{ rows, cols, filters }` → 조합 수 (30,000개 초과 검사, 필터 적용) |
+| data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary?rows=` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
 | chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |
-| chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }` |
+| chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }`, job 전체의 상태별 item 수·시간·worker 수 |
 | chart | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
 | chart | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
 | chart | 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |

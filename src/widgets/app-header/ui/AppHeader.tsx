@@ -1,6 +1,11 @@
 "use client";
 
 import { Database, History, LayoutGrid } from "lucide-react";
+import {
+  tabsStore,
+  useTabs,
+  VIEWS,
+} from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
 import { openDataDialog } from "@/features/register-dataset/ui/DataDialog";
 import { ModeBar } from "@/features/select-mode/ui/ModeBar";
@@ -8,22 +13,14 @@ import { ShareButton } from "@/features/share-chart/ui/ShareButton";
 import styles from "@/shared/ui/workspace.module.css";
 import headerStyles from "./AppHeader.module.css";
 
-export const TABS = ["gallery", "history"] as const;
-export type Tab = (typeof TABS)[number];
-
 const TAB_UI = {
   gallery: { label: "gallery", Icon: LayoutGrid },
   history: { label: "history", Icon: History },
 } as const;
 
-/** 상단 바: data 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 모드, 공유 */
-export function AppHeader({
-  tab,
-  onTabChange,
-}: {
-  tab: Tab;
-  onTabChange: (tab: Tab) => void;
-}) {
+/** 상단 바: data 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 모드, 공유. 각 view의 탭은 TabBar가 그린다. */
+export function AppHeader() {
+  const view = useTabs((s) => s.view);
   return (
     <header className={styles.header}>
       <span className={styles.brand}>vis-a-lot</span>
@@ -38,7 +35,7 @@ export function AppHeader({
           data
         </button>
         <div role="tablist" className={headerStyles.tabs}>
-          {TABS.map((t) => {
+          {VIEWS.map((t) => {
             const { label, Icon } = TAB_UI[t];
             return (
               <button
@@ -46,8 +43,8 @@ export function AppHeader({
                 type="button"
                 role="tab"
                 className={headerStyles.navButton}
-                aria-selected={tab === t}
-                onClick={() => onTabChange(t)}
+                aria-selected={view === t}
+                onClick={() => tabsStore.getState().setView(t)}
               >
                 <Icon size={14} aria-hidden="true" />
                 {label}

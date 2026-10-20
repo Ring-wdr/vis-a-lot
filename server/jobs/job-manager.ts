@@ -21,7 +21,8 @@ import {
   pngUrl,
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
-import { COLUMNS, MAX_SPLIT_ITEMS } from "../data/schema";
+import { specError } from "../charts/validate-spec";
+import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { putPng } from "../png-store";
 import { defaultLegendColor } from "../render/theme";
@@ -41,6 +42,10 @@ type Job = {
   waiters: Set<() => void>;
   abort: AbortController;
   error?: string;
+  /** draw(조회부터) 또는 redraw(그린 item 다시 그리기) */
+  kind: "draw" | "redraw";
+  /** epoch ms. 하단 바가 경과 시간·처리 속도·남은 시간을 계산한다. */
+  timing: { createdAt: number; renderStartedAt?: number; endedAt?: number };
 };
 
 /** 사용자에게 그대로 보여줄 수 있는 job 실패 사유 */
@@ -71,6 +76,8 @@ export function startJob(chart: ChartRecord): Job {
     version: 0,
     waiters: new Set(),
     abort: new AbortController(),
+    kind: "draw",
+    timing: { createdAt: Date.now() },
   };
   jobs.set(job.id, job);
   chart.primaryJobId = job.id;
@@ -87,6 +94,7 @@ export function startJob(chart: ChartRecord): Job {
       }
     })
     .finally(() => {
+      job.timing.endedAt = Date.now();
       touch(job);
       if (isTerminal(job.status)) persistHistory(chart);
     });
@@ -153,9 +161,9 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
   const items = selectedKeys(job, selection).map((k) => ({
     ...(job.items.get(k) as ItemState),
   }));
-  const done = [...job.items.values()].filter((i) =>
-    isTerminal(i.status),
-  ).length;
+  const counts = { queued: 0, running: 0, success: 0, failed: 0, cancelled: 0 };
+  for (const item of job.items.values()) counts[item.status]++;
+  const done = counts.success + counts.failed + counts.cancelled;
   return {
     jobId: job.id,
     chartId: job.chart.id,
@@ -171,6 +179,10 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
     pageSize: "pageSize" in selection ? selection.pageSize : 0,
     items,
     error: job.error,
+    kind: job.kind,
+    counts,
+    timing: { ...job.timing },
+    renderWorkers: getRuntime().render.size,
   };
 }
 
@@ -192,13 +204,23 @@ async function run(job: Job) {
     await sleep(DATASET_POLL_MS);
   }
 
-  // ── 데이터 조회: split 조합이 곧 item 목록이다 ─────────────────
+  // ── 스키마 확인: 컬럼 이름과 타입은 데이터마다 다르므로 데이터가 준비된 뒤에 본다 ──
   throwIfCancelled();
   job.status = "progress";
   job.phase = "query";
   touch(job);
+  const schema = await dataService.schema(spec.rows);
+  const invalid = specError(spec, schema.columns);
+  if (invalid) throw new JobError(invalid);
+  chart.columns = schema.columns;
+
+  // ── 데이터 조회: split 조합이 곧 item 목록이다 ─────────────────
   // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
-  const split = await dataService.splitCount(spec.rows, spec.splitBy);
+  const split = await dataService.splitCount(
+    spec.rows,
+    spec.splitBy,
+    spec.filters,
+  );
   if (split.count > MAX_SPLIT_ITEMS) {
     throw new JobError(
       `split 조합이 ${split.count.toLocaleString()}개로 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개를 넘습니다.`,
@@ -228,6 +250,7 @@ async function run(job: Job) {
     job.items.set(item.key, initialState(chart, item));
   job.order = chart.items.map((i) => i.key);
   job.phase = "render";
+  job.timing.renderStartedAt = Date.now();
   touch(job);
 
   await renderItems(job, data, chart.items);
@@ -275,6 +298,8 @@ export function startItemJob(
     version: 0,
     waiters: new Set(),
     abort: new AbortController(),
+    kind: "redraw",
+    timing: { createdAt: Date.now(), renderStartedAt: Date.now() },
   };
   jobs.set(job.id, job);
   // 전체를 다시 그리는 job(공통 속성 변경)은 grid가 바라보는 primary job이 된다.
@@ -291,6 +316,7 @@ export function startItemJob(
       job.status = "failed";
     })
     .finally(() => {
+      job.timing.endedAt = Date.now();
       for (const item of items) {
         if (item.busyJobId === job.id) item.busyJobId = undefined;
       }
@@ -367,6 +393,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
             y: spec.y,
             splitBy: spec.splitBy,
             legend: spec.legend,
+            filters: spec.filters,
           })),
           groupOf: new Map(),
         }
@@ -380,6 +407,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
             agg: spec.agg,
             splitBy: spec.splitBy,
             legend: spec.legend,
+            filters: spec.filters,
           })),
           groupOf: new Map(),
         };
@@ -402,7 +430,9 @@ function renderItem(
   const { render } = getRuntime();
   const { spec, itemSize } = chart;
   const index = data.groupOf.get(item.key);
-  const legendTitle = COLUMNS.find((c) => c.name === spec.legend)?.label ?? "";
+  const columnOf = (name: string | null) =>
+    chart.columns?.find((c) => c.name === name);
+  const legendTitle = columnOf(spec.legend)?.label ?? spec.legend ?? "";
   const common = {
     width: itemSize.width,
     height: itemSize.height,
@@ -418,10 +448,7 @@ function renderItem(
       "renderScatter",
       {
         ...common,
-        xKind:
-          COLUMNS.find((c) => c.name === spec.x)?.type === "time"
-            ? "time"
-            : "number",
+        xKind: columnOf(spec.x)?.type === "datetime" ? "time" : "number",
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),

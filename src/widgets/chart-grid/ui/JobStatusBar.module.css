@@ -1,0 +1,107 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-text-secondary);
+}
+
+/* 단계 이름 길이가 바뀌어도 오른쪽 칸들이 밀리지 않도록 가장 긴 이름만큼 자리를 둔다. */
+.status {
+  min-width: 9.5em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+  font-weight: 600;
+}
+
+.status[data-tone="done"] {
+  background: var(--ws-panel);
+  color: var(--ws-text);
+}
+
+.status[data-tone="danger"] {
+  background: color-mix(in srgb, var(--ws-danger) 12%, transparent);
+  color: var(--ws-danger);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.progress progress {
+  width: 140px;
+}
+
+.counts,
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.bar [data-zero] {
+  opacity: 0.4;
+}
+
+.counts [data-tone="danger"] {
+  color: var(--ws-danger);
+}
+
+.error {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ws-danger);
+}
+
+/* 숫자가 늘어나도 칸 폭이 바뀌지 않도록 가장 긴 값만큼 자리를 잡아 둔다.
+   진행 문구는 '1,000,000 / 1,000,000 행'과 '30,000 / 30,000 item · 100%' 중 긴 쪽,
+   상태별 수는 item 최대 30,000개(6자) + 기호. */
+.progressText {
+  min-width: 28ch;
+}
+
+.count {
+  min-width: 7ch;
+}
+
+.elapsed {
+  min-width: 8ch;
+}
+
+.rate {
+  min-width: 11ch;
+}
+
+.eta {
+  min-width: 12ch;
+}

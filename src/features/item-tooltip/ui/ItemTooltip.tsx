@@ -17,6 +17,7 @@ import styles from "@/shared/ui/workspace.module.css";
 type Cursor = { x: number; y: number };
 
 const TOOLTIP_OFFSET = 14;
+/** 화면 밖으로 나가지 않게 위치를 정할 때 쓰는 툴팁 폭. CSS의 .tooltipPortal 폭과 같아야 한다. */
 const TOOLTIP_WIDTH = 200;
 
 /**
@@ -142,7 +143,7 @@ export function ItemTooltip({
           <div
             role="tooltip"
             className={`${styles.tooltip} ${styles.tooltipPortal}`}
-            style={{ ...tooltipPosition, width: TOOLTIP_WIDTH }}
+            style={tooltipPosition}
           >
             <dl>
               {hit.rows.map((row) => (

@@ -1,16 +1,18 @@
 // 화면 ↔ mock 서버 REST API의 요청/응답 타입. 실서버로 옮겨도 이 계약은 유지한다.
 
+import type { z } from "@hono/zod-openapi";
 import type { BoxStats } from "../data/category-data";
-import type {
-  AggFn,
-  ColumnDef,
-  ColumnName,
-  LegendColumn,
-  RowSize,
-} from "../data/schema";
+import type { ColumnInfo } from "../data/datasets";
+import type { ChartFilter } from "../data/filters";
+import type { AggFn, RowSize } from "../data/schema";
+
+/** 컬럼 이름. 데이터셋마다 다르며 스키마로 확인한다. */
+type ColumnName = string;
+
 import type { CategoryMeta } from "../render/category";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
+import type { JobStateResponseSchema } from "../services/chart/schemas";
 
 export type HealthResponse = {
   db: { version: string; bootCount: number; bootMs: number };
@@ -34,7 +36,7 @@ export type DatasetListResponse = { datasets: DatasetStatus[] };
 
 export type GenerateDatasetRequest = { rows: RowSize };
 
-export type ColumnInfo = ColumnDef & { distinct: number };
+export type { ColumnInfo };
 
 export type ColumnsResponse = { rows: RowSize; columns: ColumnInfo[] };
 
@@ -89,13 +91,15 @@ export type ChartSpec = {
   /** bar의 통계 함수 */
   agg: AggFn;
   /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
-  legend: LegendColumn | null;
+  legend: ColumnName | null;
   /** 클릭한 순서가 곧 조합 순서다. */
   splitBy: ColumnName[];
   splitSeparator: string;
   tooltip: ColumnName[];
   grid: { rows: number; cols: number };
   common: CommonProps;
+  /** draw할 때 적용하는 데이터 필터. 예전 history에는 없을 수 있다. */
+  filters?: ChartFilter[];
 };
 
 export type ItemSize = { width: number; height: number };
@@ -163,7 +167,7 @@ export type ItemPropsRequest =
   | { color: string | null }
   | { legendColor: { value: string; color: string | null } };
 
-export type LegendValuesResponse = { column: LegendColumn; values: string[] };
+export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
 export function isHexColor(value: unknown): value is string {
   return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
@@ -214,23 +218,8 @@ export type ItemState = {
   customColor: boolean;
 };
 
-export type JobStateResponse = {
-  jobId: string;
-  chartId: string;
-  /** 상태가 바뀔 때마다 올라간다. long polling의 since 값으로 돌려보낸다. */
-  version: number;
-  status: JobStatus;
-  phase: JobPhase;
-  /** dataset 단계에서는 생성 행 수, 그 뒤로는 끝난 item 수 */
-  progress: { done: number; total: number };
-  /** 조회가 끝나기 전에는 item 개수를 모른다. */
-  totalItems: number | null;
-  page: number;
-  pageSize: number;
-  items: ItemState[];
-  /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
-  error?: string;
-};
+/** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
+export type JobStateResponse = z.infer<typeof JobStateResponseSchema>;
 
 // ── history ────────────────────────────────────────────────────────
 

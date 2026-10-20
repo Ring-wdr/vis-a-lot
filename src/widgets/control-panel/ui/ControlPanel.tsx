@@ -1,72 +1,39 @@
 "use client";
 
+import { useEffect } from "react";
+import { CHART_LABELS } from "@/entities/chart/lib/title";
+import {
+  axisColumns,
+  fitSpecToSchema,
+  legendColumns,
+  numericColumns,
+} from "@/entities/dataset/model/column-roles";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { GridPicker } from "@/features/change-grid/ui/GridPicker";
 import { DatasetSelect } from "@/features/register-dataset/ui/DatasetSelect";
+import { useDatasetSchema } from "@/shared/api/queries";
 import {
   type AggFn,
   CHART_TYPES,
-  type ChartSpec,
   type ChartType,
+  type ColumnInfo,
   type ColumnName,
-  type LegendColumn,
 } from "@/shared/api/types";
-import {
-  AGG_FNS,
-  AGG_LABELS,
-  COLUMNS,
-  LEGEND_COLUMNS,
-} from "@/shared/config/dataset";
+import { AGG_FNS, AGG_LABELS } from "@/shared/config/dataset";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import { Select, type SelectOption } from "@/shared/ui/Select";
 import styles from "@/shared/ui/workspace.module.css";
 
-const CHART_LABELS: Record<ChartType, string> = {
-  scatter: "Scatter",
-  bar: "Bar",
-  boxplot: "Boxplot",
-};
-
-/** 차트 종류를 바꿀 때 그 종류에 맞지 않는 x 축 컬럼은 기본값으로 바꾼다. */
-function switchChartType(
-  draft: ChartSpec,
-  chartType: ChartType,
-): Partial<ChartSpec> {
-  const allowed = chartType === "scatter" ? AXIS_COLUMNS : CATEGORY_COLUMNS;
-  if (allowed.some((c) => c.name === draft.x)) return { chartType };
-  return { chartType, x: chartType === "scatter" ? "ts" : "sensor_type" };
-}
-
-const CATEGORY_COLUMNS = COLUMNS.filter((c) => c.type === "string");
-const AXIS_COLUMNS = COLUMNS.filter(
-  (c) => c.type === "number" || c.type === "time",
-);
-const NUMBER_COLUMNS = COLUMNS.filter((c) => c.type === "number");
-const LEGEND_OPTIONS = COLUMNS.filter((c) =>
-  (LEGEND_COLUMNS as readonly string[]).includes(c.name),
-);
-/** legend 없음. select 값은 null을 담지 못해 빈 문자열로 대신한다. */
-const NO_LEGEND = "";
-const LEGEND_SELECT_OPTIONS: SelectOption<LegendColumn | typeof NO_LEGEND>[] = [
-  { value: NO_LEGEND, label: "없음" },
-  ...LEGEND_OPTIONS.map((c) => ({
-    value: c.name as LegendColumn,
-    label: c.label,
-  })),
-];
+/** legend 없음. select는 빈 값을 '고르지 않음'으로 보므로 컬럼 이름이 될 수 없는 값을 쓴다. */
+const NO_LEGEND = "\u0000none";
 const AGG_OPTIONS: SelectOption<AggFn>[] = AGG_FNS.map((fn) => ({
   value: fn,
   label: AGG_LABELS[fn],
 }));
 
-function toOptions(columns: readonly { name: ColumnName; label: string }[]) {
+function toOptions(columns: readonly ColumnInfo[]): Option<ColumnName>[] {
   return columns.map((c) => ({ value: c.name, label: c.label }));
 }
-
-const COLUMN_OPTIONS: Option<ColumnName>[] = COLUMNS.map((c) => ({
-  value: c.name,
-  label: c.label,
-}));
 
 function ChartIcon({ type }: { type: ChartType }) {
   return (
@@ -105,6 +72,19 @@ export function ControlPanel() {
   const draft = useWorkspace((s) => s.draft);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const readOnly = useWorkspace((s) => s.readOnly);
+  // 컬럼은 데이터마다 달라 고른 데이터셋의 스키마에서 후보를 고른다.
+  const schema = useDatasetSchema(draft.rows);
+  const columns = schema.data?.columns;
+  const noColumns = columns ? undefined : "데이터를 등록하면 고를 수 있습니다";
+
+  // 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
+  useEffect(() => {
+    if (readOnly || !columns) return;
+    const patch = fitSpecToSchema(draft, columns);
+    if (patch) updateDraft(patch);
+  }, [readOnly, columns, draft, updateDraft]);
+
+  const allOptions = toOptions(columns ?? []);
 
   return (
     <fieldset className={styles.controls} disabled={readOnly}>
@@ -122,7 +102,14 @@ export function ControlPanel() {
               type="button"
               aria-pressed={draft.chartType === type}
               title={CHART_LABELS[type]}
-              onClick={() => updateDraft(switchChartType(draft, type))}
+              onClick={() => {
+                // 차트 종류마다 x축에 쓸 수 있는 타입이 달라 그에 맞게 바로잡는다.
+                const next = { ...draft, chartType: type };
+                updateDraft({
+                  chartType: type,
+                  ...(columns && fitSpecToSchema(next, columns)),
+                });
+              }}
             >
               <ChartIcon type={type} />
               <span>{CHART_LABELS[type]}</span>
@@ -135,24 +122,27 @@ export function ControlPanel() {
 
       <Select
         label="x"
-        value={draft.x}
-        options={toOptions(
-          draft.chartType === "scatter" ? AXIS_COLUMNS : CATEGORY_COLUMNS,
-        )}
+        value={draft.x || null}
+        placeholder={noColumns}
+        options={toOptions(axisColumns(columns ?? [], draft.chartType))}
         onChange={(x) => updateDraft({ x })}
       />
 
       <Select
         label="y"
-        value={draft.y}
-        options={toOptions(NUMBER_COLUMNS)}
+        value={draft.y || null}
+        placeholder={noColumns}
+        options={toOptions(numericColumns(columns ?? []))}
         onChange={(y) => updateDraft({ y })}
       />
 
       <Select
         label="legend"
         value={draft.legend ?? NO_LEGEND}
-        options={LEGEND_SELECT_OPTIONS}
+        options={[
+          { value: NO_LEGEND, label: "없음" },
+          ...toOptions(legendColumns(columns ?? [])),
+        ]}
         onChange={(legend) =>
           updateDraft({ legend: legend === NO_LEGEND ? null : legend })
         }
@@ -169,30 +159,14 @@ export function ControlPanel() {
 
       <OrderedSelect
         label="split by"
-        options={COLUMN_OPTIONS}
+        options={allOptions}
         value={draft.splitBy}
         onChange={(splitBy) => updateDraft({ splitBy })}
       />
-      <label className={styles.inlineField}>
-        구분 기호
-        <input
-          value={draft.splitSeparator}
-          maxLength={5}
-          onChange={(e) => updateDraft({ splitSeparator: e.target.value })}
-        />
-        <span>
-          예:{" "}
-          {draft.splitBy.length > 1
-            ? ["A", "B", "C"]
-                .slice(0, draft.splitBy.length)
-                .join(draft.splitSeparator)
-            : "A"}
-        </span>
-      </label>
 
       <OrderedSelect
         label="tooltip"
-        options={COLUMN_OPTIONS.filter(
+        options={allOptions.filter(
           (o) => o.value !== draft.x && o.value !== draft.y,
         )}
         value={draft.tooltip}

@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { ITEM_TOOLBAR_HEIGHT } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useItemAction } from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
@@ -44,9 +43,12 @@ function Pending({
     <div className={styles.pending}>
       <span className={styles.spinner} aria-hidden="true" />
       <span>{label}</span>
-      {item?.status === "running" && (
-        <progress value={item.stageProgress} max={1} />
-      )}
+      {/* 대기 → 렌더링으로 넘어갈 때 줄이 생기며 밀리지 않도록 진행 막대 자리는 늘 둔다. */}
+      <progress
+        value={item?.status === "running" ? item.stageProgress : 0}
+        max={1}
+        aria-hidden={item?.status !== "running"}
+      />
     </div>
   );
 }
@@ -108,10 +110,7 @@ function DrawnItem({
 
   return (
     <article className={styles.item}>
-      <div
-        className={styles.itemToolbar}
-        style={{ height: ITEM_TOOLBAR_HEIGHT }}
-      >
+      <div className={styles.itemToolbar}>
         <span className={styles.itemLabel} title={item.label}>
           {item.label}
         </span>
@@ -195,10 +194,7 @@ export function ChartItemCard({
   }
   return (
     <article className={styles.item}>
-      <div
-        className={styles.itemToolbar}
-        style={{ height: ITEM_TOOLBAR_HEIGHT }}
-      >
+      <div className={styles.itemToolbar}>
         <span className={styles.itemLabel} title={item?.label}>
           {item?.label ?? "…"}
         </span>

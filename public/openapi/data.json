@@ -19,58 +19,86 @@
       }
     },
     "schemas": {
-      "ColumnsResponse": {
-        "type": "object",
-        "properties": {
-          "rows": {
-            "$ref": "#/components/schemas/RowSize"
-          },
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ColumnInfo"
-            }
-          }
-        },
-        "required": ["rows", "columns"]
-      },
-      "RowSize": {
+      "ColumnSummary": {
         "anyOf": [
           {
-            "type": "number",
-            "enum": [100000]
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["range"]
+              },
+              "column": {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["numeric", "datetime"]
+              },
+              "min": {
+                "type": ["number", "null"]
+              },
+              "max": {
+                "type": ["number", "null"]
+              },
+              "nullCount": {
+                "type": "number"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "kind",
+              "column",
+              "type",
+              "min",
+              "max",
+              "nullCount",
+              "count"
+            ]
           },
           {
-            "type": "number",
-            "enum": [500000]
-          },
-          {
-            "type": "number",
-            "enum": [1000000]
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["values"]
+              },
+              "column": {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["value", "count"]
+                }
+              },
+              "nullCount": {
+                "type": "number"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": ["kind", "column", "values", "nullCount", "count"]
           }
         ]
       },
-      "ColumnInfo": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/ColumnType"
-          },
-          "label": {
-            "type": "string"
-          },
-          "distinct": {
-            "type": "number"
-          }
-        },
-        "required": ["name", "type", "label", "distinct"]
-      },
-      "ColumnType": {
+      "ColumnName": {
         "type": "string",
-        "enum": ["time", "string", "number"]
+        "minLength": 1,
+        "maxLength": 63,
+        "example": "factory"
       },
       "ApiError": {
         "type": "object",
@@ -112,6 +140,22 @@
         },
         "required": ["rows", "state", "done", "total"]
       },
+      "RowSize": {
+        "anyOf": [
+          {
+            "type": "number",
+            "enum": [100000]
+          },
+          {
+            "type": "number",
+            "enum": [500000]
+          },
+          {
+            "type": "number",
+            "enum": [1000000]
+          }
+        ]
+      },
       "GenerateDatasetRequest": {
         "type": "object",
         "properties": {
@@ -150,7 +194,7 @@
         "type": "object",
         "properties": {
           "column": {
-            "$ref": "#/components/schemas/LegendColumn"
+            "$ref": "#/components/schemas/ColumnName"
           },
           "values": {
             "type": "array",
@@ -160,10 +204,6 @@
           }
         },
         "required": ["column", "values"]
-      },
-      "LegendColumn": {
-        "type": "string",
-        "enum": ["factory", "line", "sensor_type", "shift", "status"]
       },
       "DatasetListResponse": {
         "type": "object",
@@ -176,6 +216,49 @@
           }
         },
         "required": ["datasets"]
+      },
+      "DatasetSchema": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "$ref": "#/components/schemas/RowSize"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnInfo"
+            }
+          }
+        },
+        "required": ["rows", "ready", "columns"]
+      },
+      "ColumnInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ColumnType"
+          },
+          "nullable": {
+            "type": "boolean"
+          },
+          "distinct": {
+            "type": ["number", "null"]
+          }
+        },
+        "required": ["name", "label", "type", "nullable", "distinct"]
+      },
+      "ColumnType": {
+        "type": "string",
+        "enum": ["categorical", "numeric", "datetime"]
       },
       "SplitCountResponse": {
         "type": "object",
@@ -191,15 +274,92 @@
           }
         },
         "required": ["count", "exact", "limit"]
+      },
+      "SplitCountRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "$ref": "#/components/schemas/RowSize"
+          },
+          "cols": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnName"
+            }
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartFilter"
+            },
+            "maxItems": 200
+          }
+        },
+        "required": ["rows", "cols"]
+      },
+      "ChartFilter": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/RangeFilter"
+          },
+          {
+            "$ref": "#/components/schemas/ExcludeFilter"
+          }
+        ]
+      },
+      "RangeFilter": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["range"]
+          },
+          "column": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "inverse": {
+            "type": "boolean"
+          },
+          "includeNull": {
+            "type": "boolean"
+          }
+        },
+        "required": ["kind", "column", "min", "max", "inverse", "includeNull"]
+      },
+      "ExcludeFilter": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["exclude"]
+          },
+          "column": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50000
+          }
+        },
+        "required": ["kind", "column", "values"]
       }
     },
     "parameters": {}
   },
   "paths": {
-    "/datasets/{datasetId}/columns": {
+    "/datasets/{datasetId}/columns/{column}/summary": {
       "get": {
         "tags": ["datasets"],
-        "summary": "컬럼 타입과 고유값 수",
+        "summary": "필터용 컬럼 요약: 숫자·시계열은 범위와 null 수, 범주는 값별 행 수",
         "security": [
           {
             "bearer": []
@@ -216,6 +376,14 @@
           },
           {
             "schema": {
+              "$ref": "#/components/schemas/ColumnName"
+            },
+            "required": true,
+            "name": "column",
+            "in": "path"
+          },
+          {
+            "schema": {
               "type": "integer",
               "enum": [100000, 500000, 1000000]
             },
@@ -226,11 +394,11 @@
         ],
         "responses": {
           "200": {
-            "description": "컬럼 목록",
+            "description": "컬럼 요약",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ColumnsResponse"
+                  "$ref": "#/components/schemas/ColumnSummary"
                 }
               }
             }
@@ -417,7 +585,7 @@
           },
           {
             "schema": {
-              "$ref": "#/components/schemas/LegendColumn"
+              "$ref": "#/components/schemas/ColumnName"
             },
             "required": true,
             "name": "column",
@@ -561,10 +729,10 @@
         }
       }
     },
-    "/datasets/{datasetId}/split-count": {
+    "/datasets/{datasetId}/schema": {
       "get": {
         "tags": ["datasets"],
-        "summary": "split 조합 개수 (최대 개수 초과 검사)",
+        "summary": "데이터셋 스키마: 적재된 테이블에서 읽은 컬럼과 타입(categorical / numeric / datetime). 적재 중에도 알 수 있다",
         "security": [
           {
             "bearer": []
@@ -587,19 +755,101 @@
             "required": true,
             "name": "rows",
             "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "example": "factory,line",
-              "description": "쉼표로 구분한 split 컬럼"
-            },
-            "required": false,
-            "description": "쉼표로 구분한 split 컬럼",
-            "name": "cols",
-            "in": "query"
           }
         ],
+        "responses": {
+          "200": {
+            "description": "컬럼 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "등록하지 않은 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets/{datasetId}/split-count": {
+      "post": {
+        "tags": ["datasets"],
+        "summary": "split 조합 개수 (최대 개수 초과 검사). 필터가 있으면 필터를 적용해 센다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/DatasetId"
+            },
+            "required": true,
+            "name": "datasetId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SplitCountRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "조합 개수",

@@ -1,27 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import {
-  GRID_FOOTER_HEIGHT,
-  GRID_GAP,
-  itemSizeFor,
-} from "@/entities/chart/lib/grid-layout";
+import { useEffect, useId, useRef, useState } from "react";
+import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
-import { isTerminal, type JobStateResponse } from "@/shared/api/types";
+import { isTerminal } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import { ChartItemCard } from "./ChartItemCard";
-
-const STATUS_SUFFIX: Partial<Record<JobStateResponse["status"], string>> = {
-  success: " · 완료",
-  failed: " · 일부 실패",
-  cancelled: " · 취소됨",
-};
-
-const WHEEL_THRESHOLD = 20;
-const WHEEL_COOLDOWN_MS = 350;
+import { JobStatusBar } from "./JobStatusBar";
+import { PageScroller, type PageScrollerHandle } from "./PageScroller";
 
 function Pager({
   page,
@@ -43,7 +32,7 @@ function Pager({
       >
         ‹
       </button>
-      <span>
+      <span className={styles.pagerText}>
         {page + 1} / {totalPages}
       </span>
       <button
@@ -58,42 +47,6 @@ function Pager({
   );
 }
 
-function JobStatusText({ job }: { job: JobStateResponse | undefined }) {
-  if (!job) return null;
-  const { phase, progress, status } = job;
-  if (job.error) {
-    return (
-      <span role="alert" className={styles.error}>
-        {job.error}
-      </span>
-    );
-  }
-  // init 단계에서는 spinner만 보여주고, 생성 진행률은 왼쪽 데이터 패널이 보여준다.
-  if (phase === "dataset" || phase === "query") {
-    return (
-      <>
-        {!isTerminal(status) && (
-          <span className={styles.spinner} aria-hidden="true" />
-        )}
-        <span>
-          {phase === "dataset" ? "데이터 준비 중" : "데이터 조회 중"}
-          {STATUS_SUFFIX[status]}
-        </span>
-      </>
-    );
-  }
-  return (
-    <>
-      <progress value={progress.done} max={progress.total || 1} />
-      <span>
-        {progress.done.toLocaleString()} / {progress.total.toLocaleString()}{" "}
-        item
-        {STATUS_SUFFIX[status]}
-      </span>
-    </>
-  );
-}
-
 export function ChartGrid() {
   const areaRef = useRef<HTMLDivElement>(null);
   const setGridArea = useWorkspace((s) => s.setGridArea);
@@ -101,7 +54,11 @@ export function ChartGrid() {
   const readOnly = useWorkspace((s) => s.readOnly);
   const page = useWorkspace((s) => s.page);
   const setPage = useWorkspace((s) => s.setPage);
-  const lastWheel = useRef(0);
+  const scroller = useRef<PageScrollerHandle>(null);
+  const gridId = useId();
+  // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라온다.
+  const [viewPage, setViewPage] = useState(page);
+  const moving = viewPage !== page;
   const grid = current?.spec.grid ?? { rows: 1, cols: 1 };
   const pageSize = grid.rows * grid.cols;
   const job = useJob(current?.jobId, page, pageSize);
@@ -122,17 +79,13 @@ export function ChartGrid() {
   }, [jobError]);
 
   const goToPage = (next: number) => {
-    setPage(Math.min(totalPages - 1, Math.max(0, next)));
+    const p = Math.min(totalPages - 1, Math.max(0, next));
+    setViewPage(p);
+    setPage(p);
   };
 
-  // 스크롤 한 번에 한 페이지씩 넘긴다. 페이지 이동은 렌더 job에 영향을 주지 않는다.
-  const onWheel = (e: React.WheelEvent) => {
-    if (Math.abs(e.deltaY) < WHEEL_THRESHOLD || totalPages <= 1) return;
-    const now = performance.now();
-    if (now - lastWheel.current < WHEEL_COOLDOWN_MS) return;
-    lastWheel.current = now;
-    goToPage(page + (e.deltaY > 0 ? 1 : -1));
-  };
+  // 페이지가 밖에서 바뀌면(grid 변경 등) 보이는 페이지도 맞춘다.
+  useEffect(() => setViewPage(page), [page]);
 
   useEffect(() => {
     const el = areaRef.current;
@@ -156,40 +109,55 @@ export function ChartGrid() {
       )}
       {current && (
         <>
-          <div
-            className={styles.grid}
-            onWheel={onWheel}
-            style={{
-              gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
-              gap: GRID_GAP,
-              height: `calc(100% - ${GRID_FOOTER_HEIGHT}px)`,
-            }}
-          >
-            {job.data?.items.map((item) => (
-              <ChartItemCard
-                key={item.key}
-                item={item}
-                chartId={current.chartId}
-                primaryJobId={current.jobId}
-                hasLegend={current.spec.legend !== null}
-                displaySize={displaySize}
-                tooltipColumns={current.spec.tooltip}
-              />
-            ))}
-            {job.data?.totalItems === null &&
-              !isTerminal(job.data.status) &&
-              Array.from({ length: pageSize }, (_, i) => (
+          <div className={styles.gridRow}>
+            <div
+              id={gridId}
+              className={styles.grid}
+              // 페이지 이동은 오른쪽 스크롤바가 맡는다. grid 위의 휠도 그쪽으로 넘긴다.
+              onWheel={(e) => scroller.current?.wheel(e.deltaY)}
+              // 행·열 수는 CSS가 data 속성으로 고른다 (1..10).
+              data-rows={grid.rows}
+              data-cols={grid.cols}
+            >
+              {job.data?.items.map((item) => (
                 <ChartItemCard
-                  // biome-ignore lint/suspicious/noArrayIndexKey: 조회 전 자리 표시용
-                  key={i}
-                  placeholder={
-                    job.data?.phase === "dataset"
-                      ? "데이터 준비 중"
-                      : "데이터 조회"
-                  }
+                  key={item.key}
+                  item={item}
+                  chartId={current.chartId}
+                  primaryJobId={current.jobId}
+                  hasLegend={current.spec.legend !== null}
+                  displaySize={displaySize}
+                  tooltipColumns={current.spec.tooltip}
                 />
               ))}
+              {job.data?.totalItems === null &&
+                !isTerminal(job.data.status) &&
+                Array.from({ length: pageSize }, (_, i) => (
+                  <ChartItemCard
+                    // biome-ignore lint/suspicious/noArrayIndexKey: 조회 전 자리 표시용
+                    key={i}
+                    placeholder={
+                      job.data?.phase === "dataset"
+                        ? "데이터 준비 중"
+                        : "데이터 조회"
+                    }
+                  />
+                ))}
+              {moving && (
+                <div className={styles.pageMoving} aria-live="polite">
+                  {(viewPage + 1).toLocaleString()} /{" "}
+                  {totalPages.toLocaleString()} 페이지로 이동 중…
+                </div>
+              )}
+            </div>
+            <PageScroller
+              ref={scroller}
+              controls={gridId}
+              page={page}
+              totalPages={totalPages}
+              onPage={setPage}
+              onViewPage={setViewPage}
+            />
           </div>
           <div className={styles.footer}>
             {job.error ? (
@@ -197,9 +165,9 @@ export function ChartGrid() {
                 {job.error.message}
               </span>
             ) : (
-              <JobStatusText job={progress.data} />
+              progress.data && <JobStatusBar job={progress.data} />
             )}
-            <Pager page={page} totalPages={totalPages} onPage={goToPage} />
+            <Pager page={viewPage} totalPages={totalPages} onPage={goToPage} />
           </div>
         </>
       )}

@@ -1414,33 +1414,39 @@ export type components = {
       x: components["schemas"]["ColumnName"];
       y: components["schemas"]["ColumnName"];
       agg: components["schemas"]["AggFn"];
-      legend: components["schemas"]["LegendColumn"] | null;
+      legend: components["schemas"]["ColumnName"] | null;
       splitBy: components["schemas"]["ColumnName"][];
       splitSeparator: string;
       tooltip: components["schemas"]["ColumnName"][];
       grid: components["schemas"]["Grid"];
       common: components["schemas"]["CommonProps"];
+      filters?: components["schemas"]["ChartFilter"][];
     };
     RowSize: 100000 | 500000 | 1000000;
     /** @enum {string} */
     ChartType: "scatter" | "bar" | "boxplot";
-    /** @enum {string} */
-    ColumnName:
-      | "ts"
-      | "factory"
-      | "line"
-      | "machine"
-      | "sensor_type"
-      | "shift"
-      | "lot_id"
-      | "status"
-      | "value"
-      | "temperature_env"
-      | "load_pct";
+    /** @example factory */
+    ColumnName: string;
     /** @enum {string} */
     AggFn: "avg" | "sum" | "count" | "min" | "max" | "median";
-    /** @enum {string} */
-    LegendColumn: "factory" | "line" | "sensor_type" | "shift" | "status";
+    ChartFilter:
+      | components["schemas"]["RangeFilter"]
+      | components["schemas"]["ExcludeFilter"];
+    RangeFilter: {
+      /** @enum {string} */
+      kind: "range";
+      column: components["schemas"]["ColumnName"];
+      min: number;
+      max: number;
+      inverse: boolean;
+      includeNull: boolean;
+    };
+    ExcludeFilter: {
+      /** @enum {string} */
+      kind: "exclude";
+      column: components["schemas"]["ColumnName"];
+      values: string[];
+    };
     ItemRestore: {
       view?: components["schemas"]["ItemView"];
       shapes: components["schemas"]["Shape"][];
@@ -1628,6 +1634,21 @@ export type components = {
       pageSize: number;
       items: components["schemas"]["ItemState"][];
       error?: string;
+      /** @enum {string} */
+      kind: "draw" | "redraw";
+      counts: {
+        queued: number;
+        running: number;
+        success: number;
+        failed: number;
+        cancelled: number;
+      };
+      timing: {
+        createdAt: number;
+        renderStartedAt?: number;
+        endedAt?: number;
+      };
+      renderWorkers: number;
     };
     ItemState: {
       key: string;

@@ -4,6 +4,7 @@
 import { DATASET_ID } from "@/shared/config/dataset";
 import { chartClient, dataClient } from "./clients";
 import type {
+  ChartFilter,
   ChartSpec,
   ColumnName,
   CommonProps,
@@ -12,7 +13,6 @@ import type {
   HistoryDetail,
   ItemMeta,
   ItemSize,
-  LegendColumn,
   RowSize,
   Shape,
   TooltipRequest,
@@ -83,21 +83,31 @@ export const api = {
       }),
     ),
 
-  columns: (rows: RowSize) =>
+  /** 데이터셋 스키마: 적재된 테이블의 컬럼과 타입. 등록 전이면 409 */
+  schema: (rows: RowSize) =>
     unwrap(
-      dataClient.GET("/datasets/{datasetId}/columns", {
+      dataClient.GET("/datasets/{datasetId}/schema", {
         params: { path: dataset, query: { rows } },
       }),
     ),
 
-  splitCount: (rows: RowSize, cols: ColumnName[]) =>
+  splitCount: (rows: RowSize, cols: ColumnName[], filters?: ChartFilter[]) =>
     unwrap(
-      dataClient.GET("/datasets/{datasetId}/split-count", {
-        params: { path: dataset, query: { rows, cols: cols.join(",") } },
+      dataClient.POST("/datasets/{datasetId}/split-count", {
+        params: { path: dataset },
+        body: { rows, cols, filters },
       }),
     ),
 
-  legendValues: (rows: RowSize, column: LegendColumn) =>
+  /** 필터 패널: 아코디언을 열 때 그 컬럼의 범위나 값 목록을 받는다. */
+  columnSummary: (rows: RowSize, column: ColumnName) =>
+    unwrap(
+      dataClient.GET("/datasets/{datasetId}/columns/{column}/summary", {
+        params: { path: { ...dataset, column }, query: { rows } },
+      }),
+    ),
+
+  legendValues: (rows: RowSize, column: ColumnName) =>
     unwrap(
       dataClient.GET("/datasets/{datasetId}/legend-values", {
         params: { path: dataset, query: { rows, column } },

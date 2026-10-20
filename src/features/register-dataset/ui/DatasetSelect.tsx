@@ -5,8 +5,8 @@ import { useDatasets } from "@/shared/api/queries";
 import type { RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
 import { Select } from "@/shared/ui/Select";
+import selectStyles from "@/shared/ui/Select.module.css";
 import styles from "@/shared/ui/workspace.module.css";
-import { openDataDialog } from "./DataDialog";
 
 const STATE_SUFFIX = {
   ready: "",
@@ -16,7 +16,7 @@ const STATE_SUFFIX = {
 
 /**
  * 그릴 데이터 고르기. 등록한 규모만 고를 수 있고, 등록은 상단 data 팝업에서 한다.
- * 미등록 규모로 draw하면 서버가 데이터를 만들 때까지 job이 기다린다.
+ * 컬럼은 데이터의 스키마에서 정해지므로, 등록하지 않은 규모로는 그릴 수 없다.
  */
 export function DatasetSelect({
   rows,
@@ -27,8 +27,6 @@ export function DatasetSelect({
 }) {
   const datasets = useDatasets();
   const status = datasets.data?.datasets.find((d) => d.rows === rows);
-  const noneRegistered =
-    datasets.data?.datasets.every((d) => d.state === "missing") ?? false;
 
   return (
     <div className={styles.field}>
@@ -46,22 +44,16 @@ export function DatasetSelect({
           };
         })}
         onChange={onRowsChange}
+        aside={
+          <span className={selectStyles.aside}>
+            {status?.state === "generating"
+              ? `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
+              : status?.state === "missing"
+                ? "미등록 · data에서 등록"
+                : ""}
+          </span>
+        }
       />
-      {status?.state === "generating" && (
-        <progress value={status.done} max={status.total} />
-      )}
-      {noneRegistered && (
-        <p className={styles.muted}>
-          등록한 데이터가 없습니다. 그대로 draw하면 이 규모를 바로 만듭니다.
-        </p>
-      )}
-      <button
-        type="button"
-        className={styles.linkButton}
-        onClick={openDataDialog}
-      >
-        데이터 등록…
-      </button>
     </div>
   );
 }

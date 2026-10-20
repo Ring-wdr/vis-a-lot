@@ -1,10 +1,28 @@
 .workspace {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  grid-template-rows: 48px minmax(0, 1fr);
+  grid-template-rows: 48px 36px minmax(0, 1fr);
   height: 100vh;
   background: var(--ws-surface);
   color: var(--ws-text);
+}
+
+/* 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
+   모든 item을 새 크기로 다시 그리게 된다. */
+.filterDrawer {
+  grid-column: -2 / -1;
+  grid-row: 3;
+  justify-self: end;
+  z-index: 10;
+  display: flex;
+  width: min(300px, 100%);
+  min-height: 0;
+  box-shadow: -8px 0 24px rgb(var(--ws-shadow-rgb) / 12%);
+}
+
+.filterDrawer > * {
+  flex: 1;
+  min-width: 0;
 }
 
 .header {
@@ -54,6 +72,14 @@
 
 .modeBar button:disabled,
 .chartTypes button:disabled,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--ws-text);
+}
+
 .secondaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -61,6 +87,8 @@
 
 /* 왼쪽 패널: 설정은 스크롤되고, 공통 속성·draw 같은 동작 버튼은 하단에 고정된다. */
 .panel {
+  grid-column: 1;
+  grid-row: 3;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -195,13 +223,20 @@
 }
 
 .main {
+  /* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */
+  grid-column: 2;
+  grid-row: 3;
   min-width: 0;
   min-height: 0;
   padding: 16px;
 }
 
+/* grid와 하단 바를 세로로 쌓는다. 하단 바 높이(32px + 위 여백 12px)는
+   grid-layout.ts의 GRID_FOOTER_HEIGHT와 같아야 PNG 크기 계산이 맞는다. */
 .gridArea {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
 }
@@ -211,8 +246,142 @@
   font-size: 14px;
 }
 
+.gridRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* gap은 grid-layout.ts의 GRID_GAP과 같아야 PNG 크기 계산이 맞는다. */
 .grid {
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: grid;
+  gap: 12px;
+}
+
+.grid[data-cols="1"] {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid[data-rows="1"] {
+  grid-template-rows: repeat(1, minmax(0, 1fr));
+}
+
+.grid[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid[data-rows="2"] {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.grid[data-cols="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid[data-rows="3"] {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.grid[data-cols="4"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid[data-rows="4"] {
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.grid[data-cols="5"] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.grid[data-rows="5"] {
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+}
+
+.grid[data-cols="6"] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.grid[data-rows="6"] {
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+}
+
+.grid[data-cols="7"] {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.grid[data-rows="7"] {
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+}
+
+.grid[data-cols="8"] {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.grid[data-rows="8"] {
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+}
+
+.grid[data-cols="9"] {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.grid[data-rows="9"] {
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+}
+
+.grid[data-cols="10"] {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.grid[data-rows="10"] {
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+}
+
+/* 스크롤 중 보이는 페이지와 조회한 페이지가 다를 때 grid를 덮는 안내 */
+.pageMoving {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--ws-overlay);
+  color: var(--ws-text-secondary);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* grid 오른쪽 페이지 스크롤바. macOS의 사라지는 스크롤바 대신 항상 보이게 그린다. */
+.pageScroller {
+  flex: none;
+  width: 12px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  border-radius: 6px;
+  background: var(--ws-panel);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ws-text-muted) transparent;
+  outline: none;
+}
+
+.pageScroller:focus-visible {
+  box-shadow: 0 0 0 2px var(--ws-accent);
+}
+
+.pageScroller::-webkit-scrollbar {
+  width: 12px;
+}
+
+.pageScroller::-webkit-scrollbar-thumb {
+  min-height: 24px;
+  border: 3px solid var(--ws-panel);
+  border-radius: 6px;
+  background: var(--ws-text-muted);
 }
 
 .item {
@@ -226,7 +395,10 @@
   background: var(--ws-surface);
 }
 
+/* 높이는 grid-layout.ts의 ITEM_TOOLBAR_HEIGHT와 같아야 PNG 크기 계산이 맞는다. */
 .itemToolbar {
+  flex: none;
+  height: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -259,12 +431,14 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  width: min(140px, 90%);
+  text-align: center;
   font-size: 12px;
   color: var(--ws-text-muted);
 }
 
 .pending progress {
-  width: 120px;
+  width: 100%;
 }
 
 .spinner {
@@ -307,19 +481,11 @@
   font-size: 12px;
 }
 
-.inlineField {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--ws-text-secondary);
-}
-
-.inlineField input {
-  width: 48px;
-  padding: 3px 6px;
-  border: 1px solid var(--ws-border);
-  border-radius: 6px;
+/* 페이지 수가 30,000까지 가도 번호가 바뀔 때 버튼이 움직이지 않게 자리를 잡아 둔다. */
+.pagerText {
+  min-width: 13ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .pager {
@@ -706,6 +872,8 @@
 
 /* body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다 */
 .tooltipPortal {
+  /* ItemTooltip의 TOOLTIP_WIDTH와 같아야 한다. */
+  width: 200px;
   position: fixed;
   z-index: 1000;
 }

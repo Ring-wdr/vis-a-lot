@@ -9,6 +9,7 @@ import type { DebugRenderResponse, RowSize } from "@/shared/api/types";
 import styles from "./page.module.css";
 
 const ITEM_COUNT = 8;
+/** 렌더 요청 크기. page.module.css의 .frame 크기와 같아야 한다. */
 const WIDTH = 320;
 const HEIGHT = 200;
 
@@ -99,10 +100,7 @@ export function BootCheck() {
         <div className={styles.grid}>
           {items.map((it) => (
             <figure key={it.key} className={styles.item}>
-              <div
-                className={styles.frame}
-                style={{ width: WIDTH, height: HEIGHT }}
-              >
+              <div className={styles.frame}>
                 {it.error ? (
                   <span role="alert">{it.error}</span>
                 ) : it.result ? (

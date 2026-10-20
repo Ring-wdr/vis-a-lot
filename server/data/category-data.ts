@@ -3,13 +3,14 @@
 import type { PGlite } from "@electric-sql/pglite";
 import { queryLegendValues } from "./chart-data";
 import {
-  type AggFn,
-  COLUMNS,
-  type ColumnName,
-  type LegendColumn,
-  type RowSize,
-  readingsTable,
-} from "./schema";
+  type ColumnSchema,
+  columnOf,
+  type DatasetSchema,
+  ident,
+  textSql,
+} from "./dataset-schema";
+import { type ChartFilter, filterSql } from "./filters";
+import type { AggFn } from "./schema";
 
 export type BoxStats = {
   n: number;
@@ -42,16 +43,16 @@ export type CategoryData = {
 };
 
 export type CategoryDataParams = {
-  rows: RowSize;
+  /** 읽을 테이블 (데이터셋 하나) */
+  table: string;
   chartType: "bar" | "boxplot";
-  x: ColumnName;
-  y: ColumnName;
+  x: string;
+  y: string;
   agg: AggFn;
-  splitBy: ColumnName[];
-  legend: LegendColumn | null;
+  splitBy: string[];
+  legend: string | null;
+  filters?: ChartFilter[];
 };
-
-const COLUMN_TYPE = new Map(COLUMNS.map((c) => [c.name, c.type]));
 const OUTLIER_SAMPLE = 200;
 
 const AGG_SQL: Record<AggFn, (y: string) => string> = {
@@ -63,12 +64,16 @@ const AGG_SQL: Record<AggFn, (y: string) => string> = {
   median: (y) => `percentile_cont(0.5) within group (order by ${y})`,
 };
 
-function check(params: CategoryDataParams) {
-  const { x, y, splitBy, legend } = params;
-  for (const name of [x, y, ...splitBy, ...(legend ? [legend] : [])]) {
-    if (!COLUMN_TYPE.has(name)) throw new Error(`unknown column ${name}`);
-  }
-  if (COLUMN_TYPE.get(y) !== "number") throw new Error(`${y} is not numeric`);
+/** x는 범주, y는 숫자. split·legend 컬럼까지 스키마에서 확인해 꺼낸다. */
+function columnsOf(schema: DatasetSchema, params: CategoryDataParams) {
+  return {
+    x: columnOf(schema, params.x, "categorical"),
+    y: columnOf(schema, params.y, "numeric"),
+    split: params.splitBy.map((c) => columnOf(schema, c)),
+    legend: params.legend
+      ? columnOf(schema, params.legend, "categorical")
+      : undefined,
+  };
 }
 
 /**
@@ -107,25 +112,31 @@ function groupRows<T>(
   return groups;
 }
 
-function keyColumns(params: CategoryDataParams) {
-  const { splitBy, x, legend } = params;
-  return [...splitBy, x, ...(legend ? [legend] : [])];
+/** 묶는 순서: split…, x 범주, [legend] */
+function keyColumns(cols: ReturnType<typeof columnsOf>): ColumnSchema[] {
+  return [...cols.split, cols.x, ...(cols.legend ? [cols.legend] : [])];
 }
 
 export async function queryBarData(
   db: PGlite,
+  schema: DatasetSchema,
   params: CategoryDataParams,
 ): Promise<CategoryData> {
-  check(params);
-  const { rows, y, agg, splitBy, legend } = params;
+  const cols = columnsOf(schema, params);
+  const { table, agg, splitBy, legend } = params;
+  const y = ident(cols.y.name);
+  const filter = filterSql(schema, params.filters);
   const legendValues = legend
-    ? await queryLegendValues(db, rows, legend)
+    ? await queryLegendValues(db, table, schema, legend)
     : undefined;
-  const keys = keyColumns(params);
-  const sql = `select ${keys.map((c) => `${c}::text`).join(", ")}, ${AGG_SQL[agg](y)}::float8
-    from ${readingsTable(rows)} where ${y} is not null
-    group by ${keys.join(", ")} order by ${keys.join(", ")}`;
-  const res = await db.query<unknown[]>(sql, [], { rowMode: "array" });
+  const keys = keyColumns(cols);
+  const keyNames = keys.map((c) => ident(c.name)).join(", ");
+  const sql = `select ${keys.map(textSql).join(", ")}, ${AGG_SQL[agg](y)}::float8
+    from ${table} where ${y} is not null${filter.sql}
+    group by ${keyNames} order by ${keyNames}`;
+  const res = await db.query<unknown[]>(sql, filter.params, {
+    rowMode: "array",
+  });
   return {
     legendValues,
     groups: groupRows(
@@ -144,20 +155,24 @@ export async function queryBarData(
 /** 사분위수는 percentile_cont, 수염은 1.5 IQR 안쪽의 최솟값/최댓값, 바깥은 이상치 */
 export async function queryBoxData(
   db: PGlite,
+  schema: DatasetSchema,
   params: CategoryDataParams,
 ): Promise<CategoryData> {
-  check(params);
-  const { rows, y, splitBy, legend } = params;
+  const cols = columnsOf(schema, params);
+  const { table, splitBy, legend } = params;
+  const y = ident(cols.y.name);
+  const filter = filterSql(schema, params.filters);
   const legendValues = legend
-    ? await queryLegendValues(db, rows, legend)
+    ? await queryLegendValues(db, table, schema, legend)
     : undefined;
   // 정렬은 원래 타입 기준, 결과 값은 text로 돌려받는다.
-  const keyNames = keyColumns(params).map((c, i) => ({
+  const keyNames = keyColumns(cols).map((c, i) => ({
     src: c,
     alias: `_k${i}`,
   }));
   const select = keyNames.map(
-    (c) => `${c.src}::text as ${c.alias}, ${c.src} as ${c.alias}_o`,
+    (c) =>
+      `${textSql(c.src)} as ${c.alias}, ${ident(c.src.name)} as ${c.alias}_o`,
   );
   const aliases = keyNames.map((c) => c.alias);
   const orderAliases = keyNames.map((c) => `q.${c.alias}_o`);
@@ -167,7 +182,7 @@ export async function queryBoxData(
   const sql = `
     with s as (
       select ${select.join(", ")}, ${y}::float8 as v
-      from ${readingsTable(rows)} where ${y} is not null
+      from ${table} where ${y} is not null${filter.sql}
     ),
     q as (
       select ${aliases.join(", ")}, ${aliases.map((c) => `min(${c}_o) as ${c}_o`).join(", ")},
@@ -185,7 +200,9 @@ export async function queryBoxData(
     from q join s on ${join}
     group by ${aliases.map((c) => `q.${c}`).join(", ")}, ${orderAliases.join(", ")}, q.n, q.mean, q.q1, q.median, q.q3
     order by ${orderAliases.join(", ")}`;
-  const res = await db.query<unknown[]>(sql, [], { rowMode: "array" });
+  const res = await db.query<unknown[]>(sql, filter.params, {
+    rowMode: "array",
+  });
   return {
     legendValues,
     groups: groupRows(res.rows, splitBy.length, legendValues, (row, o) => ({

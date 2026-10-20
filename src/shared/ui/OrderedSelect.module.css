@@ -43,6 +43,7 @@
 }
 
 .list {
+  max-height: 280px;
   overflow-y: auto;
   overscroll-behavior: contain;
   outline: none;
@@ -59,7 +60,9 @@
   width: 100%;
 }
 
+/* 높이는 OrderedSelect의 ROW_HEIGHT와 같아야 포인터 위치로 줄을 계산할 수 있다. */
 .option {
+  height: 28px;
   position: absolute;
   top: 0;
   left: 0;
