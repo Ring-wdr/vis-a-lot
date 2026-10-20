@@ -4,29 +4,40 @@ import { useEffect, useRef } from "react";
 import { GRID_FOOTER_HEIGHT, GRID_GAP } from "@/lib/grid-layout";
 import { useJob } from "@/lib/queries";
 import { useWorkspace } from "@/lib/workspace-store";
-import type { JobStateResponse } from "@/server/api/types";
+import { isTerminal, type JobStateResponse } from "@/server/api/types";
 import { ChartItemCard } from "./ChartItemCard";
 import styles from "./Workspace.module.css";
+
+const STATUS_SUFFIX: Partial<Record<JobStateResponse["status"], string>> = {
+  success: " · 완료",
+  failed: " · 일부 실패",
+  cancelled: " · 취소됨",
+};
 
 function JobFooter({ job }: { job: JobStateResponse | undefined }) {
   if (!job) return null;
   const { phase, progress, status } = job;
-  const label =
-    phase === "dataset"
-      ? `데이터 준비 중 ${progress.done.toLocaleString()} / ${progress.total.toLocaleString()}`
-      : phase === "query"
-        ? "데이터 조회 중"
-        : `${progress.done.toLocaleString()} / ${progress.total.toLocaleString()} item`;
+  // init 단계에서는 spinner만 보여주고, 생성 진행률은 왼쪽 데이터 패널이 보여준다.
+  if (phase === "dataset" || phase === "query") {
+    return (
+      <div className={styles.footer}>
+        {!isTerminal(status) && (
+          <span className={styles.spinner} aria-hidden="true" />
+        )}
+        <span>
+          {phase === "dataset" ? "데이터 준비 중" : "데이터 조회 중"}
+          {STATUS_SUFFIX[status]}
+        </span>
+      </div>
+    );
+  }
   return (
     <div className={styles.footer}>
-      <progress
-        value={phase === "query" ? undefined : progress.done}
-        max={progress.total || 1}
-      />
+      <progress value={progress.done} max={progress.total || 1} />
       <span>
-        {label}
-        {status === "success" && " · 완료"}
-        {status === "failed" && " · 일부 실패"}
+        {progress.done.toLocaleString()} / {progress.total.toLocaleString()}{" "}
+        item
+        {STATUS_SUFFIX[status]}
       </span>
     </div>
   );
@@ -72,9 +83,17 @@ export function ChartGrid() {
               <ChartItemCard key={item.key} item={item} />
             ))}
             {job.data?.totalItems === null &&
+              !isTerminal(job.data.status) &&
               Array.from({ length: pageSize }, (_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: 조회 전 자리 표시용
-                <ChartItemCard key={i} />
+                <ChartItemCard
+                  // biome-ignore lint/suspicious/noArrayIndexKey: 조회 전 자리 표시용
+                  key={i}
+                  placeholder={
+                    job.data?.phase === "dataset"
+                      ? "데이터 준비 중"
+                      : "데이터 조회"
+                  }
+                />
               ))}
           </div>
           {job.error && <p role="alert">{job.error.message}</p>}

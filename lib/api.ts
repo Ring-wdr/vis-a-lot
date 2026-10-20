@@ -51,10 +51,23 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  job: (jobId: string, page: number, pageSize: number) =>
+  /** long polling. since 이후 변화가 생기거나 페이지가 모두 끝나면 응답이 온다. */
+  job: (
+    jobId: string,
+    page: number,
+    pageSize: number,
+    since: number,
+    signal?: AbortSignal,
+  ) =>
     request<JobStateResponse>(
-      `/api/jobs/${jobId}?page=${page}&pageSize=${pageSize}`,
+      `/api/jobs/${jobId}?page=${page}&pageSize=${pageSize}&since=${since}`,
+      { signal },
     ),
+
+  cancelJob: (jobId: string) =>
+    fetch(`/api/jobs/${jobId}/cancel`, { method: "POST" }).then((res) => {
+      if (!res.ok) throw new ApiRequestError(res.status, `HTTP ${res.status}`);
+    }),
 
   columns: (rows: RowSize) =>
     request<ColumnsResponse>(

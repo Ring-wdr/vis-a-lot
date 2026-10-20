@@ -1,12 +1,10 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
 import { DatasetPanel } from "@/components/DatasetPanel";
-import { api } from "@/lib/api";
-import { itemSizeFor } from "@/lib/grid-layout";
 import { useWorkspace } from "@/lib/workspace-store";
 import { CHART_TYPES, type ChartType } from "@/server/api/types";
 import { COLUMNS, type ColumnName } from "@/server/data/schema";
+import { DrawButton } from "./DrawButton";
 import styles from "./Workspace.module.css";
 
 const CHART_LABELS: Record<ChartType, string> = {
@@ -56,19 +54,6 @@ function ChartIcon({ type }: { type: ChartType }) {
 export function ControlPanel() {
   const draft = useWorkspace((s) => s.draft);
   const updateDraft = useWorkspace((s) => s.updateDraft);
-  const gridArea = useWorkspace((s) => s.gridArea);
-  const setCurrent = useWorkspace((s) => s.setCurrent);
-
-  const draw = useMutation({
-    mutationFn: () => {
-      if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
-      return api.createChart({
-        spec: draft,
-        itemSize: itemSizeFor(gridArea, draft.grid),
-      });
-    },
-    onSuccess: (res, _vars) => setCurrent({ ...res, spec: draft }),
-  });
 
   return (
     <div className={styles.controls}>
@@ -159,19 +144,7 @@ export function ControlPanel() {
         공통 속성
       </button>
 
-      <button
-        type="button"
-        className={styles.drawButton}
-        disabled={draw.isPending || !gridArea}
-        onClick={() => draw.mutate()}
-      >
-        draw
-      </button>
-      {draw.error && (
-        <p role="alert" className={styles.error}>
-          {draw.error.message}
-        </p>
-      )}
+      <DrawButton />
     </div>
   );
 }
