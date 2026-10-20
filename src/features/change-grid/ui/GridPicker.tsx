@@ -36,6 +36,7 @@ export function GridPicker() {
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
+  const notify = useWorkspace((s) => s.notify);
   const [hover, setHover] = useState<Grid>();
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
@@ -57,7 +58,7 @@ export function GridPicker() {
       );
     },
     onError: (err) => {
-      showAlert(err.message);
+      notify(err.message);
       if (current) updateDraft({ grid: current.spec.grid });
     },
   });

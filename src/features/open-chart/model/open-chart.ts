@@ -6,7 +6,6 @@ import { useWorkspaceStore } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemRestore } from "@/shared/api/types";
-import { showAlert } from "@/shared/ui/AlertDialog";
 
 export type OpenChartInput = {
   spec: ChartSpec;
@@ -53,6 +52,7 @@ export function useOpenChart() {
       ...input
     }: OpenChartInput & { store?: WorkspaceStore }) =>
       openChartIn(store, input, scoped.getState().gridArea),
-    onError: (err) => showAlert(err.message),
+    // 연 탭에 알린다. 그 탭을 보고 있지 않으면 돌아왔을 때 뜬다.
+    onError: (err, { store = scoped }) => store.getState().notify(err.message),
   });
 }

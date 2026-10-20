@@ -11,7 +11,6 @@ import {
   useJobProgress,
 } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
-import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 
 type ButtonState = "draw" | "pending" | "cancel";
@@ -24,6 +23,7 @@ export function DrawButton() {
   const gridArea = useWorkspace((s) => s.gridArea);
   const current = useWorkspace((s) => s.current);
   const setCurrent = useWorkspace((s) => s.setCurrent);
+  const notify = useWorkspace((s) => s.notify);
   const job = useJobProgress(current?.jobId);
   const cancel = useCancelJob();
   const dataset = useDatasetStatus(draft.rows);
@@ -44,7 +44,7 @@ export function DrawButton() {
           draft.filters,
         );
         if (count > limit) {
-          showAlert(
+          notify(
             `split 조합이 ${count.toLocaleString()}개입니다. 최대 ${limit.toLocaleString()}개까지 그릴 수 있습니다.`,
           );
           return undefined;

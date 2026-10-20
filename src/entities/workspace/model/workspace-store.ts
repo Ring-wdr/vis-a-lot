@@ -33,6 +33,8 @@ export type WorkspaceState = {
   itemJobs: Record<string, string>;
   /** 이 세션에서 추가한 도형 수. undo는 이 범위 안에서만 된다. */
   undoCounts: Record<string, number>;
+  /** 이 탭에서 난 오류 중 아직 보여주지 않은 것. 다른 탭을 보는 동안 쌓였다가 돌아오면 뜬다. */
+  notices: string[];
   updateDraft: (patch: Partial<ChartSpec>) => void;
   setDraft: (spec: ChartSpec) => void;
   setCurrent: (chart: DrawnChart) => void;
@@ -43,6 +45,7 @@ export type WorkspaceState = {
   setGridArea: (size: Size) => void;
   setItemJob: (key: string, jobId: string | undefined) => void;
   changeUndo: (key: string, delta: number | "reset") => void;
+  notify: (message: string) => void;
 };
 
 export const DEFAULT_SPEC: ChartSpec = {
@@ -74,6 +77,7 @@ export function createWorkspaceStore({
     mode: "normal",
     itemJobs: {},
     undoCounts: {},
+    notices: [],
     updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
     setDraft: (draft) => set({ draft }),
     setCurrent: (current) =>
@@ -109,6 +113,7 @@ export function createWorkspaceStore({
               : Math.max(0, (s.undoCounts[key] ?? 0) + delta),
         },
       })),
+    notify: (message) => set((s) => ({ notices: [...s.notices, message] })),
   }));
 }
 

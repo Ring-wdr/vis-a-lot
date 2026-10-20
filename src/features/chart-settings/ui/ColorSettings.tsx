@@ -7,7 +7,6 @@ import { useDatasetStatus, useLegendValues } from "@/shared/api/queries";
 import type { CommonProps } from "@/shared/api/types";
 import { columnLabel } from "@/shared/lib/format";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
-import { showAlert } from "@/shared/ui/AlertDialog";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import styles from "@/shared/ui/workspace.module.css";
@@ -23,6 +22,7 @@ export function ColorSettings() {
   const current = useWorkspace((s) => s.current);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
+  const notify = useWorkspace((s) => s.notify);
   const readOnly = useWorkspace((s) => s.readOnly);
   const dataset = useDatasetStatus(draft.rows);
   const legendValues = useLegendValues(
@@ -44,7 +44,7 @@ export function ColorSettings() {
     onSuccess: ({ jobId }, common) => {
       if (current) replaceJob(jobId, { ...current.spec, common });
     },
-    onError: (err) => showAlert(err.message),
+    onError: (err) => notify(err.message),
   });
 
   const change = (common: CommonProps) => {

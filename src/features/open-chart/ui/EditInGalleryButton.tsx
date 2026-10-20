@@ -5,7 +5,6 @@ import { restoreOf } from "@/entities/chart/lib/share";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
-import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import { useOpenChart } from "../model/open-chart";
 
@@ -16,6 +15,7 @@ import { useOpenChart } from "../model/open-chart";
 export function EditInGalleryButton() {
   const historyId = useWorkspace((s) => s.current?.historyId);
   const openGallery = useTabs((s) => s.openGallery);
+  const notify = useWorkspace((s) => s.notify);
   const open = useOpenChart();
   const load = useMutation({
     mutationFn: (id: string) => api.historyDetail(id),
@@ -28,7 +28,7 @@ export function EditInGalleryButton() {
         historyId: detail.id,
       });
     },
-    onError: (err) => showAlert(err.message),
+    onError: (err) => notify(err.message),
   });
 
   return (
