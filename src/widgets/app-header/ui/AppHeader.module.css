@@ -1,0 +1,35 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: var(--ws-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background: var(--ws-panel);
+}
+
+.navButton[aria-selected="true"] {
+  border-color: var(--ws-border);
+  background: var(--ws-elevated);
+  color: var(--ws-text);
+  font-weight: 600;
+}

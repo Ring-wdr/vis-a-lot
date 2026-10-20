@@ -27,6 +27,7 @@ import { putPng } from "../png-store";
 import { defaultLegendColor } from "../render/theme";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
+import { dataService } from "../services/chart/clients/data-service";
 
 type Job = {
   id: string;
@@ -174,7 +175,6 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
 }
 
 async function run(job: Job) {
-  const { db } = getRuntime();
   const { chart } = job;
   const { spec } = chart;
   const { signal } = job.abort;
@@ -182,10 +182,10 @@ async function run(job: Job) {
     if (signal.aborted) throw new CancelledError();
   };
 
-  // ── init: 데이터가 없으면 생성이 끝날 때까지 기다린다 ──────────
+  // ── init: 데이터가 없으면 data 서비스에 적재를 요청하고 끝날 때까지 기다린다 ──
   for (;;) {
     throwIfCancelled();
-    const status = await db.call("ensureDataset", { rows: spec.rows });
+    const status = await dataService.ensureDataset(spec.rows);
     job.dataset = { done: status.done, total: status.total };
     touch(job);
     if (status.state === "ready") break;
@@ -198,11 +198,7 @@ async function run(job: Job) {
   job.phase = "query";
   touch(job);
   // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
-  const split = await db.call("splitCount", {
-    rows: spec.rows,
-    cols: spec.splitBy,
-    limit: MAX_SPLIT_ITEMS,
-  });
+  const split = await dataService.splitCount(spec.rows, spec.splitBy);
   if (split.count > MAX_SPLIT_ITEMS) {
     throw new JobError(
       `split 조합이 ${split.count.toLocaleString()}개로 최대 ${MAX_SPLIT_ITEMS.toLocaleString()}개를 넘습니다.`,

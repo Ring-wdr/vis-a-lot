@@ -5,7 +5,7 @@ export function startMockServer() {
   started ??= (async () => {
     const [{ setupWorker }, { handlers }] = await Promise.all([
       import("msw/browser"),
-      import("./api/handlers"),
+      import("./gateway"),
     ]);
     await setupWorker(...handlers).start({
       onUnhandledFrame: "bypass",

@@ -42,7 +42,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 
 | 영역 | 결정 | 이유 |
 |---|---|---|
-| mocking server | MSW 2, REST | 화면에서는 실서버에 `fetch`하는 것과 똑같다 |
+| mocking server | MSW, REST | 화면에서는 실서버에 `fetch`하는 것과 똑같다. MSW는 gateway에 요청을 넘기고, 서비스는 Hono 앱이다 (6장) |
 | DB | PGlite 1개를 전용 DB Worker에서 실행, `idb://`로 IndexedDB에 저장 | PGlite는 연결을 하나만 받는다. 쿼리는 DB Worker에서 순차 처리하고, 무거운 렌더만 병렬로 돌린다 |
 | 렌더 | Render Worker N개 (`hardwareConcurrency - 1`, 최대 4) | 렌더가 쿼리보다 무겁다 |
 | 차트 그리기 | 차트 라이브러리 없이 `d3-scale` + Canvas 2D로 직접 그리기 | metadata, 도형 좌표 변환, 픽셀 기준 점 줄이기가 같은 축 계산을 공유해야 한다 |
@@ -81,7 +81,8 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 | `load_pct` | 숫자 | — | 설비 부하율 |
 
 ### 3.3 행 수 전환
-- 행 수(10만 / 50만 / 100만)는 고를 때 그 규모의 데이터를 생성한다. 한 번 만든 데이터는 IndexedDB에 남는다.
+- 행 수(10만 / 50만 / 100만)는 상단 `data` 팝업에서 등록한다(mock: 업로드 대신 서버가 시드로 생성). 한 번 만든 데이터는 IndexedDB에 남는다.
+- 왼쪽 패널의 데이터 select에서는 등록한 규모만 고를 수 있다.
 - history에는 몇 건짜리 데이터였는지 함께 저장한다. 불러올 때 그 데이터가 없으면 생성한다.
 - 데이터가 아직 없어도 draw 버튼은 누를 수 있다. 이때 job은 `init` 상태(spinner만 표시)로 기다리고, 데이터 생성이 끝난 뒤부터 `progress`로 넘어간다.
 
@@ -93,10 +94,11 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [일반] [확대] [사각형] [선] [자유곡선] [텍스트]   ← 모드 바       │
+│ [data] [gallery] [history]   [↖][🔍][□][/][✎][T] ← 모드 바   │
 ├──────────────────┬───────────────────────────────────────────┤
-│ 차트 종류 (아이콘)  │  ┌────────┐ ┌────────┐ ┌────────┐         │
-│ grid 1x1 ~ 10x10 │  │toolbar │ │toolbar │ │toolbar │         │
+│ 데이터    [▼]     │  ┌────────┐ ┌────────┐ ┌────────┐         │
+│ 차트 종류 (아이콘)  │  │toolbar │ │toolbar │ │toolbar │         │
+│ grid [▦ 3 x 3]   │  │        │ │        │ │        │         │
 │ x        [▼]     │  │  PNG   │ │  PNG   │ │  PNG   │         │
 │ y        [▼]     │  └────────┘ └────────┘ └────────┘         │
 │ 통계 함수 [▼]      │                                           │
@@ -108,8 +110,13 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 └──────────────────┴───────────────────────────────────────────┘
 ```
 
-- **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트
-- **왼쪽 패널:** 차트 종류, grid 크기, x, y, 통계 함수(bar일 때만), split by, tooltip, 공통 속성(popover), draw 버튼
+- **상단 바:** `data`(데이터 등록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 모드 바, 링크 복사
+- **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트. 아이콘으로 표시하고 이름은 title로 보여준다
+- **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, 통계 함수(bar일 때만), split by, tooltip. 공통 속성(popover)과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
+- **선택 필드:** 단일 선택(데이터, x, y, legend, 통계 함수)과 다중 선택(split by, tooltip)은 같은 트리거·팝업 모양을 쓴다(Base UI Select / Combobox). 높이를 아끼려고 다중 선택은 고른 값을 한 줄에 순서대로 쉼표로 이어 쓰고 넘치면 말줄임, 오른쪽에 개수를 보여준다.
+- **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
+- **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 행 × 열을 고른다 (1..10 × 1..10, 직사각형 가능)
+- **팝업:** 모달 팝업(알림, data 등록)은 overlay-kit으로 띄워 본문 상태와 분리한다. 버튼에 붙는 popover는 네이티브 popover API를 쓴다
 - **item 툴바:** 축소, 확대 초기화, 도형 undo, 도형 전체 삭제, 개별 색상
 
 ### 4.2 차트 종류
@@ -223,32 +230,76 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 
 ---
 
-## 6. API (MSW, REST)
+## 6. API (MSA, REST, OAS)
 
-그리기를 요청하는 API는 모두 `{ jobId }`를 돌려준다.
+### 6.1 서비스 분리
+원본은 MSA였다. 같은 경계로 브라우저 안에서 서비스를 나눈다. MSW는 요청을 gateway에 넘기기만 하고, gateway가 경로 prefix로 서비스를 고른다.
 
-| 용도 | 요청 | 응답 / 설명 |
-|---|---|---|
-| 데이터셋 상태 | `GET /datasets/:id` | 행 수별 상태(`missing` / `generating` / `ready`), 단계(`copy` / `analyze`), 진행률, 생성 시간 |
-| 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
-| 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
-| split 개수 확인 | `GET /datasets/:id/split-count?cols=a,b,c` | 조합 수 (30,000개 초과 검사) |
-| 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`<br>응답: `chartId`, `jobId`, `historyId` |
-| 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }` |
-| 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
-| 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
-| 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |
-| PNG | `GET /charts/:chartId/items/:key/png?v=` | `image/png` |
-| metadata | `GET /charts/:chartId/items/:key/meta?v=` | 4.4 참고 |
-| 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
-| 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
-| 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
-| 개별 색상 | `PATCH .../items/:key/props` | `{ color }` 또는 `{ legendColor: { value, color } }`, `null`이면 공통 색으로 |
-| legend 값 목록 | `GET /datasets/:id/legend-values?rows=&column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
-| 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
-| grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
-| resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
-| history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
+| 서비스 | prefix | 맡는 일 | 저장소 |
+|---|---|---|---|
+| auth | `/api/auth` | 로그인, 토큰 발급·refresh(rotation)·폐기, 서비스 토큰, JWKS | 서명 키·refresh 세션 (IndexedDB) |
+| data | `/api/data` | 데이터 적재(등록), 데이터셋 메타 조회 (상태, 컬럼, split 개수, legend 값) | PGlite (쓰기) |
+| chart | `/api/chart` | 렌더 job, item 조작, 툴팁, PNG, history | PGlite (조회·history), Cache API (PNG) |
+
+- chart 서비스는 데이터가 없을 때 data 서비스에 HTTP로 적재를 요청한다. 인증은 auth 서비스에서 받은 **서비스 토큰**(client credentials)으로 한다.
+- 대용량 조회(차트 데이터, 툴팁 행 값)는 chart 서비스가 DB를 직접 읽는다 (읽기 전용 접근. 원본의 렌더 서버도 DB를 직접 조회했다).
+
+### 6.2 인증
+- 로그인하면 access token(ES256 JWT, `typ: at+jwt`, 5분)과 refresh token(7일, 세션 id를 담은 JWT)을 받는다.
+- refresh token은 한 번 쓰면 폐기하고 새로 준다(rotation). 로그아웃하면 세션을 지운다.
+- data·chart 서비스는 auth 서비스의 공개 키(JWKS)로 토큰을 검증하고 scope(`chart:read`, `chart:write`, `data:read`, `data:write`)를 확인한다. 서비스끼리 비밀 키를 나눠 갖지 않는다.
+- 화면은 access token을 메모리에, refresh token을 localStorage에 둔다(브라우저 안 mock 서버라 httpOnly 쿠키를 쓸 수 없다). 만료가 가까우면 미리 refresh하고, 401이 오면 refresh 후 한 번 다시 보낸다. 동시에 여러 요청이 refresh하려 해도 한 번만 부른다.
+- `<img src>`는 Authorization 헤더를 보낼 수 없어 PNG만 인증 없이 연다. chartId가 추측할 수 없는 UUID라 링크를 아는 사람만 본다(presigned URL과 같은 성격).
+- 데모 계정: `demo` / `demo1234`.
+
+### 6.3 OAS (code-first)
+원본은 Spring 서버가 swagger를 내고 프런트가 OAS generator로 타입을 받았다. 같은 흐름을 따른다.
+
+```
+서비스 routes (zod 스키마 + createRoute)
+  ├─▶ handler 요청 검증 (실패하면 400 { error })
+  └─▶ pnpm gen:api ─▶ public/openapi/<서비스>.json (OpenAPI 3.1)
+                         └─▶ openapi-typescript ─▶ src/shared/api/generated/*.ts (화면)
+                                                └─▶ server/services/chart/generated/*.ts (chart → auth·data)
+```
+
+- handler의 반환값은 응답 스키마로, 검증된 요청 값은 서버 내부 도메인 타입으로 컴파일 타임에 맞춰진다. 스키마와 구현이 어긋나면 빌드가 깨진다.
+- 화면은 `@server/*`를 import할 수 없다(Biome `noRestrictedImports`). API 타입은 생성 타입에서만 가져오고, 화면 전용 값(컬럼 이름표 등)은 생성된 union을 키로 하는 Record로 두어 서버가 값을 늘리면 컴파일 에러가 난다.
+- `pnpm gen:api:check`로 생성물이 서비스 코드와 맞는지 확인한다.
+- 그리기를 요청하는 API는 모두 `{ jobId }`를 돌려준다.
+
+### 6.4 엔드포인트
+경로는 서비스 prefix 뒤에 붙는다. 요청·응답의 정확한 형태는 `public/openapi/*.json`이 기준이다.
+
+| 서비스 | 용도 | 요청 | 응답 / 설명 |
+|---|---|---|---|
+| auth | 로그인 | `POST /login` | `{ username, password }` → access / refresh token, 사용자 |
+| auth | refresh | `POST /refresh` | `{ refreshToken }` → 새 토큰 (쓴 refresh token은 폐기) |
+| auth | 로그아웃 | `POST /logout` | refresh 세션 폐기 |
+| auth | 현재 사용자 | `GET /me` | Bearer 필요 |
+| auth | 서비스 토큰 | `POST /token` | `{ grantType: 'client_credentials', clientId, clientSecret }` |
+| auth | 공개 키 | `GET /.well-known/jwks.json` | JWK Set |
+| data | 데이터셋 상태 | `GET /datasets/:id` | 행 수별 상태(`missing` / `generating` / `ready`), 단계(`copy` / `analyze`), 진행률, 생성 시간 |
+| data | 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
+| data | 컬럼 목록 | `GET /datasets/:id/columns?rows=` | 이름, 타입, 고유값 수. 준비 전이면 409 |
+| data | split 개수 확인 | `GET /datasets/:id/split-count?cols=a,b,c` | 조합 수 (30,000개 초과 검사) |
+| chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |
+| chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }` |
+| chart | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
+| chart | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
+| chart | 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |
+| chart | PNG | `GET /charts/:chartId/items/:key/png?v=` | `image/png` |
+| chart | metadata | `GET /charts/:chartId/items/:key/meta?v=` | 4.4 참고 |
+| chart | 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
+| chart | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
+| chart | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
+| chart | 개별 색상 | `PATCH .../items/:key/props` | `{ color }` 또는 `{ legendColor: { value, color } }`, `null`이면 공통 색으로 |
+| data | legend 값 목록 | `GET /datasets/:id/legend-values?rows=&column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
+| chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
+| chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
+| chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
+| chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
+| data / chart | 상태 | `GET /health` | 인증 없음 |
 
 ---
 
@@ -256,6 +307,9 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - 브라우저(IndexedDB)에만 보관한다. 서버 비용은 0원이다.
 - draw 한 번에 한 건이 생긴다. 그 뒤의 확대, 도형, 개별 색상, grid 변경은 같은 건에 덧붙인다. resize는 기록하지 않는다.
 - 저장 내용: 행 수, 생성기 버전, 차트 설정, 공통/개별 속성, 도형, 확대 상태, item별 최종 상태(`cancelled` 포함), 썸네일.
+- `history` 화면: 왼쪽 목록에서 고르면 그 차트를 다시 그려 보여준다. 설정은 보기 전용(select disabled)이고 모드는 일반(툴팁)만, item 툴바는 숨긴다. 다시 보기는 history에 기록하지 않는다.
+- `gallery에서 편집`을 누르면 그 차트를 gallery로 가져가고, 이후 변경은 그 history 건에 이어서 기록한다.
+- gallery와 history는 작업 상태를 따로 들고 있어 tab을 오가도 각자 보던 차트가 남는다.
 - 공유는 URL에 설정을 담아서 한다. 시드가 고정이라 같은 URL이면 같은 차트가 다시 만들어진다.
 
 ---

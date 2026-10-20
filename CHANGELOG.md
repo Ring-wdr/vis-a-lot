@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.2.0] - 2026-10-20
+
+화면 구조를 개편하고, 원본처럼 서버를 MSA(auth · data · chart)로 나눠 code-first OAS로 화면 API 타입을 생성한다.
+
+### 구조
+- FSD를 참고한 폴더 구조(`src/{application,views,widgets,features,entities,shared}`). `app/`에는 Next.js 라우트만 둔다 (#16)
+- 브라우저 안 서버를 auth(`/api/auth`) · data(`/api/data`) · chart(`/api/chart`) 서비스로 분리하고, MSW는 Hono gateway에 요청을 넘긴다. chart → data 적재 요청은 서비스 토큰으로 한다 (#17)
+- code-first OAS: 서비스 zod 스키마가 요청 검증과 OpenAPI 3.1 문서(`public/openapi/*.json`)를 만들고, `pnpm gen:api`로 TS 타입을 생성한다. 화면은 openapi-fetch client로만 API를 부르고 `@server/*` import는 lint로 막는다 (#17)
+
+### 인증
+- 로그인 화면, ES256 JWT access token(5분) + refresh token rotation, 로그아웃 (#17)
+- data · chart 서비스는 JWKS로 토큰을 검증하고 scope를 확인한다. 화면은 만료 전 미리 refresh하고, 401이면 refresh 후 한 번 다시 보낸다 (#17)
+
+### 화면
+- 상단 `[data] [gallery] [history]`. data는 데이터 등록 팝업(mock 생성), history는 그린 차트를 보기 전용으로 다시 보고 'gallery에서 편집'으로 가져간다 (#16)
+- 모달 팝업은 overlay-kit으로 본문 상태와 분리 (#16)
+- 모드 바와 item 툴바를 아이콘(lucide)으로 (#16)
+- grid 크기를 Excel 표 삽입식 popover에서 행 × 열로 고른다. 직사각형 grid 지원 (#16, #18)
+- 공통 속성 · draw 버튼을 왼쪽 패널 하단에 고정 (#16)
+- split by / tooltip: 순서 다중 선택(Base UI Combobox + 가상 스크롤), 누른 채 끌면 지나간 순서대로 선택. React Aria와 같은 시나리오로 비교한 뒤 채택(`docs/select-library-comparison.md`). 고른 값은 한 줄에 순서대로 쉼표로 이어 보여준다 (#16, #18)
+- 단일 선택(데이터, x, y, legend, 통계 함수)을 다중 선택과 같은 모양으로 통일 (#18)
+- 다크 모드: 화면 색을 모두 토큰으로 바꾸고 다크 값을 둔다. 차트 PNG 위 표시는 밝은 PNG에 맞춰 고정 색을 쓴다 (#17)
+
+### 수정
+- draw가 데이터 적재를 대신 시작해도 왼쪽 데이터 select에 '미등록'이 남던 문제 (#17)
+- jose를 출시 후 최소 경과 기간 정책 예외 없이 쓰도록 6.2.12로 고정 (#17)
+
+### 알려진 제약
+- refresh token은 localStorage에 둔다. 브라우저 안 mock 서버라 httpOnly 쿠키를 쓸 수 없다.
+- `<img src>`는 인증 헤더를 보낼 수 없어 PNG는 추측할 수 없는 chartId URL로 인증 없이 연다.
+- 공통 속성 popover가 하단 고정 버튼 아래로 열려 화면 밖으로 잘린다.
+- 다크 모드에서도 서버가 그린 차트 PNG는 밝은 테마다.
+
 ## [0.1.0] - 2026-10-20
 
 서버사이드 PNG 차트 렌더링 B2B 시각화 프로토타입의 첫 릴리스. 서버를 브라우저 안(MSW + PGlite + Web Worker)에서 돌려 유지비 없이 정적 호스팅으로 배포할 수 있다.

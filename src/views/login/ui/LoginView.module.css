@@ -1,0 +1,27 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 16px;
+  background: var(--ws-surface);
+  color: var(--ws-text);
+}
+
+.card {
+  width: min(360px, 100%);
+  padding: 28px 24px;
+  border: 1px solid var(--ws-border);
+  border-radius: 10px;
+  background: var(--ws-elevated);
+  box-shadow: 0 8px 24px rgb(var(--ws-shadow-rgb) / 6%);
+}
+
+.brand {
+  font-size: 20px;
+}
+
+.sub {
+  margin: 4px 0 20px;
+  font-size: 13px;
+  color: var(--ws-text-muted);
+}

@@ -104,5 +104,5 @@ export function getCachedChartData(chartId: string) {
 }
 
 export function pngUrl(chartId: string, item: ChartItem) {
-  return `/api/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(item.key)}/png?v=${item.version}`;
+  return `/api/chart/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(item.key)}/png?v=${item.version}`;
 }
