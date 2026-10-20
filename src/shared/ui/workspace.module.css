@@ -208,8 +208,12 @@
   padding: 16px;
 }
 
+/* grid와 하단 바를 세로로 쌓는다. 하단 바 높이(32px + 위 여백 12px)는
+   grid-layout.ts의 GRID_FOOTER_HEIGHT와 같아야 PNG 크기 계산이 맞는다. */
 .gridArea {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
 }
@@ -219,8 +223,142 @@
   font-size: 14px;
 }
 
+.gridRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* gap은 grid-layout.ts의 GRID_GAP과 같아야 PNG 크기 계산이 맞는다. */
 .grid {
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: grid;
+  gap: 12px;
+}
+
+.grid[data-cols="1"] {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid[data-rows="1"] {
+  grid-template-rows: repeat(1, minmax(0, 1fr));
+}
+
+.grid[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid[data-rows="2"] {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.grid[data-cols="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid[data-rows="3"] {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.grid[data-cols="4"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid[data-rows="4"] {
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.grid[data-cols="5"] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.grid[data-rows="5"] {
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+}
+
+.grid[data-cols="6"] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.grid[data-rows="6"] {
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+}
+
+.grid[data-cols="7"] {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.grid[data-rows="7"] {
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+}
+
+.grid[data-cols="8"] {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.grid[data-rows="8"] {
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+}
+
+.grid[data-cols="9"] {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.grid[data-rows="9"] {
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+}
+
+.grid[data-cols="10"] {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.grid[data-rows="10"] {
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+}
+
+/* 스크롤 중 보이는 페이지와 조회한 페이지가 다를 때 grid를 덮는 안내 */
+.pageMoving {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--ws-overlay);
+  color: var(--ws-text-secondary);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* grid 오른쪽 페이지 스크롤바. macOS의 사라지는 스크롤바 대신 항상 보이게 그린다. */
+.pageScroller {
+  flex: none;
+  width: 12px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  border-radius: 6px;
+  background: var(--ws-panel);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ws-text-muted) transparent;
+  outline: none;
+}
+
+.pageScroller:focus-visible {
+  box-shadow: 0 0 0 2px var(--ws-accent);
+}
+
+.pageScroller::-webkit-scrollbar {
+  width: 12px;
+}
+
+.pageScroller::-webkit-scrollbar-thumb {
+  min-height: 24px;
+  border: 3px solid var(--ws-panel);
+  border-radius: 6px;
+  background: var(--ws-text-muted);
 }
 
 .item {
