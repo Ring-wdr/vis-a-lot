@@ -45,6 +45,7 @@ export const DEFAULT_SPEC: ChartSpec = {
   chartType: "scatter",
   x: "ts",
   y: "value",
+  agg: "avg",
   splitBy: [],
   splitSeparator: "-",
   tooltip: [],

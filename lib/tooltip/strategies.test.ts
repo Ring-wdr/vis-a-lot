@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ScatterMeta } from "@/server/api/types";
 import { PointIndex } from "./point-index";
-import { invertAxis, scatterStrategy } from "./strategies";
+import {
+  barStrategy,
+  boxplotStrategy,
+  invertAxis,
+  scatterStrategy,
+} from "./strategies";
 
 const meta: ScatterMeta = {
   chartType: "scatter",
@@ -63,5 +68,53 @@ describe("scatterStrategy", () => {
     const hit = scatterStrategy.hitTest(meta, prepared, 90, 100);
     expect(hit?.rows).toHaveLength(2);
     expect(hit?.rowId).toBeUndefined();
+  });
+});
+
+describe("barStrategy / boxplotStrategy", () => {
+  const base = {
+    plot: { left: 0, top: 0, width: 300, height: 100 },
+    x: { kind: "number" as const, domain: [-0.5, 2.5] as [number, number] },
+    y: { kind: "number" as const, domain: [0, 10] as [number, number] },
+    categories: ["A", "B", "C"],
+    markWidth: 70,
+  };
+
+  it("막대 너비 안에서만 범주와 집계값을 보여준다", () => {
+    const meta = {
+      ...base,
+      chartType: "bar" as const,
+      agg: "avg" as const,
+      bars: [2, 5, 8],
+    };
+    const hit = barStrategy.hitTest(meta, undefined, 150, 50);
+    expect(hit?.rows).toEqual([
+      { label: "범주", value: "B" },
+      { label: "평균", value: "5", emphasis: true },
+    ]);
+    expect(hit?.marker).toEqual({ px: 150, py: 50 });
+    // 막대 사이 빈 곳
+    expect(barStrategy.hitTest(meta, undefined, 100, 50)).toBeNull();
+  });
+
+  it("boxplot은 사분위수와 이상치 개수를 보여준다", () => {
+    const box = {
+      n: 10,
+      mean: 5,
+      q1: 3,
+      median: 5,
+      q3: 7,
+      lo: 1,
+      hi: 9,
+      outlierCount: 2,
+    };
+    const meta = {
+      ...base,
+      chartType: "boxplot" as const,
+      boxes: [box, box, box],
+    };
+    const hit = boxplotStrategy.hitTest(meta, undefined, 50, 50);
+    expect(hit?.rows.find((r) => r.label === "중앙값")?.value).toBe("5");
+    expect(hit?.rows.find((r) => r.label === "이상치")?.value).toBe("2개");
   });
 });
