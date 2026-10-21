@@ -1,51 +1,49 @@
 "use client";
 
 import { useEffect } from "react";
-import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
+import { COLUMN_TYPE_LABELS } from "@/entities/dataset/lib/labels";
 import {
   useDatasetSchema,
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
-import type { RowSize } from "@/shared/api/types";
-import { ROW_SIZES } from "@/shared/config/dataset";
+import type { DatasetId } from "@/shared/api/types";
 import { Select } from "@/shared/ui/Select";
 import styles from "./DatasetPanel.module.css";
 
+/** 샘플 데이터 규모 고르기 (구조 검증 페이지). 고르면 없을 때 바로 생성을 시작한다. */
 export function DatasetPanel({
-  rows,
-  onRowsChange,
+  dataset,
+  onChange,
   showColumns = false,
 }: {
-  rows: RowSize;
-  onRowsChange: (rows: RowSize) => void;
+  dataset: DatasetId;
+  onChange: (dataset: DatasetId) => void;
   /** 컬럼 타입과 고유값 표를 함께 보여준다. */
   showColumns?: boolean;
 }) {
   const datasets = useDatasets();
   const generate = useGenerateDataset();
-  const status = datasets.data?.datasets.find((d) => d.rows === rows);
-  const columns = useDatasetSchema(rows);
+  const samples = datasets.data?.datasets.filter((d) => d.kind === "sample");
+  const status = samples?.find((d) => d.id === dataset);
+  const columns = useDatasetSchema(dataset);
   const { mutate } = generate;
 
-  // 행 수를 고르면 그 규모의 데이터가 없을 때 바로 생성을 시작한다.
+  // 규모를 고르면 그 데이터가 없을 때 바로 생성을 시작한다.
   useEffect(() => {
-    if (status?.state === "missing") mutate(rows);
-  }, [status?.state, rows, mutate]);
+    if (status?.state === "missing") mutate(dataset);
+  }, [status?.state, dataset, mutate]);
 
   return (
     <section className={styles.panel}>
       <Select
         label="데이터 규모"
-        value={rows}
-        options={ROW_SIZES.map((size) => {
-          const s = datasets.data?.datasets.find((d) => d.rows === size);
-          return {
-            value: size,
-            label: `${ROW_LABELS[size]}${s?.state === "ready" ? " · 준비됨" : ""}`,
-          };
-        })}
-        onChange={onRowsChange}
+        value={dataset}
+        options={(samples ?? []).map((s) => ({
+          value: s.id,
+          label: `${s.name}${s.state === "ready" ? " · 준비됨" : ""}`,
+        }))}
+        onChange={onChange}
       />
 
       {status?.state === "generating" && (

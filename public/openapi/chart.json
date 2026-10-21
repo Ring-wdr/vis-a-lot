@@ -385,8 +385,8 @@
       "ChartSpec": {
         "type": "object",
         "properties": {
-          "rows": {
-            "$ref": "#/components/schemas/RowSize"
+          "dataset": {
+            "$ref": "#/components/schemas/DatasetId"
           },
           "chartType": {
             "$ref": "#/components/schemas/ChartType"
@@ -441,7 +441,7 @@
           }
         },
         "required": [
-          "rows",
+          "dataset",
           "chartType",
           "x",
           "y",
@@ -454,21 +454,10 @@
           "common"
         ]
       },
-      "RowSize": {
-        "anyOf": [
-          {
-            "type": "number",
-            "enum": [100000]
-          },
-          {
-            "type": "number",
-            "enum": [500000]
-          },
-          {
-            "type": "number",
-            "enum": [1000000]
-          }
-        ]
+      "DatasetId": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]{1,40}$",
+        "example": "iot-100k"
       },
       "ChartType": {
         "type": "string",
@@ -744,8 +733,8 @@
           "updatedAt": {
             "type": "number"
           },
-          "rows": {
-            "$ref": "#/components/schemas/RowSize"
+          "dataset": {
+            "$ref": "#/components/schemas/DatasetId"
           },
           "generatorVersion": {
             "type": "number"
@@ -816,7 +805,7 @@
           "id",
           "createdAt",
           "updatedAt",
-          "rows",
+          "dataset",
           "generatorVersion",
           "spec",
           "status",

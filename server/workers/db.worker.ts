@@ -6,8 +6,8 @@ import {
   queryRowValues,
 } from "../data/chart-data";
 import { queryColumnSummary } from "../data/column-summary";
-import { DatasetManager } from "../data/datasets";
-import { type RowSize, readingsTable } from "../data/schema";
+import { CsvRejectError } from "../data/csv-import";
+import { DatasetManager, type UploadResult } from "../data/datasets";
 import {
   getHistory,
   listHistory,
@@ -45,12 +45,25 @@ const ready = PGlite.create("idb://vis-a-lot", {
   return { db, datasets, bootMs: performance.now() - started };
 });
 
-/** 행 수 → 테이블과 스키마. 등록하지 않은 데이터셋이면 던진다. */
-async function datasetOf(rows: RowSize) {
+/** 데이터셋 id → 테이블과 스키마. 등록하지 않은 데이터셋이면 던진다. */
+async function datasetOf(id: string) {
   const { db, datasets } = await ready;
-  const schema = await datasets.schema(rows);
-  if (!schema) throw new Error("dataset is not registered");
-  return { db, schema, table: readingsTable(rows) };
+  const schema = await datasets.schema(id);
+  const table = await datasets.table(id);
+  if (!schema || !table) throw new Error("dataset is not registered");
+  return { db, schema, table };
+}
+
+/** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
+async function rejectable<T extends UploadResult | null>(
+  work: () => Promise<T>,
+): Promise<T | UploadResult> {
+  try {
+    return await work();
+  } catch (err) {
+    if (err instanceof CsvRejectError) return { ok: false, error: err.message };
+    throw err;
+  }
 }
 
 serveRpc<DbMethods>({
@@ -78,33 +91,59 @@ serveRpc<DbMethods>({
     return datasets.statuses();
   },
 
-  async ensureDataset({ rows }) {
+  async datasetStatus({ id }) {
     const { datasets } = await ready;
-    return datasets.ensure(rows);
+    return datasets.status(id);
   },
 
-  async datasetColumns({ rows }) {
+  async ensureDataset({ id }) {
     const { datasets } = await ready;
-    return datasets.columnInfo(rows);
+    return datasets.ensure(id);
   },
 
-  async datasetReady({ rows }) {
+  async uploadDataset({ name, fileName, bytes, options }) {
     const { datasets } = await ready;
-    return datasets.ready(rows);
+    return rejectable(() =>
+      datasets.upload({
+        name,
+        file: { name: fileName, bytes: new Uint8Array(bytes) },
+        options,
+      }),
+    );
   },
 
-  async splitCount({ rows, cols, limit, filters }) {
+  async editDataset({ id, ...patch }) {
     const { datasets } = await ready;
-    return datasets.splitCount(rows, cols, limit, filters);
+    return rejectable(() => datasets.edit(id, patch));
   },
 
-  async columnSummary({ rows, column }) {
-    const { db, schema, table } = await datasetOf(rows);
+  async removeDataset({ id }) {
+    const { datasets } = await ready;
+    return datasets.remove(id);
+  },
+
+  async datasetColumns({ dataset }) {
+    const { datasets } = await ready;
+    return datasets.columnInfo(dataset);
+  },
+
+  async datasetReady({ dataset }) {
+    const { datasets } = await ready;
+    return datasets.ready(dataset);
+  },
+
+  async splitCount({ dataset, cols, limit, filters }) {
+    const { datasets } = await ready;
+    return datasets.splitCount(dataset, cols, limit, filters);
+  },
+
+  async columnSummary({ dataset, column }) {
+    const { db, schema, table } = await datasetOf(dataset);
     return queryColumnSummary(db, table, schema, column);
   },
 
-  async chartData({ rows, ...params }) {
-    const { db, schema, table } = await datasetOf(rows);
+  async chartData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
     const data = await queryChartData(db, schema, { ...params, table });
     return transfer(data, [
       data.xs.buffer,
@@ -114,8 +153,8 @@ serveRpc<DbMethods>({
     ]);
   },
 
-  async legendValues({ rows, column }) {
-    const { db, schema, table } = await datasetOf(rows);
+  async legendValues({ dataset, column }) {
+    const { db, schema, table } = await datasetOf(dataset);
     return queryLegendValues(db, table, schema, column);
   },
 
@@ -135,16 +174,16 @@ serveRpc<DbMethods>({
     return getHistory(db, id);
   },
 
-  async categoryData({ rows, ...params }) {
-    const { db, schema, table } = await datasetOf(rows);
+  async categoryData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
     const input = { ...params, table };
     return params.chartType === "bar"
       ? queryBarData(db, schema, input)
       : queryBoxData(db, schema, input);
   },
 
-  async rowValues({ rows, rowId, columns }) {
-    const { db, schema, table } = await datasetOf(rows);
+  async rowValues({ dataset, rowId, columns }) {
+    const { db, schema, table } = await datasetOf(dataset);
     return queryRowValues(db, table, schema, rowId, columns);
   },
 });

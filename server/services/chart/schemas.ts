@@ -2,8 +2,8 @@ import { z } from "@hono/zod-openapi";
 import {
   AggFnSchema,
   ColumnNameSchema,
+  DatasetIdSchema,
   FiltersSchema,
-  RowSizeSchema,
 } from "../common/dataset";
 
 /**
@@ -54,7 +54,8 @@ export const GridSchema = z
 
 export const ChartSpecSchema = z
   .object({
-    rows: RowSizeSchema,
+    /** 데이터셋 id (샘플 iot-100k …, 업로드 up-…) */
+    dataset: DatasetIdSchema,
     chartType: ChartTypeSchema,
     x: ColumnNameSchema,
     y: ColumnNameSchema,
@@ -437,7 +438,7 @@ export const HistorySummarySchema = z
     id: z.string(),
     createdAt: z.number(),
     updatedAt: z.number(),
-    rows: RowSizeSchema,
+    dataset: DatasetIdSchema,
     generatorVersion: z.number(),
     spec: ChartSpecSchema,
     status: JobStatusSchema,

@@ -10,7 +10,7 @@ export function SplitSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
-  const columns = useColumns(draft.rows);
+  const columns = useColumns(draft.dataset);
   const names =
     draft.splitBy.length > 0
       ? draft.splitBy.map(columns.label)

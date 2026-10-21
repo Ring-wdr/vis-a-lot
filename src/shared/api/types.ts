@@ -16,10 +16,12 @@ export type User = Auth["User"];
 export type TokenResponse = Auth["TokenResponse"];
 
 // ── data ───────────────────────────────────────────────────────
-export type RowSize = Data["RowSize"];
+export type DatasetId = Data["DatasetId"];
 export type ColumnType = Data["ColumnType"];
 export type DatasetStatus = Data["DatasetStatus"];
 export type DatasetListResponse = Data["DatasetListResponse"];
+export type CsvOptions = Data["CsvOptions"];
+export type UploadInfo = Data["UploadInfo"];
 export type ColumnInfo = Data["ColumnInfo"];
 export type DatasetSchema = Data["DatasetSchema"];
 export type SplitCountResponse = Data["SplitCountResponse"];

@@ -64,7 +64,7 @@ export async function saveHistory(
     id: history.id,
     createdAt: history.createdAt,
     updatedAt: Date.now(),
-    rows: chart.spec.rows,
+    dataset: chart.spec.dataset,
     generatorVersion: GENERATOR_VERSION,
     spec: chart.spec,
     status,

@@ -74,9 +74,9 @@ export function ControlPanel() {
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const readOnly = useWorkspace((s) => s.readOnly);
   // 컬럼은 데이터마다 달라 고른 데이터셋의 스키마에서 후보를 고른다.
-  const schema = useDatasetSchema(draft.rows);
+  const schema = useDatasetSchema(draft.dataset);
   const columns = schema.data?.columns;
-  const schemaState = useSchemaState(draft.rows);
+  const schemaState = useSchemaState(draft.dataset);
   const noColumns =
     schemaState === "loading" ? (
       <LoadingText announce={false}>컬럼 불러오는 중</LoadingText>
@@ -98,8 +98,8 @@ export function ControlPanel() {
   return (
     <fieldset className={styles.controls} disabled={readOnly}>
       <DatasetSelect
-        rows={draft.rows}
-        onRowsChange={(rows) => updateDraft({ rows })}
+        dataset={draft.dataset}
+        onChange={(dataset) => updateDraft({ dataset })}
       />
 
       <fieldset className={styles.field}>

@@ -87,7 +87,7 @@ export function startJob(chart: ChartRecord): Job {
     chart,
     status: "init",
     phase: "dataset",
-    dataset: { done: 0, total: chart.spec.rows },
+    dataset: { done: 0, total: 0 },
     items: new Map(),
     order: [],
     version: 0,
@@ -226,10 +226,15 @@ async function run(job: Job) {
   // ── init: 데이터가 없으면 data 서비스에 적재를 요청하고 끝날 때까지 기다린다 ──
   for (;;) {
     throwIfCancelled();
-    const status = await dataService.ensureDataset(spec.rows);
+    const status = await dataService.ensureDataset(spec.dataset);
     job.dataset = { done: status.done, total: status.total };
     touch(job);
     if (status.state === "ready") break;
+    if (status.state === "failed" || status.state === "missing") {
+      throw new JobError(
+        status.error ?? `데이터셋 '${status.name}'이 준비되지 않았습니다.`,
+      );
+    }
     await sleep(DATASET_POLL_MS);
   }
 
@@ -238,7 +243,7 @@ async function run(job: Job) {
   job.status = "progress";
   job.phase = "query";
   touch(job);
-  const schema = await dataService.schema(spec.rows);
+  const schema = await dataService.schema(spec.dataset);
   const invalid = specError(spec, schema.columns);
   if (invalid) throw new JobError(invalid);
   chart.columns = schema.columns;
@@ -246,7 +251,7 @@ async function run(job: Job) {
   // ── 데이터 조회: split 조합이 곧 item 목록이다 ─────────────────
   // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
   const split = await dataService.splitCount(
-    spec.rows,
+    spec.dataset,
     spec.splitBy,
     spec.filters,
   );
@@ -307,7 +312,13 @@ function redrawJob(chart: ChartRecord, items: ChartItem[]): Job {
     chart,
     status: "progress",
     phase: "render",
-    dataset: { done: chart.spec.rows, total: chart.spec.rows },
+    // 다시 그리기는 데이터가 이미 준비된 뒤라 draw job의 적재 상태를 그대로 보여준다.
+    dataset: {
+      ...((chart.primaryJobId && jobs.get(chart.primaryJobId)?.dataset) || {
+        done: 1,
+        total: 1,
+      }),
+    },
     items: new Map(items.map((i) => [i.key, initialState(chart, i)])),
     order: items.map((i) => i.key),
     version: 0,
@@ -487,7 +498,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
       ? {
           kind: "scatter",
           ...(await db.call("chartData", {
-            rows: spec.rows,
+            dataset: spec.dataset,
             x: spec.x,
             y: spec.y,
             splitBy: spec.splitBy,
@@ -499,7 +510,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
       : {
           kind: "category",
           ...(await db.call("categoryData", {
-            rows: spec.rows,
+            dataset: spec.dataset,
             chartType: spec.chartType,
             x: spec.x,
             y: spec.y,

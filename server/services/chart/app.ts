@@ -277,7 +277,7 @@ export const chartApp = createServiceApp()
     if (!chart) return apiError(c, 404, "unknown chart");
     const { rowId, columns } = c.req.valid("json");
     const values = await getRuntime().db.call("rowValues", {
-      rows: chart.spec.rows,
+      dataset: chart.spec.dataset,
       rowId,
       columns,
     });

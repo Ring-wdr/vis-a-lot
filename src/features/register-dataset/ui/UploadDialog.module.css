@@ -1,0 +1,121 @@
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  font-size: 16px;
+}
+
+.muted {
+  color: var(--ws-text-muted);
+  font-size: 12px;
+}
+
+.error {
+  color: var(--ws-danger);
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.field > label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ws-text-secondary);
+}
+
+.input,
+.select {
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: var(--ws-elevated);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+
+.file {
+  font-size: 13px;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.delimiter {
+  display: flex;
+  gap: 6px;
+}
+
+.delimiter > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding-bottom: 6px;
+}
+
+.types {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table caption {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ws-text-secondary);
+  padding-bottom: 6px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--ws-border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ws-text-secondary);
+}
+
+.table .select {
+  width: 100%;
+}

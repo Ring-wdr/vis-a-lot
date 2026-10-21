@@ -1,6 +1,6 @@
-/* 알림보다 넓은 팝업 */
+/* 업로드한 파일 목록이 들어가 알림보다 넓다. */
 .dialog {
-  width: min(480px, calc(100vw - 32px));
+  width: min(760px, calc(100vw - 32px));
   max-width: none;
 }
 
@@ -95,4 +95,100 @@
 
 .colAction {
   width: 6.5em;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toolbar {
+  display: flex;
+  gap: 6px;
+}
+
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 좁은 화면에서는 파일 목록만 가로로 스크롤한다. */
+.scroll {
+  overflow-x: auto;
+}
+
+.files {
+  min-width: 680px;
+}
+
+.files td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowButton {
+  border: none;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowButton[aria-pressed="true"] {
+  color: var(--ws-accent);
+  font-weight: 600;
+}
+
+.failed {
+  color: var(--ws-danger);
+}
+
+.error {
+  color: var(--ws-danger);
+  font-size: 13px;
+}
+
+.columns {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.colBytes {
+  width: 5.5em;
+}
+
+.colTime {
+  width: 9.5em;
+}
+
+.colDelimiter {
+  width: 7.5em;
+}
+
+.colHeader {
+  width: 8em;
+}
+
+.colNull {
+  width: 5em;
+}
+
+.colState {
+  width: 7.5em;
 }
