@@ -22,11 +22,14 @@ const MODE_UI: Record<Mode, { label: string; Icon: LucideIcon }> = {
   text: { label: "텍스트", Icon: Type },
 };
 
-/** 다시 보기 전용 화면에서는 일반 모드(툴팁)만 고를 수 있다. */
+/**
+ * 확대·도형 모드는 그린 차트가 있고 편집할 수 있을 때만 고를 수 있다.
+ * 다시 보기 전용 화면이나 아직 그린 차트가 없으면 일반 모드(툴팁)만 된다.
+ */
 export function ModeBar() {
   const mode = useWorkspace((s) => s.mode);
   const setMode = useWorkspace((s) => s.setMode);
-  const readOnly = useWorkspace((s) => s.readOnly);
+  const editable = useWorkspace((s) => !s.readOnly && s.current !== undefined);
 
   return (
     <div className={styles.modeBar} role="toolbar" aria-label="모드">
@@ -39,7 +42,7 @@ export function ModeBar() {
             title={label}
             aria-label={label}
             aria-pressed={mode === m}
-            disabled={readOnly && m !== "normal"}
+            disabled={!editable && m !== "normal"}
             onClick={() => setMode(m)}
           >
             <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
