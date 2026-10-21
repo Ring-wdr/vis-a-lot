@@ -15,12 +15,13 @@ import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
 import { useItemDetail } from "@/features/item-detail/model/use-item-detail";
-import { useJob } from "@/shared/api/queries";
+import { useJobRange } from "@/shared/api/queries";
 import type { ItemState } from "@/shared/api/types";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { useElementSize } from "@/shared/lib/use-element-size";
 import styles from "@/shared/ui/workspace.module.css";
+import { windowStart } from "../lib/thumbnail-window";
 import { ChartItemCard } from "./ChartItemCard";
 
 const RESIZE_DEBOUNCE_MS = 300;
@@ -62,13 +63,11 @@ export function DetailView({
   const [mainRef, mainArea] = useElementSize<HTMLDivElement>();
   const [listRef, listArea] = useElementSize<HTMLOListElement>();
 
-  // 섬네일 수만큼 끊어 한 묶음씩 받는다. 넘어가면 다음 묶음을 받는다.
+  // 크게 보는 item을 가운데 두고 한 칸씩 미끄러진다. 처음·끝에서는 목록을 꽉 채운 채 멈춘다.
   const count = listArea ? thumbnailCountFor(listArea.width) : 1;
-  const stripPage = Math.floor(focus / count);
-  const strip = useJob(current.jobId, stripPage, count, {
-    keepPrevious: true,
-  });
-  const offset = strip.data ? strip.data.page * strip.data.pageSize : 0;
+  const start = windowStart(focus, count, totalItems);
+  const strip = useJobRange(current.jobId, start, count);
+  const offset = strip.data?.offset ?? 0;
   const thumbs = strip.data?.items ?? [];
   const item = thumbs[focus - offset];
 

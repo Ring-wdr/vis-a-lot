@@ -37,6 +37,8 @@ export const queryKeys = {
     ["datasets", rows, "summary", column] as const,
   job: (jobId: string, page: number, pageSize: number) =>
     ["jobs", jobId, page, pageSize] as const,
+  jobRange: (jobId: string, offset: number, count: number) =>
+    ["jobs", jobId, "range", offset, count] as const,
   jobProgress: (jobId: string) => ["jobs", jobId, "progress"] as const,
   jobItem: (jobId: string, key: string) =>
     ["jobs", jobId, "item", key] as const,
@@ -143,12 +145,6 @@ export function useJob(
   jobId: string | undefined,
   page: number,
   pageSize: number,
-  {
-    keepPrevious = false,
-  }: {
-    /** 페이지를 옮기는 동안 이전 페이지 응답을 그대로 둔다 (응답의 page로 구분한다). */
-    keepPrevious?: boolean;
-  } = {},
 ) {
   const client = useQueryClient();
   const queryKey = queryKeys.job(jobId ?? "", page, pageSize);
@@ -165,7 +161,37 @@ export function useJob(
       );
     },
     enabled: jobId !== undefined,
-    placeholderData: keepPrevious ? keepPreviousData : undefined,
+    refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
+    refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
+  });
+}
+
+/**
+ * 페이지 경계와 상관없이 offset 순번부터 count개 item을 long polling으로 받는다 (크게 보기 섬네일 목록).
+ * 범위를 옮기는 동안에는 이전 응답을 그대로 둔다. 응답의 offset으로 어느 범위인지 구분한다.
+ */
+export function useJobRange(
+  jobId: string | undefined,
+  offset: number,
+  count: number,
+) {
+  const client = useQueryClient();
+  const queryKey = queryKeys.jobRange(jobId ?? "", offset, count);
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      const prev = client.getQueryData<JobStateResponse>(queryKey);
+      return api.jobRange(
+        jobId as string,
+        offset,
+        count,
+        prev?.version ?? -1,
+        signal,
+      );
+    },
+    enabled: jobId !== undefined,
+    placeholderData: keepPreviousData,
     refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
     refetchIntervalInBackground: true,
     ...LONG_POLL_RETRY,

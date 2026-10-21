@@ -139,6 +139,24 @@ export const api = {
       }),
     ),
 
+  /** 페이지 경계와 상관없이 offset 순번부터 count개 item의 상태를 long polling으로 받는다. */
+  jobRange: (
+    jobId: string,
+    offset: number,
+    count: number,
+    since: number,
+    signal?: AbortSignal,
+  ) =>
+    unwrap(
+      chartClient.GET("/jobs/{jobId}", {
+        params: {
+          path: { jobId },
+          query: { offset, pageSize: count, since },
+        },
+        signal,
+      }),
+    ),
+
   /** 지정한 item들의 상태를 long polling으로 받는다. */
   jobItems: (
     jobId: string,

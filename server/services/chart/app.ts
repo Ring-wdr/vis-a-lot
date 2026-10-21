@@ -104,7 +104,7 @@ export const chartApp = createServiceApp()
     const keys = query.items?.split(",").filter(Boolean);
     const selection: ItemSelection = keys
       ? { keys }
-      : { page: query.page, pageSize: query.pageSize };
+      : { page: query.page, pageSize: query.pageSize, offset: query.offset };
     await waitForUpdate(job, query.since, selection, LONG_POLL_TIMEOUT_MS);
     return c.json(stateOf(job, selection), 200);
   })
