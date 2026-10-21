@@ -21,8 +21,19 @@ export type ChartItem = {
   values: string[];
   /** 다시 그릴 때마다 올라간다. PNG URL의 v 파라미터가 된다. */
   version: number;
+  /**
+   * 그림 내용(확대 범위, 도형, 색)이 바뀔 때마다 올라간다. 크기만 바뀌는 resize에서는 그대로다.
+   * 섬네일과 상세 PNG는 이 값이 같으면 다시 그리지 않는다.
+   */
+  revision: number;
   image?: ChartImage;
   meta?: ItemMeta;
+  /** 고정 크기 섬네일. 내용이 바뀔 때만 다시 그린다. */
+  thumbnail?: ChartImage;
+  /** 크게 보기용 PNG. 현재 revision에서 그린 크기별로 둔다 ("WxH" → 결과). */
+  details: Map<string, ItemDetail>;
+  /** 크기별로 진행 중인 상세 렌더 job. 같은 요청이 겹치면 이 job을 같이 기다린다. */
+  detailJobs: Map<string, string>;
   /** 확대한 데이터 범위. 없으면 전체 범위 */
   view?: ItemView;
   /** 확대하지 않았을 때의 범위. 축소가 전체 범위를 넘으면 초기화로 본다. */
@@ -34,6 +45,8 @@ export type ChartItem = {
   /** item 단위 다시 그리기가 진행 중이면 그 job id */
   busyJobId?: string;
 };
+
+export type ItemDetail = { image: ChartImage; meta: ItemMeta };
 
 export type ChartRecord = {
   id: string;
@@ -106,6 +119,59 @@ export function getCachedChartData(chartId: string) {
   return data;
 }
 
+/** 섬네일 크기. 브라우저 크기와 상관없이 고정이라 resize에 다시 그리지 않는다. */
+export const THUMBNAIL_SIZE = { width: 128, height: 80 } as const;
+
+/** item 하나에 남겨 둘 상세 PNG 크기 수. 넘치면 가장 오래 안 쓴 크기부터 지운다. */
+const DETAIL_SIZES_PER_ITEM = 4;
+
+const itemPath = (chartId: string, item: ChartItem) =>
+  `/api/chart/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(item.key)}/png`;
+
 export function pngUrl(chartId: string, item: ChartItem) {
-  return `/api/chart/charts/${encodeURIComponent(chartId)}/items/${encodeURIComponent(item.key)}/png?v=${item.version}`;
+  return `${itemPath(chartId, item)}?v=${item.version}`;
+}
+
+export function thumbnailUrl(chartId: string, item: ChartItem) {
+  return `${itemPath(chartId, item)}?r=${item.revision}&size=thumb`;
+}
+
+export const sizeKeyOf = (size: ItemSize) => `${size.width}x${size.height}`;
+
+export function detailUrl(chartId: string, item: ChartItem, size: ItemSize) {
+  return `${itemPath(chartId, item)}?r=${item.revision}&size=${sizeKeyOf(size)}`;
+}
+
+/** 쓴 크기를 뒤로 보내 LRU로 유지한다. */
+export function getDetail(item: ChartItem, size: ItemSize) {
+  const key = sizeKeyOf(size);
+  const detail = item.details.get(key);
+  if (detail) {
+    item.details.delete(key);
+    item.details.set(key, detail);
+  }
+  return detail;
+}
+
+/** 상세 PNG를 넣고, 밀려난 크기의 URL을 돌려준다 (PNG 저장소에서 지운다). */
+export function putDetail(item: ChartItem, size: ItemSize, detail: ItemDetail) {
+  item.details.set(sizeKeyOf(size), detail);
+  const evicted: string[] = [];
+  while (item.details.size > DETAIL_SIZES_PER_ITEM) {
+    const [oldest, { image }] = item.details.entries().next().value as [
+      string,
+      ItemDetail,
+    ];
+    item.details.delete(oldest);
+    evicted.push(image.url);
+  }
+  return evicted;
+}
+
+/** 내용이 바뀌면 revision을 올리고, 예전 내용으로 그린 상세 PNG URL을 돌려준다. */
+export function bumpRevision(item: ChartItem) {
+  item.revision++;
+  const stale = [...item.details.values()].map((d) => d.image.url);
+  item.details.clear();
+  return stale;
 }

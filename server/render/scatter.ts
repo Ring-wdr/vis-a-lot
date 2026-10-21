@@ -58,6 +58,8 @@ export type ScatterInput = {
   /** 확대한 범위. 없으면 데이터 전체 범위를 보기 좋게 맞춘다. */
   view?: ItemView;
   shapes: readonly Shape[];
+  /** 섬네일: 축·제목·legend 없이 그림 영역만 그린다. */
+  compact?: boolean;
 };
 
 export type ItemView = { x: [number, number]; y: [number, number] };
@@ -85,6 +87,17 @@ function timeFormatter(domain: [number, number]) {
   return (v: number) => fmt(new Date(v + KST_OFFSET_MS));
 }
 
+/** 섬네일의 그림 영역: 여백만 조금 두고 전부 쓴다. */
+export function compactPlot(width: number, height: number) {
+  const pad = 4;
+  return {
+    left: pad,
+    top: pad,
+    width: Math.max(10, width - pad * 2),
+    height: Math.max(10, height - pad * 2),
+  };
+}
+
 export function renderScatter(
   ctx: Ctx,
   input: ScatterInput,
@@ -110,14 +123,17 @@ export function renderScatter(
     ...yTicks.map((t) => ctx.measureText(yFormat(t)).width),
     10,
   );
-  const plot = {
-    left: Math.ceil(yLabelWidth + 14),
-    top: 28 + (input.legend ? LEGEND_SPACE : 0),
-    width: 0,
-    height: 0,
-  };
-  plot.width = Math.max(10, width - plot.left - 14);
-  plot.height = Math.max(10, height - plot.top - 26);
+  const plot = input.compact
+    ? compactPlot(width, height)
+    : {
+        left: Math.ceil(yLabelWidth + 14),
+        top: 28 + (input.legend ? LEGEND_SPACE : 0),
+        width: Math.max(10, width - Math.ceil(yLabelWidth + 14) - 14),
+        height: Math.max(
+          10,
+          height - (28 + (input.legend ? LEGEND_SPACE : 0)) - 26,
+        ),
+      };
   y.range([plot.top + plot.height, plot.top]);
 
   const x =
@@ -171,48 +187,51 @@ export function renderScatter(
   }
   progress("aggregate", 1);
 
-  // ── 그리드와 축 ───────────────────────────────────────────────
-  ctx.strokeStyle = THEME.grid;
-  ctx.lineWidth = 1;
-  ctx.fillStyle = THEME.textSecondary;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  for (const t of yTicks) {
-    const ty = Math.round(y(t)) + 0.5;
+  // ── 그리드와 축, 제목, legend (섬네일은 그림 영역만 그린다) ───────────
+  let legendMeta: LegendMeta | undefined;
+  if (!input.compact) {
+    ctx.strokeStyle = THEME.grid;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = THEME.textSecondary;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for (const t of yTicks) {
+      const ty = Math.round(y(t)) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(plot.left, ty);
+      ctx.lineTo(plot.left + plot.width, ty);
+      ctx.stroke();
+      ctx.fillText(yFormat(t), plot.left - 6, ty);
+    }
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    for (const t of xTicks) {
+      const v = +t;
+      const tx = Math.round(x(v) as number) + 0.5;
+      ctx.fillText(xFormat(v), tx, plot.top + plot.height + 7);
+    }
+    ctx.strokeStyle = THEME.axis;
     ctx.beginPath();
-    ctx.moveTo(plot.left, ty);
-    ctx.lineTo(plot.left + plot.width, ty);
+    ctx.moveTo(plot.left, plot.top + plot.height + 0.5);
+    ctx.lineTo(plot.left + plot.width, plot.top + plot.height + 0.5);
     ctx.stroke();
-    ctx.fillText(yFormat(t), plot.left - 6, ty);
-  }
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  for (const t of xTicks) {
-    const v = +t;
-    const tx = Math.round(x(v) as number) + 0.5;
-    ctx.fillText(xFormat(v), tx, plot.top + plot.height + 7);
-  }
-  ctx.strokeStyle = THEME.axis;
-  ctx.beginPath();
-  ctx.moveTo(plot.left, plot.top + plot.height + 0.5);
-  ctx.lineTo(plot.left + plot.width, plot.top + plot.height + 0.5);
-  ctx.stroke();
 
-  // ── 제목 ──────────────────────────────────────────────────────
-  ctx.fillStyle = THEME.textPrimary;
-  ctx.font = `600 12px ${THEME.font}`;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(input.title, plot.left, 17, plot.width);
-  ctx.fillStyle = THEME.textMuted;
-  ctx.font = `11px ${THEME.font}`;
-  ctx.textAlign = "right";
-  ctx.fillText(`${n.toLocaleString()} pts`, plot.left + plot.width, 17);
+    // ── 제목 ──────────────────────────────────────────────────────
+    ctx.fillStyle = THEME.textPrimary;
+    ctx.font = `600 12px ${THEME.font}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(input.title, plot.left, 17, plot.width);
+    ctx.fillStyle = THEME.textMuted;
+    ctx.font = `11px ${THEME.font}`;
+    ctx.textAlign = "right";
+    ctx.fillText(`${n.toLocaleString()} pts`, plot.left + plot.width, 17);
 
-  // ── legend ────────────────────────────────────────────────
-  const legendMeta = input.legend
-    ? drawLegend(ctx, input.legend, plot.left, 24, plot.width)
-    : undefined;
+    // ── legend ────────────────────────────────────────────────
+    legendMeta = input.legend
+      ? drawLegend(ctx, input.legend, plot.left, 24, plot.width)
+      : undefined;
+  }
 
   // ── 점 (render) ───────────────────────────────────────────────
   ctx.save();
@@ -231,8 +250,9 @@ export function renderScatter(
     // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (fillStyle 전환을 줄인다).
     const { legend } = input;
     const passes = legend ? legend.colors : [input.color];
-    const small = n <= 400;
-    const size = n > 50_000 ? 1.5 : 2.5;
+    // 섬네일은 점이 적어도 테두리 원 대신 작은 점으로 그린다.
+    const small = !input.compact && n <= 400;
+    const size = input.compact || n > 50_000 ? 1.5 : 2.5;
     const half = size / 2;
     passes.forEach((color, g) => {
       ctx.fillStyle = color;

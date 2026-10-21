@@ -453,6 +453,120 @@
   font-size: 12px;
 }
 
+/* 크게 보기: 위에 item 하나, 아래에 섬네일 목록 */
+.detail {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 이 영역 크기가 곧 크게 보기 PNG 크기다 (grid-layout.ts의 detailSizeFor). */
+.detailMain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.detailMain > .item {
+  flex: 1;
+}
+
+.thumbNav {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thumbNav > button {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  align-self: stretch;
+  width: 28px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  cursor: pointer;
+}
+
+.thumbNav > button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* gap은 grid-layout.ts의 THUMBNAIL_GAP과 같아야 섬네일 개수 계산이 맞는다. */
+.thumbList {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+/* 폭은 섬네일 PNG 폭(THUMBNAIL_WIDTH)에 테두리 2px을 더한 값이다. */
+.thumb {
+  display: flex;
+  flex-direction: column;
+  width: 130px;
+  padding: 0;
+  border: 1px solid var(--ws-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.thumb:hover {
+  border-color: var(--ws-accent-border);
+}
+
+.thumb[aria-current="true"] {
+  border-color: var(--ws-accent);
+  box-shadow: 0 0 0 1px var(--ws-accent);
+}
+
+.thumb img {
+  display: block;
+}
+
+/* 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다. */
+.thumbEmpty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 128 / 80;
+  background: var(--ws-panel);
+  color: var(--ws-text-muted);
+  font-size: 11px;
+}
+
+.thumbLabel {
+  padding: 2px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 11px;
+}
+
+.thumbCount {
+  flex: none;
+  min-width: 13ch;
+  text-align: right;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* 페이지 수가 30,000까지 가도 번호가 바뀔 때 버튼이 움직이지 않게 자리를 잡아 둔다. */
 .pagerText {
   min-width: 13ch;
@@ -552,6 +666,11 @@
   display: flex;
   gap: 2px;
   margin-left: auto;
+}
+
+/* 크게 보기 버튼 묶음은 item 도구 바로 뒤에 붙는다. */
+.itemActions + .itemActions {
+  margin-left: 0;
 }
 
 .itemActions button {

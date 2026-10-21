@@ -65,21 +65,31 @@ export type DbMethods = {
   };
 };
 
+type Size = { width: number; height: number };
+
 export type RenderMethods = {
   /** 1단계 검증용: 임의의 점을 그려 PNG를 만든다. */
   renderTest: {
     params: { width: number; height: number; label: string; points: number };
     result: { png: ArrayBuffer; worker: string; ms: number };
   };
+  /** thumbnail 크기를 주면 같은 입력으로 축 없는 섬네일도 함께 그린다. */
   renderScatter: {
-    params: ScatterInput;
-    result: { png: ArrayBuffer; meta: ScatterMeta; worker: string; ms: number };
+    params: ScatterInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: ScatterMeta;
+      worker: string;
+      ms: number;
+    };
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderCategory: {
-    params: CategoryInput;
+    params: CategoryInput & { thumbnail?: Size };
     result: {
       png: ArrayBuffer;
+      thumb?: ArrayBuffer;
       meta: CategoryMeta;
       worker: string;
       ms: number;

@@ -30,6 +30,8 @@ export type WorkspaceState = {
   /** history나 공유 링크의 차트를 이 탭에 다시 그리는 중 */
   opening: boolean;
   page: number;
+  /** 크게 보고 있는 item의 전체 순번. null이면 grid를 보여준다. */
+  focus: number | null;
   mode: Mode;
   /** item grid 영역의 크기. draw할 때 item PNG 크기를 정하는 데 쓴다. */
   gridArea?: Size;
@@ -45,6 +47,7 @@ export type WorkspaceState = {
   /** 같은 차트를 새 job으로 다시 그릴 때 (공통 속성 변경). 페이지와 undo 이력은 유지한다. */
   replaceJob: (jobId: string, spec: ChartSpec, page?: number) => void;
   setPage: (page: number) => void;
+  setFocus: (focus: number | null) => void;
   setMode: (mode: Mode) => void;
   setGridArea: (size: Size) => void;
   setItemJob: (key: string, jobId: string | undefined) => void;
@@ -80,6 +83,7 @@ export function createWorkspaceStore({
     draft,
     opening: false,
     page: 0,
+    focus: null,
     mode: "normal",
     itemJobs: {},
     undoCounts: {},
@@ -87,7 +91,7 @@ export function createWorkspaceStore({
     updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
     setDraft: (draft) => set({ draft }),
     setCurrent: (current) =>
-      set({ current, page: 0, itemJobs: {}, undoCounts: {} }),
+      set({ current, page: 0, focus: null, itemJobs: {}, undoCounts: {} }),
     replaceJob: (jobId, spec, page) =>
       set((s) =>
         s.current
@@ -99,6 +103,7 @@ export function createWorkspaceStore({
           : {},
       ),
     setPage: (page) => set({ page }),
+    setFocus: (focus) => set({ focus }),
     // 다시 보기 전용 화면은 일반 모드(툴팁)만 쓴다.
     setMode: (mode) => set((s) => (s.readOnly ? {} : { mode })),
     setGridArea: (gridArea) => set({ gridArea }),

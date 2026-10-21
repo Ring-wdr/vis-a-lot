@@ -19,3 +19,11 @@ export async function matchPng(url: string) {
   const cache = await caches.open(CACHE_NAME);
   return cache.match(url);
 }
+
+export async function deletePngs(urls: string[]) {
+  if (urls.length === 0) return;
+  const cache = await caches.open(CACHE_NAME);
+  await Promise.all(
+    urls.map((url) => cache.delete(new URL(url, location.origin).href)),
+  );
+}

@@ -168,6 +168,10 @@ export const ItemStateSchema = z
     /** 현재 단계 안에서의 진행률 0..1 */
     stageProgress: z.number(),
     image: ChartImageSchema.optional(),
+    /** 고정 크기 섬네일. 크게 보기 화면 하단 목록에 쓴다. */
+    thumbnail: ChartImageSchema.optional(),
+    /** 그림 내용(확대·도형·색)이 바뀔 때마다 올라간다. 크기만 바뀌면 그대로다. */
+    revision: z.number().int(),
     error: z.string().optional(),
     /** 확대 중인지. 축소/초기화 버튼 활성화에 쓴다. */
     zoomed: z.boolean(),
@@ -228,6 +232,18 @@ export const JobQuerySchema = z.object({
     .openapi({ description: "쉼표로 구분한 item 키" }),
   since: z.coerce.number().default(-1),
 });
+
+export const DetailRequestSchema = z
+  .object({ itemSize: ItemSizeSchema })
+  .openapi("DetailRequest");
+
+/** 그 크기로 그려 둔 PNG가 있으면 image, 없으면 그리는 job */
+export const DetailResponseSchema = z
+  .union([
+    z.object({ image: ChartImageSchema }),
+    z.object({ jobId: z.string() }),
+  ])
+  .openapi("DetailResponse");
 
 export const ViewRequestSchema = z
   .discriminatedUnion("type", [

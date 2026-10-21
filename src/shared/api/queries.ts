@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQueries,
@@ -142,6 +143,12 @@ export function useJob(
   jobId: string | undefined,
   page: number,
   pageSize: number,
+  {
+    keepPrevious = false,
+  }: {
+    /** 페이지를 옮기는 동안 이전 페이지 응답을 그대로 둔다 (응답의 page로 구분한다). */
+    keepPrevious?: boolean;
+  } = {},
 ) {
   const client = useQueryClient();
   const queryKey = queryKeys.job(jobId ?? "", page, pageSize);
@@ -158,6 +165,7 @@ export function useJob(
       );
     },
     enabled: jobId !== undefined,
+    placeholderData: keepPrevious ? keepPreviousData : undefined,
     refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
     refetchIntervalInBackground: true,
     ...LONG_POLL_RETRY,

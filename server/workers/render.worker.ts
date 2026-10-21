@@ -5,6 +5,25 @@ import { serveRpc, transfer, type WorkerScope } from "../rpc";
 
 const workerName = (globalThis as unknown as WorkerScope).name;
 
+const noop = () => {};
+
+/** 캔버스에 그리고 PNG로 바꾼다. 그리는 함수가 돌려준 metadata를 함께 넘긴다. */
+async function drawPng<M>(
+  size: { width: number; height: number },
+  draw: (ctx: OffscreenCanvasRenderingContext2D) => M,
+  onEncode: () => void = noop,
+) {
+  const canvas = new OffscreenCanvas(size.width, size.height);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  const meta = draw(ctx);
+  onEncode();
+  const png = await (
+    await canvas.convertToBlob({ type: "image/png" })
+  ).arrayBuffer();
+  return { png, meta };
+}
+
 serveRpc<RenderMethods>({
   async renderTest({ width, height, label, points }) {
     const started = performance.now();
@@ -57,41 +76,48 @@ serveRpc<RenderMethods>({
     );
   },
 
-  async renderScatter(input, { progress }) {
+  async renderScatter({ thumbnail, ...input }, { progress }) {
     const started = performance.now();
-    const canvas = new OffscreenCanvas(input.width, input.height);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("2d context unavailable");
-    const meta = renderScatter(ctx, input, (stage, ratio) =>
-      progress({ stage, ratio }),
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderScatter(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
     );
-    progress({ stage: "encode", ratio: 0 });
-    const png = await (
-      await canvas.convertToBlob({ type: "image/png" })
-    ).arrayBuffer();
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderScatter(ctx, thumbInput, noop)))
+        .png;
     progress({ stage: "encode", ratio: 1 });
     return transfer(
-      { png, meta, worker: workerName, ms: performance.now() - started },
-      [png],
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
     );
   },
 
-  async renderCategory(input, { progress }) {
+  async renderCategory({ thumbnail, ...input }, { progress }) {
     const started = performance.now();
-    const canvas = new OffscreenCanvas(input.width, input.height);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("2d context unavailable");
-    const meta = renderCategory(ctx, input, (stage, ratio) =>
-      progress({ stage, ratio }),
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderCategory(ctx, input, (stage, ratio) =>
+          progress({ stage, ratio }),
+        ),
+      () => progress({ stage: "encode", ratio: 0 }),
     );
-    progress({ stage: "encode", ratio: 0 });
-    const png = await (
-      await canvas.convertToBlob({ type: "image/png" })
-    ).arrayBuffer();
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (
+        await drawPng(thumbInput, (ctx) =>
+          renderCategory(ctx, thumbInput, noop),
+        )
+      ).png;
     progress({ stage: "encode", ratio: 1 });
     return transfer(
-      { png, meta, worker: workerName, ms: performance.now() - started },
-      [png],
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
     );
   },
 });

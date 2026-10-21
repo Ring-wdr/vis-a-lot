@@ -43,6 +43,7 @@ export type ShapeType = Shape["type"];
 export type CreateChartRequest = Chart["CreateChartRequest"];
 export type CreateChartResponse = Chart["CreateChartResponse"];
 export type ItemJobResponse = Chart["ItemJobResponse"];
+export type DetailResponse = Chart["DetailResponse"];
 export type JobStatus = Chart["JobStatus"];
 export type ItemStatus = Chart["ItemStatus"];
 export type ItemStage = Chart["ItemStage"];

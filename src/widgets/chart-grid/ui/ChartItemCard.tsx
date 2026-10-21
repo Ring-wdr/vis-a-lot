@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect } from "react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -12,6 +13,7 @@ import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
+  type ChartImage,
   type ColumnName,
   type ItemSize,
   type ItemStage,
@@ -56,6 +58,39 @@ function Pending({
   );
 }
 
+/** 더블 클릭으로 크게 보기를 열고 닫는다. 버튼·입력·그리기 레이어 위에서는 그쪽 조작을 따른다. */
+function doubleClickHandler(onDoubleClick: (() => void) | undefined) {
+  if (!onDoubleClick) return undefined;
+  return (e: React.MouseEvent) => {
+    const target = e.target as Element;
+    if (target.closest("button, input, [role='application']")) return;
+    onDoubleClick();
+  };
+}
+
+/** 크게 보기를 열거나(grid) grid로 돌아가는(크게 보기) 버튼 */
+function ExpandButton({
+  expanded,
+  onClick,
+}: {
+  expanded: boolean;
+  onClick?: () => void;
+}) {
+  if (!onClick) return null;
+  const label = expanded ? "grid로 돌아가기" : "크게 보기";
+  return (
+    <div className={styles.itemActions}>
+      <button type="button" title={label} aria-label={label} onClick={onClick}>
+        {expanded ? (
+          <Minimize2 size={13} aria-hidden="true" />
+        ) : (
+          <Maximize2 size={13} aria-hidden="true" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 /**
  * 다 그려진 item. 모드에 따라 툴팁 또는 확대/도형 레이어를 띄우고,
  * item 단위로 다시 그리는 동안에는 기존 PNG 위에 진행률을 덮어 조작을 막는다.
@@ -67,6 +102,10 @@ function DrawnItem({
   tooltipColumns,
   displaySize,
   hasLegend,
+  image = item.image,
+  rendering,
+  expanded = false,
+  onDoubleClick,
 }: {
   item: ItemState & { image: NonNullable<ItemState["image"]> };
   /** legend가 있으면 색은 legend 항목별로 바꾼다. */
@@ -75,6 +114,13 @@ function DrawnItem({
   primaryJobId: string;
   tooltipColumns: ColumnName[];
   displaySize: ItemSize;
+  /** 띄울 PNG. 크게 보기에서는 grid PNG 대신 그 크기로 그린 PNG를 준다. */
+  image?: ChartImage;
+  /** 크게 보기 PNG를 그리는 중이면 그 진행 상태 */
+  rendering?: ItemState;
+  /** 크게 보기 화면의 item인지 */
+  expanded?: boolean;
+  onDoubleClick?: () => void;
 }) {
   const mode = useWorkspace((s) => s.mode);
   const readOnly = useWorkspace((s) => s.readOnly);
@@ -113,7 +159,10 @@ function DrawnItem({
   ]);
 
   return (
-    <article className={styles.item}>
+    <article
+      className={styles.item}
+      onDoubleClick={doubleClickHandler(onDoubleClick)}
+    >
       <div className={styles.itemToolbar}>
         <span className={styles.itemLabel} title={item.label}>
           {item.label}
@@ -128,11 +177,12 @@ function DrawnItem({
             onAction={action.mutate}
           />
         )}
+        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
       <div className={styles.itemBody}>
         {mode === "normal" ? (
           <ItemTooltip
-            image={item.image}
+            image={image}
             alt={item.label}
             chartId={chartId}
             itemKey={item.key}
@@ -148,16 +198,22 @@ function DrawnItem({
         ) : (
           <DrawLayer
             mode={mode}
-            image={item.image}
+            image={image}
             display={displaySize}
             alt={item.label}
             onAction={action.mutate}
           />
         )}
-        {busy && (
+        {busy ? (
           <div className={styles.busyOverlay} aria-busy="true">
             <Pending item={redrawing} placeholder="다시 그리는 중" />
           </div>
+        ) : (
+          rendering && (
+            <div className={styles.busyOverlay} aria-busy="true">
+              <Pending item={rendering} />
+            </div>
+          )
         )}
       </div>
     </article>
@@ -173,6 +229,10 @@ export function ChartItemCard({
   tooltipColumns = [],
   displaySize,
   hasLegend = false,
+  image,
+  rendering,
+  expanded = false,
+  onDoubleClick,
 }: {
   item?: ItemState;
   hasLegend?: boolean;
@@ -183,6 +243,14 @@ export function ChartItemCard({
   tooltipColumns?: ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
+  /** 띄울 PNG. 없으면 grid PNG를 띄운다. */
+  image?: ChartImage;
+  /** 크게 보기 PNG를 그리는 중이면 그 진행 상태 */
+  rendering?: ItemState;
+  /** 크게 보기 화면의 item인지 */
+  expanded?: boolean;
+  /** 더블 클릭이나 toolbar 버튼으로 크게 보기를 열고 닫는다. */
+  onDoubleClick?: () => void;
 }) {
   if (item?.status === "success" && item.image && chartId && primaryJobId) {
     return (
@@ -193,15 +261,23 @@ export function ChartItemCard({
         tooltipColumns={tooltipColumns}
         displaySize={displaySize ?? item.image}
         hasLegend={hasLegend}
+        image={image}
+        rendering={rendering}
+        expanded={expanded}
+        onDoubleClick={onDoubleClick}
       />
     );
   }
   return (
-    <article className={styles.item}>
+    <article
+      className={styles.item}
+      onDoubleClick={doubleClickHandler(onDoubleClick)}
+    >
       <div className={styles.itemToolbar}>
         <span className={styles.itemLabel} title={item?.label}>
           {item?.label ?? "…"}
         </span>
+        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
       <div className={styles.itemBody}>
         {item?.status === "failed" ? (

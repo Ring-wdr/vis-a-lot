@@ -858,6 +858,94 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/charts/{chartId}/items/{itemKey}/detail": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 크게 보기용 PNG. 같은 내용·같은 크기로 그려 둔 게 있으면 바로 주고, 없으면 그 한 장만 그리는 job을 준다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["DetailRequest"];
+        };
+      };
+      responses: {
+        /** @description 그려 둔 PNG 또는 그리는 job */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["DetailResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않았거나 다시 그리는 중 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts/{chartId}/items/{itemKey}/meta": {
     parameters: {
       query?: never;
@@ -868,7 +956,10 @@ export type paths = {
     /** 툴팁용 metadata (축 정보 + 픽셀 기준으로 줄인 점) */
     get: {
       parameters: {
-        query?: never;
+        query?: {
+          /** @description 크게 보기 PNG의 크기 (WxH) */
+          size?: string;
+        };
         header?: never;
         path: {
           chartId: string;
@@ -1016,6 +1107,8 @@ export type paths = {
       parameters: {
         query?: {
           v?: string;
+          r?: string;
+          size?: string;
         };
         header?: never;
         path: {
@@ -1535,6 +1628,21 @@ export type components = {
     HistoryListResponse: {
       entries: components["schemas"]["HistorySummary"][];
     };
+    DetailResponse:
+      | {
+          image: components["schemas"]["ChartImage"];
+        }
+      | {
+          jobId: string;
+        };
+    ChartImage: {
+      url: string;
+      width: number;
+      height: number;
+    };
+    DetailRequest: {
+      itemSize: components["schemas"]["ItemSize"];
+    };
     ItemMeta:
       | components["schemas"]["ScatterMeta"]
       | components["schemas"]["CategoryMeta"];
@@ -1657,6 +1765,8 @@ export type components = {
       stage?: components["schemas"]["ItemStage"];
       stageProgress: number;
       image?: components["schemas"]["ChartImage"];
+      thumbnail?: components["schemas"]["ChartImage"];
+      revision: number;
       error?: string;
       zoomed: boolean;
       shapeCount: number;
@@ -1665,11 +1775,6 @@ export type components = {
     };
     /** @enum {string} */
     ItemStage: "query" | "aggregate" | "render" | "encode";
-    ChartImage: {
-      url: string;
-      width: number;
-      height: number;
-    };
     ResizeRequest: {
       itemSize: components["schemas"]["ItemSize"];
       keys: string[];

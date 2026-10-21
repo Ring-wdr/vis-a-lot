@@ -8,6 +8,35 @@ export const GRID_FOOTER_HEIGHT = 44;
 export const PAGE_SCROLLER_WIDTH = 16;
 export const PAGE_SCROLLER_GAP = 8;
 
+/** 서버가 그리는 섬네일 크기. 크게 보기 하단 목록의 칸 크기가 된다. */
+export const THUMBNAIL_WIDTH = 128;
+/** 섬네일 사이 간격. CSS의 .thumbList gap과 같아야 개수 계산이 맞는다. */
+export const THUMBNAIL_GAP = 8;
+/** 섬네일 테두리(1px × 2) */
+const THUMBNAIL_BORDER = 2;
+/** 서버가 받는 PNG 한 변의 최대 크기 */
+const MAX_PNG_SIDE = 2000;
+
+/** 하단 목록 폭에 들어가는 섬네일 수. 폭이 넓을수록 많아진다. */
+export function thumbnailCountFor(width: number) {
+  const slot = THUMBNAIL_WIDTH + THUMBNAIL_BORDER + THUMBNAIL_GAP;
+  return Math.max(1, Math.floor((width + THUMBNAIL_GAP) / slot));
+}
+
+/** 크게 보기 item 칸에 맞는 PNG 크기. 칸 크기는 item 카드 전체(toolbar 포함)다. */
+export function detailSizeFor(area: {
+  width: number;
+  height: number;
+}): ItemSize {
+  return {
+    width: Math.min(MAX_PNG_SIDE, Math.max(50, Math.floor(area.width) - 2)),
+    height: Math.min(
+      MAX_PNG_SIDE,
+      Math.max(50, Math.floor(area.height) - ITEM_TOOLBAR_HEIGHT - 2),
+    ),
+  };
+}
+
 export function itemSizeFor(
   area: { width: number; height: number },
   grid: ChartSpec["grid"],

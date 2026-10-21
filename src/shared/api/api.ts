@@ -66,6 +66,12 @@ function itemOfPng(pngUrl: string) {
   return item(decodeURIComponent(match[1]), decodeURIComponent(match[2]));
 }
 
+/** 크게 보기 PNG면 그 크기(size=WxH)를 꺼낸다. grid PNG에는 없다. */
+function sizeOfPng(pngUrl: string) {
+  const size = new URL(pngUrl, location.origin).searchParams.get("size");
+  return { size: size ?? undefined };
+}
+
 export const api = {
   // ── data 서비스 ─────────────────────────────────────────────
   health: () => unwrap(dataClient.GET("/health")),
@@ -166,7 +172,7 @@ export const api = {
     as<ItemMeta>()(
       unwrap(
         chartClient.GET("/charts/{chartId}/items/{itemKey}/meta", {
-          params: { path: itemOfPng(pngUrl) },
+          params: { path: itemOfPng(pngUrl), query: sizeOfPng(pngUrl) },
         }),
       ),
     ),
@@ -228,6 +234,15 @@ export const api = {
       chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
         params: { path: item(chartId, itemKey) },
         body: { legendColor: { value, color } },
+      }),
+    ),
+
+  /** 크게 보기용 PNG. 그 크기로 그려 둔 게 있으면 image, 없으면 그리는 job이 온다. */
+  itemDetail: (chartId: string, itemKey: string, itemSize: ItemSize) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/detail", {
+        params: { path: item(chartId, itemKey) },
+        body: { itemSize },
       }),
     ),
 
