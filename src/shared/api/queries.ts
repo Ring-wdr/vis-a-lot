@@ -106,6 +106,23 @@ export function useDatasetSchema(rows: RowSize) {
   return useQuery(datasetSchemaQuery(rows, status.data?.state));
 }
 
+/**
+ * 컬럼 후보를 아직 못 보여주는 이유. 받는 중(loading)과 데이터가 없어서(missing·generating)를 나눠
+ * '등록하세요' 안내가 단순히 받는 동안에 뜨지 않게 한다.
+ */
+export type SchemaState = "loading" | "missing" | "generating" | "ready";
+
+export function useSchemaState(rows: RowSize): SchemaState {
+  const status = useDatasetStatus(rows);
+  const schema = useDatasetSchema(rows);
+  if (schema.data) return "ready";
+  const state = status.data?.state;
+  if (state === "missing") return "missing";
+  if (state === "generating") return "generating";
+  // 목록을 받는 중이거나, 준비됐는데 스키마를 받는 중이다.
+  return status.isError ? "missing" : "loading";
+}
+
 /** 이 데이터셋의 컬럼 라벨·타입. 같은 이름의 컬럼이라도 데이터셋마다 다를 수 있어 데이터셋별로 찾는다. */
 export function useColumns(rows: RowSize) {
   const columns = useDatasetSchema(rows).data?.columns;

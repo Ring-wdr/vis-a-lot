@@ -6,6 +6,7 @@ import type { ItemState, LegendPosition } from "@/shared/api/types";
 import { colorName } from "@/shared/lib/palette";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
+import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import styles from "@/shared/ui/workspace.module.css";
 
@@ -97,7 +98,7 @@ export function ItemSettings({
             ))}
           </ul>
         ) : (
-          <p className={styles.muted}>불러오는 중…</p>
+          <LegendListSkeleton />
         )}
         {item.customColor && (
           <button

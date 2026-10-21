@@ -17,6 +17,7 @@ import type {
 import { formatValue } from "@/shared/lib/format";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
+import { LoadingText, Skeleton } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 
 type Cursor = { x: number; y: number };
@@ -168,9 +169,11 @@ export function ItemTooltip({
                   <div key={c} className={styles.emphasis}>
                     <dt>{columnInfo.label(c)}</dt>
                     <dd>
-                      {extra.data && rowId === hit.rowId
-                        ? formatValue(extra.data.values[c], columnInfo.type(c))
-                        : "…"}
+                      {extra.data && rowId === hit.rowId ? (
+                        formatValue(extra.data.values[c], columnInfo.type(c))
+                      ) : (
+                        <Skeleton className={styles.tooltipValueSkeleton} />
+                      )}
                     </dd>
                   </div>
                 ))}
@@ -186,7 +189,7 @@ export function ItemTooltip({
             className={`${styles.tooltip} ${styles.tooltipPortal}`}
             style={tooltipPosition}
           >
-            불러오는 중…
+            <LoadingText>불러오는 중</LoadingText>
           </div>,
           document.body,
         )}

@@ -5,6 +5,7 @@ import { restoreOf } from "@/entities/chart/lib/share";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
+import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 import { useOpenChart } from "../model/open-chart";
 
@@ -37,8 +38,12 @@ export function EditInGalleryButton() {
       type="button"
       className={styles.drawButton}
       disabled={!historyId || load.isPending || open.isPending}
+      aria-busy={load.isPending || open.isPending}
       onClick={() => historyId && load.mutate(historyId)}
     >
+      {(load.isPending || open.isPending) && (
+        <Spinner size="sm" tone="inherit" />
+      )}
       gallery에서 편집
     </button>
   );

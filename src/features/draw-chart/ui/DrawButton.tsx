@@ -12,6 +12,7 @@ import {
   useDatasetSchema,
   useDatasetStatus,
 } from "@/shared/api/queries";
+import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 import { useDrawState } from "../model/draw-state";
 
@@ -85,7 +86,14 @@ export function DrawButton() {
           aria-busy={state === "pending"}
           onClick={() => draw.mutate()}
         >
-          {state === "pending" ? "pending" : "draw"}
+          {state === "pending" ? (
+            <>
+              <Spinner size="sm" tone="inherit" />
+              pending
+            </>
+          ) : (
+            "draw"
+          )}
         </button>
       )}
       {(draw.error ?? cancel.error) && (
