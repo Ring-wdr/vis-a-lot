@@ -134,7 +134,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 - **선택 필드:** 단일 선택(데이터, x, y, legend, 통계 함수)과 다중 선택(split by, tooltip)은 같은 트리거·팝업 모양을 쓴다(Base UI Select / Combobox). 높이를 아끼려고 다중 선택은 고른 값을 한 줄에 순서대로 쉼표로 이어 쓰고 넘치면 말줄임, 오른쪽에 개수를 보여준다.
 - **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
 - **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 행 × 열을 고른다 (1..10 × 1..10, 직사각형 가능)
-- **페이지 이동:** grid 오른쪽 페이지 스크롤바(트랙 길이가 페이지 수에 비례). grid 위 휠도 이 스크롤바로 넘긴다. 스크롤 중에는 보이는 페이지만 즉시 바꾸고 서버 조회 페이지는 throttle(200ms)로만 바꿔, 한 번에 많이 넘겨도 조회가 몇 번만 일어난다. 멈추면 페이지 경계에 맞춘다.
+- **페이지 이동:** grid 오른쪽 Windows 방식 페이지 스크롤바(위·아래 화살표, 트랙, thumb). 네이티브 스크롤을 쓰지 않고 직접 그리며, thumb 한 칸이 한 페이지다. 화살표는 한 페이지(누르고 있으면 계속), 트랙은 누른 쪽으로 thumb이 포인터에 닿을 때까지, thumb은 끌어서 이동한다. 휠은 굴린 양을 모아 일정량마다 한 페이지, 키보드는 ↑↓·PageUp/PageDown·Home/End. 보이는 페이지는 즉시 바꾸고 서버 조회 페이지는 throttle(200ms)로만 바꿔, 한 번에 많이 넘겨도 조회가 몇 번만 일어난다.
 - **하단 바:** job 단계, 진행률(%), 상태별 item 수(완료·그리는 중·대기·실패·취소), 경과 시간, 처리 속도(item/s), 남은 시간 어림, Render Worker 수
 - **필터 패널(4.9):** 탭 바 오른쪽 `필터` 토글로 오른쪽에 연다
 - **팝업:** 모달 팝업(알림, data 등록, 전체 설정)은 overlay-kit으로 띄워 본문 상태와 분리한다. 버튼에 붙는 popover는 네이티브 popover API를 쓴다

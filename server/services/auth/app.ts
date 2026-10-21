@@ -14,9 +14,20 @@ import {
   takeSession,
 } from "./token-store";
 
+// 세션 만료를 확인할 때는 빌드할 때 NEXT_PUBLIC_ACCESS_TTL_SEC, NEXT_PUBLIC_REFRESH_TTL_SEC로 줄인다.
+const ttlFromEnv = (value: string | undefined, fallback: number) =>
+  Number(value) > 0 ? Number(value) : fallback;
+
 /** access token 수명. 짧게 두고 refresh로 이어 간다. */
-export const ACCESS_TTL_SEC = 5 * 60;
-const REFRESH_TTL_SEC = 7 * 24 * 60 * 60;
+export const ACCESS_TTL_SEC = ttlFromEnv(
+  process.env.NEXT_PUBLIC_ACCESS_TTL_SEC,
+  5 * 60,
+);
+/** refresh token 수명. 쓸 때마다 새로 받으므로 이만큼 아무 요청이 없으면 세션이 끝난다. */
+const REFRESH_TTL_SEC = ttlFromEnv(
+  process.env.NEXT_PUBLIC_REFRESH_TTL_SEC,
+  7 * 24 * 60 * 60,
+);
 const SERVICE_TTL_SEC = 10 * 60;
 const REFRESH_AUDIENCE = ISSUER;
 

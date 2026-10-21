@@ -5,7 +5,7 @@ export const GRID_GAP = 12;
 export const ITEM_TOOLBAR_HEIGHT = 30;
 export const GRID_FOOTER_HEIGHT = 44;
 /** grid 오른쪽의 페이지 스크롤바 폭과 간격. 페이지가 하나여도 자리는 비워 둬 item 크기가 바뀌지 않게 한다. */
-export const PAGE_SCROLLER_WIDTH = 12;
+export const PAGE_SCROLLER_WIDTH = 16;
 export const PAGE_SCROLLER_GAP = 8;
 
 export function itemSizeFor(

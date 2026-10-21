@@ -3,7 +3,8 @@
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
 import { COLUMN_TYPE_LABELS, ROW_LABELS } from "@/entities/dataset/lib/labels";
-import { tabsStore } from "@/entities/workspace/model/tabs-store";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
+import { TABS_LOCKED_HINT } from "@/entities/workspace/model/tabs-store";
 import {
   useDatasetSchema,
   useDatasets,
@@ -44,6 +45,8 @@ function StatusCell({ status }: { status: DatasetStatus | undefined }) {
  */
 function DataDialogBody({ onClose }: { onClose: () => void }) {
   const titleId = useId();
+  const openGallery = useTabs((s) => s.openGallery);
+  const locked = useTabs((s) => s.locked);
   const datasets = useDatasets();
   const generate = useGenerateDataset();
   const [picked, setPicked] = useState<RowSize>();
@@ -162,12 +165,18 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           className={dialogStyles.primary}
-          disabled={!pickedReady}
-          title={pickedReady ? undefined : "준비된 데이터를 선택하세요"}
+          disabled={!pickedReady || locked}
+          title={
+            locked
+              ? TABS_LOCKED_HINT
+              : pickedReady
+                ? undefined
+                : "준비된 데이터를 선택하세요"
+          }
           onClick={() => {
             if (picked === undefined) return;
             // 고른 데이터로 새 gallery 탭(작업 공간)을 연다.
-            tabsStore.getState().openGallery({ rows: picked });
+            openGallery({ rows: picked });
             onClose();
           }}
         >

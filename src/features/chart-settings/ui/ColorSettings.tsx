@@ -3,11 +3,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
-import { useDatasetStatus, useLegendValues } from "@/shared/api/queries";
+import {
+  useColumns,
+  useDatasetStatus,
+  useLegendValues,
+} from "@/shared/api/queries";
 import type { CommonProps } from "@/shared/api/types";
-import { columnLabel } from "@/shared/lib/format";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
-import { showAlert } from "@/shared/ui/AlertDialog";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import styles from "@/shared/ui/workspace.module.css";
@@ -23,8 +25,10 @@ export function ColorSettings() {
   const current = useWorkspace((s) => s.current);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
+  const notify = useWorkspace((s) => s.notify);
   const readOnly = useWorkspace((s) => s.readOnly);
   const dataset = useDatasetStatus(draft.rows);
+  const columns = useColumns(draft.rows);
   const legendValues = useLegendValues(
     draft.rows,
     draft.legend,
@@ -44,7 +48,7 @@ export function ColorSettings() {
     onSuccess: ({ jobId }, common) => {
       if (current) replaceJob(jobId, { ...current.spec, common });
     },
-    onError: (err) => showAlert(err.message),
+    onError: (err) => notify(err.message),
   });
 
   const change = (common: CommonProps) => {
@@ -70,7 +74,7 @@ export function ColorSettings() {
       ) : (
         <>
           <h3 className={settingsStyles.heading}>
-            legend 색상 · {columnLabel(draft.legend)}
+            legend 색상 · {columns.label(draft.legend)}
           </h3>
           {legendValues.isPending && (
             <p className={styles.muted}>

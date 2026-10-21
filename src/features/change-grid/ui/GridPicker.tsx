@@ -4,7 +4,11 @@ import { useMutation } from "@tanstack/react-query";
 import { Grid3x3 } from "lucide-react";
 import { useState } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceMutating,
+  useWorkspaceMutationKey,
+} from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
 import { type ChartSpec, isTerminal } from "@/shared/api/types";
@@ -36,12 +40,14 @@ export function GridPicker() {
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
+  const notify = useWorkspace((s) => s.notify);
   const [hover, setHover] = useState<Grid>();
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
   const job = useJobProgress(current?.jobId);
 
   const change = useMutation({
+    mutationKey: useWorkspaceMutationKey("grid"),
     mutationFn: (next: Grid) => {
       if (!current || !gridArea) throw new Error("no chart");
       return api.changeGrid(current.chartId, next, itemSizeFor(gridArea, next));
@@ -57,11 +63,12 @@ export function GridPicker() {
       );
     },
     onError: (err) => {
-      showAlert(err.message);
+      notify(err.message);
       if (current) updateDraft({ grid: current.spec.grid });
     },
   });
 
+  const changing = useWorkspaceMutating("grid");
   const rendering =
     current !== undefined && (!job.data || !isTerminal(job.data.status));
   const selected = draft.grid;
@@ -83,7 +90,7 @@ export function GridPicker() {
       <span className={selectStyles.label}>Grid</span>
       <Popover
         triggerClassName={selectStyles.trigger}
-        disabled={readOnly || change.isPending}
+        disabled={readOnly || changing}
         width={MAX * 20 + 24}
         trigger={
           <>

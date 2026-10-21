@@ -91,10 +91,18 @@
   margin-bottom: 2px;
 }
 
-.close:hover,
-.add:hover {
+.close:hover:enabled,
+.add:hover:enabled {
   background: color-mix(in srgb, var(--ws-panel), var(--ws-text) 10%);
   color: var(--ws-text);
+}
+
+/* 그리는 중이라 탭을 바꿀 수 없을 때 */
+.select:disabled,
+.close:disabled,
+.add:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .hint {

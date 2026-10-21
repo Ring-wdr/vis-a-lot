@@ -2,18 +2,18 @@
 
 import { useEffect } from "react";
 import { readShareHash } from "@/entities/chart/lib/share";
-import {
-  emptyHistoryStore,
-  useTabs,
-} from "@/entities/workspace/model/tabs-store";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import {
   useWorkspace,
+  useWorkspaceStore,
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
+import { useDrawState } from "@/features/draw-chart/model/draw-state";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
+import { showAlert } from "@/shared/ui/AlertDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import { AppHeader } from "@/widgets/app-header/ui/AppHeader";
 import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
@@ -39,6 +39,35 @@ function useOpenSharedLink() {
     history.replaceState(null, "", location.pathname + location.search);
     open.mutate(shared);
   }, [gridArea, open]);
+}
+
+/** 보고 있는 탭의 오류를 띄운다. 다른 탭에서 난 오류는 그 탭으로 돌아왔을 때 뜬다. */
+function TabNotices() {
+  const store = useWorkspaceStore();
+
+  useEffect(() => {
+    // 꺼내면서 비우므로 StrictMode에서 effect가 두 번 돌아도 한 번만 뜬다.
+    const flush = () => {
+      const { notices } = store.getState();
+      if (notices.length === 0) return;
+      store.setState({ notices: [] });
+      for (const message of notices) showAlert(message);
+    };
+    flush();
+    return store.subscribe(flush);
+  }, [store]);
+  return null;
+}
+
+/** 보고 있는 gallery 탭이 그리는 중이면 cancel하거나 끝날 때까지 탭 전환을 잠근다. */
+function DrawLock() {
+  const readOnly = useWorkspace((s) => s.readOnly);
+  const drawing = useDrawState() !== "draw";
+  const setLocked = useTabs((s) => s.setLocked);
+  const locked = !readOnly && drawing;
+
+  useEffect(() => setLocked(locked), [locked, setLocked]);
+  return null;
 }
 
 function GallerySidebar() {
@@ -87,11 +116,14 @@ export function Workspace() {
   const view = useTabs((s) => s.view);
   const tab = useTabs((s) => s.tabs.find((t) => t.id === s.active[s.view]));
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
-  const store = tab?.store ?? emptyHistoryStore;
+  const emptyHistory = useTabs((s) => s.emptyHistory);
+  const store = tab?.store ?? emptyHistory;
   const filterOpen = useTabs((s) => s.filterPanelOpen);
 
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
+      <TabNotices />
+      <DrawLock />
       <div className={styles.workspace}>
         <AppHeader />
         <TabBar view={view} />
