@@ -140,9 +140,16 @@
   max-height: 240px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* 드래그 선택 중 글자가 선택되거나, touch에서 세로 스크롤 외 동작이 끼어들지 않게 한다. */
+  user-select: none;
+  touch-action: pan-y;
   border: 1px solid var(--ws-border);
   border-radius: 6px;
   background: var(--ws-elevated);
+}
+
+.valueList[data-dragging] {
+  cursor: ns-resize;
 }
 
 .valueSizer {
