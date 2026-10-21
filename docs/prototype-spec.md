@@ -11,7 +11,7 @@
 |---|---|
 | 목적 | 포트폴리오 / 기술 검증. 서버사이드 렌더링, 대용량 데이터 처리 구조, B2B 제품 흐름을 고르게 보여준다 |
 | 비용 | 유지비 0원. 정적 호스팅만 사용 |
-| 규모 | 실제 행만 정직하게 보여준다. 행 수(10만 / 50만 / 100만)를 바꿔 규모별 성능 차이를 보여준다 |
+| 규모 | 실제 행만 정직하게 보여준다. 행 수(10만 / 50만 / 100만)를 바꿔 규모별 성능 차이를 보여준다. CSV를 올려 자기 데이터로도 그릴 수 있다 |
 | 원칙 | 화면은 "진짜 서버와 REST로 통신한다"고 믿게 만든다. 나중에 실서버로 바꿔도 화면 코드는 바뀌지 않는다 |
 
 원본 화면의 이미지 표시 방식은 그대로 유지한다.
@@ -94,10 +94,23 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 - 서버는 SQL에 컬럼 이름을 넣을 때 항상 스키마로 확인하고 식별자를 인용한다(공백·한글·특수문자 이름도 안전). job은 데이터가 준비된 뒤 스키마로 차트 설정을 검증하고, 맞지 않으면 사유를 알려 준다.
 - 다른 데이터셋으로 바꾸면 화면이 스키마에 맞지 않는 설정(x, y, legend, split, tooltip, 필터)을 타입에 맞는 기본값으로 바로잡는다.
 
-### 3.4 행 수 전환
-- 행 수(10만 / 50만 / 100만)는 상단 `data` 팝업에서 등록한다(mock: 업로드 대신 서버가 시드로 생성). 한 번 만든 데이터는 IndexedDB에 남는다.
-- 왼쪽 패널의 데이터 select에서는 등록한 규모만 고를 수 있다.
-- history에는 몇 건짜리 데이터였는지 함께 저장한다. 불러올 때 그 데이터가 없으면 생성한다.
+### 3.4 데이터셋 (샘플과 업로드)
+- 데이터셋은 id로 구분한다. 샘플은 행 수별로 `iot-100k` / `iot-500k` / `iot-1m`, 업로드한 데이터는 `up-…`. 차트 설정·history·공유 링크는 이 id를 저장한다(예전 `rows` 기록은 샘플 id로 옮긴다).
+- 샘플(10만 / 50만 / 100만)은 상단 `data` 팝업에서 등록한다(서버가 시드로 생성). 한 번 만든 데이터는 IndexedDB에 남는다.
+- 왼쪽 패널의 데이터 select에서는 등록한 데이터(샘플·업로드)만 고를 수 있다.
+- history에는 어느 데이터였는지 함께 저장한다. 불러올 때 샘플이 없으면 생성하고, 지운 업로드 데이터면 사유와 함께 실패한다.
+
+### 3.5 CSV 업로드
+- `data` 팝업의 '업로드한 파일' 목록: 이름, 크기, 등록 시간, 구분 기호, 첫 번째 행 헤더, Null 값, 상태. 위의 `수정` / `삭제` / `업로드` 버튼으로 다룬다.
+- CSV 파일 하나 또는 CSV를 묶은 zip을 올린다. zip 안의 CSV(폴더 포함, 이름순)는 **한 데이터셋으로 합친다**. CSV가 아닌 파일과 macOS 메타 파일은 건너뛴다.
+- zip 안 CSV의 스키마(컬럼 수, 이름, 값으로 추론한 타입)가 하나라도 다르면 **전체를 거절**하고 아무것도 남기지 않는다. 사유(어느 파일의 어느 컬럼이 어떻게 다른지)를 업로드 팝업에 보여준다.
+- 전처리 옵션: 구분 기호(쉼표·탭·세미콜론·세로 막대·직접 입력 한 글자), 첫 번째 행 헤더(아니면 `column_1…`), Null 값(이 값과 같은 필드를 null로, 기본은 빈 값). 인코딩은 UTF-8, 아니면 EUC-KR로 읽고 BOM은 뗀다.
+- 타입은 값으로 추론한다: 모두 숫자면 숫자, 모두 ISO 날짜·시각이면 시계열, 아니면 범주. `수정`에서 컬럼별로 직접 정할 수 있고, 정한 타입으로 읽히지 않는 값이 있으면 거절한다.
+- `수정`으로 이름·옵션·타입을 바꾸면 보관한 원본으로 다시 검사해 적재한다. 거절되면 기존 데이터를 그대로 둔다. 적재 중에는 수정·삭제할 수 없다.
+- 파싱은 서버(DB Worker)의 papaparse 하나로 하고, Postgres에는 정규화한 CSV 조각(값마다 따옴표, null은 빈 필드)을 COPY로 넣는다. 구분 기호·따옴표·줄바꿈·빈 줄을 두 파서가 다르게 해석할 여지를 없앤다.
+- 원본 파일은 IndexedDB(idb-keyval)에 따로 보관한다. 업로드 데이터는 그 브라우저에만 있으므로 공유 링크도 같은 브라우저에서만 열린다.
+- zip·CSV 라이브러리(fflate, papaparse)는 DB Worker가 업로드를 받을 때, 업로드·수정 팝업은 처음 열 때 동적으로 불러온다.
+- 한도: 압축 해제 후 300MB, CSV 500개, 컬럼 200개.
 - 컬럼은 스키마에서 고르므로 draw하려면 데이터를 등록해야 한다. 적재 중에 draw하면 job은 `init` 상태(spinner만 표시)로 기다리고, 적재가 끝난 뒤부터 `progress`로 넘어간다.
 
 ---
@@ -284,7 +297,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | 서비스 | prefix | 맡는 일 | 저장소 |
 |---|---|---|---|
 | auth | `/api/auth` | 로그인, 토큰 발급·refresh(rotation)·폐기, 서비스 토큰, JWKS | 서명 키·refresh 세션 (IndexedDB) |
-| data | `/api/data` | 데이터 적재(등록), 데이터셋 메타 조회 (상태, 컬럼, split 개수, legend 값) | PGlite (쓰기) |
+| data | `/api/data` | 데이터 적재(샘플 생성, CSV 업로드·수정·삭제), 데이터셋 메타 조회 (상태, 컬럼, split 개수, legend 값) | PGlite (쓰기) |
 | chart | `/api/chart` | 렌더 job, item 조작, 툴팁, PNG, history | PGlite (조회·history), Cache API (PNG) |
 
 - chart 서비스는 데이터가 없을 때 data 서비스에 HTTP로 적재를 요청한다. 인증은 auth 서비스에서 받은 **서비스 토큰**(client credentials)으로 한다.
@@ -325,11 +338,15 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | auth | 현재 사용자 | `GET /me` | Bearer 필요 |
 | auth | 서비스 토큰 | `POST /token` | `{ grantType: 'client_credentials', clientId, clientSecret }` |
 | auth | 공개 키 | `GET /.well-known/jwks.json` | JWK Set |
-| data | 데이터셋 상태 | `GET /datasets/:id` | 행 수별 상태(`missing` / `generating` / `ready`), 단계(`copy` / `analyze`), 진행률, 생성 시간 |
-| data | 데이터 생성 | `POST /datasets/:id/generate` | `{ rows }`. 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 생성은 한 번에 하나씩 순서대로 |
-| data | 스키마 | `GET /datasets/:id/schema?rows=` | 적재된 테이블의 컬럼: 이름, 라벨(주석), 타입(categorical / numeric / datetime), null 허용, 고유값 수(적재 후). 등록 전이면 409 |
-| data | split 개수 확인 | `POST /datasets/:id/split-count` | `{ rows, cols, filters }` → 조합 수 (30,000개 초과 검사, 필터 적용) |
-| data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary?rows=` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
+| data | 데이터셋 목록 | `GET /datasets` | 샘플과 업로드한 데이터셋의 상태(`missing` / `generating` / `ready` / `failed`), 단계(`copy` / `analyze`), 진행률, 생성 시간, 업로드 정보(파일, 크기, 등록 시간, 전처리 옵션, 추론 타입) |
+| data | 데이터셋 상태 | `GET /datasets/:id` | 하나의 상태. 모르는 id면 404 |
+| data | 데이터 생성 | `POST /datasets/:id/generate` | 샘플이 없으면 생성을 시작하고 현재 상태를 돌려준다(202). 업로드한 데이터셋은 상태만. 적재는 한 번에 하나씩 순서대로 |
+| data | 업로드 | `POST /datasets/uploads` | multipart: `file`(csv / zip), `name`, `options`(CsvOptions JSON) → 202 적재 시작. 스키마 불일치 등은 422와 사유 |
+| data | 수정 | `PATCH /datasets/:id` | `{ name?, options? }`. options를 바꾸면 원본으로 다시 검사·적재(거절 시 422, 기존 데이터 유지) |
+| data | 삭제 | `DELETE /datasets/:id` | 업로드한 데이터셋만. 적재 중이면 409 |
+| data | 스키마 | `GET /datasets/:id/schema` | 적재된 테이블의 컬럼: 이름, 라벨(주석), 타입(categorical / numeric / datetime), null 허용, 고유값 수(적재 후). 등록 전이면 409 |
+| data | split 개수 확인 | `POST /datasets/:id/split-count` | `{ cols, filters }` → 조합 수 (30,000개 초과 검사, 필터 적용) |
+| data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
 | chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |
 | chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }`, job 전체의 상태별 item 수·시간·worker 수 |
 | chart | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
@@ -342,7 +359,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
 | chart | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
 | chart | 개별 색상 | `PATCH .../items/:key/props` | `{ color }` 또는 `{ legendColor: { value, color } }`, `null`이면 공통 색으로 |
-| data | legend 값 목록 | `GET /datasets/:id/legend-values?rows=&column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
+| data | legend 값 목록 | `GET /datasets/:id/legend-values?column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
 | chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
@@ -354,11 +371,11 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 ## 7. History
 - 브라우저(IndexedDB)에만 보관한다. 서버 비용은 0원이다.
 - draw 한 번에 한 건이 생긴다. 그 뒤의 확대, 도형, 개별 색상, grid 변경은 같은 건에 덧붙인다. resize는 기록하지 않는다.
-- 저장 내용: 행 수, 생성기 버전, 차트 설정, 공통/개별 속성, 도형, 확대 상태, item별 최종 상태(`cancelled` 포함), 썸네일.
+- 저장 내용: 데이터셋 id, 생성기 버전, 차트 설정, 공통/개별 속성, 도형, 확대 상태, item별 최종 상태(`cancelled` 포함), 썸네일.
 - `history` 화면: 왼쪽 목록에서 고르면 그 차트를 다시 그려 보여준다. 설정은 보기 전용(select disabled)이고 모드는 일반(툴팁)만, item 툴바는 숨긴다. 다시 보기는 history에 기록하지 않는다.
 - `gallery에서 편집`을 누르면 그 차트를 gallery로 가져가고, 이후 변경은 그 history 건에 이어서 기록한다.
 - gallery와 history는 작업 상태를 따로 들고 있어 tab을 오가도 각자 보던 차트가 남는다.
-- 공유는 URL에 설정을 담아서 한다. 시드가 고정이라 같은 URL이면 같은 차트가 다시 만들어진다.
+- 공유는 URL에 설정을 담아서 한다. 샘플은 시드가 고정이라 같은 URL이면 같은 차트가 다시 만들어진다. 업로드한 데이터는 같은 브라우저에서만 열린다.
 
 ---
 
@@ -368,7 +385,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - 실패한 item 다시 시도
 - 기기 간 history 동기화, 팀 공유
 - 고해상도(레티나) 대응
-- 데이터셋 여러 개, 사용자 업로드
+- 업로드 데이터의 기기 간 공유, xlsx 등 CSV 외 형식
 
 ---
 

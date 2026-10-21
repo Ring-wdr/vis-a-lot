@@ -19,3 +19,31 @@ export function showAlert(message: string) {
     </Dialog>
   ));
 }
+
+/** 확인·취소 팝업. 확인을 누르면 true, 취소·Esc면 false로 끝난다. */
+export function showConfirm(
+  message: string,
+  { confirmLabel = "확인" }: { confirmLabel?: string } = {},
+) {
+  return overlay.openAsync<boolean>(({ isOpen, close, unmount }) => (
+    <Dialog isOpen={isOpen} onClose={() => close(false)} onExited={unmount}>
+      <p>{message}</p>
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.secondary}
+          onClick={() => close(false)}
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          className={styles.primary}
+          onClick={() => close(true)}
+        >
+          {confirmLabel}
+        </button>
+      </div>
+    </Dialog>
+  ));
+}

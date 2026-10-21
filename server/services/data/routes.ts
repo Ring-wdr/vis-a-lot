@@ -2,11 +2,7 @@
 
 import { createRoute, z } from "@hono/zod-openapi";
 import { BEARER, requireAuth } from "../common/auth";
-import {
-  ColumnNameSchema,
-  DatasetPathSchema,
-  RowSizeQuerySchema,
-} from "../common/dataset";
+import { ColumnNameSchema, DatasetPathSchema } from "../common/dataset";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
   ColumnSummarySchema,
@@ -14,10 +10,11 @@ import {
   DatasetListResponseSchema,
   DatasetSchemaResponseSchema,
   DatasetStatusSchema,
-  GenerateDatasetRequestSchema,
+  EditDatasetRequestSchema,
   LegendValuesResponseSchema,
   SplitCountRequestSchema,
   SplitCountResponseSchema,
+  UploadDatasetRequestSchema,
 } from "./schemas";
 
 const tags = ["datasets"];
@@ -31,15 +28,29 @@ const notFound = { 404: errorResponse("모르는 데이터셋") };
 const notReady = { 409: errorResponse("데이터셋이 아직 준비되지 않음") };
 const badRequest = { 400: errorResponse("요청 형식 오류") };
 
+const rejected = { 422: errorResponse("CSV 검사에서 거절 (스키마 불일치 등)") };
+
 export const listDatasets = createRoute({
+  method: "get",
+  path: "/datasets",
+  tags,
+  summary: "샘플과 업로드한 데이터셋의 적재 상태",
+  ...read,
+  responses: {
+    200: jsonResponse(DatasetListResponseSchema, "데이터셋 목록"),
+    ...authErrors,
+  },
+});
+
+export const datasetStatus = createRoute({
   method: "get",
   path: "/datasets/{datasetId}",
   tags,
-  summary: "행 수별 적재 상태",
+  summary: "데이터셋 하나의 적재 상태",
   ...read,
   request: { params: DatasetPathSchema },
   responses: {
-    200: jsonResponse(DatasetListResponseSchema, "행 수별 상태"),
+    200: jsonResponse(DatasetStatusSchema, "상태"),
     ...badRequest,
     ...authErrors,
     ...notFound,
@@ -50,17 +61,74 @@ export const generateDataset = createRoute({
   method: "post",
   path: "/datasets/{datasetId}/generate",
   tags,
-  summary: "데이터 적재(등록). 이미 있거나 만드는 중이면 현재 상태만 돌려준다",
+  summary:
+    "샘플 데이터 적재(등록). 이미 있거나 만드는 중이면 현재 상태만 돌려준다. 업로드한 데이터셋은 상태만 돌려준다",
   ...write,
-  request: {
-    params: DatasetPathSchema,
-    body: jsonBody(GenerateDatasetRequestSchema),
-  },
+  request: { params: DatasetPathSchema },
   responses: {
     202: jsonResponse(DatasetStatusSchema, "현재 상태"),
     ...badRequest,
     ...authErrors,
     ...notFound,
+  },
+});
+
+export const uploadDataset = createRoute({
+  method: "post",
+  path: "/datasets/uploads",
+  tags,
+  summary:
+    "CSV 또는 zip(CSV 여러 개를 하나로 합침) 업로드. 파일마다 스키마가 다르면 거절한다",
+  ...write,
+  request: {
+    body: {
+      required: true,
+      content: {
+        "multipart/form-data": { schema: UploadDatasetRequestSchema },
+      },
+    },
+  },
+  responses: {
+    202: jsonResponse(DatasetStatusSchema, "적재 시작"),
+    ...badRequest,
+    ...authErrors,
+    ...rejected,
+  },
+});
+
+export const editDataset = createRoute({
+  method: "patch",
+  path: "/datasets/{datasetId}",
+  tags,
+  summary:
+    "업로드한 데이터셋의 이름·전처리 옵션 변경. 옵션을 바꾸면 원본으로 다시 검사·적재한다",
+  ...write,
+  request: {
+    params: DatasetPathSchema,
+    body: jsonBody(EditDatasetRequestSchema),
+  },
+  responses: {
+    200: jsonResponse(DatasetStatusSchema, "바뀐 상태"),
+    ...badRequest,
+    ...authErrors,
+    ...notFound,
+    ...rejected,
+  },
+});
+
+export const deleteDataset = createRoute({
+  method: "delete",
+  path: "/datasets/{datasetId}",
+  tags,
+  summary: "업로드한 데이터셋 삭제",
+  ...write,
+  request: { params: DatasetPathSchema },
+  responses: {
+    204: { description: "삭제됨" },
+    ...badRequest,
+    ...authErrors,
+    ...notFound,
+    409: errorResponse("적재 중이라 지울 수 없음"),
   },
 });
 
@@ -73,7 +141,6 @@ export const schema = createRoute({
   ...read,
   request: {
     params: DatasetPathSchema,
-    query: z.object({ rows: RowSizeQuerySchema }),
   },
   responses: {
     200: jsonResponse(DatasetSchemaResponseSchema, "컬럼 목록"),
@@ -116,7 +183,6 @@ export const columnSummary = createRoute({
         param: { name: "column", in: "path" },
       }),
     }),
-    query: z.object({ rows: RowSizeQuerySchema }),
   },
   responses: {
     200: jsonResponse(ColumnSummarySchema, "컬럼 요약"),
@@ -136,7 +202,6 @@ export const legendValues = createRoute({
   request: {
     params: DatasetPathSchema,
     query: z.object({
-      rows: RowSizeQuerySchema,
       column: ColumnNameSchema.openapi({
         param: { name: "column", in: "query" },
       }),

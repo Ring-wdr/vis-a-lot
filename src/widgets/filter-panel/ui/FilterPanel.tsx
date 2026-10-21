@@ -23,11 +23,11 @@ export function FilterPanel() {
   const drawn = useWorkspace((s) => s.current !== undefined);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
-  const rows = useWorkspace((s) => s.draft.rows);
+  const dataset = useWorkspace((s) => s.draft.dataset);
   // 컬럼은 데이터마다 달라 고른 데이터셋의 스키마에서 받는다.
-  const schema = useDatasetSchema(rows);
+  const schema = useDatasetSchema(dataset);
   const columns = schema.data?.columns ?? [];
-  const schemaState = useSchemaState(rows);
+  const schemaState = useSchemaState(dataset);
   const count = filters?.length ?? 0;
   const pending = drawn && !readOnly && !sameFilters(filters, applied);
 

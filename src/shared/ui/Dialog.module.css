@@ -40,3 +40,17 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.secondary {
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  background: var(--ws-elevated);
+  color: inherit;
+  cursor: pointer;
+}
+
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

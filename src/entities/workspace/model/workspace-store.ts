@@ -2,6 +2,7 @@
 
 import { createStore } from "zustand";
 import type { ChartSpec, CreateChartResponse } from "@/shared/api/types";
+import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { DEFAULT_SERIES_COLOR } from "@/shared/lib/palette";
 
 export const MODES = [
@@ -59,7 +60,7 @@ export type WorkspaceState = {
 };
 
 export const DEFAULT_SPEC: ChartSpec = {
-  rows: 100_000,
+  dataset: DEFAULT_DATASET,
   chartType: "scatter",
   // 컬럼은 데이터마다 달라 비워 두고, 데이터셋 스키마를 받으면 타입에 맞는 첫 컬럼으로 채운다.
   x: "",

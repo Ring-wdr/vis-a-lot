@@ -13,7 +13,7 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import { openChartIn } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
-import { useColumnsByRows } from "@/shared/api/queries";
+import { useColumnsByDataset, useDatasetNames } from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
 import type { ColumnLookup } from "@/shared/lib/format";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -45,9 +45,13 @@ function timeAgo(ms: number) {
   return relative.format(Math.round(diff / 86_400), "day");
 }
 
-function detailOf(entry: HistorySummary, columns: ColumnLookup) {
+function detailOf(
+  entry: HistorySummary,
+  columns: ColumnLookup,
+  datasetName: string,
+) {
   const parts = [
-    `${(entry.rows / 10_000).toLocaleString()}만 행`,
+    datasetName,
     entry.spec.splitBy.length > 0
       ? `split ${entry.spec.splitBy.map(columns.label).join(entry.spec.splitSeparator)}`
       : "split 없음",
@@ -92,9 +96,10 @@ export function HistoryList() {
   });
   const viewing = useWorkspace((s) => s.current?.historyId);
   // 컬럼 라벨은 데이터셋 스키마에 있으므로, 목록에 나오는 데이터셋의 스키마를 함께 받는다.
-  const columnsOf = useColumnsByRows(
-    list.data?.entries.map((e) => e.rows) ?? [],
+  const columnsOf = useColumnsByDataset(
+    list.data?.entries.map((e) => e.dataset) ?? [],
   );
+  const nameOf = useDatasetNames();
 
   if (list.error) {
     return (
@@ -160,10 +165,14 @@ export function HistoryList() {
             </span>
             <span className={styles.historyText}>
               <span className={styles.historyTitle}>
-                {chartTitle(entry.spec, columnsOf(entry.rows))}
+                {chartTitle(entry.spec, columnsOf(entry.dataset))}
               </span>
               <span className={styles.muted}>
-                {detailOf(entry, columnsOf(entry.rows))}
+                {detailOf(
+                  entry,
+                  columnsOf(entry.dataset),
+                  nameOf(entry.dataset),
+                )}
               </span>
               {eventsOf(entry) && (
                 <span className={styles.muted}>+ {eventsOf(entry)}</span>

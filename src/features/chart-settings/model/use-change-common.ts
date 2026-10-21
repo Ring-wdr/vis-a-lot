@@ -19,7 +19,7 @@ export function useChangeCommon() {
   const appliesToCurrent =
     current !== undefined &&
     current.spec.legend === draft.legend &&
-    current.spec.rows === draft.rows;
+    current.spec.dataset === draft.dataset;
 
   const apply = useMutation({
     mutationFn: (common: CommonProps) => {

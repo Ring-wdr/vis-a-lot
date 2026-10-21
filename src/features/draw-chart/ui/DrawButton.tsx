@@ -26,10 +26,10 @@ export function DrawButton() {
   const setCurrent = useWorkspace((s) => s.setCurrent);
   const notify = useWorkspace((s) => s.notify);
   const cancel = useCancelJob();
-  const dataset = useDatasetStatus(draft.rows);
+  const dataset = useDatasetStatus(draft.dataset);
 
   // 컬럼은 데이터셋 스키마에서 고르므로, 스키마를 받고 x·y가 정해져야 그릴 수 있다.
-  const schema = useDatasetSchema(draft.rows);
+  const schema = useDatasetSchema(draft.dataset);
   const ready = schema.data !== undefined && draft.x !== "" && draft.y !== "";
 
   const draw = useMutation({
@@ -40,7 +40,7 @@ export function DrawButton() {
       if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
         // 최대 개수는 서버가 정해 응답에 담아 준다.
         const { count, limit } = await api.splitCount(
-          draft.rows,
+          draft.dataset,
           draft.splitBy,
           draft.filters,
         );

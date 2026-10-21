@@ -5,7 +5,8 @@ import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { DatasetPanel } from "@/features/register-dataset/ui/DatasetPanel";
 import { api } from "@/shared/api/api";
 import { useHealth } from "@/shared/api/queries";
-import type { DebugRenderResponse, RowSize } from "@/shared/api/types";
+import type { DatasetId, DebugRenderResponse } from "@/shared/api/types";
+import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import styles from "./page.module.css";
 
 const ITEM_COUNT = 8;
@@ -18,7 +19,7 @@ type Item = { key: string; result?: DebugRenderResponse; error?: string };
 /** 구조 검증 페이지: DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더, `<img>` → MSW → Cache API 경로. */
 export function BootCheck() {
   const { data: health, error: healthError } = useHealth();
-  const [rows, setRows] = useState<RowSize>(100_000);
+  const [dataset, setDataset] = useState<DatasetId>(DEFAULT_DATASET);
   const [items, setItems] = useState<Item[]>([]);
   const [points, setPoints] = useState(50_000);
   const [totalMs, setTotalMs] = useState<number>();
@@ -75,7 +76,7 @@ export function BootCheck() {
 
       <section>
         <h2>데이터셋 (절차적 생성 → COPY 적재)</h2>
-        <DatasetPanel rows={rows} onRowsChange={setRows} showColumns />
+        <DatasetPanel dataset={dataset} onChange={setDataset} showColumns />
       </section>
 
       <section>

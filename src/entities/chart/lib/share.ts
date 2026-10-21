@@ -1,4 +1,5 @@
-// 공유 링크. 시드가 고정이라 설정과 item 상태만 있으면 같은 차트가 다시 만들어진다.
+// 공유 링크. 샘플 데이터는 시드가 고정이라 설정과 item 상태만 있으면 같은 차트가 다시 만들어진다.
+// 업로드한 데이터는 그 브라우저에만 있으므로 같은 브라우저에서만 열린다.
 // 상태는 lz-string으로 압축해 URL hash에 담는다 (서버로 보내지 않는다).
 
 import {
@@ -6,6 +7,7 @@ import {
   decompressFromEncodedURIComponent,
 } from "lz-string";
 import type { ChartSpec, HistoryDetail, ItemRestore } from "@/shared/api/types";
+import { legacyDatasetOf } from "@/shared/config/dataset";
 
 const PREFIX = "#s=";
 const SHARE_VERSION = 1;
@@ -58,7 +60,14 @@ export function readShareHash(hash: string): SharedChart | undefined {
     const json = decompressFromEncodedURIComponent(hash.slice(PREFIX.length));
     const payload = json ? (JSON.parse(json) as Payload) : undefined;
     if (payload?.v !== SHARE_VERSION || !payload.spec) return undefined;
-    return { spec: payload.spec, restore: payload.restore ?? {} };
+    // 행 수(rows)로 데이터셋을 구분하던 예전 링크
+    const { rows, ...spec } = payload.spec as ChartSpec & { rows?: number };
+    return {
+      spec: spec.dataset
+        ? spec
+        : { ...spec, dataset: legacyDatasetOf(rows ?? 0) },
+      restore: payload.restore ?? {},
+    };
   } catch {
     return undefined;
   }

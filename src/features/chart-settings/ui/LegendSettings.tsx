@@ -14,7 +14,7 @@ import settingsStyles from "./SettingsDialog.module.css";
 export function LegendSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
-  const columns = useColumns(draft.rows);
+  const columns = useColumns(draft.dataset);
   const { common, change, pending, appliesToCurrent } = useChangeCommon();
 
   return (
