@@ -61,12 +61,8 @@
 
 .delimiter {
   display: flex;
+  flex-direction: column;
   gap: 6px;
-}
-
-.delimiter > * {
-  flex: 1;
-  min-width: 0;
 }
 
 .check {

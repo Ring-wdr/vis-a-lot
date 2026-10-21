@@ -3,6 +3,7 @@
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
+import { useDialogContainer } from "./Dialog";
 import styles from "./Select.module.css";
 
 export type SelectOption<T> = { value: T; label: string; disabled?: boolean };
@@ -30,6 +31,7 @@ export function Select<T extends string | number>({
   onChange: (next: T) => void;
   disabled?: boolean;
 }) {
+  const dialog = useDialogContainer();
   return (
     <div className={styles.field}>
       <BaseSelect.Root
@@ -55,8 +57,10 @@ export function Select<T extends string | number>({
             <ChevronDown size={14} aria-hidden="true" />
           </BaseSelect.Icon>
         </BaseSelect.Trigger>
-        <BaseSelect.Portal>
+        {/* dialog 안이면 dialog 안으로 portal하고, dialog의 스크롤 영역에 잘리지 않게 fixed로 띄운다. */}
+        <BaseSelect.Portal container={dialog ?? undefined}>
           <BaseSelect.Positioner
+            positionMethod={dialog ? "fixed" : undefined}
             className={styles.positioner}
             alignItemWithTrigger={false}
             align="start"
