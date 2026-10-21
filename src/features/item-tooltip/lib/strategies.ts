@@ -24,6 +24,11 @@ export type TooltipHit = {
   rowId?: number;
 };
 
+export type TooltipOptions = {
+  /** scatter: 커서에서 가장 가까운 점(픽셀 기준으로 줄인 점)을 함께 보여줄지. 끄면 커서 좌표값만 보여준다. */
+  nearest: boolean;
+};
+
 export type TooltipStrategy<M extends ItemMeta> = {
   /** metadata를 받았을 때 한 번 만드는 준비물 (공간 인덱스 등) */
   prepare: (meta: M) => unknown;
@@ -33,6 +38,7 @@ export type TooltipStrategy<M extends ItemMeta> = {
     prepared: unknown,
     px: number,
     py: number,
+    options?: TooltipOptions,
   ) => TooltipHit | null;
 };
 
@@ -54,7 +60,7 @@ const NEAREST_MAX_PX = 24;
 export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
   prepare: (meta) => new PointIndex(meta.points.px, meta.points.py),
 
-  hitTest(meta, prepared, px, py) {
+  hitTest(meta, prepared, px, py, { nearest } = { nearest: true }) {
     const { plot } = meta;
     if (inLegendBox(meta, px, py)) return null;
     if (
@@ -71,6 +77,8 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
       { label: "커서 x", value: formatValue(x, meta.x.kind) },
       { label: "커서 y", value: formatValue(y, meta.y.kind) },
     ];
+    // 가까운 점을 끄면 tooltip 컬럼도 가져오지 않는다 (가까운 점의 행에서 읽는 값이다).
+    if (!nearest) return { rows };
     const index = (prepared as PointIndex).nearest(px, py, NEAREST_MAX_PX);
     if (index === -1) return { rows };
     const { points } = meta;

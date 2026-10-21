@@ -133,7 +133,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
   - history는 목록에서 고른 건마다 탭으로 열고(이미 열린 건이면 그 탭으로), `gallery에서 편집`은 새 gallery 탭으로 가져간다.
 - **모드 바:** 일반 / 확대 / 사각형 / 선 / 자유곡선 / 텍스트. 아이콘으로 표시하고 이름은 title로 보여준다. 확대·도형 모드는 그린 차트가 없거나 다시 보기 전용(history)이면 disabled이고 흐리게 보인다
 - **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, legend, 통계 함수(bar일 때만), split by, tooltip. `전체 설정`과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
-- **전체 설정 팝업:** 자주 바꾸지 않는 설정을 모은다. 왼쪽 메뉴로 고른다: 색상(공통 색 또는 legend 값별 색), split by(구분 기호)
+- **전체 설정 팝업:** 자주 바꾸지 않는 설정을 모은다. 왼쪽 메뉴로 고른다: 색상(공통 색 또는 legend 값별 색), legend(위치), split by(구분 기호), 툴팁(가까운 점 표시)
 - **선택 필드:** 단일 선택(데이터, x, y, legend, 통계 함수)과 다중 선택(split by, tooltip)은 같은 트리거·팝업 모양을 쓴다(Base UI Select / Combobox). 높이를 아끼려고 다중 선택은 고른 값을 한 줄에 순서대로 쉼표로 이어 쓰고 넘치면 말줄임, 오른쪽에 개수를 보여준다.
 - **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
 - **grid 크기:** Excel의 표 삽입처럼 10 x 10 칸 popover에서 행 × 열을 고른다 (1..10 × 1..10, 직사각형 가능)
@@ -182,7 +182,7 @@ PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같�
   - bar / boxplot의 통계값
 - x, y 값과 가장 가까운 점은 metadata만으로 서버 호출 없이 바로 보여준다. tooltip에서 다른 컬럼을 고른 경우에만 서버를 호출한다.
 - 차트 종류별 툴팁 렌더링은 strategy pattern으로 만든다.
-  - scatter: 커서 위치의 좌표값 + 가장 가까운 점
+  - scatter: 커서 위치의 좌표값 + 가장 가까운 점. 가까운 점 표시는 전체 설정 · 툴팁에서 끌 수 있다(기본 켬). 끄면 커서 좌표값만 보이고, tooltip 컬럼은 가까운 점의 행 값이라 함께 숨기며 서버도 호출하지 않는다. 화면 표시만 바꾸는 설정이라 탭 상태에 두고 차트 설정(spec)에는 넣지 않는다
   - bar: 막대의 집계값
   - boxplot: 사분위수 등 통계값
 

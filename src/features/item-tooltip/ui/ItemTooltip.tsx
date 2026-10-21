@@ -56,6 +56,7 @@ export function ItemTooltip({
   // 컬럼 라벨·타입은 그린 차트의 데이터셋 스키마에서 찾는다.
   const rows = useWorkspace((s) => s.current?.spec.rows ?? s.draft.rows);
   const columnInfo = useColumns(rows);
+  const showNearest = useWorkspace((s) => s.showNearest);
 
   const strategy = meta.data ? strategyFor(meta.data) : undefined;
   const prepared = useMemo(
@@ -65,7 +66,9 @@ export function ItemTooltip({
 
   const hit =
     cursor && meta.data && strategy
-      ? strategy.hitTest(meta.data, prepared, cursor.x, cursor.y)
+      ? strategy.hitTest(meta.data, prepared, cursor.x, cursor.y, {
+          nearest: showNearest,
+        })
       : null;
   const rowId = useDebounced(hit?.rowId, 100);
   const extra = useTooltipValues(chartId, itemKey, rowId, columns);
