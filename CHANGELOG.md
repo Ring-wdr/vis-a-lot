@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.0] - 2026-10-21
 
 CSV·zip을 올려 자기 데이터로 그린다. 데이터셋을 행 수가 아니라 id로 구분한다.
 
@@ -15,6 +15,9 @@ CSV·zip을 올려 자기 데이터로 그린다. 데이터셋을 행 수가 아
 ### 데이터셋 id
 - 차트 설정·history·공유 링크가 행 수(`rows`) 대신 데이터셋 id(`iot-100k`, `up-…`)를 저장한다. 예전 history와 링크, 등록해 둔 샘플은 그대로 옮겨 쓴다
 - data API: `GET /datasets`, `POST /datasets/uploads`, `PATCH`·`DELETE /datasets/{id}`를 더하고 `rows` 파라미터를 없앴다
+
+### 수정
+- 팝업(`<dialog>`) 안에서 Select·OrderedSelect 목록이 dialog 아래에 깔려 고를 수 없던 문제. dialog 안이면 목록을 그 dialog 안으로 띄운다
 
 ## [0.4.0] - 2026-10-21
 
