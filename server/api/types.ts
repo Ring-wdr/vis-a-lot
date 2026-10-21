@@ -176,6 +176,10 @@ export function isHexColor(value: unknown): value is string {
 /** item 하나(또는 몇 개)를 다시 그리는 job */
 export type ItemJobResponse = { jobId: string };
 
+/** 크게 보기용 PNG. 그 크기로 그려 둔 게 있으면 바로 image를, 없으면 그리는 job을 준다. */
+export type DetailRequest = { itemSize: ItemSize };
+export type DetailResponse = { image: ChartImage } | { jobId: string };
+
 export type TooltipRequest = { rowId: number; columns: ColumnName[] };
 export type TooltipResponse = {
   values: Record<string, string | number | null>;
@@ -208,6 +212,10 @@ export type ItemState = {
   /** 현재 단계 안에서의 진행률 0..1 */
   stageProgress: number;
   image?: ChartImage;
+  /** 고정 크기 섬네일. 크게 보기 화면 하단 목록에 쓴다. */
+  thumbnail?: ChartImage;
+  /** 그림 내용이 바뀔 때마다 올라간다. 크기만 바뀌면 그대로다. */
+  revision: number;
   error?: string;
   /** 확대 중인지. 축소/초기화 버튼 활성화에 쓴다. */
   zoomed: boolean;
