@@ -124,6 +124,9 @@ function DrawnItem({
 }) {
   const mode = useWorkspace((s) => s.mode);
   const readOnly = useWorkspace((s) => s.readOnly);
+  const commonPosition = useWorkspace(
+    (s) => s.current?.spec.common.legendPosition ?? "top",
+  );
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
   const setItemJob = useWorkspace((s) => s.setItemJob);
@@ -161,24 +164,9 @@ function DrawnItem({
   return (
     <article
       className={styles.item}
+      aria-label={item.label}
       onDoubleClick={doubleClickHandler(onDoubleClick)}
     >
-      <div className={styles.itemToolbar}>
-        <span className={styles.itemLabel} title={item.label}>
-          {item.label}
-        </span>
-        {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
-        {!readOnly && (
-          <ItemToolbar
-            item={item}
-            busy={busy}
-            undoCount={undoCount}
-            hasLegend={hasLegend}
-            onAction={action.mutate}
-          />
-        )}
-        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
-      </div>
       <div className={styles.itemBody}>
         {mode === "normal" ? (
           <ItemTooltip
@@ -215,6 +203,21 @@ function DrawnItem({
             </div>
           )
         )}
+      </div>
+      {/* 차트 위 우측 상단에 떠 있는 도구. 커서를 올리거나 포커스가 들어오면 보인다. */}
+      <div className={styles.itemToolbar}>
+        {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
+        {!readOnly && (
+          <ItemToolbar
+            item={item}
+            busy={busy}
+            undoCount={undoCount}
+            hasLegend={hasLegend}
+            commonPosition={commonPosition}
+            onAction={action.mutate}
+          />
+        )}
+        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
     </article>
   );
@@ -271,15 +274,14 @@ export function ChartItemCard({
   return (
     <article
       className={styles.item}
+      aria-label={item?.label}
       onDoubleClick={doubleClickHandler(onDoubleClick)}
     >
-      <div className={styles.itemToolbar}>
+      <div className={styles.itemBody}>
+        {/* 그림이 없으면 PNG 제목 대신 이름을 띄운다. */}
         <span className={styles.itemLabel} title={item?.label}>
           {item?.label ?? "…"}
         </span>
-        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
-      </div>
-      <div className={styles.itemBody}>
         {item?.status === "failed" ? (
           <p role="alert" className={styles.error}>
             렌더 실패: {item.error}
@@ -289,6 +291,9 @@ export function ChartItemCard({
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}
+      </div>
+      <div className={styles.itemToolbar}>
+        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
     </article>
   );

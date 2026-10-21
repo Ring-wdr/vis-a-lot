@@ -2,7 +2,6 @@ import type { ChartSpec, ItemSize } from "@/shared/api/types";
 // item grid의 치수 계산. 화면 배치와 서버에 요청할 PNG 크기가 같은 계산을 쓴다.
 
 export const GRID_GAP = 12;
-export const ITEM_TOOLBAR_HEIGHT = 30;
 export const GRID_FOOTER_HEIGHT = 44;
 /** grid 오른쪽의 페이지 스크롤바 폭과 간격. 페이지가 하나여도 자리는 비워 둬 item 크기가 바뀌지 않게 한다. */
 export const PAGE_SCROLLER_WIDTH = 16;
@@ -23,17 +22,14 @@ export function thumbnailCountFor(width: number) {
   return Math.max(1, Math.floor((width + THUMBNAIL_GAP) / slot));
 }
 
-/** 크게 보기 item 칸에 맞는 PNG 크기. 칸 크기는 item 카드 전체(toolbar 포함)다. */
+/** 크게 보기 item 칸에 맞는 PNG 크기. 도구는 차트 위에 떠 있어 카드 전체를 PNG가 쓴다 (테두리 1px × 2만 뺀다). */
 export function detailSizeFor(area: {
   width: number;
   height: number;
 }): ItemSize {
   return {
     width: Math.min(MAX_PNG_SIDE, Math.max(50, Math.floor(area.width) - 2)),
-    height: Math.min(
-      MAX_PNG_SIDE,
-      Math.max(50, Math.floor(area.height) - ITEM_TOOLBAR_HEIGHT - 2),
-    ),
+    height: Math.min(MAX_PNG_SIDE, Math.max(50, Math.floor(area.height) - 2)),
   };
 }
 
@@ -47,6 +43,6 @@ export function itemSizeFor(
   const cellHeight = (height - GRID_GAP * (grid.rows - 1)) / grid.rows;
   return {
     width: Math.max(50, Math.floor(cellWidth) - 2),
-    height: Math.max(50, Math.floor(cellHeight) - ITEM_TOOLBAR_HEIGHT - 2),
+    height: Math.max(50, Math.floor(cellHeight) - 2),
   };
 }

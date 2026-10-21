@@ -13,6 +13,7 @@ import type {
   HistoryDetail,
   ItemMeta,
   ItemSize,
+  LegendPosition,
   RowSize,
   Shape,
   TooltipRequest,
@@ -261,6 +262,18 @@ export const api = {
       chartClient.POST("/charts/{chartId}/items/{itemKey}/detail", {
         params: { path: item(chartId, itemKey) },
         body: { itemSize },
+      }),
+    ),
+
+  setItemLegendPosition: (
+    chartId: string,
+    itemKey: string,
+    legendPosition: LegendPosition | null,
+  ) =>
+    unwrap(
+      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
+        params: { path: item(chartId, itemKey) },
+        body: { legendPosition },
       }),
     ),
 

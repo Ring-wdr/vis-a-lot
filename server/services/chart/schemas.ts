@@ -283,8 +283,8 @@ export const ResizeRequestSchema = z
   .openapi("ResizeRequest");
 
 /**
- * 개별 색상. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색이다.
- * 색이 null이면 공통 속성을 따르도록 되돌린다.
+ * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치다.
+ * null이면 공통 속성을 따르도록 되돌린다. color: null은 legend 값별 색까지 모두 되돌린다.
  */
 export const ItemPropsRequestSchema = z
   .union([

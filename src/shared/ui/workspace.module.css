@@ -357,6 +357,7 @@
 }
 
 .item {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -367,22 +368,49 @@
   background: var(--ws-surface);
 }
 
-/* 높이는 grid-layout.ts의 ITEM_TOOLBAR_HEIGHT와 같아야 PNG 크기 계산이 맞는다. */
+/* item 도구는 차트 위 우측 상단에 띄운다. 자리를 차지하지 않으니 PNG가 카드 전체를 쓴다.
+   평소에는 숨기고, 커서를 올리거나 포커스가 들어오거나 설정 팝업이 열려 있으면 보인다. */
 .itemToolbar {
-  flex: none;
-  height: 30px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--ws-border);
-  font-size: 12px;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  box-shadow: 0 2px 8px rgb(var(--ws-shadow-rgb) / 10%);
+  opacity: 0;
+  transition: opacity 120ms;
 }
 
+.item:hover .itemToolbar,
+.itemToolbar:focus-within,
+.itemToolbar:has(:popover-open) {
+  opacity: 1;
+}
+
+/* 커서가 없는 기기에서는 늘 보인다. */
+@media (hover: none) {
+  .itemToolbar {
+    opacity: 1;
+  }
+}
+
+/* 그림이 없는 item의 이름 */
 .itemLabel {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  max-width: calc(100% - 60px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .itemBody {
@@ -595,13 +623,9 @@
   cursor: not-allowed;
 }
 
+/* 도구를 쓰지 않는 일반 모드는 기본 커서. 가리킨 점·막대는 표시(hitMarker·hitBox)로 보여준다. */
 .tooltipLayer {
   position: relative;
-  cursor: crosshair;
-}
-
-/* bar/boxplot은 점이 아니라 막대/상자를 고르므로 십자 대신 기본 커서 + 감싸는 사각형 */
-.tooltipLayer[data-hover="box"] {
   cursor: default;
 }
 
@@ -665,15 +689,9 @@
 .itemActions {
   display: flex;
   gap: 2px;
-  margin-left: auto;
 }
 
-/* 크게 보기 버튼 묶음은 item 도구 바로 뒤에 붙는다. */
-.itemActions + .itemActions {
-  margin-left: 0;
-}
-
-.itemActions button {
+.itemActions > button {
   display: inline-grid;
   place-items: center;
   width: 24px;
@@ -686,12 +704,12 @@
   cursor: pointer;
 }
 
-.itemActions button:hover:not(:disabled) {
+.itemActions > button:hover:not(:disabled) {
   border-color: var(--ws-border);
   background: var(--ws-elevated);
 }
 
-.itemActions button:disabled {
+.itemActions > button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
@@ -806,19 +824,10 @@
   vertical-align: -1px;
 }
 
-.colorButton .colorDot {
-  margin: 0;
-}
-
 .colorDot[data-custom] {
   box-shadow:
     0 0 0 2px var(--ws-elevated),
     0 0 0 3px var(--ws-text);
-}
-
-.itemActions .colorButton {
-  display: inline-grid;
-  place-items: center;
 }
 
 .linkButton {
@@ -967,4 +976,72 @@
   width: 200px;
   position: fixed;
   z-index: 1000;
+}
+
+/* 붙어 있는 선택 버튼 묶음 (legend 위치) */
+.segmented {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.segmented button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid var(--ws-border);
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.segmented button + button {
+  margin-left: -1px;
+}
+
+.segmented button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.segmented button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.segmented button[aria-pressed="true"] {
+  position: relative;
+  border-color: var(--ws-accent-border);
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+  font-weight: 600;
+}
+
+.segmented button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* item 설정 팝업의 묶음 (legend 위치, 색상) */
+.settingsGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.settingsGroup > .segmented {
+  align-self: stretch;
+}
+
+.settingsGroup h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ws-text-secondary);
 }

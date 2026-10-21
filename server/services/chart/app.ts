@@ -179,8 +179,12 @@ export const chartApp = createServiceApp()
         : undefined;
     } else if ("legendPosition" in body) {
       props.legendPosition = body.legendPosition ?? undefined;
+    } else if (body.color === null) {
+      // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
+      props.color = undefined;
+      props.legendColors = undefined;
     } else {
-      props.color = body.color ?? undefined;
+      props.color = body.color;
     }
     item.props = propsOrNone(props);
     recordEvent(
