@@ -21,6 +21,7 @@ import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
 import { FilterPanel } from "@/widgets/filter-panel/ui/FilterPanel";
 import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
 import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
+import { TabToolbar } from "@/widgets/tab-toolbar/ui/TabToolbar";
 
 // tab을 오가며 gallery가 다시 마운트돼도 공유 링크는 처음 한 번만 연다.
 let sharedLinkHandled = false;
@@ -127,6 +128,7 @@ export function Workspace() {
       <div className={styles.workspace}>
         <AppHeader />
         <TabBar view={view} />
+        <TabToolbar />
         <aside className={styles.panel}>
           {view === "gallery" ? <GallerySidebar /> : <HistorySidebar />}
         </aside>

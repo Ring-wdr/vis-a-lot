@@ -1,7 +1,8 @@
 .workspace {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  grid-template-rows: 48px 36px minmax(0, 1fr);
+  /* 상단 바 · 탭 바 · 탭 도구 줄 · 탭 내용 */
+  grid-template-rows: 48px 36px 44px minmax(0, 1fr);
   height: 100vh;
   background: var(--ws-surface);
   color: var(--ws-text);
@@ -11,7 +12,7 @@
    모든 item을 새 크기로 다시 그리게 된다. */
 .filterDrawer {
   grid-column: -2 / -1;
-  grid-row: 3;
+  grid-row: 4;
   justify-self: end;
   z-index: 10;
   display: flex;
@@ -37,6 +38,17 @@
 .brand {
   font-weight: 700;
   width: 228px;
+}
+
+/* 탭 안 도구 줄: 탭 바 바로 아래, 탭 내용과 같은 배경이라 그 탭에 속해 보인다. */
+.tabToolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ws-border);
+  background: var(--ws-surface);
 }
 
 .modeBar {
@@ -71,7 +83,11 @@
 }
 
 .modeBar button:disabled,
-.chartTypes button:disabled,
+.chartTypes button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .secondaryButton {
   display: inline-flex;
   align-items: center;
@@ -88,7 +104,7 @@
 /* 왼쪽 패널: 설정은 스크롤되고, 공통 속성·draw 같은 동작 버튼은 하단에 고정된다. */
 .panel {
   grid-column: 1;
-  grid-row: 3;
+  grid-row: 4;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -225,7 +241,7 @@
 .main {
   /* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 4;
   min-width: 0;
   min-height: 0;
   padding: 16px;
