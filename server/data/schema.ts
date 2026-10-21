@@ -2,7 +2,6 @@
 // 컬럼 정의(COLUMNS)는 생성기가 테이블을 만들 때만 쓴다. 나머지 코드는 적재된 테이블의 스키마를
 // 읽어(dataset-schema.ts) 컬럼과 타입을 안다. 그래야 컬럼 이름이 다른 데이터가 들어와도 그대로 동작한다.
 
-export const DATASET_ID = "iot";
 /** 2: 컬럼 라벨을 컬럼 주석(comment)으로 남긴다. */
 export const GENERATOR_VERSION = 2;
 export const SEED = 20261020;
@@ -26,8 +25,25 @@ export const AGG_LABELS: Record<AggFn, string> = {
 export const MAX_SPLIT_ITEMS = 30_000;
 export type RowSize = (typeof ROW_SIZES)[number];
 
-export function isRowSize(n: number): n is RowSize {
-  return (ROW_SIZES as readonly number[]).includes(n);
+/**
+ * 샘플(생성기) 데이터셋. id가 행 수를 정한다. 업로드한 데이터셋은 `up-`로 시작하는 id를 받는다.
+ * 예전 기록(spec.rows)은 sampleIdOf로 id를 찾는다.
+ */
+export const SAMPLES = [
+  { id: "iot-100k", rows: 100_000, name: "IoT 센서 · 10만 행" },
+  { id: "iot-500k", rows: 500_000, name: "IoT 센서 · 50만 행" },
+  { id: "iot-1m", rows: 1_000_000, name: "IoT 센서 · 100만 행" },
+] as const satisfies readonly { id: string; rows: RowSize; name: string }[];
+
+export type SampleId = (typeof SAMPLES)[number]["id"];
+export const DEFAULT_DATASET: SampleId = SAMPLES[0].id;
+
+export function sampleOf(id: string) {
+  return SAMPLES.find((s) => s.id === id);
+}
+
+export function sampleIdOf(rows: number): SampleId | undefined {
+  return SAMPLES.find((s) => s.rows === rows)?.id;
 }
 
 export const COLUMN_TYPES = ["time", "string", "number"] as const;

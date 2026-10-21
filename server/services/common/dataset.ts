@@ -1,28 +1,14 @@
-// data·chart 서비스가 함께 쓰는 데이터셋 계약 (행 수, 컬럼, 집계 함수).
+// data·chart 서비스가 함께 쓰는 데이터셋 계약 (데이터셋 id, 컬럼, 집계 함수).
 
 import { z } from "@hono/zod-openapi";
 import { LOGICAL_TYPES } from "../../data/dataset-schema";
-import { AGG_FNS, DATASET_ID, ROW_SIZES } from "../../data/schema";
+import { AGG_FNS, DEFAULT_DATASET } from "../../data/schema";
 
-export const DatasetIdSchema = z.literal(DATASET_ID).openapi("DatasetId");
-
-export const RowSizeSchema = z
-  .union([
-    z.literal(ROW_SIZES[0]),
-    z.literal(ROW_SIZES[1]),
-    z.literal(ROW_SIZES[2]),
-  ])
-  .openapi("RowSize");
-
-/** 쿼리 문자열의 행 수 */
-export const RowSizeQuerySchema = z.coerce
-  .number()
-  .pipe(RowSizeSchema)
-  .openapi({
-    param: { name: "rows", in: "query" },
-    type: "integer",
-    enum: [...ROW_SIZES],
-  });
+/** 데이터셋 id. 샘플은 iot-100k처럼 행 수를, 업로드는 up-…로 시작한다. */
+export const DatasetIdSchema = z
+  .string()
+  .regex(/^[a-z0-9-]{1,40}$/, "invalid dataset id")
+  .openapi("DatasetId", { example: DEFAULT_DATASET });
 
 /**
  * 컬럼 이름. 데이터마다 이름이 제각각이라 정해 두지 않고, 서버가 데이터셋 스키마로 확인한다

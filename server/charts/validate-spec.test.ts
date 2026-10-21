@@ -11,7 +11,7 @@ const columns = [
 ] as const;
 
 const base: ChartSpec = {
-  rows: 100_000,
+  dataset: "iot-100k",
   chartType: "scatter",
   x: "측정일시",
   y: "온도(℃)",

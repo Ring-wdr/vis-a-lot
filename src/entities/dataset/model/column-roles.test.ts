@@ -18,7 +18,7 @@ const plant = [
 ];
 
 const spec: ChartSpec = {
-  rows: 100_000,
+  dataset: "iot-100k",
   chartType: "scatter",
   x: "ts",
   y: "value",

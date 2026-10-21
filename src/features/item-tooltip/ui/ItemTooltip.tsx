@@ -55,8 +55,10 @@ export function ItemTooltip({
   const [cursor, setCursor] = useState<Cursor>();
   const meta = useItemMeta(image.url, hovered);
   // 컬럼 라벨·타입은 그린 차트의 데이터셋 스키마에서 찾는다.
-  const rows = useWorkspace((s) => s.current?.spec.rows ?? s.draft.rows);
-  const columnInfo = useColumns(rows);
+  const dataset = useWorkspace(
+    (s) => s.current?.spec.dataset ?? s.draft.dataset,
+  );
+  const columnInfo = useColumns(dataset);
   const showNearest = useWorkspace((s) => s.showNearest);
 
   const strategy = meta.data ? strategyFor(meta.data) : undefined;

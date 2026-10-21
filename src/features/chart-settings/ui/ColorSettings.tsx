@@ -21,10 +21,10 @@ import settingsStyles from "./SettingsDialog.module.css";
 export function ColorSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
-  const dataset = useDatasetStatus(draft.rows);
-  const columns = useColumns(draft.rows);
+  const dataset = useDatasetStatus(draft.dataset);
+  const columns = useColumns(draft.dataset);
   const legendValues = useLegendValues(
-    draft.rows,
+    draft.dataset,
     draft.legend,
     dataset.data?.state === "ready",
   );

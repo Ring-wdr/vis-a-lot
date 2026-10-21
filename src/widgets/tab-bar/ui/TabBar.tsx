@@ -3,7 +3,6 @@
 import { Filter, Plus, X } from "lucide-react";
 import { useStore } from "zustand";
 import { chartTitle } from "@/entities/chart/lib/title";
-import { ROW_LABELS } from "@/entities/dataset/lib/labels";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import {
   TABS_LOCKED_HINT,
@@ -11,21 +10,22 @@ import {
   type WorkspaceTab,
 } from "@/entities/workspace/model/tabs-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { useColumns } from "@/shared/api/queries";
+import { useColumns, useDatasetNames } from "@/shared/api/queries";
 import { LoadingText } from "@/shared/ui/Loading";
 import styles from "./TabBar.module.css";
 
 /** 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터. history 탭은 다시 그리기 전까지 불러오는 중이다. */
 function TabLabel({ tab }: { tab: WorkspaceTab }) {
   const spec = useStore(tab.store, (s) => s.current?.spec);
-  const rows = useStore(tab.store, (s) => s.draft.rows);
-  const columns = useColumns(spec?.rows ?? rows);
+  const dataset = useStore(tab.store, (s) => s.draft.dataset);
+  const columns = useColumns(spec?.dataset ?? dataset);
+  const nameOf = useDatasetNames();
   const loading = !spec && tab.view === "history";
   const label = spec
     ? chartTitle(spec, columns)
     : loading
       ? "불러오는 중"
-      : `새 차트 · IoT ${ROW_LABELS[rows]}`;
+      : `새 차트 · ${nameOf(dataset)}`;
   return (
     <span className={styles.label} title={label}>
       {loading ? <LoadingText>{label}</LoadingText> : label}

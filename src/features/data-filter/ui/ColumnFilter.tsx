@@ -14,11 +14,11 @@ import { ValuesFilterBody } from "./ValuesFilterBody";
  * 바꾼 필터는 draft에만 담기고 draw할 때 적용된다.
  */
 export function ColumnFilter({ column }: { column: ColumnName }) {
-  const rows = useWorkspace((s) => s.draft.rows);
+  const dataset = useWorkspace((s) => s.draft.dataset);
   const filters = useWorkspace((s) => s.draft.filters);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
-  const summary = useColumnSummary(rows, column);
+  const summary = useColumnSummary(dataset, column);
   const filter = filterOf(filters, column);
 
   if (summary.isPending) {

@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toggleValue } from "@/shared/lib/drag-select";
 import { useDragSelect } from "@/shared/lib/use-drag-select";
+import { useDialogContainer } from "./Dialog";
 import styles from "./OrderedSelect.module.css";
 import selectStyles from "./Select.module.css";
 
@@ -37,6 +38,7 @@ export function OrderedSelect<T extends string>({
   placeholder?: string;
   disabled?: boolean;
 }) {
+  const dialog = useDialogContainer();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   /** 드래그 중 미리 보기 값. 확정(pointerup) 전까지 onChange를 부르지 않는다. */
@@ -186,8 +188,10 @@ export function OrderedSelect<T extends string>({
             </span>
           </Combobox.Trigger>
         </div>
-        <Combobox.Portal>
+        {/* dialog 안이면 dialog 안으로 portal한다 (Select와 같은 이유). */}
+        <Combobox.Portal container={dialog ?? undefined}>
           <Combobox.Positioner
+            positionMethod={dialog ? "fixed" : undefined}
             anchor={anchorRef}
             align="start"
             sideOffset={4}

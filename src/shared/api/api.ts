@@ -1,7 +1,6 @@
 // 서비스 API 호출 모음. 화면은 이 함수들로만 서버와 통신하고, 경로·파라미터·응답 타입은
 // 모두 OAS에서 생성한 client가 검사한다.
 
-import { DATASET_ID } from "@/shared/config/dataset";
 import { chartClient, dataClient } from "./clients";
 import type {
   ChartFilter,
@@ -9,12 +8,13 @@ import type {
   ColumnName,
   CommonProps,
   CreateChartRequest,
+  CsvOptions,
+  DatasetId,
   DebugRenderRequest,
   HistoryDetail,
   ItemMeta,
   ItemSize,
   LegendPosition,
-  RowSize,
   Shape,
   TooltipRequest,
   ViewRequest,
@@ -55,7 +55,7 @@ function as<T>() {
     promise as unknown as Promise<T>;
 }
 
-const dataset = { datasetId: DATASET_ID } as const;
+const dataset = (datasetId: DatasetId) => ({ datasetId });
 const item = (chartId: string, itemKey: string) => ({ chartId, itemKey });
 
 /** PNG URL(`/api/chart/charts/{chartId}/items/{itemKey}/png?v=…`)에서 item을 꺼낸다. */
@@ -77,47 +77,73 @@ export const api = {
   // ── data 서비스 ─────────────────────────────────────────────
   health: () => unwrap(dataClient.GET("/health")),
 
-  datasets: () =>
-    unwrap(
-      dataClient.GET("/datasets/{datasetId}", { params: { path: dataset } }),
-    ),
+  datasets: () => unwrap(dataClient.GET("/datasets")),
 
-  generateDataset: (rows: RowSize) =>
+  generateDataset: (id: DatasetId) =>
     unwrap(
       dataClient.POST("/datasets/{datasetId}/generate", {
-        params: { path: dataset },
-        body: { rows },
+        params: { path: dataset(id) },
+      }),
+    ),
+
+  /** CSV 또는 zip 업로드. 스키마가 맞지 않으면 422와 거절 사유가 온다. */
+  uploadDataset: (input: { file: File; name: string; options: CsvOptions }) => {
+    const form = new FormData();
+    form.set("file", input.file);
+    form.set("name", input.name);
+    form.set("options", JSON.stringify(input.options));
+    return unwrap(
+      dataClient.POST("/datasets/uploads", {
+        // openapi-fetch는 FormData를 그대로 보내고 boundary는 브라우저가 붙인다.
+        body: form as never,
+      }),
+    );
+  },
+
+  /** 이름이나 전처리 옵션 변경. 옵션을 바꾸면 다시 검사해 거절되면 422 */
+  editDataset: (id: DatasetId, body: { name?: string; options?: CsvOptions }) =>
+    unwrap(
+      dataClient.PATCH("/datasets/{datasetId}", {
+        params: { path: dataset(id) },
+        body,
+      }),
+    ),
+
+  deleteDataset: (id: DatasetId) =>
+    unwrap(
+      dataClient.DELETE("/datasets/{datasetId}", {
+        params: { path: dataset(id) },
       }),
     ),
 
   /** 데이터셋 스키마: 적재된 테이블의 컬럼과 타입. 등록 전이면 409 */
-  schema: (rows: RowSize) =>
+  schema: (id: DatasetId) =>
     unwrap(
       dataClient.GET("/datasets/{datasetId}/schema", {
-        params: { path: dataset, query: { rows } },
+        params: { path: dataset(id) },
       }),
     ),
 
-  splitCount: (rows: RowSize, cols: ColumnName[], filters?: ChartFilter[]) =>
+  splitCount: (id: DatasetId, cols: ColumnName[], filters?: ChartFilter[]) =>
     unwrap(
       dataClient.POST("/datasets/{datasetId}/split-count", {
-        params: { path: dataset },
-        body: { rows, cols, filters },
+        params: { path: dataset(id) },
+        body: { cols, filters },
       }),
     ),
 
   /** 필터 패널: 아코디언을 열 때 그 컬럼의 범위나 값 목록을 받는다. */
-  columnSummary: (rows: RowSize, column: ColumnName) =>
+  columnSummary: (id: DatasetId, column: ColumnName) =>
     unwrap(
       dataClient.GET("/datasets/{datasetId}/columns/{column}/summary", {
-        params: { path: { ...dataset, column }, query: { rows } },
+        params: { path: { ...dataset(id), column } },
       }),
     ),
 
-  legendValues: (rows: RowSize, column: ColumnName) =>
+  legendValues: (id: DatasetId, column: ColumnName) =>
     unwrap(
       dataClient.GET("/datasets/{datasetId}/legend-values", {
-        params: { path: dataset, query: { rows, column } },
+        params: { path: dataset(id), query: { column } },
       }),
     ),
 

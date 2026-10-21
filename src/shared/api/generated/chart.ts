@@ -1509,7 +1509,7 @@ export type components = {
       record?: boolean;
     };
     ChartSpec: {
-      rows: components["schemas"]["RowSize"];
+      dataset: components["schemas"]["DatasetId"];
       chartType: components["schemas"]["ChartType"];
       x: components["schemas"]["ColumnName"];
       y: components["schemas"]["ColumnName"];
@@ -1522,7 +1522,8 @@ export type components = {
       common: components["schemas"]["CommonProps"];
       filters?: components["schemas"]["ChartFilter"][];
     };
-    RowSize: 100000 | 500000 | 1000000;
+    /** @example iot-100k */
+    DatasetId: string;
     /** @enum {string} */
     ChartType: "scatter" | "bar" | "boxplot";
     /** @example factory */
@@ -1611,7 +1612,7 @@ export type components = {
       id: string;
       createdAt: number;
       updatedAt: number;
-      rows: components["schemas"]["RowSize"];
+      dataset: components["schemas"]["DatasetId"];
       generatorVersion: number;
       spec: components["schemas"]["ChartSpec"];
       status: components["schemas"]["JobStatus"];

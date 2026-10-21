@@ -3,7 +3,6 @@
 
 import createClient, { type Middleware } from "openapi-fetch";
 import type { ChartFilter } from "../../../data/filters";
-import type { RowSize } from "../../../data/schema";
 import type { paths as AuthPaths } from "../generated/auth";
 import type { paths as DataPaths } from "../generated/data";
 
@@ -60,28 +59,31 @@ function unwrap<T>(
 }
 
 export const dataService = {
-  /** 없으면 적재를 시작하고 현재 상태를 돌려준다. */
-  ensureDataset: async (rows: RowSize) =>
+  /** 샘플이 없으면 적재를 시작하고 현재 상태를 돌려준다. 업로드한 데이터셋은 상태만 돌려준다. */
+  ensureDataset: async (datasetId: string) =>
     unwrap(
       await data.POST("/datasets/{datasetId}/generate", {
-        params: { path: { datasetId: "iot" } },
-        body: { rows },
+        params: { path: { datasetId } },
       }),
       "generate",
     ),
-  splitCount: async (rows: RowSize, cols: string[], filters?: ChartFilter[]) =>
+  splitCount: async (
+    datasetId: string,
+    cols: string[],
+    filters?: ChartFilter[],
+  ) =>
     unwrap(
       await data.POST("/datasets/{datasetId}/split-count", {
-        params: { path: { datasetId: "iot" } },
-        body: { rows, cols, filters },
+        params: { path: { datasetId } },
+        body: { cols, filters },
       }),
       "split-count",
     ),
   /** 데이터셋 스키마. job이 데이터 준비 뒤 컬럼과 타입을 확인하는 데 쓴다. */
-  schema: async (rows: RowSize) =>
+  schema: async (datasetId: string) =>
     unwrap(
       await data.GET("/datasets/{datasetId}/schema", {
-        params: { path: { datasetId: "iot" }, query: { rows } },
+        params: { path: { datasetId } },
       }),
       "schema",
     ),

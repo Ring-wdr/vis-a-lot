@@ -11,10 +11,11 @@ import {
 import { useMemo } from "react";
 import {
   type ColumnName,
+  type CsvOptions,
+  type DatasetId,
   type DatasetStatus,
   isTerminal,
   type JobStateResponse,
-  type RowSize,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
 import { api } from "./api";
@@ -31,10 +32,14 @@ const LONG_POLL_RETRY = {
 export const queryKeys = {
   health: ["health"] as const,
   datasets: ["datasets"] as const,
-  schema: (rows: RowSize, ready: boolean) =>
-    ["datasets", rows, "schema", ready] as const,
-  columnSummary: (rows: RowSize, column: ColumnName) =>
-    ["datasets", rows, "summary", column] as const,
+  /** 데이터셋 하나에 딸린 query (스키마, 컬럼 요약, legend 값). 다시 적재하거나 지우면 통째로 버린다. */
+  dataset: (id: DatasetId) => ["datasets", id] as const,
+  schema: (id: DatasetId, ready: boolean) =>
+    ["datasets", id, "schema", ready] as const,
+  columnSummary: (id: DatasetId, column: ColumnName) =>
+    ["datasets", id, "summary", column] as const,
+  legendValues: (id: DatasetId, column: ColumnName | null) =>
+    ["datasets", id, "legend-values", column] as const,
   job: (jobId: string, page: number, pageSize: number) =>
     ["jobs", jobId, page, pageSize] as const,
   jobRange: (jobId: string, offset: number, count: number) =>
@@ -72,10 +77,19 @@ export function useDatasets() {
   return useQuery(datasetsQuery);
 }
 
-export function useDatasetStatus(rows: RowSize) {
+/** 데이터셋 이름. 지웠거나 목록을 받기 전이면 id를 그대로 쓴다. */
+export function useDatasetNames() {
+  const datasets = useDatasets().data?.datasets;
+  return useMemo(() => {
+    const names = new Map(datasets?.map((d) => [d.id, d.name]));
+    return (id: DatasetId) => names.get(id) ?? id;
+  }, [datasets]);
+}
+
+export function useDatasetStatus(id: DatasetId) {
   return useQuery({
     ...datasetsQuery,
-    select: (data) => data.datasets.find((d) => d.rows === rows),
+    select: (data) => data.datasets.find((d) => d.id === id),
   });
 }
 
@@ -87,23 +101,66 @@ export function useGenerateDataset() {
   });
 }
 
+export function useUploadDataset() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.uploadDataset,
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.datasets }),
+  });
+}
+
+/** 다시 적재하거나 지운 데이터셋은 스키마·요약이 달라지므로 딸린 query를 버리고 목록을 다시 받는다. */
+function useDatasetChanged() {
+  const client = useQueryClient();
+  return (id: DatasetId) => {
+    client.removeQueries({ queryKey: queryKeys.dataset(id) });
+    return client.invalidateQueries({
+      queryKey: queryKeys.datasets,
+      exact: true,
+    });
+  };
+}
+
+export function useEditDataset() {
+  const changed = useDatasetChanged();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...body
+    }: {
+      id: DatasetId;
+      name?: string;
+      options?: CsvOptions;
+    }) => api.editDataset(id, body),
+    onSuccess: (_, { id }) => changed(id),
+  });
+}
+
+export function useDeleteDataset() {
+  const changed = useDatasetChanged();
+  return useMutation({
+    mutationFn: api.deleteDataset,
+    onSuccess: (_, id) => changed(id),
+  });
+}
+
 /** 데이터셋 스키마 query. 적재가 끝나면 고유값 수가 생기므로 ready를 키에 넣어 그때 한 번 더 받는다. */
 export function datasetSchemaQuery(
-  rows: RowSize,
+  id: DatasetId,
   state: DatasetStatus["state"] | undefined,
 ) {
   return queryOptions({
-    queryKey: queryKeys.schema(rows, state === "ready"),
-    queryFn: () => api.schema(rows),
-    enabled: state !== undefined && state !== "missing",
+    queryKey: queryKeys.schema(id, state === "ready"),
+    queryFn: () => api.schema(id),
+    enabled: state === "generating" || state === "ready",
     staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
 /** 데이터셋 스키마(컬럼과 타입). 등록한 데이터셋만 받을 수 있다. */
-export function useDatasetSchema(rows: RowSize) {
-  const status = useDatasetStatus(rows);
-  return useQuery(datasetSchemaQuery(rows, status.data?.state));
+export function useDatasetSchema(id: DatasetId) {
+  const status = useDatasetStatus(id);
+  return useQuery(datasetSchemaQuery(id, status.data?.state));
 }
 
 /**
@@ -112,9 +169,9 @@ export function useDatasetSchema(rows: RowSize) {
  */
 export type SchemaState = "loading" | "missing" | "generating" | "ready";
 
-export function useSchemaState(rows: RowSize): SchemaState {
-  const status = useDatasetStatus(rows);
-  const schema = useDatasetSchema(rows);
+export function useSchemaState(id: DatasetId): SchemaState {
+  const status = useDatasetStatus(id);
+  const schema = useDatasetSchema(id);
   if (schema.data) return "ready";
   const state = status.data?.state;
   if (state === "missing") return "missing";
@@ -124,24 +181,24 @@ export function useSchemaState(rows: RowSize): SchemaState {
 }
 
 /** 이 데이터셋의 컬럼 라벨·타입. 같은 이름의 컬럼이라도 데이터셋마다 다를 수 있어 데이터셋별로 찾는다. */
-export function useColumns(rows: RowSize) {
-  const columns = useDatasetSchema(rows).data?.columns;
+export function useColumns(id: DatasetId) {
+  const columns = useDatasetSchema(id).data?.columns;
   return useMemo(() => columnLookup(columns), [columns]);
 }
 
 /** 여러 데이터셋의 컬럼 라벨·타입 (history 목록처럼 데이터셋이 섞인 곳). 데이터셋으로 찾아 쓴다. */
-export function useColumnsByRows(rowsList: readonly RowSize[]) {
+export function useColumnsByDataset(ids: readonly DatasetId[]) {
   const datasets = useDatasets();
-  const unique = [...new Set(rowsList)];
+  const unique = [...new Set(ids)];
   return useQueries({
-    queries: unique.map((rows) =>
+    queries: unique.map((id) =>
       datasetSchemaQuery(
-        rows,
-        datasets.data?.datasets.find((d) => d.rows === rows)?.state,
+        id,
+        datasets.data?.datasets.find((d) => d.id === id)?.state,
       ),
     ),
-    combine: (results) => (rows: RowSize) =>
-      columnLookup(results[unique.indexOf(rows)]?.data?.columns),
+    combine: (results) => (id: DatasetId) =>
+      columnLookup(results[unique.indexOf(id)]?.data?.columns),
   });
 }
 
@@ -298,23 +355,23 @@ export function useTooltipValues(
 
 /** legend 값 목록. 데이터셋이 준비된 뒤에만 받을 수 있다. */
 export function useLegendValues(
-  rows: RowSize,
+  id: DatasetId,
   column: ColumnName | null,
   enabled: boolean,
 ) {
   return useQuery({
-    queryKey: ["legend-values", rows, column],
-    queryFn: () => api.legendValues(rows, column as ColumnName),
+    queryKey: queryKeys.legendValues(id, column),
+    queryFn: () => api.legendValues(id, column as ColumnName),
     enabled: enabled && column !== null,
     staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
 /** 필터 아코디언을 열 때 그 컬럼의 범위나 값 목록을 서버에서 받는다. 데이터는 바뀌지 않으므로 다시 받지 않는다. */
-export function useColumnSummary(rows: RowSize, column: ColumnName) {
+export function useColumnSummary(id: DatasetId, column: ColumnName) {
   return useQuery({
-    queryKey: queryKeys.columnSummary(rows, column),
-    queryFn: () => api.columnSummary(rows, column),
+    queryKey: queryKeys.columnSummary(id, column),
+    queryFn: () => api.columnSummary(id, column),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

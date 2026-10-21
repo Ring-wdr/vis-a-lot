@@ -2,9 +2,11 @@
 
 import type { z } from "@hono/zod-openapi";
 import type { BoxStats } from "../data/category-data";
+import type { CsvOptions } from "../data/csv-import";
+import type { LogicalType } from "../data/dataset-schema";
 import type { ColumnInfo } from "../data/datasets";
 import type { ChartFilter } from "../data/filters";
-import type { AggFn, RowSize } from "../data/schema";
+import type { AggFn } from "../data/schema";
 
 /** 컬럼 이름. 데이터셋마다 다르며 스키마로 확인한다. */
 type ColumnName = string;
@@ -20,26 +22,45 @@ export type HealthResponse = {
   renderWorkers: number;
 };
 
-export const DATASET_STATES = ["missing", "generating", "ready"] as const;
+export const DATASET_STATES = [
+  "missing",
+  "generating",
+  "ready",
+  "failed",
+] as const;
 export type DatasetState = (typeof DATASET_STATES)[number];
 
+/** 업로드한 CSV 데이터셋의 원본과 전처리 옵션 */
+export type UploadInfo = {
+  /** 올린 파일 이름 (csv 또는 zip) */
+  fileName: string;
+  size: number;
+  /** 적재한 CSV 파일들. zip이면 여러 개다. */
+  files: { name: string; size: number }[];
+  createdAt: number;
+  options: CsvOptions;
+  /** 컬럼 순서대로, 값으로 추론한 타입 (직접 정한 타입과 상관없이) */
+  inferred: { name: string; type: LogicalType }[];
+};
+
 export type DatasetStatus = {
-  rows: RowSize;
+  id: string;
+  kind: "sample" | "upload";
+  name: string;
   state: DatasetState;
   /** generating일 때: copy(행 적재) → analyze(컬럼 통계) */
   phase?: "copy" | "analyze";
   done: number;
   total: number;
   generateMs?: number;
+  /** failed일 때 사유 */
+  error?: string;
+  upload?: UploadInfo;
 };
 
 export type DatasetListResponse = { datasets: DatasetStatus[] };
 
-export type GenerateDatasetRequest = { rows: RowSize };
-
 export type { ColumnInfo };
-
-export type ColumnsResponse = { rows: RowSize; columns: ColumnInfo[] };
 
 export type SplitCountResponse = {
   count: number;
@@ -88,7 +109,8 @@ export type ItemProps = {
 };
 
 export type ChartSpec = {
-  rows: RowSize;
+  /** 데이터셋 id (샘플 iot-100k …, 업로드 up-…) */
+  dataset: string;
   chartType: ChartType;
   x: ColumnName;
   y: ColumnName;
@@ -267,7 +289,7 @@ export type HistorySummary = {
   id: string;
   createdAt: number;
   updatedAt: number;
-  rows: RowSize;
+  dataset: string;
   generatorVersion: number;
   spec: ChartSpec;
   status: JobStatus;

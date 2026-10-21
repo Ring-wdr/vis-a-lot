@@ -11,9 +11,7 @@ export type paths = {
     /** 필터용 컬럼 요약: 숫자·시계열은 범위와 null 수, 범주는 값별 행 수 */
     get: {
       parameters: {
-        query: {
-          rows: 100000 | 500000 | 1000000;
-        };
+        query?: never;
         header?: never;
         path: {
           datasetId: components["schemas"]["DatasetId"];
@@ -87,17 +85,144 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  "/datasets/{datasetId}/generate": {
+  "/datasets/{datasetId}": {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** 데이터셋 하나의 적재 상태 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          datasetId: components["schemas"]["DatasetId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 상태 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["DatasetStatus"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
     put?: never;
-    /** 데이터 적재(등록). 이미 있거나 만드는 중이면 현재 상태만 돌려준다 */
-    post: {
+    post?: never;
+    /** 업로드한 데이터셋 삭제 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          datasetId: components["schemas"]["DatasetId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 삭제됨 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 적재 중이라 지울 수 없음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    /** 업로드한 데이터셋의 이름·전처리 옵션 변경. 옵션을 바꾸면 원본으로 다시 검사·적재한다 */
+    patch: {
       parameters: {
         query?: never;
         header?: never;
@@ -108,9 +233,88 @@ export type paths = {
       };
       requestBody: {
         content: {
-          "application/json": components["schemas"]["GenerateDatasetRequest"];
+          "application/json": components["schemas"]["EditDatasetRequest"];
         };
       };
+      responses: {
+        /** @description 바뀐 상태 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["DatasetStatus"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (스키마 불일치 등) */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    trace?: never;
+  };
+  "/datasets/{datasetId}/generate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 샘플 데이터 적재(등록). 이미 있거나 만드는 중이면 현재 상태만 돌려준다. 업로드한 데이터셋은 상태만 돌려준다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          datasetId: components["schemas"]["DatasetId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
       responses: {
         /** @description 현재 상태 */
         202: {
@@ -211,7 +415,6 @@ export type paths = {
     get: {
       parameters: {
         query: {
-          rows: 100000 | 500000 | 1000000;
           column: components["schemas"]["ColumnName"];
         };
         header?: never;
@@ -286,41 +489,30 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  "/datasets/{datasetId}": {
+  "/datasets": {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** 행 수별 적재 상태 */
+    /** 샘플과 업로드한 데이터셋의 적재 상태 */
     get: {
       parameters: {
         query?: never;
         header?: never;
-        path: {
-          datasetId: components["schemas"]["DatasetId"];
-        };
+        path?: never;
         cookie?: never;
       };
       requestBody?: never;
       responses: {
-        /** @description 행 수별 상태 */
+        /** @description 데이터셋 목록 */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
             "application/json": components["schemas"]["DatasetListResponse"];
-          };
-        };
-        /** @description 요청 형식 오류 */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
           };
         };
         /** @description 토큰 없음, 만료, 위조 */
@@ -334,15 +526,6 @@ export type paths = {
         };
         /** @description scope 부족 */
         403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 모르는 데이터셋 */
-        404: {
           headers: {
             [name: string]: unknown;
           };
@@ -370,9 +553,7 @@ export type paths = {
     /** 데이터셋 스키마: 적재된 테이블에서 읽은 컬럼과 타입(categorical / numeric / datetime). 적재 중에도 알 수 있다 */
     get: {
       parameters: {
-        query: {
-          rows: 100000 | 500000 | 1000000;
-        };
+        query?: never;
         header?: never;
         path: {
           datasetId: components["schemas"]["DatasetId"];
@@ -532,6 +713,82 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/datasets/uploads": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** CSV 또는 zip(CSV 여러 개를 하나로 합침) 업로드. 파일마다 스키마가 다르면 거절한다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "multipart/form-data": components["schemas"]["UploadDatasetRequest"];
+        };
+      };
+      responses: {
+        /** @description 적재 시작 */
+        202: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["DatasetStatus"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (스키마 불일치 등) */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 };
 export type webhooks = Record<string, never>;
 export type components = {
@@ -565,21 +822,50 @@ export type components = {
       /** @example unknown chart */
       error: string;
     };
-    /** @enum {string} */
-    DatasetId: "iot";
+    /** @example iot-100k */
+    DatasetId: string;
     DatasetStatus: {
-      rows: components["schemas"]["RowSize"];
+      id: components["schemas"]["DatasetId"];
       /** @enum {string} */
-      state: "missing" | "generating" | "ready";
+      kind: "sample" | "upload";
+      name: string;
+      /** @enum {string} */
+      state: "missing" | "generating" | "ready" | "failed";
       /** @enum {string} */
       phase?: "copy" | "analyze";
       done: number;
       total: number;
       generateMs?: number;
+      error?: string;
+      upload?: components["schemas"]["UploadInfo"];
     };
-    RowSize: 100000 | 500000 | 1000000;
-    GenerateDatasetRequest: {
-      rows: components["schemas"]["RowSize"];
+    UploadInfo: {
+      fileName: string;
+      size: number;
+      files: {
+        name: string;
+        size: number;
+      }[];
+      createdAt: number;
+      options: components["schemas"]["CsvOptions"];
+      inferred: {
+        name: string;
+        type: components["schemas"]["ColumnType"];
+      }[];
+    };
+    CsvOptions: {
+      delimiter: string;
+      header: boolean;
+      nullValue: string;
+      types?: {
+        [key: string]: components["schemas"]["ColumnType"];
+      };
+    };
+    /** @enum {string} */
+    ColumnType: "categorical" | "numeric" | "datetime";
+    EditDatasetRequest: {
+      name?: string;
+      options?: components["schemas"]["CsvOptions"];
     };
     DataHealth: {
       /** @enum {string} */
@@ -598,7 +884,7 @@ export type components = {
       datasets: components["schemas"]["DatasetStatus"][];
     };
     DatasetSchema: {
-      rows: components["schemas"]["RowSize"];
+      id: components["schemas"]["DatasetId"];
       ready: boolean;
       columns: components["schemas"]["ColumnInfo"][];
     };
@@ -609,15 +895,12 @@ export type components = {
       nullable: boolean;
       distinct: number | null;
     };
-    /** @enum {string} */
-    ColumnType: "categorical" | "numeric" | "datetime";
     SplitCountResponse: {
       count: number;
       exact: boolean;
       limit: number;
     };
     SplitCountRequest: {
-      rows: components["schemas"]["RowSize"];
       cols: components["schemas"]["ColumnName"][];
       filters?: components["schemas"]["ChartFilter"][];
     };
@@ -638,6 +921,13 @@ export type components = {
       kind: "exclude";
       column: components["schemas"]["ColumnName"];
       values: string[];
+    };
+    UploadDatasetRequest: {
+      /** Format: binary */
+      file: string;
+      name: string;
+      /** @description CsvOptions JSON */
+      options: string;
     };
   };
   responses: never;
