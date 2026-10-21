@@ -64,6 +64,15 @@ describe("scatterStrategy", () => {
     expect(hit?.rowId).toBe(22);
   });
 
+  it("가까운 점 표시를 끄면 커서 좌표만 보여주고 점 표시와 서버 호출도 없다", () => {
+    const hit = scatterStrategy.hitTest(meta, prepared, 142, 68, {
+      nearest: false,
+    });
+    expect(hit?.rows.map((r) => r.label)).toEqual(["커서 x", "커서 y"]);
+    expect(hit?.marker).toBeUndefined();
+    expect(hit?.rowId).toBeUndefined();
+  });
+
   it("가까운 점이 없으면 커서 좌표만 보여주고 서버 호출 대상도 없다", () => {
     const hit = scatterStrategy.hitTest(meta, prepared, 90, 100);
     expect(hit?.rows).toHaveLength(2);

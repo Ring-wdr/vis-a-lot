@@ -1,6 +1,6 @@
 "use client";
 
-import { List, Palette, Split } from "lucide-react";
+import { List, MessageSquare, Palette, Split } from "lucide-react";
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
 import { WorkspaceScope } from "@/entities/workspace/model/workspace-scope";
@@ -11,11 +11,13 @@ import { ColorSettings } from "./ColorSettings";
 import { LegendSettings } from "./LegendSettings";
 import styles from "./SettingsDialog.module.css";
 import { SplitSettings } from "./SplitSettings";
+import { TooltipSettings } from "./TooltipSettings";
 
 const MENUS = [
   { id: "color", label: "색상", Icon: Palette, Body: ColorSettings },
   { id: "legend", label: "legend", Icon: List, Body: LegendSettings },
   { id: "split", label: "split by", Icon: Split, Body: SplitSettings },
+  { id: "tooltip", label: "툴팁", Icon: MessageSquare, Body: TooltipSettings },
 ] as const;
 type MenuId = (typeof MENUS)[number]["id"];
 
