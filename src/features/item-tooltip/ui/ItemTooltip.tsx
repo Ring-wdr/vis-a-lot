@@ -92,15 +92,12 @@ export function ItemTooltip({
   const extraRows = hit?.rowId !== undefined ? columns.length : 0;
   const tooltipPosition =
     client && placeTooltip(client, (hit?.rows.length ?? 1) + extraRows);
-  const isCategory =
-    meta.data !== undefined && meta.data.chartType !== "scatter";
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: 마우스 위치를 읽는 시각 보조 레이어. 같은 정보는 이후 표 보기로 제공한다.
     <div
       ref={layerRef}
       className={styles.tooltipLayer}
-      data-hover={isCategory ? "box" : "point"}
       style={{ width: display.width, height: display.height }}
       onMouseEnter={() => setHovered(true)}
       onMouseMove={onMove}

@@ -35,6 +35,7 @@ export type ChartFilter = Chart["ChartFilter"];
 export type RangeFilter = Chart["RangeFilter"];
 export type ExcludeFilter = Chart["ExcludeFilter"];
 export type CommonProps = Chart["CommonProps"];
+export type LegendPosition = Chart["LegendPosition"];
 export type ItemSize = Chart["ItemSize"];
 export type ItemView = Chart["ItemView"];
 export type ItemRestore = Chart["ItemRestore"];

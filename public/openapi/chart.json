@@ -161,6 +161,9 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/HexColor"
             }
+          },
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
           }
         },
         "required": ["color"]
@@ -169,6 +172,10 @@
         "type": "string",
         "pattern": "^#[0-9a-f]{6}$/i",
         "example": "#2a78d6"
+      },
+      "LegendPosition": {
+        "type": "string",
+        "enum": ["top", "bottom", "left", "right"]
       },
       "GridRequest": {
         "type": "object",
@@ -256,6 +263,22 @@
               }
             },
             "required": ["legendColor"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "legendPosition": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LegendPosition"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": ["legendPosition"]
           }
         ]
       },
@@ -536,6 +559,9 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/HexColor"
             }
+          },
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
           }
         },
         "required": ["shapes"]
@@ -701,6 +727,7 @@
           "undo",
           "clearShapes",
           "color",
+          "legend",
           "common",
           "grid"
         ]
@@ -768,6 +795,9 @@
                 "type": "number"
               },
               "color": {
+                "type": "number"
+              },
+              "legend": {
                 "type": "number"
               },
               "common": {
@@ -1327,6 +1357,9 @@
           },
           "customColor": {
             "type": "boolean"
+          },
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
           }
         },
         "required": [

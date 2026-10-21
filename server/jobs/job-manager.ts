@@ -4,6 +4,7 @@
 
 import {
   type ItemMeta,
+  type ItemProps,
   type ItemSize,
   type ItemStage,
   type ItemState,
@@ -271,10 +272,11 @@ async function run(job: Job) {
       detailJobs: new Map(),
       view: restored?.view,
       shapes: restored?.shapes ?? [],
-      props:
-        restored?.color || restored?.legendColors
-          ? { color: restored.color, legendColors: restored.legendColors }
-          : undefined,
+      props: propsOrNone({
+        color: restored?.color,
+        legendColors: restored?.legendColors,
+        legendPosition: restored?.legendPosition,
+      }),
     };
   });
   for (const item of chart.items)
@@ -420,7 +422,22 @@ function initialState(chart: ChartRecord, item: ChartItem): ItemState {
     shapeCount: item.shapes.length,
     color: itemColor(chart, item),
     customColor: hasCustomColor(item),
+    legendPosition: item.props?.legendPosition,
   };
+}
+
+/** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
+export function propsOrNone(props: ItemProps): ItemProps | undefined {
+  return props.color || props.legendColors || props.legendPosition
+    ? props
+    : undefined;
+}
+
+/** legend 위치: item 개별 → 공통 → 위 */
+function legendPosition(chart: ChartRecord, item: ChartItem) {
+  return (
+    item.props?.legendPosition ?? chart.spec.common.legendPosition ?? "top"
+  );
 }
 
 /** 개별 색이 있으면 그 색, 없으면 공통 색 */
@@ -541,6 +558,7 @@ function renderItem(
           title: legendTitle,
           values: data.legend.values,
           colors: legendColors(chart, item, data.legend.values),
+          position: legendPosition(chart, item),
           index: data.legend.index.slice(group.start, group.end),
         },
       },
@@ -561,6 +579,7 @@ function renderItem(
         title: legendTitle,
         values: data.legendValues,
         colors: legendColors(chart, item, data.legendValues),
+        position: legendPosition(chart, item),
       },
     },
     options,
@@ -619,6 +638,7 @@ async function renderItems(
           state.revision = item.revision;
           state.color = itemColor(chart, item);
           state.customColor = hasCustomColor(item);
+          state.legendPosition = item.props?.legendPosition;
           state.status = "success";
           syncPrimary(chart, item);
         })
@@ -651,6 +671,7 @@ function syncPrimary(chart: ChartRecord, item: ChartItem) {
   state.shapeCount = item.shapes.length;
   state.color = itemColor(chart, item);
   state.customColor = hasCustomColor(item);
+  state.legendPosition = item.props?.legendPosition;
   touch(primary);
 }
 

@@ -15,6 +15,7 @@ import {
   cancelJob as cancel,
   getJob,
   type ItemSelection,
+  propsOrNone,
   startDetailJob,
   startItemJob,
   startJob,
@@ -176,11 +177,21 @@ export const chartApp = createServiceApp()
       props.legendColors = Object.keys(legendColors).length
         ? legendColors
         : undefined;
+    } else if ("legendPosition" in body) {
+      props.legendPosition = body.legendPosition ?? undefined;
+    } else if (body.color === null) {
+      // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
+      props.color = undefined;
+      props.legendColors = undefined;
     } else {
-      props.color = body.color ?? undefined;
+      props.color = body.color;
     }
-    item.props = props.color || props.legendColors ? props : undefined;
-    recordEvent(target.chart, "color", item.key);
+    item.props = propsOrNone(props);
+    recordEvent(
+      target.chart,
+      "legendPosition" in body ? "legend" : "color",
+      item.key,
+    );
     return c.json(redrawJob(target.chart, [item.key]), 202);
   })
   // 공통 속성 변경: 개별 속성을 모두 덮어쓰고, 다시 조회하지 않고 전체를 다시 그린다.
