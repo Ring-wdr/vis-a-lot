@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { DELIMITER_LABELS } from "@/entities/dataset/lib/labels";
 import type { CsvOptions } from "@/shared/api/types";
+import { Select } from "@/shared/ui/Select";
 import styles from "./UploadDialog.module.css";
 
 const CUSTOM = "custom";
@@ -25,41 +26,31 @@ export function CsvOptionsFields({
   const known = value.delimiter in DELIMITER_LABELS;
   return (
     <div className={styles.options}>
-      {/* 팝업(<dialog>) 안이라 popup을 body로 띄우는 Select 대신 native select를 쓴다. */}
-      <div className={styles.field}>
-        <label htmlFor={`${id}-delimiter`}>구분 기호</label>
-        <div className={styles.delimiter}>
-          <select
-            id={`${id}-delimiter`}
-            className={styles.select}
-            value={known ? value.delimiter : CUSTOM}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                delimiter: e.target.value === CUSTOM ? "" : e.target.value,
-              })
-            }
-          >
-            {Object.entries(DELIMITER_LABELS).map(([d, label]) => (
-              <option key={d} value={d}>
-                {label}
-              </option>
-            ))}
-            <option value={CUSTOM}>직접 입력</option>
-          </select>
-          {!known && (
-            <input
-              aria-label="구분 기호 직접 입력"
-              className={styles.input}
-              value={value.delimiter}
-              maxLength={1}
-              placeholder="한 글자"
-              onChange={(e) =>
-                onChange({ ...value, delimiter: e.target.value })
-              }
-            />
-          )}
-        </div>
+      <div className={styles.delimiter}>
+        <Select
+          label="구분 기호"
+          value={known ? value.delimiter : CUSTOM}
+          options={[
+            ...Object.entries(DELIMITER_LABELS).map(([d, label]) => ({
+              value: d,
+              label,
+            })),
+            { value: CUSTOM, label: "직접 입력" },
+          ]}
+          onChange={(next) =>
+            onChange({ ...value, delimiter: next === CUSTOM ? "" : next })
+          }
+        />
+        {!known && (
+          <input
+            aria-label="구분 기호 직접 입력"
+            className={styles.input}
+            value={value.delimiter}
+            maxLength={1}
+            placeholder="한 글자"
+            onChange={(e) => onChange({ ...value, delimiter: e.target.value })}
+          />
+        )}
       </div>
       <label className={styles.check}>
         <input
