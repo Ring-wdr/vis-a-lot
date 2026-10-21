@@ -3,6 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { login } from "@/shared/api/session";
+import { Spinner } from "@/shared/ui/Loading";
 import styles from "./LoginForm.module.css";
 
 /** mock 계정으로 로그인한다. 토큰은 auth 서비스가 발급하고 세션 store가 들고 있는다. */
@@ -55,7 +56,14 @@ export function LoginForm({ notice }: { notice?: string }) {
         className={styles.submit}
         disabled={submit.isPending}
       >
-        {submit.isPending ? "로그인 중…" : "로그인"}
+        {submit.isPending ? (
+          <>
+            <Spinner size="sm" tone="inherit" />
+            로그인 중
+          </>
+        ) : (
+          "로그인"
+        )}
       </button>
       <p className={styles.hint}>
         데모 계정: <code>demo</code> / <code>demo1234</code>

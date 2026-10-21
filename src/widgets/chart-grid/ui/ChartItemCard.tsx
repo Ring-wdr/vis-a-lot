@@ -21,6 +21,7 @@ import {
   isTerminal,
 } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
@@ -46,7 +47,7 @@ function Pending({
         : (placeholder ?? "준비 중");
   return (
     <div className={styles.pending}>
-      <span className={styles.spinner} aria-hidden="true" />
+      <Spinner size="lg" />
       <span>{label}</span>
       {/* 대기 → 렌더링으로 넘어갈 때 줄이 생기며 밀리지 않도록 진행 막대 자리는 늘 둔다. */}
       <progress

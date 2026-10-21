@@ -16,10 +16,11 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
 import { useItemDetail } from "@/features/item-detail/model/use-item-detail";
 import { useJobRange } from "@/shared/api/queries";
-import type { ItemState } from "@/shared/api/types";
+import { type ItemState, isTerminal } from "@/shared/api/types";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { useElementSize } from "@/shared/lib/use-element-size";
+import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 import { windowStart } from "../lib/thumbnail-window";
 import { ChartItemCard } from "./ChartItemCard";
@@ -156,6 +157,7 @@ export function DetailView({
                     <ChartImage data={thumb.thumbnail} alt="" />
                   ) : (
                     <span className={styles.thumbEmpty}>
+                      {!isTerminal(thumb.status) && <Spinner size="sm" />}
                       {THUMB_STATUS[thumb.status]}
                     </span>
                   )}

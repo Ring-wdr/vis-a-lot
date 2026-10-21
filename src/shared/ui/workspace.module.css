@@ -209,6 +209,10 @@
 }
 
 .drawButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: none;
   border-radius: 6px;
   padding: 9px 12px;
@@ -255,11 +259,6 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-}
-
-.empty {
-  color: var(--ws-text-muted);
-  font-size: 14px;
 }
 
 .gridRow {
@@ -363,8 +362,10 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border-radius: 6px;
   background: var(--ws-overlay);
   color: var(--ws-text-secondary);
@@ -455,21 +456,6 @@
 
 .pending progress {
   width: 100%;
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--ws-border);
-  border-top-color: var(--ws-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .footer {
@@ -584,8 +570,10 @@
 
 /* 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다. */
 .thumbEmpty {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   aspect-ratio: 128 / 80;
   background: var(--ws-panel);
@@ -687,6 +675,12 @@
   justify-content: space-between;
   gap: 12px;
   color: var(--ws-text-secondary);
+}
+
+/* tooltip 컬럼 값을 서버에서 받는 동안의 자리 */
+.tooltip .tooltipValueSkeleton {
+  width: 48px;
+  margin-top: 3px;
 }
 
 .tooltip dd {
@@ -914,6 +908,32 @@
   background: var(--ws-accent-soft);
 }
 
+.historyThumb {
+  position: relative;
+  flex: none;
+  display: flex;
+}
+
+.historyThumbBusy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--ws-overlay);
+}
+
+/* 목록을 받는 동안의 자리. 버튼이 아니라 누를 수 없다. */
+.historyEntry[data-skeleton] {
+  cursor: default;
+}
+
+.historyEntry[data-skeleton] .historyText {
+  flex: 1;
+  justify-content: center;
+  gap: 6px;
+}
+
 .historyEntry img,
 .historyThumbEmpty {
   flex: none;
@@ -975,6 +995,14 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
+}
+
+/* 두 클래스로 써서 skeleton 기본 높이(10px)보다 앞선다. */
+.legendList .legendSwatchSkeleton {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
 }
 
 .legendSwatch {

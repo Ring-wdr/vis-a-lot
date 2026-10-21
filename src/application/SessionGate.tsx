@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useEffect } from "react";
 import { restoreSession, useSession } from "@/shared/api/session";
+import { BootScreen } from "@/shared/ui/Loading";
 import { LoginView } from "@/views/login/ui/LoginView";
 
 /**
@@ -24,7 +25,7 @@ export function SessionGate({ children }: { children: ReactNode }) {
     if (status === "anonymous") client.clear();
   }, [status, client]);
 
-  if (status === "unknown") return <p>로그인 확인 중…</p>;
+  if (status === "unknown") return <BootScreen step="session" />;
   if (status === "anonymous") return <LoginView notice={reason} />;
   return children;
 }

@@ -14,9 +14,18 @@ import type { DatasetStatus, RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
 import { Dialog } from "@/shared/ui/Dialog";
 import dialogStyles from "@/shared/ui/Dialog.module.css";
+import { LoadingText, Skeleton, Spinner } from "@/shared/ui/Loading";
 import styles from "./DataDialog.module.css";
 
-function StatusCell({ status }: { status: DatasetStatus | undefined }) {
+function StatusCell({
+  status,
+  loading,
+}: {
+  status: DatasetStatus | undefined;
+  /** 목록을 받는 중이면 등록 여부를 아직 모른다. */
+  loading: boolean;
+}) {
+  if (loading) return <Skeleton width={50} />;
   if (!status || status.state === "missing") {
     return <span className={styles.muted}>미등록</span>;
   }
@@ -88,7 +97,7 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
               <tr key={rows} aria-selected={picked === rows || undefined}>
                 <td>{ROW_LABELS[rows]}</td>
                 <td>
-                  <StatusCell status={status} />
+                  <StatusCell status={status} loading={datasets.isPending} />
                 </td>
                 <td className={styles.action}>
                   {/* 적재 중에도 버튼 자리를 남겨 행 높이가 바뀌지 않게 한다. */}
@@ -98,6 +107,7 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
                       className={dialogStyles.primary}
                       disabled
                     >
+                      <Spinner size="sm" tone="inherit" />
                       등록 중
                     </button>
                   )}
@@ -134,6 +144,9 @@ function DataDialogBody({ onClose }: { onClose: () => void }) {
       {datasets.error && <p role="alert">{datasets.error.message}</p>}
       {generate.error && <p role="alert">{generate.error.message}</p>}
 
+      {pickedReady && columns.isPending && (
+        <LoadingText>컬럼 불러오는 중</LoadingText>
+      )}
       {pickedReady && columns.data && (
         <table className={styles.table}>
           <caption>{ROW_LABELS[columns.data.rows]} 컬럼</caption>

@@ -9,6 +9,7 @@ import {
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
+import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import styles from "@/shared/ui/workspace.module.css";
 import { useChangeCommon } from "../model/use-change-common";
 import settingsStyles from "./SettingsDialog.module.css";
@@ -49,11 +50,14 @@ export function ColorSettings() {
           <h3 className={settingsStyles.heading}>
             legend 색상 · {columns.label(draft.legend)}
           </h3>
-          {legendValues.isPending && (
-            <p className={styles.muted}>
-              데이터가 준비되면 legend 값이 표시됩니다.
-            </p>
-          )}
+          {legendValues.isPending &&
+            (dataset.data?.state === "ready" ? (
+              <LegendListSkeleton />
+            ) : (
+              <p className={styles.muted}>
+                데이터가 준비되면 legend 값이 표시됩니다.
+              </p>
+            ))}
           <ul className={styles.legendList}>
             {legendValues.data?.values.map((value, i) => {
               const color = legendColorOf(value, i);
