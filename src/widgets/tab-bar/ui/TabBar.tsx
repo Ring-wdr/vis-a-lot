@@ -12,6 +12,7 @@ import {
 } from "@/entities/workspace/model/tabs-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
+import { LoadingText } from "@/shared/ui/Loading";
 import styles from "./TabBar.module.css";
 
 /** 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터. history 탭은 다시 그리기 전까지 불러오는 중이다. */
@@ -19,14 +20,15 @@ function TabLabel({ tab }: { tab: WorkspaceTab }) {
   const spec = useStore(tab.store, (s) => s.current?.spec);
   const rows = useStore(tab.store, (s) => s.draft.rows);
   const columns = useColumns(spec?.rows ?? rows);
+  const loading = !spec && tab.view === "history";
   const label = spec
     ? chartTitle(spec, columns)
-    : tab.view === "history"
-      ? "불러오는 중…"
+    : loading
+      ? "불러오는 중"
       : `새 차트 · IoT ${ROW_LABELS[rows]}`;
   return (
     <span className={styles.label} title={label}>
-      {label}
+      {loading ? <LoadingText>{label}</LoadingText> : label}
     </span>
   );
 }

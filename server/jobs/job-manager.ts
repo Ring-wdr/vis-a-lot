@@ -4,6 +4,8 @@
 
 import {
   type ItemMeta,
+  type ItemProps,
+  type ItemSize,
   type ItemStage,
   type ItemState,
   isTerminal,
@@ -12,19 +14,25 @@ import {
   type JobStatus,
 } from "../api/types";
 import {
+  bumpRevision,
   type CachedChartData,
   type ChartItem,
   type ChartRecord,
   cacheChartData,
+  detailUrl,
   getCachedChartData,
   getItem,
   pngUrl,
+  putDetail,
+  sizeKeyOf,
+  THUMBNAIL_SIZE,
+  thumbnailUrl,
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { specError } from "../charts/validate-spec";
 import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
-import { putPng } from "../png-store";
+import { deletePngs, putPng } from "../png-store";
 import { defaultLegendColor } from "../render/theme";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -47,6 +55,15 @@ type Job = {
   /** epoch ms. 하단 바가 경과 시간·처리 속도·남은 시간을 계산한다. */
   timing: { createdAt: number; renderStartedAt?: number; endedAt?: number };
 };
+
+/**
+ * 무엇을 그리는지.
+ * - item: grid에 놓일 PNG. 내용이 바뀐 경우(thumbnail)에는 고정 크기 섬네일도 같은 렌더에서 함께 그린다.
+ * - detail: 크게 보기용 PNG 한 장. grid PNG와 섬네일은 건드리지 않는다.
+ */
+type RenderTarget =
+  | { kind: "item"; thumbnail: boolean }
+  | { kind: "detail"; size: ItemSize; revision: number };
 
 /** 사용자에게 그대로 보여줄 수 있는 job 실패 사유 */
 class JobError extends Error {}
@@ -114,14 +131,25 @@ export function cancelJob(job: Job) {
 
 /** 응답에 담을 item: 페이지 단위, 또는 키를 지정하면 그 item들 */
 export type ItemSelection =
-  | { page: number; pageSize: number }
+  | {
+      page: number;
+      pageSize: number;
+      /** 지정하면 페이지 경계와 상관없이 이 순번부터 pageSize개 (크게 보기 섬네일 목록) */
+      offset?: number;
+    }
   | { keys: string[] };
 
 function selectedKeys(job: Job, selection: ItemSelection) {
   if ("keys" in selection)
     return selection.keys.filter((k) => job.items.has(k));
-  const { page, pageSize } = selection;
-  return job.order.slice(page * pageSize, (page + 1) * pageSize);
+  const start = startOf(selection);
+  return job.order.slice(start, start + selection.pageSize);
+}
+
+/** 응답 item 중 첫 item의 전체 순번 */
+function startOf(selection: ItemSelection) {
+  if ("keys" in selection) return 0;
+  return selection.offset ?? selection.page * selection.pageSize;
 }
 
 /** 고른 item이 없으면(pageSize 0) job 전체 진행 상태만 받는 요청이다. job이 끝나야 더 기다릴 게 없다. */
@@ -177,6 +205,7 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
     totalItems: job.phase === "render" ? job.order.length : null,
     page: "page" in selection ? selection.page : 0,
     pageSize: "pageSize" in selection ? selection.pageSize : 0,
+    offset: startOf(selection),
     items,
     error: job.error,
     kind: job.kind,
@@ -238,12 +267,16 @@ async function run(job: Job) {
       label: itemLabelOf(g.values, spec.splitSeparator),
       values: g.values,
       version: 0,
+      revision: 0,
+      details: new Map(),
+      detailJobs: new Map(),
       view: restored?.view,
       shapes: restored?.shapes ?? [],
-      props:
-        restored?.color || restored?.legendColors
-          ? { color: restored.color, legendColors: restored.legendColors }
-          : undefined,
+      props: propsOrNone({
+        color: restored?.color,
+        legendColors: restored?.legendColors,
+        legendPosition: restored?.legendPosition,
+      }),
     };
   });
   for (const item of chart.items)
@@ -253,7 +286,7 @@ async function run(job: Job) {
   job.timing.renderStartedAt = Date.now();
   touch(job);
 
-  await renderItems(job, data, chart.items);
+  await renderItems(job, data, chart.items, { kind: "item", thumbnail: true });
   job.status = finalStatus(job);
 }
 
@@ -268,25 +301,7 @@ function persistHistory(chart: ChartRecord) {
   );
 }
 
-/**
- * item 일부만 다시 그리는 job (확대/축소, 도형, 개별 속성, resize).
- * 결과는 draw job의 item 상태에도 반영해 grid가 새 PNG를 보게 한다.
- */
-export function startItemJob(
-  chart: ChartRecord,
-  keys: string[],
-  {
-    primary = false,
-    record = true,
-  }: {
-    primary?: boolean;
-    /** history에 남길지. resize는 남기지 않는다. */
-    record?: boolean;
-  } = {},
-): Job {
-  const items = keys
-    .map((k) => getItem(chart, k))
-    .filter((i): i is ChartItem => i !== undefined);
+function redrawJob(chart: ChartRecord, items: ChartItem[]): Job {
   const job: Job = {
     id: crypto.randomUUID(),
     chart,
@@ -302,13 +317,45 @@ export function startItemJob(
     timing: { createdAt: Date.now(), renderStartedAt: Date.now() },
   };
   jobs.set(job.id, job);
+  return job;
+}
+
+/**
+ * item 일부만 다시 그리는 job (확대/축소, 도형, 개별 속성, resize).
+ * 결과는 draw job의 item 상태에도 반영해 grid가 새 PNG를 보게 한다.
+ */
+export function startItemJob(
+  chart: ChartRecord,
+  keys: string[],
+  {
+    primary = false,
+    record = true,
+    content = true,
+  }: {
+    primary?: boolean;
+    /** history에 남길지. resize는 남기지 않는다. */
+    record?: boolean;
+    /** 그림 내용이 바뀌었는지. 크기만 바뀌면(resize, grid) 섬네일과 상세 PNG를 그대로 둔다. */
+    content?: boolean;
+  } = {},
+): Job {
+  const items = keys
+    .map((k) => getItem(chart, k))
+    .filter((i): i is ChartItem => i !== undefined);
+  // 예전 내용으로 그린 상세 PNG는 더 쓸 일이 없으니 지운다.
+  if (content) {
+    deletePngs(items.flatMap(bumpRevision)).catch((err) =>
+      console.warn("stale detail png cleanup failed", err),
+    );
+  }
+  const job = redrawJob(chart, items);
   // 전체를 다시 그리는 job(공통 속성 변경)은 grid가 바라보는 primary job이 된다.
   if (primary) chart.primaryJobId = job.id;
   for (const item of items) item.busyJobId = job.id;
 
   (async () => {
     const data = await loadChartData(chart);
-    await renderItems(job, data, items);
+    await renderItems(job, data, items, { kind: "item", thumbnail: content });
     job.status = finalStatus(job);
   })()
     .catch((err) => {
@@ -326,6 +373,41 @@ export function startItemJob(
   return job;
 }
 
+/**
+ * 크게 보기용 PNG를 그 크기로 한 장 그리는 job. 조작 차단(busy)도, history 기록도 하지 않는다.
+ * 같은 크기를 이미 그리는 중이면 그 job을 돌려준다.
+ */
+export function startDetailJob(
+  chart: ChartRecord,
+  item: ChartItem,
+  size: ItemSize,
+): Job {
+  const sizeKey = sizeKeyOf(size);
+  const running = item.detailJobs.get(sizeKey);
+  const existing = running && jobs.get(running);
+  if (existing && !isTerminal(existing.status)) return existing;
+
+  const job = redrawJob(chart, [item]);
+  item.detailJobs.set(sizeKey, job.id);
+  const target = { kind: "detail", size, revision: item.revision } as const;
+  (async () => {
+    const data = await loadChartData(chart);
+    await renderItems(job, data, [item], target);
+    job.status = finalStatus(job);
+  })()
+    .catch((err) => {
+      console.error(`detail job ${job.id} failed`, err);
+      job.status = "failed";
+    })
+    .finally(() => {
+      job.timing.endedAt = Date.now();
+      if (item.detailJobs.get(sizeKey) === job.id)
+        item.detailJobs.delete(sizeKey);
+      touch(job);
+    });
+  return job;
+}
+
 function initialState(chart: ChartRecord, item: ChartItem): ItemState {
   return {
     key: item.key,
@@ -334,11 +416,28 @@ function initialState(chart: ChartRecord, item: ChartItem): ItemState {
     stage: "query",
     stageProgress: 1,
     image: item.image,
+    thumbnail: item.thumbnail,
+    revision: item.revision,
     zoomed: item.view !== undefined,
     shapeCount: item.shapes.length,
     color: itemColor(chart, item),
     customColor: hasCustomColor(item),
+    legendPosition: item.props?.legendPosition,
   };
+}
+
+/** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
+export function propsOrNone(props: ItemProps): ItemProps | undefined {
+  return props.color || props.legendColors || props.legendPosition
+    ? props
+    : undefined;
+}
+
+/** legend 위치: item 개별 → 공통 → 위 */
+function legendPosition(chart: ChartRecord, item: ChartItem) {
+  return (
+    item.props?.legendPosition ?? chart.spec.common.legendPosition ?? "top"
+  );
 }
 
 /** 개별 색이 있으면 그 색, 없으면 공통 색 */
@@ -418,24 +517,27 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   return result;
 }
 
-type RenderOutput = { png: ArrayBuffer; meta: ItemMeta };
+type RenderOutput = { png: ArrayBuffer; thumb?: ArrayBuffer; meta: ItemMeta };
 
 /** 차트 종류에 맞는 렌더러를 골라 item 하나를 그린다. */
 function renderItem(
   chart: ChartRecord,
   data: CachedChartData,
   item: ChartItem,
+  size: ItemSize,
+  thumbnail: boolean,
   options: PoolCallOptions<"renderScatter" | "renderCategory">,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
-  const { spec, itemSize } = chart;
+  const { spec } = chart;
   const index = data.groupOf.get(item.key);
   const columnOf = (name: string | null) =>
     chart.columns?.find((c) => c.name === name);
   const legendTitle = columnOf(spec.legend)?.label ?? spec.legend ?? "";
   const common = {
-    width: itemSize.width,
-    height: itemSize.height,
+    width: size.width,
+    height: size.height,
+    thumbnail: thumbnail ? THUMBNAIL_SIZE : undefined,
     title: item.label,
     color: itemColor(chart, item),
     view: item.view,
@@ -456,6 +558,7 @@ function renderItem(
           title: legendTitle,
           values: data.legend.values,
           colors: legendColors(chart, item, data.legend.values),
+          position: legendPosition(chart, item),
           index: data.legend.index.slice(group.start, group.end),
         },
       },
@@ -476,6 +579,7 @@ function renderItem(
         title: legendTitle,
         values: data.legendValues,
         colors: legendColors(chart, item, data.legendValues),
+        position: legendPosition(chart, item),
       },
     },
     options,
@@ -487,6 +591,7 @@ async function renderItems(
   job: Job,
   data: CachedChartData,
   items: ChartItem[],
+  target: RenderTarget,
 ) {
   const { chart } = job;
   const { signal } = job.abort;
@@ -499,7 +604,9 @@ async function renderItems(
         state.stageProgress = ratio;
         touch(job);
       };
-      return renderItem(chart, data, item, {
+      const size = target.kind === "detail" ? target.size : chart.itemSize;
+      const thumbnail = target.kind === "item" && target.thumbnail;
+      return renderItem(chart, data, item, size, thumbnail, {
         signal,
         onStart: () => {
           state.status = "running";
@@ -508,7 +615,17 @@ async function renderItems(
         onProgress: (p) => setStage(p.stage, p.ratio),
       })
         .then(async (result) => {
-          await storeResult(chart, item, result.png);
+          if (target.kind === "detail") {
+            // 그리는 사이 내용이 바뀌었으면 예전 그림이므로 버린다. 화면은 새 revision으로 다시 요청한다.
+            if (item.revision !== target.revision) {
+              state.status = "cancelled";
+              return;
+            }
+            state.image = await storeDetail(chart, item, size, result);
+            state.status = "success";
+            return;
+          }
+          await storeResult(chart, item, result);
           item.meta = result.meta;
           if (!item.view) {
             item.fullView = {
@@ -517,8 +634,11 @@ async function renderItems(
             };
           }
           state.image = item.image;
+          state.thumbnail = item.thumbnail;
+          state.revision = item.revision;
           state.color = itemColor(chart, item);
           state.customColor = hasCustomColor(item);
+          state.legendPosition = item.props?.legendPosition;
           state.status = "success";
           syncPrimary(chart, item);
         })
@@ -545,17 +665,20 @@ function syncPrimary(chart: ChartRecord, item: ChartItem) {
   const state = primary?.items.get(item.key);
   if (!primary || !state) return;
   state.image = item.image;
+  state.thumbnail = item.thumbnail;
+  state.revision = item.revision;
   state.zoomed = item.view !== undefined;
   state.shapeCount = item.shapes.length;
   state.color = itemColor(chart, item);
   state.customColor = hasCustomColor(item);
+  state.legendPosition = item.props?.legendPosition;
   touch(primary);
 }
 
 async function storeResult(
   chart: ChartRecord,
   item: ChartItem,
-  png: ArrayBuffer,
+  { png, thumb }: RenderOutput,
 ) {
   item.version++;
   const url = pngUrl(chart.id, item);
@@ -565,4 +688,23 @@ async function storeResult(
     width: chart.itemSize.width,
     height: chart.itemSize.height,
   };
+  if (thumb) {
+    const thumbUrl = thumbnailUrl(chart.id, item);
+    await putPng(new URL(thumbUrl, location.origin).href, thumb);
+    item.thumbnail = { url: thumbUrl, ...THUMBNAIL_SIZE };
+  }
+}
+
+/** 상세 PNG를 크기별 캐시에 넣는다. 밀려난 크기의 PNG는 지운다. */
+async function storeDetail(
+  chart: ChartRecord,
+  item: ChartItem,
+  size: ItemSize,
+  { png, meta }: RenderOutput,
+) {
+  const url = detailUrl(chart.id, item, size);
+  await putPng(new URL(url, location.origin).href, png);
+  const image = { url, ...size };
+  await deletePngs(putDetail(item, size, { image, meta }));
+  return image;
 }

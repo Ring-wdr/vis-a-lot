@@ -10,6 +10,7 @@ import type { AggFn, RowSize } from "../data/schema";
 type ColumnName = string;
 
 import type { CategoryMeta } from "../render/category";
+import type { LegendPosition } from "../render/legend";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
@@ -75,12 +76,15 @@ export type CommonProps = {
   color: string;
   /** legend 값별 색. 없는 값은 팔레트 순서대로 기본 색을 쓴다. */
   legendColors?: Record<string, string>;
+  /** legend 위치. 없으면 위 */
+  legendPosition?: LegendPosition;
 };
 
 /** item 개별 속성. 공통 속성보다 우선한다. */
 export type ItemProps = {
   color?: string;
   legendColors?: Record<string, string>;
+  legendPosition?: LegendPosition;
 };
 
 export type ChartSpec = {
@@ -110,6 +114,7 @@ export type ItemRestore = {
   shapes: Shape[];
   color?: string;
   legendColors?: Record<string, string>;
+  legendPosition?: LegendPosition;
 };
 
 export type CreateChartRequest = {
@@ -165,7 +170,8 @@ export type ResizeRequest = { itemSize: ItemSize; keys: string[] };
  */
 export type ItemPropsRequest =
   | { color: string | null }
-  | { legendColor: { value: string; color: string | null } };
+  | { legendColor: { value: string; color: string | null } }
+  | { legendPosition: LegendPosition | null };
 
 export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
@@ -175,6 +181,10 @@ export function isHexColor(value: unknown): value is string {
 
 /** item 하나(또는 몇 개)를 다시 그리는 job */
 export type ItemJobResponse = { jobId: string };
+
+/** 크게 보기용 PNG. 그 크기로 그려 둔 게 있으면 바로 image를, 없으면 그리는 job을 준다. */
+export type DetailRequest = { itemSize: ItemSize };
+export type DetailResponse = { image: ChartImage } | { jobId: string };
 
 export type TooltipRequest = { rowId: number; columns: ColumnName[] };
 export type TooltipResponse = {
@@ -208,6 +218,10 @@ export type ItemState = {
   /** 현재 단계 안에서의 진행률 0..1 */
   stageProgress: number;
   image?: ChartImage;
+  /** 고정 크기 섬네일. 크게 보기 화면 하단 목록에 쓴다. */
+  thumbnail?: ChartImage;
+  /** 그림 내용이 바뀔 때마다 올라간다. 크기만 바뀌면 그대로다. */
+  revision: number;
   error?: string;
   /** 확대 중인지. 축소/초기화 버튼 활성화에 쓴다. */
   zoomed: boolean;
@@ -216,6 +230,8 @@ export type ItemState = {
   color: string;
   /** 개별 색을 지정했는지 */
   customColor: boolean;
+  /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
+  legendPosition?: LegendPosition;
 };
 
 /** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
@@ -230,6 +246,7 @@ export const HISTORY_EVENT_TYPES = [
   "undo",
   "clearShapes",
   "color",
+  "legend",
   "common",
   "grid",
 ] as const;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect } from "react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -12,6 +13,7 @@ import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
+  type ChartImage,
   type ColumnName,
   type ItemSize,
   type ItemStage,
@@ -19,6 +21,7 @@ import {
   isTerminal,
 } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
@@ -44,7 +47,7 @@ function Pending({
         : (placeholder ?? "준비 중");
   return (
     <div className={styles.pending}>
-      <span className={styles.spinner} aria-hidden="true" />
+      <Spinner size="lg" />
       <span>{label}</span>
       {/* 대기 → 렌더링으로 넘어갈 때 줄이 생기며 밀리지 않도록 진행 막대 자리는 늘 둔다. */}
       <progress
@@ -52,6 +55,39 @@ function Pending({
         max={1}
         aria-hidden={item?.status !== "running"}
       />
+    </div>
+  );
+}
+
+/** 더블 클릭으로 크게 보기를 열고 닫는다. 버튼·입력·그리기 레이어 위에서는 그쪽 조작을 따른다. */
+function doubleClickHandler(onDoubleClick: (() => void) | undefined) {
+  if (!onDoubleClick) return undefined;
+  return (e: React.MouseEvent) => {
+    const target = e.target as Element;
+    if (target.closest("button, input, [role='application']")) return;
+    onDoubleClick();
+  };
+}
+
+/** 크게 보기를 열거나(grid) grid로 돌아가는(크게 보기) 버튼 */
+function ExpandButton({
+  expanded,
+  onClick,
+}: {
+  expanded: boolean;
+  onClick?: () => void;
+}) {
+  if (!onClick) return null;
+  const label = expanded ? "grid로 돌아가기" : "크게 보기";
+  return (
+    <div className={styles.itemActions}>
+      <button type="button" title={label} aria-label={label} onClick={onClick}>
+        {expanded ? (
+          <Minimize2 size={13} aria-hidden="true" />
+        ) : (
+          <Maximize2 size={13} aria-hidden="true" />
+        )}
+      </button>
     </div>
   );
 }
@@ -67,6 +103,10 @@ function DrawnItem({
   tooltipColumns,
   displaySize,
   hasLegend,
+  image = item.image,
+  rendering,
+  expanded = false,
+  onDoubleClick,
 }: {
   item: ItemState & { image: NonNullable<ItemState["image"]> };
   /** legend가 있으면 색은 legend 항목별로 바꾼다. */
@@ -75,9 +115,19 @@ function DrawnItem({
   primaryJobId: string;
   tooltipColumns: ColumnName[];
   displaySize: ItemSize;
+  /** 띄울 PNG. 크게 보기에서는 grid PNG 대신 그 크기로 그린 PNG를 준다. */
+  image?: ChartImage;
+  /** 크게 보기 PNG를 그리는 중이면 그 진행 상태 */
+  rendering?: ItemState;
+  /** 크게 보기 화면의 item인지 */
+  expanded?: boolean;
+  onDoubleClick?: () => void;
 }) {
   const mode = useWorkspace((s) => s.mode);
   const readOnly = useWorkspace((s) => s.readOnly);
+  const commonPosition = useWorkspace(
+    (s) => s.current?.spec.common.legendPosition ?? "top",
+  );
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
   const setItemJob = useWorkspace((s) => s.setItemJob);
@@ -113,26 +163,15 @@ function DrawnItem({
   ]);
 
   return (
-    <article className={styles.item}>
-      <div className={styles.itemToolbar}>
-        <span className={styles.itemLabel} title={item.label}>
-          {item.label}
-        </span>
-        {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
-        {!readOnly && (
-          <ItemToolbar
-            item={item}
-            busy={busy}
-            undoCount={undoCount}
-            hasLegend={hasLegend}
-            onAction={action.mutate}
-          />
-        )}
-      </div>
+    <article
+      className={styles.item}
+      aria-label={item.label}
+      onDoubleClick={doubleClickHandler(onDoubleClick)}
+    >
       <div className={styles.itemBody}>
         {mode === "normal" ? (
           <ItemTooltip
-            image={item.image}
+            image={image}
             alt={item.label}
             chartId={chartId}
             itemKey={item.key}
@@ -148,17 +187,38 @@ function DrawnItem({
         ) : (
           <DrawLayer
             mode={mode}
-            image={item.image}
+            image={image}
             display={displaySize}
             alt={item.label}
             onAction={action.mutate}
           />
         )}
-        {busy && (
+        {busy ? (
           <div className={styles.busyOverlay} aria-busy="true">
             <Pending item={redrawing} placeholder="다시 그리는 중" />
           </div>
+        ) : (
+          rendering && (
+            <div className={styles.busyOverlay} aria-busy="true">
+              <Pending item={rendering} />
+            </div>
+          )
         )}
+      </div>
+      {/* 차트 위 우측 상단에 떠 있는 도구. 커서를 올리거나 포커스가 들어오면 보인다. */}
+      <div className={styles.itemToolbar}>
+        {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
+        {!readOnly && (
+          <ItemToolbar
+            item={item}
+            busy={busy}
+            undoCount={undoCount}
+            hasLegend={hasLegend}
+            commonPosition={commonPosition}
+            onAction={action.mutate}
+          />
+        )}
+        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
     </article>
   );
@@ -173,6 +233,10 @@ export function ChartItemCard({
   tooltipColumns = [],
   displaySize,
   hasLegend = false,
+  image,
+  rendering,
+  expanded = false,
+  onDoubleClick,
 }: {
   item?: ItemState;
   hasLegend?: boolean;
@@ -183,6 +247,14 @@ export function ChartItemCard({
   tooltipColumns?: ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
+  /** 띄울 PNG. 없으면 grid PNG를 띄운다. */
+  image?: ChartImage;
+  /** 크게 보기 PNG를 그리는 중이면 그 진행 상태 */
+  rendering?: ItemState;
+  /** 크게 보기 화면의 item인지 */
+  expanded?: boolean;
+  /** 더블 클릭이나 toolbar 버튼으로 크게 보기를 열고 닫는다. */
+  onDoubleClick?: () => void;
 }) {
   if (item?.status === "success" && item.image && chartId && primaryJobId) {
     return (
@@ -193,17 +265,24 @@ export function ChartItemCard({
         tooltipColumns={tooltipColumns}
         displaySize={displaySize ?? item.image}
         hasLegend={hasLegend}
+        image={image}
+        rendering={rendering}
+        expanded={expanded}
+        onDoubleClick={onDoubleClick}
       />
     );
   }
   return (
-    <article className={styles.item}>
-      <div className={styles.itemToolbar}>
+    <article
+      className={styles.item}
+      aria-label={item?.label}
+      onDoubleClick={doubleClickHandler(onDoubleClick)}
+    >
+      <div className={styles.itemBody}>
+        {/* 그림이 없으면 PNG 제목 대신 이름을 띄운다. */}
         <span className={styles.itemLabel} title={item?.label}>
           {item?.label ?? "…"}
         </span>
-      </div>
-      <div className={styles.itemBody}>
         {item?.status === "failed" ? (
           <p role="alert" className={styles.error}>
             렌더 실패: {item.error}
@@ -213,6 +292,9 @@ export function ChartItemCard({
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}
+      </div>
+      <div className={styles.itemToolbar}>
+        <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
     </article>
   );

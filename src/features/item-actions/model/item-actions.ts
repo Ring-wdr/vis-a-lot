@@ -7,7 +7,7 @@ import {
   useWorkspaceMutationKey,
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
-import type { Shape, ViewRequest } from "@/shared/api/types";
+import type { LegendPosition, Shape, ViewRequest } from "@/shared/api/types";
 
 export type ItemAction =
   | { type: "view"; body: ViewRequest }
@@ -15,6 +15,7 @@ export type ItemAction =
   | { type: "undoShape" }
   | { type: "color"; color: string | null }
   | { type: "legendColor"; value: string; color: string | null }
+  | { type: "legendPosition"; position: LegendPosition | null }
   | { type: "clearShapes" };
 
 /**
@@ -47,6 +48,8 @@ export function useItemAction(chartId: string, itemKey: string) {
           );
         case "clearShapes":
           return api.clearShapes(chartId, itemKey);
+        case "legendPosition":
+          return api.setItemLegendPosition(chartId, itemKey, action.position);
       }
     },
     onSuccess: ({ jobId }, action) => {

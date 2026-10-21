@@ -11,7 +11,7 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { GridPicker } from "@/features/change-grid/ui/GridPicker";
 import { DatasetSelect } from "@/features/register-dataset/ui/DatasetSelect";
-import { useDatasetSchema } from "@/shared/api/queries";
+import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
 import {
   type AggFn,
   CHART_TYPES,
@@ -20,6 +20,7 @@ import {
   type ColumnName,
 } from "@/shared/api/types";
 import { AGG_FNS, AGG_LABELS } from "@/shared/config/dataset";
+import { LoadingText } from "@/shared/ui/Loading";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import { Select, type SelectOption } from "@/shared/ui/Select";
 import styles from "@/shared/ui/workspace.module.css";
@@ -75,7 +76,15 @@ export function ControlPanel() {
   // 컬럼은 데이터마다 달라 고른 데이터셋의 스키마에서 후보를 고른다.
   const schema = useDatasetSchema(draft.rows);
   const columns = schema.data?.columns;
-  const noColumns = columns ? undefined : "데이터를 등록하면 고를 수 있습니다";
+  const schemaState = useSchemaState(draft.rows);
+  const noColumns =
+    schemaState === "loading" ? (
+      <LoadingText announce={false}>컬럼 불러오는 중</LoadingText>
+    ) : schemaState === "generating" ? (
+      "데이터 등록이 끝나면 고를 수 있습니다"
+    ) : schemaState === "missing" ? (
+      "데이터를 등록하면 고를 수 있습니다"
+    ) : undefined;
 
   // 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
   useEffect(() => {

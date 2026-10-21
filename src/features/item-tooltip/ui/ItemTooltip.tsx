@@ -17,6 +17,7 @@ import type {
 import { formatValue } from "@/shared/lib/format";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
+import { LoadingText, Skeleton } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 
 type Cursor = { x: number; y: number };
@@ -56,6 +57,7 @@ export function ItemTooltip({
   // 컬럼 라벨·타입은 그린 차트의 데이터셋 스키마에서 찾는다.
   const rows = useWorkspace((s) => s.current?.spec.rows ?? s.draft.rows);
   const columnInfo = useColumns(rows);
+  const showNearest = useWorkspace((s) => s.showNearest);
 
   const strategy = meta.data ? strategyFor(meta.data) : undefined;
   const prepared = useMemo(
@@ -65,7 +67,9 @@ export function ItemTooltip({
 
   const hit =
     cursor && meta.data && strategy
-      ? strategy.hitTest(meta.data, prepared, cursor.x, cursor.y)
+      ? strategy.hitTest(meta.data, prepared, cursor.x, cursor.y, {
+          nearest: showNearest,
+        })
       : null;
   const rowId = useDebounced(hit?.rowId, 100);
   const extra = useTooltipValues(chartId, itemKey, rowId, columns);
@@ -92,15 +96,12 @@ export function ItemTooltip({
   const extraRows = hit?.rowId !== undefined ? columns.length : 0;
   const tooltipPosition =
     client && placeTooltip(client, (hit?.rows.length ?? 1) + extraRows);
-  const isCategory =
-    meta.data !== undefined && meta.data.chartType !== "scatter";
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: 마우스 위치를 읽는 시각 보조 레이어. 같은 정보는 이후 표 보기로 제공한다.
     <div
       ref={layerRef}
       className={styles.tooltipLayer}
-      data-hover={isCategory ? "box" : "point"}
       style={{ width: display.width, height: display.height }}
       onMouseEnter={() => setHovered(true)}
       onMouseMove={onMove}
@@ -168,9 +169,11 @@ export function ItemTooltip({
                   <div key={c} className={styles.emphasis}>
                     <dt>{columnInfo.label(c)}</dt>
                     <dd>
-                      {extra.data && rowId === hit.rowId
-                        ? formatValue(extra.data.values[c], columnInfo.type(c))
-                        : "…"}
+                      {extra.data && rowId === hit.rowId ? (
+                        formatValue(extra.data.values[c], columnInfo.type(c))
+                      ) : (
+                        <Skeleton className={styles.tooltipValueSkeleton} />
+                      )}
                     </dd>
                   </div>
                 ))}
@@ -186,7 +189,7 @@ export function ItemTooltip({
             className={`${styles.tooltip} ${styles.tooltipPortal}`}
             style={tooltipPosition}
           >
-            불러오는 중…
+            <LoadingText>불러오는 중</LoadingText>
           </div>,
           document.body,
         )}

@@ -161,6 +161,9 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/HexColor"
             }
+          },
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
           }
         },
         "required": ["color"]
@@ -169,6 +172,10 @@
         "type": "string",
         "pattern": "^#[0-9a-f]{6}$/i",
         "example": "#2a78d6"
+      },
+      "LegendPosition": {
+        "type": "string",
+        "enum": ["top", "bottom", "left", "right"]
       },
       "GridRequest": {
         "type": "object",
@@ -256,6 +263,22 @@
               }
             },
             "required": ["legendColor"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "legendPosition": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LegendPosition"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": ["legendPosition"]
           }
         ]
       },
@@ -536,6 +559,9 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/HexColor"
             }
+          },
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
           }
         },
         "required": ["shapes"]
@@ -701,6 +727,7 @@
           "undo",
           "clearShapes",
           "color",
+          "legend",
           "common",
           "grid"
         ]
@@ -770,6 +797,9 @@
               "color": {
                 "type": "number"
               },
+              "legend": {
+                "type": "number"
+              },
               "common": {
                 "type": "number"
               },
@@ -806,6 +836,52 @@
           }
         },
         "required": ["entries"]
+      },
+      "DetailResponse": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "image": {
+                "$ref": "#/components/schemas/ChartImage"
+              }
+            },
+            "required": ["image"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "jobId": {
+                "type": "string"
+              }
+            },
+            "required": ["jobId"]
+          }
+        ]
+      },
+      "ChartImage": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          }
+        },
+        "required": ["url", "width", "height"]
+      },
+      "DetailRequest": {
+        "type": "object",
+        "properties": {
+          "itemSize": {
+            "$ref": "#/components/schemas/ItemSize"
+          }
+        },
+        "required": ["itemSize"]
       },
       "ItemMeta": {
         "anyOf": [
@@ -1166,6 +1242,9 @@
           "pageSize": {
             "type": "number"
           },
+          "offset": {
+            "type": "number"
+          },
           "items": {
             "type": "array",
             "items": {
@@ -1229,6 +1308,7 @@
           "totalItems",
           "page",
           "pageSize",
+          "offset",
           "items",
           "kind",
           "counts",
@@ -1257,6 +1337,12 @@
           "image": {
             "$ref": "#/components/schemas/ChartImage"
           },
+          "thumbnail": {
+            "$ref": "#/components/schemas/ChartImage"
+          },
+          "revision": {
+            "type": "integer"
+          },
           "error": {
             "type": "string"
           },
@@ -1271,6 +1357,9 @@
           },
           "customColor": {
             "type": "boolean"
+          },
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
           }
         },
         "required": [
@@ -1278,6 +1367,7 @@
           "label",
           "status",
           "stageProgress",
+          "revision",
           "zoomed",
           "shapeCount",
           "color",
@@ -1287,21 +1377,6 @@
       "ItemStage": {
         "type": "string",
         "enum": ["query", "aggregate", "render", "encode"]
-      },
-      "ChartImage": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "width": {
-            "type": "number"
-          },
-          "height": {
-            "type": "number"
-          }
-        },
-        "required": ["url", "width", "height"]
       },
       "ResizeRequest": {
         "type": "object",
@@ -2242,6 +2317,107 @@
         }
       }
     },
+    "/charts/{chartId}/items/{itemKey}/detail": {
+      "post": {
+        "tags": ["items"],
+        "summary": "크게 보기용 PNG. 같은 내용·같은 크기로 그려 둔 게 있으면 바로 주고, 없으면 그 한 장만 그리는 job을 준다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "그려 둔 PNG 또는 그리는 job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/charts/{chartId}/items/{itemKey}/meta": {
       "get": {
         "tags": ["tooltip"],
@@ -2267,6 +2443,17 @@
             "required": true,
             "name": "itemKey",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+x\\d+$",
+              "description": "크게 보기 PNG의 크기 (WxH)"
+            },
+            "required": false,
+            "description": "크게 보기 PNG의 크기 (WxH)",
+            "name": "size",
+            "in": "query"
           }
         ],
         "responses": {
@@ -2350,6 +2537,15 @@
             },
             "required": false,
             "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "offset",
             "in": "query"
           },
           {
@@ -2453,6 +2649,22 @@
             },
             "required": false,
             "name": "v",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "r",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "size",
             "in": "query"
           }
         ],

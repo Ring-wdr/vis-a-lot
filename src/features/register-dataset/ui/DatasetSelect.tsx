@@ -4,6 +4,7 @@ import { ROW_LABELS } from "@/entities/dataset/lib/labels";
 import { useDatasets } from "@/shared/api/queries";
 import type { RowSize } from "@/shared/api/types";
 import { ROW_SIZES } from "@/shared/config/dataset";
+import { LoadingText } from "@/shared/ui/Loading";
 import { Select } from "@/shared/ui/Select";
 import selectStyles from "@/shared/ui/Select.module.css";
 import styles from "@/shared/ui/workspace.module.css";
@@ -34,23 +35,29 @@ export function DatasetSelect({
         label="데이터"
         value={rows}
         options={ROW_SIZES.map((size) => {
-          const state =
-            datasets.data?.datasets.find((d) => d.rows === size)?.state ??
-            "missing";
+          // 목록을 받기 전에는 등록 여부를 모르니 상태를 붙이지 않는다.
+          const state = datasets.data
+            ? (datasets.data.datasets.find((d) => d.rows === size)?.state ??
+              "missing")
+            : undefined;
           return {
             value: size,
-            label: `IoT 센서 · ${ROW_LABELS[size]}${STATE_SUFFIX[state]}`,
+            label: `IoT 센서 · ${ROW_LABELS[size]}${state ? STATE_SUFFIX[state] : ""}`,
             disabled: state === "missing",
           };
         })}
         onChange={onRowsChange}
         aside={
           <span className={selectStyles.aside}>
-            {status?.state === "generating"
-              ? `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
-              : status?.state === "missing"
-                ? "미등록 · data에서 등록"
-                : ""}
+            {datasets.isPending ? (
+              <LoadingText>확인 중</LoadingText>
+            ) : status?.state === "generating" ? (
+              `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
+            ) : status?.state === "missing" ? (
+              "미등록 · data에서 등록"
+            ) : (
+              ""
+            )}
           </span>
         }
       />

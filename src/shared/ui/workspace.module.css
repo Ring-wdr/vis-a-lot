@@ -1,7 +1,8 @@
 .workspace {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  grid-template-rows: 48px 36px minmax(0, 1fr);
+  /* 상단 바 · 탭 바 · 탭 도구 줄 · 탭 내용 */
+  grid-template-rows: 48px 36px 44px minmax(0, 1fr);
   height: 100vh;
   background: var(--ws-surface);
   color: var(--ws-text);
@@ -11,7 +12,7 @@
    모든 item을 새 크기로 다시 그리게 된다. */
 .filterDrawer {
   grid-column: -2 / -1;
-  grid-row: 3;
+  grid-row: 4;
   justify-self: end;
   z-index: 10;
   display: flex;
@@ -37,6 +38,17 @@
 .brand {
   font-weight: 700;
   width: 228px;
+}
+
+/* 탭 안 도구 줄: 탭 바 바로 아래, 탭 내용과 같은 배경이라 그 탭에 속해 보인다. */
+.tabToolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ws-border);
+  background: var(--ws-surface);
 }
 
 .modeBar {
@@ -71,7 +83,11 @@
 }
 
 .modeBar button:disabled,
-.chartTypes button:disabled,
+.chartTypes button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .secondaryButton {
   display: inline-flex;
   align-items: center;
@@ -88,7 +104,7 @@
 /* 왼쪽 패널: 설정은 스크롤되고, 공통 속성·draw 같은 동작 버튼은 하단에 고정된다. */
 .panel {
   grid-column: 1;
-  grid-row: 3;
+  grid-row: 4;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -193,6 +209,10 @@
 }
 
 .drawButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: none;
   border-radius: 6px;
   padding: 9px 12px;
@@ -225,7 +245,7 @@
 .main {
   /* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 4;
   min-width: 0;
   min-height: 0;
   padding: 16px;
@@ -239,11 +259,6 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-}
-
-.empty {
-  color: var(--ws-text-muted);
-  font-size: 14px;
 }
 
 .gridRow {
@@ -347,8 +362,10 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border-radius: 6px;
   background: var(--ws-overlay);
   color: var(--ws-text-secondary);
@@ -357,6 +374,7 @@
 }
 
 .item {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -367,22 +385,49 @@
   background: var(--ws-surface);
 }
 
-/* 높이는 grid-layout.ts의 ITEM_TOOLBAR_HEIGHT와 같아야 PNG 크기 계산이 맞는다. */
+/* item 도구는 차트 위 우측 상단에 띄운다. 자리를 차지하지 않으니 PNG가 카드 전체를 쓴다.
+   평소에는 숨기고, 커서를 올리거나 포커스가 들어오거나 설정 팝업이 열려 있으면 보인다. */
 .itemToolbar {
-  flex: none;
-  height: 30px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--ws-border);
-  font-size: 12px;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  box-shadow: 0 2px 8px rgb(var(--ws-shadow-rgb) / 10%);
+  opacity: 0;
+  transition: opacity 120ms;
 }
 
+.item:hover .itemToolbar,
+.itemToolbar:focus-within,
+.itemToolbar:has(:popover-open) {
+  opacity: 1;
+}
+
+/* 커서가 없는 기기에서는 늘 보인다. */
+@media (hover: none) {
+  .itemToolbar {
+    opacity: 1;
+  }
+}
+
+/* 그림이 없는 item의 이름 */
 .itemLabel {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  max-width: calc(100% - 60px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .itemBody {
@@ -413,21 +458,6 @@
   width: 100%;
 }
 
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--ws-border);
-  border-top-color: var(--ws-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .footer {
   display: flex;
   align-items: center;
@@ -451,6 +481,122 @@
 .muted {
   color: var(--ws-text-muted);
   font-size: 12px;
+}
+
+/* 크게 보기: 위에 item 하나, 아래에 섬네일 목록 */
+.detail {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 이 영역 크기가 곧 크게 보기 PNG 크기다 (grid-layout.ts의 detailSizeFor). */
+.detailMain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.detailMain > .item {
+  flex: 1;
+}
+
+.thumbNav {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thumbNav > button {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  align-self: stretch;
+  width: 28px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  cursor: pointer;
+}
+
+.thumbNav > button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* gap은 grid-layout.ts의 THUMBNAIL_GAP과 같아야 섬네일 개수 계산이 맞는다. */
+.thumbList {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+/* 폭은 섬네일 PNG 폭(THUMBNAIL_WIDTH)에 테두리 2px을 더한 값이다. */
+.thumb {
+  display: flex;
+  flex-direction: column;
+  width: 130px;
+  padding: 0;
+  border: 1px solid var(--ws-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.thumb:hover {
+  border-color: var(--ws-accent-border);
+}
+
+.thumb[aria-current="true"] {
+  border-color: var(--ws-accent);
+  box-shadow: 0 0 0 1px var(--ws-accent);
+}
+
+.thumb img {
+  display: block;
+}
+
+/* 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다. */
+.thumbEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  aspect-ratio: 128 / 80;
+  background: var(--ws-panel);
+  color: var(--ws-text-muted);
+  font-size: 11px;
+}
+
+.thumbLabel {
+  padding: 2px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 11px;
+}
+
+.thumbCount {
+  flex: none;
+  min-width: 13ch;
+  text-align: right;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* 페이지 수가 30,000까지 가도 번호가 바뀔 때 버튼이 움직이지 않게 자리를 잡아 둔다. */
@@ -481,13 +627,9 @@
   cursor: not-allowed;
 }
 
+/* 도구를 쓰지 않는 일반 모드는 기본 커서. 가리킨 점·막대는 표시(hitMarker·hitBox)로 보여준다. */
 .tooltipLayer {
   position: relative;
-  cursor: crosshair;
-}
-
-/* bar/boxplot은 점이 아니라 막대/상자를 고르므로 십자 대신 기본 커서 + 감싸는 사각형 */
-.tooltipLayer[data-hover="box"] {
   cursor: default;
 }
 
@@ -535,6 +677,12 @@
   color: var(--ws-text-secondary);
 }
 
+/* tooltip 컬럼 값을 서버에서 받는 동안의 자리 */
+.tooltip .tooltipValueSkeleton {
+  width: 48px;
+  margin-top: 3px;
+}
+
 .tooltip dd {
   font-variant-numeric: tabular-nums;
   color: var(--ws-text);
@@ -551,10 +699,9 @@
 .itemActions {
   display: flex;
   gap: 2px;
-  margin-left: auto;
 }
 
-.itemActions button {
+.itemActions > button {
   display: inline-grid;
   place-items: center;
   width: 24px;
@@ -567,12 +714,12 @@
   cursor: pointer;
 }
 
-.itemActions button:hover:not(:disabled) {
+.itemActions > button:hover:not(:disabled) {
   border-color: var(--ws-border);
   background: var(--ws-elevated);
 }
 
-.itemActions button:disabled {
+.itemActions > button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
@@ -687,19 +834,10 @@
   vertical-align: -1px;
 }
 
-.colorButton .colorDot {
-  margin: 0;
-}
-
 .colorDot[data-custom] {
   box-shadow:
     0 0 0 2px var(--ws-elevated),
     0 0 0 3px var(--ws-text);
-}
-
-.itemActions .colorButton {
-  display: inline-grid;
-  place-items: center;
 }
 
 .linkButton {
@@ -770,6 +908,32 @@
   background: var(--ws-accent-soft);
 }
 
+.historyThumb {
+  position: relative;
+  flex: none;
+  display: flex;
+}
+
+.historyThumbBusy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--ws-overlay);
+}
+
+/* 목록을 받는 동안의 자리. 버튼이 아니라 누를 수 없다. */
+.historyEntry[data-skeleton] {
+  cursor: default;
+}
+
+.historyEntry[data-skeleton] .historyText {
+  flex: 1;
+  justify-content: center;
+  gap: 6px;
+}
+
 .historyEntry img,
 .historyThumbEmpty {
   flex: none;
@@ -833,6 +997,14 @@
   font-size: 12px;
 }
 
+/* 두 클래스로 써서 skeleton 기본 높이(10px)보다 앞선다. */
+.legendList .legendSwatchSkeleton {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
 .legendSwatch {
   width: 18px;
   height: 18px;
@@ -848,4 +1020,72 @@
   width: 200px;
   position: fixed;
   z-index: 1000;
+}
+
+/* 붙어 있는 선택 버튼 묶음 (legend 위치) */
+.segmented {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.segmented button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid var(--ws-border);
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.segmented button + button {
+  margin-left: -1px;
+}
+
+.segmented button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.segmented button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.segmented button[aria-pressed="true"] {
+  position: relative;
+  border-color: var(--ws-accent-border);
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+  font-weight: 600;
+}
+
+.segmented button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* item 설정 팝업의 묶음 (legend 위치, 색상) */
+.settingsGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.settingsGroup > .segmented {
+  align-self: stretch;
+}
+
+.settingsGroup h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ws-text-secondary);
 }

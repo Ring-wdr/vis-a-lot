@@ -56,6 +56,14 @@
   border-bottom: 1px solid var(--ws-border);
 }
 
+/* 컬럼을 받는 동안의 자리: 아코디언 머리와 같은 높이 */
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  height: 37px;
+  padding: 0 14px;
+}
+
 .itemHeader {
   margin: 0;
 }

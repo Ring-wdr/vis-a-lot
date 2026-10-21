@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
+import { BootScreen } from "@/shared/ui/Loading";
 
 type State =
   | { status: "booting" }
@@ -29,8 +30,8 @@ export function MockServerProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  if (state.status === "booting") return <p>서버 부팅 중…</p>;
+  if (state.status === "booting") return <BootScreen step="server" />;
   if (state.status === "error")
-    return <p role="alert">서버 부팅 실패: {state.message}</p>;
+    return <BootScreen step="server" error={state.message} />;
   return children;
 }

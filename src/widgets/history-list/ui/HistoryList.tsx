@@ -2,6 +2,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { History } from "lucide-react";
 import { restoreOf } from "@/entities/chart/lib/share";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
@@ -16,6 +17,7 @@ import { useColumnsByRows } from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
 import type { ColumnLookup } from "@/shared/lib/format";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
@@ -24,6 +26,7 @@ const EVENT_LABELS: Record<HistoryEventType, string> = {
   undo: "되돌리기",
   clearShapes: "도형 삭제",
   color: "개별 색",
+  legend: "legend 위치",
   common: "공통 속성",
   grid: "grid",
 };
@@ -100,13 +103,35 @@ export function HistoryList() {
       </p>
     );
   }
-  if (list.data?.entries.length === 0) {
-    return <p className={styles.muted}>아직 그린 차트가 없습니다.</p>;
+  if (list.isPending) {
+    // 목록 항목과 같은 모양으로 자리를 잡아 둔다.
+    return (
+      <ul className={styles.historyList} aria-busy="true">
+        {([90, 70, 90] as const).map((width, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: 받기 전 자리 표시용
+          <li key={i} className={styles.historyEntry} data-skeleton="">
+            <span className={styles.historyThumbEmpty} />
+            <span className={styles.historyText}>
+              <Skeleton width={width} />
+              <Skeleton width={70} />
+              <Skeleton width={30} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (list.data.entries.length === 0) {
+    return (
+      <EmptyState size="sm" icon={<History size={16} />} title="기록 없음">
+        gallery에서 draw하면 여기에 쌓입니다.
+      </EmptyState>
+    );
   }
 
   return (
     <ul className={styles.historyList}>
-      {list.data?.entries.map((entry) => (
+      {list.data.entries.map((entry) => (
         <li key={entry.id}>
           <button
             type="button"
@@ -120,11 +145,19 @@ export function HistoryList() {
                 load.mutate({ id: entry.id, tab: opened.tab });
             }}
           >
-            {entry.thumbnail ? (
-              <img src={entry.thumbnail} alt="" width={72} height={45} />
-            ) : (
-              <span className={styles.historyThumbEmpty} />
-            )}
+            <span className={styles.historyThumb}>
+              {entry.thumbnail ? (
+                <img src={entry.thumbnail} alt="" width={72} height={45} />
+              ) : (
+                <span className={styles.historyThumbEmpty} />
+              )}
+              {/* 고른 건을 불러와 탭에 그리는 동안 */}
+              {load.isPending && load.variables?.id === entry.id && (
+                <span className={styles.historyThumbBusy} aria-busy="true">
+                  <Spinner size="sm" />
+                </span>
+              )}
+            </span>
             <span className={styles.historyText}>
               <span className={styles.historyTitle}>
                 {chartTitle(entry.spec, columnsOf(entry.rows))}

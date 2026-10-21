@@ -13,6 +13,7 @@ import type {
   HistoryDetail,
   ItemMeta,
   ItemSize,
+  LegendPosition,
   RowSize,
   Shape,
   TooltipRequest,
@@ -64,6 +65,12 @@ function itemOfPng(pngUrl: string) {
   );
   if (!match) throw new Error(`not a chart png url: ${pngUrl}`);
   return item(decodeURIComponent(match[1]), decodeURIComponent(match[2]));
+}
+
+/** 크게 보기 PNG면 그 크기(size=WxH)를 꺼낸다. grid PNG에는 없다. */
+function sizeOfPng(pngUrl: string) {
+  const size = new URL(pngUrl, location.origin).searchParams.get("size");
+  return { size: size ?? undefined };
 }
 
 export const api = {
@@ -133,6 +140,24 @@ export const api = {
       }),
     ),
 
+  /** 페이지 경계와 상관없이 offset 순번부터 count개 item의 상태를 long polling으로 받는다. */
+  jobRange: (
+    jobId: string,
+    offset: number,
+    count: number,
+    since: number,
+    signal?: AbortSignal,
+  ) =>
+    unwrap(
+      chartClient.GET("/jobs/{jobId}", {
+        params: {
+          path: { jobId },
+          query: { offset, pageSize: count, since },
+        },
+        signal,
+      }),
+    ),
+
   /** 지정한 item들의 상태를 long polling으로 받는다. */
   jobItems: (
     jobId: string,
@@ -166,7 +191,7 @@ export const api = {
     as<ItemMeta>()(
       unwrap(
         chartClient.GET("/charts/{chartId}/items/{itemKey}/meta", {
-          params: { path: itemOfPng(pngUrl) },
+          params: { path: itemOfPng(pngUrl), query: sizeOfPng(pngUrl) },
         }),
       ),
     ),
@@ -228,6 +253,27 @@ export const api = {
       chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
         params: { path: item(chartId, itemKey) },
         body: { legendColor: { value, color } },
+      }),
+    ),
+
+  /** 크게 보기용 PNG. 그 크기로 그려 둔 게 있으면 image, 없으면 그리는 job이 온다. */
+  itemDetail: (chartId: string, itemKey: string, itemSize: ItemSize) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/detail", {
+        params: { path: item(chartId, itemKey) },
+        body: { itemSize },
+      }),
+    ),
+
+  setItemLegendPosition: (
+    chartId: string,
+    itemKey: string,
+    legendPosition: LegendPosition | null,
+  ) =>
+    unwrap(
+      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
+        params: { path: item(chartId, itemKey) },
+        body: { legendPosition },
       }),
     ),
 

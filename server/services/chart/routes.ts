@@ -11,6 +11,8 @@ import {
   CreateChartResponseSchema,
   DebugRenderRequestSchema,
   DebugRenderResponseSchema,
+  DetailRequestSchema,
+  DetailResponseSchema,
   GridRequestSchema,
   HistoryDetailSchema,
   HistoryListResponseSchema,
@@ -193,7 +195,30 @@ export const resize = createRoute({
   responses: { 202: accepted, ...chartErrors },
 });
 
+// ── 크게 보기 ──────────────────────────────────────────────────
+
+export const itemDetail = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/detail",
+  tags: ["items"],
+  summary:
+    "크게 보기용 PNG. 같은 내용·같은 크기로 그려 둔 게 있으면 바로 주고, 없으면 그 한 장만 그리는 job을 준다",
+  ...read,
+  request: { params: ItemParams, body: jsonBody(DetailRequestSchema) },
+  responses: {
+    200: jsonResponse(DetailResponseSchema, "그려 둔 PNG 또는 그리는 job"),
+    ...itemErrors,
+  },
+});
+
 // ── 툴팁 ───────────────────────────────────────────────────────
+
+/** 크게 보기 PNG의 크기 ("WxH"). 없으면 grid PNG의 metadata다. */
+const SizeQuerySchema = z
+  .string()
+  .regex(/^\d+x\d+$/)
+  .optional()
+  .openapi({ description: "크게 보기 PNG의 크기 (WxH)" });
 
 export const itemMeta = createRoute({
   method: "get",
@@ -201,7 +226,7 @@ export const itemMeta = createRoute({
   tags: ["tooltip"],
   summary: "툴팁용 metadata (축 정보 + 픽셀 기준으로 줄인 점)",
   ...read,
-  request: { params: ItemParams },
+  request: { params: ItemParams, query: z.object({ size: SizeQuerySchema }) },
   responses: {
     200: jsonResponse(ItemMetaSchema, "metadata"),
     ...authErrors,
@@ -235,7 +260,12 @@ export const png = createRoute({
   summary: "렌더된 PNG",
   request: {
     params: ItemParams,
-    query: z.object({ v: z.string().optional() }),
+    // v: grid PNG 버전, r: 내용 revision, size: 섬네일(thumb) 또는 크게 보기 크기
+    query: z.object({
+      v: z.string().optional(),
+      r: z.string().optional(),
+      size: z.string().optional(),
+    }),
   },
   responses: {
     200: {

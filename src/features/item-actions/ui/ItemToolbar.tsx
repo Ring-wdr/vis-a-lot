@@ -1,26 +1,29 @@
 "use client";
 
-import { Eraser, RotateCcw, Undo2, ZoomOut } from "lucide-react";
+import { Eraser, RotateCcw, Settings, Undo2, ZoomOut } from "lucide-react";
+import { useState } from "react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
-import type { ItemState } from "@/shared/api/types";
-import { colorName } from "@/shared/lib/palette";
-import { ColorSwatches } from "@/shared/ui/ColorSwatches";
+import type { ItemState, LegendPosition } from "@/shared/api/types";
 import { Popover } from "@/shared/ui/Popover";
 import styles from "@/shared/ui/workspace.module.css";
+import { ItemSettings } from "./ItemSettings";
 
 const ZOOM_OUT_RATIO = 2;
 
-/** item별 툴바: 축소, 확대 초기화, 도형 undo, 도형 전체 삭제, 개별 색상 */
+/** item별 툴바: 축소, 확대 초기화, 도형 undo, 도형 전체 삭제, 설정(legend 위치·개별 색) */
 export function ItemToolbar({
   item,
   busy,
   undoCount,
   hasLegend = false,
+  commonPosition = "top",
   onAction,
 }: {
   item: ItemState;
-  /** legend가 있으면 개별 색은 PNG 안 legend 항목에서 바꾼다. */
+  /** legend가 있으면 개별 색을 legend 값별로 바꾸고 위치를 고른다. */
   hasLegend?: boolean;
+  /** 공통 속성의 legend 위치 */
+  commonPosition?: LegendPosition;
   busy: boolean;
   /** 이 세션에서 그린 도형 수 */
   undoCount: number;
@@ -28,6 +31,8 @@ export function ItemToolbar({
 }) {
   const drawn = item.status === "success";
   const disabled = busy || !drawn;
+  // 설정 팝업을 한 번 열면 그 뒤로는 metadata를 캐시에서 바로 쓴다.
+  const [settingsOpened, setSettingsOpened] = useState(false);
 
   return (
     <div
@@ -76,42 +81,26 @@ export function ItemToolbar({
       >
         <Eraser size={13} aria-hidden="true" />
       </button>
-      {!hasLegend && (
+      {drawn && item.image && (
         <Popover
-          triggerClassName={styles.colorButton}
-          triggerLabel={`개별 색상: ${colorName(item.color)}${item.customColor ? " (개별)" : ""}`}
-          disabled={disabled}
-          trigger={
-            <span
-              className={styles.colorDot}
-              data-custom={item.customColor || undefined}
-              style={{ background: item.color }}
-            />
-          }
+          triggerLabel="item 설정"
+          disabled={busy}
+          width={300}
+          onOpen={() => setSettingsOpened(true)}
+          trigger={<Settings size={13} aria-hidden="true" />}
         >
-          {(close) => (
-            <div className={styles.popoverBody}>
-              <strong>{item.label} 색상</strong>
-              <ColorSwatches
-                value={item.color}
-                onSelect={(color) => {
-                  onAction({ type: "color", color });
-                  close();
-                }}
-              />
-              {item.customColor && (
-                <button
-                  type="button"
-                  className={styles.linkButton}
-                  onClick={() => {
-                    onAction({ type: "color", color: null });
-                    close();
-                  }}
-                >
-                  공통 색 따르기
-                </button>
-              )}
-            </div>
+          {() => (
+            <ItemSettings
+              item={{
+                ...item,
+                image: item.image as NonNullable<ItemState["image"]>,
+              }}
+              hasLegend={hasLegend}
+              commonPosition={commonPosition}
+              disabled={disabled}
+              open={settingsOpened}
+              onAction={onAction}
+            />
           )}
         </Popover>
       )}

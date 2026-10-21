@@ -29,12 +29,18 @@ export const ChartTypeSchema = z
   .enum(["scatter", "bar", "boxplot"])
   .openapi("ChartType");
 
+export const LegendPositionSchema = z
+  .enum(["top", "bottom", "left", "right"])
+  .openapi("LegendPosition");
+
 export const CommonPropsSchema = z
   .object({
     /** legend가 없을 때의 색 */
     color: HexColorSchema,
     /** legend 값별 색. 없는 값은 팔레트 순서대로 기본 색을 쓴다. */
     legendColors: ColorMapSchema.optional(),
+    /** legend 위치. 없으면 위 */
+    legendPosition: LegendPositionSchema.optional(),
   })
   .openapi("CommonProps");
 
@@ -120,6 +126,7 @@ export const ItemRestoreSchema = z
     shapes: z.array(ShapeSchema),
     color: HexColorSchema.optional(),
     legendColors: ColorMapSchema.optional(),
+    legendPosition: LegendPositionSchema.optional(),
   })
   .openapi("ItemRestore");
 
@@ -168,6 +175,10 @@ export const ItemStateSchema = z
     /** 현재 단계 안에서의 진행률 0..1 */
     stageProgress: z.number(),
     image: ChartImageSchema.optional(),
+    /** 고정 크기 섬네일. 크게 보기 화면 하단 목록에 쓴다. */
+    thumbnail: ChartImageSchema.optional(),
+    /** 그림 내용(확대·도형·색)이 바뀔 때마다 올라간다. 크기만 바뀌면 그대로다. */
+    revision: z.number().int(),
     error: z.string().optional(),
     /** 확대 중인지. 축소/초기화 버튼 활성화에 쓴다. */
     zoomed: z.boolean(),
@@ -176,6 +187,8 @@ export const ItemStateSchema = z
     color: z.string(),
     /** 개별 색을 지정했는지 */
     customColor: z.boolean(),
+    /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
+    legendPosition: LegendPositionSchema.optional(),
   })
   .openapi("ItemState");
 
@@ -194,6 +207,8 @@ export const JobStateResponseSchema = z
     totalItems: z.number().nullable(),
     page: z.number(),
     pageSize: z.number(),
+    /** items[0]의 전체 순번 */
+    offset: z.number(),
     items: z.array(ItemStateSchema),
     /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
     error: z.string().optional(),
@@ -221,6 +236,8 @@ export const JobStateResponseSchema = z
 export const JobQuerySchema = z.object({
   page: z.coerce.number().int().min(0).default(0),
   pageSize: z.coerce.number().int().min(0).max(100).default(9),
+  /** 지정하면 page 대신 이 순번부터 pageSize개를 준다. */
+  offset: z.coerce.number().int().min(0).optional(),
   /** 지정하면 그 item들만 (item 단위 다시 그리기) */
   items: z
     .string()
@@ -228,6 +245,18 @@ export const JobQuerySchema = z.object({
     .openapi({ description: "쉼표로 구분한 item 키" }),
   since: z.coerce.number().default(-1),
 });
+
+export const DetailRequestSchema = z
+  .object({ itemSize: ItemSizeSchema })
+  .openapi("DetailRequest");
+
+/** 그 크기로 그려 둔 PNG가 있으면 image, 없으면 그리는 job */
+export const DetailResponseSchema = z
+  .union([
+    z.object({ image: ChartImageSchema }),
+    z.object({ jobId: z.string() }),
+  ])
+  .openapi("DetailResponse");
 
 export const ViewRequestSchema = z
   .discriminatedUnion("type", [
@@ -254,8 +283,8 @@ export const ResizeRequestSchema = z
   .openapi("ResizeRequest");
 
 /**
- * 개별 색상. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색이다.
- * 색이 null이면 공통 속성을 따르도록 되돌린다.
+ * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치다.
+ * null이면 공통 속성을 따르도록 되돌린다. color: null은 legend 값별 색까지 모두 되돌린다.
  */
 export const ItemPropsRequestSchema = z
   .union([
@@ -266,6 +295,7 @@ export const ItemPropsRequestSchema = z
         color: orNull(HexColorSchema),
       }),
     }),
+    z.object({ legendPosition: orNull(LegendPositionSchema) }),
   ])
   .openapi("ItemPropsRequest");
 
@@ -390,7 +420,16 @@ export const ItemMetaSchema = z
 // ── history ────────────────────────────────────────────────────
 
 export const HistoryEventTypeSchema = z
-  .enum(["zoom", "shape", "undo", "clearShapes", "color", "common", "grid"])
+  .enum([
+    "zoom",
+    "shape",
+    "undo",
+    "clearShapes",
+    "color",
+    "legend",
+    "common",
+    "grid",
+  ])
   .openapi("HistoryEventType");
 
 export const HistorySummarySchema = z

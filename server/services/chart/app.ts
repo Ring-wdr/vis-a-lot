@@ -3,13 +3,20 @@
 
 import type { Context } from "hono";
 import { isTerminal } from "../../api/types";
-import { createChart, getChart, getItem } from "../../charts/chart-store";
+import {
+  createChart,
+  getChart,
+  getDetail,
+  getItem,
+} from "../../charts/chart-store";
 import { zoomIn, zoomOut } from "../../charts/item-view";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
   getJob,
   type ItemSelection,
+  propsOrNone,
+  startDetailJob,
   startItemJob,
   startJob,
   jobState as stateOf,
@@ -98,7 +105,7 @@ export const chartApp = createServiceApp()
     const keys = query.items?.split(",").filter(Boolean);
     const selection: ItemSelection = keys
       ? { keys }
-      : { page: query.page, pageSize: query.pageSize };
+      : { page: query.page, pageSize: query.pageSize, offset: query.offset };
     await waitForUpdate(job, query.since, selection, LONG_POLL_TIMEOUT_MS);
     return c.json(stateOf(job, selection), 200);
   })
@@ -170,11 +177,21 @@ export const chartApp = createServiceApp()
       props.legendColors = Object.keys(legendColors).length
         ? legendColors
         : undefined;
+    } else if ("legendPosition" in body) {
+      props.legendPosition = body.legendPosition ?? undefined;
+    } else if (body.color === null) {
+      // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
+      props.color = undefined;
+      props.legendColors = undefined;
     } else {
-      props.color = body.color ?? undefined;
+      props.color = body.color;
     }
-    item.props = props.color || props.legendColors ? props : undefined;
-    recordEvent(target.chart, "color", item.key);
+    item.props = propsOrNone(props);
+    recordEvent(
+      target.chart,
+      "legendPosition" in body ? "legend" : "color",
+      item.key,
+    );
     return c.json(redrawJob(target.chart, [item.key]), 202);
   })
   // 공통 속성 변경: 개별 속성을 모두 덮어쓰고, 다시 조회하지 않고 전체를 다시 그린다.
@@ -203,11 +220,12 @@ export const chartApp = createServiceApp()
     chart.spec = { ...chart.spec, grid: { rows: grid.rows, cols: grid.cols } };
     chart.itemSize = roundSize(itemSize);
     recordEvent(chart, "grid");
+    // 크기만 바뀌므로 섬네일과 크게 보기 PNG는 그대로 쓴다.
     return c.json(
       redrawJob(
         chart,
         items.map((i) => i.key),
-        { primary: true },
+        { primary: true, content: false },
       ),
       202,
     );
@@ -227,17 +245,31 @@ export const chartApp = createServiceApp()
       redrawJob(
         chart,
         targets.map((i) => i.key),
-        { record: false },
+        { record: false, content: false },
       ),
       202,
     );
   })
+  // 크게 보기: 같은 내용·같은 크기로 그려 둔 PNG가 있으면 바로 주고, 없으면 그 한 장만 그린다.
+  // 브라우저 크기가 바뀌어도 보이는 item 하나만 다시 그리므로 grid resize보다 부담이 작다.
+  .openapi(routes.itemDetail, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const size = roundSize(c.req.valid("json").itemSize);
+    const cached = getDetail(item, size);
+    if (cached) return c.json({ image: cached.image }, 200);
+    return c.json({ jobId: startDetailJob(chart, item, size).id }, 200);
+  })
   // 툴팁용 metadata. 화면이 item에 처음 커서를 올릴 때 받아 캐시한다.
   .openapi(routes.itemMeta, (c) => {
     const { chartId, itemKey } = c.req.valid("param");
+    const { size } = c.req.valid("query");
     const item = getChart(chartId)?.items?.find((i) => i.key === itemKey);
-    if (!item?.meta) return apiError(c, 404, "metadata is not ready");
-    return c.json(item.meta, 200);
+    const meta = size ? item?.details.get(size)?.meta : item?.meta;
+    if (!meta) return apiError(c, 404, "metadata is not ready");
+    return c.json(meta, 200);
   })
   // x, y 외의 툴팁 컬럼은 행 식별자로 조회한다 (조회는 chart 서비스가 DB를 직접 읽는다).
   .openapi(routes.tooltip, async (c) => {

@@ -3,8 +3,9 @@
 `split by`, `tooltip`에 쓰는 공통 selectbox를 두 라이브러리로 각각 끝까지 만들어 보고, 같은 시나리오로 실제 브라우저에서 시험한 뒤 하나를 골랐다.
 
 - 결론: **Base UI(`@base-ui/react` Combobox) + `@tanstack/react-virtual`**
-- 비교 시점: 2026-10-20, 기준 커밋 `7791e1a` (`feature/workspace-tabs`)
-- 브랜치: `feature/ordered-select-base-ui`(채택), `feature/ordered-select-react-aria`(보관)
+- 비교 시점: 2026-10-20, 기준 커밋 `7791e1a` (`feature/workspace-tabs`, PR #16으로 병합)
+- Base UI 구현(채택): `feature/ordered-select-base-ui`를 `188fddd`에서 `feature/workspace-tabs`에 병합해 PR #16으로 들어갔다.
+- React Aria 구현(보관): 태그 `archive/ordered-select-react-aria`(`d9a62bc`). `git checkout archive/ordered-select-react-aria`로 열어 `/dev/select`에서 같은 시나리오를 돌려 볼 수 있다.
 
 ## 1. 요구사항
 

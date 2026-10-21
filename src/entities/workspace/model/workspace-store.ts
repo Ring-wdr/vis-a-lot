@@ -30,7 +30,11 @@ export type WorkspaceState = {
   /** history나 공유 링크의 차트를 이 탭에 다시 그리는 중 */
   opening: boolean;
   page: number;
+  /** 크게 보고 있는 item의 전체 순번. null이면 grid를 보여준다. */
+  focus: number | null;
   mode: Mode;
+  /** scatter 툴팁에 가까운 점(x, y, tooltip 컬럼)을 보여줄지. 화면 표시만 바꾸므로 차트 설정(spec)에 넣지 않는다. */
+  showNearest: boolean;
   /** item grid 영역의 크기. draw할 때 item PNG 크기를 정하는 데 쓴다. */
   gridArea?: Size;
   /** item 단위로 다시 그리는 중인 job (item 키 → job id) */
@@ -45,7 +49,9 @@ export type WorkspaceState = {
   /** 같은 차트를 새 job으로 다시 그릴 때 (공통 속성 변경). 페이지와 undo 이력은 유지한다. */
   replaceJob: (jobId: string, spec: ChartSpec, page?: number) => void;
   setPage: (page: number) => void;
+  setFocus: (focus: number | null) => void;
   setMode: (mode: Mode) => void;
+  setShowNearest: (show: boolean) => void;
   setGridArea: (size: Size) => void;
   setItemJob: (key: string, jobId: string | undefined) => void;
   changeUndo: (key: string, delta: number | "reset") => void;
@@ -80,14 +86,16 @@ export function createWorkspaceStore({
     draft,
     opening: false,
     page: 0,
+    focus: null,
     mode: "normal",
+    showNearest: true,
     itemJobs: {},
     undoCounts: {},
     notices: [],
     updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
     setDraft: (draft) => set({ draft }),
     setCurrent: (current) =>
-      set({ current, page: 0, itemJobs: {}, undoCounts: {} }),
+      set({ current, page: 0, focus: null, itemJobs: {}, undoCounts: {} }),
     replaceJob: (jobId, spec, page) =>
       set((s) =>
         s.current
@@ -99,8 +107,10 @@ export function createWorkspaceStore({
           : {},
       ),
     setPage: (page) => set({ page }),
+    setFocus: (focus) => set({ focus }),
     // 다시 보기 전용 화면은 일반 모드(툴팁)만 쓴다.
     setMode: (mode) => set((s) => (s.readOnly ? {} : { mode })),
+    setShowNearest: (showNearest) => set({ showNearest }),
     setGridArea: (gridArea) => set({ gridArea }),
     setItemJob: (key, jobId) =>
       set((s) => {

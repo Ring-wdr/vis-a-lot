@@ -6,12 +6,17 @@ import { scaleLinear } from "d3-scale";
 import type { BoxStats } from "../data/category-data";
 import { AGG_LABELS, type AggFn } from "../data/schema";
 import {
-  drawLegend,
-  LEGEND_SPACE,
+  drawLegendAround,
+  framePlot,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { AxisMeta, ItemView, ProgressFn } from "./scatter";
+import {
+  type AxisMeta,
+  compactPlot,
+  type ItemView,
+  type ProgressFn,
+} from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
 
@@ -49,6 +54,8 @@ export type CategoryInput = {
   legend?: LegendInput;
   view?: ItemView;
   shapes: readonly Shape[];
+  /** 섬네일: 축·제목·legend 없이 그림 영역만 그린다. */
+  compact?: boolean;
 };
 
 type Ctx = OffscreenCanvasRenderingContext2D;
@@ -131,14 +138,9 @@ export function renderCategory(
     ...yTicks.map((t) => ctx.measureText(yFormat(t)).width),
     10,
   );
-  const plot = {
-    left: Math.ceil(yLabelWidth + 14),
-    top: 28 + (input.legend ? LEGEND_SPACE : 0),
-    width: 0,
-    height: 0,
-  };
-  plot.width = Math.max(10, width - plot.left - 14);
-  plot.height = Math.max(10, height - plot.top - 26);
+  const plot = input.compact
+    ? compactPlot(width, height)
+    : framePlot(ctx, width, height, yLabelWidth, input.legend);
   y.range([plot.top + plot.height, plot.top]);
 
   const xDomain: [number, number] = view?.x ?? [-0.5, Math.max(0, n - 1) + 0.5];
@@ -149,70 +151,73 @@ export function renderCategory(
   const markWidth = Math.max(1, band * MARK_RATIO);
   progress("aggregate", 1);
 
-  // ── 그리드와 축 ───────────────────────────────────────────────
-  ctx.strokeStyle = THEME.grid;
-  ctx.lineWidth = 1;
-  ctx.fillStyle = THEME.textSecondary;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  for (const t of yTicks) {
-    const ty = Math.round(y(t)) + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(plot.left, ty);
-    ctx.lineTo(plot.left + plot.width, ty);
-    ctx.stroke();
-    ctx.fillText(yFormat(t), plot.left - 6, ty);
-  }
+  // ── 그리드와 축, 제목, legend (섬네일은 그림 영역만 그린다) ───────────
+  let legendMeta: LegendMeta | undefined;
+  if (!input.compact) {
+    ctx.strokeStyle = THEME.grid;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = THEME.textSecondary;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for (const t of yTicks) {
+      const ty = Math.round(y(t)) + 0.5;
+      ctx.beginPath();
+      ctx.moveTo(plot.left, ty);
+      ctx.lineTo(plot.left + plot.width, ty);
+      ctx.stroke();
+      ctx.fillText(yFormat(t), plot.left - 6, ty);
+    }
 
-  // 보이는 범주만 라벨을 달고, 겹치면 건너뛴다.
-  const first = Math.max(0, Math.ceil(xDomain[0]));
-  const last = Math.min(n - 1, Math.floor(xDomain[1]));
-  const widest = Math.max(
-    ...categories.slice(first, last + 1).map((c) => ctx.measureText(c).width),
-    1,
-  );
-  const step = Math.max(
-    1,
-    Math.ceil(Math.min(widest, 80) / Math.max(band, 1) + 0.2),
-  );
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  for (let i = first; i <= last; i += step) {
-    ctx.fillText(
-      truncate(ctx, categories[i], band * step - 4),
-      x(i),
-      plot.top + plot.height + 7,
+    // 보이는 범주만 라벨을 달고, 겹치면 건너뛴다.
+    const first = Math.max(0, Math.ceil(xDomain[0]));
+    const last = Math.min(n - 1, Math.floor(xDomain[1]));
+    const widest = Math.max(
+      ...categories.slice(first, last + 1).map((c) => ctx.measureText(c).width),
+      1,
     );
+    const step = Math.max(
+      1,
+      Math.ceil(Math.min(widest, 80) / Math.max(band, 1) + 0.2),
+    );
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    for (let i = first; i <= last; i += step) {
+      ctx.fillText(
+        truncate(ctx, categories[i], band * step - 4),
+        x(i),
+        plot.top + plot.height + 7,
+      );
+    }
+    ctx.strokeStyle = THEME.axis;
+    const baseY =
+      Math.round(y(input.chartType === "bar" ? 0 : y.domain()[0])) + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(plot.left, baseY);
+    ctx.lineTo(plot.left + plot.width, baseY);
+    ctx.stroke();
+
+    // ── 제목 ──────────────────────────────────────────────────────
+    ctx.fillStyle = THEME.textPrimary;
+    ctx.font = `600 12px ${THEME.font}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(input.title, plot.left, 17, plot.width);
+    ctx.fillStyle = THEME.textMuted;
+    ctx.font = `11px ${THEME.font}`;
+    ctx.textAlign = "right";
+    ctx.fillText(
+      input.chartType === "bar"
+        ? `${input.agg ? AGG_LABELS[input.agg] : ""} · ${n}개 범주`
+        : `${n}개 범주`,
+      plot.left + plot.width,
+      17,
+    );
+
+    // ── legend ────────────────────────────────────────────────────
+    legendMeta = input.legend
+      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth)
+      : undefined;
   }
-  ctx.strokeStyle = THEME.axis;
-  const baseY =
-    Math.round(y(input.chartType === "bar" ? 0 : y.domain()[0])) + 0.5;
-  ctx.beginPath();
-  ctx.moveTo(plot.left, baseY);
-  ctx.lineTo(plot.left + plot.width, baseY);
-  ctx.stroke();
-
-  // ── 제목 ──────────────────────────────────────────────────────
-  ctx.fillStyle = THEME.textPrimary;
-  ctx.font = `600 12px ${THEME.font}`;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(input.title, plot.left, 17, plot.width);
-  ctx.fillStyle = THEME.textMuted;
-  ctx.font = `11px ${THEME.font}`;
-  ctx.textAlign = "right";
-  ctx.fillText(
-    input.chartType === "bar"
-      ? `${input.agg ? AGG_LABELS[input.agg] : ""} · ${n}개 범주`
-      : `${n}개 범주`,
-    plot.left + plot.width,
-    17,
-  );
-
-  // ── legend ────────────────────────────────────────────────────
-  const legendMeta = input.legend
-    ? drawLegend(ctx, input.legend, plot.left, 24, plot.width)
-    : undefined;
 
   // ── 막대 / 상자 (render) ─────────────────────────────────────
   ctx.save();

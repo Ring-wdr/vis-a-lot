@@ -3,6 +3,7 @@
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumnSummary } from "@/shared/api/queries";
 import type { ColumnName } from "@/shared/api/types";
+import { LoadingText } from "@/shared/ui/Loading";
 import { filterOf, withFilter } from "../model/filters";
 import styles from "./DataFilter.module.css";
 import { RangeFilterBody } from "./RangeFilterBody";
@@ -23,8 +24,7 @@ export function ColumnFilter({ column }: { column: ColumnName }) {
   if (summary.isPending) {
     return (
       <div className={styles.pending} aria-busy="true">
-        <span className={styles.spinner} aria-hidden="true" />값 범위를 불러오는
-        중…
+        <LoadingText>값 범위를 불러오는 중</LoadingText>
       </div>
     );
   }
