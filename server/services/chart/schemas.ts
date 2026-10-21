@@ -198,6 +198,8 @@ export const JobStateResponseSchema = z
     totalItems: z.number().nullable(),
     page: z.number(),
     pageSize: z.number(),
+    /** items[0]의 전체 순번 */
+    offset: z.number(),
     items: z.array(ItemStateSchema),
     /** job이 failed로 끝난 이유 (예: split 조합 개수 초과) */
     error: z.string().optional(),
@@ -225,6 +227,8 @@ export const JobStateResponseSchema = z
 export const JobQuerySchema = z.object({
   page: z.coerce.number().int().min(0).default(0),
   pageSize: z.coerce.number().int().min(0).max(100).default(9),
+  /** 지정하면 page 대신 이 순번부터 pageSize개를 준다. */
+  offset: z.coerce.number().int().min(0).optional(),
   /** 지정하면 그 item들만 (item 단위 다시 그리기) */
   items: z
     .string()

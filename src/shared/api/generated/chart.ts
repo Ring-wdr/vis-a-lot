@@ -1028,6 +1028,7 @@ export type paths = {
         query?: {
           page?: number | null;
           pageSize?: number | null;
+          offset?: number | null;
           /** @description 쉼표로 구분한 item 키 */
           items?: string;
           since?: number | null;
@@ -1740,6 +1741,7 @@ export type components = {
       totalItems: number | null;
       page: number;
       pageSize: number;
+      offset: number;
       items: components["schemas"]["ItemState"][];
       error?: string;
       /** @enum {string} */

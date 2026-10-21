@@ -130,14 +130,25 @@ export function cancelJob(job: Job) {
 
 /** 응답에 담을 item: 페이지 단위, 또는 키를 지정하면 그 item들 */
 export type ItemSelection =
-  | { page: number; pageSize: number }
+  | {
+      page: number;
+      pageSize: number;
+      /** 지정하면 페이지 경계와 상관없이 이 순번부터 pageSize개 (크게 보기 섬네일 목록) */
+      offset?: number;
+    }
   | { keys: string[] };
 
 function selectedKeys(job: Job, selection: ItemSelection) {
   if ("keys" in selection)
     return selection.keys.filter((k) => job.items.has(k));
-  const { page, pageSize } = selection;
-  return job.order.slice(page * pageSize, (page + 1) * pageSize);
+  const start = startOf(selection);
+  return job.order.slice(start, start + selection.pageSize);
+}
+
+/** 응답 item 중 첫 item의 전체 순번 */
+function startOf(selection: ItemSelection) {
+  if ("keys" in selection) return 0;
+  return selection.offset ?? selection.page * selection.pageSize;
 }
 
 /** 고른 item이 없으면(pageSize 0) job 전체 진행 상태만 받는 요청이다. job이 끝나야 더 기다릴 게 없다. */
@@ -193,6 +204,7 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
     totalItems: job.phase === "render" ? job.order.length : null,
     page: "page" in selection ? selection.page : 0,
     pageSize: "pageSize" in selection ? selection.pageSize : 0,
+    offset: startOf(selection),
     items,
     error: job.error,
     kind: job.kind,

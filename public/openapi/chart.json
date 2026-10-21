@@ -1212,6 +1212,9 @@
           "pageSize": {
             "type": "number"
           },
+          "offset": {
+            "type": "number"
+          },
           "items": {
             "type": "array",
             "items": {
@@ -1275,6 +1278,7 @@
           "totalItems",
           "page",
           "pageSize",
+          "offset",
           "items",
           "kind",
           "counts",
@@ -2500,6 +2504,15 @@
             },
             "required": false,
             "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": ["integer", "null"],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "offset",
             "in": "query"
           },
           {
