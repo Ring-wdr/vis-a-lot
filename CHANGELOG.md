@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0] - 2026-10-21
+
+item을 크게 보는 화면과 섬네일, legend 위치, 우측 상단 item 툴바를 더하고, 모든 로딩 상태에 자리 표시를 둔다.
 
 ### 크게 보기
 - item을 더블 클릭(또는 toolbar의 크게 보기 버튼)하면 grid 자리에 그 item 하나를 크게 보여준다. 아래 `<< < 섬네일 > >>`로 한 item씩, 또는 처음·끝으로 옮기고 ←/→, Home/End, Esc도 된다
@@ -32,6 +34,13 @@
 ### 탭 도구 줄
 - 모드 바와 링크 복사를 최상단 바에서 탭 바 아래 줄로 내렸다. 탭마다 차트가 따로라 그 탭 안의 도구로 보이게 했다
 - 확대·도형 모드는 그린 차트가 없거나 history 다시 보기면 disabled로 흐리게 보인다. 차트 종류 버튼도 disabled면 흐리게 보인다
+
+### API
+- `POST /charts/{chartId}/items/{itemKey}/detail`: 크게 보기 PNG. 같은 내용·크기로 그려 둔 게 있으면 `{ image }`, 없으면 그 한 장만 그리는 `{ jobId }`
+- `GET /charts/{chartId}/items/{itemKey}/meta?size=WxH`: 크게 보기 PNG의 metadata
+- `GET /jobs/{jobId}?offset=`: 페이지 경계와 상관없이 그 순번부터 `pageSize`개. 응답에 `offset`
+- `ItemState`에 `thumbnail`, `revision`(그림 내용이 바뀔 때만 오름), `legendPosition`
+- `CommonProps`·`ItemRestore`에 `legendPosition`, `PATCH .../props`에 `{ legendPosition }`, history 이벤트 `legend`
 
 ### 바뀐 동작
 - 도구를 쓰지 않는 일반 모드에서는 item 위 커서가 십자 대신 기본 커서다
