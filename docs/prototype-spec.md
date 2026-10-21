@@ -157,6 +157,17 @@ PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같�
 - grid는 1×1부터 10×10까지 행·열을 따로 고를 수 있고, pagination으로 보여준다. 예: 3×3 grid에 item이 20개면 3페이지가 된다. 오른쪽 페이지 스크롤바로 넘긴다.
 - 고해상도(레티나) 화면 대응은 하지 않는다.
 
+### 4.3.1 크게 보기
+- item을 더블 클릭하거나 item toolbar의 크게 보기 버튼을 누르면 grid 자리에 그 item 하나를 크게 보여준다. 다시 더블 클릭하거나 Esc, 버튼으로 grid로 돌아가면 그 item이 있는 페이지가 보인다.
+- 아래에는 `<< < [섬네일…] > >>`가 있다. 한 item씩 옆으로(`<` `>`, ←/→), 처음·끝으로(`<<` `>>`, Home/End) 옮긴다. 섬네일을 누르면 그 item으로 간다.
+- 섬네일은 128×80 고정 크기다. 목록 폭에 들어가는 만큼 보여주므로 브라우저가 넓을수록 많아지고, 그 개수 단위로 끊어 넘긴다.
+- 섬네일은 draw 때 원래 PNG와 같은 렌더 작업에서 함께 그린다(축·제목·legend 없이 그림 영역만). 크기가 고정이라 resize나 grid 변경에서는 다시 그리지 않고, 확대·도형·색처럼 그림 내용이 바뀔 때만 다시 그린다.
+- 큰 차트는 영역 크기로 따로 그린다. 해상도를 지키려고 크기를 구간으로 맞추지 않는다. 대신 다음으로 부담을 줄인다.
+  - 보이는 item 한 장만 그린다. 옆 item을 미리 그리지 않는다.
+  - 서버가 같은 내용(revision)·같은 크기로 그린 PNG를 item당 4개 크기까지 LRU로 보관한다. 오가거나 다시 열거나 원래 크기로 돌아오면 다시 그리지 않는다. 실서버라면 오브젝트 스토리지 + TTL로 같은 캐시를 둔다.
+  - 크기 변경은 5.4와 같이 300ms debounce, 그동안 grid PNG를 늘려 보여준다. 크게 보는 동안에는 grid item을 다시 그리지 않는다.
+- 크게 본 item에서도 툴팁·확대·도형·색 조작이 grid와 같이 된다. 조작하면 grid PNG와 섬네일을 다시 그리고, 이어서 큰 PNG를 새 내용으로 받는다.
+
 ### 4.4 툴팁
 - tooltip 컬럼을 여러 개 고를 수 있는 selectbox가 있다.
 - item에 처음 커서를 올리면 metadata를 받아오고, 그다음부터는 저장해 둔 것을 쓴다 (첫 커서에만 딜레이 허용).
@@ -319,7 +330,8 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
 | chart | 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |
 | chart | PNG | `GET /charts/:chartId/items/:key/png?v=` | `image/png` |
-| chart | metadata | `GET /charts/:chartId/items/:key/meta?v=` | 4.4 참고 |
+| chart | metadata | `GET /charts/:chartId/items/:key/meta?size=` | 4.4 참고. `size=WxH`면 크게 보기 PNG의 metadata |
+| chart | 크게 보기 | `POST /charts/:chartId/items/:key/detail` | `{ itemSize }` 그려 둔 PNG가 있으면 `{ image }`, 없으면 그 한 장만 그리는 `{ jobId }` |
 | chart | 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
 | chart | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
 | chart | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
