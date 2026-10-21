@@ -26,7 +26,8 @@ export function restoreOf(detail: HistoryDetail): Record<string, ItemRestore> {
       !item.view &&
       item.shapes.length === 0 &&
       !item.color &&
-      !hasLegendColors
+      !hasLegendColors &&
+      !item.legendPosition
     )
       continue;
     restore[key] = {
@@ -34,6 +35,7 @@ export function restoreOf(detail: HistoryDetail): Record<string, ItemRestore> {
       shapes: item.shapes,
       color: item.color,
       ...(hasLegendColors ? { legendColors: item.legendColors } : {}),
+      ...(item.legendPosition ? { legendPosition: item.legendPosition } : {}),
     };
   }
   return restore;

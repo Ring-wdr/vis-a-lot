@@ -10,6 +10,7 @@ import type { AggFn, RowSize } from "../data/schema";
 type ColumnName = string;
 
 import type { CategoryMeta } from "../render/category";
+import type { LegendPosition } from "../render/legend";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
@@ -75,12 +76,15 @@ export type CommonProps = {
   color: string;
   /** legend 값별 색. 없는 값은 팔레트 순서대로 기본 색을 쓴다. */
   legendColors?: Record<string, string>;
+  /** legend 위치. 없으면 위 */
+  legendPosition?: LegendPosition;
 };
 
 /** item 개별 속성. 공통 속성보다 우선한다. */
 export type ItemProps = {
   color?: string;
   legendColors?: Record<string, string>;
+  legendPosition?: LegendPosition;
 };
 
 export type ChartSpec = {
@@ -110,6 +114,7 @@ export type ItemRestore = {
   shapes: Shape[];
   color?: string;
   legendColors?: Record<string, string>;
+  legendPosition?: LegendPosition;
 };
 
 export type CreateChartRequest = {
@@ -165,7 +170,8 @@ export type ResizeRequest = { itemSize: ItemSize; keys: string[] };
  */
 export type ItemPropsRequest =
   | { color: string | null }
-  | { legendColor: { value: string; color: string | null } };
+  | { legendColor: { value: string; color: string | null } }
+  | { legendPosition: LegendPosition | null };
 
 export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
@@ -224,6 +230,8 @@ export type ItemState = {
   color: string;
   /** 개별 색을 지정했는지 */
   customColor: boolean;
+  /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
+  legendPosition?: LegendPosition;
 };
 
 /** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
@@ -238,6 +246,7 @@ export const HISTORY_EVENT_TYPES = [
   "undo",
   "clearShapes",
   "color",
+  "legend",
   "common",
   "grid",
 ] as const;

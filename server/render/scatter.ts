@@ -5,8 +5,8 @@ import { extent } from "d3-array";
 import { scaleLinear, scaleUtc } from "d3-scale";
 import { utcFormat } from "d3-time-format";
 import {
-  drawLegend,
-  LEGEND_SPACE,
+  drawLegendAround,
+  framePlot,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
@@ -125,15 +125,7 @@ export function renderScatter(
   );
   const plot = input.compact
     ? compactPlot(width, height)
-    : {
-        left: Math.ceil(yLabelWidth + 14),
-        top: 28 + (input.legend ? LEGEND_SPACE : 0),
-        width: Math.max(10, width - Math.ceil(yLabelWidth + 14) - 14),
-        height: Math.max(
-          10,
-          height - (28 + (input.legend ? LEGEND_SPACE : 0)) - 26,
-        ),
-      };
+    : framePlot(ctx, width, height, yLabelWidth, input.legend);
   y.range([plot.top + plot.height, plot.top]);
 
   const x =
@@ -229,7 +221,7 @@ export function renderScatter(
 
     // ── legend ────────────────────────────────────────────────
     legendMeta = input.legend
-      ? drawLegend(ctx, input.legend, plot.left, 24, plot.width)
+      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth)
       : undefined;
   }
 

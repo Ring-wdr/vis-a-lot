@@ -29,12 +29,18 @@ export const ChartTypeSchema = z
   .enum(["scatter", "bar", "boxplot"])
   .openapi("ChartType");
 
+export const LegendPositionSchema = z
+  .enum(["top", "bottom", "left", "right"])
+  .openapi("LegendPosition");
+
 export const CommonPropsSchema = z
   .object({
     /** legend가 없을 때의 색 */
     color: HexColorSchema,
     /** legend 값별 색. 없는 값은 팔레트 순서대로 기본 색을 쓴다. */
     legendColors: ColorMapSchema.optional(),
+    /** legend 위치. 없으면 위 */
+    legendPosition: LegendPositionSchema.optional(),
   })
   .openapi("CommonProps");
 
@@ -120,6 +126,7 @@ export const ItemRestoreSchema = z
     shapes: z.array(ShapeSchema),
     color: HexColorSchema.optional(),
     legendColors: ColorMapSchema.optional(),
+    legendPosition: LegendPositionSchema.optional(),
   })
   .openapi("ItemRestore");
 
@@ -180,6 +187,8 @@ export const ItemStateSchema = z
     color: z.string(),
     /** 개별 색을 지정했는지 */
     customColor: z.boolean(),
+    /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
+    legendPosition: LegendPositionSchema.optional(),
   })
   .openapi("ItemState");
 
@@ -286,6 +295,7 @@ export const ItemPropsRequestSchema = z
         color: orNull(HexColorSchema),
       }),
     }),
+    z.object({ legendPosition: orNull(LegendPositionSchema) }),
   ])
   .openapi("ItemPropsRequest");
 
@@ -410,7 +420,16 @@ export const ItemMetaSchema = z
 // ── history ────────────────────────────────────────────────────
 
 export const HistoryEventTypeSchema = z
-  .enum(["zoom", "shape", "undo", "clearShapes", "color", "common", "grid"])
+  .enum([
+    "zoom",
+    "shape",
+    "undo",
+    "clearShapes",
+    "color",
+    "legend",
+    "common",
+    "grid",
+  ])
   .openapi("HistoryEventType");
 
 export const HistorySummarySchema = z

@@ -1447,9 +1447,12 @@ export type components = {
       legendColors?: {
         [key: string]: components["schemas"]["HexColor"];
       };
+      legendPosition?: components["schemas"]["LegendPosition"];
     };
     /** @example #2a78d6 */
     HexColor: string;
+    /** @enum {string} */
+    LegendPosition: "top" | "bottom" | "left" | "right";
     GridRequest: {
       grid: components["schemas"]["Grid"];
       itemSize: components["schemas"]["ItemSize"];
@@ -1471,6 +1474,9 @@ export type components = {
             value: string;
             color: components["schemas"]["HexColor"] | null;
           };
+        }
+      | {
+          legendPosition: components["schemas"]["LegendPosition"] | null;
         };
     ViewRequest:
       | {
@@ -1548,6 +1554,7 @@ export type components = {
       legendColors?: {
         [key: string]: components["schemas"]["HexColor"];
       };
+      legendPosition?: components["schemas"]["LegendPosition"];
     };
     ItemView: {
       x: [number, number];
@@ -1597,6 +1604,7 @@ export type components = {
       | "undo"
       | "clearShapes"
       | "color"
+      | "legend"
       | "common"
       | "grid";
     HistorySummary: {
@@ -1621,6 +1629,7 @@ export type components = {
         undo?: number;
         clearShapes?: number;
         color?: number;
+        legend?: number;
         common?: number;
         grid?: number;
       };
@@ -1774,6 +1783,7 @@ export type components = {
       shapeCount: number;
       color: string;
       customColor: boolean;
+      legendPosition?: components["schemas"]["LegendPosition"];
     };
     /** @enum {string} */
     ItemStage: "query" | "aggregate" | "render" | "encode";
