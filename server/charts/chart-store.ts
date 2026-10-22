@@ -13,6 +13,7 @@ import type {
 } from "../api/types";
 import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
+import type { SankeyData } from "../data/sankey-data";
 import type { Region } from "../render/region";
 import type { ItemView } from "../render/scatter";
 import type { Shape } from "../render/shapes";
@@ -82,6 +83,7 @@ export type ChartRecord = {
 export type CachedChartData = (
   | ({ kind: "scatter" } & ChartData)
   | ({ kind: "category" } & CategoryData)
+  | ({ kind: "sankey" } & SankeyData)
 ) & { groupOf: Map<string, number> };
 
 const charts = new Map<string, ChartRecord>();

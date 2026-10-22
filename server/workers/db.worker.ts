@@ -9,6 +9,7 @@ import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
+import { querySankeyData } from "../data/sankey-data";
 import {
   getHistory,
   listHistory,
@@ -208,6 +209,11 @@ serveRpc<DbMethods>({
     return params.chartType === "bar"
       ? queryBarData(db, schema, input)
       : queryBoxData(db, schema, input);
+  },
+
+  async sankeyData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return querySankeyData(db, schema, { ...params, table });
   },
 
   async itemRows({ dataset, scope, page }) {

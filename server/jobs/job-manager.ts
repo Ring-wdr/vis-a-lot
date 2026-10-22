@@ -597,33 +597,47 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const { db } = getRuntime();
   const { spec } = chart;
   const result: CachedChartData =
-    spec.chartType === "scatter"
+    spec.chartType === "sankey"
       ? {
-          kind: "scatter",
-          ...(await db.call("chartData", {
+          kind: "sankey",
+          ...(await db.call("sankeyData", {
             dataset: spec.dataset,
             x: spec.x,
             y: spec.y,
+            z: spec.z ?? "",
+            agg: spec.agg,
             splitBy: spec.splitBy,
-            legend: spec.legend,
             filters: spec.filters,
           })),
           groupOf: new Map(),
         }
-      : {
-          kind: "category",
-          ...(await db.call("categoryData", {
-            dataset: spec.dataset,
-            chartType: spec.chartType,
-            x: spec.x,
-            y: spec.y,
-            agg: spec.agg,
-            splitBy: spec.splitBy,
-            legend: spec.legend,
-            filters: spec.filters,
-          })),
-          groupOf: new Map(),
-        };
+      : spec.chartType === "scatter"
+        ? {
+            kind: "scatter",
+            ...(await db.call("chartData", {
+              dataset: spec.dataset,
+              x: spec.x,
+              y: spec.y,
+              splitBy: spec.splitBy,
+              legend: spec.legend,
+              filters: spec.filters,
+            })),
+            groupOf: new Map(),
+          }
+        : {
+            kind: "category",
+            ...(await db.call("categoryData", {
+              dataset: spec.dataset,
+              chartType: spec.chartType,
+              x: spec.x,
+              y: spec.y,
+              agg: spec.agg,
+              splitBy: spec.splitBy,
+              legend: spec.legend,
+              filters: spec.filters,
+            })),
+            groupOf: new Map(),
+          };
   result.groups.forEach((g, i) => {
     result.groupOf.set(itemKeyOf(g.values), i);
   });
@@ -640,7 +654,7 @@ function renderItem(
   item: ChartItem,
   size: ItemSize,
   thumbnail: boolean,
-  options: PoolCallOptions<"renderScatter" | "renderCategory">,
+  options: PoolCallOptions<"renderScatter" | "renderCategory" | "renderSankey">,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
   const { spec } = chart;
@@ -679,6 +693,33 @@ function renderItem(
             data.legend?.index.slice(group.start, group.end) ??
             new Uint8Array(group.end - group.start),
         },
+      },
+      options,
+    );
+  }
+  if (data.kind === "sankey") {
+    const group = index === undefined ? undefined : data.groups[index];
+    // legend는 출발 노드(x 값)다. 체크박스로 끈 노드의 흐름은 빼고 배치한다.
+    const legend = legendInput(
+      chart,
+      item,
+      columnOf(spec.x)?.label ?? spec.x,
+      data.sources,
+    ) as NonNullable<ReturnType<typeof legendInput>>;
+    return render.call(
+      "renderSankey",
+      {
+        width: common.width,
+        height: common.height,
+        thumbnail: common.thumbnail,
+        title: common.title,
+        shapes: common.shapes,
+        selection: common.selection,
+        sources: data.sources,
+        targets: data.targets,
+        links: group?.links ?? [],
+        agg: spec.agg,
+        legend,
       },
       options,
     );

@@ -3,6 +3,7 @@
 import type { ItemRowsScope } from "../data/item-rows";
 import { markPoint } from "../render/category";
 import { regionTester } from "../render/region";
+import { isRowChart } from "./chart-fields";
 import type { ChartItem, ChartRecord } from "./chart-store";
 
 /** 차트에 쓴 컬럼: split by → x → y → legend → 툴팁 순서, 겹치면 한 번만 */
@@ -25,7 +26,12 @@ export function chartColumns(chart: ChartRecord) {
  */
 function selectedMarks(chart: ChartRecord, item: ChartItem) {
   const meta = item.meta;
-  if (!item.selection || !meta || meta.chartType === "scatter") return [];
+  if (
+    !item.selection ||
+    !meta ||
+    (meta.chartType !== "bar" && meta.chartType !== "boxplot")
+  )
+    return [];
   const inside = regionTester(item.selection);
   const legendValues = chart.spec.legend ? meta.legend?.values : undefined;
   const marks: [string, string | null][] = [];
@@ -43,11 +49,13 @@ function selectedMarks(chart: ChartRecord, item: ChartItem) {
   return marks;
 }
 
+/** 데이터 표·다운로드를 쓰지 않는 차트면 undefined */
 export function itemRowsScope(
   chart: ChartRecord,
   item: ChartItem,
-): ItemRowsScope {
+): ItemRowsScope | undefined {
   const { spec } = chart;
+  if (!isRowChart(spec.chartType)) return undefined;
   const scatter = spec.chartType === "scatter";
   return {
     chartType: spec.chartType,

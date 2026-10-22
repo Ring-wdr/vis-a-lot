@@ -27,7 +27,7 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot"])
+  .enum(["scatter", "bar", "boxplot", "sankey"])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -524,9 +524,51 @@ export const CategoryMetaSchema = z
   })
   .openapi("CategoryMeta");
 
+export const SankeyMetaSchema = z
+  .object({
+    chartType: z.literal("sankey"),
+    plot: PlotSchema,
+    /** 고정 좌표 공간 [0, plot.width]. 이동·확대가 없다. */
+    x: AxisMetaSchema,
+    /** 고정 좌표 공간 [0, plot.height] (아래가 0) */
+    y: AxisMetaSchema,
+    agg: AggFnSchema,
+    /** 놓인 노드. 좌표는 PNG 좌표다. */
+    nodes: z.array(
+      z.object({
+        name: z.string(),
+        side: z.enum(["source", "target"]),
+        x0: z.number(),
+        y0: z.number(),
+        x1: z.number(),
+        y1: z.number(),
+        /** 들어오는 흐름 합 */
+        in: z.number(),
+        /** 나가는 흐름 합 */
+        out: z.number(),
+        /** 출발 노드의 legend 인덱스 */
+        legend: z.number().optional(),
+      }),
+    ),
+    /** 흐름. source·target은 nodes 인덱스, y0·y1은 양 끝의 가운데 y, width는 굵기(px) */
+    links: z.array(
+      z.object({
+        source: z.number(),
+        target: z.number(),
+        value: z.number(),
+        y0: z.number(),
+        y1: z.number(),
+        width: z.number(),
+      }),
+    ),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("SankeyMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
-  .union([ScatterMetaSchema, CategoryMetaSchema])
+  .union([ScatterMetaSchema, CategoryMetaSchema, SankeyMetaSchema])
   .openapi("ItemMeta");
 
 // ── history ────────────────────────────────────────────────────

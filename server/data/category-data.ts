@@ -55,7 +55,7 @@ export type CategoryDataParams = {
 };
 const OUTLIER_SAMPLE = 200;
 
-const AGG_SQL: Record<AggFn, (y: string) => string> = {
+export const AGG_SQL: Record<AggFn, (y: string) => string> = {
   avg: (y) => `avg(${y})`,
   sum: (y) => `sum(${y})`,
   count: () => "count(*)",
