@@ -413,6 +413,12 @@
   background: var(--ws-surface);
 }
 
+/* 누른 item: 다운로드·데이터 표의 대상 */
+.item[data-selected] {
+  border-color: var(--ws-accent);
+  box-shadow: 0 0 0 1px var(--ws-accent);
+}
+
 /* item 도구는 차트 위 우측 상단에 띄운다. 자리를 차지하지 않으니 PNG가 카드 전체를 쓴다.
    평소에는 숨기고, 커서를 올리거나 포커스가 들어오거나 설정 팝업이 열려 있으면 보인다. */
 .itemToolbar {
