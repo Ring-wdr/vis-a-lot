@@ -41,6 +41,7 @@ export const ChartTypeSchema = z
     "radar",
     "histogram",
     "waterfall",
+    "funnel",
   ])
   .openapi("ChartType");
 
@@ -805,6 +806,35 @@ export const WaterfallMetaSchema = z
   })
   .openapi("WaterfallMeta");
 
+export const FunnelMetaSchema = z
+  .object({
+    chartType: z.literal("funnel"),
+    plot: PlotSchema,
+    /** 고정 좌표: [0, 그림 영역 폭] */
+    x: AxisMetaSchema,
+    /** 고정 좌표: [0, 그림 영역 높이] (아래에서 위로) */
+    y: AxisMetaSchema,
+    /** 그린(끄지 않은) 단계만, 위에서 아래 순서 */
+    stages: z.array(
+      z.object({
+        label: z.string(),
+        value: z.number(),
+        /** legend 인덱스 (단계 순서) */
+        index: z.number(),
+        /** 막대의 PNG 좌표 */
+        rect: RectSchema,
+        /** 바로 위 단계 대비 비율 */
+        rate: z.number().nullable(),
+        /** 첫 단계 대비 비율 */
+        share: z.number().nullable(),
+      }),
+    ),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("FunnelMeta");
+
 export const ItemMetaSchema = z
   .union([
     ScatterMetaSchema,
@@ -818,6 +848,7 @@ export const ItemMetaSchema = z
     RadarMetaSchema,
     HistogramMetaSchema,
     WaterfallMetaSchema,
+    FunnelMetaSchema,
   ])
   .openapi("ItemMeta");
 

@@ -13,7 +13,11 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
-import { legendColumnOf, POINT_CHARTS } from "../charts/chart-fields";
+import {
+  CHART_FIELDS,
+  legendColumnOf,
+  POINT_CHARTS,
+} from "../charts/chart-fields";
 import {
   bumpRevision,
   type CachedChartData,
@@ -507,7 +511,10 @@ export function propsOrNone(props: ItemProps): ItemProps | undefined {
 /** legend 위치: item 개별 → 공통 → 위 */
 function legendPosition(chart: ChartRecord, item: ChartItem) {
   return (
-    item.props?.legendPosition ?? chart.spec.common.legendPosition ?? "top"
+    item.props?.legendPosition ??
+    chart.spec.common.legendPosition ??
+    CHART_FIELDS[chart.spec.chartType].legendPosition ??
+    "top"
   );
 }
 
@@ -748,7 +755,10 @@ async function queryChartData(
     ...(await db.call("categoryData", {
       dataset: spec.dataset,
       // treemap·waterfall은 bar와 같은 범주 × legend 값 집계를 쓴다.
-      chartType: spec.chartType === "boxplot" ? "boxplot" : "bar",
+      chartType:
+        spec.chartType === "boxplot" || spec.chartType === "funnel"
+          ? spec.chartType
+          : "bar",
       x: spec.x,
       y: spec.y,
       agg: spec.agg,
@@ -793,6 +803,7 @@ function renderItem(
     | "renderRadar"
     | "renderHistogram"
     | "renderWaterfall"
+    | "renderFunnel"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -1002,6 +1013,26 @@ function renderItem(
     );
   }
   const group = index === undefined ? undefined : data.groups[index];
+  if (spec.chartType === "funnel") {
+    // 단계가 곧 legend 값이다. 단계 순서(값 큰 순)대로 팔레트 색을 받는다.
+    const stages = group?.categories ?? [];
+    return render.call(
+      "renderFunnel",
+      {
+        ...common,
+        stages,
+        values: group?.bars?.map((row) => row[0]) ?? [],
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          item,
+          columnOf(spec.x)?.label ?? spec.x,
+          stages,
+        ),
+      },
+      options,
+    );
+  }
   if (spec.chartType === "waterfall") {
     return render.call(
       "renderWaterfall",

@@ -23,6 +23,7 @@ import type { PieData, RadarData } from "./data/polar-data";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
 import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
+import type { FunnelInput, FunnelMeta } from "./render/funnel";
 import type { GanttInput, GanttMeta } from "./render/gantt";
 import type { HeatmapInput, HeatmapMeta } from "./render/heatmap";
 import type { HistogramInput, HistogramMeta } from "./render/histogram";
@@ -316,6 +317,17 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: WaterfallMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderFunnel: {
+    params: FunnelInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: FunnelMeta;
       worker: string;
       ms: number;
     };

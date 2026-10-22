@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { HistogramMeta, WaterfallMeta } from "@/shared/api/types";
-import { histogramStrategy, waterfallStrategy } from "./strategies";
+import type {
+  FunnelMeta,
+  HistogramMeta,
+  WaterfallMeta,
+} from "@/shared/api/types";
+import {
+  funnelStrategy,
+  histogramStrategy,
+  waterfallStrategy,
+} from "./strategies";
 
 describe("histogramStrategy", () => {
   const meta: HistogramMeta = {
@@ -95,5 +103,49 @@ describe("waterfallStrategy", () => {
       { label: "누적", value: "6", emphasis: true },
     ]);
     expect(waterfallStrategy.hitTest(meta, undefined, 100, 50)).toBeNull();
+  });
+});
+
+describe("funnelStrategy", () => {
+  const meta: FunnelMeta = {
+    chartType: "funnel",
+    plot: { left: 50, top: 0, width: 200, height: 200 },
+    x: { kind: "number", domain: [0, 200] },
+    y: { kind: "number", domain: [0, 200] },
+    agg: "count",
+    stages: [
+      {
+        label: "방문",
+        value: 100,
+        index: 0,
+        rect: { x: 50, y: 28, width: 200, height: 44 },
+        rate: null,
+        share: 1,
+      },
+      {
+        label: "구매",
+        value: 25,
+        index: 1,
+        rect: { x: 125, y: 128, width: 50, height: 44 },
+        rate: 0.25,
+        share: 0.25,
+      },
+    ],
+  };
+
+  it("막대가 놓인 줄이면 단계와 값, 전환율을 보여준다", () => {
+    const hit = funnelStrategy.hitTest(meta, undefined, 90, 150);
+    expect(hit?.rows).toEqual([
+      { label: "단계", value: "구매" },
+      { label: "개수", value: "25", emphasis: true },
+      { label: "이전 단계 대비", value: "25%" },
+      { label: "첫 단계 대비", value: "25%" },
+    ]);
+    expect(hit?.highlight).toEqual({ x: 122, y: 125, width: 56, height: 50 });
+  });
+
+  it("막대 사이 틈과 단계 이름 칸은 무시한다", () => {
+    expect(funnelStrategy.hitTest(meta, undefined, 150, 100)).toBeNull();
+    expect(funnelStrategy.hitTest(meta, undefined, 20, 50)).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ import type {
   AxisMeta,
   CandleMeta,
   CategoryMeta,
+  FunnelMeta,
   GanttMeta,
   HeatmapMeta,
   HistogramMeta,
@@ -814,6 +815,47 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
   },
 };
 
+/** funnel: 가리킨 단계의 값과 전환율. 막대가 놓인 줄 높이 안이면 막대 옆 빈 곳도 그 단계로 본다. */
+export const funnelStrategy: TooltipStrategy<FunnelMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (py < plot.top || py > plot.top + plot.height) return null;
+    const stage = meta.stages.find(
+      (s) =>
+        py >= s.rect.y - HIT_SLOP_PX &&
+        py <= s.rect.y + s.rect.height + HIT_SLOP_PX &&
+        px >= Math.min(s.rect.x, plot.left) - HIT_SLOP_PX &&
+        px <= plot.left + plot.width,
+    );
+    if (!stage) return null;
+    const pct = (r: number | null) =>
+      r === null
+        ? "–"
+        : `${(r * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+    const { rect } = stage;
+    return {
+      highlight: {
+        x: rect.x - HIGHLIGHT_PAD,
+        y: rect.y - HIGHLIGHT_PAD,
+        width: rect.width + HIGHLIGHT_PAD * 2,
+        height: rect.height + HIGHLIGHT_PAD * 2,
+      },
+      rows: [
+        { label: "단계", value: stage.label },
+        {
+          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          value: formatValue(stage.value, "number"),
+          emphasis: true,
+        },
+        { label: "이전 단계 대비", value: pct(stage.rate) },
+        { label: "첫 단계 대비", value: pct(stage.share) },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -828,6 +870,7 @@ const STRATEGIES: {
   radar: TooltipStrategy<RadarMeta>;
   histogram: TooltipStrategy<HistogramMeta>;
   waterfall: TooltipStrategy<WaterfallMeta>;
+  funnel: TooltipStrategy<FunnelMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -843,6 +886,7 @@ const STRATEGIES: {
   radar: radarStrategy,
   histogram: histogramStrategy,
   waterfall: waterfallStrategy,
+  funnel: funnelStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

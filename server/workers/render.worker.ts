@@ -1,6 +1,7 @@
 import type { RenderMethods } from "../protocol";
 import { renderCandle } from "../render/candle";
 import { renderCategory } from "../render/category";
+import { renderFunnel } from "../render/funnel";
 import { renderGantt } from "../render/gantt";
 import { renderHeatmap } from "../render/heatmap";
 import { renderHistogram } from "../render/histogram";
@@ -312,5 +313,9 @@ serveRpc<RenderMethods>({
 
   renderWaterfall(params, { progress }) {
     return renderPair(renderWaterfall, params, progress);
+  },
+
+  renderFunnel(params, { progress }) {
+    return renderPair(renderFunnel, params, progress);
   },
 });

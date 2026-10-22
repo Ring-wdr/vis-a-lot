@@ -13,6 +13,7 @@ type ColumnName = string;
 
 import type { CandleMeta } from "../render/candle";
 import type { CategoryMeta } from "../render/category";
+import type { FunnelMeta } from "../render/funnel";
 import type { GanttMeta } from "../render/gantt";
 import type { HeatmapMeta } from "../render/heatmap";
 import type { HistogramMeta } from "../render/histogram";
@@ -161,6 +162,7 @@ export const CHART_TYPES = [
   "radar",
   "histogram",
   "waterfall",
+  "funnel",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -249,6 +251,7 @@ export type {
   BoxStats,
   CandleMeta,
   CategoryMeta,
+  FunnelMeta,
   GanttMeta,
   HeatmapMeta,
   HistogramMeta,
@@ -276,7 +279,8 @@ export type ItemMeta =
   | PieMeta
   | RadarMeta
   | HistogramMeta
-  | WaterfallMeta;
+  | WaterfallMeta
+  | FunnelMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

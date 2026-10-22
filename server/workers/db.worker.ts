@@ -9,6 +9,7 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { queryFunnelData } from "../data/funnel-data";
 import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
@@ -211,6 +212,8 @@ serveRpc<DbMethods>({
   async categoryData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     const input = { ...params, table };
+    if (params.chartType === "funnel")
+      return queryFunnelData(db, schema, input);
     return params.chartType === "boxplot"
       ? queryBoxData(db, schema, input)
       : queryBarData(db, schema, input);
