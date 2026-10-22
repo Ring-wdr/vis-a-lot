@@ -1,11 +1,16 @@
 // candle 데이터. 전체 기간을 깔끔한 시간 간격으로 나눠, split 조합 × 구간마다 OHLC를 SQL로 집계한다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import {
+  allOf,
   columnOf,
   type DatasetSchema,
   ident,
+  list,
   numericSql,
+  tableSql,
   textSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
@@ -95,22 +100,28 @@ export type CandleDataParams = {
 };
 
 export async function queryCandleData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   { table, x, y, splitBy, filters }: CandleDataParams,
 ): Promise<CandleData> {
   const xCol = columnOf(schema, x, "datetime");
   const yCol = columnOf(schema, y, "numeric");
   const splitCols = splitBy.map((c) => columnOf(schema, c));
-  const filter = filterSql(schema, filters);
-  const t = `${numericSql(xCol)}::float8`;
-  const v = `${ident(yCol.name)}::float8`;
-  const where = `${ident(xCol.name)} is not null and ${ident(yCol.name)} is not null${filter.sql}`;
+  const t = sql`${numericSql(xCol)}::float8`;
+  const v = sql`${ident(yCol.name)}::float8`;
+  const from = tableSql(table);
+  const where = allOf([
+    sql`${ident(xCol.name)} is not null`,
+    sql`${ident(yCol.name)} is not null`,
+    ...filterSql(schema, filters),
+  ]);
 
   // 구간 간격은 item마다가 아니라 전체 기간으로 정해, 어느 item이든 같은 간격으로 비교한다.
-  const range = await db.query<{ lo: number | null; hi: number | null }>(
-    `select min(${t}) as lo, max(${t}) as hi from ${table} where ${where}`,
-    filter.params,
+  const range = await sql<{
+    lo: number | null;
+    hi: number | null;
+  }>`select min(${t}) as lo, max(${t}) as hi from ${from} where ${where}`.execute(
+    db,
   );
   const lo = range.rows[0]?.lo ?? null;
   const hi = range.rows[0]?.hi ?? null;
@@ -120,20 +131,31 @@ export async function queryCandleData(
   const groups: CandleGroup[] = [];
   if (lo !== null) {
     const splitKeys = splitCols.map((c) => ident(c.name));
-    const bucket = `floor((${t} + ${KST_OFFSET_MS}) / ${interval})`;
-    const sql = `select ${[...splitCols.map(textSql), `${bucket} as b`].join(", ")},
-        (array_agg(${v} order by ${t}, ctid))[1] as o,
-        max(${v}) as h, min(${v}) as l,
-        (array_agg(${v} order by ${t} desc, ctid desc))[1] as c,
-        count(*)::int as n
-      from ${table} where ${where}
-      group by ${[...splitKeys, "b"].join(", ")}
-      order by ${[...splitKeys, "b"].join(", ")}`;
-    const res = await db.query<unknown[]>(sql, filter.params, {
-      rowMode: "array",
-    });
+    // 구간 값은 글자로 넣는다 (array_agg … order by와 함께 Postgres 계열 전용).
+    const bucket = sql`floor((${t} + ${sql.lit(KST_OFFSET_MS)}) / ${sql.lit(interval)})`;
+    // 같은 시각에 행이 여럿이면(설비·센서가 섞인 계열) 행 순서로 시가/종가를 고르면 한쪽으로 치우친다.
+    // 그래서 시각마다 값을 먼저 평균하고, 구간의 첫 시각 평균을 시가, 끝 시각 평균을 종가로 둔다.
+    // 고가·저가는 원래 값의 최대·최소다.
+    const keys = list([...splitKeys, sql`b`]);
+    const rows = await queryArrays(
+      db,
+      sql`with p as (
+        select ${list([...splitKeys, sql`${bucket} as b`, sql`${t} as t`])},
+          avg(${v}) as m, max(${v}) as h, min(${v}) as l, count(*)::int as n
+        from ${from} where ${where}
+        group by ${list([...splitKeys, sql`b`, sql`t`])}
+      )
+      select ${list([...splitCols.map(textSql), sql`b`])},
+        (array_agg(m order by t))[1] as o,
+        max(h) as h, min(l) as l,
+        (array_agg(m order by t desc))[1] as c,
+        sum(n)::int as n
+      from p
+      group by ${keys}
+      order by ${keys}`,
+    );
     let current: CandleGroup | undefined;
-    for (const row of res.rows) {
+    for (const row of rows) {
       const values = row.slice(0, k) as string[];
       if (!current || values.some((s, j) => s !== current?.values[j])) {
         current = {

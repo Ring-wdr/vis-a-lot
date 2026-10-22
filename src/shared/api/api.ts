@@ -300,7 +300,7 @@ export const api = {
     ),
 
   // ── chart 서비스: 데이터 표 / 다운로드 ──────────────────────
-  /** item이 그린 행 한 페이지. 선택 영역이 있으면 그 안의 행만 온다. */
+  /** item이 그린 행 한 페이지 (모든 컬럼). 선택 필드 차트는 선택 영역이 있으면 그 안의 행만 온다. */
   itemRows: (
     chartId: string,
     itemKey: string,
@@ -310,6 +310,16 @@ export const api = {
     unwrap(
       chartClient.POST("/charts/{chartId}/items/{itemKey}/rows", {
         params: { path: item(chartId, itemKey) },
+        body,
+        signal,
+      }),
+    ),
+
+  /** 전체 데이터 표 한 페이지: 데이터셋 전체를 draw 시점 필터로 거른 최대 30,000행 샘플 */
+  sampleRows: (chartId: string, body: ItemRowsRequest, signal?: AbortSignal) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/rows", {
+        params: { path: { chartId } },
         body,
         signal,
       }),

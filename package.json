@@ -1,6 +1,6 @@
 {
   "name": "vis-a-lot",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -28,6 +28,7 @@
     "hono": "4.13.13",
     "idb-keyval": "6.3.0",
     "jose": "6.2.12",
+    "kysely": "0.29.7",
     "lucide-react": "1.59.0",
     "lz-string": "1.5.0",
     "msw": "3.0.3",

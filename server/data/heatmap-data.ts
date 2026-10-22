@@ -1,15 +1,20 @@
 // heatmap 데이터. x 범주(또는 시계열을 자동 시간 구간으로 묶은 값) × y 범주 칸마다 z를 통계 함수로 집계한다.
 // 집계는 DB(PGlite)가 SQL로 하고, split 조합 단위로 [x][y] 칸을 채워 돌려준다.
 
-import type { PGlite } from "@electric-sql/pglite";
 import { utcFormat } from "d3-time-format";
+import { sql } from "kysely";
+import type { Db, Sql } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import { AGG_SQL } from "./category-data";
 import { queryLegendValues } from "./chart-data";
 import {
+  allOf,
   columnOf,
   type DatasetSchema,
   ident,
+  list,
   numericSql,
+  tableSql,
   textSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
@@ -182,7 +187,7 @@ export function groupHeatmapRows(
 
 /** x·y·z가 모두 있는 행만 센다. 시계열 x는 전체 범위로 구간 길이를 정해 모든 item이 같은 구간을 쓴다. */
 export async function queryHeatmapData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: HeatmapDataParams,
 ): Promise<HeatmapData> {
@@ -191,21 +196,27 @@ export async function queryHeatmapData(
   const yCol = columnOf(schema, params.y, "categorical");
   const zCol = columnOf(schema, params.z, "numeric");
   const splitCols = splitBy.map((c) => columnOf(schema, c));
-  const filter = filterSql(schema, params.filters);
-  const where = `${ident(xCol.name)} is not null and ${ident(yCol.name)} is not null and ${ident(zCol.name)} is not null${filter.sql}`;
+  const from = tableSql(table);
+  const where = allOf([
+    sql`${ident(xCol.name)} is not null`,
+    sql`${ident(yCol.name)} is not null`,
+    sql`${ident(zCol.name)} is not null`,
+    ...filterSql(schema, params.filters),
+  ]);
 
   let timeBin: number | undefined;
-  let xKey: string;
-  let xGroup: string;
+  let xKey: Sql;
+  let xGroup: Sql;
   if (xCol.type === "datetime") {
-    const range = await db.query<{ lo: number | null; hi: number | null }>(
-      `select min(${numericSql(xCol)})::float8 as lo, max(${numericSql(xCol)})::float8 as hi
-       from ${table} where ${where}`,
-      filter.params,
-    );
+    const range = await sql<{
+      lo: number | null;
+      hi: number | null;
+    }>`select min(${numericSql(xCol)})::float8 as lo, max(${numericSql(xCol)})::float8 as hi
+       from ${from} where ${where}`.execute(db);
     const { lo, hi } = range.rows[0] ?? { lo: null, hi: null };
     timeBin = chooseTimeBin(lo ?? 0, hi ?? 0);
-    xKey = `floor((${numericSql(xCol)} + ${KST_OFFSET_MS}) / ${timeBin})::float8`;
+    // 구간 값은 글자로 넣는다. select와 group by의 식이 같아야 묶인다.
+    xKey = sql`floor((${numericSql(xCol)} + ${sql.lit(KST_OFFSET_MS)}) / ${sql.lit(timeBin)})::float8`;
     xGroup = xKey;
   } else {
     // 정렬은 원래 타입 기준, 값은 text로 받는다.
@@ -213,19 +224,19 @@ export async function queryHeatmapData(
     xGroup = ident(xCol.name);
   }
   const yOrder = await queryLegendValues(db, table, schema, yCol.name);
-  const keys = [
+  const keys = list([
     ...splitCols.map((c) => ident(c.name)),
     xGroup,
     ident(yCol.name),
-  ];
+  ]);
   const select = [...splitCols.map(textSql), xKey, textSql(yCol)];
-  const sql = `select ${select.join(", ")}, ${AGG_SQL[agg](ident(zCol.name))}::float8
-    from ${table} where ${where}
-    group by ${keys.join(", ")} order by ${keys.join(", ")}`;
-  const res = await db.query<unknown[]>(sql, filter.params, {
-    rowMode: "array",
-  });
-  const groups = groupHeatmapRows(res.rows, splitBy.length, yOrder, timeBin);
+  const rows = await queryArrays(
+    db,
+    sql`select ${list(select)}, ${AGG_SQL[agg](ident(zCol.name))}::float8
+    from ${from} where ${where}
+    group by ${keys} order by ${keys}`,
+  );
+  const groups = groupHeatmapRows(rows, splitBy.length, yOrder, timeBin);
   // 조건에 맞는 행이 없어도 split 없는 차트는 빈 item 하나를 그린다.
   if (groups.length === 0 && splitBy.length === 0)
     groups.push({ values: [], xCategories: [], yCategories: [], cells: [] });

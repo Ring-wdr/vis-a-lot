@@ -1045,7 +1045,7 @@ export type paths = {
     };
     get?: never;
     put?: never;
-    /** item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건) */
+    /** item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건, 모든 컬럼) */
     post: {
       parameters: {
         query?: never;
@@ -1440,7 +1440,7 @@ export type paths = {
     };
     get?: never;
     put?: never;
-    /** item이 그린 행 한 페이지 (차트에 쓴 컬럼). 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다 */
+    /** item이 그린 행 한 페이지 (모든 컬럼, draw 시점 필터). 선택 필드 차트는 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다 */
     post: {
       parameters: {
         query?: never;
@@ -1892,6 +1892,84 @@ export type paths = {
         };
         /** @description 렌더링 중 */
         409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chartId}/rows": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 전체 데이터 표 한 페이지: 데이터셋 전체를 draw 시점 필터로 거른 뒤 최대 30,000행 샘플 (모든 컬럼) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ItemRowsRequest"];
+        };
+      };
+      responses: {
+        /** @description 샘플 행 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SampleRowsResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 차트, 또는 지운 데이터셋 */
+        404: {
           headers: {
             [name: string]: unknown;
           };
@@ -2950,6 +3028,7 @@ export type components = {
       rows: (string | number | null)[][];
       total: number;
       selected: boolean;
+      filterCount: number;
     };
     /** @enum {string} */
     ColumnType: "categorical" | "numeric" | "datetime";
@@ -3022,6 +3101,18 @@ export type components = {
     ResizeRequest: {
       itemSize: components["schemas"]["ItemSize"];
       keys: string[];
+    };
+    SampleRowsResponse: {
+      columns: {
+        name: components["schemas"]["ColumnName"];
+        label: string;
+        type: components["schemas"]["ColumnType"];
+      }[];
+      rows: (string | number | null)[][];
+      total: number;
+      population: number;
+      sampled: boolean;
+      filterCount: number;
     };
     SelectionRequest: {
       region:

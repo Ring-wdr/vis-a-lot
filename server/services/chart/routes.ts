@@ -26,6 +26,7 @@ import {
   JobStateResponseSchema,
   NameRequestSchema,
   ResizeRequestSchema,
+  SampleRowsResponseSchema,
   SelectionRequestSchema,
   TooltipRequestSchema,
   TooltipResponseSchema,
@@ -352,7 +353,7 @@ export const itemRows = createRoute({
   path: "/charts/{chartId}/items/{itemKey}/rows",
   tags: ["data"],
   summary:
-    "item이 그린 행 한 페이지 (차트에 쓴 컬럼). 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다",
+    "item이 그린 행 한 페이지 (모든 컬럼, draw 시점 필터). 선택 필드 차트는 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다",
   ...read,
   request: { params: ItemParams, body: jsonBody(ItemRowsRequestSchema) },
   responses: {
@@ -361,11 +362,27 @@ export const itemRows = createRoute({
   },
 });
 
+export const sampleRows = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/rows",
+  tags: ["data"],
+  summary:
+    "전체 데이터 표 한 페이지: 데이터셋 전체를 draw 시점 필터로 거른 뒤 최대 30,000행 샘플 (모든 컬럼)",
+  ...read,
+  request: { params: ChartParams, body: jsonBody(ItemRowsRequestSchema) },
+  responses: {
+    200: jsonResponse(SampleRowsResponseSchema, "샘플 행"),
+    ...badRequest,
+    ...authErrors,
+    404: errorResponse("모르는 차트, 또는 지운 데이터셋"),
+  },
+});
+
 export const exportItemRows = createRoute({
   method: "post",
   path: "/charts/{chartId}/items/{itemKey}/rows/export",
   tags: ["data"],
-  summary: "item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건)",
+  summary: "item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건, 모든 컬럼)",
   ...read,
   request: { params: ItemParams },
   responses: {

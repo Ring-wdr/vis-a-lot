@@ -20,6 +20,7 @@ import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
 import type { HistogramData, HistogramDataParams } from "./data/histogram-data";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
 import type { PieData, RadarData } from "./data/polar-data";
+import type { SampleRowsPage } from "./data/sample-rows";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
 import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
@@ -179,6 +180,19 @@ export type DbMethods = {
       };
     };
     result: ItemRowsPage | null;
+  };
+  /** 전체 데이터 표: 필터에 맞는 행 중 최대 30,000행 샘플 한 페이지. 모르는 데이터셋이면 null */
+  sampleRows: {
+    params: {
+      dataset: string;
+      filters?: ChartFilter[];
+      page: {
+        offset: number;
+        limit: number;
+        sort?: { column: string; desc: boolean };
+      };
+    };
+    result: SampleRowsPage | null;
   };
   /** 데이터 다운로드: item이 그린 행 전체 CSV. 모르는 데이터셋이면 null */
   exportItemRows: {
