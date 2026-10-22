@@ -52,7 +52,8 @@ function sideWidth(ctx: Ctx, legend: LegendInput, width: number) {
     ...legend.values.map((v) => MARKER_R * 2 + 4 + ctx.measureText(v).width),
   );
   ctx.restore();
-  const max = Math.max(SIDE_MIN_WIDTH, width * SIDE_MAX_RATIO);
+  // 그림 영역은 정수 픽셀이어야 한다 (scatter metadata가 픽셀 칸 번호로 점을 찾는다).
+  const max = Math.max(SIDE_MIN_WIDTH, Math.floor(width * SIDE_MAX_RATIO));
   return Math.min(max, Math.ceil(widest + PAD * 2)) + GAP;
 }
 
