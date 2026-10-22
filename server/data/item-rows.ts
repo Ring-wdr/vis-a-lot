@@ -140,16 +140,17 @@ export function itemRowsWhere(schema: DatasetSchema, scope: ItemRowsScope) {
 
   const filter = filterSql(schema, scope.filters, params.length + 1);
   params.push(...filter.params);
-  return { sql: parts.join(" and ") + filter.sql, params };
+  // 조건이 하나도 없을 수 있다(split·필터 없는 pie 등). 그래도 where 절이 깨지지 않게 true에서 시작한다.
+  return { sql: ["true", ...parts].join(" and ") + filter.sql, params };
 }
 
 /** 결과 컬럼: 이름이 겹치면 한 번만, 스키마 순서가 아니라 고른 순서대로 */
-function columnsOf(schema: DatasetSchema, names: string[]) {
+export function columnsOf(schema: DatasetSchema, names: string[]) {
   return [...new Set(names)].map((n) => columnOf(schema, n));
 }
 
 /** 표 값: 시각은 epoch ms 숫자로, 숫자는 숫자로, 나머지는 글자로 */
-function selectOf(columns: ColumnSchema[]) {
+export function selectOf(columns: ColumnSchema[]) {
   return columns
     .map((c, i) =>
       c.type === "datetime"
@@ -159,6 +160,16 @@ function selectOf(columns: ColumnSchema[]) {
           : `${textSql(c)} as c${i}`,
     )
     .join(", ");
+}
+
+/** 정렬 컬럼이 같으면 저장된 순서(ctid)로 이어 정렬해 페이지가 겹치지 않게 한다. */
+export function orderOf(
+  schema: DatasetSchema,
+  sort: { column: string; desc: boolean } | undefined,
+) {
+  return sort
+    ? `${ident(columnOf(schema, sort.column).name)} ${sort.desc ? "desc" : "asc"} nulls last, ctid`
+    : "ctid";
 }
 
 /** 데이터 표 한 페이지. sort가 없으면 저장된 순서(ctid)대로 */
@@ -175,9 +186,7 @@ export async function queryItemRows(
 ): Promise<ItemRowsPage> {
   const columns = columnsOf(schema, scope.columns);
   const where = itemRowsWhere(schema, scope);
-  const order = page.sort
-    ? `${ident(columnOf(schema, page.sort.column).name)} ${page.sort.desc ? "desc" : "asc"} nulls last, ctid`
-    : "ctid";
+  const order = orderOf(schema, page.sort);
   const [rows, count] = await Promise.all([
     db.query<unknown[]>(
       `select ${selectOf(columns)} from ${table} where ${where.sql}

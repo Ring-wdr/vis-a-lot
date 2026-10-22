@@ -7,7 +7,7 @@ import { regionTester } from "../render/region";
 import { stepPoint, WATERFALL_KINDS } from "../render/waterfall";
 import {
   CHART_FIELDS,
-  isRowChart,
+  filtersRowsBySelection,
   legendColumnOf,
   POINT_CHARTS,
 } from "./chart-fields";
@@ -94,13 +94,34 @@ function selectedSteps(item: ChartItem) {
   return marks;
 }
 
-/** 데이터 표·다운로드를 쓰지 않는 차트면 undefined */
+/** 데이터 표에 넣는 컬럼: 데이터셋의 모든 컬럼(스키마 순서). 스키마를 모르면 차트에 쓴 컬럼 */
+function allColumns(chart: ChartRecord) {
+  return chart.columns?.map((c) => c.name) ?? chartColumns(chart);
+}
+
+/**
+ * item이 그린 행의 범위: split 조합 + draw 시점 필터 + 끈 legend 값. 화면에 지금 보이는 필터가 아니라
+ * 차트를 그릴 때 저장한 spec.filters를 쓴다. 선택 필드 차트는 선택 영역·지운 영역으로 행을 더 거른다.
+ */
 export function itemRowsScope(
   chart: ChartRecord,
   item: ChartItem,
-): ItemRowsScope | undefined {
+): ItemRowsScope {
   const { spec } = chart;
-  if (!isRowChart(spec.chartType)) return undefined;
+  if (!filtersRowsBySelection(spec.chartType)) {
+    return {
+      chartType: spec.chartType,
+      x: spec.x,
+      y: null,
+      legend: legendColumnOf(spec),
+      splitBy: spec.splitBy,
+      splitValues: item.values,
+      columns: allColumns(chart),
+      filters: spec.filters,
+      deletions: [],
+      hiddenLegend: item.props?.hiddenLegend,
+    };
+  }
   const scatter = POINT_CHARTS.includes(spec.chartType);
   const histogram = spec.chartType === "histogram";
   const waterfall = spec.chartType === "waterfall";
@@ -111,7 +132,7 @@ export function itemRowsScope(
     legend: legendColumnOf(spec),
     splitBy: spec.splitBy,
     splitValues: item.values,
-    columns: chartColumns(chart),
+    columns: allColumns(chart),
     filters: spec.filters,
     deletions: scatter ? item.deletions : [],
     selection: scatter ? item.selection : undefined,
@@ -126,4 +147,13 @@ export function itemRowsScope(
       histogram && item.selection ? selectedBins(chart, item) : undefined,
     hiddenLegend: item.props?.hiddenLegend,
   };
+}
+
+/** 선택 영역 안의 행만 고른 범위인지 */
+export function scopeSelected(scope: ItemRowsScope) {
+  return (
+    scope.selection !== undefined ||
+    scope.selectedMarks !== undefined ||
+    scope.selectedBins !== undefined
+  );
 }

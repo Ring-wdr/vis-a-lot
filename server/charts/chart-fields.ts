@@ -78,8 +78,11 @@ export const DELETABLE_CHARTS: readonly ChartType[] = ["scatter", "line"];
  */
 export const POINT_CHARTS: readonly ChartType[] = ["scatter", "line"];
 
-/** item이 그린 행을 데이터 표·다운로드로 줄 수 있는 차트 (server/data/item-rows.ts가 행 고르는 규칙을 아는 차트) */
-export const ROW_CHARTS = [
+/**
+ * 선택 영역으로 데이터 표·다운로드의 행을 거르는 차트 (기능 표의 '선택 필드').
+ * server/data/item-rows.ts가 선택 영역 → 행 규칙을 아는 차트다. 나머지는 item 전체 행을 준다.
+ */
+export const SELECTION_ROW_CHARTS = [
   "scatter",
   "bar",
   "boxplot",
@@ -88,8 +91,8 @@ export const ROW_CHARTS = [
   "waterfall",
 ] as const satisfies readonly ChartType[];
 
-export function isRowChart(
+export function filtersRowsBySelection(
   type: ChartType,
-): type is (typeof ROW_CHARTS)[number] {
-  return (ROW_CHARTS as readonly ChartType[]).includes(type);
+): type is (typeof SELECTION_ROW_CHARTS)[number] {
+  return (SELECTION_ROW_CHARTS as readonly ChartType[]).includes(type);
 }

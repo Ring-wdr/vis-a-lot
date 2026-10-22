@@ -114,3 +114,54 @@ describe("exportItemRows", () => {
     expect(lines).toHaveLength(3);
   });
 });
+
+describe("선택 필드가 아닌 차트의 item 행", () => {
+  it("split·필터가 없어 조건이 하나도 없어도 모든 행을 준다", async () => {
+    const scope: ItemRowsScope = {
+      chartType: "pie",
+      x: "line",
+      y: null,
+      legend: null,
+      splitBy: [],
+      splitValues: [],
+      columns: ["line", "value"],
+      deletions: [],
+    };
+    const page = await queryItemRows(db, "t", schema, scope, {
+      offset: 0,
+      limit: 10,
+    });
+    expect(page.total).toBe(5);
+    const csv = await (await exportItemRows(db, "t", schema, scope)).text();
+    expect(csv.trim().split("\n")).toHaveLength(6);
+  });
+
+  it("split 조합과 draw 시점 필터만으로 모든 컬럼을 준다", async () => {
+    const page = await queryItemRows(
+      db,
+      "t",
+      schema,
+      {
+        chartType: "sankey",
+        x: "line",
+        y: null,
+        legend: null,
+        splitBy: ["line"],
+        splitValues: ["A"],
+        columns: ["ts", "line", "kind", "value"],
+        filters: [{ kind: "exclude", column: "kind", values: ["y"] }],
+        deletions: [],
+      },
+      { offset: 0, limit: 10 },
+    );
+    expect(page.columns.map((c) => c.name)).toEqual([
+      "ts",
+      "line",
+      "kind",
+      "value",
+    ]);
+    // 값이 null인 행도 원본 행이라 남는다.
+    expect(page.rows.map((r) => r[3])).toEqual([1, 3, null]);
+    expect(page.total).toBe(3);
+  });
+});
