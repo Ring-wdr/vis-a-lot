@@ -2415,7 +2415,10 @@ export type components = {
       | "candle"
       | "gantt"
       | "pie"
-      | "radar";
+      | "radar"
+      | "histogram"
+      | "waterfall"
+      | "funnel";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2573,7 +2576,10 @@ export type components = {
       | components["schemas"]["CandleMeta"]
       | components["schemas"]["GanttMeta"]
       | components["schemas"]["PieMeta"]
-      | components["schemas"]["RadarMeta"];
+      | components["schemas"]["RadarMeta"]
+      | components["schemas"]["HistogramMeta"]
+      | components["schemas"]["WaterfallMeta"]
+      | components["schemas"]["FunnelMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2859,6 +2865,77 @@ export type components = {
         index: number;
         values: (number | null)[];
         points: ([number, number] | null)[];
+      }[];
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    HistogramMeta: {
+      /** @enum {string} */
+      chartType: "histogram";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      bins: {
+        lo: number;
+        step: number;
+        count: number;
+      };
+      counts: number[][];
+      groupCount: number;
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    WaterfallMeta: {
+      /** @enum {string} */
+      chartType: "waterfall";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      categories: string[];
+      steps: {
+        start: number;
+        end: number;
+        kind: 0 | 1 | 2;
+      }[];
+      markWidth: number;
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    FunnelMeta: {
+      /** @enum {string} */
+      chartType: "funnel";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      stages: {
+        label: string;
+        value: number;
+        index: number;
+        rect: {
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+        };
+        rate: number | null;
+        share: number | null;
       }[];
       agg?: components["schemas"]["AggFn"];
       selected?: number;

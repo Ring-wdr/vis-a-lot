@@ -114,6 +114,30 @@ const ICONS: Record<ChartType, ReactNode> = {
       />
     </g>
   ),
+  histogram: (
+    <g fill="currentColor">
+      <rect x="3" y="15" width="3.5" height="5" />
+      <rect x="7" y="9" width="3.5" height="11" />
+      <rect x="11" y="5" width="3.5" height="15" />
+      <rect x="15" y="11" width="3.5" height="9" />
+      <rect x="19" y="16" width="2.5" height="4" />
+    </g>
+  ),
+  waterfall: (
+    <g fill="currentColor">
+      <rect x="3" y="12" width="4" height="8" rx="1" />
+      <rect x="8" y="6" width="4" height="6" rx="1" />
+      <rect x="13" y="6" width="4" height="4" rx="1" opacity="0.55" />
+      <rect x="18" y="10" width="4" height="10" rx="1" />
+    </g>
+  ),
+  funnel: (
+    <g fill="currentColor">
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <rect x="6" y="10" width="12" height="4" rx="1" />
+      <rect x="9" y="16" width="6" height="4" rx="1" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

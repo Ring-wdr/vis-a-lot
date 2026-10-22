@@ -16,6 +16,7 @@ import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
 import type { GanttData } from "../data/gantt-data";
 import type { HeatmapData } from "../data/heatmap-data";
+import type { HistogramData } from "../data/histogram-data";
 import type { PieData, RadarData } from "../data/polar-data";
 import type { SankeyData } from "../data/sankey-data";
 import type { Region } from "../render/region";
@@ -93,6 +94,7 @@ export type CachedChartData = (
   | ({ kind: "gantt" } & GanttData)
   | ({ kind: "pie" } & PieData)
   | ({ kind: "radar" } & RadarData)
+  | ({ kind: "histogram" } & HistogramData)
 ) & { groupOf: Map<string, number> };
 
 const charts = new Map<string, ChartRecord>();

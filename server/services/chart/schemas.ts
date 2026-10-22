@@ -39,6 +39,9 @@ export const ChartTypeSchema = z
     "gantt",
     "pie",
     "radar",
+    "histogram",
+    "waterfall",
+    "funnel",
   ])
   .openapi("ChartType");
 
@@ -759,6 +762,79 @@ export const RadarMetaSchema = z
   .openapi("RadarMeta");
 
 /** 차트 종류별 metadata */
+export const HistogramMetaSchema = z
+  .object({
+    chartType: z.literal("histogram"),
+    plot: PlotSchema,
+    /** 값 공간 */
+    x: AxisMetaSchema,
+    /** 개수 */
+    y: AxisMetaSchema,
+    /** 구간: lo부터 step 간격으로 count개. 마지막 구간만 끝값을 포함한다. */
+    bins: z.object({ lo: z.number(), step: z.number(), count: z.number() }),
+    /** [구간][legend 값] 개수 */
+    counts: z.array(z.array(z.number())),
+    /** 구간 하나에 나란히 놓는 막대 수 (legend 값 수, 없으면 1) */
+    groupCount: z.number(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("HistogramMeta");
+
+export const WaterfallMetaSchema = z
+  .object({
+    chartType: z.literal("waterfall"),
+    plot: PlotSchema,
+    /** 막대 인덱스 공간. 마지막 인덱스가 합계 */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 데이터 범주. 막대 수는 범주 수 + 1(합계)이다. */
+    categories: z.array(z.string()),
+    /** 막대: start에서 end까지. kind 0 증가, 1 감소, 2 합계 */
+    steps: z.array(
+      z.object({
+        start: z.number(),
+        end: z.number(),
+        kind: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+      }),
+    ),
+    /** 막대의 픽셀 너비 */
+    markWidth: z.number(),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("WaterfallMeta");
+
+export const FunnelMetaSchema = z
+  .object({
+    chartType: z.literal("funnel"),
+    plot: PlotSchema,
+    /** 고정 좌표: [0, 그림 영역 폭] */
+    x: AxisMetaSchema,
+    /** 고정 좌표: [0, 그림 영역 높이] (아래에서 위로) */
+    y: AxisMetaSchema,
+    /** 그린(끄지 않은) 단계만, 위에서 아래 순서 */
+    stages: z.array(
+      z.object({
+        label: z.string(),
+        value: z.number(),
+        /** legend 인덱스 (단계 순서) */
+        index: z.number(),
+        /** 막대의 PNG 좌표 */
+        rect: RectSchema,
+        /** 바로 위 단계 대비 비율 */
+        rate: z.number().nullable(),
+        /** 첫 단계 대비 비율 */
+        share: z.number().nullable(),
+      }),
+    ),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("FunnelMeta");
+
 export const ItemMetaSchema = z
   .union([
     ScatterMetaSchema,
@@ -770,6 +846,9 @@ export const ItemMetaSchema = z
     GanttMetaSchema,
     PieMetaSchema,
     RadarMetaSchema,
+    HistogramMetaSchema,
+    WaterfallMetaSchema,
+    FunnelMetaSchema,
   ])
   .openapi("ItemMeta");
 

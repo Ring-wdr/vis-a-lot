@@ -1,8 +1,9 @@
 // 차트 종류별로 x·y·z에 쓸 수 있는 컬럼 타입과 기능. 새 차트는 여기에 한 줄을 더한다.
 // 화면은 @server를 import하지 않으므로 같은 표를 src/entities/chart/model/chart-kinds.ts에 따로 둔다.
 
-import type { ChartType } from "../api/types";
+import type { ChartSpec, ChartType } from "../api/types";
 import type { LogicalType } from "../data/dataset-schema";
+import type { LegendPosition } from "../render/legend";
 
 export type ChartFields = {
   x: readonly LogicalType[];
@@ -16,6 +17,8 @@ export type ChartFields = {
   legend?: false;
   /** x와 y가 서로 다른 컬럼이어야 하는지 (예: sankey 출발 ≠ 도착) */
   distinctXY?: true;
+  /** 공통·개별 속성에 legend 위치가 없을 때의 위치. 없으면 위 (funnel은 단계 이름이 길어 오른쪽 세로 목록) */
+  legendPosition?: LegendPosition;
 };
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
@@ -43,7 +46,28 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   gantt: { x: ["datetime"], y: ["categorical"], agg: false },
   pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
   radar: { x: ["categorical"], y: ["numeric"], agg: true },
+  histogram: { x: ["numeric"], y: null, agg: false },
+  // 막대 종류(증가·감소·합계)가 곧 legend다.
+  waterfall: {
+    x: ["categorical"],
+    y: ["numeric"],
+    agg: true,
+    legend: false,
+  },
+  // 단계(값 큰 순으로 줄 세운 범주)가 곧 legend다.
+  funnel: {
+    x: ["categorical"],
+    y: ["numeric"],
+    agg: true,
+    legend: false,
+    legendPosition: "right",
+  },
 };
+
+/** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 spec에 남은 값이 있어도 null (화면 chart-kinds와 같다) */
+export function legendColumnOf(spec: Pick<ChartSpec, "chartType" | "legend">) {
+  return CHART_FIELDS[spec.chartType].legend === false ? null : spec.legend;
+}
 
 /** 점 하나하나를 그려 사각형·자유형 삭제를 할 수 있는 차트 */
 export const DELETABLE_CHARTS: readonly ChartType[] = ["scatter", "line"];
@@ -60,6 +84,8 @@ export const ROW_CHARTS = [
   "bar",
   "boxplot",
   "line",
+  "histogram",
+  "waterfall",
 ] as const satisfies readonly ChartType[];
 
 export function isRowChart(

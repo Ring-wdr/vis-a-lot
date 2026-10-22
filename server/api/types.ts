@@ -13,8 +13,10 @@ type ColumnName = string;
 
 import type { CandleMeta } from "../render/candle";
 import type { CategoryMeta } from "../render/category";
+import type { FunnelMeta } from "../render/funnel";
 import type { GanttMeta } from "../render/gantt";
 import type { HeatmapMeta } from "../render/heatmap";
+import type { HistogramMeta } from "../render/histogram";
 import type { LegendPosition } from "../render/legend";
 import type { PieMeta } from "../render/pie";
 import type { RadarMeta } from "../render/radar";
@@ -23,6 +25,7 @@ import type { SankeyMeta } from "../render/sankey";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { TreemapMeta } from "../render/treemap";
+import type { WaterfallMeta } from "../render/waterfall";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
 
 export type HealthResponse = {
@@ -157,6 +160,9 @@ export const CHART_TYPES = [
   "gantt",
   "pie",
   "radar",
+  "histogram",
+  "waterfall",
+  "funnel",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -245,8 +251,10 @@ export type {
   BoxStats,
   CandleMeta,
   CategoryMeta,
+  FunnelMeta,
   GanttMeta,
   HeatmapMeta,
+  HistogramMeta,
   ItemView,
   PieMeta,
   RadarMeta,
@@ -256,6 +264,7 @@ export type {
   Shape,
   ShapeType,
   TreemapMeta,
+  WaterfallMeta,
 };
 
 /** 차트 종류별 metadata */
@@ -268,7 +277,10 @@ export type ItemMeta =
   | CandleMeta
   | GanttMeta
   | PieMeta
-  | RadarMeta;
+  | RadarMeta
+  | HistogramMeta
+  | WaterfallMeta
+  | FunnelMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

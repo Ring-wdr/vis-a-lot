@@ -587,7 +587,10 @@
           "candle",
           "gantt",
           "pie",
-          "radar"
+          "radar",
+          "histogram",
+          "waterfall",
+          "funnel"
         ]
       },
       "ColumnName": {
@@ -1099,6 +1102,15 @@
           },
           {
             "$ref": "#/components/schemas/RadarMeta"
+          },
+          {
+            "$ref": "#/components/schemas/HistogramMeta"
+          },
+          {
+            "$ref": "#/components/schemas/WaterfallMeta"
+          },
+          {
+            "$ref": "#/components/schemas/FunnelMeta"
           }
         ]
       },
@@ -2206,6 +2218,257 @@
           "domain",
           "series"
         ]
+      },
+      "HistogramMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["histogram"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "bins": {
+            "type": "object",
+            "properties": {
+              "lo": {
+                "type": "number"
+              },
+              "step": {
+                "type": "number"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": ["lo", "step", "count"]
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "groupCount": {
+            "type": "number"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "bins",
+          "counts",
+          "groupCount"
+        ]
+      },
+      "WaterfallMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["waterfall"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "number"
+                },
+                "end": {
+                  "type": "number"
+                },
+                "kind": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "enum": [0]
+                    },
+                    {
+                      "type": "number",
+                      "enum": [1]
+                    },
+                    {
+                      "type": "number",
+                      "enum": [2]
+                    }
+                  ]
+                }
+              },
+              "required": ["start", "end", "kind"]
+            }
+          },
+          "markWidth": {
+            "type": "number"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "categories",
+          "steps",
+          "markWidth"
+        ]
+      },
+      "FunnelMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["funnel"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "index": {
+                  "type": "number"
+                },
+                "rect": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["x", "y", "width", "height"]
+                },
+                "rate": {
+                  "type": ["number", "null"]
+                },
+                "share": {
+                  "type": ["number", "null"]
+                }
+              },
+              "required": ["label", "value", "index", "rect", "rate", "share"]
+            }
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": ["chartType", "plot", "x", "y", "stages"]
       },
       "ItemRowsResponse": {
         "type": "object",

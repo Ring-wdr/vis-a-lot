@@ -1,7 +1,12 @@
 // 차트 종류별 컬럼 역할과 상단 도구 줄에서 쓸 수 있는 기능. 새 차트는 여기에 한 줄씩 더한다.
 // 서버의 같은 표(server/charts/chart-fields.ts)와 컬럼 타입이 맞아야 한다.
 
-import type { ChartSpec, ChartType, ColumnType } from "@/shared/api/types";
+import type {
+  ChartSpec,
+  ChartType,
+  ColumnType,
+  LegendPosition,
+} from "@/shared/api/types";
 
 export type ChartFields = {
   x: readonly ColumnType[];
@@ -15,6 +20,8 @@ export type ChartFields = {
   agg: boolean;
   /** false면 legend 컬럼을 고르지 않는다. 차트가 정한 값(예: sankey 출발 노드)으로 legend를 그린다. */
   legend?: false;
+  /** 공통·개별 속성에 legend 위치가 없을 때의 위치. 없으면 위. 서버 표와 같아야 한다. */
+  legendPosition?: LegendPosition;
 };
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
@@ -47,6 +54,22 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   },
   pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
   radar: { x: ["categorical"], y: ["numeric"], agg: true },
+  histogram: { x: ["numeric"], y: null, agg: false },
+  // 막대 종류(증가·감소·합계)가 곧 legend다.
+  waterfall: {
+    x: ["categorical"],
+    y: ["numeric"],
+    agg: true,
+    legend: false,
+  },
+  // 단계(값 큰 순으로 줄 세운 범주)가 곧 legend다.
+  funnel: {
+    x: ["categorical"],
+    y: ["numeric"],
+    agg: true,
+    legend: false,
+    legendPosition: "right",
+  },
 };
 
 /**
@@ -81,7 +104,18 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   pie: ["select", "checkbox"],
   // 고정 좌표 차트: 선택(꼭짓점)과 체크박스(계열 숨기기)만
   radar: ["select", "checkbox"],
+  histogram: NO_DELETE,
+  waterfall: NO_DELETE,
+  // 고정 좌표 차트: 선택(막대 가운데)과 체크박스(단계 숨기기)만
+  funnel: ["select", "checkbox"],
 };
+
+/** 공통 속성에 legend 위치가 없을 때 그 차트가 legend를 놓는 위치 */
+export function defaultLegendPosition(
+  type: ChartType | undefined,
+): LegendPosition {
+  return (type && CHART_FIELDS[type].legendPosition) ?? "top";
+}
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */
 export function legendColumnOf(spec: Pick<ChartSpec, "chartType" | "legend">) {

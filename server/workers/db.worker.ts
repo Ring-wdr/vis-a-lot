@@ -9,8 +9,10 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { queryFunnelData } from "../data/funnel-data";
 import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
+import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { toPieData, toRadarData } from "../data/polar-data";
 import { querySankeyData } from "../data/sankey-data";
@@ -210,9 +212,11 @@ serveRpc<DbMethods>({
   async categoryData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     const input = { ...params, table };
-    return params.chartType === "bar"
-      ? queryBarData(db, schema, input)
-      : queryBoxData(db, schema, input);
+    if (params.chartType === "funnel")
+      return queryFunnelData(db, schema, input);
+    return params.chartType === "boxplot"
+      ? queryBoxData(db, schema, input)
+      : queryBarData(db, schema, input);
   },
 
   async sankeyData({ dataset, ...params }) {
@@ -223,6 +227,11 @@ serveRpc<DbMethods>({
   async heatmapData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     return queryHeatmapData(db, schema, { ...params, table });
+  },
+
+  async histogramData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryHistogramData(db, schema, { ...params, table });
   },
 
   async candleData({ dataset, ...params }) {

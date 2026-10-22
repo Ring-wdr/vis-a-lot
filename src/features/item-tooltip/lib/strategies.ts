@@ -5,14 +5,17 @@ import type {
   AxisMeta,
   CandleMeta,
   CategoryMeta,
+  FunnelMeta,
   GanttMeta,
   HeatmapMeta,
+  HistogramMeta,
   ItemMeta,
   PieMeta,
   RadarMeta,
   SankeyMeta,
   ScatterMeta,
   TreemapMeta,
+  WaterfallMeta,
 } from "@/shared/api/types";
 import { AGG_LABELS } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
@@ -703,6 +706,156 @@ export const radarStrategy: TooltipStrategy<RadarMeta> = {
   },
 };
 
+/** 데이터 x 값 → PNG x 좌표 */
+function xToPx(meta: ItemMeta, v: number) {
+  const { plot } = meta;
+  const [d0, d1] = meta.x.domain;
+  return plot.left + ((v - d0) / (d1 - d0)) * plot.width;
+}
+
+/** legend 체크박스로 끈 값인지 */
+function legendHidden(meta: ItemMeta, index: number) {
+  return meta.legend?.entries.find((e) => e.index === index)?.visible === false;
+}
+
+/** 커서가 가리키는 구간과, legend가 있으면 그 구간 안의 막대 칸 */
+export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot, bins } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const v = invertAxis(meta.x, plot.left, plot.width, px, false);
+    const pos = (v - bins.lo) / bins.step;
+    const i = Math.min(bins.count - 1, Math.floor(pos));
+    if (pos < 0 || pos > bins.count) return null;
+    const g = Math.min(
+      meta.groupCount - 1,
+      Math.max(0, Math.floor((pos - i) * meta.groupCount)),
+    );
+    if (legendHidden(meta, g)) return null;
+    const count = meta.counts[i]?.[g] ?? 0;
+    const from = bins.lo + bins.step * i;
+    const to = from + bins.step;
+    const num = (n: number) => formatValue(n, "number");
+    // 마지막 구간만 끝값을 포함한다.
+    const range = `${num(from)} ~ ${num(to)}${i === bins.count - 1 ? "" : " 미만"}`;
+    const left = xToPx(meta, from + (bins.step * g) / meta.groupCount);
+    const right = xToPx(meta, from + (bins.step * (g + 1)) / meta.groupCount);
+    const rows: TooltipRow[] = [{ label: "구간", value: range }];
+    if (meta.legend)
+      rows.push({ label: meta.legend.title, value: meta.legend.values[g] });
+    rows.push({ label: "개수", value: num(count), emphasis: true });
+    return {
+      highlight: highlightRect(
+        meta,
+        (left + right) / 2,
+        right - left,
+        0,
+        count,
+      ),
+      rows,
+    };
+  },
+};
+
+/** waterfall: 가리킨 막대의 범주·값·누적. 마지막 막대는 합계다. */
+export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot, steps } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const i = Math.round(invertAxis(meta.x, plot.left, plot.width, px, false));
+    const step = steps[i];
+    if (!step) return null;
+    const center = xToPx(meta, i);
+    if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX) return null;
+    if (legendHidden(meta, step.kind)) return null;
+    const num = (n: number) => formatValue(n, "number");
+    const label = meta.agg ? AGG_LABELS[meta.agg] : "값";
+    return {
+      highlight: highlightRect(
+        meta,
+        center,
+        meta.markWidth,
+        step.start,
+        step.end,
+      ),
+      rows:
+        step.kind === 2
+          ? [
+              { label: "범주", value: "합계" },
+              { label: "누적", value: num(step.end), emphasis: true },
+            ]
+          : [
+              { label: "범주", value: meta.categories[i] },
+              {
+                label,
+                value: num(step.end - step.start),
+                emphasis: true,
+              },
+              { label: "누적", value: num(step.end) },
+            ],
+    };
+  },
+};
+
+/** funnel: 가리킨 단계의 값과 전환율. 막대가 놓인 줄 높이 안이면 막대 옆 빈 곳도 그 단계로 본다. */
+export const funnelStrategy: TooltipStrategy<FunnelMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (py < plot.top || py > plot.top + plot.height) return null;
+    const stage = meta.stages.find(
+      (s) =>
+        py >= s.rect.y - HIT_SLOP_PX &&
+        py <= s.rect.y + s.rect.height + HIT_SLOP_PX &&
+        px >= Math.min(s.rect.x, plot.left) - HIT_SLOP_PX &&
+        px <= plot.left + plot.width,
+    );
+    if (!stage) return null;
+    const pct = (r: number | null) =>
+      r === null
+        ? "–"
+        : `${(r * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+    const { rect } = stage;
+    return {
+      highlight: {
+        x: rect.x - HIGHLIGHT_PAD,
+        y: rect.y - HIGHLIGHT_PAD,
+        width: rect.width + HIGHLIGHT_PAD * 2,
+        height: rect.height + HIGHLIGHT_PAD * 2,
+      },
+      rows: [
+        { label: "단계", value: stage.label },
+        {
+          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          value: formatValue(stage.value, "number"),
+          emphasis: true,
+        },
+        { label: "이전 단계 대비", value: pct(stage.rate) },
+        { label: "첫 단계 대비", value: pct(stage.share) },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -715,6 +868,9 @@ const STRATEGIES: {
   gantt: TooltipStrategy<GanttMeta>;
   pie: TooltipStrategy<PieMeta>;
   radar: TooltipStrategy<RadarMeta>;
+  histogram: TooltipStrategy<HistogramMeta>;
+  waterfall: TooltipStrategy<WaterfallMeta>;
+  funnel: TooltipStrategy<FunnelMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -728,6 +884,9 @@ const STRATEGIES: {
   gantt: ganttStrategy,
   pie: pieStrategy,
   radar: radarStrategy,
+  histogram: histogramStrategy,
+  waterfall: waterfallStrategy,
+  funnel: funnelStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

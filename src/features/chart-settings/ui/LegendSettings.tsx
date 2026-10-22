@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  defaultLegendPosition,
   drawsLegend,
   legendColumnOf,
 } from "@/entities/chart/model/chart-kinds";
@@ -29,7 +30,7 @@ export function LegendSettings() {
         {legend !== null && ` · ${columns.label(legend)}`}
       </h3>
       <LegendPositionPicker
-        value={common.legendPosition ?? "top"}
+        value={common.legendPosition ?? defaultLegendPosition(draft.chartType)}
         disabled={readOnly || pending}
         onSelect={(legendPosition) => change({ ...common, legendPosition })}
       />

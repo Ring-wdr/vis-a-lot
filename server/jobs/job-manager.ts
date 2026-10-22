@@ -13,7 +13,11 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
-import { POINT_CHARTS } from "../charts/chart-fields";
+import {
+  CHART_FIELDS,
+  legendColumnOf,
+  POINT_CHARTS,
+} from "../charts/chart-fields";
 import {
   bumpRevision,
   type CachedChartData,
@@ -37,6 +41,7 @@ import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
 import { CANDLE_LEGEND } from "../render/candle";
 import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
+import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
 import {
@@ -506,7 +511,10 @@ export function propsOrNone(props: ItemProps): ItemProps | undefined {
 /** legend 위치: item 개별 → 공통 → 위 */
 function legendPosition(chart: ChartRecord, item: ChartItem) {
   return (
-    item.props?.legendPosition ?? chart.spec.common.legendPosition ?? "top"
+    item.props?.legendPosition ??
+    chart.spec.common.legendPosition ??
+    CHART_FIELDS[chart.spec.chartType].legendPosition ??
+    "top"
   );
 }
 
@@ -657,6 +665,19 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "histogram") {
+    return {
+      kind: "histogram",
+      ...(await db.call("histogramData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   if (spec.chartType === "candle") {
     return {
       kind: "candle",
@@ -733,13 +754,17 @@ async function queryChartData(
     kind: "category",
     ...(await db.call("categoryData", {
       dataset: spec.dataset,
-      // treemap은 bar와 같은 범주 × legend 값 집계를 쓴다.
-      chartType: spec.chartType === "boxplot" ? "boxplot" : "bar",
+      // treemap·waterfall은 bar와 같은 범주 × legend 값 집계를 쓴다.
+      chartType:
+        spec.chartType === "boxplot" || spec.chartType === "funnel"
+          ? spec.chartType
+          : "bar",
       x: spec.x,
       y: spec.y,
       agg: spec.agg,
       splitBy: spec.splitBy,
-      legend: spec.legend,
+      // legend를 스스로 그리는 차트(waterfall)는 spec에 남은 legend 컬럼을 쓰지 않는다.
+      legend: legendColumnOf(spec),
       filters: spec.filters,
     })),
     groupOf,
@@ -776,6 +801,9 @@ function renderItem(
     | "renderGantt"
     | "renderPie"
     | "renderRadar"
+    | "renderHistogram"
+    | "renderWaterfall"
+    | "renderFunnel"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -870,6 +898,19 @@ function renderItem(
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
         },
+      },
+      options,
+    );
+  }
+  if (data.kind === "histogram") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderHistogram",
+      {
+        ...common,
+        bins: data.bins,
+        counts: group?.counts ?? [],
+        legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
       options,
     );
@@ -972,6 +1013,45 @@ function renderItem(
     );
   }
   const group = index === undefined ? undefined : data.groups[index];
+  if (spec.chartType === "funnel") {
+    // 단계가 곧 legend 값이다. 단계 순서(값 큰 순)대로 팔레트 색을 받는다.
+    const stages = group?.categories ?? [];
+    return render.call(
+      "renderFunnel",
+      {
+        ...common,
+        stages,
+        values: group?.bars?.map((row) => row[0]) ?? [],
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          item,
+          columnOf(spec.x)?.label ?? spec.x,
+          stages,
+        ),
+      },
+      options,
+    );
+  }
+  if (spec.chartType === "waterfall") {
+    return render.call(
+      "renderWaterfall",
+      {
+        ...common,
+        categories: group?.categories ?? [],
+        values: group?.bars?.map((row) => row[0]) ?? [],
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          item,
+          "구분",
+          [...WATERFALL_KINDS],
+          waterfallDefaultColors(common.color),
+        ),
+      },
+      options,
+    );
+  }
   if (spec.chartType === "treemap") {
     // 새 범례(선택 영역)는 treemap에 쓰지 않는다. legend 값이 곧 부모 묶음이다.
     return render.call(
