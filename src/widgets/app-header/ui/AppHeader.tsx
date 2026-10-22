@@ -1,10 +1,13 @@
 "use client";
 
-import { Database, History, LayoutGrid } from "lucide-react";
+import { Database, History, LayoutGrid, Upload } from "lucide-react";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import { TABS_LOCKED_HINT, VIEWS } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
-import { openDataDialog } from "@/features/register-dataset/ui/DataDialog";
+import {
+  openDatastoreDialog,
+  openUploadThenDatastore,
+} from "@/features/register-dataset/ui/DatastoreDialog";
 import styles from "@/shared/ui/workspace.module.css";
 import headerStyles from "./AppHeader.module.css";
 
@@ -14,7 +17,7 @@ const TAB_UI = {
 } as const;
 
 /**
- * 상단 바: data 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 사용자.
+ * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 사용자.
  * 각 view의 탭은 TabBar가, 탭 안의 모드·공유는 TabToolbar가 그린다.
  */
 export function AppHeader() {
@@ -29,10 +32,19 @@ export function AppHeader() {
           type="button"
           className={headerStyles.navButton}
           aria-haspopup="dialog"
-          onClick={openDataDialog}
+          onClick={openUploadThenDatastore}
+        >
+          <Upload size={14} aria-hidden="true" />
+          upload
+        </button>
+        <button
+          type="button"
+          className={headerStyles.navButton}
+          aria-haspopup="dialog"
+          onClick={() => openDatastoreDialog()}
         >
           <Database size={14} aria-hidden="true" />
-          data
+          datastore
         </button>
         <div
           role="tablist"
