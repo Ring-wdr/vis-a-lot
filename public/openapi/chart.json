@@ -2515,9 +2515,12 @@
           },
           "selected": {
             "type": "boolean"
+          },
+          "filterCount": {
+            "type": "integer"
           }
         },
-        "required": ["columns", "rows", "total", "selected"]
+        "required": ["columns", "rows", "total", "selected", "filterCount"]
       },
       "ColumnType": {
         "type": "string",
@@ -2770,6 +2773,68 @@
           }
         },
         "required": ["itemSize", "keys"]
+      },
+      "SampleRowsResponse": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "$ref": "#/components/schemas/ColumnName"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/ColumnType"
+                }
+              },
+              "required": ["name", "label", "type"]
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "population": {
+            "type": "number"
+          },
+          "sampled": {
+            "type": "boolean"
+          },
+          "filterCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "columns",
+          "rows",
+          "total",
+          "population",
+          "sampled",
+          "filterCount"
+        ]
       },
       "SelectionRequest": {
         "type": "object",
@@ -4028,7 +4093,7 @@
     "/charts/{chartId}/items/{itemKey}/rows/export": {
       "post": {
         "tags": ["data"],
-        "summary": "item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건)",
+        "summary": "item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건, 모든 컬럼)",
         "security": [
           {
             "bearer": []
@@ -4425,7 +4490,7 @@
     "/charts/{chartId}/items/{itemKey}/rows": {
       "post": {
         "tags": ["data"],
-        "summary": "item이 그린 행 한 페이지 (차트에 쓴 컬럼). 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다",
+        "summary": "item이 그린 행 한 페이지 (모든 컬럼, draw 시점 필터). 선택 필드 차트는 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다",
         "security": [
           {
             "bearer": []
@@ -4989,6 +5054,89 @@
           },
           "409": {
             "description": "렌더링 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/rows": {
+      "post": {
+        "tags": ["data"],
+        "summary": "전체 데이터 표 한 페이지: 데이터셋 전체를 draw 시점 필터로 거른 뒤 최대 30,000행 샘플 (모든 컬럼)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemRowsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "샘플 행",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SampleRowsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 차트, 또는 지운 데이터셋",
             "content": {
               "application/json": {
                 "schema": {

@@ -15,6 +15,7 @@ import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { toPieData, toRadarData } from "../data/polar-data";
+import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
 import {
   getHistory,
@@ -270,6 +271,13 @@ serveRpc<DbMethods>({
     if (!(await datasets.table(dataset))) return null;
     const { db, schema, table } = await datasetOf(dataset);
     return queryItemRows(db, table, schema, scope, page);
+  },
+
+  async sampleRows({ dataset, filters, page }) {
+    const { datasets } = await ready;
+    if (!(await datasets.table(dataset))) return null;
+    const { db, schema, table } = await datasetOf(dataset);
+    return querySampleRows(db, table, schema, filters, page);
   },
 
   async exportItemRows({ dataset, scope }) {

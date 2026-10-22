@@ -11,7 +11,11 @@ import {
 import { overlay } from "overlay-kit";
 import { useId, useRef, useState } from "react";
 import { api } from "@/shared/api/api";
-import type { ItemRowsResponse } from "@/shared/api/types";
+import type {
+  ItemRowsRequest,
+  ItemRowsResponse,
+  SampleRowsResponse,
+} from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
 import { Dialog } from "@/shared/ui/Dialog";
 import dialogStyles from "@/shared/ui/Dialog.module.css";
@@ -30,20 +34,34 @@ function nextSort(sort: Sort, column: string): Sort {
   return sort.desc ? undefined : { column, desc: true };
 }
 
-type Target = { chartId: string; itemKey: string; label: string };
+/** 표 한 페이지. item 데이터와 전체 데이터(샘플)가 같은 모양을 쓴다. */
+type TablePage = Pick<
+  ItemRowsResponse,
+  "columns" | "rows" | "total" | "filterCount"
+>;
+
+/** 표가 읽는 곳: 제목, 페이지 조회, 행 수 요약, 빈 표 안내 */
+type TableSource<P extends TablePage> = {
+  /** 쿼리 키. 같은 내용이면 받아 둔 페이지를 다시 쓴다. */
+  key: readonly unknown[];
+  title: string;
+  fetch: (request: ItemRowsRequest, signal: AbortSignal) => Promise<P>;
+  summary: (page: P) => string;
+  empty: (page: P) => string;
+};
+
+/** draw 시점 필터 안내. 화면에 지금 보이는 필터가 아니라 차트를 그릴 때의 필터다. */
+const filterNote = (page: TablePage) =>
+  page.filterCount > 0 ? ` · draw 시점 필터 ${page.filterCount}개 적용` : "";
 
 /**
- * 고른 item이 그린 데이터를 표로 본다. 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다.
- * 보이는 행이 든 페이지만 받아 오는 가상 스크롤이고, 열 머리를 눌러 서버에서 정렬한다.
+ * 데이터를 표로 본다. 보이는 행이 든 페이지만 받아 오는 가상 스크롤이고, 열 머리를 눌러 서버에서 정렬한다.
  */
-function DataTable({
-  target,
-  version,
+function DataTable<P extends TablePage>({
+  source,
   onClose,
 }: {
-  target: Target;
-  /** 열 때의 PNG URL. 같은 내용이면 받아 둔 페이지를 다시 쓴다. */
-  version: string;
+  source: TableSource<P>;
   onClose: () => void;
 }) {
   const titleId = useId();
@@ -53,18 +71,9 @@ function DataTable({
 
   const pages = useQueries({
     queries: visiblePages.map((page) => ({
-      queryKey: [
-        "item-rows",
-        target.chartId,
-        target.itemKey,
-        version,
-        sort,
-        page,
-      ],
+      queryKey: [...source.key, sort, page],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.itemRows(
-          target.chartId,
-          target.itemKey,
+        source.fetch(
           { offset: page * PAGE_SIZE, limit: PAGE_SIZE, sort },
           signal,
         ),
@@ -72,7 +81,7 @@ function DataTable({
       staleTime: Number.POSITIVE_INFINITY,
     })),
   });
-  const first = pages.find((p) => p.data)?.data as ItemRowsResponse | undefined;
+  const first = pages.find((p) => p.data)?.data as P | undefined;
   const failed = pages.find((p) => p.isError)?.error;
   const total = first?.total ?? 0;
   const columns = first?.columns ?? [];
@@ -117,12 +126,10 @@ function DataTable({
     <div className={styles.body}>
       <header className={styles.header}>
         <h2 id={titleId} className={styles.title}>
-          {target.label} 데이터
+          {source.title}
         </h2>
         <span className={styles.muted}>
-          {first
-            ? `${first.selected ? "선택한 " : ""}${total.toLocaleString()}행`
-            : "불러오는 중"}
+          {first ? source.summary(first) + filterNote(first) : "불러오는 중"}
         </span>
       </header>
 
@@ -132,9 +139,7 @@ function DataTable({
         </p>
       ) : first && total === 0 ? (
         <EmptyState icon={<TableIcon size={20} />} title="행이 없습니다">
-          {first.selected
-            ? "선택 영역 안에 든 데이터가 없습니다."
-            : "이 차트에 그린 데이터가 없습니다."}
+          {source.empty(first)}
         </EmptyState>
       ) : (
         <div ref={scrollRef} className={styles.scroll}>
@@ -231,7 +236,7 @@ function DataTable({
   );
 }
 
-export function openDataTable(target: Target, version: string) {
+function openTable<P extends TablePage>(source: TableSource<P>) {
   overlay.open(({ isOpen, close, unmount }) => (
     <Dialog
       isOpen={isOpen}
@@ -239,7 +244,49 @@ export function openDataTable(target: Target, version: string) {
       onExited={unmount}
       className={styles.dialog}
     >
-      <DataTable target={target} version={version} onClose={close} />
+      <DataTable source={source} onClose={close} />
     </Dialog>
   ));
+}
+
+type ItemTarget = { chartId: string; itemKey: string; label: string };
+
+/**
+ * 고른 item의 원본 행을 모든 컬럼으로 본다. 선택 필드 차트는 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다.
+ * version은 열 때의 PNG URL이다. 같은 내용이면 받아 둔 페이지를 다시 쓴다.
+ */
+export function openDataTable(target: ItemTarget, version: string) {
+  openTable<ItemRowsResponse>({
+    key: ["item-rows", target.chartId, target.itemKey, version],
+    title: `${target.label} 데이터`,
+    fetch: (request, signal) =>
+      api.itemRows(target.chartId, target.itemKey, request, signal),
+    summary: (page) =>
+      `${page.selected ? "선택한 " : ""}${page.total.toLocaleString()}행`,
+    empty: (page) =>
+      page.selected
+        ? "선택 영역 안에 든 데이터가 없습니다."
+        : "이 차트에 그린 데이터가 없습니다.",
+  });
+}
+
+/**
+ * 데이터셋 전체를 그 차트의 draw 시점 필터로 거른 행을 본다. 너무 많으면 서버가 최대 30,000행만 샘플로 준다.
+ * jobId가 바뀌면(다시 draw) 필터가 바뀌었을 수 있어 새로 받는다.
+ */
+export function openSampleTable(chart: {
+  chartId: string;
+  jobId: string;
+  title: string;
+}) {
+  openTable<SampleRowsResponse>({
+    key: ["sample-rows", chart.chartId, chart.jobId],
+    title: `전체 데이터 · ${chart.title}`,
+    fetch: (request, signal) => api.sampleRows(chart.chartId, request, signal),
+    summary: (page) =>
+      page.sampled
+        ? `전체 ${page.population.toLocaleString()}행 중 ${page.total.toLocaleString()}행 샘플`
+        : `${page.total.toLocaleString()}행`,
+    empty: () => "필터에 맞는 데이터가 없습니다.",
+  });
 }
