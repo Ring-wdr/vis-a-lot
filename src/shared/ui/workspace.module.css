@@ -411,6 +411,11 @@
   transition: opacity 120ms;
 }
 
+.itemToolbar[data-side="left"] {
+  right: auto;
+  left: 4px;
+}
+
 .item:hover .itemToolbar,
 .itemToolbar:focus-within,
 .itemToolbar:has(:popover-open) {
@@ -721,6 +726,19 @@
   cursor: pointer;
 }
 
+.itemActions > button[aria-pressed="true"] {
+  border-color: var(--ws-accent);
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+}
+
+.itemActionsDivider {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 2px;
+  background: var(--ws-border);
+}
+
 .itemActions > button:hover:not(:disabled) {
   border-color: var(--ws-border);
   background: var(--ws-elevated);
@@ -748,7 +766,7 @@
   user-select: none;
 }
 
-.drawLayer[data-mode="text"] {
+.drawLayer[data-tool="text"] {
   cursor: text;
 }
 

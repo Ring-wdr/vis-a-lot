@@ -10,6 +10,7 @@ import {
 } from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
+import { PaintToolbar } from "@/features/item-actions/ui/PaintToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
@@ -124,6 +125,7 @@ function DrawnItem({
   onDoubleClick?: () => void;
 }) {
   const mode = useWorkspace((s) => s.mode);
+  const paintTool = useWorkspace((s) => s.paintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
   const commonPosition = useWorkspace(
     (s) => s.current?.spec.common.legendPosition ?? "top",
@@ -189,7 +191,7 @@ function DrawnItem({
           />
         ) : (
           <DrawLayer
-            mode={mode}
+            tool={mode === "paint" ? paintTool : mode}
             image={image}
             display={displaySize}
             alt={item.label}
@@ -208,6 +210,17 @@ function DrawnItem({
           )
         )}
       </div>
+      {/* 페인트 모드에서만 차트 위 좌측 상단에 그리기 도구를 띄운다. 우측 도구처럼 커서를 올리면 보인다. */}
+      {mode === "paint" && !readOnly && (
+        <div className={styles.itemToolbar} data-side="left">
+          <PaintToolbar
+            item={item}
+            busy={busy}
+            undoCount={undoCount}
+            onAction={action.mutate}
+          />
+        </div>
+      )}
       {/* 차트 위 우측 상단에 떠 있는 도구. 커서를 올리거나 포커스가 들어오면 보인다. */}
       <div className={styles.itemToolbar}>
         {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
@@ -215,7 +228,6 @@ function DrawnItem({
           <ItemToolbar
             item={item}
             busy={busy}
-            undoCount={undoCount}
             hasLegend={hasLegend}
             commonPosition={commonPosition}
             onAction={action.mutate}
