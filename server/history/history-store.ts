@@ -1,53 +1,58 @@
 // DB Worker 안의 history 저장소. PGlite(IndexedDB)에 저장해 새로고침해도 남는다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { type Selectable, sql } from "kysely";
 import type { ChartSpec, HistoryDetail, HistorySummary } from "../api/types";
 import { DEFAULT_DATASET, sampleIdOf } from "../data/schema";
+import type { Db, HistoryTable } from "../db/database";
 
-type Row = {
-  id: string;
-  created_at: number;
-  updated_at: number;
-  dataset: string;
-  generator_version: number;
-  spec: HistorySummary["spec"];
-  status: HistorySummary["status"];
-  items: HistoryDetail["items"];
-  events: HistoryDetail["events"];
-  thumbnail: string | null;
-};
+type Row = Selectable<HistoryTable>;
 
 const LIST_LIMIT = 50;
 
-export async function openHistory(db: PGlite) {
-  await db.exec(`
-    create table if not exists history (
-      id text primary key,
-      created_at double precision not null,
-      updated_at double precision not null,
-      dataset text not null,
-      generator_version int not null,
-      spec jsonb not null,
-      status text not null,
-      items jsonb not null,
-      events jsonb not null,
-      thumbnail text
-    );
-    create index if not exists history_updated_at on history (updated_at desc);
-  `);
+export async function openHistory(db: Db) {
+  await db.schema
+    .createTable("history")
+    .ifNotExists()
+    .addColumn("id", "text", (c) => c.primaryKey())
+    .addColumn("created_at", "double precision", (c) => c.notNull())
+    .addColumn("updated_at", "double precision", (c) => c.notNull())
+    .addColumn("dataset", "text", (c) => c.notNull())
+    .addColumn("generator_version", "integer", (c) => c.notNull())
+    .addColumn("spec", "jsonb", (c) => c.notNull())
+    .addColumn("status", "text", (c) => c.notNull())
+    .addColumn("items", "jsonb", (c) => c.notNull())
+    .addColumn("events", "jsonb", (c) => c.notNull())
+    .addColumn("thumbnail", "text")
+    .execute();
+  await db.schema
+    .createIndex("history_updated_at")
+    .ifNotExists()
+    .on("history")
+    .expression(sql`updated_at desc`)
+    .execute();
   // 행 수(rows)로 데이터셋을 구분하던 예전 기록: 샘플 데이터셋 id로 옮긴다.
-  const legacy = await db.query<{ exists: boolean }>(
-    `select exists (select 1 from information_schema.columns
-       where table_name = 'history' and column_name = 'rows') as exists`,
+  // information_schema 조회와 컬럼 옮기기는 Postgres 계열 전용 SQL 그대로 둔다.
+  const legacy = await sql<{
+    exists: boolean;
+  }>`select exists (select 1 from information_schema.columns
+       where table_name = 'history' and column_name = 'rows') as exists`.execute(
+    db,
   );
   if (legacy.rows[0].exists) {
-    await db.exec(`
-      alter table history add column if not exists dataset text;
-      update history set dataset = case rows
-        when 500000 then 'iot-500k' when 1000000 then 'iot-1m' else 'iot-100k' end;
-      alter table history alter column dataset set not null;
-      alter table history drop column rows;
-    `);
+    // 예전에는 exec 한 번(암묵적 트랜잭션 하나)으로 옮겼다. 같은 원자성을 트랜잭션으로 지킨다.
+    await db.transaction().execute(async (trx) => {
+      await sql`alter table history add column if not exists dataset text`.execute(
+        trx,
+      );
+      await sql`update history set dataset = case rows
+        when 500000 then 'iot-500k' when 1000000 then 'iot-1m' else 'iot-100k' end`.execute(
+        trx,
+      );
+      await sql`alter table history alter column dataset set not null`.execute(
+        trx,
+      );
+      await sql`alter table history drop column rows`.execute(trx);
+    });
   }
 }
 
@@ -84,42 +89,56 @@ function summarize(row: Row): HistorySummary {
   };
 }
 
-export async function saveHistory(db: PGlite, entry: HistoryDetail) {
-  await db.query(
-    `insert into history (id, created_at, updated_at, dataset, generator_version, spec, status, items, events, thumbnail)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-     on conflict (id) do update set
-       updated_at = excluded.updated_at, spec = excluded.spec, status = excluded.status,
-       items = excluded.items, events = excluded.events,
-       thumbnail = coalesce(excluded.thumbnail, history.thumbnail)`,
-    [
-      entry.id,
-      entry.createdAt,
-      entry.updatedAt,
-      entry.dataset,
-      entry.generatorVersion,
-      JSON.stringify(entry.spec),
-      entry.status,
-      JSON.stringify(entry.items),
-      JSON.stringify(entry.events),
-      entry.thumbnail ?? null,
-    ],
-  );
+export async function saveHistory(db: Db, entry: HistoryDetail) {
+  await db
+    .insertInto("history")
+    .values({
+      id: entry.id,
+      created_at: entry.createdAt,
+      updated_at: entry.updatedAt,
+      dataset: entry.dataset,
+      generator_version: entry.generatorVersion,
+      spec: JSON.stringify(entry.spec),
+      status: entry.status,
+      items: JSON.stringify(entry.items),
+      events: JSON.stringify(entry.events),
+      thumbnail: entry.thumbnail ?? null,
+    })
+    .onConflict((oc) =>
+      oc.column("id").doUpdateSet((eb) => ({
+        updated_at: eb.ref("excluded.updated_at"),
+        spec: eb.ref("excluded.spec"),
+        status: eb.ref("excluded.status"),
+        items: eb.ref("excluded.items"),
+        events: eb.ref("excluded.events"),
+        thumbnail: eb.fn.coalesce(
+          eb.ref("excluded.thumbnail"),
+          eb.ref("history.thumbnail"),
+        ),
+      })),
+    )
+    .execute();
 }
 
-export async function listHistory(db: PGlite): Promise<HistorySummary[]> {
-  const res = await db.query<Row>(
-    `select * from history order by updated_at desc limit ${LIST_LIMIT}`,
-  );
-  return res.rows.map(summarize);
+export async function listHistory(db: Db): Promise<HistorySummary[]> {
+  const rows = await db
+    .selectFrom("history")
+    .selectAll()
+    .orderBy("updated_at", "desc")
+    .limit(LIST_LIMIT)
+    .execute();
+  return rows.map(summarize);
 }
 
 export async function getHistory(
-  db: PGlite,
+  db: Db,
   id: string,
 ): Promise<HistoryDetail | null> {
-  const res = await db.query<Row>("select * from history where id = $1", [id]);
-  const row = res.rows[0];
+  const row = await db
+    .selectFrom("history")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst();
   if (!row) return null;
   return { ...summarize(row), items: row.items, events: row.events };
 }

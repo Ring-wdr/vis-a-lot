@@ -2,9 +2,19 @@
 // 노드가 많으면 흐름이 큰 상위 몇 개만 남기고 나머지를 '기타' 노드 하나로 묶는다.
 // 묶기는 원래 행 단위로 하므로 평균·중앙값도 '기타' 안의 행으로 다시 계산한다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import { AGG_SQL } from "./category-data";
-import { columnOf, type DatasetSchema, ident, textSql } from "./dataset-schema";
+import {
+  allOf,
+  columnOf,
+  type DatasetSchema,
+  ident,
+  list,
+  tableSql,
+  textSql,
+} from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
 import type { AggFn } from "./schema";
 
@@ -88,7 +98,7 @@ export function groupLinks(
 }
 
 export async function querySankeyData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: SankeyDataParams,
 ): Promise<SankeyData> {
@@ -97,18 +107,22 @@ export async function querySankeyData(
   const y = columnOf(schema, params.y, "categorical");
   const z = ident(columnOf(schema, params.z, "numeric").name);
   const split = params.splitBy.map((c) => columnOf(schema, c));
-  const filter = filterSql(schema, params.filters);
-  const where = `${ident(x.name)} is not null and ${ident(y.name)} is not null and ${z} is not null${filter.sql}`;
-  const value = `${AGG_SQL[agg](z)}::float8`;
+  const from = tableSql(table);
+  const where = allOf([
+    sql`${ident(x.name)} is not null`,
+    sql`${ident(y.name)} is not null`,
+    sql`${z} is not null`,
+    ...filterSql(schema, params.filters),
+  ]);
+  const value = sql`${AGG_SQL[agg](z)}::float8`;
 
   // ── 노드 순위: 전체 데이터에서 흐름이 큰 순서. 상한 + 1개만 보면 묶을지 알 수 있다 ──
   const rank = async (column: typeof x, max: number) => {
-    const res = await db.query<{ v: string }>(
-      `select ${textSql(column)} as v from ${table} where ${where}
+    const res = await sql<{
+      v: string;
+    }>`select ${textSql(column)} as v from ${from} where ${where}
         group by ${ident(column.name)} order by ${value} desc nulls last, ${ident(column.name)}
-        limit ${max + 1}`,
-      filter.params,
-    );
+        limit ${sql.lit(max + 1)}`.execute(db);
     return topNodes(
       res.rows.map((r) => r.v),
       max,
@@ -118,30 +132,21 @@ export async function querySankeyData(
   const targets = await rank(y, SANKEY_MAX_TARGETS);
 
   // ── 흐름: 상위에 들지 못한 값은 원래 행 단위로 '기타'에 넣고 집계한다 ──
-  const n = filter.params.length;
-  const others = `$${n + 3}`;
-  const bucket = (column: typeof x, param: string) =>
-    `case when ${textSql(column)} in (select jsonb_array_elements_text(${param}::jsonb)) then ${textSql(column)} else ${others} end`;
+  const bucket = (column: typeof x, keep: string[]) =>
+    sql`case when ${textSql(column)} in (select jsonb_array_elements_text(${JSON.stringify(keep)}::jsonb)) then ${textSql(column)} else ${SANKEY_OTHERS} end`;
   const k = split.length;
   const splitOrder = split.map((c) => ident(c.name));
   // split은 원래 타입 순서로 정렬하고 text로 돌려받는다. 출발·도착은 select 순번으로 묶는다.
-  const groupBy = [...splitOrder, `${k + 1}`, `${k + 2}`].join(", ");
-  const sql = `select ${[...split.map(textSql), bucket(x, `$${n + 1}`), bucket(y, `$${n + 2}`)].join(", ")}, ${value}
-    from ${table} where ${where}
-    group by ${groupBy} order by ${groupBy}`;
-  const res = await db.query<unknown[]>(
-    sql,
-    [
-      ...filter.params,
-      JSON.stringify(sources.keep),
-      JSON.stringify(targets.keep),
-      SANKEY_OTHERS,
-    ],
-    { rowMode: "array" },
+  const groupBy = list([...splitOrder, sql.lit(k + 1), sql.lit(k + 2)]);
+  const rows = await queryArrays(
+    db,
+    sql`select ${list([...split.map(textSql), bucket(x, sources.keep), bucket(y, targets.keep)])}, ${value}
+    from ${from} where ${where}
+    group by ${groupBy} order by ${groupBy}`,
   );
   return {
     sources: sources.nodes,
     targets: targets.nodes,
-    groups: groupLinks(res.rows, k, sources.nodes, targets.nodes),
+    groups: groupLinks(rows, k, sources.nodes, targets.nodes),
   };
 }

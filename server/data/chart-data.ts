@@ -1,11 +1,16 @@
 // 차트 job 하나에 필요한 데이터를 한 번의 쿼리로 가져와 split 조합별로 나눈다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import {
+  allOf,
   columnOf,
   type DatasetSchema,
   ident,
+  list,
   numericSql,
+  tableSql,
   textSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
@@ -39,23 +44,24 @@ export type ChartDataParams = {
   filters?: ChartFilter[];
 };
 
-/** ctid → 숫자. 테이블을 다시 만들기 전까지 행을 가리키는 값으로 안정적이다. */
-const ROW_ID_EXPR =
-  "((ctid::text::point)[0] * 65536 + (ctid::text::point)[1])::float8";
+/** ctid → 숫자. 테이블을 다시 만들기 전까지 행을 가리키는 값으로 안정적이다 (Postgres 계열 전용). */
+const ROW_ID_EXPR = sql`((ctid::text::point)[0] * 65536 + (ctid::text::point)[1])::float8`;
 
 /**
  * legend 값 목록. item마다가 아니라 전체 데이터 기준으로 정해야
  * 어느 item에서든 같은 값이 같은 색을 받는다 (색은 순위가 아니라 값을 따른다).
  */
 export async function queryLegendValues(
-  db: PGlite,
+  db: Db,
   table: string,
   schema: DatasetSchema,
   name: string,
 ): Promise<string[]> {
   const column = columnOf(schema, name, "categorical");
-  const res = await db.query<{ v: string }>(
-    `select distinct ${textSql(column)} as v, ${ident(column.name)} from ${table} order by ${ident(column.name)}`,
+  const res = await sql<{
+    v: string;
+  }>`select distinct ${textSql(column)} as v, ${ident(column.name)} from ${tableSql(table)} order by ${ident(column.name)}`.execute(
+    db,
   );
   return res.rows.map((r) => r.v);
 }
@@ -66,7 +72,7 @@ export function rowIdToTid(id: number) {
 
 /** 툴팁 추가 컬럼: 행 식별자로 한 행의 값들을 가져온다. 시각은 epoch ms로 돌려준다. */
 export async function queryRowValues(
-  db: PGlite,
+  db: Db,
   table: string,
   schema: DatasetSchema,
   rowId: number,
@@ -75,16 +81,17 @@ export async function queryRowValues(
   if (names.length === 0) return {};
   const columns = names.map((n) => columnOf(schema, n));
   // 결과 키는 컬럼 순서대로 c0, c1 …로 받아 원래 이름으로 되돌린다 (이름에 무엇이 들어 있어도 된다).
-  const select = columns
-    .map((c, i) =>
+  const select = list(
+    columns.map((c, i) =>
       c.type === "datetime"
-        ? `${numericSql(c)}::float8 as c${i}`
-        : `${ident(c.name)} as c${i}`,
-    )
-    .join(", ");
-  const res = await db.query<Record<string, string | number | null>>(
-    `select ${select} from ${table} where ctid = $1::tid`,
-    [rowIdToTid(rowId)],
+        ? sql`${numericSql(c)}::float8 as ${sql.id(`c${i}`)}`
+        : sql`${ident(c.name)} as ${sql.id(`c${i}`)}`,
+    ),
+  );
+  const res = await sql<
+    Record<string, string | number | null>
+  >`select ${select} from ${tableSql(table)} where ctid = ${rowIdToTid(rowId)}::tid`.execute(
+    db,
   );
   const row = res.rows[0];
   if (!row) return {};
@@ -94,7 +101,7 @@ export async function queryRowValues(
 }
 
 export async function queryChartData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   { table, x, y, splitBy, legend, filters }: ChartDataParams,
 ): Promise<ChartData> {
@@ -103,8 +110,8 @@ export async function queryChartData(
   const splitCols = splitBy.map((c) => columnOf(schema, c));
   const select = [
     ...splitCols.map(textSql),
-    `${numericSql(xCol)}::float8`,
-    `${numericSql(yCol)}::float8`,
+    sql`${numericSql(xCol)}::float8`,
+    sql`${numericSql(yCol)}::float8`,
     ROW_ID_EXPR,
     ...(legend ? [textSql(columnOf(schema, legend, "categorical"))] : []),
   ];
@@ -114,16 +121,19 @@ export async function queryChartData(
   const legendIndexOf = new Map(legendValues.map((v, i) => [v, i]));
   const order =
     splitCols.length > 0
-      ? `order by ${splitCols.map((c) => ident(c.name)).join(", ")}`
-      : "";
-  const filter = filterSql(schema, filters);
-  const sql = `select ${select.join(", ")} from ${table}
-    where ${ident(xCol.name)} is not null and ${ident(yCol.name)} is not null${filter.sql} ${order}`;
-
-  const res = await db.query<unknown[]>(sql, filter.params, {
-    rowMode: "array",
-  });
-  const n = res.rows.length;
+      ? sql`order by ${list(splitCols.map((c) => ident(c.name)))}`
+      : sql``;
+  const where = allOf([
+    sql`${ident(xCol.name)} is not null`,
+    sql`${ident(yCol.name)} is not null`,
+    ...filterSql(schema, filters),
+  ]);
+  const rows = await queryArrays(
+    db,
+    sql`select ${list(select)} from ${tableSql(table)}
+    where ${where} ${order}`,
+  );
+  const n = rows.length;
   const xs = new Float64Array(n);
   const ys = new Float64Array(n);
   const ids = new Float64Array(n);
@@ -133,7 +143,7 @@ export async function queryChartData(
   let current: SplitGroup | undefined;
 
   for (let i = 0; i < n; i++) {
-    const row = res.rows[i];
+    const row = rows[i];
     xs[i] = row[k] as number;
     ys[i] = row[k + 1] as number;
     ids[i] = row[k + 2] as number;

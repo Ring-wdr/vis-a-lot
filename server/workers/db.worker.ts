@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { CompiledQuery, sql } from "kysely";
 import { queryCandleData } from "../data/candle-data";
 import { queryBarData, queryBoxData } from "../data/category-data";
 import {
@@ -17,6 +18,7 @@ import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { toPieData, toRadarData } from "../data/polar-data";
 import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
+import { createDb } from "../db/database";
 import {
   getHistory,
   listHistory,
@@ -41,14 +43,17 @@ self.addEventListener("unhandledrejection", (e) => {
 // IndexedDB에 저장해서 새로고침해도 데이터가 남는다.
 const ready = PGlite.create("idb://vis-a-lot", {
   relaxedDurability: true,
-}).then(async (db) => {
-  await db.exec(`
-    create table if not exists boot_log (
-      id serial primary key,
-      booted_at timestamptz not null default now()
-    );
-    insert into boot_log default values;
-  `);
+}).then(async (pglite) => {
+  const db = createDb(pglite);
+  await db.schema
+    .createTable("boot_log")
+    .ifNotExists()
+    .addColumn("id", "serial", (c) => c.primaryKey())
+    .addColumn("booted_at", "timestamptz", (c) =>
+      c.notNull().defaultTo(sql`now()`),
+    )
+    .execute();
+  await db.insertInto("boot_log").defaultValues().execute();
   const datasets = await DatasetManager.open(db);
   await openHistory(db);
   return { db, datasets, bootMs: performance.now() - started };
@@ -76,20 +81,26 @@ async function rejectable<T>(work: () => Promise<T>): Promise<Rejectable<T>> {
 serveRpc<DbMethods>({
   async ping() {
     const { db, bootMs } = await ready;
-    const version = await db.query<{ version: string }>("select version()");
-    const boots = await db.query<{ count: number }>(
-      "select count(*)::int as count from boot_log",
+    const version = await sql<{ version: string }>`select version()`.execute(
+      db,
     );
+    const boots = await db
+      .selectFrom("boot_log")
+      .select(sql<number>`count(*)::int`.as("count"))
+      .executeTakeFirstOrThrow();
     return {
       version: version.rows[0].version,
-      bootCount: boots.rows[0].count,
+      bootCount: boots.count,
       bootMs,
     };
   },
 
-  async query({ sql, params }) {
+  async query({ sql: text, params }) {
     const { db } = await ready;
-    const result = await db.query<Record<string, unknown>>(sql, params);
+    // 화면에서 보낸 SQL을 그대로 실행한다 (개발용 질의).
+    const result = await db.executeQuery<Record<string, unknown>>(
+      CompiledQuery.raw(text, params),
+    );
     return { rows: result.rows };
   },
 

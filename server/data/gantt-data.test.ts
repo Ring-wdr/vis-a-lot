@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import { schemaOf } from "./dataset-schema";
 import { queryGanttData } from "./gantt-data";
 
@@ -13,11 +14,12 @@ const schema = schemaOf([
 const t0 = Date.parse("2026-01-01T00:00:00Z");
 const at = (s: number) => new Date(t0 + s * 1000).toISOString();
 
-let db: PGlite;
+let db: Db;
 beforeAll(async () => {
-  db = new PGlite();
+  const pglite = new PGlite();
+  db = createDb(pglite);
   // M1: 정상 0~2초, 경고 3~4초, 정상 5초 (일부러 순서를 섞어 넣는다). M2: 정상 1초
-  await db.exec(`
+  await pglite.exec(`
     create table t (ts timestamptz, line text, machine text, status text);
     insert into t values
       ('${at(4)}', 'A', 'M1', '경고'),

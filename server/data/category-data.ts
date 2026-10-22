@@ -1,12 +1,17 @@
 // bar / boxplot 데이터. 집계는 DB(PGlite)가 SQL로 하고, split 조합 × x 범주 × legend 값 단위로 돌려준다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db, Sql } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import { queryLegendValues } from "./chart-data";
 import {
+  allOf,
   type ColumnSchema,
   columnOf,
   type DatasetSchema,
   ident,
+  list,
+  tableSql,
   textSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
@@ -56,13 +61,14 @@ export type CategoryDataParams = {
 };
 const OUTLIER_SAMPLE = 200;
 
-export const AGG_SQL: Record<AggFn, (y: string) => string> = {
-  avg: (y) => `avg(${y})`,
-  sum: (y) => `sum(${y})`,
-  count: () => "count(*)",
-  min: (y) => `min(${y})`,
-  max: (y) => `max(${y})`,
-  median: (y) => `percentile_cont(0.5) within group (order by ${y})`,
+/** 통계 함수 조각. median의 percentile_cont … within group은 Postgres 계열 전용이다. */
+export const AGG_SQL: Record<AggFn, (y: Sql) => Sql> = {
+  avg: (y) => sql`avg(${y})`,
+  sum: (y) => sql`sum(${y})`,
+  count: () => sql`count(*)`,
+  min: (y) => sql`min(${y})`,
+  max: (y) => sql`max(${y})`,
+  median: (y) => sql`percentile_cont(0.5) within group (order by ${y})`,
 };
 
 /** x는 범주, y는 숫자. split·legend 컬럼까지 스키마에서 확인해 꺼낸다. */
@@ -119,29 +125,32 @@ function keyColumns(cols: ReturnType<typeof columnsOf>): ColumnSchema[] {
 }
 
 export async function queryBarData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: CategoryDataParams,
 ): Promise<CategoryData> {
   const cols = columnsOf(schema, params);
   const { table, agg, splitBy, legend } = params;
   const y = ident(cols.y.name);
-  const filter = filterSql(schema, params.filters);
+  const where = allOf([
+    sql`${y} is not null`,
+    ...filterSql(schema, params.filters),
+  ]);
   const legendValues = legend
     ? await queryLegendValues(db, table, schema, legend)
     : undefined;
   const keys = keyColumns(cols);
-  const keyNames = keys.map((c) => ident(c.name)).join(", ");
-  const sql = `select ${keys.map(textSql).join(", ")}, ${AGG_SQL[agg](y)}::float8
-    from ${table} where ${y} is not null${filter.sql}
-    group by ${keyNames} order by ${keyNames}`;
-  const res = await db.query<unknown[]>(sql, filter.params, {
-    rowMode: "array",
-  });
+  const keyNames = list(keys.map((c) => ident(c.name)));
+  const rows = await queryArrays(
+    db,
+    sql`select ${list(keys.map(textSql))}, ${AGG_SQL[agg](y)}::float8
+    from ${tableSql(table)} where ${where}
+    group by ${keyNames} order by ${keyNames}`,
+  );
   return {
     legendValues,
     groups: groupRows(
-      res.rows,
+      rows,
       splitBy.length,
       legendValues,
       (row, o) => row[o] as number,
@@ -153,16 +162,19 @@ export async function queryBarData(
   };
 }
 
-/** 사분위수는 percentile_cont, 수염은 1.5 IQR 안쪽의 최솟값/최댓값, 바깥은 이상치 */
+/** 사분위수는 percentile_cont, 수염은 1.5 IQR 안쪽의 최솟값/최댓값, 바깥은 이상치 (Postgres 계열 전용) */
 export async function queryBoxData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: CategoryDataParams,
 ): Promise<CategoryData> {
   const cols = columnsOf(schema, params);
   const { table, splitBy, legend } = params;
   const y = ident(cols.y.name);
-  const filter = filterSql(schema, params.filters);
+  const where = allOf([
+    sql`${y} is not null`,
+    ...filterSql(schema, params.filters),
+  ]);
   const legendValues = legend
     ? await queryLegendValues(db, table, schema, legend)
     : undefined;
@@ -173,40 +185,43 @@ export async function queryBoxData(
   }));
   const select = keyNames.map(
     (c) =>
-      `${textSql(c.src)} as ${c.alias}, ${ident(c.src.name)} as ${c.alias}_o`,
+      sql`${textSql(c.src)} as ${sql.id(c.alias)}, ${ident(c.src.name)} as ${sql.id(`${c.alias}_o`)}`,
   );
-  const aliases = keyNames.map((c) => c.alias);
-  const orderAliases = keyNames.map((c) => `q.${c.alias}_o`);
-  const join = aliases.map((c) => `s.${c} = q.${c}`).join(" and ");
-  const lowFence = "q.q1 - 1.5 * (q.q3 - q.q1)";
-  const highFence = "q.q3 + 1.5 * (q.q3 - q.q1)";
-  const sql = `
+  const aliases = keyNames.map((c) => sql.id(c.alias));
+  const qAliases = list(keyNames.map((c) => sql.id("q", c.alias)));
+  const orderAliases = list(keyNames.map((c) => sql.id("q", `${c.alias}_o`)));
+  const join = allOf(
+    keyNames.map((c) => sql`${sql.id("s", c.alias)} = ${sql.id("q", c.alias)}`),
+  );
+  const lowFence = sql`q.q1 - 1.5 * (q.q3 - q.q1)`;
+  const highFence = sql`q.q3 + 1.5 * (q.q3 - q.q1)`;
+  const rows = await queryArrays(
+    db,
+    sql`
     with s as (
-      select ${select.join(", ")}, ${y}::float8 as v
-      from ${table} where ${y} is not null${filter.sql}
+      select ${list(select)}, ${y}::float8 as v
+      from ${tableSql(table)} where ${where}
     ),
     q as (
-      select ${aliases.join(", ")}, ${aliases.map((c) => `min(${c}_o) as ${c}_o`).join(", ")},
+      select ${list(aliases)}, ${list(keyNames.map((c) => sql`min(${sql.id(`${c.alias}_o`)}) as ${sql.id(`${c.alias}_o`)}`))},
         count(*)::int as n, avg(v) as mean,
         percentile_cont(0.25) within group (order by v) as q1,
         percentile_cont(0.5) within group (order by v) as median,
         percentile_cont(0.75) within group (order by v) as q3
-      from s group by ${aliases.join(", ")}
+      from s group by ${list(aliases)}
     )
-    select ${aliases.map((c) => `q.${c}`).join(", ")}, q.n, q.mean, q.q1, q.median, q.q3,
+    select ${qAliases}, q.n, q.mean, q.q1, q.median, q.q3,
       min(s.v) filter (where s.v >= ${lowFence}) as lo,
       max(s.v) filter (where s.v <= ${highFence}) as hi,
       count(*) filter (where s.v < ${lowFence} or s.v > ${highFence})::int as outlier_count,
-      (array_agg(s.v) filter (where s.v < ${lowFence} or s.v > ${highFence}))[1:${OUTLIER_SAMPLE}] as outliers
+      (array_agg(s.v) filter (where s.v < ${lowFence} or s.v > ${highFence}))[1:${sql.lit(OUTLIER_SAMPLE)}] as outliers
     from q join s on ${join}
-    group by ${aliases.map((c) => `q.${c}`).join(", ")}, ${orderAliases.join(", ")}, q.n, q.mean, q.q1, q.median, q.q3
-    order by ${orderAliases.join(", ")}`;
-  const res = await db.query<unknown[]>(sql, filter.params, {
-    rowMode: "array",
-  });
+    group by ${qAliases}, ${orderAliases}, q.n, q.mean, q.q1, q.median, q.q3
+    order by ${orderAliases}`,
+  );
   return {
     legendValues,
-    groups: groupRows(res.rows, splitBy.length, legendValues, (row, o) => ({
+    groups: groupRows(rows, splitBy.length, legendValues, (row, o) => ({
       n: row[o] as number,
       mean: row[o + 1] as number,
       q1: row[o + 2] as number,

@@ -1,3 +1,4 @@
+import { createQueryId, PostgresQueryCompiler, sql } from "kysely";
 import { describe, expect, it } from "vitest";
 import { schemaOf } from "./dataset-schema";
 import { filterSql as build } from "./filters";
@@ -7,8 +8,21 @@ const schema = schemaOf([
   { name: "factory", type: "categorical", label: "공장", nullable: false },
   { name: "value", type: "numeric", label: "측정값", nullable: true },
 ]);
-const filterSql = (filters: Parameters<typeof build>[1], first?: number) =>
-  build(schema, filters, first);
+/** 조건 조각을 ` and (…)` 글자로 컴파일한다. 앞에 파라미터가 first - 1개 있는 것처럼 번호를 민다. */
+const filterSql = (filters: Parameters<typeof build>[1], first = 1) => {
+  const parts = build(schema, filters).map((p) => sql` and ${p}`);
+  const compiled = new PostgresQueryCompiler().compileQuery(
+    sql.join(parts, sql``).toOperationNode(),
+    createQueryId(),
+  );
+  return {
+    sql: compiled.sql.replace(
+      /\$(\d+)/g,
+      (_, i) => `$${Number(i) + first - 1}`,
+    ),
+    params: [...compiled.parameters],
+  };
+};
 
 describe("filterSql", () => {
   it("필터가 없으면 빈 조건", () => {

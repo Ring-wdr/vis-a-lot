@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import { schemaOf } from "./dataset-schema";
 import { exportItemRows, type ItemRowsScope, queryItemRows } from "./item-rows";
 
@@ -10,10 +11,11 @@ const schema = schemaOf([
   { name: "value", type: "numeric", label: "측정값", nullable: true },
 ]);
 
-let db: PGlite;
+let db: Db;
 beforeAll(async () => {
-  db = new PGlite();
-  await db.exec(`
+  const pglite = new PGlite();
+  db = createDb(pglite);
+  await pglite.exec(`
     create table t (ts timestamptz, line text, kind text, value float8);
     insert into t values
       ('2026-01-01T00:00:00Z', 'A', 'x', 1),

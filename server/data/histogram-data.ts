@@ -2,9 +2,19 @@
 // 구간은 (필터를 건) 전체 데이터 범위에서 한 번 정해 모든 split item이 같은 구간을 쓴다.
 // 그래야 item끼리 막대 위치와 폭이 같아 나란히 비교할 수 있다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db, Sql } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import { queryLegendValues } from "./chart-data";
-import { columnOf, type DatasetSchema, ident, textSql } from "./dataset-schema";
+import {
+  allOf,
+  columnOf,
+  type DatasetSchema,
+  ident,
+  list,
+  tableSql,
+  textSql,
+} from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
 
 /** 구간: lo부터 step 간격으로 count개. 마지막 구간만 끝값(hi)을 포함한다. */
@@ -83,13 +93,15 @@ function roundEdge(v: number, step: number) {
  * 값이 든 구간 번호(0부터) SQL 식. width_bucket은 끝값(hi)을 count + 1로 돌려주므로 마지막 구간으로 붙잡는다.
  * 데이터 표·다운로드가 같은 식으로 행을 고르므로 경계 값이 렌더와 어긋나지 않는다.
  */
-export function binSql(x: string, bins: HistogramBins) {
+export function binSql(x: Sql, bins: HistogramBins): Sql {
   const hi = bins.lo + bins.step * bins.count;
-  return `(least(width_bucket(${x}::float8, ${bins.lo}::float8, ${hi}::float8, ${bins.count}), ${bins.count}) - 1)`;
+  // 구간 값은 바인딩 대신 글자로 넣는다. select와 group by에 같은 식이 나와도 같은 식으로 보게 한다.
+  const count = sql.lit(bins.count);
+  return sql`(least(width_bucket(${x}::float8, ${sql.lit(bins.lo)}::float8, ${sql.lit(hi)}::float8, ${count}), ${count}) - 1)`;
 }
 
 export async function queryHistogramData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: HistogramDataParams,
 ): Promise<HistogramData> {
@@ -100,12 +112,17 @@ export async function queryHistogramData(
     ? columnOf(schema, legend, "categorical")
     : undefined;
   const x = ident(xCol.name);
-  const filter = filterSql(schema, params.filters);
-  const where = `${x} is not null${filter.sql}`;
+  const from = tableSql(table);
+  const where = allOf([
+    sql`${x} is not null`,
+    ...filterSql(schema, params.filters),
+  ]);
 
-  const range = await db.query<{ min: number | null; max: number | null }>(
-    `select min(${x})::float8 as min, max(${x})::float8 as max from ${table} where ${where}`,
-    filter.params,
+  const range = await sql<{
+    min: number | null;
+    max: number | null;
+  }>`select min(${x})::float8 as min, max(${x})::float8 as max from ${from} where ${where}`.execute(
+    db,
   );
   const { min, max } = range.rows[0] ?? { min: null, max: null };
   const bins = histogramBins(min ?? 0, max ?? 0);
@@ -116,17 +133,18 @@ export async function queryHistogramData(
   const keys = [...split, ...(legendCol ? [legendCol] : [])];
   const keyNames = keys.map((c) => ident(c.name));
   const splitNames = split.map((c) => ident(c.name));
-  const sql = `select ${[...split.map(textSql), "_b", ...(legendCol ? [textSql(legendCol)] : [])].join(", ")}, count(*)::int
-    from (select *, ${binSql(x, bins)} as _b from ${table} where ${where}) t
-    group by ${[...keyNames, "_b"].join(", ")}
-    order by ${[...splitNames, "_b", ...(legendCol ? [ident(legendCol.name)] : [])].join(", ")}`;
-  const res = await db.query<unknown[]>(sql, filter.params, {
-    rowMode: "array",
-  });
+  const b = sql`_b`;
+  const rows = await queryArrays(
+    db,
+    sql`select ${list([...split.map(textSql), b, ...(legendCol ? [textSql(legendCol)] : [])])}, count(*)::int
+    from (select *, ${binSql(x, bins)} as _b from ${from} where ${where}) t
+    group by ${list([...keyNames, b])}
+    order by ${list([...splitNames, b, ...(legendCol ? [ident(legendCol.name)] : [])])}`,
+  );
   return {
     bins,
     legendValues,
-    groups: groupBins(res.rows, split.length, bins.count, legendValues),
+    groups: groupBins(rows, split.length, bins.count, legendValues),
   };
 }
 

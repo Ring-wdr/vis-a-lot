@@ -3,6 +3,7 @@
 
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import { queryBarData } from "./category-data";
 import {
   queryChartData,
@@ -13,12 +14,13 @@ import { queryColumnSummary } from "./column-summary";
 import { type DatasetSchema, readTableSchema } from "./dataset-schema";
 
 const TABLE = "plant_raw";
-let db: PGlite;
+let db: Db;
 let schema: DatasetSchema;
 
 beforeAll(async () => {
-  db = new PGlite();
-  await db.exec(`
+  const pglite = new PGlite();
+  db = createDb(pglite);
+  await pglite.exec(`
     create table ${TABLE} (
       "측정일시" timestamptz not null,
       "Line No" text not null,

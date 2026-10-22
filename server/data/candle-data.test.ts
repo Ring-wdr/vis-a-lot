@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import {
   bucketStart,
   candleInterval,
@@ -37,11 +38,12 @@ const schema = schemaOf([
   { name: "value", type: "numeric", label: "측정값", nullable: true },
 ]);
 
-let db: PGlite;
+let db: Db;
 beforeAll(async () => {
-  db = new PGlite();
+  const pglite = new PGlite();
+  db = createDb(pglite);
   // 0초~99초에 걸친 데이터라 1초 간격이 된다. 같은 초 안의 시간순 첫 값/끝 값이 시가/종가다.
-  await db.exec(`
+  await pglite.exec(`
     create table t (ts timestamptz, line text, value float8);
     insert into t values
       ('2026-01-01T00:00:00.100Z', 'A', 5),

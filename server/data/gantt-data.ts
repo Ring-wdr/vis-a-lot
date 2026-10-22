@@ -2,13 +2,18 @@
 // (gaps-and-islands: 행 전체 순번 - legend 값별 순번이 같으면 한 구간). 묶기는 DB(PGlite)가 window 함수로 한다.
 // legend가 없으면 행마다 처음~마지막 시각 막대 하나다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db } from "../db/database";
+import { queryArrays } from "../db/pglite-native";
 import { queryLegendValues } from "./chart-data";
 import {
+  allOf,
   columnOf,
   type DatasetSchema,
   ident,
+  list,
   numericSql,
+  tableSql,
   textSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
@@ -80,7 +85,7 @@ export function groupGanttRows(
 }
 
 export async function queryGanttData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   { table, x, y, splitBy, legend, filters }: GanttDataParams,
 ): Promise<GanttData> {
@@ -90,25 +95,32 @@ export async function queryGanttData(
     ? columnOf(schema, legend, "categorical")
     : undefined;
   const splitCols = splitBy.map((c) => columnOf(schema, c));
-  const filter = filterSql(schema, filters);
+  const where = allOf([
+    sql`${ident(xCol.name)} is not null`,
+    sql`${ident(yCol.name)} is not null`,
+    ...filterSql(schema, filters),
+  ]);
   const legendValues = legendCol
     ? await queryLegendValues(db, table, schema, legendCol.name)
     : undefined;
 
   // split은 원래 타입으로 묶고 정렬한 뒤 결과만 text로 돌려받는다.
-  const split = splitCols.map((_, i) => `_s${i}`);
-  const part = [...split, "r"].join(", ");
-  const sql = `
+  // 구간 묶기(window 함수 row_number·lead)는 Postgres 계열 전용 문법 그대로 둔다.
+  const split = splitCols.map((_, i) => sql.id(`_s${i}`));
+  const part = list([...split, sql`r`]);
+  const rows = await queryArrays(
+    db,
+    sql`
     with s as (
-      select ${[
-        ...splitCols.map((c, i) => `${ident(c.name)} as _s${i}`),
-        `${textSql(yCol)} as r`,
-        `${legendCol ? textSql(legendCol) : "null::text"} as g`,
-        `${numericSql(xCol)}::float8 as t`,
-        "ctid as id",
-      ].join(", ")}
-      from ${table}
-      where ${ident(xCol.name)} is not null and ${ident(yCol.name)} is not null${filter.sql}
+      select ${list([
+        ...splitCols.map((c, i) => sql`${ident(c.name)} as ${split[i]}`),
+        sql`${textSql(yCol)} as r`,
+        sql`${legendCol ? textSql(legendCol) : sql`null::text`} as g`,
+        sql`${numericSql(xCol)}::float8 as t`,
+        sql`ctid as id`,
+      ])}
+      from ${tableSql(table)}
+      where ${where}
     ),
     w as (
       select *,
@@ -118,20 +130,18 @@ export async function queryGanttData(
     ),
     i as (
       select ${part}, g, min(t) as st, max(t) as mt, count(*)::int as n
-      from w group by ${part}, g${legendCol ? ", island" : ""}
+      from w group by ${part}, g${legendCol ? sql`, island` : sql``}
     )
-    select ${[...split.map((c) => `${c}::text`), "r", "g"].join(", ")}, st,
+    select ${list([...split.map((c) => sql`${c}::text`), sql`r`, sql`g`])}, st,
       ${
         // 상태는 다음 구간이 시작될 때까지 이어진 것으로 보고 끝을 다음 시작에 붙인다. 마지막 구간은 마지막 시각까지.
         legendCol
-          ? `coalesce(lead(st) over (partition by ${part} order by st), mt)`
-          : "mt"
+          ? sql`coalesce(lead(st) over (partition by ${part} order by st), mt)`
+          : sql`mt`
       } as en, n
-    from i order by ${part}, st`;
-  const res = await db.query<unknown[]>(sql, filter.params, {
-    rowMode: "array",
-  });
-  const groups = groupGanttRows(res.rows, splitCols.length, legendValues);
+    from i order by ${part}, st`,
+  );
+  const groups = groupGanttRows(rows, splitCols.length, legendValues);
   // 조건에 맞는 행이 없어도 split 없는 차트는 빈 item 하나를 그린다.
   if (groups.length === 0 && splitCols.length === 0) {
     groups.push({
