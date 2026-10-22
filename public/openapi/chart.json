@@ -585,7 +585,8 @@
           "heatmap",
           "treemap",
           "candle",
-          "gantt"
+          "gantt",
+          "pie"
         ]
       },
       "ColumnName": {
@@ -1091,6 +1092,9 @@
           },
           {
             "$ref": "#/components/schemas/GanttMeta"
+          },
+          {
+            "$ref": "#/components/schemas/PieMeta"
           }
         ]
       },
@@ -1962,6 +1966,114 @@
           "barHeight",
           "bars",
           "truncated"
+        ]
+      },
+      "PieMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["pie"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "center": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": ["x", "y"]
+          },
+          "radius": {
+            "type": "number"
+          },
+          "slices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "ratio": {
+                  "type": "number"
+                },
+                "start": {
+                  "type": "number"
+                },
+                "end": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "category",
+                "value",
+                "ratio",
+                "start",
+                "end",
+                "color",
+                "index"
+              ]
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "center",
+          "radius",
+          "slices",
+          "total"
         ]
       },
       "ItemRowsResponse": {

@@ -31,11 +31,12 @@ import {
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { specError } from "../charts/validate-spec";
+import { OTHERS_SLICE, type PieData } from "../data/polar-data";
 import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
 import { CANDLE_LEGEND } from "../render/candle";
-import { defaultLegendColor } from "../render/theme";
+import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
 import {
@@ -566,6 +567,29 @@ function legendInput(
   };
 }
 
+/**
+ * pie 조각 색. 색 순서(colorOrder)가 있으면 그 순서로 legend 색을 골라 item끼리 같은 범주가 같은 색이 되고,
+ * 없으면 item 안의 조각 순서대로 고른다. '기타'는 따로 정한 색이 없으면 회색이다.
+ */
+function pieColors(
+  chart: ChartRecord,
+  item: ChartItem,
+  data: PieData,
+  values: string[],
+) {
+  const order = data.colorOrder ?? values.filter((v) => v !== OTHERS_SLICE);
+  const named = legendColors(chart, item, order);
+  return values.map((v) => {
+    const i = v === OTHERS_SLICE ? -1 : order.indexOf(v);
+    if (i >= 0) return named[i];
+    return (
+      item.props?.legendColors?.[v] ??
+      chart.spec.common.legendColors?.[v] ??
+      OTHERS_COLOR
+    );
+  });
+}
+
 /** 새 범례만 있을 때 나머지 점의 legend 이름 */
 export const OTHERS_LABEL = "기타";
 
@@ -675,6 +699,21 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "pie") {
+    // 조각 범주가 곧 legend라 spec.legend는 쓰지 않는다.
+    return {
+      kind: "pie",
+      ...(await db.call("pieData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   return {
     kind: "category",
     ...(await db.call("categoryData", {
@@ -720,6 +759,7 @@ function renderItem(
     | "renderTreemap"
     | "renderCandle"
     | "renderGantt"
+    | "renderPie"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -759,6 +799,31 @@ function renderItem(
           index:
             data.legend?.index.slice(group.start, group.end) ??
             new Uint8Array(group.end - group.start),
+        },
+      },
+      options,
+    );
+  }
+  if (data.kind === "pie") {
+    const slices = index === undefined ? [] : data.groups[index].slices;
+    const values = slices.map((s) => s.category);
+    return render.call(
+      "renderPie",
+      {
+        width: size.width,
+        height: size.height,
+        thumbnail: common.thumbnail,
+        title: item.label,
+        selection: item.selection,
+        slices,
+        agg: spec.agg,
+        // 조각 범주가 곧 legend다 (spec.legend는 쓰지 않는다).
+        legend: {
+          title: columnOf(spec.x)?.label ?? spec.x,
+          values,
+          colors: pieColors(chart, item, data, values),
+          position: legendPosition(chart, item),
+          hidden: item.props?.hiddenLegend,
         },
       },
       options,

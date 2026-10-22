@@ -18,11 +18,13 @@ import type { ChartFilter } from "./data/filters";
 import type { GanttData, GanttDataParams } from "./data/gantt-data";
 import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
+import type { PieData } from "./data/polar-data";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
 import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { GanttInput, GanttMeta } from "./render/gantt";
 import type { HeatmapInput, HeatmapMeta } from "./render/heatmap";
+import type { PieInput, PieMeta } from "./render/pie";
 import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 import type { TreemapInput, TreemapMeta } from "./render/treemap";
@@ -128,6 +130,13 @@ export type DbMethods = {
   ganttData: {
     params: Omit<GanttDataParams, "table"> & { dataset: string };
     result: GanttData;
+  };
+  /** pie: bar와 같은 SQL 집계를 큰 순 조각(상위 N + 기타)으로 */
+  pieData: {
+    params: Omit<CategoryDataParams, "table" | "chartType" | "legend"> & {
+      dataset: string;
+    };
+    result: PieData;
   };
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
@@ -247,6 +256,17 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: GanttMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderPie: {
+    params: PieInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: PieMeta;
       worker: string;
       ms: number;
     };

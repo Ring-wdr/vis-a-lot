@@ -37,6 +37,7 @@ export const ChartTypeSchema = z
     "treemap",
     "candle",
     "gantt",
+    "pie",
   ])
   .openapi("ChartType");
 
@@ -688,6 +689,40 @@ export const GanttMetaSchema = z
   })
   .openapi("GanttMeta");
 
+const PointSchema = z.object({ x: z.number(), y: z.number() });
+
+export const PieMetaSchema = z
+  .object({
+    chartType: z.literal("pie"),
+    plot: PlotSchema,
+    /** 고정 좌표 공간: 그림 영역 픽셀과 1:1 (x는 왼쪽, y는 아래쪽에서의 거리) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 원의 중심(PNG 좌표)과 반지름(px) */
+    center: PointSchema,
+    radius: z.number(),
+    /** 보이는 조각만, 그린 순서대로 */
+    slices: z.array(
+      z.object({
+        category: z.string(),
+        value: z.number(),
+        /** 보이는 조각 합계 대비 비율 */
+        ratio: z.number(),
+        /** 캔버스 각도(라디안). 12시 방향이 -π/2이고 시계 방향으로 커진다. */
+        start: z.number(),
+        end: z.number(),
+        color: z.string(),
+        /** legend 인덱스 */
+        index: z.number(),
+      }),
+    ),
+    total: z.number(),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("PieMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
   .union([
@@ -698,6 +733,7 @@ export const ItemMetaSchema = z
     TreemapMetaSchema,
     CandleMetaSchema,
     GanttMetaSchema,
+    PieMetaSchema,
   ])
   .openapi("ItemMeta");
 

@@ -45,6 +45,7 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
     labels: { y: "y (작업 행)" },
     agg: false,
   },
+  pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
 };
 
 /**
@@ -75,6 +76,8 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   treemap: ["pan", "zoom", "select", "checkbox"],
   candle: ["pan", "zoom", "select", "paint", "checkbox"],
   gantt: ["pan", "zoom", "select", "paint", "checkbox"],
+  // 이동·확대가 없는 고정 좌표 차트: 선택(조각 중심점)과 체크박스(조각 숨기기)만
+  pie: ["select", "checkbox"],
 };
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */

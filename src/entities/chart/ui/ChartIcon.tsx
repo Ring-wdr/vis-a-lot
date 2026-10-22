@@ -93,6 +93,12 @@ const ICONS: Record<ChartType, ReactNode> = {
       <rect x="6" y="15.5" width="7" height="3.5" rx="1" />
     </g>
   ),
+  pie: (
+    <g fill="currentColor">
+      <path d="M11 4a8 8 0 1 0 8 9h-8z" />
+      <path d="M13 2.5a8 8 0 0 1 7.5 8.5H13z" opacity="0.55" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

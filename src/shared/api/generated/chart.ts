@@ -2413,7 +2413,8 @@ export type components = {
       | "heatmap"
       | "treemap"
       | "candle"
-      | "gantt";
+      | "gantt"
+      | "pie";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2569,7 +2570,8 @@ export type components = {
       | components["schemas"]["HeatmapMeta"]
       | components["schemas"]["TreemapMeta"]
       | components["schemas"]["CandleMeta"]
-      | components["schemas"]["GanttMeta"];
+      | components["schemas"]["GanttMeta"]
+      | components["schemas"]["PieMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2797,6 +2799,36 @@ export type components = {
         m: number[];
       };
       truncated: boolean;
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    PieMeta: {
+      /** @enum {string} */
+      chartType: "pie";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      center: {
+        x: number;
+        y: number;
+      };
+      radius: number;
+      slices: {
+        category: string;
+        value: number;
+        ratio: number;
+        start: number;
+        end: number;
+        color: string;
+        index: number;
+      }[];
+      total: number;
+      agg?: components["schemas"]["AggFn"];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };

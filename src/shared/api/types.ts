@@ -73,6 +73,7 @@ export type HeatmapMeta = Chart["HeatmapMeta"];
 export type TreemapMeta = Chart["TreemapMeta"];
 export type CandleMeta = Chart["CandleMeta"];
 export type GanttMeta = Chart["GanttMeta"];
+export type PieMeta = Chart["PieMeta"];
 export type ItemMeta = Chart["ItemMeta"];
 export type HistoryEventType = Chart["HistoryEventType"];
 export type HistorySummary = Chart["HistorySummary"];
@@ -94,6 +95,7 @@ const CHART_TYPE_SET: Record<ChartType, true> = {
   treemap: true,
   candle: true,
   gantt: true,
+  pie: true,
 };
 export const CHART_TYPES = Object.keys(CHART_TYPE_SET) as ChartType[];
 
