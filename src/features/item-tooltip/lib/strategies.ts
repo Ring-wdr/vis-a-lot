@@ -254,10 +254,13 @@ const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
   boxplot: TooltipStrategy<CategoryMeta>;
+  line: TooltipStrategy<ScatterMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
   boxplot: boxplotStrategy,
+  // 행 단위 점이 scatter와 같아 가장 가까운 점을 그대로 찾는다.
+  line: scatterStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

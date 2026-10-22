@@ -2404,7 +2404,7 @@ export type components = {
     /** @example iot-100k */
     DatasetId: string;
     /** @enum {string} */
-    ChartType: "scatter" | "bar" | "boxplot";
+    ChartType: "scatter" | "bar" | "boxplot" | "line";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2558,7 +2558,7 @@ export type components = {
       | components["schemas"]["CategoryMeta"];
     ScatterMeta: {
       /** @enum {string} */
-      chartType: "scatter";
+      chartType: "scatter" | "line";
       plot: {
         left: number;
         top: number;

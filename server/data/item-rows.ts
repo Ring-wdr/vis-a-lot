@@ -2,6 +2,8 @@
 // 데이터 표(페이지 단위·정렬)와 데이터 다운로드(CSV 전체)가 같은 조건을 쓴다.
 
 import type { PGlite } from "@electric-sql/pglite";
+import type { ChartType } from "../api/types";
+import { POINT_CHARTS } from "../charts/chart-fields";
 import type { Region } from "../render/region";
 import {
   type ColumnSchema,
@@ -14,7 +16,7 @@ import {
 import { type ChartFilter, filterSql } from "./filters";
 
 export type ItemRowsScope = {
-  chartType: "scatter" | "bar" | "boxplot";
+  chartType: ChartType;
   x: string;
   y: string;
   legend: string | null;
@@ -24,9 +26,9 @@ export type ItemRowsScope = {
   /** 결과에 넣을 컬럼 (차트에 쓴 컬럼) */
   columns: string[];
   filters?: ChartFilter[];
-  /** scatter: 지운 영역. 안의 행은 뺀다. */
+  /** scatter·line: 지운 영역. 안의 행은 뺀다. */
   deletions: Region[];
-  /** scatter: 선택 영역. 있으면 안의 행만 */
+  /** scatter·line: 선택 영역. 있으면 안의 행만 */
   selection?: Region;
   /** bar/boxplot: 선택된 막대/상자 [범주, legend 값]. 있으면 이 조합의 행만 */
   selectedMarks?: [string, string | null][];
@@ -67,7 +69,7 @@ export function itemRowsWhere(schema: DatasetSchema, scope: ItemRowsScope) {
     return `$${params.length}`;
   };
   const parts: string[] = [];
-  const scatter = scope.chartType === "scatter";
+  const scatter = POINT_CHARTS.includes(scope.chartType);
   const xCol = scatter
     ? columnOf(schema, scope.x, "numeric", "datetime")
     : columnOf(schema, scope.x, "categorical");

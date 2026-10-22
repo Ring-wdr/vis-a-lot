@@ -27,7 +27,7 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot"])
+  .enum(["scatter", "bar", "boxplot", "line"])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -465,7 +465,8 @@ export const LegendMetaSchema = z
 
 export const ScatterMetaSchema = z
   .object({
-    chartType: z.literal("scatter"),
+    /** line도 같은 행 단위 점 metadata를 쓴다. */
+    chartType: z.enum(["scatter", "line"]),
     /** PNG 안에서 그림 영역의 픽셀 범위 */
     plot: PlotSchema,
     x: AxisMetaSchema,

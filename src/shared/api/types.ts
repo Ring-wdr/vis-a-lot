@@ -83,6 +83,7 @@ const CHART_TYPE_SET: Record<ChartType, true> = {
   scatter: true,
   bar: true,
   boxplot: true,
+  line: true,
 };
 export const CHART_TYPES = Object.keys(CHART_TYPE_SET) as ChartType[];
 
