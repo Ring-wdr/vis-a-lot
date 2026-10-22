@@ -121,14 +121,24 @@ export async function queryCandleData(
   if (lo !== null) {
     const splitKeys = splitCols.map((c) => ident(c.name));
     const bucket = `floor((${t} + ${KST_OFFSET_MS}) / ${interval})`;
-    const sql = `select ${[...splitCols.map(textSql), `${bucket} as b`].join(", ")},
-        (array_agg(${v} order by ${t}, ctid))[1] as o,
-        max(${v}) as h, min(${v}) as l,
-        (array_agg(${v} order by ${t} desc, ctid desc))[1] as c,
-        count(*)::int as n
-      from ${table} where ${where}
-      group by ${[...splitKeys, "b"].join(", ")}
-      order by ${[...splitKeys, "b"].join(", ")}`;
+    // 같은 시각에 행이 여럿이면(설비·센서가 섞인 계열) 행 순서로 시가/종가를 고르면 한쪽으로 치우친다.
+    // 그래서 시각마다 값을 먼저 평균하고, 구간의 첫 시각 평균을 시가, 끝 시각 평균을 종가로 둔다.
+    // 고가·저가는 원래 값의 최대·최소다.
+    const keys = [...splitKeys, "b"].join(", ");
+    const sql = `with p as (
+        select ${[...splitKeys, `${bucket} as b`, `${t} as t`].join(", ")},
+          avg(${v}) as m, max(${v}) as h, min(${v}) as l, count(*)::int as n
+        from ${table} where ${where}
+        group by ${[...splitKeys, "b", "t"].join(", ")}
+      )
+      select ${[...splitCols.map(textSql), "b"].join(", ")},
+        (array_agg(m order by t))[1] as o,
+        max(h) as h, min(l) as l,
+        (array_agg(m order by t desc))[1] as c,
+        sum(n)::int as n
+      from p
+      group by ${keys}
+      order by ${keys}`;
     const res = await db.query<unknown[]>(sql, filter.params, {
       rowMode: "array",
     });
