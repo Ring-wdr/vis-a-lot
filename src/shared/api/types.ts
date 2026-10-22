@@ -60,6 +60,7 @@ export type ItemStage = Chart["ItemStage"];
 export type ItemState = Chart["ItemState"];
 export type ItemRowsRequest = Chart["ItemRowsRequest"];
 export type ItemRowsResponse = Chart["ItemRowsResponse"];
+export type SampleRowsResponse = Chart["SampleRowsResponse"];
 export type JobStateResponse = Chart["JobStateResponse"];
 export type ChartImage = Chart["ChartImage"];
 export type ViewRequest = Chart["ViewRequest"];

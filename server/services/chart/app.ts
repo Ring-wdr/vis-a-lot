@@ -10,7 +10,7 @@ import {
   getDetail,
   getItem,
 } from "../../charts/chart-store";
-import { itemRowsScope } from "../../charts/item-scope";
+import { itemRowsScope, scopeSelected } from "../../charts/item-scope";
 import { pan, zoomIn, zoomOut } from "../../charts/item-view";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
@@ -35,8 +35,6 @@ const LONG_POLL_TIMEOUT_MS = 25_000;
 const MAX_FAVORITES = 20;
 const MAX_LEGEND_GROUPS = 8;
 const MAX_DELETIONS = 50;
-/** 데이터 표·다운로드를 쓰지 않는 차트(sankey 등) */
-const NO_ROWS = "이 차트는 데이터 표·다운로드를 쓰지 않습니다.";
 
 let pngVersion = 0;
 
@@ -448,21 +446,41 @@ export const chartApp = createServiceApp()
     if ("error" in target) return reject(c, target);
     const { chart, item } = target;
     const scope = itemRowsScope(chart, item);
-    if (!scope) return apiError(c, 409, NO_ROWS);
     const page = await getRuntime().db.call("itemRows", {
       dataset: chart.spec.dataset,
       scope,
       page: c.req.valid("json"),
     });
     if (!page) return apiError(c, 404, "unknown dataset");
-    return c.json({ ...page, selected: item.selection !== undefined }, 200);
+    return c.json(
+      {
+        ...page,
+        selected: scopeSelected(scope),
+        filterCount: chart.spec.filters?.length ?? 0,
+      },
+      200,
+    );
+  })
+  // 전체 데이터 표: 데이터셋 전체를 그 차트의 draw 시점 필터로 거른 샘플. 그린 item이 없어도 된다.
+  .openapi(routes.sampleRows, async (c) => {
+    const chart = getChart(c.req.valid("param").chartId);
+    if (!chart) return apiError(c, 404, "unknown chart");
+    const page = await getRuntime().db.call("sampleRows", {
+      dataset: chart.spec.dataset,
+      filters: chart.spec.filters,
+      page: c.req.valid("json"),
+    });
+    if (!page) return apiError(c, 404, "unknown dataset");
+    return c.json(
+      { ...page, filterCount: chart.spec.filters?.length ?? 0 },
+      200,
+    );
   })
   .openapi(routes.exportItemRows, async (c) => {
     const target = drawnItem(c.req.valid("param"));
     if ("error" in target) return reject(c, target);
     const { chart, item } = target;
     const scope = itemRowsScope(chart, item);
-    if (!scope) return apiError(c, 409, NO_ROWS);
     const csv = await getRuntime().db.call("exportItemRows", {
       dataset: chart.spec.dataset,
       scope,

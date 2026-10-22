@@ -401,24 +401,43 @@ export const ItemRowsRequestSchema = z
   })
   .openapi("ItemRowsRequest");
 
+const ItemRowsColumnsSchema = z.array(
+  z.object({
+    name: ColumnNameSchema,
+    label: z.string(),
+    type: ColumnTypeSchema,
+  }),
+);
+
 export const ItemRowsResponseSchema = z
   .object({
-    /** 차트에 쓴 컬럼 (split by → x → y → legend → 툴팁) */
-    columns: z.array(
-      z.object({
-        name: ColumnNameSchema,
-        label: z.string(),
-        type: ColumnTypeSchema,
-      }),
-    ),
+    /** 데이터셋의 모든 컬럼 (스키마 순서) */
+    columns: ItemRowsColumnsSchema,
     /** 컬럼 순서대로의 값. 시각은 epoch ms */
     rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
     /** 조건에 맞는 전체 행 수 */
     total: z.number(),
     /** 선택 영역 안의 행만 담았는지 */
     selected: z.boolean(),
+    /** 적용한 draw 시점 필터 수 (화면에 지금 보이는 필터가 아니다) */
+    filterCount: z.number().int(),
   })
   .openapi("ItemRowsResponse");
+
+export const SampleRowsResponseSchema = z
+  .object({
+    /** 데이터셋의 모든 컬럼 (스키마 순서) */
+    columns: ItemRowsColumnsSchema,
+    rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+    /** 샘플 안의 행 수 (최대 30,000) */
+    total: z.number(),
+    /** draw 시점 필터에 맞는 전체 행 수 */
+    population: z.number(),
+    /** 전체가 상한보다 많아 샘플로 줄였는지 */
+    sampled: z.boolean(),
+    filterCount: z.number().int(),
+  })
+  .openapi("SampleRowsResponse");
 
 export const TooltipRequestSchema = z
   .object({ rowId: finite, columns: z.array(ColumnNameSchema) })
