@@ -41,6 +41,7 @@ import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
 import { CANDLE_LEGEND } from "../render/candle";
+import { gradientColors, legendStyleOf } from "../render/style";
 import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
@@ -527,7 +528,19 @@ export function itemColor(chart: ChartRecord, item: ChartItem) {
   return item.props?.color ?? chart.spec.common.color;
 }
 
-/** legend 값별 색: item 개별 색 → 공통 속성의 legend 색 → 팔레트 기본 색 순서로 고른다. */
+/** item에 적용할 차트 속성 (기본값 → 공통 → 개별) */
+function optionsFor(chart: ChartRecord, item: ChartItem) {
+  return resolveOptions(
+    chart.spec.chartType,
+    chart.spec.common.options,
+    item.props?.options,
+  );
+}
+
+/**
+ * legend 값별 색: item 개별 색 → 공통 속성의 legend 색 → 기본 색 순서로 고른다.
+ * 기본 색은 palette.gradient가 켜져 있으면 값 순서대로 그라데이션 단계, 아니면 차트가 정한 색이나 팔레트 순서다.
+ */
 export function legendColors(
   chart: ChartRecord,
   item: ChartItem,
@@ -535,10 +548,15 @@ export function legendColors(
   /** 차트가 정한 기본 색 (candle의 상승/하락). 없으면 팔레트 순서 */
   defaults?: readonly string[],
 ) {
+  const { palette } = optionsFor(chart, item);
+  const gradient = palette.gradient
+    ? gradientColors(palette, values.length)
+    : undefined;
   return values.map(
     (v, i) =>
       item.props?.legendColors?.[v] ??
       chart.spec.common.legendColors?.[v] ??
+      gradient?.[i] ??
       defaults?.[i] ??
       defaultLegendColor(i),
   );
@@ -576,6 +594,7 @@ function legendInput(
     ],
     position: legendPosition(chart, item),
     hidden: item.props?.hiddenLegend,
+    style: legendStyleOf(optionsFor(chart, item)),
   };
 }
 
@@ -880,6 +899,7 @@ function renderItem(
           colors: pieColors(chart, item, data, values),
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
+          style: legendStyleOf(options),
         },
       },
       poolOptions,
@@ -910,6 +930,7 @@ function renderItem(
           colors: legendColors(chart, item, values),
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
+          style: legendStyleOf(options),
         },
       },
       poolOptions,
@@ -1020,6 +1041,7 @@ function renderItem(
                 values: groups.map((g) => g.name),
                 colors: groups.map((g) => groupColor(item, g)),
                 position: legendPosition(chart, item),
+                style: legendStyleOf(options),
               }
             : undefined,
       },

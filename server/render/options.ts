@@ -279,7 +279,11 @@ export const DEFAULT_OPTIONS: ChartOptions = {
     color: "#0b0b0b",
     align: "left",
   },
-  axes: { x: axis(), y: axis() },
+  // 지금까지 x축은 세로 그리드 없이 아래 축 선만, y축은 가로 그리드만 그렸다.
+  axes: {
+    x: { ...axis(), grid: { ...axis().grid, visible: false } },
+    y: { ...axis(), line: { ...axis().line, visible: false } },
+  },
   legend: {
     visible: true,
     border: true,
