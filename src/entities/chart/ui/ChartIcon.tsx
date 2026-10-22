@@ -123,6 +123,14 @@ const ICONS: Record<ChartType, ReactNode> = {
       <rect x="19" y="16" width="2.5" height="4" />
     </g>
   ),
+  waterfall: (
+    <g fill="currentColor">
+      <rect x="3" y="12" width="4" height="8" rx="1" />
+      <rect x="8" y="6" width="4" height="6" rx="1" />
+      <rect x="13" y="6" width="4" height="4" rx="1" opacity="0.55" />
+      <rect x="18" y="10" width="4" height="10" rx="1" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

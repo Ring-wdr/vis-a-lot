@@ -45,7 +45,8 @@ export type CategoryData = {
 export type CategoryDataParams = {
   /** 읽을 테이블 (데이터셋 하나) */
   table: string;
-  chartType: "bar" | "boxplot";
+  /** waterfall은 bar와 같은 집계(legend 없이)를 쓰고 누적은 렌더러가 한다. */
+  chartType: "bar" | "boxplot" | "waterfall";
   x: string;
   y: string;
   agg: AggFn;

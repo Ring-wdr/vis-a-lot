@@ -76,6 +76,7 @@ export type GanttMeta = Chart["GanttMeta"];
 export type PieMeta = Chart["PieMeta"];
 export type RadarMeta = Chart["RadarMeta"];
 export type HistogramMeta = Chart["HistogramMeta"];
+export type WaterfallMeta = Chart["WaterfallMeta"];
 export type ItemMeta = Chart["ItemMeta"];
 export type HistoryEventType = Chart["HistoryEventType"];
 export type HistorySummary = Chart["HistorySummary"];
@@ -100,6 +101,7 @@ const CHART_TYPE_SET: Record<ChartType, true> = {
   pie: true,
   radar: true,
   histogram: true,
+  waterfall: true,
 };
 export const CHART_TYPES = Object.keys(CHART_TYPE_SET) as ChartType[];
 

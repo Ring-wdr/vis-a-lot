@@ -211,9 +211,9 @@ serveRpc<DbMethods>({
   async categoryData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     const input = { ...params, table };
-    return params.chartType === "bar"
-      ? queryBarData(db, schema, input)
-      : queryBoxData(db, schema, input);
+    return params.chartType === "boxplot"
+      ? queryBoxData(db, schema, input)
+      : queryBarData(db, schema, input);
   },
 
   async sankeyData({ dataset, ...params }) {

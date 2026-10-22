@@ -14,6 +14,7 @@ import type {
   SankeyMeta,
   ScatterMeta,
   TreemapMeta,
+  WaterfallMeta,
 } from "@/shared/api/types";
 import { AGG_LABELS } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
@@ -764,6 +765,55 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
   },
 };
 
+/** waterfall: 가리킨 막대의 범주·값·누적. 마지막 막대는 합계다. */
+export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot, steps } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const i = Math.round(invertAxis(meta.x, plot.left, plot.width, px, false));
+    const step = steps[i];
+    if (!step) return null;
+    const center = xToPx(meta, i);
+    if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX) return null;
+    if (legendHidden(meta, step.kind)) return null;
+    const num = (n: number) => formatValue(n, "number");
+    const label = meta.agg ? AGG_LABELS[meta.agg] : "값";
+    return {
+      highlight: highlightRect(
+        meta,
+        center,
+        meta.markWidth,
+        step.start,
+        step.end,
+      ),
+      rows:
+        step.kind === 2
+          ? [
+              { label: "범주", value: "합계" },
+              { label: "누적", value: num(step.end), emphasis: true },
+            ]
+          : [
+              { label: "범주", value: meta.categories[i] },
+              {
+                label,
+                value: num(step.end - step.start),
+                emphasis: true,
+              },
+              { label: "누적", value: num(step.end) },
+            ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -777,6 +827,7 @@ const STRATEGIES: {
   pie: TooltipStrategy<PieMeta>;
   radar: TooltipStrategy<RadarMeta>;
   histogram: TooltipStrategy<HistogramMeta>;
+  waterfall: TooltipStrategy<WaterfallMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -791,6 +842,7 @@ const STRATEGIES: {
   pie: pieStrategy,
   radar: radarStrategy,
   histogram: histogramStrategy,
+  waterfall: waterfallStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

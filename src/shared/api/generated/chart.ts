@@ -2416,7 +2416,8 @@ export type components = {
       | "gantt"
       | "pie"
       | "radar"
-      | "histogram";
+      | "histogram"
+      | "waterfall";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2575,7 +2576,8 @@ export type components = {
       | components["schemas"]["GanttMeta"]
       | components["schemas"]["PieMeta"]
       | components["schemas"]["RadarMeta"]
-      | components["schemas"]["HistogramMeta"];
+      | components["schemas"]["HistogramMeta"]
+      | components["schemas"]["WaterfallMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2884,6 +2886,28 @@ export type components = {
       };
       counts: number[][];
       groupCount: number;
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    WaterfallMeta: {
+      /** @enum {string} */
+      chartType: "waterfall";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      categories: string[];
+      steps: {
+        start: number;
+        end: number;
+        kind: 0 | 1 | 2;
+      }[];
+      markWidth: number;
+      agg?: components["schemas"]["AggFn"];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };

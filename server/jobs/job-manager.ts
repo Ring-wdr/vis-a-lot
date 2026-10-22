@@ -13,7 +13,7 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
-import { POINT_CHARTS } from "../charts/chart-fields";
+import { legendColumnOf, POINT_CHARTS } from "../charts/chart-fields";
 import {
   bumpRevision,
   type CachedChartData,
@@ -37,6 +37,7 @@ import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
 import { CANDLE_LEGEND } from "../render/candle";
 import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
+import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
 import {
@@ -746,13 +747,14 @@ async function queryChartData(
     kind: "category",
     ...(await db.call("categoryData", {
       dataset: spec.dataset,
-      // treemap은 bar와 같은 범주 × legend 값 집계를 쓴다.
+      // treemap·waterfall은 bar와 같은 범주 × legend 값 집계를 쓴다.
       chartType: spec.chartType === "boxplot" ? "boxplot" : "bar",
       x: spec.x,
       y: spec.y,
       agg: spec.agg,
       splitBy: spec.splitBy,
-      legend: spec.legend,
+      // legend를 스스로 그리는 차트(waterfall)는 spec에 남은 legend 컬럼을 쓰지 않는다.
+      legend: legendColumnOf(spec),
       filters: spec.filters,
     })),
     groupOf,
@@ -790,6 +792,7 @@ function renderItem(
     | "renderPie"
     | "renderRadar"
     | "renderHistogram"
+    | "renderWaterfall"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -999,6 +1002,25 @@ function renderItem(
     );
   }
   const group = index === undefined ? undefined : data.groups[index];
+  if (spec.chartType === "waterfall") {
+    return render.call(
+      "renderWaterfall",
+      {
+        ...common,
+        categories: group?.categories ?? [],
+        values: group?.bars?.map((row) => row[0]) ?? [],
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          item,
+          "구분",
+          [...WATERFALL_KINDS],
+          waterfallDefaultColors(common.color),
+        ),
+      },
+      options,
+    );
+  }
   if (spec.chartType === "treemap") {
     // 새 범례(선택 영역)는 treemap에 쓰지 않는다. legend 값이 곧 부모 묶음이다.
     return render.call(

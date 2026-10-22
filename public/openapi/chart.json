@@ -588,7 +588,8 @@
           "gantt",
           "pie",
           "radar",
-          "histogram"
+          "histogram",
+          "waterfall"
         ]
       },
       "ColumnName": {
@@ -1103,6 +1104,9 @@
           },
           {
             "$ref": "#/components/schemas/HistogramMeta"
+          },
+          {
+            "$ref": "#/components/schemas/WaterfallMeta"
           }
         ]
       },
@@ -2284,6 +2288,97 @@
           "bins",
           "counts",
           "groupCount"
+        ]
+      },
+      "WaterfallMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["waterfall"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "number"
+                },
+                "end": {
+                  "type": "number"
+                },
+                "kind": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "enum": [0]
+                    },
+                    {
+                      "type": "number",
+                      "enum": [1]
+                    },
+                    {
+                      "type": "number",
+                      "enum": [2]
+                    }
+                  ]
+                }
+              },
+              "required": ["start", "end", "kind"]
+            }
+          },
+          "markWidth": {
+            "type": "number"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "categories",
+          "steps",
+          "markWidth"
         ]
       },
       "ItemRowsResponse": {

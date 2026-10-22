@@ -24,6 +24,7 @@ import type { SankeyMeta } from "../render/sankey";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { TreemapMeta } from "../render/treemap";
+import type { WaterfallMeta } from "../render/waterfall";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
 
 export type HealthResponse = {
@@ -159,6 +160,7 @@ export const CHART_TYPES = [
   "pie",
   "radar",
   "histogram",
+  "waterfall",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -259,6 +261,7 @@ export type {
   Shape,
   ShapeType,
   TreemapMeta,
+  WaterfallMeta,
 };
 
 /** 차트 종류별 metadata */
@@ -272,7 +275,8 @@ export type ItemMeta =
   | GanttMeta
   | PieMeta
   | RadarMeta
-  | HistogramMeta;
+  | HistogramMeta
+  | WaterfallMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

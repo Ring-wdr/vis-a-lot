@@ -4,18 +4,25 @@ import type { ItemRowsScope } from "../data/item-rows";
 import { markPoint } from "../render/category";
 import { histogramMarkPoint } from "../render/histogram";
 import { regionTester } from "../render/region";
-import { CHART_FIELDS, isRowChart, POINT_CHARTS } from "./chart-fields";
+import { stepPoint, WATERFALL_KINDS } from "../render/waterfall";
+import {
+  CHART_FIELDS,
+  isRowChart,
+  legendColumnOf,
+  POINT_CHARTS,
+} from "./chart-fields";
 import type { ChartItem, ChartRecord } from "./chart-store";
 
 /** 차트에 쓴 컬럼: split by → x → y → legend → 툴팁 순서, 겹치면 한 번만. 쓰지 않는 y는 뺀다. */
 export function chartColumns(chart: ChartRecord) {
   const { spec } = chart;
+  const legend = legendColumnOf(spec);
   return [
     ...new Set([
       ...spec.splitBy,
       spec.x,
       ...(CHART_FIELDS[spec.chartType].y ? [spec.y] : []),
-      ...(spec.legend ? [spec.legend] : []),
+      ...(legend ? [legend] : []),
       ...spec.tooltip,
     ]),
   ];
@@ -27,7 +34,11 @@ export function chartColumns(chart: ChartRecord) {
  */
 function selectedMarks(chart: ChartRecord, item: ChartItem) {
   const meta = item.meta;
-  if (!item.selection || !meta || !("categories" in meta)) return [];
+  if (
+    !item.selection ||
+    (meta?.chartType !== "bar" && meta?.chartType !== "boxplot")
+  )
+    return [];
   const inside = regionTester(item.selection);
   const legendValues = chart.spec.legend ? meta.legend?.values : undefined;
   const marks: [string, string | null][] = [];
@@ -64,6 +75,25 @@ function selectedBins(chart: ChartRecord, item: ChartItem) {
   return { bins: meta.bins, marks };
 }
 
+/**
+ * waterfall에서 선택 영역 안의 막대 [범주, null]. 합계 막대가 들면 모든 범주를 고른 것으로 보고
+ * undefined(범주 조건 없음)를 돌려준다. 체크박스로 끈 종류의 막대는 고르지 않는다.
+ */
+function selectedSteps(item: ChartItem) {
+  const meta = item.meta;
+  if (!item.selection || meta?.chartType !== "waterfall") return [];
+  const inside = regionTester(item.selection);
+  const hidden = new Set(item.props?.hiddenLegend);
+  const marks: [string, string | null][] = [];
+  for (const [i, step] of meta.steps.entries()) {
+    if (hidden.has(WATERFALL_KINDS[step.kind])) continue;
+    if (!inside(...stepPoint(i, step))) continue;
+    if (step.kind === 2) return undefined;
+    marks.push([meta.categories[i], null]);
+  }
+  return marks;
+}
+
 /** 데이터 표·다운로드를 쓰지 않는 차트면 undefined */
 export function itemRowsScope(
   chart: ChartRecord,
@@ -73,21 +103,25 @@ export function itemRowsScope(
   if (!isRowChart(spec.chartType)) return undefined;
   const scatter = POINT_CHARTS.includes(spec.chartType);
   const histogram = spec.chartType === "histogram";
+  const waterfall = spec.chartType === "waterfall";
   return {
     chartType: spec.chartType,
     x: spec.x,
     y: CHART_FIELDS[spec.chartType].y ? spec.y : null,
-    legend: spec.legend,
+    legend: legendColumnOf(spec),
     splitBy: spec.splitBy,
     splitValues: item.values,
     columns: chartColumns(chart),
     filters: spec.filters,
     deletions: scatter ? item.deletions : [],
     selection: scatter ? item.selection : undefined,
-    selectedMarks:
-      !scatter && !histogram && item.selection
-        ? selectedMarks(chart, item)
-        : undefined,
+    selectedMarks: !item.selection
+      ? undefined
+      : waterfall
+        ? selectedSteps(item)
+        : !scatter && !histogram
+          ? selectedMarks(chart, item)
+          : undefined,
     selectedBins:
       histogram && item.selection ? selectedBins(chart, item) : undefined,
     hiddenLegend: item.props?.hiddenLegend,

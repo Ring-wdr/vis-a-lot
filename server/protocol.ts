@@ -31,6 +31,7 @@ import type { RadarInput, RadarMeta } from "./render/radar";
 import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 import type { TreemapInput, TreemapMeta } from "./render/treemap";
+import type { WaterfallInput, WaterfallMeta } from "./render/waterfall";
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
 export type Rejectable<T> =
@@ -304,6 +305,17 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: HistogramMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderWaterfall: {
+    params: WaterfallInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: WaterfallMeta;
       worker: string;
       ms: number;
     };

@@ -16,6 +16,7 @@ export const CHART_LABELS: Record<ChartType, string> = {
   pie: "Pie",
   radar: "Radar",
   histogram: "Histogram",
+  waterfall: "Waterfall",
 };
 
 /**

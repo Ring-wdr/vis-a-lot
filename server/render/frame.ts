@@ -71,3 +71,39 @@ export function labelWidth(ctx: Ctx, labels: string[]) {
   ctx.font = `11px ${THEME.font}`;
   return Math.max(...labels.map((l) => ctx.measureText(l).width), 10);
 }
+
+/**
+ * 인덱스 축(0, 1, 2 …)의 범주 글자. 보이는 범주만 달고, 겹치면 건너뛴다.
+ * band는 인덱스 하나의 픽셀 폭이다.
+ */
+export function drawCategoryLabels(
+  ctx: Ctx,
+  plot: Plot,
+  x: ScaleLinear<number, number>,
+  labels: string[],
+  domain: [number, number],
+  band: number,
+) {
+  const n = labels.length;
+  const first = Math.max(0, Math.ceil(domain[0]));
+  const last = Math.min(n - 1, Math.floor(domain[1]));
+  ctx.font = `11px ${THEME.font}`;
+  const widest = Math.max(
+    ...labels.slice(first, last + 1).map((c) => ctx.measureText(c).width),
+    1,
+  );
+  const step = Math.max(
+    1,
+    Math.ceil(Math.min(widest, 80) / Math.max(band, 1) + 0.2),
+  );
+  ctx.fillStyle = THEME.textSecondary;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  for (let i = first; i <= last; i += step) {
+    ctx.fillText(
+      truncate(ctx, labels[i], band * step - 4),
+      x(i),
+      plot.top + plot.height + 7,
+    );
+  }
+}

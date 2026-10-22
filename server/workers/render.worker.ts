@@ -9,6 +9,7 @@ import { renderRadar } from "../render/radar";
 import { renderSankey } from "../render/sankey";
 import { type ProgressFn, renderScatter } from "../render/scatter";
 import { renderTreemap } from "../render/treemap";
+import { renderWaterfall } from "../render/waterfall";
 import { serveRpc, transfer, type WorkerScope } from "../rpc";
 
 const workerName = (globalThis as unknown as WorkerScope).name;
@@ -307,5 +308,9 @@ serveRpc<RenderMethods>({
 
   renderHistogram(params, { progress }) {
     return renderPair(renderHistogram, params, progress);
+  },
+
+  renderWaterfall(params, { progress }) {
+    return renderPair(renderWaterfall, params, progress);
   },
 });

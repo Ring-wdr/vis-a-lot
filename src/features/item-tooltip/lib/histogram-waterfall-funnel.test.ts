@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { HistogramMeta } from "@/shared/api/types";
-import { histogramStrategy } from "./strategies";
+import type { HistogramMeta, WaterfallMeta } from "@/shared/api/types";
+import { histogramStrategy, waterfallStrategy } from "./strategies";
 
 describe("histogramStrategy", () => {
   const meta: HistogramMeta = {
@@ -59,5 +59,41 @@ describe("histogramStrategy", () => {
     const hit = histogramStrategy.hitTest(meta, undefined, 155, 50);
     expect(hit?.rows[0]).toEqual({ label: "구간", value: "15 ~ 20" });
     expect(histogramStrategy.hitTest(meta, undefined, 190, 50)).toBeNull();
+  });
+});
+
+describe("waterfallStrategy", () => {
+  const meta: WaterfallMeta = {
+    chartType: "waterfall",
+    plot: { left: 0, top: 0, width: 300, height: 100 },
+    x: { kind: "number", domain: [-0.5, 2.5] },
+    y: { kind: "number", domain: [0, 20] },
+    categories: ["A", "B"],
+    steps: [
+      { start: 0, end: 10, kind: 0 },
+      { start: 10, end: 6, kind: 1 },
+      { start: 0, end: 6, kind: 2 },
+    ],
+    markWidth: 70,
+    agg: "sum",
+  };
+
+  it("범주·값·누적을 보여주고 막대(시작~끝)를 감싼다", () => {
+    const hit = waterfallStrategy.hitTest(meta, undefined, 150, 50);
+    expect(hit?.rows).toEqual([
+      { label: "범주", value: "B" },
+      { label: "합계", value: "-4", emphasis: true },
+      { label: "누적", value: "6" },
+    ]);
+    // 가운데 150, 너비 70, 값 10 → 6 (위 50px ~ 70px)
+    expect(hit?.highlight).toEqual({ x: 112, y: 47, width: 76, height: 26 });
+  });
+
+  it("합계 막대는 최종 누적을 보여주고, 막대 사이 빈 곳은 무시한다", () => {
+    expect(waterfallStrategy.hitTest(meta, undefined, 250, 80)?.rows).toEqual([
+      { label: "범주", value: "합계" },
+      { label: "누적", value: "6", emphasis: true },
+    ]);
+    expect(waterfallStrategy.hitTest(meta, undefined, 100, 50)).toBeNull();
   });
 });
