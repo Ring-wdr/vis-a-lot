@@ -5,16 +5,24 @@ import { BEARER, requireAuth } from "../common/auth";
 import { ColumnNameSchema, DatasetPathSchema } from "../common/dataset";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
+  CheckUploadRequestSchema,
   ColumnSummarySchema,
+  CommitUploadRequestSchema,
+  CsvCheckSchema,
+  CsvPreviewSchema,
   DataHealthSchema,
   DatasetListResponseSchema,
   DatasetSchemaResponseSchema,
   DatasetStatusSchema,
-  EditDatasetRequestSchema,
   LegendValuesResponseSchema,
+  PreviewUploadRequestSchema,
+  RenameDatasetRequestSchema,
   SplitCountRequestSchema,
   SplitCountResponseSchema,
-  UploadDatasetRequestSchema,
+  StagedUploadSchema,
+  StagePathSchema,
+  StageUploadRequestSchema,
+  UploadTaskSchema,
 } from "./schemas";
 
 const tags = ["datasets"];
@@ -28,7 +36,11 @@ const notFound = { 404: errorResponse("모르는 데이터셋") };
 const notReady = { 409: errorResponse("데이터셋이 아직 준비되지 않음") };
 const badRequest = { 400: errorResponse("요청 형식 오류") };
 
-const rejected = { 422: errorResponse("CSV 검사에서 거절 (스키마 불일치 등)") };
+const rejected = {
+  422: errorResponse(
+    "CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등)",
+  ),
+};
 
 export const listDatasets = createRoute({
   method: "get",
@@ -73,46 +85,153 @@ export const generateDataset = createRoute({
   },
 });
 
-export const uploadDataset = createRoute({
+export const stageUpload = createRoute({
   method: "post",
-  path: "/datasets/uploads",
+  path: "/datasets/staging",
   tags,
   summary:
-    "CSV 또는 zip(CSV 여러 개를 하나로 합침) 업로드. 파일마다 스키마가 다르면 거절한다",
+    "CSV 또는 zip(CSV 여러 개를 하나로 합침)을 올려 둔다. 미리보기·검사로 옵션을 정한 뒤 commit으로 적재한다",
   ...write,
   request: {
     body: {
       required: true,
       content: {
-        "multipart/form-data": { schema: UploadDatasetRequestSchema },
+        "multipart/form-data": { schema: StageUploadRequestSchema },
       },
     },
   },
   responses: {
-    202: jsonResponse(DatasetStatusSchema, "적재 시작"),
+    201: jsonResponse(StagedUploadSchema, "올려 둔 파일"),
     ...badRequest,
     ...authErrors,
     ...rejected,
   },
 });
 
-export const editDataset = createRoute({
+export const stageDataset = createRoute({
+  method: "post",
+  path: "/datasets/{datasetId}/staging",
+  tags,
+  summary:
+    "업로드한 데이터셋의 원본을 다시 올려 둔다. 옵션·타입을 바꿔 commit하면 그 데이터셋을 다시 적재한다",
+  ...write,
+  request: { params: DatasetPathSchema },
+  responses: {
+    201: jsonResponse(StagedUploadSchema, "올려 둔 파일"),
+    ...badRequest,
+    ...authErrors,
+    ...notFound,
+    ...rejected,
+  },
+});
+
+export const discardStage = createRoute({
+  method: "delete",
+  path: "/datasets/staging/{stageId}",
+  tags,
+  summary: "올려 둔 파일을 버린다",
+  ...write,
+  request: { params: StagePathSchema },
+  responses: { 204: { description: "버림" }, ...badRequest, ...authErrors },
+});
+
+export const previewUpload = createRoute({
+  method: "post",
+  path: "/datasets/staging/{stageId}/preview",
+  tags,
+  summary:
+    "올려 둔 파일 하나의 앞부분: 원본 줄, 컬럼과 추론 타입, 정한 타입으로 바꾼 앞쪽 행",
+  ...write,
+  request: {
+    params: StagePathSchema,
+    body: jsonBody(PreviewUploadRequestSchema),
+  },
+  responses: {
+    200: jsonResponse(CsvPreviewSchema, "미리보기"),
+    ...badRequest,
+    ...authErrors,
+    ...rejected,
+  },
+});
+
+export const checkUpload = createRoute({
+  method: "post",
+  path: "/datasets/staging/{stageId}/check",
+  tags,
+  summary:
+    "적재하지 않고 파일 전체를 검사한다: 행 수, 컬럼별 타입과 변환 불가 값 수",
+  ...write,
+  request: {
+    params: StagePathSchema,
+    body: jsonBody(CheckUploadRequestSchema),
+  },
+  responses: {
+    200: jsonResponse(CsvCheckSchema, "검사 결과"),
+    ...badRequest,
+    ...authErrors,
+    ...rejected,
+  },
+});
+
+export const commitUpload = createRoute({
+  method: "post",
+  path: "/datasets/staging/{stageId}/commit",
+  tags,
+  summary:
+    "올려 둔 파일을 적재한다. 검사·변환부터 백그라운드에서 하고 진행은 task long polling으로 받는다",
+  ...write,
+  request: {
+    params: StagePathSchema,
+    body: jsonBody(CommitUploadRequestSchema),
+  },
+  responses: {
+    202: jsonResponse(UploadTaskSchema, "적재 시작"),
+    ...badRequest,
+    ...authErrors,
+    ...rejected,
+  },
+});
+
+export const uploadTask = createRoute({
+  method: "get",
+  path: "/datasets/staging/{stageId}/task",
+  tags,
+  summary:
+    "업로드 진행 (long polling). since가 지금 version과 같으면 바뀔 때까지 최대 15초 기다린다",
+  ...write,
+  request: {
+    params: StagePathSchema,
+    query: z.object({
+      since: z.coerce
+        .number()
+        .int()
+        .optional()
+        .openapi({ param: { name: "since", in: "query" } }),
+    }),
+  },
+  responses: {
+    200: jsonResponse(UploadTaskSchema, "진행"),
+    ...badRequest,
+    ...authErrors,
+    404: errorResponse("commit하지 않은 stage"),
+  },
+});
+
+export const renameDataset = createRoute({
   method: "patch",
   path: "/datasets/{datasetId}",
   tags,
-  summary:
-    "업로드한 데이터셋의 이름·전처리 옵션 변경. 옵션을 바꾸면 원본으로 다시 검사·적재한다",
+  summary: "업로드한 데이터셋의 이름 변경",
   ...write,
   request: {
     params: DatasetPathSchema,
-    body: jsonBody(EditDatasetRequestSchema),
+    body: jsonBody(RenameDatasetRequestSchema),
   },
   responses: {
     200: jsonResponse(DatasetStatusSchema, "바뀐 상태"),
     ...badRequest,
     ...authErrors,
     ...notFound,
-    ...rejected,
   },
 });
 
@@ -147,7 +266,7 @@ export const schema = createRoute({
     ...badRequest,
     ...authErrors,
     ...notFound,
-    409: errorResponse("등록하지 않은 데이터셋"),
+    409: errorResponse("등록하지 않은 샘플이거나 적재에 실패한 데이터셋"),
   },
 });
 

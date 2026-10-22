@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
+import { DELETED_DATASET_HINT } from "@/entities/dataset/lib/labels";
 import {
   useWorkspace,
   useWorkspaceMutationKey,
@@ -11,6 +12,7 @@ import {
   useCancelJob,
   useDatasetSchema,
   useDatasetStatus,
+  useSchemaState,
 } from "@/shared/api/queries";
 import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
@@ -31,6 +33,7 @@ export function DrawButton() {
   // 컬럼은 데이터셋 스키마에서 고르므로, 스키마를 받고 x·y가 정해져야 그릴 수 있다.
   const schema = useDatasetSchema(draft.dataset);
   const ready = schema.data !== undefined && draft.x !== "" && draft.y !== "";
+  const deleted = useSchemaState(draft.dataset) === "deleted";
 
   const draw = useMutation({
     mutationKey: useWorkspaceMutationKey("draw"),
@@ -77,11 +80,13 @@ export function DrawButton() {
         <button
           type="button"
           className={styles.drawButton}
-          disabled={state === "pending" || !gridArea || !ready}
+          disabled={state === "pending" || !gridArea || !ready || deleted}
           title={
-            ready
-              ? undefined
-              : "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
+            deleted
+              ? DELETED_DATASET_HINT
+              : ready
+                ? undefined
+                : "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
           }
           aria-busy={state === "pending"}
           onClick={() => draw.mutate()}

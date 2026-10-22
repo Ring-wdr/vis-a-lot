@@ -1,0 +1,237 @@
+.dialog {
+  width: min(880px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.title {
+  font-size: 16px;
+}
+
+.muted {
+  color: var(--ws-text-muted);
+}
+
+.error {
+  margin: 0;
+  color: var(--ws-danger);
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.failed {
+  color: var(--ws-danger);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: min(280px, 100%);
+  padding: 5px 8px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: var(--ws-text-muted);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ws-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.tools {
+  display: flex;
+  gap: 4px;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: var(--ws-text-secondary);
+  cursor: pointer;
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.iconButton [data-spinning] {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 가상 스크롤 표: 행을 tbody 안에 겹쳐 놓고 translateY로 옮긴다. 머리와 행이 같은 칸 폭을 쓴다. */
+.scroll {
+  height: min(360px, 42dvh);
+  overflow: auto;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+}
+
+.table {
+  display: grid;
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  background: var(--ws-panel);
+}
+
+.table tbody {
+  position: relative;
+  display: grid;
+}
+
+.table tr {
+  display: grid;
+  grid-template-columns: 56px minmax(160px, 1fr) 160px 96px 84px 140px;
+  align-items: center;
+  height: 34px;
+  border-bottom: 1px solid var(--ws-border);
+}
+
+.table tbody tr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  cursor: default;
+}
+
+.table th,
+.table td {
+  min-width: 0;
+  padding: 0 10px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table th {
+  color: var(--ws-text-secondary);
+  font-weight: 600;
+}
+
+.table tbody tr:hover {
+  background: var(--ws-surface);
+}
+
+.table tbody tr[aria-selected="true"] {
+  background: var(--ws-accent-soft);
+}
+
+.table tr[data-sample] td:first-child {
+  font-size: 12px;
+}
+
+.table .number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.nameButton {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inlineButton {
+  padding: 2px 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--ws-accent);
+  color: var(--ws-on-accent);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.inlineButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+}
+
+.progress progress {
+  width: 64px;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.usage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+}
+
+.usage progress {
+  width: 100%;
+}

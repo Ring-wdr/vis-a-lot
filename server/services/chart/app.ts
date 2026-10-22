@@ -281,6 +281,7 @@ export const chartApp = createServiceApp()
       rowId,
       columns,
     });
+    if (!values) return apiError(c, 404, "unknown dataset");
     return c.json({ values }, 200);
   })
   // `<img src>` 요청도 service worker를 거쳐 여기로 온다.

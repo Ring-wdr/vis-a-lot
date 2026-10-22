@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
+import { ApiRequestError } from "@/shared/api/api";
 import {
   useColumns,
   useItemMeta,
@@ -75,8 +76,16 @@ export function ItemTooltip({
       : null;
   const rowId = useDebounced(hit?.rowId, 100);
   const extra = useTooltipValues(chartId, itemKey, rowId, columns);
+  const extraFailure =
+    extra.error instanceof ApiRequestError && extra.error.status === 404
+      ? "삭제된 데이터라 값을 읽을 수 없습니다"
+      : "값을 읽지 못했습니다";
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 커서가 이미 올라가 있을 때 레이어가 새로 생겨도(크게 보기, 모드 전환) 받아 오도록 여기서도 켠다.
+    setHovered(true);
+    // 실패한 채 남은 metadata는 커서를 움직이면 다시 받는다 (그사이 서버가 다시 그렸을 수 있다).
+    if (meta.isError && !meta.isFetching) meta.refetch();
     const rect = e.currentTarget.getBoundingClientRect();
     // 이미지가 늘어나 보일 때(resize 대기 중)도 PNG 좌표로 바꿔 계산한다.
     const scaleX = image.width / rect.width;
@@ -105,7 +114,8 @@ export function ItemTooltip({
       ref={layerRef}
       className={styles.tooltipLayer}
       style={{ width: display.width, height: display.height }}
-      onMouseEnter={() => setHovered(true)}
+      // 다시 그리는 동안 덮였던 레이어가 커서 아래에서 다시 드러나면 mousemove 없이 enter만 온다.
+      onMouseEnter={onMove}
       onMouseMove={onMove}
       onMouseLeave={() => setCursor(undefined)}
     >
@@ -173,6 +183,11 @@ export function ItemTooltip({
                     <dd>
                       {extra.data && rowId === hit.rowId ? (
                         formatValue(extra.data.values[c], columnInfo.type(c))
+                      ) : extra.isError ? (
+                        // 받지 못했으면 자리 표시를 계속 두지 않고 사유를 남긴다.
+                        <span className={styles.muted} title={extraFailure}>
+                          –
+                        </span>
                       ) : (
                         <Skeleton className={styles.tooltipValueSkeleton} />
                       )}
@@ -185,7 +200,8 @@ export function ItemTooltip({
         )}
       {tooltipPosition &&
         hovered &&
-        meta.isPending &&
+        !meta.data &&
+        (meta.isPending || meta.isFetching) &&
         createPortal(
           <div
             className={`${styles.tooltip} ${styles.tooltipPortal}`}

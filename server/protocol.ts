@@ -1,14 +1,26 @@
 // Worker별 RPC 메서드 정의.
 
-import type { DatasetStatus, HistoryDetail, HistorySummary } from "./api/types";
+import type {
+  CsvCheck,
+  DatasetStatus,
+  HistoryDetail,
+  HistorySummary,
+  StagedUpload,
+  UploadTask,
+} from "./api/types";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
 import type { ColumnSummary } from "./data/column-summary";
-import type { CsvOptions } from "./data/csv-import";
-import type { ColumnInfo, UploadResult } from "./data/datasets";
+import type { CsvOptions, CsvPreview } from "./data/csv-import";
+import type { ColumnInfo } from "./data/datasets";
 import type { ChartFilter } from "./data/filters";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
+
+/** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
+export type Rejectable<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string };
 
 export type DbMethods = {
   ping: {
@@ -24,20 +36,40 @@ export type DbMethods = {
   datasetStatus: { params: { id: string }; result: DatasetStatus | null };
   /** 샘플이 없으면 생성을 시작하고 바로 현재 상태를 돌려준다. 적재는 한 번에 하나씩 순서대로 한다. */
   ensureDataset: { params: { id: string }; result: DatasetStatus | null };
-  /** CSV·zip 업로드. 스키마가 맞지 않으면 거절 사유를 돌려준다. */
-  uploadDataset: {
-    params: {
-      name: string;
-      fileName: string;
-      bytes: ArrayBuffer;
-      options: CsvOptions;
-    };
-    result: UploadResult;
+  /** CSV·zip을 올려 둔다. 거절 사유는 error로 돌려준다. */
+  stageUpload: {
+    params: { fileName: string; bytes: ArrayBuffer };
+    result: Rejectable<StagedUpload>;
   };
-  /** 업로드한 데이터셋의 이름·전처리 옵션 변경. 모르는 데이터셋이면 null */
-  editDataset: {
-    params: { id: string; name?: string; options?: CsvOptions };
-    result: UploadResult | null;
+  /** 업로드한 데이터셋의 원본을 다시 올려 둔다(수정). 모르는 데이터셋이면 null */
+  stageDataset: {
+    params: { id: string };
+    result: Rejectable<StagedUpload> | null;
+  };
+  discardStage: { params: { stageId: string }; result: undefined };
+  /** 올려 둔 파일 하나의 앞부분 미리보기 */
+  previewUpload: {
+    params: { stageId: string; file: number; options: CsvOptions };
+    result: Rejectable<CsvPreview>;
+  };
+  /** 적재하지 않고 전체를 검사한다. */
+  checkUpload: {
+    params: { stageId: string; options: CsvOptions };
+    result: Rejectable<CsvCheck>;
+  };
+  /** 적재를 시작한다. 진행은 uploadTask로 받는다. */
+  commitUpload: {
+    params: { stageId: string; name: string; options: CsvOptions };
+    result: Rejectable<UploadTask>;
+  };
+  /** 업로드 진행. since 버전과 같으면 바뀔 때까지 기다린다. 모르는 stageId면 null */
+  uploadTask: {
+    params: { stageId: string; since?: number };
+    result: UploadTask | null;
+  };
+  renameDataset: {
+    params: { id: string; name: string };
+    result: DatasetStatus | null;
   };
   removeDataset: {
     params: { id: string };
@@ -79,10 +111,10 @@ export type DbMethods = {
     params: { dataset: string; column: string };
     result: ColumnSummary;
   };
-  /** 툴팁 추가 컬럼 조회 */
+  /** 툴팁 추가 컬럼 조회. 모르는 데이터셋(지운 업로드)이면 null */
   rowValues: {
     params: { dataset: string; rowId: number; columns: string[] };
-    result: Record<string, string | number | null>;
+    result: Record<string, string | number | null> | null;
   };
 };
 

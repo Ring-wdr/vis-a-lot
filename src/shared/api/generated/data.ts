@@ -1,6 +1,84 @@
 // 자동 생성 파일. 직접 고치지 말고 `pnpm gen:api`로 다시 만든다.
 
 export type paths = {
+  "/datasets/staging/{stageId}/check": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 적재하지 않고 파일 전체를 검사한다: 행 수, 컬럼별 타입과 변환 불가 값 수 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          stageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["CheckUploadRequest"];
+        };
+      };
+      responses: {
+        /** @description 검사 결과 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["CsvCheck"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등) */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/datasets/{datasetId}/columns/{column}/summary": {
     parameters: {
       query?: never;
@@ -79,6 +157,84 @@ export type paths = {
     };
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/datasets/staging/{stageId}/commit": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 올려 둔 파일을 적재한다. 검사·변환부터 백그라운드에서 하고 진행은 task long polling으로 받는다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          stageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["CommitUploadRequest"];
+        };
+      };
+      responses: {
+        /** @description 적재 시작 */
+        202: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["UploadTask"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등) */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
     delete?: never;
     options?: never;
     head?: never;
@@ -221,7 +377,7 @@ export type paths = {
     };
     options?: never;
     head?: never;
-    /** 업로드한 데이터셋의 이름·전처리 옵션 변경. 옵션을 바꾸면 원본으로 다시 검사·적재한다 */
+    /** 업로드한 데이터셋의 이름 변경 */
     patch: {
       parameters: {
         query?: never;
@@ -233,7 +389,7 @@ export type paths = {
       };
       requestBody: {
         content: {
-          "application/json": components["schemas"]["EditDatasetRequest"];
+          "application/json": components["schemas"]["RenameDatasetRequest"];
         };
       };
       responses: {
@@ -282,8 +438,59 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
-        /** @description CSV 검사에서 거절 (스키마 불일치 등) */
-        422: {
+      };
+    };
+    trace?: never;
+  };
+  "/datasets/staging/{stageId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** 올려 둔 파일을 버린다 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          stageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 버림 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
           headers: {
             [name: string]: unknown;
           };
@@ -293,6 +500,9 @@ export type paths = {
         };
       };
     };
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   "/datasets/{datasetId}/generate": {
@@ -543,6 +753,84 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/datasets/staging/{stageId}/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 올려 둔 파일 하나의 앞부분: 원본 줄, 컬럼과 추론 타입, 정한 타입으로 바꾼 앞쪽 행 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          stageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["PreviewUploadRequest"];
+        };
+      };
+      responses: {
+        /** @description 미리보기 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["CsvPreview"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등) */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/datasets/{datasetId}/schema": {
     parameters: {
       query?: never;
@@ -607,7 +895,7 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
-        /** @description 등록하지 않은 데이터셋 */
+        /** @description 등록하지 않은 샘플이거나 적재에 실패한 데이터셋 */
         409: {
           headers: {
             [name: string]: unknown;
@@ -713,7 +1001,7 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  "/datasets/uploads": {
+  "/datasets/{datasetId}/staging": {
     parameters: {
       query?: never;
       header?: never;
@@ -722,27 +1010,25 @@ export type paths = {
     };
     get?: never;
     put?: never;
-    /** CSV 또는 zip(CSV 여러 개를 하나로 합침) 업로드. 파일마다 스키마가 다르면 거절한다 */
+    /** 업로드한 데이터셋의 원본을 다시 올려 둔다. 옵션·타입을 바꿔 commit하면 그 데이터셋을 다시 적재한다 */
     post: {
       parameters: {
         query?: never;
         header?: never;
-        path?: never;
+        path: {
+          datasetId: components["schemas"]["DatasetId"];
+        };
         cookie?: never;
       };
-      requestBody: {
-        content: {
-          "multipart/form-data": components["schemas"]["UploadDatasetRequest"];
-        };
-      };
+      requestBody?: never;
       responses: {
-        /** @description 적재 시작 */
-        202: {
+        /** @description 올려 둔 파일 */
+        201: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            "application/json": components["schemas"]["DatasetStatus"];
+            "application/json": components["schemas"]["StagedUpload"];
           };
         };
         /** @description 요청 형식 오류 */
@@ -772,7 +1058,16 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
-        /** @description CSV 검사에서 거절 (스키마 불일치 등) */
+        /** @description 모르는 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등) */
         422: {
           headers: {
             [name: string]: unknown;
@@ -789,10 +1084,196 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/datasets/staging": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** CSV 또는 zip(CSV 여러 개를 하나로 합침)을 올려 둔다. 미리보기·검사로 옵션을 정한 뒤 commit으로 적재한다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "multipart/form-data": components["schemas"]["StageUploadRequest"];
+        };
+      };
+      responses: {
+        /** @description 올려 둔 파일 */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["StagedUpload"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등) */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/datasets/staging/{stageId}/task": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 업로드 진행 (long polling). since가 지금 version과 같으면 바뀔 때까지 최대 15초 기다린다 */
+    get: {
+      parameters: {
+        query?: {
+          since?: number | null;
+        };
+        header?: never;
+        path: {
+          stageId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 진행 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["UploadTask"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description commit하지 않은 stage */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 };
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    CsvCheck: {
+      rows: number;
+      skipped: number;
+      columns: {
+        name: string;
+        type: components["schemas"]["ColumnType"];
+        inferred: components["schemas"]["ColumnType"];
+        included: boolean;
+        invalid: number;
+      }[];
+    };
+    /** @enum {string} */
+    ColumnType: "categorical" | "numeric" | "datetime";
+    ApiError: {
+      /** @example unknown chart */
+      error: string;
+    };
+    CheckUploadRequest: {
+      options: components["schemas"]["CsvOptions"];
+    };
+    CsvOptions: {
+      delimiter: string;
+      header: boolean;
+      nullValue: string;
+      quote: string;
+      /** @enum {string} */
+      encoding: "auto" | "utf-8" | "euc-kr";
+      datetimeFormat: string | null;
+      ignoreErrors: boolean;
+      types?: {
+        [key: string]: components["schemas"]["ColumnType"];
+      };
+      excluded?: string[];
+    };
     ColumnSummary:
       | {
           /** @enum {string} */
@@ -818,12 +1299,28 @@ export type components = {
         };
     /** @example factory */
     ColumnName: string;
-    ApiError: {
-      /** @example unknown chart */
-      error: string;
-    };
     /** @example iot-100k */
     DatasetId: string;
+    UploadTask: {
+      /** @enum {string} */
+      state:
+        | "parse"
+        | "queued"
+        | "copy"
+        | "analyze"
+        | "done"
+        | "rejected"
+        | "failed";
+      done: number;
+      total: number;
+      version: number;
+      datasetId?: components["schemas"]["DatasetId"];
+      error?: string;
+    };
+    CommitUploadRequest: {
+      name: string;
+      options: components["schemas"]["CsvOptions"];
+    };
     DatasetStatus: {
       id: components["schemas"]["DatasetId"];
       /** @enum {string} */
@@ -853,20 +1350,6 @@ export type components = {
         type: components["schemas"]["ColumnType"];
       }[];
     };
-    CsvOptions: {
-      delimiter: string;
-      header: boolean;
-      nullValue: string;
-      types?: {
-        [key: string]: components["schemas"]["ColumnType"];
-      };
-    };
-    /** @enum {string} */
-    ColumnType: "categorical" | "numeric" | "datetime";
-    EditDatasetRequest: {
-      name?: string;
-      options?: components["schemas"]["CsvOptions"];
-    };
     DataHealth: {
       /** @enum {string} */
       service: "data";
@@ -882,6 +1365,24 @@ export type components = {
     };
     DatasetListResponse: {
       datasets: components["schemas"]["DatasetStatus"][];
+    };
+    CsvPreview: {
+      raw: string[];
+      columns: {
+        name: string;
+        inferred: components["schemas"]["ColumnType"];
+        type: components["schemas"]["ColumnType"];
+      }[];
+      rows: (string | null)[][];
+      invalid: [number, number][];
+      error?: string;
+    };
+    PreviewUploadRequest: {
+      file: number;
+      options: components["schemas"]["CsvOptions"];
+    };
+    RenameDatasetRequest: {
+      name: string;
     };
     DatasetSchema: {
       id: components["schemas"]["DatasetId"];
@@ -922,12 +1423,23 @@ export type components = {
       column: components["schemas"]["ColumnName"];
       values: string[];
     };
-    UploadDatasetRequest: {
+    StagedUpload: {
+      stageId: string;
+      fileName: string;
+      size: number;
+      files: {
+        name: string;
+        size: number;
+      }[];
+      dataset?: {
+        id: components["schemas"]["DatasetId"];
+        name: string;
+        options: components["schemas"]["CsvOptions"];
+      };
+    };
+    StageUploadRequest: {
       /** Format: binary */
       file: string;
-      name: string;
-      /** @description CsvOptions JSON */
-      options: string;
     };
   };
   responses: never;

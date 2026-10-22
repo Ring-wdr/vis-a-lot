@@ -245,7 +245,7 @@ export const tooltip = createRoute({
     200: jsonResponse(TooltipResponseSchema, "컬럼 값"),
     ...badRequest,
     ...authErrors,
-    404: errorResponse("모르는 차트"),
+    404: errorResponse("모르는 차트, 또는 지운 데이터셋"),
   },
 });
 

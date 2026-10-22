@@ -1295,7 +1295,7 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
-        /** @description 모르는 차트 */
+        /** @description 모르는 차트, 또는 지운 데이터셋 */
         404: {
           headers: {
             [name: string]: unknown;

@@ -1,11 +1,9 @@
 // data 서비스: 데이터셋 적재(샘플 생성, CSV 업로드)와 메타 조회. DB(PGlite worker)에 쓰는 유일한 서비스다.
 
-import type { CsvOptions } from "../../data/csv-import";
 import { MAX_SPLIT_ITEMS } from "../../data/schema";
 import { getRuntime } from "../../runtime";
 import { apiError, createServiceApp } from "../common/http";
 import * as routes from "./routes";
-import { CsvOptionsSchema } from "./schemas";
 
 const db = () => getRuntime().db;
 
@@ -18,17 +16,6 @@ function isReady(dataset: string) {
 async function columnOf(dataset: string, name: string) {
   const columns = await db().call("datasetColumns", { dataset });
   return columns?.find((c) => c.name === name);
-}
-
-/** multipart의 options 필드(JSON 문자열)를 검사한다. */
-function parseOptions(raw: string): CsvOptions | string {
-  try {
-    const parsed = CsvOptionsSchema.safeParse(JSON.parse(raw));
-    if (parsed.success) return parsed.data;
-    return `options: ${parsed.error.issues[0]?.message ?? "invalid"}`;
-  } catch {
-    return "options: invalid json";
-  }
 }
 
 export const dataApp = createServiceApp()
@@ -48,26 +35,66 @@ export const dataApp = createServiceApp()
     if (!status) return apiError(c, 404, "unknown dataset");
     return c.json(status, 202);
   })
-  .openapi(routes.uploadDataset, async (c) => {
-    const { file, name, options: raw } = c.req.valid("form");
-    const options = parseOptions(raw);
-    if (typeof options === "string") return apiError(c, 400, options);
+  .openapi(routes.stageUpload, async (c) => {
+    const { file } = c.req.valid("form");
     const bytes = await file.arrayBuffer();
     const result = await db().call(
-      "uploadDataset",
-      { name, fileName: file.name, bytes, options },
+      "stageUpload",
+      { fileName: file.name, bytes },
       { transfer: [bytes] },
     );
     if (!result.ok) return apiError(c, 422, result.error);
-    return c.json(result.status, 202);
+    return c.json(result.value, 201);
   })
-  .openapi(routes.editDataset, async (c) => {
+  .openapi(routes.stageDataset, async (c) => {
     const { datasetId } = c.req.valid("param");
-    const patch = c.req.valid("json");
-    const result = await db().call("editDataset", { id: datasetId, ...patch });
+    const result = await db().call("stageDataset", { id: datasetId });
     if (!result) return apiError(c, 404, "unknown upload dataset");
     if (!result.ok) return apiError(c, 422, result.error);
-    return c.json(result.status, 200);
+    return c.json(result.value, 201);
+  })
+  .openapi(routes.discardStage, async (c) => {
+    await db().call("discardStage", c.req.valid("param"));
+    return c.body(null, 204);
+  })
+  .openapi(routes.previewUpload, async (c) => {
+    const { stageId } = c.req.valid("param");
+    const result = await db().call("previewUpload", {
+      stageId,
+      ...c.req.valid("json"),
+    });
+    if (!result.ok) return apiError(c, 422, result.error);
+    return c.json(result.value, 200);
+  })
+  .openapi(routes.checkUpload, async (c) => {
+    const { stageId } = c.req.valid("param");
+    const { options } = c.req.valid("json");
+    const result = await db().call("checkUpload", { stageId, options });
+    if (!result.ok) return apiError(c, 422, result.error);
+    return c.json(result.value, 200);
+  })
+  .openapi(routes.commitUpload, async (c) => {
+    const { stageId } = c.req.valid("param");
+    const result = await db().call("commitUpload", {
+      stageId,
+      ...c.req.valid("json"),
+    });
+    if (!result.ok) return apiError(c, 422, result.error);
+    return c.json(result.value, 202);
+  })
+  .openapi(routes.uploadTask, async (c) => {
+    const { stageId } = c.req.valid("param");
+    const { since } = c.req.valid("query");
+    const task = await db().call("uploadTask", { stageId, since });
+    if (!task) return apiError(c, 404, "unknown upload task");
+    return c.json(task, 200);
+  })
+  .openapi(routes.renameDataset, async (c) => {
+    const { datasetId } = c.req.valid("param");
+    const { name } = c.req.valid("json");
+    const status = await db().call("renameDataset", { id: datasetId, name });
+    if (!status) return apiError(c, 404, "unknown upload dataset");
+    return c.json(status, 200);
   })
   .openapi(routes.deleteDataset, async (c) => {
     const { datasetId } = c.req.valid("param");
@@ -80,7 +107,12 @@ export const dataApp = createServiceApp()
   .openapi(routes.schema, async (c) => {
     const { datasetId } = c.req.valid("param");
     const columns = await db().call("datasetColumns", { dataset: datasetId });
-    if (!columns) return apiError(c, 409, "dataset is not registered");
+    if (!columns) {
+      // 모르는 데이터셋(지운 업로드)과 아직 등록하지 않은 샘플을 상태 코드로 나눈다.
+      const status = await db().call("datasetStatus", { id: datasetId });
+      if (!status) return apiError(c, 404, "unknown dataset");
+      return apiError(c, 409, "dataset is not registered");
+    }
     return c.json(
       { id: datasetId, ready: await isReady(datasetId), columns },
       200,

@@ -41,8 +41,9 @@ export function itemSizeFor(
   const width = area.width - PAGE_SCROLLER_WIDTH - PAGE_SCROLLER_GAP;
   const cellWidth = (width - GRID_GAP * (grid.cols - 1)) / grid.cols;
   const cellHeight = (height - GRID_GAP * (grid.rows - 1)) / grid.rows;
+  // 브라우저를 많이 축소하면 칸이 서버 한도보다 커진다. PNG는 한도로 그리고 칸에 맞춰 늘려 보인다.
   return {
-    width: Math.max(50, Math.floor(cellWidth) - 2),
-    height: Math.max(50, Math.floor(cellHeight) - 2),
+    width: Math.min(MAX_PNG_SIDE, Math.max(50, Math.floor(cellWidth) - 2)),
+    height: Math.min(MAX_PNG_SIDE, Math.max(50, Math.floor(cellHeight) - 2)),
   };
 }

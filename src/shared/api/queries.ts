@@ -16,9 +16,10 @@ import {
   type DatasetStatus,
   isTerminal,
   type JobStateResponse,
+  type UploadTask,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
-import { api } from "./api";
+import { ApiRequestError, api } from "./api";
 
 /**
  * long polling 요청은 한 번 실패해도 멈추면 안 된다 (service worker 재시작 등).
@@ -77,12 +78,16 @@ export function useDatasets() {
   return useQuery(datasetsQuery);
 }
 
-/** 데이터셋 이름. 지웠거나 목록을 받기 전이면 id를 그대로 쓴다. */
+/** 목록에 없는 데이터셋(지운 업로드)의 이름 */
+export const DELETED_DATASET_NAME = "삭제된 데이터";
+
+/** 데이터셋 이름. 목록을 받기 전이면 id를, 목록에 없으면(지운 데이터) '삭제된 데이터'를 쓴다. */
 export function useDatasetNames() {
   const datasets = useDatasets().data?.datasets;
   return useMemo(() => {
     const names = new Map(datasets?.map((d) => [d.id, d.name]));
-    return (id: DatasetId) => names.get(id) ?? id;
+    return (id: DatasetId) =>
+      names.get(id) ?? (datasets ? DELETED_DATASET_NAME : id);
   }, [datasets]);
 }
 
@@ -101,16 +106,8 @@ export function useGenerateDataset() {
   });
 }
 
-export function useUploadDataset() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: api.uploadDataset,
-    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.datasets }),
-  });
-}
-
 /** 다시 적재하거나 지운 데이터셋은 스키마·요약이 달라지므로 딸린 query를 버리고 목록을 다시 받는다. */
-function useDatasetChanged() {
+export function useDatasetChanged() {
   const client = useQueryClient();
   return (id: DatasetId) => {
     client.removeQueries({ queryKey: queryKeys.dataset(id) });
@@ -121,18 +118,53 @@ function useDatasetChanged() {
   };
 }
 
-export function useEditDataset() {
+export function useRenameDataset() {
   const changed = useDatasetChanged();
   return useMutation({
-    mutationFn: ({
-      id,
-      ...body
-    }: {
-      id: DatasetId;
-      name?: string;
-      options?: CsvOptions;
-    }) => api.editDataset(id, body),
+    mutationFn: ({ id, name }: { id: DatasetId; name: string }) =>
+      api.renameDataset(id, name),
     onSuccess: (_, { id }) => changed(id),
+  });
+}
+
+/** 업로드 팝업의 미리보기. 옵션을 바꾸는 동안에는 직전 결과를 그대로 보여준다. */
+export function useUploadPreview(
+  stageId: string | undefined,
+  file: number,
+  options: CsvOptions,
+) {
+  return useQuery({
+    queryKey: ["upload-preview", stageId, file, options],
+    queryFn: ({ signal }) =>
+      api.previewUpload(stageId as string, { file, options }, signal),
+    enabled: stageId !== undefined,
+    placeholderData: keepPreviousData,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+const UPLOAD_TASK_DONE = new Set(["done", "rejected", "failed"]);
+
+/**
+ * 확인을 누른 업로드의 진행 (long polling). 직전 버전을 since로 보내 바뀔 때만 응답을 받고,
+ * 끝나면(done·rejected·failed) 멈춘다. attempt는 다시 확인을 누를 때마다 새로 받기 위한 값이다.
+ */
+export function useUploadTask(stageId: string | undefined, attempt: number) {
+  const client = useQueryClient();
+  const queryKey = ["upload-task", stageId, attempt];
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      const prev = client.getQueryData<UploadTask>(queryKey);
+      return api.uploadTask(stageId as string, prev?.version, signal);
+    },
+    enabled: stageId !== undefined && attempt > 0,
+    refetchInterval: (query) =>
+      query.state.data && UPLOAD_TASK_DONE.has(query.state.data.state)
+        ? false
+        : 1,
+    refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
   });
 }
 
@@ -165,13 +197,20 @@ export function useDatasetSchema(id: DatasetId) {
 
 /**
  * 컬럼 후보를 아직 못 보여주는 이유. 받는 중(loading)과 데이터가 없어서(missing·generating)를 나눠
- * '등록하세요' 안내가 단순히 받는 동안에 뜨지 않게 한다.
+ * '등록하세요' 안내가 단순히 받는 동안에 뜨지 않게 한다. deleted는 목록에 없는 데이터(지운 업로드)다.
  */
-export type SchemaState = "loading" | "missing" | "generating" | "ready";
+export type SchemaState =
+  | "loading"
+  | "missing"
+  | "generating"
+  | "ready"
+  | "deleted";
 
 export function useSchemaState(id: DatasetId): SchemaState {
   const status = useDatasetStatus(id);
   const schema = useDatasetSchema(id);
+  // 목록을 받았는데 없으면 지운 데이터다. 남아 있는 스키마 캐시보다 먼저 본다.
+  if (status.isSuccess && !status.data) return "deleted";
   if (schema.data) return "ready";
   const state = status.data?.state;
   if (state === "missing") return "missing";
@@ -326,14 +365,28 @@ export function useCancelJob() {
   return useMutation({ mutationFn: api.cancelJob });
 }
 
+/**
+ * 툴팁 query는 한 번 실패하면 그 PNG에서 툴팁이 다시는 안 나오므로 몇 번 더 시도한다
+ * (service worker 재시작, 다시 그린 직후 metadata가 아직 없을 때 등).
+ */
+const TOOLTIP_RETRY = {
+  retry: 3,
+  retryDelay: (attempt: number) => Math.min(250 * 2 ** attempt, 2000),
+} as const;
+
 /** item에 처음 커서를 올릴 때 받아 오고, 같은 PNG 버전이면 다시 받지 않는다. */
 export function useItemMeta(pngUrl: string, enabled: boolean) {
-  return useQuery({
+  return useQuery(itemMetaQuery(pngUrl, enabled));
+}
+
+export function itemMetaQuery(pngUrl: string, enabled = true) {
+  return queryOptions({
     queryKey: ["meta", pngUrl],
     queryFn: () => api.itemMeta(pngUrl),
     enabled,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 5 * 60_000,
+    ...TOOLTIP_RETRY,
   });
 }
 
@@ -350,6 +403,11 @@ export function useTooltipValues(
       api.tooltip(chartId, itemKey, { rowId: rowId as number, columns }),
     enabled: rowId !== undefined && columns.length > 0,
     staleTime: Number.POSITIVE_INFINITY,
+    ...TOOLTIP_RETRY,
+    // 404(지운 데이터셋·차트)는 다시 물어도 같다.
+    retry: (count, err) =>
+      !(err instanceof ApiRequestError && err.status === 404) &&
+      count < TOOLTIP_RETRY.retry,
   });
 }
 

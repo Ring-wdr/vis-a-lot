@@ -1,6 +1,6 @@
 "use client";
 
-import { useDatasets } from "@/shared/api/queries";
+import { DELETED_DATASET_NAME, useDatasets } from "@/shared/api/queries";
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { LoadingText } from "@/shared/ui/Loading";
 import { Select } from "@/shared/ui/Select";
@@ -15,7 +15,7 @@ const STATE_SUFFIX: Record<DatasetStatus["state"], string> = {
 };
 
 /**
- * 그릴 데이터 고르기. 샘플과 업로드한 데이터 중 등록한 것만 고를 수 있고, 등록·업로드는 상단 data 팝업에서 한다.
+ * 그릴 데이터 고르기. 샘플과 업로드한 데이터 중 등록한 것만 고를 수 있고, 샘플 등록은 상단 datastore, 파일은 upload 팝업에서 한다.
  * 컬럼은 데이터의 스키마에서 정해지므로, 등록하지 않은 데이터로는 그릴 수 없다.
  */
 export function DatasetSelect({
@@ -36,7 +36,11 @@ export function DatasetSelect({
   }));
   // 지운 데이터로 그린 탭도 고른 값이 보이도록 자리를 남긴다.
   if (list && !status) {
-    options.push({ value: dataset, label: "삭제된 데이터", disabled: true });
+    options.push({
+      value: dataset,
+      label: DELETED_DATASET_NAME,
+      disabled: true,
+    });
   }
 
   return (
@@ -54,9 +58,9 @@ export function DatasetSelect({
             ) : status?.state === "generating" ? (
               `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
             ) : status?.state === "missing" ? (
-              "미등록 · data에서 등록"
+              "미등록 · datastore에서 등록"
             ) : !status ? (
-              "data에서 다른 데이터를 고르세요"
+              "datastore에서 다른 데이터를 고르세요"
             ) : (
               ""
             )}

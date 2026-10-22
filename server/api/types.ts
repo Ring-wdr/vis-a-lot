@@ -60,6 +60,54 @@ export type DatasetStatus = {
 
 export type DatasetListResponse = { datasets: DatasetStatus[] };
 
+/** 올려 두고(staging) 미리보기·검사·옵션 조정을 하는 파일. 확인을 누르면 적재한다. */
+export type StagedUpload = {
+  stageId: string;
+  fileName: string;
+  size: number;
+  /** 파일 안의 CSV. zip이면 여러 개다. */
+  files: { name: string; size: number }[];
+  /** 기존 데이터셋을 다시 적재(수정)하는 중이면 그 데이터셋 */
+  dataset?: { id: string; name: string; options: CsvOptions };
+};
+
+/** 검사 결과: 전체 행 수와 컬럼별 타입·변환 불가 값 수 */
+export type CsvCheck = {
+  rows: number;
+  skipped: number;
+  columns: {
+    name: string;
+    type: LogicalType;
+    inferred: LogicalType;
+    included: boolean;
+    invalid: number;
+  }[];
+};
+
+export const UPLOAD_TASK_STATES = [
+  "parse",
+  "queued",
+  "copy",
+  "analyze",
+  "done",
+  "rejected",
+  "failed",
+] as const;
+
+/**
+ * 확인을 누른 뒤의 적재 진행. parse(검사·변환, 글자 수) → queued(다른 적재 대기) → copy(행 수) →
+ * analyze → done. rejected는 검사에서 거절되어 아무것도 바꾸지 않은 것, failed는 적재 중 실패다.
+ */
+export type UploadTask = {
+  state: (typeof UPLOAD_TASK_STATES)[number];
+  done: number;
+  total: number;
+  /** 상태가 바뀔 때마다 오른다. long polling의 since로 쓴다. */
+  version: number;
+  datasetId?: string;
+  error?: string;
+};
+
 export type { ColumnInfo };
 
 export type SplitCountResponse = {

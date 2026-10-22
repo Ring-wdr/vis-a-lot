@@ -373,6 +373,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* item이 하나도 없이 끝난 job의 사유. grid 칸 전체를 쓴다. */
+.gridMessage {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  align-self: center;
+}
+
 .item {
   position: relative;
   display: flex;
@@ -1080,7 +1087,9 @@
   gap: 8px;
 }
 
-.settingsGroup > .segmented {
+/* 팔레트는 1fr 칸이라 늘리지 않으면 내용 폭(0)으로 줄어 색이 테두리에 가려진다. */
+.settingsGroup > .segmented,
+.settingsGroup > .swatches {
   align-self: stretch;
 }
 

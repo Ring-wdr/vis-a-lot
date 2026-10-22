@@ -84,6 +84,8 @@ export function ControlPanel() {
       "데이터 등록이 끝나면 고를 수 있습니다"
     ) : schemaState === "missing" ? (
       "데이터를 등록하면 고를 수 있습니다"
+    ) : schemaState === "deleted" ? (
+      "삭제된 데이터라 고를 컬럼이 없습니다"
     ) : undefined;
 
   // 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
