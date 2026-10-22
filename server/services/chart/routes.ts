@@ -21,7 +21,9 @@ import {
   ItemPropsRequestSchema,
   JobQuerySchema,
   JobStateResponseSchema,
+  NameRequestSchema,
   ResizeRequestSchema,
+  SelectionRequestSchema,
   TooltipRequestSchema,
   TooltipResponseSchema,
   ViewRequestSchema,
@@ -142,6 +144,59 @@ export const clearShapes = createRoute({
   summary: "도형 전체 삭제",
   ...write,
   request: { params: ItemParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const setSelection = createRoute({
+  method: "put",
+  path: "/charts/{chartId}/items/{itemKey}/selection",
+  tags: ["items"],
+  summary: "선택 영역 (데이터 좌표). null이면 선택 해제",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(SelectionRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+const NamedParams = ItemParams.extend({ name: pathParam("name") });
+
+export const addFavorite = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/favorites",
+  tags: ["items"],
+  summary: "지금 선택 영역을 이름 붙여 즐겨찾기에 추가",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(NameRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const removeFavorite = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/favorites/{name}",
+  tags: ["items"],
+  summary: "즐겨찾기 삭제",
+  ...write,
+  request: { params: NamedParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const addLegendGroup = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/legend-groups",
+  tags: ["items"],
+  summary:
+    "지금 선택 영역을 새 범례로. 영역 안의 점을 새 legend 항목 색으로 칠하고 선택은 푼다",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(NameRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const removeLegendGroup = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/legend-groups/{name}",
+  tags: ["items"],
+  summary: "새 범례 삭제",
+  ...write,
+  request: { params: NamedParams },
   responses: { 202: accepted, ...itemErrors },
 });
 

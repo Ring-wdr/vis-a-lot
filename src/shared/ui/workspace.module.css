@@ -806,6 +806,13 @@
   fill: none;
 }
 
+.drawPreview .selectRegion {
+  fill: rgb(var(--ws-accent-rgb) / 8%);
+  stroke: var(--ws-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
 .drawPreview .zoomRect {
   fill: rgb(var(--ws-accent-rgb) / 12%);
   stroke: var(--ws-accent);
@@ -1129,4 +1136,55 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--ws-text-secondary);
+}
+
+/* item 우클릭 메뉴 (Base UI ContextMenu) */
+.menuPositioner {
+  z-index: 20;
+  outline: 0;
+}
+
+.menu {
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  background: var(--ws-elevated);
+  box-shadow: 0 8px 24px rgb(var(--ws-shadow-rgb) / 12%);
+  font-size: 13px;
+  outline: 0;
+}
+
+.menuLabel {
+  padding: 4px 8px;
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: default;
+  user-select: none;
+  outline: 0;
+}
+
+.menuItem[data-highlighted],
+.menuItem[data-popup-open] {
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+}
+
+.menuItem[data-disabled] {
+  opacity: 0.4;
+}
+
+.menuSeparator {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--ws-border);
 }

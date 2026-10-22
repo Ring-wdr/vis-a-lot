@@ -38,6 +38,16 @@
         },
         "required": ["error"]
       },
+      "NameRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 40
+          }
+        },
+        "required": ["name"]
+      },
       "AddShapeRequest": {
         "type": "object",
         "properties": {
@@ -556,6 +566,23 @@
               "$ref": "#/components/schemas/Shape"
             }
           },
+          "selection": {
+            "$ref": "#/components/schemas/Region"
+          },
+          "favorites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Favorite"
+            },
+            "maxItems": 20
+          },
+          "legendGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegendGroup"
+            },
+            "maxItems": 8
+          },
           "color": {
             "$ref": "#/components/schemas/HexColor"
           },
@@ -598,6 +625,87 @@
           }
         },
         "required": ["x", "y"]
+      },
+      "Region": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["rect"]
+              },
+              "x0": {
+                "type": "number"
+              },
+              "y0": {
+                "type": "number"
+              },
+              "x1": {
+                "type": "number"
+              },
+              "y1": {
+                "type": "number"
+              }
+            },
+            "required": ["type", "x0", "y0", "x1", "y1"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["lasso"]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "minItems": 3,
+                "maxItems": 2000
+              }
+            },
+            "required": ["type", "points"]
+          }
+        ]
+      },
+      "Favorite": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          }
+        },
+        "required": ["name", "region"]
+      },
+      "LegendGroup": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "color": {
+            "$ref": "#/components/schemas/HexColor"
+          },
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          }
+        },
+        "required": ["name", "color", "region"]
       },
       "DebugRenderResponse": {
         "type": "object",
@@ -734,7 +842,9 @@
           "color",
           "legend",
           "common",
-          "grid"
+          "grid",
+          "selection",
+          "favorite"
         ]
       },
       "HistorySummary": {
@@ -809,6 +919,12 @@
                 "type": "number"
               },
               "grid": {
+                "type": "number"
+              },
+              "selection": {
+                "type": "number"
+              },
+              "favorite": {
                 "type": "number"
               }
             }
@@ -972,6 +1088,9 @@
             "required": ["px", "py", "x", "y", "id"]
           },
           "total": {
+            "type": "number"
+          },
+          "selected": {
             "type": "number"
           },
           "legend": {
@@ -1152,6 +1271,9 @@
                 ]
               }
             }
+          },
+          "selected": {
+            "type": "number"
           },
           "legend": {
             "$ref": "#/components/schemas/LegendMeta"
@@ -1365,6 +1487,30 @@
           },
           "legendPosition": {
             "$ref": "#/components/schemas/LegendPosition"
+          },
+          "selectedCount": {
+            "type": "number"
+          },
+          "favorites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Favorite"
+            }
+          },
+          "legendGroups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                }
+              },
+              "required": ["name", "color"]
+            }
           }
         },
         "required": [
@@ -1376,7 +1522,9 @@
           "zoomed",
           "shapeCount",
           "color",
-          "customColor"
+          "customColor",
+          "favorites",
+          "legendGroups"
         ]
       },
       "ItemStage": {
@@ -1397,6 +1545,67 @@
           }
         },
         "required": ["itemSize", "keys"]
+      },
+      "SelectionRequest": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["rect"]
+                  },
+                  "x0": {
+                    "type": "number"
+                  },
+                  "y0": {
+                    "type": "number"
+                  },
+                  "x1": {
+                    "type": "number"
+                  },
+                  "y1": {
+                    "type": "number"
+                  }
+                },
+                "required": ["type", "x0", "y0", "x1", "y1"]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["lasso"]
+                  },
+                  "points": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "minItems": 3,
+                    "maxItems": 2000
+                  }
+                },
+                "required": ["type", "points"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["region"]
       },
       "TooltipResponse": {
         "type": "object",
@@ -1439,6 +1648,208 @@
     "parameters": {}
   },
   "paths": {
+    "/charts/{chartId}/items/{itemKey}/favorites": {
+      "post": {
+        "tags": ["items"],
+        "summary": "지금 선택 영역을 이름 붙여 즐겨찾기에 추가",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/items/{itemKey}/legend-groups": {
+      "post": {
+        "tags": ["items"],
+        "summary": "지금 선택 영역을 새 범례로. 영역 안의 점을 새 legend 항목 색으로 칠하고 선택은 푼다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/charts/{chartId}/items/{itemKey}/shapes": {
       "post": {
         "tags": ["items"],
@@ -2691,6 +3102,204 @@
         }
       }
     },
+    "/charts/{chartId}/items/{itemKey}/favorites/{name}": {
+      "delete": {
+        "tags": ["items"],
+        "summary": "즐겨찾기 삭제",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "name",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/items/{itemKey}/legend-groups/{name}": {
+      "delete": {
+        "tags": ["items"],
+        "summary": "새 범례 삭제",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "name",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/charts/{chartId}/resize": {
       "post": {
         "tags": ["charts"],
@@ -2773,6 +3382,107 @@
           },
           "409": {
             "description": "렌더링 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/items/{itemKey}/selection": {
+      "put": {
+        "tags": ["items"],
+        "summary": "선택 영역 (데이터 좌표). null이면 선택 해제",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
             "content": {
               "application/json": {
                 "schema": {

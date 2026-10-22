@@ -47,3 +47,49 @@ export function showConfirm(
     </Dialog>
   ));
 }
+
+/** 이름 하나를 받는 팝업. 확인하면 다듬은 글자, 취소·Esc·빈 값이면 null로 끝난다. */
+export function showPrompt(
+  message: string,
+  {
+    defaultValue = "",
+    confirmLabel = "확인",
+    maxLength = 40,
+  }: { defaultValue?: string; confirmLabel?: string; maxLength?: number } = {},
+) {
+  return overlay.openAsync<string | null>(({ isOpen, close, unmount }) => (
+    <Dialog isOpen={isOpen} onClose={() => close(null)} onExited={unmount}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const value = String(new FormData(e.currentTarget).get("value"));
+          close(value.trim() || null);
+        }}
+      >
+        <label className={styles.field}>
+          <span>{message}</span>
+          <input
+            name="value"
+            defaultValue={defaultValue}
+            maxLength={maxLength}
+            required
+            autoFocus
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        </label>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.secondary}
+            onClick={() => close(null)}
+          >
+            취소
+          </button>
+          <button type="submit" className={styles.primary}>
+            {confirmLabel}
+          </button>
+        </div>
+      </form>
+    </Dialog>
+  ));
+}
