@@ -2,7 +2,16 @@
 // 구간마다 심지(고가~저가)와 몸통(시가~종가)을 그리고, 상승(종가 ≥ 시가)과 하락을 색으로 가른다.
 // legend는 데이터 컬럼이 아니라 '상승/하락' 두 항목이라 체크박스로 한쪽을 숨길 수 있다.
 
-import { scaleLinear } from "d3-scale";
+import { scaleLinear, scaleUtc } from "d3-scale";
+import { focusTest } from "./analytics/focus";
+import {
+  drawAxisTitles,
+  drawXAxis,
+  drawYAxis,
+  timeFormat,
+  valueScale,
+} from "./axis-style";
+import { drawTitle, labelWidth } from "./frame";
 import {
   drawLegendAround,
   framePlot,
@@ -10,17 +19,23 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
   compactPlot,
   type ItemView,
   type ProgressFn,
-  xAxis,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import { PALETTE, THEME } from "./theme";
+import {
+  createLabelGuard,
+  drawPanel,
+  drawPointLabel,
+  fontPx,
+  lineWidthOf,
+} from "./style";
+import { OTHERS_COLOR, PALETTE, THEME } from "./theme";
 
 /** candle의 고정 legend. 색은 국내 시세 관례(상승 빨강, 하락 파랑)를 따른다. */
 export const CANDLE_LEGEND = {
@@ -80,6 +95,24 @@ type Ctx = OffscreenCanvasRenderingContext2D;
 
 const BODY_RATIO = 0.7;
 
+/**
+ * 시계열 x축 (candle·gantt). 위치는 숫자(epoch ms) 선형 축으로 계산하고 눈금 자리만 scaleUtc에서 받는다.
+ * 범위 폭 90px마다 눈금 하나. 1ms보다 좁으면 눈금이 없을 수 있어 가운데 하나를 둔다.
+ */
+export function timeXAxis(domain: [number, number], range: [number, number]) {
+  const scale = scaleLinear().domain(domain).range(range);
+  const count = Math.max(2, Math.floor((range[1] - range[0]) / 90));
+  const ticks = scaleUtc()
+    .domain(domain)
+    .ticks(count)
+    .map(Number)
+    .filter((t) => t >= domain[0] && t <= domain[1]);
+  return {
+    scale,
+    ticks: ticks.length > 0 ? ticks : [(domain[0] + domain[1]) / 2],
+  };
+}
+
 /** 캔들 i를 대표하는 데이터 좌표: 구간 가운데 시각과 종가. 선택·새 범례 판정에 쓴다. */
 export function candlePoint(
   candles: CandleSeries,
@@ -126,11 +159,30 @@ export function intervalLabel(ms: number) {
   return `${ms}ms`;
 }
 
+/**
+ * focus 조건에 맞는 캔들. target x는 구간 가운데 시각, y는 종가로 견준다.
+ * focus가 꺼져 있으면 undefined
+ */
+export function candleFocus(
+  candles: CandleSeries,
+  interval: number,
+  o: ChartOptions,
+): Uint8Array | undefined {
+  if (!o.focus.enabled) return undefined;
+  const test = focusTest(o.focus);
+  const out = new Uint8Array(candles.t.length);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = test(...candlePoint(candles, interval, i)) ? 1 : 0;
+  }
+  return out;
+}
+
 export function renderCandle(
   ctx: Ctx,
   input: CandleInput,
   progress: ProgressFn,
 ): CandleMeta {
+  const o = optionsOf(input);
   const { width, height, candles, interval, view } = input;
   const n = candles.t.length;
   const full = candleExtent(candles, interval);
@@ -152,29 +204,34 @@ export function renderCandle(
     }
   }
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  const focus = candleFocus(candles, interval, o);
+
+  drawPanel(ctx, width, height, o);
 
   // ── 축 (aggregate) ────────────────────────────────────────────
-  const y = scaleLinear().domain(view?.y ?? full.y);
-  if (!view) y.nice(5);
-  const yTicks = y.ticks(5);
-  const yFormat = y.tickFormat(5);
-  ctx.font = `11px ${THEME.font}`;
-  const yLabelWidth = Math.max(
-    ...yTicks.map((t) => ctx.measureText(yFormat(t)).width),
-    10,
+  // 값 축은 min·max·log·소수 자리를 따르고, 확대 중이면 확대 범위가 이긴다.
+  // 눈금은 범위(px)와 상관없으므로 글자 폭을 먼저 재고, 그림 영역이 정해지면 같은 축을 다시 만든다.
+  const yAxisOf = (range: [number, number]) =>
+    valueScale(view?.y ?? full.y, range, o.axes.y, {
+      nice: !view,
+      zoomed: view !== undefined,
+    });
+  const { ticks: yTicks, format: yFormat } = yAxisOf([1, 0]);
+  const yLabelWidth = labelWidth(
+    ctx,
+    yTicks.map((t) => yFormat(t)),
+    fontPx(o, 11, o.axes.y.label.fontSize),
   );
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, yLabelWidth, input.legend);
-  y.range([plot.top + plot.height, plot.top]);
+    : framePlot(ctx, width, height, yLabelWidth, input.legend, o);
+  const { scale: y } = yAxisOf([plot.top + plot.height, plot.top]);
   const xDomain = view?.x ?? full.x;
-  const {
-    scale: x,
-    ticks: xTicks,
-    format: xFormat,
-  } = xAxis("time", xDomain, [plot.left, plot.left + plot.width], false);
+  const { scale: x, ticks: xTicks } = timeXAxis(
+    [xDomain[0], xDomain[1]],
+    [plot.left, plot.left + plot.width],
+  );
+  const xFormat = timeFormat(o.axes.x.dateFormat, [xDomain[0], xDomain[1]]);
   const slot = (plot.width * interval) / (xDomain[1] - xDomain[0]);
   const bodyWidth = Math.max(1, slot * BODY_RATIO);
   progress("aggregate", 1);
@@ -208,54 +265,21 @@ export function renderCandle(
   // ── 그리드와 축, 제목, legend ───────────────────────────────────
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    ctx.strokeStyle = THEME.grid;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = THEME.textSecondary;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for (const t of yTicks) {
-      const ty = Math.round(y(t)) + 0.5;
-      ctx.beginPath();
-      ctx.moveTo(plot.left, ty);
-      ctx.lineTo(plot.left + plot.width, ty);
-      ctx.stroke();
-      ctx.fillText(yFormat(t), plot.left - 6, ty);
-    }
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (const t of xTicks) {
-      ctx.fillText(
-        xFormat(t),
-        Math.round(x(t)) + 0.5,
-        plot.top + plot.height + 7,
-      );
-    }
-    ctx.strokeStyle = THEME.axis;
-    ctx.beginPath();
-    ctx.moveTo(plot.left, plot.top + plot.height + 0.5);
-    ctx.lineTo(plot.left + plot.width, plot.top + plot.height + 0.5);
-    ctx.stroke();
-
-    ctx.fillStyle = THEME.textPrimary;
-    ctx.font = `600 12px ${THEME.font}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(input.title, plot.left, 17, plot.width);
-    ctx.fillStyle = THEME.textMuted;
-    ctx.font = `11px ${THEME.font}`;
-    ctx.textAlign = "right";
-    ctx.fillText(
+    drawYAxis(ctx, plot, y, yTicks, yFormat, o);
+    drawXAxis(ctx, plot, x, xTicks, xFormat, o);
+    drawAxisTitles(ctx, plot, o, { x: "시간", y: "값" }, yLabelWidth);
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
       [
         `${intervalLabel(interval)} 간격`,
         `${n.toLocaleString()}개 구간`,
         inSelection ? `${selectedCount.toLocaleString()}개 선택` : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-      plot.left + plot.width,
-      17,
+      ],
+      o,
     );
-    legendMeta = drawLegendAround(ctx, input.legend, plot, yLabelWidth);
+    legendMeta = drawLegendAround(ctx, input.legend, plot, yLabelWidth, o);
   }
 
   // ── 캔들 (render) ─────────────────────────────────────────────
@@ -273,16 +297,24 @@ export function renderCandle(
     );
   }
   const [x0, x1] = xDomain;
+  const wick = lineWidthOf(o, 1);
+  // focus: 조건에 맞는 캔들은 focus 색, legendSingleColor면 나머지는 회색 한 가지
+  const colorOf = (i: number) =>
+    focus?.[i]
+      ? o.focus.color
+      : focus && o.focus.legendSingleColor
+        ? OTHERS_COLOR
+        : (input.legend.colors[index[i]] ?? THEME.textMuted);
   for (let i = 0; i < n; i++) {
     if (off[index[i]]) continue;
     // 보이는 범위 밖 구간은 건너뛴다.
     if (candles.t[i] + interval < x0 || candles.t[i] > x1) continue;
-    const color = input.legend.colors[index[i]] ?? THEME.textMuted;
+    const color = colorOf(i);
     const cx = x(candles.t[i] + interval / 2);
     ctx.globalAlpha = inside[i] ? 1 : 0.2;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = wick;
     // 심지
     const wickX = Math.round(cx) + 0.5;
     ctx.beginPath();
@@ -296,6 +328,30 @@ export function renderCandle(
     if (i % 50 === 0) progress("render", i / n);
   }
   ctx.globalAlpha = 1;
+  // 종가 글자: 몸통 위(아래·가운데), 겹치면 건너뛴다.
+  if (o.pointLabel.visible && !input.compact) {
+    const guard = createLabelGuard();
+    const font = fontPx(o, 10, o.pointLabel.fontSize);
+    for (let i = 0; i < n; i++) {
+      if (off[index[i]]) continue;
+      if (candles.t[i] + interval < x0 || candles.t[i] > x1) continue;
+      const anchor =
+        o.pointLabel.position === "bottom"
+          ? Math.min(candles.open[i], candles.close[i])
+          : o.pointLabel.position === "top"
+            ? Math.max(candles.open[i], candles.close[i])
+            : candles.close[i];
+      drawPointLabel(
+        ctx,
+        x(candles.t[i] + interval / 2),
+        y(anchor),
+        candles.close[i],
+        o.pointLabel,
+        font,
+        guard,
+      );
+    }
+  }
   if (input.selection) {
     drawSelection(
       ctx,

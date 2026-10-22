@@ -10,6 +10,7 @@ import {
 } from "d3-hierarchy";
 import { scaleLinear } from "d3-scale";
 import { AGG_LABELS, type AggFn } from "../data/schema";
+import { drawTitle } from "./frame";
 import {
   drawLegendAround,
   framePlot,
@@ -17,7 +18,7 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -26,6 +27,14 @@ import {
   type ProgressFn,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
+import {
+  alphaOf,
+  createLabelGuard,
+  drawPanel,
+  drawPointLabel,
+  fontPx,
+  surfaceOf,
+} from "./style";
 import { THEME } from "./theme";
 
 /** 데이터 좌표의 사각형. y0이 아래, y1이 위다. */
@@ -177,29 +186,37 @@ const formatNumber = (v: number) =>
     ? v.toLocaleString()
     : v.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
+/** value.nullNumeric이 있으면 빈 값(null)을 그 값으로 채운다 (0 이하면 여전히 칸이 없다). */
+export function fillNullBars(
+  bars: readonly (readonly (number | null)[])[],
+  fill: number | null,
+): (number | null)[][] {
+  return bars.map((row) => row.map((v) => v ?? fill));
+}
+
 export function renderTreemap(
   ctx: Ctx,
   input: TreemapInput,
   progress: ProgressFn,
 ): TreemapMeta {
+  const o = optionsOf(input);
   const { width, height, view } = input;
   const off = hiddenIndexes(input.legend);
   const legendCount = input.legend?.values.length ?? 0;
   const inSelection = input.selection && regionTester(input.selection);
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
 
   // ── 레이아웃 (aggregate) ──────────────────────────────────────
   // 축 눈금 글자가 없으므로 framePlot이 x축 글자 자리로 비워 둔 아래 여백도 그림 영역으로 쓴다.
   // legend는 원래 자리(legendFrame) 기준으로 놓는다.
-  const legendFrame = framePlot(ctx, width, height, 0, input.legend);
+  const legendFrame = framePlot(ctx, width, height, 0, input.legend, o);
   const plot = input.compact
     ? compactPlot(width, height)
     : { ...legendFrame, height: legendFrame.height + AXIS_SPACE };
   const { leaves, parents } = layoutTreemap(
     input.categories,
-    input.bars ?? [],
+    fillNullBars(input.bars ?? [], o.value.nullNumeric),
     legendCount,
     off,
     plot.width,
@@ -226,27 +243,19 @@ export function renderTreemap(
   // ── 제목, legend ──────────────────────────────────────────────
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    ctx.fillStyle = THEME.textPrimary;
-    ctx.font = `600 12px ${THEME.font}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(input.title, plot.left, 17, plot.width);
-    ctx.fillStyle = THEME.textMuted;
-    ctx.font = `11px ${THEME.font}`;
-    ctx.textAlign = "right";
-    ctx.fillText(
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
       [
         AGG_LABELS[input.agg],
         `${leaves.length}개 칸`,
         inSelection ? `${selectedCount}개 선택` : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-      plot.left + plot.width,
-      17,
+      ],
+      o,
     );
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, legendFrame, 0)
+      ? drawLegendAround(ctx, input.legend, legendFrame, 0, o)
       : undefined;
   }
 
@@ -274,7 +283,8 @@ export function renderTreemap(
     );
   }
   // 부모 묶음: 옅은 바탕과 이름 띠
-  ctx.font = `11px ${THEME.font}`;
+  const font = fontPx(o, 11);
+  ctx.font = `${font}px ${THEME.font}`;
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
   for (const p of parents) {
@@ -288,7 +298,7 @@ export function renderTreemap(
     // 이름 띠는 확대한 만큼 커진다.
     const headerH = PARENT_HEADER / (yDomain[1] - yDomain[0]);
     const band = Math.min(r.h, headerH);
-    if (band >= 12) {
+    if (band >= font + 1) {
       ctx.fillStyle = THEME.textSecondary;
       ctx.fillText(
         truncate(ctx, name, r.w - 8),
@@ -297,31 +307,75 @@ export function renderTreemap(
       );
     }
   }
+  // 칸 모양: 채우기·테두리(style), 투명도, 테두리 굵기
+  const { style, borderWidth, transparency } = o.shape;
+  const alpha = alphaOf(transparency, 1);
+  const stroke = surfaceOf(o);
+  // 점 글자(값)를 켜면 칸 안 값 줄 대신 점 글자로 적는다.
+  const pointLabels = o.pointLabel.visible && !input.compact;
+  const line = font + 3;
   leaves.forEach((l, k) => {
     const r = pxRect(l);
     if (r.left > plot.left + plot.width || r.left + r.w < plot.left) return;
     if (r.top > plot.top + plot.height || r.top + r.h < plot.top) return;
     const color = colorOf(l.g);
-    ctx.globalAlpha = selected[k] ? 1 : 0.2;
-    ctx.fillStyle = color;
-    ctx.fillRect(r.left, r.top, Math.max(1, r.w), Math.max(1, r.h));
+    ctx.globalAlpha = selected[k] ? alpha : alpha * 0.2;
+    const w = Math.max(1, r.w);
+    const h = Math.max(1, r.h);
+    if (style !== "border") {
+      ctx.fillStyle = color;
+      ctx.fillRect(r.left, r.top, w, h);
+    }
+    if (style === "border" || borderWidth > 0) {
+      const bw = style === "border" ? Math.max(1, borderWidth) : borderWidth;
+      ctx.strokeStyle = style === "border" ? color : stroke;
+      ctx.lineWidth = bw;
+      ctx.strokeRect(
+        r.left + bw / 2,
+        r.top + bw / 2,
+        Math.max(0, w - bw),
+        Math.max(0, h - bw),
+      );
+    }
     ctx.globalAlpha = 1;
-    // 들어갈 때만 이름(과 값)을 칸 안 왼쪽 위에 적는다.
-    if (!input.compact && r.w >= 28 && r.h >= 18) {
-      ctx.fillStyle = selected[k] ? inkOn(color) : THEME.textMuted;
+    // 들어갈 때만 이름(과 값)을 칸 안 왼쪽 위에 적는다. 테두리만 그린 칸은 바탕 위 글자색이다.
+    if (!input.compact && r.w >= 28 && r.h >= font + 7) {
+      ctx.fillStyle = !selected[k]
+        ? THEME.textMuted
+        : style === "border"
+          ? THEME.textPrimary
+          : inkOn(color);
       const name = truncate(ctx, l.name, r.w - 8);
       if (name) {
-        ctx.fillText(name, r.left + 4, r.top + 10);
-        if (r.h >= 32) {
+        ctx.fillText(name, r.left + 4, r.top + font - 1);
+        if (!pointLabels && r.h >= font + 21) {
           const value = truncate(ctx, formatNumber(l.value), r.w - 8);
           ctx.globalAlpha = 0.85;
-          ctx.fillText(value, r.left + 4, r.top + 24);
+          ctx.fillText(value, r.left + 4, r.top + font - 1 + line);
           ctx.globalAlpha = 1;
         }
       }
     }
     if (k % 200 === 0) progress("render", k / leaves.length);
   });
+  // 값 글자: 칸 가운데 기준, 겹치면 건너뛴다.
+  if (pointLabels) {
+    const guard = createLabelGuard();
+    const labelFont = fontPx(o, 10, o.pointLabel.fontSize);
+    for (const l of leaves) {
+      const r = pxRect(l);
+      if (r.w < 16 || r.h < labelFont + 4) continue;
+      drawPointLabel(
+        ctx,
+        r.left + r.w / 2,
+        r.top + r.h / 2,
+        l.value,
+        o.pointLabel,
+        labelFont,
+        guard,
+      );
+    }
+  }
   if (input.selection) {
     drawSelection(
       ctx,
