@@ -635,6 +635,8 @@ export const AxisMetaSchema = z
     kind: z.enum(["number", "time"]),
     /** 데이터 값 기준 범위 (시계열은 epoch ms) */
     domain: range,
+    /** 로그 축으로 그렸는지. 픽셀 ↔ 값 환산을 log10 공간에서 한다. */
+    log: z.boolean().optional(),
   })
   .openapi("AxisMeta");
 

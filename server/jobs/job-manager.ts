@@ -862,6 +862,8 @@ function renderItem(
       {
         ...common,
         chartType: spec.chartType === "line" ? "line" : "scatter",
+        xTitle: columnOf(spec.x)?.label ?? spec.x,
+        yTitle: columnOf(spec.y)?.label ?? spec.y,
         xKind: columnOf(spec.x)?.type === "datetime" ? "time" : "number",
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
@@ -942,6 +944,10 @@ function renderItem(
       "renderHistogram",
       {
         ...common,
+        axisTitles: {
+          x: columnOf(spec.x)?.label ?? spec.x,
+          y: "개수",
+        },
         bins: data.bins,
         counts: group?.counts ?? [],
         legend: legendInput(chart, item, legendTitle, data.legendValues),
@@ -1074,6 +1080,10 @@ function renderItem(
       "renderWaterfall",
       {
         ...common,
+        axisTitles: {
+          x: columnOf(spec.x)?.label ?? spec.x,
+          y: columnOf(spec.y)?.label ?? spec.y,
+        },
         categories: group?.categories ?? [],
         values: group?.bars?.map((row) => row[0]) ?? [],
         agg: spec.agg,
@@ -1111,6 +1121,10 @@ function renderItem(
     "renderCategory",
     {
       ...common,
+      axisTitles: {
+        x: columnOf(spec.x)?.label ?? spec.x,
+        y: columnOf(spec.y)?.label ?? spec.y,
+      },
       chartType: spec.chartType === "bar" ? "bar" : "boxplot",
       categories: group?.categories ?? [],
       bars: group?.bars,

@@ -2870,6 +2870,7 @@ export type components = {
       /** @enum {string} */
       kind: "number" | "time";
       domain: [number, number];
+      log?: boolean;
     };
     LegendMeta: {
       title: string;

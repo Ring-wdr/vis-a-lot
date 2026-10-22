@@ -225,7 +225,7 @@ export function renderCandle(
   const plot = input.compact
     ? compactPlot(width, height)
     : framePlot(ctx, width, height, yLabelWidth, input.legend, o);
-  const { scale: y } = yAxisOf([plot.top + plot.height, plot.top]);
+  const { scale: y, log: yLog } = yAxisOf([plot.top + plot.height, plot.top]);
   const xDomain = view?.x ?? full.x;
   const { scale: x, ticks: xTicks } = timeXAxis(
     [xDomain[0], xDomain[1]],
@@ -374,7 +374,11 @@ export function renderCandle(
     chartType: "candle",
     plot,
     x: { kind: "time", domain: [xDomain[0], xDomain[1]] },
-    y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },
+    y: {
+      kind: "number",
+      domain: [y.domain()[0], y.domain()[1]],
+      ...(yLog ? { log: true } : {}),
+    },
     interval,
     bodyWidth,
     candles: kept,

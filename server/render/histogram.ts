@@ -268,7 +268,11 @@ export function renderHistogram(
     chartType: "histogram",
     plot,
     x: { kind: "number", domain: [x.domain()[0], x.domain()[1]] },
-    y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },
+    y: {
+      kind: "number",
+      domain: [y.domain()[0], y.domain()[1]],
+      ...(yLog ? { log: true } : {}),
+    },
     bins,
     counts,
     groupCount,
