@@ -4,6 +4,20 @@
 import { extent } from "d3-array";
 import { scaleLinear, scaleUtc } from "d3-scale";
 import { utcFormat } from "d3-time-format";
+import { compileExpression } from "./analytics/expression";
+import { focusTest } from "./analytics/focus";
+import { keepMask, outlierBounds } from "./analytics/outlier";
+import { type PredictionResult, predict } from "./analytics/prediction";
+import { computeScores, type ScoreResult } from "./analytics/score";
+import {
+  drawAxisTitles,
+  drawXAxis,
+  drawYAxis,
+  numberFormat,
+  timeFormat,
+  valueScale,
+} from "./axis-style";
+import { drawTitle, labelWidth } from "./frame";
 import {
   drawLegendAround,
   framePlot,
@@ -12,10 +26,27 @@ import {
   type LegendMeta,
 } from "./legend";
 import { drawLines, seriesOrder } from "./line";
-import type { ChartOptions } from "./options";
+import {
+  type AxisOptions,
+  type ChartOptions,
+  DEFAULT_OPTIONS,
+  optionsOf,
+} from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
-import { THEME } from "./theme";
+import {
+  alphaOf,
+  createLabelGuard,
+  drawPanel,
+  drawPoint,
+  drawPointLabel,
+  fontPx,
+  lineWidthOf,
+  pathPoint,
+  pointSizeOf,
+  surfaceOf,
+} from "./style";
+import { OTHERS_COLOR, THEME } from "./theme";
 
 const KST_OFFSET_MS = 9 * 3_600_000;
 const DAY_MS = 86_400_000;
@@ -26,6 +57,8 @@ export type AxisMeta = {
   kind: AxisKind;
   /** 데이터 값 기준 범위 (시계열은 epoch ms) */
   domain: [number, number];
+  /** 로그 축으로 그렸는지 (axes.log). 없으면 선형 */
+  log?: boolean;
 };
 
 /** line도 같은 행 단위 점을 쓰므로 metadata 모양이 같다. */
@@ -49,6 +82,8 @@ export type ScatterMeta = {
   /** 선택 영역 안에 든 점 수. 선택이 없으면 없다. */
   selected?: number;
   legend?: LegendMeta;
+  /** score 구역을 켰을 때 계산한 점수 (그린 점 기준) */
+  scores?: ScoreResult[];
 };
 
 export type ScatterInput = {
@@ -80,6 +115,9 @@ export type ScatterInput = {
   shapes: readonly Shape[];
   /** 섬네일: 축·제목·legend 없이 그림 영역만 그린다. */
   compact?: boolean;
+  /** 축 제목(axes.title.visible이고 글자를 비웠을 때)으로 쓰는 컬럼 이름. 없으면 x, y */
+  xTitle?: string;
+  yTitle?: string;
 };
 
 export type ItemView = { x: [number, number]; y: [number, number] };
@@ -134,15 +172,12 @@ export function compactPlot(width: number, height: number) {
   };
 }
 
-/** 지운 영역 안의 점을 뺀 입력. 지운 영역이 없으면 그대로 돌려준다. */
-export function withoutDeleted(input: ScatterInput): ScatterInput {
-  const tests = (input.deletions ?? []).map(regionTester);
-  if (tests.length === 0) return input;
+/** keep이 1인 행만 남긴 입력 (x·y·행 id·legend 인덱스를 함께 줄인다) */
+function keepRows(input: ScatterInput, mask: Uint8Array): ScatterInput {
   const { xs, ys, ids, legend } = input;
   const keep: number[] = [];
-  for (let i = 0; i < xs.length; i++) {
-    if (!tests.some((inside) => inside(xs[i], ys[i]))) keep.push(i);
-  }
+  for (let i = 0; i < xs.length; i++) if (mask[i]) keep.push(i);
+  if (keep.length === xs.length) return input;
   const pick = <T extends Float64Array | Uint8Array>(src: T, out: T) => {
     keep.forEach((k, j) => {
       out[j] = src[k];
@@ -161,23 +196,106 @@ export function withoutDeleted(input: ScatterInput): ScatterInput {
   };
 }
 
+/** 지운 영역 안의 점을 뺀 입력. 지운 영역이 없으면 그대로 돌려준다. */
+export function withoutDeleted(input: ScatterInput): ScatterInput {
+  const tests = (input.deletions ?? []).map(regionTester);
+  if (tests.length === 0) return input;
+  const { xs, ys } = input;
+  const mask = new Uint8Array(xs.length);
+  for (let i = 0; i < xs.length; i++) {
+    mask[i] = tests.some((inside) => inside(xs[i], ys[i])) ? 0 : 1;
+  }
+  return keepRows(input, mask);
+}
+
+/**
+ * expression 구역: x·y 식을 값에 적용한다 (식 안에서 x, y는 원래 값). 결과가 NaN·무한이면 그 행은 뺀다.
+ * 식이 틀리면 데이터를 그대로 두고 오류 글자를 돌려준다. 빈 식은 그 축을 바꾸지 않는다.
+ */
+export function withExpression(
+  input: ScatterInput,
+  expression: ChartOptions["expression"],
+): { input: ScatterInput; error?: string } {
+  const sources = [expression.x.trim(), expression.y.trim()];
+  if (!sources[0] && !sources[1]) return { input };
+  const compiled = sources.map((src) => (src ? compileExpression(src) : null));
+  for (const [k, c] of compiled.entries()) {
+    if (c && !c.ok)
+      return { input, error: `${k === 0 ? "x" : "y"} 식: ${c.error}` };
+  }
+  const fx = compiled[0]?.ok ? compiled[0].fn : null;
+  const fy = compiled[1]?.ok ? compiled[1].fn : null;
+  const { xs, ys } = input;
+  const nx = new Float64Array(xs.length);
+  const ny = new Float64Array(ys.length);
+  const mask = new Uint8Array(xs.length);
+  for (let i = 0; i < xs.length; i++) {
+    const x = fx ? fx(xs[i], ys[i]) : xs[i];
+    const y = fy ? fy(xs[i], ys[i]) : ys[i];
+    nx[i] = x;
+    ny[i] = y;
+    mask[i] = Number.isFinite(x) && Number.isFinite(y) ? 1 : 0;
+  }
+  return { input: keepRows({ ...input, xs: nx, ys: ny }, mask) };
+}
+
+/** value 구역의 이상치: y가 범위 밖인 행을 뺀다. 뺀 수를 함께 돌려준다. */
+export function withoutOutliers(
+  input: ScatterInput,
+  value: ChartOptions["value"],
+): { input: ScatterInput; removed: number } {
+  if (!value.outlier || input.ys.length === 0) return { input, removed: 0 };
+  const mask = keepMask(
+    input.ys,
+    outlierBounds(input.ys, value.outlierMethod, value.outlierK),
+  );
+  const out = keepRows(input, mask);
+  return { input: out, removed: input.ys.length - out.ys.length };
+}
+
+/** x축 눈금 개수를 폭에서 정하는 기본값. tick.count를 바꾸면 그 값을 쓴다. */
+const DEFAULT_TICK_COUNT = DEFAULT_OPTIONS.axes.x.tick.count;
+
 /**
  * x축: 위치는 시계열도 숫자(epoch ms) 선형 축으로 계산한다. scaleUtc는 범위를 Date로 바꾸며
  * 밀리초 아래를 버려서, 1ms보다 좁게 확대하면 점이 한쪽 끝으로 밀려 보였다.
  * 시계열은 눈금 자리와 글자만 scaleUtc에서 받는다. nice는 확대하지 않은 숫자 축에만 건다.
+ * axis(axes.x)가 있으면 숫자 축에 min·max·log·소수 자리를, 시계열에 dateFormat을 쓴다.
+ * nice가 false(확대 중)면 min·max보다 확대 범위가 이긴다. min·max는 숫자 축에만 쓴다.
  */
 export function xAxis(
   kind: AxisKind,
   domain: [number, number],
   range: [number, number],
   nice: boolean,
+  axis: AxisOptions = DEFAULT_OPTIONS.axes.x,
 ) {
-  const scale = scaleLinear().domain(domain).range(range);
-  if (nice && kind !== "time") scale.nice(5);
-  const count = Math.max(2, Math.floor((range[1] - range[0]) / 90));
+  const count =
+    axis.tick.count === DEFAULT_TICK_COUNT
+      ? Math.max(2, Math.floor((range[1] - range[0]) / 90))
+      : Math.max(1, Math.round(axis.tick.count));
   if (kind !== "time") {
-    return { scale, ticks: scale.ticks(count), format: scale.tickFormat(5) };
+    if (axis.log) {
+      const v = valueScale(domain, range, axis, { nice, zoomed: !nice });
+      if (v.log)
+        return { scale: v.scale, ticks: v.ticks, format: v.format, log: true };
+    }
+    let d = domain;
+    const fixed = nice && (axis.min !== null || axis.max !== null);
+    if (fixed) {
+      const fd: [number, number] = [axis.min ?? d[0], axis.max ?? d[1]];
+      if (fd[0] < fd[1]) d = fd;
+    }
+    const scale = scaleLinear().domain(d).range(range);
+    if (nice && !fixed) scale.nice(5);
+    return {
+      scale,
+      ticks: scale.ticks(count),
+      format: numberFormat(axis.decimals, scale.tickFormat(5)),
+      log: false,
+    };
   }
+  const scale = scaleLinear().domain(domain).range(range);
   const ticks = scaleUtc()
     .domain(domain)
     .ticks(count)
@@ -187,46 +305,288 @@ export function xAxis(
     scale,
     // 1ms보다 좁으면 눈금이 없을 수 있어 가운데 하나를 둔다.
     ticks: ticks.length > 0 ? ticks : [(domain[0] + domain[1]) / 2],
-    format: timeFormatter(domain),
+    format: timeFormat(axis.dateFormat, domain),
+    log: false,
   };
 }
 
+/** 점 글자를 다는 최대 점 수 (픽셀로 줄인 뒤). 넘으면 글자를 달지 않는다. */
+export const MAX_LABEL_POINTS = 3000;
+
+/** 예측 한 계열: 그릴 색과 결과 */
+type Forecast = {
+  color: string;
+  result: PredictionResult;
+  lastX: number;
+  lastY: number;
+};
+
+/**
+ * prediction 구역. line은 legend 계열마다, scatter는 전체 점을 x 순으로 한 계열로 예측한다.
+ * 끈 legend 값은 뺀다.
+ */
+function forecasts(
+  input: ScatterInput,
+  o: ChartOptions,
+  groupIndex: Uint8Array | undefined,
+  off: readonly boolean[],
+): Forecast[] {
+  if (!o.prediction.enabled || input.xs.length === 0) return [];
+  const { xs, ys, legend } = input;
+  const perSeries = input.chartType === "line";
+  const count = perSeries && legend ? legend.colors.length : 1;
+  const series = seriesOrder(
+    xs,
+    perSeries ? groupIndex : undefined,
+    count,
+    perSeries ? off : [],
+  );
+  const out: Forecast[] = [];
+  series.forEach((order, g) => {
+    let picked = order;
+    if (!perSeries && groupIndex && off.some(Boolean)) {
+      picked = order.filter((i) => !off[groupIndex[i]]);
+    }
+    if (picked.length === 0) return;
+    const sx = new Float64Array(picked.length);
+    const sy = new Float64Array(picked.length);
+    picked.forEach((i, k) => {
+      sx[k] = xs[i];
+      sy[k] = ys[i];
+    });
+    const result = predict(sx, sy, o.prediction);
+    if (!result || result.xs.length === 0) return;
+    const color =
+      perSeries && legend
+        ? legend.colors[g]
+        : legend
+          ? THEME.textSecondary
+          : input.color;
+    out.push({
+      color,
+      result,
+      lastX: sx[sx.length - 1],
+      lastY: sy[sy.length - 1],
+    });
+  });
+  return out;
+}
+
+/** 예측 값까지 담도록 넓힌 범위 */
+function extendDomain(
+  domain: [number, number],
+  values: Iterable<number>,
+): [number, number] {
+  let [lo, hi] = domain;
+  for (const v of values) {
+    if (!Number.isFinite(v)) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  return [lo, hi];
+}
+
+function drawForecasts(
+  ctx: Ctx,
+  list: readonly Forecast[],
+  x: (v: number) => number,
+  y: (v: number) => number,
+  lineWidth: number,
+) {
+  for (const { color, result, lastX, lastY } of list) {
+    const { lower, upper } = result;
+    if (lower && upper) {
+      ctx.save();
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x(lastX), y(lastY));
+      result.xs.forEach((v, k) => {
+        ctx.lineTo(x(v), y(upper[k]));
+      });
+      for (let k = result.xs.length - 1; k >= 0; k--)
+        ctx.lineTo(x(result.xs[k]), y(lower[k]));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x(lastX), y(lastY));
+    result.xs.forEach((v, k) => {
+      if (Number.isFinite(result.ys[k])) ctx.lineTo(x(v), y(result.ys[k]));
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/** score 상자: 그림 영역 오른쪽 위에 점수 한 줄씩 */
+function drawScoreBox(
+  ctx: Ctx,
+  plot: { left: number; top: number; width: number; height: number },
+  scores: readonly ScoreResult[],
+  o: ChartOptions,
+) {
+  if (scores.length === 0) return;
+  const s = o.score;
+  const font = fontPx(o, 11, s.fontSize);
+  ctx.save();
+  ctx.font = `${font}px ${THEME.font}`;
+  const pad = 6;
+  const line = font + 4;
+  const width =
+    Math.max(...scores.map((r) => ctx.measureText(r.label).width)) + pad * 2;
+  const height = scores.length * line + pad * 2 - 4;
+  const bx = Math.round(plot.left + plot.width - width - 6) + 0.5;
+  const by = Math.round(plot.top + 6) + 0.5;
+  ctx.fillStyle = s.backColor;
+  ctx.fillRect(bx, by, width, height);
+  if (s.borderWidth > 0) {
+    ctx.strokeStyle = s.borderColor;
+    ctx.lineWidth = s.borderWidth;
+    ctx.strokeRect(bx, by, width, height);
+  }
+  ctx.fillStyle = s.fontColor;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  scores.forEach((r, k) => {
+    ctx.fillText(r.label, bx + pad, by + pad + k * line);
+  });
+  ctx.restore();
+}
+
+/** score 구역 계산: 그린 점(끈 legend 값 제외) 기준. fscore의 그룹은 legend 인덱스 */
+function scoresOf(
+  xs: Float64Array,
+  ys: Float64Array,
+  groupIndex: Uint8Array | undefined,
+  off: readonly boolean[],
+  o: ChartOptions,
+): ScoreResult[] {
+  const limits = { ucl: o.score.ucl, lcl: o.score.lcl };
+  if (!groupIndex || !off.some(Boolean)) {
+    return computeScores(o.score.kinds, { xs, ys, groups: groupIndex }, limits);
+  }
+  const keep: number[] = [];
+  for (let i = 0; i < xs.length; i++) if (!off[groupIndex[i]]) keep.push(i);
+  return computeScores(
+    o.score.kinds,
+    {
+      xs: keep.map((i) => xs[i]),
+      ys: keep.map((i) => ys[i]),
+      groups: keep.map((i) => groupIndex[i]),
+    },
+    limits,
+  );
+}
+
+/**
+ * 좌표 기준: expression을 적용한 값이 곧 "데이터 좌표"다. 축 범위, metadata(points.x/y, 축 domain),
+ * 확대 범위(view), 선택·지운 영역, 도형은 모두 이 변환된 값으로 다룬다. 식을 바꾸면 예전 영역은
+ * 새 좌표에서 그대로 해석된다. 처리 순서: expression → 지운 영역 → 이상치(value) → 그리기.
+ * value.nullNumeric은 행 단위 점 차트에 빈 칸이 없어 쓰지 않는다 (null 행은 조회에서 빠진다).
+ */
 export function renderScatter(
   ctx: Ctx,
   rawInput: ScatterInput,
   progress: ProgressFn,
 ): ScatterMeta {
-  const input = withoutDeleted(rawInput);
+  const o = optionsOf(rawInput);
+  const expressed = withExpression(rawInput, o.expression);
+  const cleaned = withoutOutliers(withoutDeleted(expressed.input), o.value);
+  const input = cleaned.input;
   const { width, height, xs, ys } = input;
   const n = xs.length;
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
+
+  // 점마다의 legend 인덱스. 새 범례 영역 안의 점은 덧붙인 항목으로 바꾼다.
+  const groups = (input.groups ?? []).map(regionTester);
+  const groupIndex = input.legend && new Uint8Array(input.legend.index);
+  const groupBase = (input.legend?.values.length ?? 0) - groups.length;
+  if (groupIndex && groups.length > 0) {
+    for (let i = 0; i < n; i++) {
+      for (let k = groups.length - 1; k >= 0; k--) {
+        if (groups[k](xs[i], ys[i])) {
+          groupIndex[i] = groupBase + k;
+          break;
+        }
+      }
+    }
+  }
+  // 체크박스로 끈 legend 값의 점은 그리지도, 툴팁으로 찾지도 않는다.
+  const off = hiddenIndexes(input.legend);
+
+  // ── 예측 (축 범위를 넓히므로 먼저) ─────────────────────────────
+  const predicted = forecasts(input, o, groupIndex, off);
 
   // ── 축 범위와 눈금 (aggregate) ─────────────────────────────────
   const { view } = input;
-  const xDomain = view?.x ?? niceDomain(xs, input.xKind);
-  const yDomain = view?.y ?? niceDomain(ys);
-  const y = scaleLinear().domain(yDomain);
-  if (!view) y.nice(5);
-  const yTicks = y.ticks(5);
-  const yFormat = y.tickFormat(5);
+  let xDomain = view?.x ?? niceDomain(xs, input.xKind);
+  let yDomain = view?.y ?? niceDomain(ys);
+  if (!view && predicted.length > 0) {
+    xDomain = extendDomain(
+      n > 0 ? xDomain : [Infinity, -Infinity],
+      predicted.flatMap((f) => f.result.xs),
+    );
+    yDomain = extendDomain(
+      n > 0 ? yDomain : [Infinity, -Infinity],
+      predicted.flatMap((f) => [
+        ...f.result.ys,
+        ...(f.result.lower ?? []),
+        ...(f.result.upper ?? []),
+      ]),
+    );
+  }
+  const yScaleAt = (range: [number, number]) =>
+    valueScale(yDomain, range, o.axes.y, {
+      nice: true,
+      zoomed: view !== undefined,
+    });
+  // 눈금은 범위(픽셀)와 무관하다. 글자 폭으로 그림 영역을 정한 뒤 같은 축을 픽셀 범위로 다시 만든다.
+  const { ticks: yTicks, format: yFormat } = yScaleAt([1, 0]);
 
-  ctx.font = `11px ${THEME.font}`;
-  const yLabelWidth = Math.max(
-    ...yTicks.map((t) => ctx.measureText(yFormat(t)).width),
-    10,
+  const yLabelWidth = labelWidth(
+    ctx,
+    yTicks.map((t) => yFormat(t)),
+    fontPx(o, 11, o.axes.y.label.fontSize),
   );
+  // x 눈금 글자를 돌리면 가장 긴 글자 폭만큼 아래를 비운다 (양 끝 값으로 어림한다).
+  const xLabelWidth = o.axes.x.label.angle
+    ? labelWidth(
+        ctx,
+        [xDomain[0], xDomain[1]].map(
+          xAxis(input.xKind, xDomain, [0, 1], !view, o.axes.x).format,
+        ),
+        fontPx(o, 11, o.axes.x.label.fontSize),
+      )
+    : undefined;
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, yLabelWidth, input.legend);
-  y.range([plot.top + plot.height, plot.top]);
+    : framePlot(ctx, width, height, yLabelWidth, input.legend, o, xLabelWidth);
+  const yAxis = yScaleAt([plot.top + plot.height, plot.top]);
+  const y = yAxis.scale;
 
   const {
     scale: x,
     ticks: xTicks,
     format: xFormat,
-  } = xAxis(input.xKind, xDomain, [plot.left, plot.left + plot.width], !view);
+    log: xLog,
+  } = xAxis(
+    input.xKind,
+    xDomain,
+    [plot.left, plot.left + plot.width],
+    !view,
+    o.axes.x,
+  );
+
+  // focus 구역: 조건에 맞는 점은 맨 위에 focus 색·모양·크기로 다시 그린다.
+  const focus = o.focus.enabled ? focusTest(o.focus) : undefined;
+  const focused = focus ? new Uint8Array(n) : undefined;
 
   // 픽셀 단위로 점을 줄인다. 툴팁의 "가장 가까운 점"은 이 점들 안에서 찾는다.
   const cell = new Int32Array(plot.width * plot.height).fill(-1);
@@ -238,25 +598,12 @@ export function renderScatter(
   const keptG: number[] = [];
   const sx = new Float32Array(n);
   const sy = new Float32Array(n);
-  // 점마다의 legend 인덱스. 새 범례 영역 안의 점은 덧붙인 항목으로 바꾼다.
-  const groups = (input.groups ?? []).map(regionTester);
-  const groupIndex = input.legend && new Uint8Array(input.legend.index);
-  const groupBase = (input.legend?.values.length ?? 0) - groups.length;
-  // 체크박스로 끈 legend 값의 점은 그리지도, 툴팁으로 찾지도 않는다.
-  const off = hiddenIndexes(input.legend);
   const { selection } = input;
   const inSelection = selection && regionTester(selection);
   const selected = selection ? new Uint8Array(n) : undefined;
   let selectedCount = 0;
+  let focusedCount = 0;
   for (let i = 0; i < n; i++) {
-    if (groupIndex) {
-      for (let k = groups.length - 1; k >= 0; k--) {
-        if (groups[k](xs[i], ys[i])) {
-          groupIndex[i] = groupBase + k;
-          break;
-        }
-      }
-    }
     if (inSelection && selected && inSelection(xs[i], ys[i])) {
       selected[i] = 1;
       selectedCount++;
@@ -266,6 +613,10 @@ export function renderScatter(
     sx[i] = cx;
     sy[i] = cy;
     if (groupIndex && off[groupIndex[i]]) continue;
+    if (focused && focus?.(xs[i], ys[i])) {
+      focused[i] = 1;
+      focusedCount++;
+    }
     const ix = Math.round(cx - plot.left);
     const iy = Math.round(cy - plot.top);
     if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
@@ -284,55 +635,44 @@ export function renderScatter(
   }
   progress("aggregate", 1);
 
+  const scores =
+    o.score.visible && o.score.kinds.length > 0
+      ? scoresOf(xs, ys, groupIndex, off, o)
+      : undefined;
+
   // ── 그리드와 축, 제목, legend (섬네일은 그림 영역만 그린다) ───────────
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    ctx.strokeStyle = THEME.grid;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = THEME.textSecondary;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for (const t of yTicks) {
-      const ty = Math.round(y(t)) + 0.5;
-      ctx.beginPath();
-      ctx.moveTo(plot.left, ty);
-      ctx.lineTo(plot.left + plot.width, ty);
-      ctx.stroke();
-      ctx.fillText(yFormat(t), plot.left - 6, ty);
-    }
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (const t of xTicks) {
-      const v = +t;
-      const tx = Math.round(x(v)) + 0.5;
-      ctx.fillText(xFormat(v), tx, plot.top + plot.height + 7);
-    }
-    ctx.strokeStyle = THEME.axis;
-    ctx.beginPath();
-    ctx.moveTo(plot.left, plot.top + plot.height + 0.5);
-    ctx.lineTo(plot.left + plot.width, plot.top + plot.height + 0.5);
-    ctx.stroke();
+    drawYAxis(ctx, plot, y, yTicks, yFormat, o);
+    drawXAxis(ctx, plot, x, xTicks, xFormat, o);
+    drawAxisTitles(
+      ctx,
+      plot,
+      o,
+      { x: input.xTitle ?? "x", y: input.yTitle ?? "y" },
+      yLabelWidth,
+      xLabelWidth,
+    );
 
     // ── 제목 ──────────────────────────────────────────────────────
-    ctx.fillStyle = THEME.textPrimary;
-    ctx.font = `600 12px ${THEME.font}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(input.title, plot.left, 17, plot.width);
-    ctx.fillStyle = THEME.textMuted;
-    ctx.font = `11px ${THEME.font}`;
-    ctx.textAlign = "right";
-    ctx.fillText(
-      selection
-        ? `${selectedCount.toLocaleString()} / ${n.toLocaleString()} pts 선택`
-        : `${n.toLocaleString()} pts`,
-      plot.left + plot.width,
-      17,
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
+      [
+        expressed.error,
+        cleaned.removed > 0 &&
+          `이상치 ${cleaned.removed.toLocaleString()} 제외`,
+        selection
+          ? `${selectedCount.toLocaleString()} / ${n.toLocaleString()} pts 선택`
+          : `${n.toLocaleString()} pts`,
+      ],
+      o,
     );
 
     // ── legend ────────────────────────────────────────────────
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth)
+      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth, o)
       : undefined;
   }
 
@@ -341,6 +681,10 @@ export function renderScatter(
   ctx.beginPath();
   ctx.rect(plot.left, plot.top, plot.width, plot.height);
   ctx.clip();
+  // legendSingleColor: 조건에 맞지 않는 점은 legend 색 대신 회색 한 가지로 그린다.
+  const single = focus && o.focus.legendSingleColor;
+  const surface = surfaceOf(o);
+  const { shape } = o;
   if (n === 0) {
     ctx.fillStyle = THEME.textMuted;
     ctx.textAlign = "center";
@@ -351,19 +695,28 @@ export function renderScatter(
     );
   } else if (input.chartType === "line") {
     progress("render", 0);
+    const count = input.legend ? input.legend.colors.length : 1;
     drawLines(ctx, {
       sx,
       sy,
-      series: seriesOrder(
-        xs,
-        groupIndex,
-        input.legend ? input.legend.colors.length : 1,
-        off,
-      ),
-      colors: input.legend ? input.legend.colors : [input.color],
+      series: seriesOrder(xs, groupIndex, count, off),
+      colors: single
+        ? new Array(count).fill(OTHERS_COLOR)
+        : input.legend
+          ? input.legend.colors
+          : [input.color],
       selected,
       plot,
       compact: input.compact,
+      lineWidth: lineWidthOf(o, input.compact ? 1 : 1.5),
+      alpha: alphaOf(shape.transparency, 1),
+      dot: {
+        shape: shape.type,
+        radius: pointSizeOf(o, 2.5),
+        style: shape.style,
+        borderWidth: shape.borderWidth,
+        stroke: surface,
+      },
     });
   } else {
     // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (fillStyle 전환을 줄인다).
@@ -373,39 +726,115 @@ export function renderScatter(
     const layers = selected ? [0, 1] : [1];
     // 섬네일은 점이 적어도 테두리 원 대신 작은 점으로 그린다.
     const small = !input.compact && n <= 400;
-    const size = input.compact || n > 50_000 ? 1.5 : 2.5;
+    const size = pointSizeOf(o, input.compact || n > 50_000 ? 1.5 : 2.5);
     const half = size / 2;
-    const baseAlpha = small ? 1 : n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6;
+    const radius = pointSizeOf(o, 4);
+    const baseAlpha = alphaOf(
+      shape.transparency,
+      small ? 1 : n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6,
+    );
+    // 기본 모양(원·채우기·테두리 없음)은 지금까지처럼: 적으면 배경색 테두리 원, 많으면 작은 사각 점.
+    const plain =
+      shape.type === "circle" &&
+      shape.style !== "border" &&
+      shape.borderWidth === 0;
+    const fast = plain && size <= 3;
     const steps = layers.length * passes.length;
     layers.forEach((layer, l) => {
-      passes.forEach((color, g) => {
+      passes.forEach((passColor, g) => {
         if (off[g]) return;
+        const color = single ? OTHERS_COLOR : passColor;
         ctx.fillStyle = color;
+        ctx.strokeStyle = color;
         // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 하고,
         // 많으면 작은 반투명 점으로 밀도를 보여준다. 선택 바깥 점은 더 옅게 그린다.
         ctx.globalAlpha = layer === 0 ? baseAlpha * 0.2 : baseAlpha;
-        if (small) {
-          ctx.strokeStyle = THEME.surface;
+        if (small && plain) {
+          ctx.strokeStyle = surface;
           ctx.lineWidth = 2;
         }
+        let batched = 0;
+        if (!small && !fast) ctx.beginPath();
         for (let i = 0; i < n; i++) {
           if (groupIndex && groupIndex[i] !== g) continue;
           if (selected && selected[i] !== layer) continue;
           if (small) {
-            ctx.beginPath();
-            ctx.arc(sx[i], sy[i], 4, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.fill();
-          } else {
+            if (plain) {
+              ctx.beginPath();
+              ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.fill();
+            } else {
+              drawPoint(
+                ctx,
+                shape.type,
+                sx[i],
+                sy[i],
+                radius,
+                shape.style,
+                shape.borderWidth,
+                color,
+                surface,
+              );
+            }
+          } else if (fast) {
             ctx.fillRect(sx[i] - half, sy[i] - half, size, size);
+          } else {
+            // 같은 색 점을 한 path로 모아 그린다. path가 너무 커지지 않게 일정 수마다 비운다.
+            pathPoint(ctx, shape.type, sx[i], sy[i], half);
+            if (++batched === 10_000) {
+              finishBatch(ctx, shape, color, surface);
+              ctx.beginPath();
+              batched = 0;
+            }
           }
           if (i % CHUNK === 0)
             progress("render", (l * passes.length + g + i / n) / steps);
         }
+        if (!small && !fast && batched > 0)
+          finishBatch(ctx, shape, color, surface);
       });
     });
   }
   ctx.globalAlpha = 1;
+
+  // ── focus: 조건에 맞는 점을 맨 위에 ────────────────────────────
+  if (focused && focusedCount > 0) {
+    const f = o.focus;
+    const r = Math.max(0.5, f.size / 2);
+    ctx.fillStyle = f.color;
+    ctx.strokeStyle = f.color;
+    ctx.lineWidth = Math.max(1, shape.borderWidth || 1);
+    let batched = 0;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      if (!focused[i]) continue;
+      if (selected && !selected[i]) continue;
+      pathPoint(ctx, f.shape, sx[i], sy[i], r);
+      if (++batched === 10_000) {
+        finishBatch(ctx, { ...shape, type: f.shape }, f.color, surface);
+        ctx.beginPath();
+        batched = 0;
+      }
+    }
+    if (batched > 0)
+      finishBatch(ctx, { ...shape, type: f.shape }, f.color, surface);
+  }
+
+  // ── 예측 선과 구간 ────────────────────────────────────────────
+  if (predicted.length > 0) {
+    drawForecasts(ctx, predicted, x, y, lineWidthOf(o, 1.5));
+  }
+
+  // ── 점 글자 (픽셀로 줄인 점이 적을 때만) ─────────────────────────
+  if (!input.compact && o.pointLabel.visible && px.length <= MAX_LABEL_POINTS) {
+    const guard = createLabelGuard();
+    const font = fontPx(o, 10, o.pointLabel.fontSize);
+    for (let k = 0; k < px.length; k++) {
+      drawPointLabel(ctx, px[k], py[k], keptY[k], o.pointLabel, font, guard);
+    }
+  }
+
   if (selection) {
     drawSelection(
       ctx,
@@ -423,13 +852,42 @@ export function renderScatter(
     (v) => y(v),
   );
   ctx.restore();
+
+  if (!input.compact) {
+    if (scores) drawScoreBox(ctx, plot, scores, o);
+    if (o.prediction.description && predicted.length > 0) {
+      ctx.save();
+      ctx.font = `${fontPx(o, 10)}px ${THEME.font}`;
+      ctx.fillStyle = THEME.textMuted;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      const text = [
+        ...new Set(predicted.map((f) => f.result.description)),
+      ].join(" · ");
+      ctx.fillText(
+        text,
+        plot.left + 6,
+        plot.top + plot.height - 4,
+        plot.width - 12,
+      );
+      ctx.restore();
+    }
+  }
   progress("render", 1);
 
   return {
     chartType: input.chartType ?? "scatter",
     plot,
-    x: { kind: input.xKind, domain: [+x.domain()[0], +x.domain()[1]] },
-    y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },
+    x: {
+      kind: input.xKind,
+      domain: [+x.domain()[0], +x.domain()[1]],
+      ...(xLog ? { log: true } : {}),
+    },
+    y: {
+      kind: "number",
+      domain: [+y.domain()[0], +y.domain()[1]],
+      ...(yAxis.log ? { log: true } : {}),
+    },
     points: {
       px,
       py,
@@ -441,5 +899,28 @@ export function renderScatter(
     total: n,
     ...(selection ? { selected: selectedCount } : {}),
     legend: legendMeta,
+    ...(scores ? { scores } : {}),
   };
+}
+
+/** 모아 둔 path를 shape.style대로 칠한다. cross는 선으로만 보인다. */
+function finishBatch(
+  ctx: Ctx,
+  shape: ChartOptions["shape"],
+  color: string,
+  stroke: string,
+) {
+  if (shape.type === "cross" || shape.style === "border") {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1, shape.borderWidth);
+    ctx.stroke();
+    return;
+  }
+  ctx.fillStyle = color;
+  ctx.fill();
+  if (shape.style === "both" && shape.borderWidth > 0) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = shape.borderWidth;
+    ctx.stroke();
+  }
 }
