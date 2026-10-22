@@ -11,6 +11,7 @@ import {
 } from "d3-sankey";
 import type { SankeyLink } from "../data/sankey-data";
 import { AGG_LABELS, type AggFn } from "../data/schema";
+import { drawTitle } from "./frame";
 import {
   drawLegendAround,
   framePlot,
@@ -18,10 +19,11 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
+import { alphaOf, drawPanel, fontPx, lineWidthOf, mixColor } from "./style";
 import { THEME } from "./theme";
 
 type Plot = { left: number; top: number; width: number; height: number };
@@ -228,19 +230,21 @@ export function renderSankey(
   progress: ProgressFn,
 ): SankeyMeta {
   const { width, height } = input;
+  const o = optionsOf(input);
+  const { shape } = o;
   const off = hiddenIndexes(input.legend);
   const inSelection = input.selection && regionTester(input.selection);
+  const font = fontPx(o, 11);
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
 
   // ── 그림 영역: 왼쪽·오른쪽에 노드 라벨 자리를 둔다 ──────────────
-  ctx.font = `11px ${THEME.font}`;
+  ctx.font = `${font}px ${THEME.font}`;
   const leftLabel = input.compact ? 0 : labelWidth(ctx, input.sources, width);
   const rightLabel = input.compact ? 0 : labelWidth(ctx, input.targets, width);
   const frame = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, leftLabel, input.legend);
+    : framePlot(ctx, width, height, leftLabel, input.legend, o);
   const plot: Plot = input.compact
     ? frame
     : {
@@ -266,13 +270,17 @@ export function renderSankey(
       ? (input.legend.colors[node.legend] ?? TARGET_COLOR)
       : TARGET_COLOR;
 
+  // shape 투명도는 흐름·노드 모두에, 선 굵기(size.lineWidth)는 가장 가는 흐름의 굵기에 쓴다.
+  const opacity = alphaOf(shape.transparency, 1);
+  const minLink = lineWidthOf(o, 1);
+
   // ── 흐름 (render) ─────────────────────────────────────────────
   ctx.save();
   layout.links.forEach((link, i) => {
     const { xs, xt } = linkEnds(layout, link);
     ctx.strokeStyle = colorOf(layout.nodes[link.source]);
-    ctx.globalAlpha = LINK_ALPHA * (linkIn[i] ? 1 : DIM);
-    ctx.lineWidth = Math.max(1, link.width);
+    ctx.globalAlpha = LINK_ALPHA * opacity * (linkIn[i] ? 1 : DIM);
+    ctx.lineWidth = Math.max(minLink, link.width);
     traceLink(ctx, xs, xt, link);
     ctx.stroke();
     if (i % 200 === 0) progress("render", i / layout.links.length);
@@ -280,15 +288,22 @@ export function renderSankey(
   ctx.globalAlpha = 1;
 
   // ── 노드 ──────────────────────────────────────────────────────
+  // shape: brush는 채우기만, border는 노드 색 테두리만, both는 채우기 + 진한 색 테두리(borderWidth)
   layout.nodes.forEach((node, i) => {
-    ctx.fillStyle = colorOf(node);
-    ctx.globalAlpha = nodeIn[i] ? 1 : DIM;
-    ctx.fillRect(
-      node.x0,
-      node.y0,
-      node.x1 - node.x0,
-      Math.max(1, node.y1 - node.y0),
-    );
+    const color = colorOf(node);
+    ctx.globalAlpha = opacity * (nodeIn[i] ? 1 : DIM);
+    const w = node.x1 - node.x0;
+    const h = Math.max(1, node.y1 - node.y0);
+    if (shape.style !== "border") {
+      ctx.fillStyle = color;
+      ctx.fillRect(node.x0, node.y0, w, h);
+    }
+    if (shape.style === "border" || shape.borderWidth > 0) {
+      ctx.strokeStyle =
+        shape.style === "border" ? color : mixColor(color, "#000000", 0.3);
+      ctx.lineWidth = Math.max(1, shape.borderWidth);
+      ctx.strokeRect(node.x0, node.y0, w, h);
+    }
   });
   ctx.globalAlpha = 1;
   ctx.restore();
@@ -296,7 +311,7 @@ export function renderSankey(
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
     // ── 노드 라벨: 출발은 노드 왼쪽, 도착은 노드 오른쪽 ────────────
-    ctx.font = `11px ${THEME.font}`;
+    ctx.font = `${font}px ${THEME.font}`;
     ctx.textBaseline = "middle";
     layout.nodes.forEach((node, i) => {
       const source = node.side === "source";
@@ -319,28 +334,20 @@ export function renderSankey(
     }
 
     // ── 제목 ──────────────────────────────────────────────────────
-    ctx.fillStyle = THEME.textPrimary;
-    ctx.font = `600 12px ${THEME.font}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(input.title, frame.left, 17, frame.width);
-    ctx.fillStyle = THEME.textMuted;
-    ctx.font = `11px ${THEME.font}`;
-    ctx.textAlign = "right";
-    ctx.fillText(
+    drawTitle(
+      ctx,
+      frame,
+      input.title,
       [
         AGG_LABELS[input.agg],
         `${layout.links.length}개 흐름`,
         inSelection ? `${selectedCount}개 선택` : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-      frame.left + frame.width,
-      17,
+      ],
+      o,
     );
 
     // ── legend (출발 노드) ────────────────────────────────────────
-    legendMeta = drawLegendAround(ctx, input.legend, frame, leftLabel);
+    legendMeta = drawLegendAround(ctx, input.legend, frame, leftLabel, o);
   }
 
   // 고정 좌표 공간의 데이터 좌표 → PNG 좌표

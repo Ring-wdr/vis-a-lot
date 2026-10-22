@@ -12,10 +12,11 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
+import { alphaOf, drawPanel, fontPx, mixColor, surfaceOf } from "./style";
 import { THEME } from "./theme";
 
 type Rect = { x: number; y: number; width: number; height: number };
@@ -132,20 +133,28 @@ export function renderFunnel(
   progress: ProgressFn,
 ): FunnelMeta {
   const { width, height } = input;
+  const o = optionsOf(input);
+  const { shape } = o;
   const off = hiddenIndexes(input.legend);
   const colorOf = (index: number) => input.legend?.colors[index] ?? input.color;
+  // 값이 없는 단계: value.nullNumeric을 정했으면 그 값으로 그린다 (없으면 0).
+  const { nullNumeric } = o.value;
+  const values =
+    nullNumeric === null
+      ? input.values
+      : input.values.map((v) => v ?? nullNumeric);
+  const font = fontPx(o, 11);
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
   // 단계 이름은 y축 눈금 글자 자리(왼쪽)에 적는다.
   const nameWidth = Math.min(
     width * LABEL_MAX_RATIO,
-    labelWidth(ctx, input.stages),
+    labelWidth(ctx, input.stages, font),
   );
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, nameWidth, input.legend);
-  const stages = funnelLayout(plot, input.stages, input.values, off);
+    : framePlot(ctx, width, height, nameWidth, input.legend, o);
+  const stages = funnelLayout(plot, input.stages, values, off);
   const x = (v: number) => plot.left + v;
   const y = (v: number) => plot.top + plot.height - v;
   const inSelection = input.selection && regionTester(input.selection);
@@ -158,13 +167,19 @@ export function renderFunnel(
 
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    drawTitle(ctx, plot, input.title, [
-      input.agg && AGG_LABELS[input.agg],
-      `${input.stages.length}개 단계`,
-      inSelection && `${selectedCount}개 선택`,
-    ]);
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
+      [
+        input.agg && AGG_LABELS[input.agg],
+        `${input.stages.length}개 단계`,
+        inSelection && `${selectedCount}개 선택`,
+      ],
+      o,
+    );
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, plot, nameWidth)
+      ? drawLegendAround(ctx, input.legend, plot, nameWidth, o)
       : undefined;
   }
 
@@ -189,23 +204,35 @@ export function renderFunnel(
     ctx.fill();
     ctx.globalAlpha = 1;
   });
-  ctx.font = `11px ${THEME.font}`;
+  ctx.font = `${font}px ${THEME.font}`;
   ctx.textBaseline = "middle";
+  const opacity = alphaOf(shape.transparency, 1);
+  const surface = surfaceOf(o);
   const rowPitch = plot.height / Math.max(1, stages.length);
   stages.forEach((s, i) => {
     const { rect } = s;
     const alpha = isSelected(s) ? 1 : 0.2;
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = colorOf(s.index);
+    const color = colorOf(s.index);
+    // shape: brush는 채우기만, border는 막대 색 테두리만, both는 채우기 + 진한 색 테두리(borderWidth)
+    ctx.globalAlpha = alpha * opacity;
     ctx.beginPath();
     ctx.roundRect(rect.x, rect.y, rect.width, rect.height, 3);
-    ctx.fill();
+    if (shape.style !== "border") {
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+    if (shape.style === "border" || shape.borderWidth > 0) {
+      ctx.strokeStyle =
+        shape.style === "border" ? color : mixColor(color, "#000000", 0.3);
+      ctx.lineWidth = Math.max(1, shape.borderWidth);
+      ctx.stroke();
+    }
     ctx.globalAlpha = 1;
     if (input.compact) return;
     const midY = rect.y + rect.height / 2;
     // 글자가 들어갈 높이가 없으면 생략한다 (툴팁으로 본다).
     // 단계 이름: 왼쪽 칸에 오른쪽 맞춤. 줄 간격이 글자보다 넓을 때만
-    if (rowPitch >= MIN_TEXT_HEIGHT) {
+    if (rowPitch >= Math.max(MIN_TEXT_HEIGHT, font + 1)) {
       ctx.fillStyle = THEME.textSecondary;
       ctx.textAlign = "right";
       ctx.fillText(truncate(ctx, s.label, nameWidth), plot.left - 6, midY);
@@ -218,7 +245,8 @@ export function renderFunnel(
       ctx.globalAlpha = alpha;
       ctx.textAlign = "center";
       if (textWidth + 8 <= rect.width) {
-        ctx.fillStyle = THEME.surface;
+        // 테두리만 그린 막대 안은 배경이 비치므로 진한 글자
+        ctx.fillStyle = shape.style === "border" ? THEME.textPrimary : surface;
         ctx.fillText(text, rect.x + rect.width / 2, midY);
       } else {
         ctx.fillStyle = THEME.textPrimary;

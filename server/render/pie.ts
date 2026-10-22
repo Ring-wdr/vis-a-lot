@@ -11,10 +11,18 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawEmpty, drawHeader, fixedSpace } from "./polar";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
+import {
+  alphaOf,
+  createLabelGuard,
+  drawPanel,
+  drawPointLabel,
+  fontPx,
+  surfaceOf,
+} from "./style";
 import { THEME } from "./theme";
 
 export type PieSlice = PieSliceValue & {
@@ -107,6 +115,24 @@ export function sliceCentroid(
   return [center.x + Math.cos(mid) * r, center.y + Math.sin(mid) * r];
 }
 
+/** 점 글자(pointLabel) 자리: top은 원 바깥, center는 조각 가운데(대표점), bottom은 중심 가까이 */
+const POINT_LABEL_RATIO = { top: 1, center: CENTROID_RATIO, bottom: 0.35 };
+const OUTSIDE_GAP = 10;
+
+/** 점 글자를 놓는 PNG 좌표 */
+export function pointLabelAnchor(
+  center: { x: number; y: number },
+  radius: number,
+  slice: Pick<PieSlice, "start" | "end">,
+  position: keyof typeof POINT_LABEL_RATIO,
+): [number, number] {
+  const mid = (slice.start + slice.end) / 2;
+  const r =
+    radius * POINT_LABEL_RATIO[position] +
+    (position === "top" ? OUTSIDE_GAP : 0);
+  return [center.x + Math.cos(mid) * r, center.y + Math.sin(mid) * r];
+}
+
 /** 배경 위 비율 글자 색: 밝은 조각에는 검은 글자, 어두운 조각에는 흰 글자 */
 function labelColor(hex: string) {
   const n = Number.parseInt(hex.slice(1), 16);
@@ -120,6 +146,8 @@ export function renderPie(
   progress: ProgressFn,
 ): PieMeta {
   const { width, height, legend } = input;
+  const o = optionsOf(input);
+  const { shape } = o;
   const { slices, total } = layoutPie(
     input.slices,
     legend.colors,
@@ -127,11 +155,10 @@ export function renderPie(
   );
   progress("aggregate", 1);
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, 0, legend);
+    : framePlot(ctx, width, height, 0, legend, o);
   const space = fixedSpace(plot);
   const center = {
     x: plot.left + plot.width / 2,
@@ -151,9 +178,11 @@ export function renderPie(
   const selectedCount = inside.filter(Boolean).length;
 
   // ── 조각 (render) ─────────────────────────────────────────────
+  // shape: brush는 채우기만, border는 조각 색 테두리만, both는 채우기 + borderWidth만큼 배경색 테두리
+  const opacity = alphaOf(shape.transparency, 1);
+  const surface = surfaceOf(o);
   for (const [i, s] of slices.entries()) {
-    ctx.globalAlpha = inside[i] ? 1 : 0.2;
-    ctx.fillStyle = s.color;
+    ctx.globalAlpha = opacity * (inside[i] ? 1 : 0.2);
     ctx.beginPath();
     if (s.ratio >= 1) {
       ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
@@ -162,12 +191,21 @@ export function renderPie(
       ctx.arc(center.x, center.y, radius, s.start, s.end);
       ctx.closePath();
     }
-    ctx.fill();
+    if (shape.style !== "border") {
+      ctx.fillStyle = s.color;
+      ctx.fill();
+    }
+    if (shape.style === "border" || shape.borderWidth > 0) {
+      ctx.strokeStyle = shape.style === "border" ? s.color : surface;
+      ctx.lineWidth = Math.max(1, shape.borderWidth);
+      ctx.lineJoin = "round";
+      ctx.stroke();
+    }
   }
   ctx.globalAlpha = 1;
-  if (slices.length > 1) {
+  if (slices.length > 1 && shape.style !== "border") {
     // 조각 경계: 중심에서 바깥으로 배경색 선
-    ctx.strokeStyle = THEME.surface;
+    ctx.strokeStyle = surface;
     ctx.lineWidth = SEPARATOR;
     ctx.beginPath();
     for (const s of slices) {
@@ -182,11 +220,30 @@ export function renderPie(
   progress("render", 0.8);
 
   if (!input.compact) {
-    // ── 비율 글자 ─────────────────────────────────────────────
-    ctx.font = `600 11px ${THEME.font}`;
+    // ── 비율 글자 (점 글자를 켜면 그 자리를 점 글자가 쓴다) ──────────
+    ctx.font = `600 ${fontPx(o, 11)}px ${THEME.font}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    if (radius >= 40) {
+    const label = o.pointLabel;
+    if (label.visible) {
+      // 조각 값. 겹치면 건너뛰고, 위치는 바깥(top)·조각 가운데(center)·안쪽(bottom)
+      const guard = createLabelGuard();
+      const font = fontPx(o, 10, label.fontSize);
+      for (const [i, s] of slices.entries()) {
+        const [lx, ly] = pointLabelAnchor(center, radius, s, label.position);
+        ctx.globalAlpha = inside[i] ? 1 : 0.4;
+        drawPointLabel(
+          ctx,
+          lx,
+          ly,
+          s.value,
+          { ...label, position: "center" },
+          font,
+          guard,
+        );
+      }
+      ctx.globalAlpha = 1;
+    } else if (radius >= 40) {
       for (const [i, s] of slices.entries()) {
         if (s.ratio < LABEL_MIN_RATIO) continue;
         const [lx, ly] = sliceCentroid(center, radius, s);
@@ -196,19 +253,25 @@ export function renderPie(
       }
       ctx.globalAlpha = 1;
     }
-    if (slices.length === 0) drawEmpty(ctx, plot, "보이는 조각이 없습니다");
+    if (slices.length === 0) drawEmpty(ctx, plot, "보이는 조각이 없습니다", o);
 
-    drawHeader(ctx, plot, input.title, [
-      input.agg ? AGG_LABELS[input.agg] : "",
-      `${slices.length}개 조각`,
-      inSelection ? `${selectedCount}개 선택` : "",
-    ]);
+    drawHeader(
+      ctx,
+      plot,
+      input.title,
+      [
+        input.agg ? AGG_LABELS[input.agg] : "",
+        `${slices.length}개 조각`,
+        inSelection ? `${selectedCount}개 선택` : "",
+      ],
+      o,
+    );
   }
 
   // ── legend ──────────────────────────────────────────────────────
   const legendMeta = input.compact
     ? undefined
-    : drawLegendAround(ctx, legend, plot, 0);
+    : drawLegendAround(ctx, legend, plot, 0, o);
 
   if (input.selection) {
     drawSelection(ctx, input.selection, space.px, space.py, THEME.selection);
