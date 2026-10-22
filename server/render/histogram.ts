@@ -4,7 +4,19 @@
 
 import { scaleLinear } from "d3-scale";
 import type { HistogramBins } from "../data/histogram-data";
-import { drawBaseline, drawTitle, drawYGrid, labelWidth } from "./frame";
+import {
+  drawAxisTitles,
+  drawXAxis,
+  drawYAxis,
+  numberFormat,
+} from "./axis-style";
+import {
+  categoryValueAxis,
+  markLabeler,
+  paintMark,
+  rotatedLabelWidth,
+} from "./category";
+import { drawBaseline, drawTitle, labelWidth } from "./frame";
 import {
   drawLegendAround,
   framePlot,
@@ -12,16 +24,16 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, mergeOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
   compactPlot,
   type ItemView,
   type ProgressFn,
-  xAxis,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
+import { alphaOf, drawPanel, fontPx } from "./style";
 import { THEME } from "./theme";
 
 export type HistogramMeta = {
@@ -58,9 +70,18 @@ export type HistogramInput = {
   /** 선택 영역. 바깥 막대는 흐리게 그린다. */
   selection?: Region;
   compact?: boolean;
+  /** 축 제목(axes.*.title.visible)에 쓰는 이름. 보통 x 컬럼 라벨과 '개수' */
+  axisTitles?: { x?: string; y?: string };
 };
 
 type Ctx = OffscreenCanvasRenderingContext2D;
+
+/** 값 x축: 범위를 그대로(nice 없이) 쓰고, 90px마다 눈금 하나 (scatter의 숫자 x축과 같다) */
+function valueXAxis(domain: [number, number], range: [number, number]) {
+  const scale = scaleLinear().domain(domain).range(range);
+  const count = Math.max(2, Math.floor((range[1] - range[0]) / 90));
+  return { scale, ticks: scale.ticks(count), format: scale.tickFormat(5) };
+}
 
 /** 이웃 구간 사이 간격(px). 구간이 좁으면 두지 않는다. */
 const BIN_GAP = 1;
@@ -91,6 +112,7 @@ export function renderHistogram(
   input: HistogramInput,
   progress: ProgressFn,
 ): HistogramMeta {
+  const o = optionsOf(input);
   const { width, height, bins, counts, view } = input;
   const groups = (input.groups ?? []).map(regionTester);
   const groupCount = Math.max(
@@ -122,52 +144,82 @@ export function renderHistogram(
     });
   });
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
 
-  const y = scaleLinear().domain(view?.y ?? [0, Math.max(1, maxCount)]);
-  if (!view) y.nice(5);
-  const yTicks = y.ticks(5).filter((t) => Number.isInteger(t));
-  const yFormat = y.tickFormat(5);
-  const yLabelWidth = labelWidth(ctx, yTicks.map(yFormat));
+  // 개수 축: min·max·log·소수 자리를 따른다. 개수라 눈금은 정수만 둔다.
+  const extent: [number, number] = [0, Math.max(1, maxCount)];
+  const yAxis = categoryValueAxis(extent, view, o);
+  const yTicks = yAxis.ticks.filter((t) => Number.isInteger(t));
+  const yFormat = yAxis.format;
+  const yLabelWidth = labelWidth(
+    ctx,
+    yTicks.map(yFormat),
+    fontPx(o, 11, o.axes.y.label.fontSize),
+  );
+  // x는 값 축이다. 확대가 없으면 axes.x의 min·max로 보이는 범위를 정한다.
+  const fullX: [number, number] = [bins.lo, bins.lo + bins.step * bins.count];
+  const xAxisOptions = o.axes.x;
+  const xRange: [number, number] = [
+    xAxisOptions.min ?? fullX[0],
+    xAxisOptions.max ?? fullX[1],
+  ];
+  const xDomain = view?.x ?? (xRange[0] < xRange[1] ? xRange : fullX);
+  const xLabelWidth = rotatedLabelWidth(
+    ctx,
+    valueXAxis(xDomain, [0, Math.max(1, width)]).ticks.map(String),
+    o,
+  );
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, yLabelWidth, input.legend);
-  y.range([plot.top + plot.height, plot.top]);
-  const fullX: [number, number] = [bins.lo, bins.lo + bins.step * bins.count];
+    : framePlot(ctx, width, height, yLabelWidth, input.legend, o, xLabelWidth);
+  const { scale: y, log: yLog } = categoryValueAxis(extent, view, o, [
+    plot.top + plot.height,
+    plot.top,
+  ]);
   const {
     scale: x,
     ticks: xTicks,
-    format: xFormat,
-  } = xAxis(
-    "number",
-    view?.x ?? fullX,
-    [plot.left, plot.left + plot.width],
-    false,
-  );
+    format: autoXFormat,
+  } = valueXAxis(xDomain, [plot.left, plot.left + plot.width]);
+  const xFormat = numberFormat(xAxisOptions.decimals, autoXFormat);
+  /** 막대가 시작하는 기준선. 로그 축이면 0이 없어 축 아래 끝 */
+  const baseValue = yLog ? y.domain()[0] : 0;
   progress("aggregate", 1);
 
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    drawYGrid(ctx, plot, y, yTicks, yFormat);
-    ctx.fillStyle = THEME.textSecondary;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (const t of xTicks) {
-      ctx.fillText(
-        xFormat(t),
-        Math.round(x(t)) + 0.5,
-        plot.top + plot.height + 7,
-      );
-    }
-    drawBaseline(ctx, plot, y(0));
-    drawTitle(ctx, plot, input.title, [
-      `${total.toLocaleString()}개 값`,
-      `${bins.count}개 구간`,
-      inSelection && `${selectedCount}개 선택`,
-    ]);
+    drawYAxis(ctx, plot, y, yTicks, yFormat, o);
+    // 아래 축 선은 개수 0 기준선이 대신한다 (확대하면 0이 그림 영역 밖일 수 있다).
+    drawXAxis(
+      ctx,
+      plot,
+      x,
+      xTicks,
+      xFormat,
+      mergeOptions(o, { axes: { x: { line: { visible: false } } } }),
+    );
+    drawBaseline(ctx, plot, y(baseValue), o);
+    drawAxisTitles(
+      ctx,
+      plot,
+      o,
+      input.axisTitles ?? {},
+      yLabelWidth,
+      xLabelWidth,
+    );
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
+      [
+        `${total.toLocaleString()}개 값`,
+        `${bins.count}개 구간`,
+        inSelection && `${selectedCount}개 선택`,
+      ],
+      o,
+    );
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth)
+      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth, o)
       : undefined;
   }
 
@@ -176,7 +228,10 @@ export function renderHistogram(
   ctx.beginPath();
   ctx.rect(plot.left, plot.top, plot.width, plot.height);
   ctx.clip();
-  const zero = y(0);
+  const zero = y(baseValue);
+  const fill = alphaOf(o.shape.transparency, 1);
+  /** 점 글자 자리: [x, y, 개수]. clip을 푼 뒤 그린다. */
+  const labels: [number, number, number][] = [];
   counts.forEach((row, i) => {
     const left = x(bins.lo + bins.step * i);
     const right = x(bins.lo + bins.step * (i + 1));
@@ -188,14 +243,14 @@ export function renderHistogram(
       const index = legendIndexOf(g, point);
       if (off[index]) return;
       const top = y(c);
-      ctx.fillStyle = colorOf(index);
-      ctx.globalAlpha = !inSelection || inSelection(...point) ? 1 : 0.2;
-      ctx.fillRect(
-        left + gap / 2 + slot * g,
-        top,
-        Math.max(1, slot - (groupCount > 1 ? 1 : 0)),
-        Math.max(1, zero - top),
-      );
+      const barWidth = Math.max(1, slot - (groupCount > 1 ? 1 : 0));
+      const barLeft = left + gap / 2 + slot * g;
+      ctx.globalAlpha =
+        (!inSelection || inSelection(...point) ? 1 : 0.2) * fill;
+      ctx.beginPath();
+      ctx.rect(barLeft, top, barWidth, Math.max(1, zero - top));
+      paintMark(ctx, o.shape, colorOf(index));
+      labels.push([barLeft + barWidth / 2, top, c]);
     });
     if (i % 20 === 0) progress("render", i / counts.length);
   });
@@ -205,6 +260,8 @@ export function renderHistogram(
   }
   drawShapes(ctx, input.shapes, x, y);
   ctx.restore();
+  const label = input.compact ? undefined : markLabeler(ctx, plot, o);
+  if (label) for (const [lx, ly, c] of labels) label(lx, ly, c);
   progress("render", 1);
 
   return {

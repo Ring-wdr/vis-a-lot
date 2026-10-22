@@ -4,11 +4,12 @@
 
 import { scaleLinear } from "d3-scale";
 import { AGG_LABELS, type AggFn } from "../data/schema";
+import { drawAxisTitles, drawYAxis } from "./axis-style";
+import { categoryValueAxis, markLabeler, rotatedLabelWidth } from "./category";
 import {
   drawBaseline,
   drawCategoryLabels,
   drawTitle,
-  drawYGrid,
   labelWidth,
 } from "./frame";
 import {
@@ -18,7 +19,7 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
-import type { ChartOptions } from "./options";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -27,6 +28,7 @@ import {
   type ProgressFn,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
+import { drawPanel, fontPx, lineWidthOf } from "./style";
 import { PALETTE, THEME } from "./theme";
 
 /** 막대 종류. 순서가 곧 legend 순서다. */
@@ -78,6 +80,8 @@ export type WaterfallInput = {
   groups?: readonly Region[];
   selection?: Region;
   compact?: boolean;
+  /** 축 제목(axes.*.title.visible)에 쓰는 이름. 보통 x·y 컬럼 라벨 */
+  axisTitles?: { x?: string; y?: string };
 };
 
 type Ctx = OffscreenCanvasRenderingContext2D;
@@ -116,8 +120,15 @@ export function renderWaterfall(
   input: WaterfallInput,
   progress: ProgressFn,
 ): WaterfallMeta {
+  const o = optionsOf(input);
   const { width, height, categories, view } = input;
-  const steps = waterfallSteps(input.values);
+  // value: 빈 범주(null)는 nullNumeric이 있으면 그 값으로 쌓는다 (없으면 지금처럼 0).
+  const { nullNumeric } = o.value;
+  const steps = waterfallSteps(
+    nullNumeric === null
+      ? input.values
+      : input.values.map((v) => v ?? nullNumeric),
+  );
   const n = steps.length;
   const labels = [...categories, TOTAL_LABEL];
   const groups = (input.groups ?? []).map(regionTester);
@@ -141,18 +152,26 @@ export function renderWaterfall(
     });
   }
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
 
-  const y = scaleLinear().domain(view?.y ?? valueExtent(steps));
-  if (!view) y.nice(5);
-  const yTicks = y.ticks(5);
-  const yFormat = y.tickFormat(5);
-  const yLabelWidth = labelWidth(ctx, yTicks.map(yFormat));
+  // 누적 막대는 0을 지나 오르내리므로 로그 축은 범위가 모두 양수일 때만 (valueScale이 판정)
+  const extent = valueExtent(steps);
+  const { ticks: yTicks, format: yFormat } = categoryValueAxis(extent, view, o);
+  const yLabelWidth = labelWidth(
+    ctx,
+    yTicks.map(yFormat),
+    fontPx(o, 11, o.axes.y.label.fontSize),
+  );
+  const xLabelWidth = rotatedLabelWidth(ctx, labels, o);
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, yLabelWidth, input.legend);
-  y.range([plot.top + plot.height, plot.top]);
+    : framePlot(ctx, width, height, yLabelWidth, input.legend, o, xLabelWidth);
+  const { scale: y, log: yLog } = categoryValueAxis(extent, view, o, [
+    plot.top + plot.height,
+    plot.top,
+  ]);
+  /** 값 v의 픽셀 y. 로그 축에서 0 이하는 축 아래 끝 */
+  const py = (v: number) => (yLog && v <= 0 ? plot.top + plot.height : y(v));
   const xDomain: [number, number] = view?.x ?? [-0.5, n - 0.5];
   const x = scaleLinear()
     .domain(xDomain)
@@ -163,16 +182,30 @@ export function renderWaterfall(
 
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    drawYGrid(ctx, plot, y, yTicks, yFormat);
-    drawCategoryLabels(ctx, plot, x, labels, xDomain, band);
-    drawBaseline(ctx, plot, y(0));
-    drawTitle(ctx, plot, input.title, [
-      input.agg && AGG_LABELS[input.agg],
-      `${categories.length}개 범주`,
-      inSelection && `${selectedCount}개 선택`,
-    ]);
+    drawYAxis(ctx, plot, y, yTicks, yFormat, o);
+    drawCategoryLabels(ctx, plot, x, labels, xDomain, band, o);
+    drawBaseline(ctx, plot, py(0), o);
+    drawAxisTitles(
+      ctx,
+      plot,
+      o,
+      input.axisTitles ?? {},
+      yLabelWidth,
+      xLabelWidth,
+    );
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
+      [
+        input.agg && AGG_LABELS[input.agg],
+        `${categories.length}개 범주`,
+        inSelection && `${selectedCount}개 선택`,
+      ],
+      o,
+    );
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth)
+      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth, o)
       : undefined;
   }
 
@@ -183,27 +216,31 @@ export function renderWaterfall(
   ctx.clip();
   // 이전 막대 끝에서 다음 막대 시작까지 누적 높이를 점선으로 잇는다.
   ctx.strokeStyle = THEME.axis;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = lineWidthOf(o, 1);
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
   for (let i = 0; i < n - 1; i++) {
-    const level = Math.round(y(steps[i].end)) + 0.5;
+    const level = Math.round(py(steps[i].end)) + 0.5;
     ctx.moveTo(x(i) + markWidth / 2, level);
     ctx.lineTo(x(i + 1) - markWidth / 2, level);
   }
   ctx.stroke();
   ctx.setLineDash([]);
+  /** 점 글자 자리: [x, y, 값]. clip을 푼 뒤 그린다. */
+  const marks: [number, number, number][] = [];
   steps.forEach((s, i) => {
     const index = legendIndexOf(i);
     if (off[index]) return;
-    const top = Math.min(y(s.start), y(s.end));
-    const h = Math.abs(y(s.end) - y(s.start));
+    const top = Math.min(py(s.start), py(s.end));
+    const h = Math.abs(py(s.end) - py(s.start));
     ctx.fillStyle = colorOf(index);
     ctx.globalAlpha = !inSelection || inSelection(...stepPoint(i, s)) ? 1 : 0.2;
     ctx.beginPath();
     ctx.roundRect(x(i) - markWidth / 2, top, markWidth, Math.max(h, 1), 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+    // 점 글자: 증가·감소 막대는 바뀐 값, 합계는 최종 누적. 막대 위쪽 끝에 단다.
+    marks.push([x(i), top, s.end - s.start]);
     if (i % 200 === 0) progress("render", i / n);
   });
   if (input.selection) {
@@ -211,6 +248,8 @@ export function renderWaterfall(
   }
   drawShapes(ctx, input.shapes, x, y);
   ctx.restore();
+  const label = input.compact ? undefined : markLabeler(ctx, plot, o);
+  if (label) for (const [lx, ly, v] of marks) label(lx, ly, v);
   progress("render", 1);
 
   return {
