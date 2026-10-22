@@ -313,6 +313,7 @@ async function run(job: Job) {
         color: restored?.color,
         legendColors: restored?.legendColors,
         legendPosition: restored?.legendPosition,
+        hiddenLegend: restored?.hiddenLegend,
       }),
     };
   });
@@ -491,7 +492,10 @@ function itemView(chart: ChartRecord, item: ChartItem) {
 
 /** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
 export function propsOrNone(props: ItemProps): ItemProps | undefined {
-  return props.color || props.legendColors || props.legendPosition
+  return props.color ||
+    props.legendColors ||
+    props.legendPosition ||
+    props.hiddenLegend?.length
     ? props
     : undefined;
 }
@@ -552,6 +556,7 @@ function legendInput(
       ...groups.map((g) => groupColor(item, g)),
     ],
     position: legendPosition(chart, item),
+    hidden: item.props?.hiddenLegend,
   };
 }
 

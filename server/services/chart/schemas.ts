@@ -171,6 +171,8 @@ export const ItemRestoreSchema = z
     color: HexColorSchema.optional(),
     legendColors: ColorMapSchema.optional(),
     legendPosition: LegendPositionSchema.optional(),
+    /** legend 체크박스로 끈 값 */
+    hiddenLegend: z.array(z.string()).max(16).optional(),
   })
   .openapi("ItemRestore");
 
@@ -349,7 +351,8 @@ export const ResizeRequestSchema = z
   .openapi("ResizeRequest");
 
 /**
- * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치다.
+ * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치,
+ * legendVisible은 legend 체크박스로 값 하나를 켜고 끈다.
  * null이면 공통 속성을 따르도록 되돌린다. color: null은 legend 값별 색까지 모두 되돌린다.
  */
 export const ItemPropsRequestSchema = z
@@ -362,6 +365,10 @@ export const ItemPropsRequestSchema = z
       }),
     }),
     z.object({ legendPosition: orNull(LegendPositionSchema) }),
+    /** legend 체크박스: 값 하나를 보이거나 숨긴다. */
+    z.object({
+      legendVisible: z.object({ value: z.string(), visible: z.boolean() }),
+    }),
   ])
   .openapi("ItemPropsRequest");
 
@@ -413,6 +420,10 @@ export const LegendMetaSchema = z
         color: z.string(),
         index: z.number(),
         rect: RectSchema,
+        /** 색 표시(●)의 가운데. 체크박스를 이 자리에 겹친다. */
+        marker: z.object({ x: z.number(), y: z.number() }),
+        /** 체크박스로 끈 값이면 false */
+        visible: z.boolean(),
       }),
     ),
     hidden: z.number(),

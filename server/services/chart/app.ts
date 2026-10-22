@@ -312,6 +312,12 @@ export const chartApp = createServiceApp()
         : undefined;
     } else if ("legendPosition" in body) {
       props.legendPosition = body.legendPosition ?? undefined;
+    } else if ("legendVisible" in body) {
+      const { value, visible } = body.legendVisible;
+      const hidden = new Set(props.hiddenLegend);
+      if (visible) hidden.delete(value);
+      else hidden.add(value);
+      props.hiddenLegend = hidden.size ? [...hidden] : undefined;
     } else if (body.color === null) {
       // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
       props.color = undefined;
@@ -322,7 +328,7 @@ export const chartApp = createServiceApp()
     item.props = propsOrNone(props);
     recordEvent(
       target.chart,
-      "legendPosition" in body ? "legend" : "color",
+      "color" in body || "legendColor" in body ? "color" : "legend",
       item.key,
     );
     return c.json(redrawJob(target.chart, [item.key]), 202);

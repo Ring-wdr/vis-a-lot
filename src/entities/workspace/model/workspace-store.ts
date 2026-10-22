@@ -49,6 +49,8 @@ export type WorkspaceState = {
   mode: Mode;
   /** 페인트 모드에서 쓰는 그리기 도구. 탭 안의 모든 item이 같은 도구를 쓴다. */
   paintTool: PaintTool;
+  /** PNG legend 항목 위에 체크박스를 띄울지. 화면 표시만 바꾸므로 차트 설정(spec)에 넣지 않는다. */
+  showLegendCheckboxes: boolean;
   /** scatter 툴팁에 가까운 점(x, y, tooltip 컬럼)을 보여줄지. 화면 표시만 바꾸므로 차트 설정(spec)에 넣지 않는다. */
   showNearest: boolean;
   /** item grid 영역의 크기. draw할 때 item PNG 크기를 정하는 데 쓴다. */
@@ -69,6 +71,7 @@ export type WorkspaceState = {
   setMode: (mode: Mode) => void;
   setPaintTool: (tool: PaintTool) => void;
   setShowNearest: (show: boolean) => void;
+  toggleLegendCheckboxes: () => void;
   setGridArea: (size: Size) => void;
   setItemJob: (key: string, jobId: string | undefined) => void;
   changeUndo: (key: string, delta: number | "reset") => void;
@@ -107,6 +110,7 @@ export function createWorkspaceStore({
     mode: "normal",
     paintTool: "rect",
     showNearest: true,
+    showLegendCheckboxes: false,
     itemJobs: {},
     undoCounts: {},
     notices: [],
@@ -141,6 +145,8 @@ export function createWorkspaceStore({
     setMode: (mode) => set((s) => (s.readOnly ? {} : { mode })),
     setPaintTool: (paintTool) => set({ paintTool }),
     setShowNearest: (showNearest) => set({ showNearest }),
+    toggleLegendCheckboxes: () =>
+      set((s) => ({ showLegendCheckboxes: !s.showLegendCheckboxes })),
     setGridArea: (gridArea) => set({ gridArea }),
     setItemJob: (key, jobId) =>
       set((s) => {

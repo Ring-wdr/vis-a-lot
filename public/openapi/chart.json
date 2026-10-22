@@ -350,6 +350,24 @@
               }
             },
             "required": ["legendPosition"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "legendVisible": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "visible": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["value", "visible"]
+              }
+            },
+            "required": ["legendVisible"]
           }
         ]
       },
@@ -662,6 +680,13 @@
           },
           "legendPosition": {
             "$ref": "#/components/schemas/LegendPosition"
+          },
+          "hiddenLegend": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16
           }
         },
         "required": ["shapes"]
@@ -1207,9 +1232,31 @@
                     }
                   },
                   "required": ["x", "y", "width", "height"]
+                },
+                "marker": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["x", "y"]
+                },
+                "visible": {
+                  "type": "boolean"
                 }
               },
-              "required": ["value", "color", "index", "rect"]
+              "required": [
+                "value",
+                "color",
+                "index",
+                "rect",
+                "marker",
+                "visible"
+              ]
             }
           },
           "hidden": {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
@@ -39,7 +39,10 @@ export function ItemTooltip({
   columns,
   display,
   onLegendColor,
+  overlay,
 }: {
+  /** PNG 위에 겹칠 조작 (legend 체크박스) */
+  overlay?: ReactNode;
   image: ChartImageData;
   /** PNG 안 legend 상자의 [● 값]을 눌러 고른 최종 색 */
   onLegendColor?: (value: string, color: string) => void;
@@ -120,6 +123,7 @@ export function ItemTooltip({
       onMouseLeave={() => setCursor(undefined)}
     >
       <ChartImage data={image} alt={alt} />
+      {overlay}
       {meta.data?.legend && onLegendColor && (
         // PNG에 그려진 legend 항목 자리에 색 선택 버튼을 겹친다 (위치는 metadata).
         <div className={styles.legendHitLayer}>

@@ -7,6 +7,7 @@ import { utcFormat } from "d3-time-format";
 import {
   drawLegendAround,
   framePlot,
+  hiddenIndexes,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
@@ -200,6 +201,8 @@ export function renderScatter(
   const groups = (input.groups ?? []).map(regionTester);
   const groupIndex = input.legend && new Uint8Array(input.legend.index);
   const groupBase = (input.legend?.values.length ?? 0) - groups.length;
+  // 체크박스로 끈 legend 값의 점은 그리지도, 툴팁으로 찾지도 않는다.
+  const off = hiddenIndexes(input.legend);
   const { selection } = input;
   const inSelection = selection && regionTester(selection);
   const selected = selection ? new Uint8Array(n) : undefined;
@@ -221,6 +224,7 @@ export function renderScatter(
     const cy = y(ys[i]);
     sx[i] = cx;
     sy[i] = cy;
+    if (groupIndex && off[groupIndex[i]]) continue;
     const ix = Math.round(cx - plot.left);
     const iy = Math.round(cy - plot.top);
     if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
@@ -318,6 +322,7 @@ export function renderScatter(
     const steps = layers.length * passes.length;
     layers.forEach((layer, l) => {
       passes.forEach((color, g) => {
+        if (off[g]) return;
         ctx.fillStyle = color;
         // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 하고,
         // 많으면 작은 반투명 점으로 밀도를 보여준다. 선택 바깥 점은 더 옅게 그린다.
