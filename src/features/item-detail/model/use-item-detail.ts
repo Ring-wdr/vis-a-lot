@@ -48,10 +48,11 @@ export function useItemDetail(
   const job = useJobItem(jobId, item?.key ?? "");
   const state = job.data?.items[0];
   const failed = state?.status === "failed";
+  const failure = state?.error;
 
   useEffect(() => {
-    if (failed) notify("크게 보기 PNG를 그리지 못했습니다.");
-  }, [failed, notify]);
+    if (failed) notify(failure ?? "크게 보기 PNG를 그리지 못했습니다.");
+  }, [failed, failure, notify]);
 
   const image =
     query.data && "image" in query.data

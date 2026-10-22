@@ -1,6 +1,6 @@
 "use client";
 
-import { History, LayoutGrid } from "lucide-react";
+import { History, LayoutGrid, TriangleAlert } from "lucide-react";
 import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
@@ -200,6 +200,18 @@ export function ChartGrid() {
                       }
                     />
                   ))}
+                {/* item 목록이 정해지기 전에 실패하면(지운 데이터, 스키마 오류 등) 빈 grid 대신 사유를 보여준다. */}
+                {job.data?.status === "failed" &&
+                  job.data.totalItems === null && (
+                    <div className={styles.gridMessage}>
+                      <EmptyState
+                        icon={<TriangleAlert size={20} />}
+                        title="그리지 못했습니다"
+                      >
+                        {jobError ?? "다시 draw를 눌러 보세요."}
+                      </EmptyState>
+                    </div>
+                  )}
                 {moving && (
                   <div className={styles.pageMoving} aria-live="polite">
                     <Spinner />

@@ -2,7 +2,10 @@
 
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown, Database } from "lucide-react";
-import { COLUMN_TYPE_LABELS } from "@/entities/dataset/lib/labels";
+import {
+  COLUMN_TYPE_LABELS,
+  DELETED_DATASET_HINT,
+} from "@/entities/dataset/lib/labels";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { filterOf, sameFilters } from "@/features/data-filter/model/filters";
 import { ColumnFilter } from "@/features/data-filter/ui/ColumnFilter";
@@ -53,11 +56,15 @@ export function FilterPanel() {
             ? "바뀐 필터는 draw를 눌러야 적용됩니다."
             : "필터는 draw할 때 적용됩니다."}
       </p>
-      {(schemaState === "missing" || schemaState === "generating") && (
+      {(schemaState === "missing" ||
+        schemaState === "generating" ||
+        schemaState === "deleted") && (
         <EmptyState size="sm" icon={<Database size={16} />} title="컬럼 없음">
           {schemaState === "generating"
             ? "데이터 등록이 끝나면 컬럼이 나타납니다."
-            : "데이터를 등록하면 컬럼이 나타납니다."}
+            : schemaState === "deleted"
+              ? DELETED_DATASET_HINT
+              : "데이터를 등록하면 컬럼이 나타납니다."}
         </EmptyState>
       )}
       {schemaState === "loading" && (

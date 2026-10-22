@@ -42,3 +42,7 @@ export const DATETIME_FORMATS = [
   "yyyyMMddHHmmss",
   "yyyyMMdd",
 ] as const;
+
+/** 지운 데이터를 고른 채로 남은 화면에 보여주는 안내 */
+export const DELETED_DATASET_HINT =
+  "삭제된 데이터입니다. datastore에서 다른 데이터를 고르세요.";
