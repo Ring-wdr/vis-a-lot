@@ -11,8 +11,7 @@ import {
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import type { Mode } from "@/entities/workspace/model/workspace-store";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
-import { api } from "@/shared/api/api";
-import { useItemMeta } from "@/shared/api/queries";
+import { itemMetaQuery, useItemMeta } from "@/shared/api/queries";
 import type {
   ChartImage as ChartImageData,
   ItemMeta,
@@ -57,10 +56,7 @@ export function DrawLayer({
   const getMeta = (): Promise<ItemMeta> =>
     meta.data
       ? Promise.resolve(meta.data)
-      : client.fetchQuery({
-          queryKey: ["meta", image.url],
-          queryFn: () => api.itemMeta(image.url),
-        });
+      : client.fetchQuery(itemMetaQuery(image.url));
 
   const toPoint = (e: React.PointerEvent) => {
     const p = eventToPng(e, e.currentTarget, image);

@@ -326,14 +326,28 @@ export function useCancelJob() {
   return useMutation({ mutationFn: api.cancelJob });
 }
 
+/**
+ * 툴팁 query는 한 번 실패하면 그 PNG에서 툴팁이 다시는 안 나오므로 몇 번 더 시도한다
+ * (service worker 재시작, 다시 그린 직후 metadata가 아직 없을 때 등).
+ */
+const TOOLTIP_RETRY = {
+  retry: 3,
+  retryDelay: (attempt: number) => Math.min(250 * 2 ** attempt, 2000),
+} as const;
+
 /** item에 처음 커서를 올릴 때 받아 오고, 같은 PNG 버전이면 다시 받지 않는다. */
 export function useItemMeta(pngUrl: string, enabled: boolean) {
-  return useQuery({
+  return useQuery(itemMetaQuery(pngUrl, enabled));
+}
+
+export function itemMetaQuery(pngUrl: string, enabled = true) {
+  return queryOptions({
     queryKey: ["meta", pngUrl],
     queryFn: () => api.itemMeta(pngUrl),
     enabled,
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 5 * 60_000,
+    ...TOOLTIP_RETRY,
   });
 }
 
@@ -350,6 +364,7 @@ export function useTooltipValues(
       api.tooltip(chartId, itemKey, { rowId: rowId as number, columns }),
     enabled: rowId !== undefined && columns.length > 0,
     staleTime: Number.POSITIVE_INFINITY,
+    ...TOOLTIP_RETRY,
   });
 }
 
