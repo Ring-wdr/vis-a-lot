@@ -1,0 +1,25 @@
+#!/bin/sh
+# 브랜치 이름 규칙 검사. 사용법: check-branch-name.sh <브랜치 이름>
+# .husky/pre-push와 .claude/hooks/check-branch.mjs가 함께 쓴다.
+# 클라우드 세션이 자동으로 붙이는 이름(feat/beautiful-tesla-e18o94, ccr-332f13b1-v0zrsd 등)을 막는다.
+
+branch=$1
+
+allowed='^(main|develop|release)$|^(feat|feature|fix|chore|refactor|docs|test|release)/[a-z0-9][a-z0-9.-]*$'
+# 자동 이름은 <prefix>/<단어>-<단어>-<숫자가 섞인 6자리>이거나 ccr-로 시작한다.
+generated='^[a-z]+/[a-z]+-[a-z]+-[a-z0-9]{6}$'
+
+is_generated=false
+case "$branch" in
+  ccr-*) is_generated=true ;;
+esac
+if echo "$branch" | grep -Eq "$generated" && echo "${branch##*-}" | grep -q '[0-9]'; then
+  is_generated=true
+fi
+
+if [ "$is_generated" = true ] || ! echo "$branch" | grep -Eq "$allowed"; then
+  echo "브랜치 이름 '$branch'은 규칙에 맞지 않습니다." >&2
+  echo "작업 내용에 맞게 feat/<이름>, fix/<이름>처럼 영어 kebab-case 브랜치를 새로 만드세요." >&2
+  echo "자세한 규칙: .claude/skills/git-branch/SKILL.md" >&2
+  exit 1
+fi
