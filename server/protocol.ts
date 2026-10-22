@@ -111,10 +111,10 @@ export type DbMethods = {
     params: { dataset: string; column: string };
     result: ColumnSummary;
   };
-  /** 툴팁 추가 컬럼 조회 */
+  /** 툴팁 추가 컬럼 조회. 모르는 데이터셋(지운 업로드)이면 null */
   rowValues: {
     params: { dataset: string; rowId: number; columns: string[] };
-    result: Record<string, string | number | null>;
+    result: Record<string, string | number | null> | null;
   };
 };
 

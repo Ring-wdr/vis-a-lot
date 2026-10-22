@@ -210,6 +210,9 @@ serveRpc<DbMethods>({
   },
 
   async rowValues({ dataset, rowId, columns }) {
+    const { datasets } = await ready;
+    // 지운 데이터셋이면 null. chart 서비스가 404로 답한다.
+    if (!(await datasets.table(dataset))) return null;
     const { db, schema, table } = await datasetOf(dataset);
     return queryRowValues(db, table, schema, rowId, columns);
   },

@@ -266,7 +266,7 @@ export const schema = createRoute({
     ...badRequest,
     ...authErrors,
     ...notFound,
-    409: errorResponse("등록하지 않은 데이터셋"),
+    409: errorResponse("등록하지 않은 샘플이거나 적재에 실패한 데이터셋"),
   },
 });
 
