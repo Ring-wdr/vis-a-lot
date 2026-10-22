@@ -65,6 +65,8 @@ export type ScatterInput = {
   groups?: readonly Region[];
   /** 선택 영역. 바깥 점은 흐리게 그린다. */
   selection?: Region;
+  /** 지운 영역. 안의 점은 없던 것으로 보고 그리지도, 세지도 않는다. */
+  deletions?: readonly Region[];
   /** 확대한 범위. 없으면 데이터 전체 범위를 보기 좋게 맞춘다. */
   view?: ItemView;
   shapes: readonly Shape[];
@@ -108,11 +110,39 @@ export function compactPlot(width: number, height: number) {
   };
 }
 
+/** 지운 영역 안의 점을 뺀 입력. 지운 영역이 없으면 그대로 돌려준다. */
+export function withoutDeleted(input: ScatterInput): ScatterInput {
+  const tests = (input.deletions ?? []).map(regionTester);
+  if (tests.length === 0) return input;
+  const { xs, ys, ids, legend } = input;
+  const keep: number[] = [];
+  for (let i = 0; i < xs.length; i++) {
+    if (!tests.some((inside) => inside(xs[i], ys[i]))) keep.push(i);
+  }
+  const pick = <T extends Float64Array | Uint8Array>(src: T, out: T) => {
+    keep.forEach((k, j) => {
+      out[j] = src[k];
+    });
+    return out;
+  };
+  return {
+    ...input,
+    xs: pick(xs, new Float64Array(keep.length)),
+    ys: pick(ys, new Float64Array(keep.length)),
+    ids: pick(ids, new Float64Array(keep.length)),
+    legend: legend && {
+      ...legend,
+      index: pick(legend.index, new Uint8Array(keep.length)),
+    },
+  };
+}
+
 export function renderScatter(
   ctx: Ctx,
-  input: ScatterInput,
+  rawInput: ScatterInput,
   progress: ProgressFn,
 ): ScatterMeta {
+  const input = withoutDeleted(rawInput);
   const { width, height, xs, ys } = input;
   const n = xs.length;
 

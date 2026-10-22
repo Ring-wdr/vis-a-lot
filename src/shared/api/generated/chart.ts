@@ -1,6 +1,162 @@
 // 자동 생성 파일. 직접 고치지 말고 `pnpm gen:api`로 다시 만든다.
 
 export type paths = {
+  "/charts/{chartId}/items/{itemKey}/deletions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 영역 안의 점 지우기 (scatter만). 데이터는 그대로 두고 그 item에서만 뺀다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["DeletionRequest"];
+        };
+      };
+      responses: {
+        /** @description 다시 그리는 job. long polling으로 진행 상태를 받는다 */
+        202: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ItemJobResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않았거나 다시 그리는 중 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    /** 지운 점 모두 되돌리기 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 다시 그리는 job. long polling으로 진행 상태를 받는다 */
+        202: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ItemJobResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않았거나 다시 그리는 중 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts/{chartId}/items/{itemKey}/favorites": {
     parameters: {
       query?: never;
@@ -1746,6 +1902,90 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/charts/{chartId}/items/{itemKey}/deletions/last": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** 마지막으로 지운 영역 되돌리기 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 다시 그리는 job. long polling으로 진행 상태를 받는다 */
+        202: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ItemJobResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않았거나 다시 그리는 중 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts/{chartId}/items/{itemKey}/shapes/last": {
     parameters: {
       query?: never;
@@ -1841,6 +2081,23 @@ export type components = {
       /** @example unknown chart */
       error: string;
     };
+    DeletionRequest: {
+      region: components["schemas"]["Region"];
+    };
+    Region:
+      | {
+          /** @enum {string} */
+          type: "rect";
+          x0: number;
+          y0: number;
+          x1: number;
+          y1: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "lasso";
+          points: [number, number][];
+        };
     NameRequest: {
       name: string;
     };
@@ -1997,6 +2254,7 @@ export type components = {
       selection?: components["schemas"]["Region"];
       favorites?: components["schemas"]["Favorite"][];
       legendGroups?: components["schemas"]["LegendGroup"][];
+      deletions?: components["schemas"]["Region"][];
       color?: components["schemas"]["HexColor"];
       legendColors?: {
         [key: string]: components["schemas"]["HexColor"];
@@ -2007,20 +2265,6 @@ export type components = {
       x: [number, number];
       y: [number, number];
     };
-    Region:
-      | {
-          /** @enum {string} */
-          type: "rect";
-          x0: number;
-          y0: number;
-          x1: number;
-          y1: number;
-        }
-      | {
-          /** @enum {string} */
-          type: "lasso";
-          points: [number, number][];
-        };
     Favorite: {
       name: string;
       region: components["schemas"]["Region"];
@@ -2078,7 +2322,8 @@ export type components = {
       | "common"
       | "grid"
       | "selection"
-      | "favorite";
+      | "favorite"
+      | "delete";
     HistorySummary: {
       id: string;
       createdAt: number;
@@ -2106,6 +2351,7 @@ export type components = {
         grid?: number;
         selection?: number;
         favorite?: number;
+        delete?: number;
       };
       thumbnail?: string;
     };
@@ -2266,6 +2512,7 @@ export type components = {
         name: string;
         color: string;
       }[];
+      deletionCount: number;
     };
     /** @enum {string} */
     ItemStage: "query" | "aggregate" | "render" | "encode";

@@ -51,6 +51,8 @@ export type ChartItem = {
   favorites: Favorite[];
   /** 선택 영역으로 만든 새 범례. 순서대로 legend 끝에 붙는다. */
   legendGroups: LegendGroup[];
+  /** 지운 영역 (scatter). 그린 순서대로 쌓이고 되돌리기는 마지막 것을 뺀다. */
+  deletions: Region[];
   /** 개별 속성. split 조합 키에 붙어 있어 다시 불러와도 유지된다. 없으면 공통 속성을 따른다. */
   props?: ItemProps;
   /** item 단위 다시 그리기가 진행 중이면 그 job id */

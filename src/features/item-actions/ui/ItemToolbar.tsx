@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Settings, ZoomOut } from "lucide-react";
+import { ArchiveRestore, RotateCcw, Settings, ZoomOut } from "lucide-react";
 import { useState } from "react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
@@ -10,7 +10,10 @@ import { ItemSettings } from "./ItemSettings";
 
 const ZOOM_OUT_RATIO = 2;
 
-/** item별 툴바: 축소, 확대 초기화, 설정(legend 위치·개별 색). 그리기 도구는 페인트 모드의 왼쪽 도구에 있다. */
+/**
+ * item별 툴바: 축소, 확대 초기화, 지운 점 되돌리기, 설정(legend 위치·개별 색).
+ * 그리기 도구는 페인트 모드의 왼쪽 도구에 있다.
+ */
 export function ItemToolbar({
   item,
   busy,
@@ -60,6 +63,18 @@ export function ItemToolbar({
       >
         <RotateCcw size={13} aria-hidden="true" />
       </button>
+      {/* 점을 지운 적이 있을 때만 보인다 (scatter). */}
+      {item.deletionCount > 0 && (
+        <button
+          type="button"
+          title="지운 점 되돌리기"
+          aria-label="지운 점 되돌리기"
+          disabled={disabled}
+          onClick={() => onAction({ type: "undoDeletion" })}
+        >
+          <ArchiveRestore size={13} aria-hidden="true" />
+        </button>
+      )}
       {drawn && item.image && (
         <Popover
           triggerLabel="item 설정"

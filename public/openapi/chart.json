@@ -38,6 +38,67 @@
         },
         "required": ["error"]
       },
+      "DeletionRequest": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          }
+        },
+        "required": ["region"]
+      },
+      "Region": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["rect"]
+              },
+              "x0": {
+                "type": "number"
+              },
+              "y0": {
+                "type": "number"
+              },
+              "x1": {
+                "type": "number"
+              },
+              "y1": {
+                "type": "number"
+              }
+            },
+            "required": ["type", "x0", "y0", "x1", "y1"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["lasso"]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "minItems": 3,
+                "maxItems": 2000
+              }
+            },
+            "required": ["type", "points"]
+          }
+        ]
+      },
       "NameRequest": {
         "type": "object",
         "properties": {
@@ -583,6 +644,13 @@
             },
             "maxItems": 8
           },
+          "deletions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Region"
+            },
+            "maxItems": 50
+          },
           "color": {
             "$ref": "#/components/schemas/HexColor"
           },
@@ -625,58 +693,6 @@
           }
         },
         "required": ["x", "y"]
-      },
-      "Region": {
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": ["rect"]
-              },
-              "x0": {
-                "type": "number"
-              },
-              "y0": {
-                "type": "number"
-              },
-              "x1": {
-                "type": "number"
-              },
-              "y1": {
-                "type": "number"
-              }
-            },
-            "required": ["type", "x0", "y0", "x1", "y1"]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": ["lasso"]
-              },
-              "points": {
-                "type": "array",
-                "items": {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ]
-                },
-                "minItems": 3,
-                "maxItems": 2000
-              }
-            },
-            "required": ["type", "points"]
-          }
-        ]
       },
       "Favorite": {
         "type": "object",
@@ -844,7 +860,8 @@
           "common",
           "grid",
           "selection",
-          "favorite"
+          "favorite",
+          "delete"
         ]
       },
       "HistorySummary": {
@@ -925,6 +942,9 @@
                 "type": "number"
               },
               "favorite": {
+                "type": "number"
+              },
+              "delete": {
                 "type": "number"
               }
             }
@@ -1511,6 +1531,9 @@
               },
               "required": ["name", "color"]
             }
+          },
+          "deletionCount": {
+            "type": "number"
           }
         },
         "required": [
@@ -1524,7 +1547,8 @@
           "color",
           "customColor",
           "favorites",
-          "legendGroups"
+          "legendGroups",
+          "deletionCount"
         ]
       },
       "ItemStage": {
@@ -1648,6 +1672,196 @@
     "parameters": {}
   },
   "paths": {
+    "/charts/{chartId}/items/{itemKey}/deletions": {
+      "post": {
+        "tags": ["items"],
+        "summary": "영역 안의 점 지우기 (scatter만). 데이터는 그대로 두고 그 item에서만 뺀다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["items"],
+        "summary": "지운 점 모두 되돌리기",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/charts/{chartId}/items/{itemKey}/favorites": {
       "post": {
         "tags": ["items"],
@@ -3574,6 +3788,97 @@
           },
           "404": {
             "description": "모르는 차트, 또는 지운 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/items/{itemKey}/deletions/last": {
+      "delete": {
+        "tags": ["items"],
+        "summary": "마지막으로 지운 영역 되돌리기",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않았거나 다시 그리는 중",
             "content": {
               "application/json": {
                 "schema": {

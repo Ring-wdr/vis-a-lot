@@ -12,9 +12,17 @@ export const MODES = [
   "zoom",
   "rectSelect",
   "lassoSelect",
+  "rectDelete",
+  "lassoDelete",
   "paint",
 ] as const;
 export type Mode = (typeof MODES)[number];
+
+/** scatter에서만 쓰는 모드 (점 삭제) */
+export const SCATTER_ONLY_MODES: readonly Mode[] = [
+  "rectDelete",
+  "lassoDelete",
+];
 
 /** 페인트 모드에서 고르는 그리기 도구 */
 export const PAINT_TOOLS = ["rect", "line", "freehand", "text"] as const;
@@ -105,7 +113,18 @@ export function createWorkspaceStore({
     updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
     setDraft: (draft) => set({ draft }),
     setCurrent: (current) =>
-      set({ current, page: 0, focus: null, itemJobs: {}, undoCounts: {} }),
+      set((s) => ({
+        current,
+        page: 0,
+        focus: null,
+        itemJobs: {},
+        undoCounts: {},
+        // 점 삭제 모드는 scatter에서만 쓰므로 다른 차트를 그리면 기본 모드로 돌린다.
+        ...(SCATTER_ONLY_MODES.includes(s.mode) &&
+        current.spec.chartType !== "scatter"
+          ? { mode: "normal" as const }
+          : {}),
+      })),
     replaceJob: (jobId, spec, page) =>
       set((s) =>
         s.current

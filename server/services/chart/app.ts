@@ -32,6 +32,7 @@ import * as routes from "./routes";
 const LONG_POLL_TIMEOUT_MS = 25_000;
 const MAX_FAVORITES = 20;
 const MAX_LEGEND_GROUPS = 8;
+const MAX_DELETIONS = 50;
 
 let pngVersion = 0;
 
@@ -170,6 +171,44 @@ export const chartApp = createServiceApp()
     target.item.shapes = [];
     recordEvent(target.chart, "clearShapes", target.item.key);
     return c.json(redrawJob(target.chart, [target.item.key]), 202);
+  })
+  .openapi(routes.addDeletion, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    // bar/boxplot은 점이 아니라 집계 값이라 지울 대상이 없다.
+    if (chart.spec.chartType !== "scatter")
+      return apiError(c, 409, "점 삭제는 scatter 차트에서만 됩니다.");
+    if (item.deletions.length >= MAX_DELETIONS)
+      return apiError(
+        c,
+        409,
+        `삭제는 ${MAX_DELETIONS}번까지 쌓을 수 있습니다.`,
+      );
+    item.deletions = [...item.deletions, c.req.valid("json").region];
+    recordEvent(chart, "delete", item.key);
+    return c.json(redrawJob(chart, [item.key]), 202);
+  })
+  .openapi(routes.undoDeletion, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (item.deletions.length === 0) return apiError(c, 409, "no deletions");
+    item.deletions = item.deletions.slice(0, -1);
+    recordEvent(target.chart, "delete", item.key);
+    return c.json(redrawJob(target.chart, [item.key]), 202);
+  })
+  .openapi(routes.clearDeletions, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (item.deletions.length === 0) return apiError(c, 409, "no deletions");
+    item.deletions = [];
+    recordEvent(target.chart, "delete", item.key);
+    return c.json(redrawJob(target.chart, [item.key]), 202);
   })
   .openapi(routes.setSelection, (c) => {
     const { chartId, itemKey } = c.req.valid("param");

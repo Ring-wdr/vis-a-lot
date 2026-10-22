@@ -192,6 +192,7 @@ export type ItemRestore = {
   selection?: Region;
   favorites?: Favorite[];
   legendGroups?: LegendGroup[];
+  deletions?: Region[];
   color?: string;
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
@@ -235,6 +236,7 @@ export type ViewRequest =
   | { type: "reset" }
   | { type: "pan"; dx: number; dy: number };
 
+export type DeletionRequest = { region: Region };
 export type SelectionRequest = { region: Region | null };
 export type NameRequest = { name: string };
 
@@ -321,6 +323,7 @@ export type ItemState = {
   selectedCount?: number;
   favorites: Favorite[];
   legendGroups: { name: string; color: string }[];
+  deletionCount: number;
 };
 
 /** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
@@ -340,6 +343,7 @@ export const HISTORY_EVENT_TYPES = [
   "grid",
   "selection",
   "favorite",
+  "delete",
 ] as const;
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];
 
