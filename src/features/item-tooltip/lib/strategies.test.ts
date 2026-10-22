@@ -1,11 +1,26 @@
 import { describe, expect, it } from "vitest";
-import type { ScatterMeta } from "@/shared/api/types";
+import type {
+  CandleMeta,
+  GanttMeta,
+  PieMeta,
+  RadarMeta,
+  ScatterMeta,
+} from "@/shared/api/types";
 import { PointIndex } from "./point-index";
 import {
   barStrategy,
   boxplotStrategy,
+  candleAt,
+  candleStrategy,
+  formatDuration,
+  ganttStrategy,
+  hitSlice,
   invertAxis,
+  nearestVertex,
+  pieStrategy,
+  radarStrategy,
   scatterStrategy,
+  wedgePath,
 } from "./strategies";
 
 const meta: ScatterMeta = {
@@ -173,5 +188,210 @@ describe("legend가 있는 bar", () => {
 
   it("legend 상자 위에서는 툴팁을 띄우지 않는다", () => {
     expect(barStrategy.hitTest(meta, undefined, 50, 10)).toBeNull();
+  });
+});
+
+describe("candle 툴팁", () => {
+  const meta: CandleMeta = {
+    chartType: "candle",
+    plot: { left: 0, top: 0, width: 300, height: 100 },
+    x: { kind: "time", domain: [0, 3000] },
+    y: { kind: "number", domain: [0, 10] },
+    interval: 1000,
+    bodyWidth: 70,
+    // 1000~2000 구간은 숨겨서 빠졌다.
+    candles: {
+      t: [0, 2000],
+      open: [5, 6],
+      high: [9, 8],
+      low: [3, 6],
+      close: [3, 7],
+      count: [3, 2],
+      g: [1, 0],
+    },
+    legend: {
+      title: "캔들",
+      values: ["상승", "하락"],
+      colors: ["#e34948", "#2a78d6"],
+      box: { x: 0, y: -30, width: 10, height: 10 },
+      entries: [],
+      hidden: 0,
+    },
+  };
+
+  it("구간 시작 목록에서 시각이 든 캔들을 찾는다", () => {
+    expect(candleAt(meta.candles.t, 1000, 2500)).toBe(1);
+    expect(candleAt(meta.candles.t, 1000, 1500)).toBe(-1);
+    expect(candleAt(meta.candles.t, 1000, -1)).toBe(-1);
+  });
+
+  it("가리킨 캔들의 OHLC와 심지 범위 하이라이트", () => {
+    const hit = candleStrategy.hitTest(meta, undefined, 50, 50);
+    expect(hit?.rows.find((r) => r.label === "캔들")?.value).toBe("하락");
+    expect(hit?.rows.find((r) => r.label === "종가")?.value).toBe("3");
+    expect(hit?.rows.find((r) => r.label === "개수")?.value).toBe("3");
+    // 가운데 50, 몸통 70을 3px 여유로 감싸고, 세로는 고가 9 ~ 저가 3
+    expect(hit?.highlight).toMatchObject({
+      x: 12,
+      width: 76,
+      y: 7,
+      height: 66,
+    });
+    expect(candleStrategy.hitTest(meta, undefined, 150, 50)).toBeNull();
+  });
+});
+
+describe("gantt 툴팁", () => {
+  // 행 2개(높이 100 → 행마다 50px), 시간 0~1000을 200px에
+  const meta: GanttMeta = {
+    chartType: "gantt",
+    plot: { left: 0, top: 0, width: 200, height: 100 },
+    x: { kind: "time", domain: [0, 1000] },
+    y: { kind: "number", domain: [-0.5, 1.5] },
+    rowTitle: "설비",
+    rows: ["M1", "M2"],
+    barHeight: 35,
+    bars: {
+      r: [0, 0, 1],
+      s: [0, 500, 200],
+      e: [500, 1000, 400],
+      g: [1, 0, 1],
+      n: [3, 2, 1],
+      m: [1, 4, 1],
+    },
+    truncated: false,
+    legend: {
+      title: "상태",
+      values: ["경고", "정상"],
+      colors: ["#eb6834", "#2a78d6"],
+      box: { x: 0, y: -30, width: 10, height: 10 },
+      entries: [],
+      hidden: 0,
+    },
+  };
+  const prepared = ganttStrategy.prepare(meta);
+
+  it("첫 행은 위, 커서 시각이 든 막대를 찾는다", () => {
+    const hit = ganttStrategy.hitTest(meta, prepared, 150, 25);
+    expect(hit?.rows).toEqual([
+      { label: "설비", value: "M1" },
+      { label: "상태", value: "경고" },
+      { label: "시작", value: expect.any(String) },
+      { label: "끝", value: expect.any(String) },
+      { label: "길이", value: "500ms", emphasis: true },
+      { label: "개수", value: "2" },
+      { label: "합친 구간", value: "4개" },
+    ]);
+    expect(hit?.highlight).toMatchObject({ x: 97, width: 106 });
+    // 아래 행(M2)은 40~80px에만 막대가 있다.
+    expect(ganttStrategy.hitTest(meta, prepared, 60, 75)?.rows[0].value).toBe(
+      "M2",
+    );
+    expect(ganttStrategy.hitTest(meta, prepared, 120, 75)).toBeNull();
+    // 행 사이(막대 높이 밖)
+    expect(ganttStrategy.hitTest(meta, prepared, 60, 49)).toBeNull();
+  });
+
+  it("기간을 큰 단위 둘로 읽는다", () => {
+    expect(formatDuration(2 * 3_600_000 + 5 * 60_000 + 3000)).toBe("2시간 5분");
+    expect(formatDuration(35_000)).toBe("35초");
+    expect(formatDuration(86_400_000)).toBe("1일");
+  });
+});
+
+describe("pie", () => {
+  const pie: PieMeta = {
+    chartType: "pie",
+    plot: { left: 0, top: 0, width: 200, height: 200 },
+    x: { kind: "number", domain: [0, 200] },
+    y: { kind: "number", domain: [0, 200] },
+    center: { x: 100, y: 100 },
+    radius: 80,
+    slices: [
+      {
+        category: "a",
+        value: 3,
+        ratio: 0.75,
+        start: -Math.PI / 2,
+        end: Math.PI,
+        color: "#2a78d6",
+        index: 0,
+      },
+      {
+        category: "b",
+        value: 1,
+        ratio: 0.25,
+        start: Math.PI,
+        end: (Math.PI * 3) / 2,
+        color: "#eb6834",
+        index: 1,
+      },
+    ],
+    total: 4,
+    agg: "sum",
+  };
+
+  it("커서 각도로 조각을 찾고, 원 밖이면 없다", () => {
+    expect(hitSlice(pie, 150, 100)?.category).toBe("a"); // 3시
+    expect(hitSlice(pie, 60, 60)?.category).toBe("b"); // 10시 반
+    expect(hitSlice(pie, 101, 30)?.category).toBe("a"); // 12시 바로 오른쪽
+    expect(hitSlice(pie, 195, 100)).toBeUndefined();
+  });
+
+  it("조각 범주·값·비율과 윤곽을 준다", () => {
+    const hit = pieStrategy.hitTest(pie, undefined, 60, 60);
+    expect(hit?.rows.map((r) => r.value)).toEqual(["b", "1", "25.0%"]);
+    expect(hit?.outline).toMatch(/^M 100 100 L /);
+  });
+
+  it("한 바퀴 전체 조각의 윤곽은 반원 두 개", () => {
+    expect(wedgePath(0, 0, 10, 0, Math.PI * 2).match(/A /g)).toHaveLength(2);
+  });
+});
+
+describe("radar", () => {
+  const radar: RadarMeta = {
+    chartType: "radar",
+    plot: { left: 0, top: 0, width: 200, height: 200 },
+    x: { kind: "number", domain: [0, 200] },
+    y: { kind: "number", domain: [0, 200] },
+    center: { x: 100, y: 100 },
+    radius: 80,
+    axisTitle: "라인",
+    axes: ["L1", "L2", "L3"],
+    domain: [0, 10],
+    series: [
+      {
+        name: "주간",
+        color: "#2a78d6",
+        index: 0,
+        values: [10, 5, null],
+        points: [[100, 20], [135, 120], null],
+      },
+      {
+        name: "야간",
+        color: "#eb6834",
+        index: 1,
+        values: [2, 2, 2],
+        points: [
+          [100, 84],
+          [114, 108],
+          [86, 108],
+        ],
+      },
+    ],
+    agg: "avg",
+  };
+
+  it("가장 가까운 꼭짓점을 찾고, 멀면 없다", () => {
+    expect(nearestVertex(radar, 102, 24)).toEqual([0, 0]);
+    expect(nearestVertex(radar, 88, 110)).toEqual([1, 2]);
+    expect(nearestVertex(radar, 190, 190)).toBeUndefined();
+  });
+
+  it("축·계열·값을 보여주고 꼭짓점에 표시한다", () => {
+    const hit = radarStrategy.hitTest(radar, undefined, 133, 118);
+    expect(hit?.marker).toEqual({ px: 135, py: 120 });
+    expect(hit?.rows.map((r) => r.value)).toEqual(["L2", "주간", "5"]);
   });
 });

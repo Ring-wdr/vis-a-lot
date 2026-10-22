@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  defaultLegendPosition,
+  drawsLegend,
+  legendColumnOf,
+} from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
@@ -16,20 +21,21 @@ export function LegendSettings() {
   const readOnly = useWorkspace((s) => s.readOnly);
   const columns = useColumns(draft.dataset);
   const { common, change, pending, appliesToCurrent } = useChangeCommon();
+  const legend = legendColumnOf(draft);
 
   return (
     <div className={settingsStyles.section}>
       <h3 className={settingsStyles.heading}>
         legend 위치
-        {draft.legend !== null && ` · ${columns.label(draft.legend)}`}
+        {legend !== null && ` · ${columns.label(legend)}`}
       </h3>
       <LegendPositionPicker
-        value={common.legendPosition ?? "top"}
+        value={common.legendPosition ?? defaultLegendPosition(draft.chartType)}
         disabled={readOnly || pending}
         onSelect={(legendPosition) => change({ ...common, legendPosition })}
       />
       <p className={styles.muted}>
-        {draft.legend === null
+        {!drawsLegend(draft)
           ? "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다."
           : appliesToCurrent
             ? "바꾸면 전체를 다시 그리고, item별로 정한 위치는 모두 공통 위치로 바뀝니다."

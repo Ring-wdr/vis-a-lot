@@ -68,6 +68,16 @@ export type TooltipResponse = Chart["TooltipResponse"];
 export type AxisMeta = Chart["AxisMeta"];
 export type ScatterMeta = Chart["ScatterMeta"];
 export type CategoryMeta = Chart["CategoryMeta"];
+export type SankeyMeta = Chart["SankeyMeta"];
+export type HeatmapMeta = Chart["HeatmapMeta"];
+export type TreemapMeta = Chart["TreemapMeta"];
+export type CandleMeta = Chart["CandleMeta"];
+export type GanttMeta = Chart["GanttMeta"];
+export type PieMeta = Chart["PieMeta"];
+export type RadarMeta = Chart["RadarMeta"];
+export type HistogramMeta = Chart["HistogramMeta"];
+export type WaterfallMeta = Chart["WaterfallMeta"];
+export type FunnelMeta = Chart["FunnelMeta"];
 export type ItemMeta = Chart["ItemMeta"];
 export type HistoryEventType = Chart["HistoryEventType"];
 export type HistorySummary = Chart["HistorySummary"];
@@ -83,6 +93,17 @@ const CHART_TYPE_SET: Record<ChartType, true> = {
   scatter: true,
   bar: true,
   boxplot: true,
+  line: true,
+  sankey: true,
+  heatmap: true,
+  treemap: true,
+  candle: true,
+  gantt: true,
+  pie: true,
+  radar: true,
+  histogram: true,
+  waterfall: true,
+  funnel: true,
 };
 export const CHART_TYPES = Object.keys(CHART_TYPE_SET) as ChartType[];
 

@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect } from "react";
+import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useItemAction,
@@ -130,7 +131,9 @@ function DrawnItem({
   const paintTool = useWorkspace((s) => s.paintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
   const commonPosition = useWorkspace(
-    (s) => s.current?.spec.common.legendPosition ?? "top",
+    (s) =>
+      s.current?.spec.common.legendPosition ??
+      defaultLegendPosition(s.current?.spec.chartType),
   );
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
   const selected = useWorkspace((s) => s.selectedItem === item.key);

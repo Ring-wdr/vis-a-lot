@@ -45,7 +45,8 @@ export type CategoryData = {
 export type CategoryDataParams = {
   /** 읽을 테이블 (데이터셋 하나) */
   table: string;
-  chartType: "bar" | "boxplot";
+  /** waterfall은 bar와 같은 집계(legend 없이)를 쓰고 누적은 렌더러가 한다. funnel은 funnel-data가 줄 세운다. */
+  chartType: "bar" | "boxplot" | "waterfall" | "funnel";
   x: string;
   y: string;
   agg: AggFn;
@@ -55,7 +56,7 @@ export type CategoryDataParams = {
 };
 const OUTLIER_SAMPLE = 200;
 
-const AGG_SQL: Record<AggFn, (y: string) => string> = {
+export const AGG_SQL: Record<AggFn, (y: string) => string> = {
   avg: (y) => `avg(${y})`,
   sum: (y) => `sum(${y})`,
   count: () => "count(*)",

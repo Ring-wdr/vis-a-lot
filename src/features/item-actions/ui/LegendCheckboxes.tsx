@@ -1,5 +1,6 @@
 "use client";
 
+import { supports } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
@@ -23,7 +24,11 @@ export function LegendCheckboxes({
   disabled: boolean;
   onAction: (action: ItemAction) => void;
 }) {
-  const shown = useWorkspace((s) => s.showLegendCheckboxes);
+  // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
+  const shown = useWorkspace(
+    (s) =>
+      s.showLegendCheckboxes && supports(s.current?.spec.chartType, "checkbox"),
+  );
   const meta = useItemMeta(image.url, shown);
   const legend = meta.data?.legend;
   if (!shown || !legend) return null;

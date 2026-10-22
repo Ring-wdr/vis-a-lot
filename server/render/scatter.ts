@@ -11,6 +11,7 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import { drawLines, seriesOrder } from "./line";
 import { drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
@@ -26,8 +27,9 @@ export type AxisMeta = {
   domain: [number, number];
 };
 
+/** line도 같은 행 단위 점을 쓰므로 metadata 모양이 같다. */
 export type ScatterMeta = {
-  chartType: "scatter";
+  chartType: "scatter" | "line";
   /** PNG 안에서 그림 영역의 픽셀 범위 */
   plot: { left: number; top: number; width: number; height: number };
   x: AxisMeta;
@@ -49,6 +51,8 @@ export type ScatterMeta = {
 };
 
 export type ScatterInput = {
+  /** line이면 점 대신 legend 계열별로 x 순 점을 선으로 잇는다. 없으면 scatter */
+  chartType?: "scatter" | "line";
   width: number;
   height: number;
   title: string;
@@ -219,12 +223,7 @@ export function renderScatter(
     scale: x,
     ticks: xTicks,
     format: xFormat,
-  } = xAxis(
-    input.xKind,
-    xDomain,
-    [plot.left, plot.left + plot.width],
-    !view,
-  );
+  } = xAxis(input.xKind, xDomain, [plot.left, plot.left + plot.width], !view);
 
   // 픽셀 단위로 점을 줄인다. 툴팁의 "가장 가까운 점"은 이 점들 안에서 찾는다.
   const cell = new Int32Array(plot.width * plot.height).fill(-1);
@@ -347,6 +346,22 @@ export function renderScatter(
       plot.left + plot.width / 2,
       plot.top + plot.height / 2,
     );
+  } else if (input.chartType === "line") {
+    progress("render", 0);
+    drawLines(ctx, {
+      sx,
+      sy,
+      series: seriesOrder(
+        xs,
+        groupIndex,
+        input.legend ? input.legend.colors.length : 1,
+        off,
+      ),
+      colors: input.legend ? input.legend.colors : [input.color],
+      selected,
+      plot,
+      compact: input.compact,
+    });
   } else {
     // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (fillStyle 전환을 줄인다).
     const { legend } = input;
@@ -408,7 +423,7 @@ export function renderScatter(
   progress("render", 1);
 
   return {
-    chartType: "scatter",
+    chartType: input.chartType ?? "scatter",
     plot,
     x: { kind: input.xKind, domain: [+x.domain()[0], +x.domain()[1]] },
     y: { kind: "number", domain: [y.domain()[0], y.domain()[1]] },

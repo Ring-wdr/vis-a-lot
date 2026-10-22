@@ -502,6 +502,16 @@
           "y": {
             "$ref": "#/components/schemas/ColumnName"
           },
+          "z": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "agg": {
             "$ref": "#/components/schemas/AggFn"
           },
@@ -566,7 +576,22 @@
       },
       "ChartType": {
         "type": "string",
-        "enum": ["scatter", "bar", "boxplot"]
+        "enum": [
+          "scatter",
+          "bar",
+          "boxplot",
+          "line",
+          "sankey",
+          "heatmap",
+          "treemap",
+          "candle",
+          "gantt",
+          "pie",
+          "radar",
+          "histogram",
+          "waterfall",
+          "funnel"
+        ]
       },
       "ColumnName": {
         "type": "string",
@@ -1056,6 +1081,36 @@
           },
           {
             "$ref": "#/components/schemas/CategoryMeta"
+          },
+          {
+            "$ref": "#/components/schemas/SankeyMeta"
+          },
+          {
+            "$ref": "#/components/schemas/HeatmapMeta"
+          },
+          {
+            "$ref": "#/components/schemas/TreemapMeta"
+          },
+          {
+            "$ref": "#/components/schemas/CandleMeta"
+          },
+          {
+            "$ref": "#/components/schemas/GanttMeta"
+          },
+          {
+            "$ref": "#/components/schemas/PieMeta"
+          },
+          {
+            "$ref": "#/components/schemas/RadarMeta"
+          },
+          {
+            "$ref": "#/components/schemas/HistogramMeta"
+          },
+          {
+            "$ref": "#/components/schemas/WaterfallMeta"
+          },
+          {
+            "$ref": "#/components/schemas/FunnelMeta"
           }
         ]
       },
@@ -1064,7 +1119,7 @@
         "properties": {
           "chartType": {
             "type": "string",
-            "enum": ["scatter"]
+            "enum": ["scatter", "line"]
           },
           "plot": {
             "type": "object",
@@ -1395,6 +1450,1025 @@
           "hi",
           "outlierCount"
         ]
+      },
+      "SankeyMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["sankey"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "side": {
+                  "type": "string",
+                  "enum": ["source", "target"]
+                },
+                "x0": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                },
+                "in": {
+                  "type": "number"
+                },
+                "out": {
+                  "type": "number"
+                },
+                "legend": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "side", "x0", "y0", "x1", "y1", "in", "out"]
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "number"
+                },
+                "target": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                },
+                "width": {
+                  "type": "number"
+                }
+              },
+              "required": ["source", "target", "value", "y0", "y1", "width"]
+            }
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": ["chartType", "plot", "x", "y", "agg", "nodes", "links"]
+      },
+      "HeatmapMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["heatmap"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "xTitle": {
+            "type": "string"
+          },
+          "yTitle": {
+            "type": "string"
+          },
+          "xCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "xStarts": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "timeBin": {
+            "type": "number"
+          },
+          "yCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": ["number", "null"]
+              }
+            }
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "colorDomain": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "xTitle",
+          "yTitle",
+          "xCategories",
+          "yCategories",
+          "cells",
+          "agg",
+          "colorDomain"
+        ]
+      },
+      "TreemapMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["treemap"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "total": {
+            "type": "number"
+          },
+          "leaves": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "g": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "x0": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "g", "value", "x0", "y0", "x1", "y1"]
+            }
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "g": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "x0": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "g", "value", "x0", "y0", "x1", "y1"]
+            }
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "agg",
+          "total",
+          "leaves",
+          "parents"
+        ]
+      },
+      "CandleMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["candle"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "interval": {
+            "type": "number"
+          },
+          "bodyWidth": {
+            "type": "number"
+          },
+          "candles": {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "open": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "high": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "low": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "close": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "count": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "g": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": ["t", "open", "high", "low", "close", "count", "g"]
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "interval",
+          "bodyWidth",
+          "candles"
+        ]
+      },
+      "GanttMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["gantt"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "rowTitle": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "barHeight": {
+            "type": "number"
+          },
+          "bars": {
+            "type": "object",
+            "properties": {
+              "r": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "s": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "e": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "g": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "n": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "m": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": ["r", "s", "e", "g", "n", "m"]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "rowTitle",
+          "rows",
+          "barHeight",
+          "bars",
+          "truncated"
+        ]
+      },
+      "PieMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["pie"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "center": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": ["x", "y"]
+          },
+          "radius": {
+            "type": "number"
+          },
+          "slices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "ratio": {
+                  "type": "number"
+                },
+                "start": {
+                  "type": "number"
+                },
+                "end": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "category",
+                "value",
+                "ratio",
+                "start",
+                "end",
+                "color",
+                "index"
+              ]
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "center",
+          "radius",
+          "slices",
+          "total"
+        ]
+      },
+      "RadarMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["radar"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "center": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": ["x", "y"]
+          },
+          "radius": {
+            "type": "number"
+          },
+          "axisTitle": {
+            "type": "string"
+          },
+          "axes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "domain": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "number"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": ["number", "null"]
+                  }
+                },
+                "points": {
+                  "type": "array",
+                  "items": {
+                    "type": ["array", "null"],
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": ["name", "color", "index", "values", "points"]
+            }
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "center",
+          "radius",
+          "axisTitle",
+          "axes",
+          "domain",
+          "series"
+        ]
+      },
+      "HistogramMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["histogram"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "bins": {
+            "type": "object",
+            "properties": {
+              "lo": {
+                "type": "number"
+              },
+              "step": {
+                "type": "number"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": ["lo", "step", "count"]
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "groupCount": {
+            "type": "number"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "bins",
+          "counts",
+          "groupCount"
+        ]
+      },
+      "WaterfallMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["waterfall"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "number"
+                },
+                "end": {
+                  "type": "number"
+                },
+                "kind": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "enum": [0]
+                    },
+                    {
+                      "type": "number",
+                      "enum": [1]
+                    },
+                    {
+                      "type": "number",
+                      "enum": [2]
+                    }
+                  ]
+                }
+              },
+              "required": ["start", "end", "kind"]
+            }
+          },
+          "markWidth": {
+            "type": "number"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "categories",
+          "steps",
+          "markWidth"
+        ]
+      },
+      "FunnelMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["funnel"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "index": {
+                  "type": "number"
+                },
+                "rect": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["x", "y", "width", "height"]
+                },
+                "rate": {
+                  "type": ["number", "null"]
+                },
+                "share": {
+                  "type": ["number", "null"]
+                }
+              },
+              "required": ["label", "value", "index", "rect", "rate", "share"]
+            }
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": ["chartType", "plot", "x", "y", "stages"]
       },
       "ItemRowsResponse": {
         "type": "object",

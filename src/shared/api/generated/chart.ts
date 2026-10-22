@@ -2391,6 +2391,7 @@ export type components = {
       chartType: components["schemas"]["ChartType"];
       x: components["schemas"]["ColumnName"];
       y: components["schemas"]["ColumnName"];
+      z?: components["schemas"]["ColumnName"] | null;
       agg: components["schemas"]["AggFn"];
       legend: components["schemas"]["ColumnName"] | null;
       splitBy: components["schemas"]["ColumnName"][];
@@ -2403,7 +2404,21 @@ export type components = {
     /** @example iot-100k */
     DatasetId: string;
     /** @enum {string} */
-    ChartType: "scatter" | "bar" | "boxplot";
+    ChartType:
+      | "scatter"
+      | "bar"
+      | "boxplot"
+      | "line"
+      | "sankey"
+      | "heatmap"
+      | "treemap"
+      | "candle"
+      | "gantt"
+      | "pie"
+      | "radar"
+      | "histogram"
+      | "waterfall"
+      | "funnel";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2554,10 +2569,20 @@ export type components = {
     };
     ItemMeta:
       | components["schemas"]["ScatterMeta"]
-      | components["schemas"]["CategoryMeta"];
+      | components["schemas"]["CategoryMeta"]
+      | components["schemas"]["SankeyMeta"]
+      | components["schemas"]["HeatmapMeta"]
+      | components["schemas"]["TreemapMeta"]
+      | components["schemas"]["CandleMeta"]
+      | components["schemas"]["GanttMeta"]
+      | components["schemas"]["PieMeta"]
+      | components["schemas"]["RadarMeta"]
+      | components["schemas"]["HistogramMeta"]
+      | components["schemas"]["WaterfallMeta"]
+      | components["schemas"]["FunnelMeta"];
     ScatterMeta: {
       /** @enum {string} */
-      chartType: "scatter";
+      chartType: "scatter" | "line";
       plot: {
         left: number;
         top: number;
@@ -2641,6 +2666,280 @@ export type components = {
       lo: number;
       hi: number;
       outlierCount: number;
+    };
+    SankeyMeta: {
+      /** @enum {string} */
+      chartType: "sankey";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      agg: components["schemas"]["AggFn"];
+      nodes: {
+        name: string;
+        /** @enum {string} */
+        side: "source" | "target";
+        x0: number;
+        y0: number;
+        x1: number;
+        y1: number;
+        in: number;
+        out: number;
+        legend?: number;
+      }[];
+      links: {
+        source: number;
+        target: number;
+        value: number;
+        y0: number;
+        y1: number;
+        width: number;
+      }[];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    HeatmapMeta: {
+      /** @enum {string} */
+      chartType: "heatmap";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      xTitle: string;
+      yTitle: string;
+      xCategories: string[];
+      xStarts?: number[];
+      timeBin?: number;
+      yCategories: string[];
+      cells: (number | null)[][];
+      agg: components["schemas"]["AggFn"];
+      colorDomain: [number, number];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    TreemapMeta: {
+      /** @enum {string} */
+      chartType: "treemap";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      agg: components["schemas"]["AggFn"];
+      total: number;
+      leaves: {
+        name: string;
+        g: number;
+        value: number;
+        x0: number;
+        y0: number;
+        x1: number;
+        y1: number;
+      }[];
+      parents: {
+        name: string;
+        g: number;
+        value: number;
+        x0: number;
+        y0: number;
+        x1: number;
+        y1: number;
+      }[];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    CandleMeta: {
+      /** @enum {string} */
+      chartType: "candle";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      interval: number;
+      bodyWidth: number;
+      candles: {
+        t: number[];
+        open: number[];
+        high: number[];
+        low: number[];
+        close: number[];
+        count: number[];
+        g: number[];
+      };
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    GanttMeta: {
+      /** @enum {string} */
+      chartType: "gantt";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      rowTitle: string;
+      rows: string[];
+      barHeight: number;
+      bars: {
+        r: number[];
+        s: number[];
+        e: number[];
+        g: number[];
+        n: number[];
+        m: number[];
+      };
+      truncated: boolean;
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    PieMeta: {
+      /** @enum {string} */
+      chartType: "pie";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      center: {
+        x: number;
+        y: number;
+      };
+      radius: number;
+      slices: {
+        category: string;
+        value: number;
+        ratio: number;
+        start: number;
+        end: number;
+        color: string;
+        index: number;
+      }[];
+      total: number;
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    RadarMeta: {
+      /** @enum {string} */
+      chartType: "radar";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      center: {
+        x: number;
+        y: number;
+      };
+      radius: number;
+      axisTitle: string;
+      axes: string[];
+      domain: [number, number];
+      series: {
+        name: string;
+        color: string;
+        index: number;
+        values: (number | null)[];
+        points: ([number, number] | null)[];
+      }[];
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    HistogramMeta: {
+      /** @enum {string} */
+      chartType: "histogram";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      bins: {
+        lo: number;
+        step: number;
+        count: number;
+      };
+      counts: number[][];
+      groupCount: number;
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    WaterfallMeta: {
+      /** @enum {string} */
+      chartType: "waterfall";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      categories: string[];
+      steps: {
+        start: number;
+        end: number;
+        kind: 0 | 1 | 2;
+      }[];
+      markWidth: number;
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    FunnelMeta: {
+      /** @enum {string} */
+      chartType: "funnel";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      stages: {
+        label: string;
+        value: number;
+        index: number;
+        rect: {
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+        };
+        rate: number | null;
+        share: number | null;
+      }[];
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
     };
     ItemRowsResponse: {
       columns: {

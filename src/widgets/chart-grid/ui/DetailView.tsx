@@ -11,6 +11,7 @@ import {
   detailSizeFor,
   thumbnailCountFor,
 } from "@/entities/chart/lib/grid-layout";
+import { drawsLegend } from "@/entities/chart/model/chart-kinds";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
@@ -110,7 +111,7 @@ export function DetailView({
             item={item}
             chartId={current.chartId}
             primaryJobId={current.jobId}
-            hasLegend={current.spec.legend !== null}
+            hasLegend={drawsLegend(current.spec)}
             displaySize={displaySize}
             tooltipColumns={current.spec.tooltip}
             image={detail.image}

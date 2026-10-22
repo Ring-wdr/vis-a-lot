@@ -11,11 +11,21 @@ import type { AggFn } from "../data/schema";
 /** 컬럼 이름. 데이터셋마다 다르며 스키마로 확인한다. */
 type ColumnName = string;
 
+import type { CandleMeta } from "../render/candle";
 import type { CategoryMeta } from "../render/category";
+import type { FunnelMeta } from "../render/funnel";
+import type { GanttMeta } from "../render/gantt";
+import type { HeatmapMeta } from "../render/heatmap";
+import type { HistogramMeta } from "../render/histogram";
 import type { LegendPosition } from "../render/legend";
+import type { PieMeta } from "../render/pie";
+import type { RadarMeta } from "../render/radar";
 import type { Region } from "../render/region";
+import type { SankeyMeta } from "../render/sankey";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
+import type { TreemapMeta } from "../render/treemap";
+import type { WaterfallMeta } from "../render/waterfall";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
 
 export type HealthResponse = {
@@ -138,7 +148,22 @@ export type ApiError = { error: string };
 
 // ── 차트 ────────────────────────────────────────────────────────────
 
-export const CHART_TYPES = ["scatter", "bar", "boxplot"] as const;
+export const CHART_TYPES = [
+  "scatter",
+  "bar",
+  "boxplot",
+  "line",
+  "sankey",
+  "heatmap",
+  "treemap",
+  "candle",
+  "gantt",
+  "pie",
+  "radar",
+  "histogram",
+  "waterfall",
+  "funnel",
+] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
 export type CommonProps = {
@@ -165,6 +190,8 @@ export type ChartSpec = {
   chartType: ChartType;
   x: ColumnName;
   y: ColumnName;
+  /** 세 번째 값 컬럼. 쓰는 차트만 고른다 (server/charts/chart-fields.ts). 예전 history에는 없다. */
+  z?: ColumnName | null;
   /** bar의 통계 함수 */
   agg: AggFn;
   /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
@@ -222,16 +249,38 @@ export type ChartImage = { url: string; width: number; height: number };
 export type {
   AxisMeta,
   BoxStats,
+  CandleMeta,
   CategoryMeta,
+  FunnelMeta,
+  GanttMeta,
+  HeatmapMeta,
+  HistogramMeta,
   ItemView,
+  PieMeta,
+  RadarMeta,
   Region,
+  SankeyMeta,
   ScatterMeta,
   Shape,
   ShapeType,
+  TreemapMeta,
+  WaterfallMeta,
 };
 
 /** 차트 종류별 metadata */
-export type ItemMeta = ScatterMeta | CategoryMeta;
+export type ItemMeta =
+  | ScatterMeta
+  | CategoryMeta
+  | SankeyMeta
+  | HeatmapMeta
+  | TreemapMeta
+  | CandleMeta
+  | GanttMeta
+  | PieMeta
+  | RadarMeta
+  | HistogramMeta
+  | WaterfallMeta
+  | FunnelMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

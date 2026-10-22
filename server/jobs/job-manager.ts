@@ -14,6 +14,11 @@ import {
   type JobStatus,
 } from "../api/types";
 import {
+  CHART_FIELDS,
+  legendColumnOf,
+  POINT_CHARTS,
+} from "../charts/chart-fields";
+import {
   bumpRevision,
   type CachedChartData,
   type ChartItem,
@@ -30,10 +35,13 @@ import {
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { specError } from "../charts/validate-spec";
+import { OTHERS_SLICE, type PieData } from "../data/polar-data";
 import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
-import { defaultLegendColor } from "../render/theme";
+import { CANDLE_LEGEND } from "../render/candle";
+import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
+import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
 import {
@@ -503,7 +511,10 @@ export function propsOrNone(props: ItemProps): ItemProps | undefined {
 /** legend 위치: item 개별 → 공통 → 위 */
 function legendPosition(chart: ChartRecord, item: ChartItem) {
   return (
-    item.props?.legendPosition ?? chart.spec.common.legendPosition ?? "top"
+    item.props?.legendPosition ??
+    chart.spec.common.legendPosition ??
+    CHART_FIELDS[chart.spec.chartType].legendPosition ??
+    "top"
   );
 }
 
@@ -517,11 +528,14 @@ export function legendColors(
   chart: ChartRecord,
   item: ChartItem,
   values: string[],
+  /** 차트가 정한 기본 색 (candle의 상승/하락). 없으면 팔레트 순서 */
+  defaults?: readonly string[],
 ) {
   return values.map(
     (v, i) =>
       item.props?.legendColors?.[v] ??
       chart.spec.common.legendColors?.[v] ??
+      defaults?.[i] ??
       defaultLegendColor(i),
   );
 }
@@ -543,6 +557,7 @@ function legendInput(
   item: ChartItem,
   title: string,
   values: string[] | undefined,
+  defaults?: readonly string[],
 ) {
   const groups = item.legendGroups;
   if (!values && groups.length === 0) return undefined;
@@ -551,13 +566,36 @@ function legendInput(
     values: [...(values ?? [OTHERS_LABEL]), ...groups.map((g) => g.name)],
     colors: [
       ...(values
-        ? legendColors(chart, item, values)
+        ? legendColors(chart, item, values, defaults)
         : [item.props?.legendColors?.[OTHERS_LABEL] ?? itemColor(chart, item)]),
       ...groups.map((g) => groupColor(item, g)),
     ],
     position: legendPosition(chart, item),
     hidden: item.props?.hiddenLegend,
   };
+}
+
+/**
+ * pie 조각 색. 색 순서(colorOrder)가 있으면 그 순서로 legend 색을 골라 item끼리 같은 범주가 같은 색이 되고,
+ * 없으면 item 안의 조각 순서대로 고른다. '기타'는 따로 정한 색이 없으면 회색이다.
+ */
+function pieColors(
+  chart: ChartRecord,
+  item: ChartItem,
+  data: PieData,
+  values: string[],
+) {
+  const order = data.colorOrder ?? values.filter((v) => v !== OTHERS_SLICE);
+  const named = legendColors(chart, item, order);
+  return values.map((v) => {
+    const i = v === OTHERS_SLICE ? -1 : order.indexOf(v);
+    if (i >= 0) return named[i];
+    return (
+      item.props?.legendColors?.[v] ??
+      chart.spec.common.legendColors?.[v] ??
+      OTHERS_COLOR
+    );
+  });
 }
 
 /** 새 범례만 있을 때 나머지 점의 legend 이름 */
@@ -591,39 +629,152 @@ async function itemData(chart: ChartRecord) {
   return loadChartData(chart);
 }
 
+/** 차트 종류에 맞는 데이터를 조회한다. 새 차트는 여기에 분기 하나를 더한다. */
+async function queryChartData(
+  spec: ChartRecord["spec"],
+): Promise<CachedChartData> {
+  const { db } = getRuntime();
+  const groupOf = new Map<string, number>();
+  // 행 단위 점 차트(scatter, line)는 같은 원자료를 쓴다.
+  if (POINT_CHARTS.includes(spec.chartType)) {
+    return {
+      kind: "scatter",
+      ...(await db.call("chartData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "heatmap") {
+    return {
+      kind: "heatmap",
+      ...(await db.call("heatmapData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        z: spec.z ?? "",
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "histogram") {
+    return {
+      kind: "histogram",
+      ...(await db.call("histogramData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "candle") {
+    return {
+      kind: "candle",
+      ...(await db.call("candleData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "gantt") {
+    return {
+      kind: "gantt",
+      ...(await db.call("ganttData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "sankey") {
+    return {
+      kind: "sankey",
+      ...(await db.call("sankeyData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        z: spec.z ?? "",
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "pie") {
+    // 조각 범주가 곧 legend라 spec.legend는 쓰지 않는다.
+    return {
+      kind: "pie",
+      ...(await db.call("pieData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "radar") {
+    return {
+      kind: "radar",
+      ...(await db.call("radarData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  return {
+    kind: "category",
+    ...(await db.call("categoryData", {
+      dataset: spec.dataset,
+      // treemap·waterfall은 bar와 같은 범주 × legend 값 집계를 쓴다.
+      chartType:
+        spec.chartType === "boxplot" || spec.chartType === "funnel"
+          ? spec.chartType
+          : "bar",
+      x: spec.x,
+      y: spec.y,
+      agg: spec.agg,
+      splitBy: spec.splitBy,
+      // legend를 스스로 그리는 차트(waterfall)는 spec에 남은 legend 컬럼을 쓰지 않는다.
+      legend: legendColumnOf(spec),
+      filters: spec.filters,
+    })),
+    groupOf,
+  };
+}
+
 async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const cached = getCachedChartData(chart.id);
   if (cached) return cached;
-  const { db } = getRuntime();
-  const { spec } = chart;
-  const result: CachedChartData =
-    spec.chartType === "scatter"
-      ? {
-          kind: "scatter",
-          ...(await db.call("chartData", {
-            dataset: spec.dataset,
-            x: spec.x,
-            y: spec.y,
-            splitBy: spec.splitBy,
-            legend: spec.legend,
-            filters: spec.filters,
-          })),
-          groupOf: new Map(),
-        }
-      : {
-          kind: "category",
-          ...(await db.call("categoryData", {
-            dataset: spec.dataset,
-            chartType: spec.chartType,
-            x: spec.x,
-            y: spec.y,
-            agg: spec.agg,
-            splitBy: spec.splitBy,
-            legend: spec.legend,
-            filters: spec.filters,
-          })),
-          groupOf: new Map(),
-        };
+  const result = await queryChartData(chart.spec);
   result.groups.forEach((g, i) => {
     result.groupOf.set(itemKeyOf(g.values), i);
   });
@@ -640,7 +791,20 @@ function renderItem(
   item: ChartItem,
   size: ItemSize,
   thumbnail: boolean,
-  options: PoolCallOptions<"renderScatter" | "renderCategory">,
+  options: PoolCallOptions<
+    | "renderScatter"
+    | "renderCategory"
+    | "renderSankey"
+    | "renderHeatmap"
+    | "renderTreemap"
+    | "renderCandle"
+    | "renderGantt"
+    | "renderPie"
+    | "renderRadar"
+    | "renderHistogram"
+    | "renderWaterfall"
+    | "renderFunnel"
+  >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
   const { spec } = chart;
@@ -667,6 +831,7 @@ function renderItem(
       "renderScatter",
       {
         ...common,
+        chartType: spec.chartType === "line" ? "line" : "scatter",
         xKind: columnOf(spec.x)?.type === "datetime" ? "time" : "number",
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
@@ -683,7 +848,229 @@ function renderItem(
       options,
     );
   }
+  if (data.kind === "pie") {
+    const slices = index === undefined ? [] : data.groups[index].slices;
+    const values = slices.map((s) => s.category);
+    return render.call(
+      "renderPie",
+      {
+        width: size.width,
+        height: size.height,
+        thumbnail: common.thumbnail,
+        title: item.label,
+        selection: item.selection,
+        slices,
+        agg: spec.agg,
+        // 조각 범주가 곧 legend다 (spec.legend는 쓰지 않는다).
+        legend: {
+          title: columnOf(spec.x)?.label ?? spec.x,
+          values,
+          colors: pieColors(chart, item, data, values),
+          position: legendPosition(chart, item),
+          hidden: item.props?.hiddenLegend,
+        },
+      },
+      options,
+    );
+  }
+  if (data.kind === "radar") {
+    const group = index === undefined ? undefined : data.groups[index];
+    const values = data.legendValues;
+    return render.call(
+      "renderRadar",
+      {
+        width: size.width,
+        height: size.height,
+        thumbnail: common.thumbnail,
+        title: item.label,
+        selection: item.selection,
+        color: common.color,
+        axisTitle: columnOf(spec.x)?.label ?? spec.x,
+        seriesName: columnOf(spec.y)?.label ?? spec.y,
+        axes: group?.axes ?? [],
+        cells: group?.cells ?? [],
+        agg: spec.agg,
+        // 새 범례(선택 영역 그룹)는 꼭짓점 색으로 칠하지 않아 legend에도 붙이지 않는다.
+        legend: values && {
+          title: legendTitle,
+          values,
+          colors: legendColors(chart, item, values),
+          position: legendPosition(chart, item),
+          hidden: item.props?.hiddenLegend,
+        },
+      },
+      options,
+    );
+  }
+  if (data.kind === "histogram") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderHistogram",
+      {
+        ...common,
+        bins: data.bins,
+        counts: group?.counts ?? [],
+        legend: legendInput(chart, item, legendTitle, data.legendValues),
+      },
+      options,
+    );
+  }
+  if (data.kind === "candle") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderCandle",
+      {
+        ...common,
+        interval: data.interval,
+        candles: group ?? {
+          t: [],
+          open: [],
+          high: [],
+          low: [],
+          close: [],
+          count: [],
+        },
+        // 데이터 컬럼 대신 상승/하락 두 항목이 legend다.
+        legend: legendInput(
+          chart,
+          item,
+          CANDLE_LEGEND.title,
+          [...CANDLE_LEGEND.values],
+          CANDLE_LEGEND.colors,
+        ) as NonNullable<ReturnType<typeof legendInput>>,
+      },
+      options,
+    );
+  }
+  if (data.kind === "gantt") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderGantt",
+      {
+        ...common,
+        rowTitle: columnOf(spec.y)?.label ?? spec.y,
+        rows: group?.rows ?? [],
+        bars: group?.bars ?? { r: [], s: [], e: [], g: [], n: [] },
+        legend: legendInput(chart, item, legendTitle, data.legendValues),
+      },
+      options,
+    );
+  }
+  if (data.kind === "sankey") {
+    const group = index === undefined ? undefined : data.groups[index];
+    // legend는 출발 노드(x 값)다. 체크박스로 끈 노드의 흐름은 빼고 배치한다.
+    const legend = legendInput(
+      chart,
+      item,
+      columnOf(spec.x)?.label ?? spec.x,
+      data.sources,
+    ) as NonNullable<ReturnType<typeof legendInput>>;
+    return render.call(
+      "renderSankey",
+      {
+        width: common.width,
+        height: common.height,
+        thumbnail: common.thumbnail,
+        title: common.title,
+        shapes: common.shapes,
+        selection: common.selection,
+        sources: data.sources,
+        targets: data.targets,
+        links: group?.links ?? [],
+        agg: spec.agg,
+        legend,
+      },
+      options,
+    );
+  }
+  if (data.kind === "heatmap") {
+    const group = index === undefined ? undefined : data.groups[index];
+    // legend 컬럼은 쓰지 않는다. 선택 영역으로 만든 새 범례만 legend 상자에 둔다.
+    const groups = item.legendGroups;
+    return render.call(
+      "renderHeatmap",
+      {
+        ...common,
+        xTitle: columnOf(spec.x)?.label ?? spec.x,
+        yTitle: columnOf(spec.y)?.label ?? spec.y,
+        xCategories: group?.xCategories ?? [],
+        xStarts: group?.xStarts,
+        timeBin: data.timeBin,
+        yCategories: group?.yCategories ?? [],
+        cells: group?.cells ?? [],
+        agg: spec.agg,
+        legend:
+          groups.length > 0
+            ? {
+                title: "범례",
+                values: groups.map((g) => g.name),
+                colors: groups.map((g) => groupColor(item, g)),
+                position: legendPosition(chart, item),
+              }
+            : undefined,
+      },
+      options,
+    );
+  }
   const group = index === undefined ? undefined : data.groups[index];
+  if (spec.chartType === "funnel") {
+    // 단계가 곧 legend 값이다. 단계 순서(값 큰 순)대로 팔레트 색을 받는다.
+    const stages = group?.categories ?? [];
+    return render.call(
+      "renderFunnel",
+      {
+        ...common,
+        stages,
+        values: group?.bars?.map((row) => row[0]) ?? [],
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          item,
+          columnOf(spec.x)?.label ?? spec.x,
+          stages,
+        ),
+      },
+      options,
+    );
+  }
+  if (spec.chartType === "waterfall") {
+    return render.call(
+      "renderWaterfall",
+      {
+        ...common,
+        categories: group?.categories ?? [],
+        values: group?.bars?.map((row) => row[0]) ?? [],
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          item,
+          "구분",
+          [...WATERFALL_KINDS],
+          waterfallDefaultColors(common.color),
+        ),
+      },
+      options,
+    );
+  }
+  if (spec.chartType === "treemap") {
+    // 새 범례(선택 영역)는 treemap에 쓰지 않는다. legend 값이 곧 부모 묶음이다.
+    return render.call(
+      "renderTreemap",
+      {
+        ...common,
+        categories: group?.categories ?? [],
+        bars: group?.bars,
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          { ...item, legendGroups: [] },
+          legendTitle,
+          data.legendValues,
+        ),
+      },
+      options,
+    );
+  }
   return render.call(
     "renderCategory",
     {

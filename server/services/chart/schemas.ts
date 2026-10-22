@@ -27,7 +27,22 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot"])
+  .enum([
+    "scatter",
+    "bar",
+    "boxplot",
+    "line",
+    "sankey",
+    "heatmap",
+    "treemap",
+    "candle",
+    "gantt",
+    "pie",
+    "radar",
+    "histogram",
+    "waterfall",
+    "funnel",
+  ])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -60,6 +75,8 @@ export const ChartSpecSchema = z
     chartType: ChartTypeSchema,
     x: ColumnNameSchema,
     y: ColumnNameSchema,
+    /** 세 번째 값 컬럼. 쓰는 차트만 고른다. 예전 history에는 없다. */
+    z: orNull(ColumnNameSchema).optional(),
     /** bar의 통계 함수 */
     agg: AggFnSchema,
     /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */
@@ -463,7 +480,8 @@ export const LegendMetaSchema = z
 
 export const ScatterMetaSchema = z
   .object({
-    chartType: z.literal("scatter"),
+    /** line도 같은 행 단위 점 metadata를 쓴다. */
+    chartType: z.enum(["scatter", "line"]),
     /** PNG 안에서 그림 영역의 픽셀 범위 */
     plot: PlotSchema,
     x: AxisMetaSchema,
@@ -522,9 +540,316 @@ export const CategoryMetaSchema = z
   })
   .openapi("CategoryMeta");
 
+export const SankeyMetaSchema = z
+  .object({
+    chartType: z.literal("sankey"),
+    plot: PlotSchema,
+    /** 고정 좌표 공간 [0, plot.width]. 이동·확대가 없다. */
+    x: AxisMetaSchema,
+    /** 고정 좌표 공간 [0, plot.height] (아래가 0) */
+    y: AxisMetaSchema,
+    agg: AggFnSchema,
+    /** 놓인 노드. 좌표는 PNG 좌표다. */
+    nodes: z.array(
+      z.object({
+        name: z.string(),
+        side: z.enum(["source", "target"]),
+        x0: z.number(),
+        y0: z.number(),
+        x1: z.number(),
+        y1: z.number(),
+        /** 들어오는 흐름 합 */
+        in: z.number(),
+        /** 나가는 흐름 합 */
+        out: z.number(),
+        /** 출발 노드의 legend 인덱스 */
+        legend: z.number().optional(),
+      }),
+    ),
+    /** 흐름. source·target은 nodes 인덱스, y0·y1은 양 끝의 가운데 y, width는 굵기(px) */
+    links: z.array(
+      z.object({
+        source: z.number(),
+        target: z.number(),
+        value: z.number(),
+        y0: z.number(),
+        y1: z.number(),
+        width: z.number(),
+      }),
+    ),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("SankeyMeta");
+
+export const HeatmapMetaSchema = z
+  .object({
+    chartType: z.literal("heatmap"),
+    plot: PlotSchema,
+    /** x 범주 인덱스 공간 */
+    x: AxisMetaSchema,
+    /** y 범주 인덱스 공간 (0이 아래) */
+    y: AxisMetaSchema,
+    xTitle: z.string(),
+    yTitle: z.string(),
+    xCategories: z.array(z.string()),
+    /** 시계열 x: 구간 시작 시각(epoch ms)과 구간 길이 */
+    xStarts: z.array(z.number()).optional(),
+    timeBin: z.number().optional(),
+    yCategories: z.array(z.string()),
+    /** [x][y] 집계값 */
+    cells: z.array(z.array(z.number().nullable())),
+    agg: AggFnSchema,
+    /** 색 척도의 값 범위 */
+    colorDomain: range,
+    selected: z.number().optional(),
+    /** 선택 영역으로 만든 새 범례 */
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("HeatmapMeta");
+
+const TreemapNodeSchema = z.object({
+  name: z.string(),
+  /** legend 인덱스 (legend가 없으면 0) */
+  g: z.number(),
+  value: z.number(),
+  /** 레이아웃 좌표 [0,1]. y0이 아래, y1이 위 */
+  x0: z.number(),
+  y0: z.number(),
+  x1: z.number(),
+  y1: z.number(),
+});
+
+export const TreemapMetaSchema = z
+  .object({
+    chartType: z.literal("treemap"),
+    plot: PlotSchema,
+    /** 레이아웃 좌표 [0,1] */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    agg: AggFnSchema,
+    /** 보이는 잎 값의 합 */
+    total: z.number(),
+    leaves: z.array(TreemapNodeSchema),
+    /** legend가 있을 때의 부모 묶음 */
+    parents: z.array(TreemapNodeSchema),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("TreemapMeta");
+
+export const CandleMetaSchema = z
+  .object({
+    chartType: z.literal("candle"),
+    plot: PlotSchema,
+    /** 시계열(epoch ms) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 구간 길이(ms) */
+    interval: z.number(),
+    /** 몸통 픽셀 너비 */
+    bodyWidth: z.number(),
+    /** 그린 캔들 (숨긴 legend 값은 빠진다). t는 구간 시작, g는 legend 인덱스 (상승 0, 하락 1, 새 범례는 그 뒤) */
+    candles: z.object({
+      t: z.array(z.number()),
+      open: z.array(z.number()),
+      high: z.array(z.number()),
+      low: z.array(z.number()),
+      close: z.array(z.number()),
+      count: z.array(z.number()),
+      g: z.array(z.number()),
+    }),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("CandleMeta");
+
+export const GanttMetaSchema = z
+  .object({
+    chartType: z.literal("gantt"),
+    plot: PlotSchema,
+    /** 시계열(epoch ms) */
+    x: AxisMetaSchema,
+    /** 행 인덱스 공간. 행 i의 가운데는 rows.length - 1 - i */
+    y: AxisMetaSchema,
+    /** y 컬럼 이름(라벨) */
+    rowTitle: z.string(),
+    rows: z.array(z.string()),
+    /** 막대 픽셀 높이 */
+    barHeight: z.number(),
+    /** 그린 막대. r 행 번호, s·e 시작·끝, g legend 인덱스, n 행 수, m 같은 픽셀 칸에 합친 막대 수. 행 → 시작 순 */
+    bars: z.object({
+      r: z.array(z.number()),
+      s: z.array(z.number()),
+      e: z.array(z.number()),
+      g: z.array(z.number()),
+      n: z.array(z.number()),
+      m: z.array(z.number()),
+    }),
+    /** 막대가 상한을 넘어 metadata에서 뺀 게 있는지 */
+    truncated: z.boolean(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("GanttMeta");
+
+const PointSchema = z.object({ x: z.number(), y: z.number() });
+
+export const PieMetaSchema = z
+  .object({
+    chartType: z.literal("pie"),
+    plot: PlotSchema,
+    /** 고정 좌표 공간: 그림 영역 픽셀과 1:1 (x는 왼쪽, y는 아래쪽에서의 거리) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 원의 중심(PNG 좌표)과 반지름(px) */
+    center: PointSchema,
+    radius: z.number(),
+    /** 보이는 조각만, 그린 순서대로 */
+    slices: z.array(
+      z.object({
+        category: z.string(),
+        value: z.number(),
+        /** 보이는 조각 합계 대비 비율 */
+        ratio: z.number(),
+        /** 캔버스 각도(라디안). 12시 방향이 -π/2이고 시계 방향으로 커진다. */
+        start: z.number(),
+        end: z.number(),
+        color: z.string(),
+        /** legend 인덱스 */
+        index: z.number(),
+      }),
+    ),
+    total: z.number(),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("PieMeta");
+
+export const RadarMetaSchema = z
+  .object({
+    chartType: z.literal("radar"),
+    plot: PlotSchema,
+    /** 고정 좌표 공간: 그림 영역 픽셀과 1:1 (x는 왼쪽, y는 아래쪽에서의 거리) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    center: PointSchema,
+    radius: z.number(),
+    /** x 컬럼 라벨 */
+    axisTitle: z.string(),
+    /** 축(x 범주). 12시부터 시계 방향 */
+    axes: z.array(z.string()),
+    /** 중심 → 바깥 값 범위 */
+    domain: range,
+    /** 보이는 계열만 */
+    series: z.array(
+      z.object({
+        name: z.string(),
+        color: z.string(),
+        /** legend 인덱스 (legend가 없으면 0) */
+        index: z.number(),
+        /** 축 순서대로의 값 */
+        values: z.array(z.number().nullable()),
+        /** 꼭짓점의 PNG 좌표. 값이 없는 축은 null */
+        points: z.array(z.tuple([z.number(), z.number()]).nullable()),
+      }),
+    ),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("RadarMeta");
+
 /** 차트 종류별 metadata */
+export const HistogramMetaSchema = z
+  .object({
+    chartType: z.literal("histogram"),
+    plot: PlotSchema,
+    /** 값 공간 */
+    x: AxisMetaSchema,
+    /** 개수 */
+    y: AxisMetaSchema,
+    /** 구간: lo부터 step 간격으로 count개. 마지막 구간만 끝값을 포함한다. */
+    bins: z.object({ lo: z.number(), step: z.number(), count: z.number() }),
+    /** [구간][legend 값] 개수 */
+    counts: z.array(z.array(z.number())),
+    /** 구간 하나에 나란히 놓는 막대 수 (legend 값 수, 없으면 1) */
+    groupCount: z.number(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("HistogramMeta");
+
+export const WaterfallMetaSchema = z
+  .object({
+    chartType: z.literal("waterfall"),
+    plot: PlotSchema,
+    /** 막대 인덱스 공간. 마지막 인덱스가 합계 */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 데이터 범주. 막대 수는 범주 수 + 1(합계)이다. */
+    categories: z.array(z.string()),
+    /** 막대: start에서 end까지. kind 0 증가, 1 감소, 2 합계 */
+    steps: z.array(
+      z.object({
+        start: z.number(),
+        end: z.number(),
+        kind: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+      }),
+    ),
+    /** 막대의 픽셀 너비 */
+    markWidth: z.number(),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("WaterfallMeta");
+
+export const FunnelMetaSchema = z
+  .object({
+    chartType: z.literal("funnel"),
+    plot: PlotSchema,
+    /** 고정 좌표: [0, 그림 영역 폭] */
+    x: AxisMetaSchema,
+    /** 고정 좌표: [0, 그림 영역 높이] (아래에서 위로) */
+    y: AxisMetaSchema,
+    /** 그린(끄지 않은) 단계만, 위에서 아래 순서 */
+    stages: z.array(
+      z.object({
+        label: z.string(),
+        value: z.number(),
+        /** legend 인덱스 (단계 순서) */
+        index: z.number(),
+        /** 막대의 PNG 좌표 */
+        rect: RectSchema,
+        /** 바로 위 단계 대비 비율 */
+        rate: z.number().nullable(),
+        /** 첫 단계 대비 비율 */
+        share: z.number().nullable(),
+      }),
+    ),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("FunnelMeta");
+
 export const ItemMetaSchema = z
-  .union([ScatterMetaSchema, CategoryMetaSchema])
+  .union([
+    ScatterMetaSchema,
+    CategoryMetaSchema,
+    SankeyMetaSchema,
+    HeatmapMetaSchema,
+    TreemapMetaSchema,
+    CandleMetaSchema,
+    GanttMetaSchema,
+    PieMetaSchema,
+    RadarMetaSchema,
+    HistogramMetaSchema,
+    WaterfallMetaSchema,
+    FunnelMetaSchema,
+  ])
   .openapi("ItemMeta");
 
 // ── history ────────────────────────────────────────────────────

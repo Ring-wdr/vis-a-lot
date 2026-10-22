@@ -8,15 +8,31 @@ import type {
   StagedUpload,
   UploadTask,
 } from "./api/types";
+import type { CandleData, CandleDataParams } from "./data/candle-data";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
 import type { ColumnSummary } from "./data/column-summary";
 import type { CsvOptions, CsvPreview } from "./data/csv-import";
 import type { ColumnInfo } from "./data/datasets";
 import type { ChartFilter } from "./data/filters";
+import type { GanttData, GanttDataParams } from "./data/gantt-data";
+import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
+import type { HistogramData, HistogramDataParams } from "./data/histogram-data";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
+import type { PieData, RadarData } from "./data/polar-data";
+import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
+import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
+import type { FunnelInput, FunnelMeta } from "./render/funnel";
+import type { GanttInput, GanttMeta } from "./render/gantt";
+import type { HeatmapInput, HeatmapMeta } from "./render/heatmap";
+import type { HistogramInput, HistogramMeta } from "./render/histogram";
+import type { PieInput, PieMeta } from "./render/pie";
+import type { RadarInput, RadarMeta } from "./render/radar";
+import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
+import type { TreemapInput, TreemapMeta } from "./render/treemap";
+import type { WaterfallInput, WaterfallMeta } from "./render/waterfall";
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
 export type Rejectable<T> =
@@ -100,6 +116,45 @@ export type DbMethods = {
     params: Omit<CategoryDataParams, "table"> & { dataset: string };
     result: CategoryData;
   };
+  /** sankey: SQL로 집계한 split 조합 × 출발 → 도착 흐름 */
+  sankeyData: {
+    params: Omit<SankeyDataParams, "table"> & { dataset: string };
+    result: SankeyData;
+  };
+  /** heatmap: SQL로 집계한 split 조합 × x × y 칸 값 */
+  heatmapData: {
+    params: Omit<HeatmapDataParams, "table"> & { dataset: string };
+    result: HeatmapData;
+  };
+  /** histogram: 전체 범위에서 정한 구간 × split 조합 × legend 값 개수 */
+  histogramData: {
+    params: Omit<HistogramDataParams, "table"> & { dataset: string };
+    result: HistogramData;
+  };
+  /** candle: 자동 시간 구간별 OHLC */
+  candleData: {
+    params: Omit<CandleDataParams, "table"> & { dataset: string };
+    result: CandleData;
+  };
+  /** gantt: 행마다 같은 legend 값이 이어지는 구간 */
+  ganttData: {
+    params: Omit<GanttDataParams, "table"> & { dataset: string };
+    result: GanttData;
+  };
+  /** pie: bar와 같은 SQL 집계를 큰 순 조각(상위 N + 기타)으로 */
+  pieData: {
+    params: Omit<CategoryDataParams, "table" | "chartType" | "legend"> & {
+      dataset: string;
+    };
+    result: PieData;
+  };
+  /** radar: bar와 같은 SQL 집계(legend 값별)를 축(상위 N)으로 */
+  radarData: {
+    params: Omit<CategoryDataParams, "table" | "chartType"> & {
+      dataset: string;
+    };
+    result: RadarData;
+  };
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
@@ -163,6 +218,116 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: CategoryMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderSankey: {
+    params: SankeyInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: SankeyMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderHeatmap: {
+    params: HeatmapInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: HeatmapMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderTreemap: {
+    params: TreemapInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: TreemapMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderCandle: {
+    params: CandleInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: CandleMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderGantt: {
+    params: GanttInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: GanttMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderPie: {
+    params: PieInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: PieMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderRadar: {
+    params: RadarInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: RadarMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderHistogram: {
+    params: HistogramInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: HistogramMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderWaterfall: {
+    params: WaterfallInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: WaterfallMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderFunnel: {
+    params: FunnelInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: FunnelMeta;
       worker: string;
       ms: number;
     };

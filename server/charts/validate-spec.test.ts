@@ -60,6 +60,27 @@ describe("specError", () => {
     );
   });
 
+  it("sankey는 출발·도착이 서로 다른 범주, z는 숫자이고 legend 컬럼은 보지 않는다", () => {
+    const sankey: ChartSpec = {
+      ...base,
+      chartType: "sankey",
+      x: "Line No",
+      y: "lot",
+      z: "온도(℃)",
+      agg: "sum",
+      // legend 컬럼을 쓰지 않으므로 값이 많은 컬럼이 남아 있어도 통과한다.
+      legend: "lot",
+    };
+    expect(specError(sankey, columns)).toBeUndefined();
+    expect(specError({ ...sankey, y: "Line No" }, columns)).toContain(
+      "서로 다른",
+    );
+    expect(specError({ ...sankey, z: null }, columns)).toContain("z 컬럼");
+    expect(specError({ ...sankey, y: "온도(℃)" }, columns)).toContain(
+      "categorical",
+    );
+  });
+
   it("필터 종류와 컬럼 타입", () => {
     expect(
       specError(

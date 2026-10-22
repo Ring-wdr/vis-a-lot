@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { queryCandleData } from "../data/candle-data";
 import { queryBarData, queryBoxData } from "../data/category-data";
 import {
   queryChartData,
@@ -8,7 +9,13 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { queryFunnelData } from "../data/funnel-data";
+import { queryGanttData } from "../data/gantt-data";
+import { queryHeatmapData } from "../data/heatmap-data";
+import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
+import { toPieData, toRadarData } from "../data/polar-data";
+import { querySankeyData } from "../data/sankey-data";
 import {
   getHistory,
   listHistory,
@@ -205,9 +212,57 @@ serveRpc<DbMethods>({
   async categoryData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     const input = { ...params, table };
-    return params.chartType === "bar"
-      ? queryBarData(db, schema, input)
-      : queryBoxData(db, schema, input);
+    if (params.chartType === "funnel")
+      return queryFunnelData(db, schema, input);
+    return params.chartType === "boxplot"
+      ? queryBoxData(db, schema, input)
+      : queryBarData(db, schema, input);
+  },
+
+  async sankeyData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return querySankeyData(db, schema, { ...params, table });
+  },
+
+  async heatmapData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryHeatmapData(db, schema, { ...params, table });
+  },
+
+  async histogramData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryHistogramData(db, schema, { ...params, table });
+  },
+
+  async candleData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryCandleData(db, schema, { ...params, table });
+  },
+
+  async ganttData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryGanttData(db, schema, { ...params, table });
+  },
+
+  async pieData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    const bars = await queryBarData(db, schema, {
+      ...params,
+      table,
+      chartType: "bar",
+      legend: null,
+    });
+    return toPieData(bars);
+  },
+
+  async radarData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    const bars = await queryBarData(db, schema, {
+      ...params,
+      table,
+      chartType: "bar",
+    });
+    return toRadarData(bars);
   },
 
   async itemRows({ dataset, scope, page }) {

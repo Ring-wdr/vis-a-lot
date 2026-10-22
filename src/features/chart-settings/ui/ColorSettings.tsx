@@ -1,5 +1,6 @@
 "use client";
 
+import { legendColumnOf } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useColumns,
@@ -23,9 +24,11 @@ export function ColorSettings() {
   const readOnly = useWorkspace((s) => s.readOnly);
   const dataset = useDatasetStatus(draft.dataset);
   const columns = useColumns(draft.dataset);
+  // legend 컬럼을 쓰지 않는 차트(sankey)는 남아 있는 legend 값을 보이지 않는다.
+  const legend = legendColumnOf(draft);
   const legendValues = useLegendValues(
     draft.dataset,
-    draft.legend,
+    legend,
     dataset.data?.state === "ready",
   );
   const { change, pending, appliesToCurrent } = useChangeCommon();
@@ -35,7 +38,7 @@ export function ColorSettings() {
 
   return (
     <div className={settingsStyles.section}>
-      {draft.legend === null ? (
+      {legend === null ? (
         <>
           <h3 className={settingsStyles.heading}>공통 색상</h3>
           <ColorSwatches
@@ -48,7 +51,7 @@ export function ColorSettings() {
       ) : (
         <>
           <h3 className={settingsStyles.heading}>
-            legend 색상 · {columns.label(draft.legend)}
+            legend 색상 · {columns.label(legend)}
           </h3>
           {legendValues.isPending &&
             (dataset.data?.state === "ready" ? (

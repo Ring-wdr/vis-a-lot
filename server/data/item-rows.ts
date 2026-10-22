@@ -2,6 +2,8 @@
 // 데이터 표(페이지 단위·정렬)와 데이터 다운로드(CSV 전체)가 같은 조건을 쓴다.
 
 import type { PGlite } from "@electric-sql/pglite";
+import type { ChartType } from "../api/types";
+import { CHART_FIELDS, POINT_CHARTS } from "../charts/chart-fields";
 import type { Region } from "../render/region";
 import {
   type ColumnSchema,
@@ -12,11 +14,13 @@ import {
   textSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
+import { binSql, type HistogramBins } from "./histogram-data";
 
 export type ItemRowsScope = {
-  chartType: "scatter" | "bar" | "boxplot";
+  chartType: ChartType;
   x: string;
-  y: string;
+  /** null이면 y를 쓰지 않는 차트다 (histogram) */
+  y: string | null;
   legend: string | null;
   splitBy: string[];
   /** split 컬럼 순서대로의 값 (이 item의 조합) */
@@ -24,12 +28,14 @@ export type ItemRowsScope = {
   /** 결과에 넣을 컬럼 (차트에 쓴 컬럼) */
   columns: string[];
   filters?: ChartFilter[];
-  /** scatter: 지운 영역. 안의 행은 뺀다. */
+  /** scatter·line: 지운 영역. 안의 행은 뺀다. */
   deletions: Region[];
-  /** scatter: 선택 영역. 있으면 안의 행만 */
+  /** scatter·line: 선택 영역. 있으면 안의 행만 */
   selection?: Region;
   /** bar/boxplot: 선택된 막대/상자 [범주, legend 값]. 있으면 이 조합의 행만 */
   selectedMarks?: [string, string | null][];
+  /** histogram: 선택된 막대 [구간 번호, legend 값]. 구간은 렌더와 같은 정의로 다시 센다. */
+  selectedBins?: { bins: HistogramBins; marks: [number, string | null][] };
   /** legend 체크박스로 끈 값 */
   hiddenLegend?: string[];
 };
@@ -67,13 +73,16 @@ export function itemRowsWhere(schema: DatasetSchema, scope: ItemRowsScope) {
     return `$${params.length}`;
   };
   const parts: string[] = [];
-  const scatter = scope.chartType === "scatter";
-  const xCol = scatter
-    ? columnOf(schema, scope.x, "numeric", "datetime")
-    : columnOf(schema, scope.x, "categorical");
-  const yCol = columnOf(schema, scope.y, "numeric", "datetime");
-  parts.push(`${ident(yCol.name)} is not null`);
-  if (scatter) parts.push(`${ident(xCol.name)} is not null`);
+  const scatter = POINT_CHARTS.includes(scope.chartType);
+  const xCol = columnOf(schema, scope.x, ...CHART_FIELDS[scope.chartType].x);
+  const yCol =
+    scope.y === null
+      ? undefined
+      : columnOf(schema, scope.y, "numeric", "datetime");
+  if (yCol) parts.push(`${ident(yCol.name)} is not null`);
+  // 값 축(숫자·시계열) x는 값이 없으면 그리지 않은 행이다. 범주 x는 null도 범주 하나로 센다.
+  if (xCol.type !== "categorical")
+    parts.push(`${ident(xCol.name)} is not null`);
 
   scope.splitBy.forEach((name, i) => {
     const column = columnOf(schema, name);
@@ -94,7 +103,7 @@ export function itemRowsWhere(schema: DatasetSchema, scope: ItemRowsScope) {
     );
   }
 
-  if (scatter) {
+  if (scatter && yCol) {
     const point = `point(${numericSql(xCol)}::float8, ${numericSql(yCol)}::float8)`;
     for (const region of scope.deletions) {
       const g = geometryOf(region);
@@ -104,6 +113,18 @@ export function itemRowsWhere(schema: DatasetSchema, scope: ItemRowsScope) {
       const g = geometryOf(scope.selection);
       parts.push(`${point} <@ ${param(g.text)}::${g.type}`);
     }
+  } else if (scope.selectedBins) {
+    const { bins, marks } = scope.selectedBins;
+    const bin = binSql(ident(xCol.name), bins);
+    const key = legendCol
+      ? `(${bin}::text || chr(31) || coalesce(${textSql(legendCol)}, ''))`
+      : `${bin}::text`;
+    const keys = marks.map(([b, legend]) =>
+      legendCol ? `${b}\u001f${legend ?? ""}` : String(b),
+    );
+    parts.push(
+      `${key} in (select jsonb_array_elements_text(${param(JSON.stringify(keys))}::jsonb))`,
+    );
   } else if (scope.selectedMarks) {
     // 범주와 legend 값을 한 글자(\u001f)로 이어 붙인 키로 비교한다.
     const key = legendCol

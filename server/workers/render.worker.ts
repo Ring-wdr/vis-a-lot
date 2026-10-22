@@ -1,6 +1,16 @@
 import type { RenderMethods } from "../protocol";
+import { renderCandle } from "../render/candle";
 import { renderCategory } from "../render/category";
-import { renderScatter } from "../render/scatter";
+import { renderFunnel } from "../render/funnel";
+import { renderGantt } from "../render/gantt";
+import { renderHeatmap } from "../render/heatmap";
+import { renderHistogram } from "../render/histogram";
+import { renderPie } from "../render/pie";
+import { renderRadar } from "../render/radar";
+import { renderSankey } from "../render/sankey";
+import { type ProgressFn, renderScatter } from "../render/scatter";
+import { renderTreemap } from "../render/treemap";
+import { renderWaterfall } from "../render/waterfall";
 import { serveRpc, transfer, type WorkerScope } from "../rpc";
 
 const workerName = (globalThis as unknown as WorkerScope).name;
@@ -22,6 +32,42 @@ async function drawPng<M>(
     await canvas.convertToBlob({ type: "image/png" })
   ).arrayBuffer();
   return { png, meta };
+}
+
+type Size = { width: number; height: number };
+
+/**
+ * 렌더러 하나로 PNG와 (요청하면) 같은 입력의 섬네일을 그린다. 아래 차트별 메서드와 같은 순서를 묶어 둔 것이다.
+ * 진행률은 렌더러 단계(aggregate → render) 다음에 encode를 알린다.
+ */
+async function renderPair<I extends Size & { compact?: boolean }, M>(
+  render: (
+    ctx: OffscreenCanvasRenderingContext2D,
+    input: I,
+    progress: ProgressFn,
+  ) => M,
+  { thumbnail, ...rest }: I & { thumbnail?: Size },
+  progress: (p: {
+    stage: Parameters<ProgressFn>[0] | "encode";
+    ratio: number;
+  }) => void,
+) {
+  const started = performance.now();
+  const input = rest as unknown as I;
+  const { png, meta } = await drawPng(
+    input,
+    (ctx) => render(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+    () => progress({ stage: "encode", ratio: 0 }),
+  );
+  const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+  const thumb =
+    thumbInput &&
+    (await drawPng(thumbInput, (ctx) => render(ctx, thumbInput, noop))).png;
+  progress({ stage: "encode", ratio: 1 });
+  return transfer(
+    { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+    thumb ? [png, thumb] : [png],
+  );
 }
 
 serveRpc<RenderMethods>({
@@ -119,5 +165,157 @@ serveRpc<RenderMethods>({
       { png, thumb, meta, worker: workerName, ms: performance.now() - started },
       thumb ? [png, thumb] : [png],
     );
+  },
+
+  async renderSankey({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderSankey(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderSankey(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderHeatmap({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderHeatmap(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderHeatmap(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderTreemap({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderTreemap(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderTreemap(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderCandle({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderCandle(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderCandle(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderGantt({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderGantt(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderGantt(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderPie({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderPie(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderPie(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderRadar({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderRadar(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderRadar(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  renderHistogram(params, { progress }) {
+    return renderPair(renderHistogram, params, progress);
+  },
+
+  renderWaterfall(params, { progress }) {
+    return renderPair(renderWaterfall, params, progress);
+  },
+
+  renderFunnel(params, { progress }) {
+    return renderPair(renderFunnel, params, progress);
   },
 });
