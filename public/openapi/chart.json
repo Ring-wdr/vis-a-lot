@@ -576,7 +576,7 @@
       },
       "ChartType": {
         "type": "string",
-        "enum": ["scatter", "bar", "boxplot", "line"]
+        "enum": ["scatter", "bar", "boxplot", "line", "sankey"]
       },
       "ColumnName": {
         "type": "string",
@@ -1066,6 +1066,9 @@
           },
           {
             "$ref": "#/components/schemas/CategoryMeta"
+          },
+          {
+            "$ref": "#/components/schemas/SankeyMeta"
           }
         ]
       },
@@ -1405,6 +1408,113 @@
           "hi",
           "outlierCount"
         ]
+      },
+      "SankeyMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["sankey"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "side": {
+                  "type": "string",
+                  "enum": ["source", "target"]
+                },
+                "x0": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                },
+                "in": {
+                  "type": "number"
+                },
+                "out": {
+                  "type": "number"
+                },
+                "legend": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "side", "x0", "y0", "x1", "y1", "in", "out"]
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "number"
+                },
+                "target": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                },
+                "width": {
+                  "type": "number"
+                }
+              },
+              "required": ["source", "target", "value", "y0", "y1", "width"]
+            }
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": ["chartType", "plot", "x", "y", "agg", "nodes", "links"]
       },
       "ItemRowsResponse": {
         "type": "object",

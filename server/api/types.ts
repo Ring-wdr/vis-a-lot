@@ -14,6 +14,7 @@ type ColumnName = string;
 import type { CategoryMeta } from "../render/category";
 import type { LegendPosition } from "../render/legend";
 import type { Region } from "../render/region";
+import type { SankeyMeta } from "../render/sankey";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
@@ -138,7 +139,13 @@ export type ApiError = { error: string };
 
 // ── 차트 ────────────────────────────────────────────────────────────
 
-export const CHART_TYPES = ["scatter", "bar", "boxplot", "line"] as const;
+export const CHART_TYPES = [
+  "scatter",
+  "bar",
+  "boxplot",
+  "line",
+  "sankey",
+] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
 export type CommonProps = {
@@ -227,13 +234,14 @@ export type {
   CategoryMeta,
   ItemView,
   Region,
+  SankeyMeta,
   ScatterMeta,
   Shape,
   ShapeType,
 };
 
 /** 차트 종류별 metadata */
-export type ItemMeta = ScatterMeta | CategoryMeta;
+export type ItemMeta = ScatterMeta | CategoryMeta | SankeyMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

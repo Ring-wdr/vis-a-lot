@@ -592,40 +592,62 @@ async function itemData(chart: ChartRecord) {
   return loadChartData(chart);
 }
 
+/** 차트 종류에 맞는 데이터를 조회한다. 새 차트는 여기에 분기 하나를 더한다. */
+async function queryChartData(
+  spec: ChartRecord["spec"],
+): Promise<CachedChartData> {
+  const { db } = getRuntime();
+  const groupOf = new Map<string, number>();
+  // 행 단위 점 차트(scatter, line)는 같은 원자료를 쓴다.
+  if (POINT_CHARTS.includes(spec.chartType)) {
+    return {
+      kind: "scatter",
+      ...(await db.call("chartData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "sankey") {
+    return {
+      kind: "sankey",
+      ...(await db.call("sankeyData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        z: spec.z ?? "",
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  return {
+    kind: "category",
+    ...(await db.call("categoryData", {
+      dataset: spec.dataset,
+      chartType: spec.chartType === "bar" ? "bar" : "boxplot",
+      x: spec.x,
+      y: spec.y,
+      agg: spec.agg,
+      splitBy: spec.splitBy,
+      legend: spec.legend,
+      filters: spec.filters,
+    })),
+    groupOf,
+  };
+}
+
 async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const cached = getCachedChartData(chart.id);
   if (cached) return cached;
-  const { db } = getRuntime();
-  const { spec } = chart;
-  const result: CachedChartData =
-    // 행 단위 점 차트(scatter, line)는 같은 원자료를 쓴다.
-    POINT_CHARTS.includes(spec.chartType)
-      ? {
-          kind: "scatter",
-          ...(await db.call("chartData", {
-            dataset: spec.dataset,
-            x: spec.x,
-            y: spec.y,
-            splitBy: spec.splitBy,
-            legend: spec.legend,
-            filters: spec.filters,
-          })),
-          groupOf: new Map(),
-        }
-      : {
-          kind: "category",
-          ...(await db.call("categoryData", {
-            dataset: spec.dataset,
-            chartType: spec.chartType === "bar" ? "bar" : "boxplot",
-            x: spec.x,
-            y: spec.y,
-            agg: spec.agg,
-            splitBy: spec.splitBy,
-            legend: spec.legend,
-            filters: spec.filters,
-          })),
-          groupOf: new Map(),
-        };
+  const result = await queryChartData(chart.spec);
   result.groups.forEach((g, i) => {
     result.groupOf.set(itemKeyOf(g.values), i);
   });
@@ -642,7 +664,7 @@ function renderItem(
   item: ChartItem,
   size: ItemSize,
   thumbnail: boolean,
-  options: PoolCallOptions<"renderScatter" | "renderCategory">,
+  options: PoolCallOptions<"renderScatter" | "renderCategory" | "renderSankey">,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
   const { spec } = chart;
@@ -682,6 +704,33 @@ function renderItem(
             data.legend?.index.slice(group.start, group.end) ??
             new Uint8Array(group.end - group.start),
         },
+      },
+      options,
+    );
+  }
+  if (data.kind === "sankey") {
+    const group = index === undefined ? undefined : data.groups[index];
+    // legend는 출발 노드(x 값)다. 체크박스로 끈 노드의 흐름은 빼고 배치한다.
+    const legend = legendInput(
+      chart,
+      item,
+      columnOf(spec.x)?.label ?? spec.x,
+      data.sources,
+    ) as NonNullable<ReturnType<typeof legendInput>>;
+    return render.call(
+      "renderSankey",
+      {
+        width: common.width,
+        height: common.height,
+        thumbnail: common.thumbnail,
+        title: common.title,
+        shapes: common.shapes,
+        selection: common.selection,
+        sources: data.sources,
+        targets: data.targets,
+        links: group?.links ?? [],
+        agg: spec.agg,
+        legend,
       },
       options,
     );

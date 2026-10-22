@@ -40,8 +40,11 @@ export function specError(
         : "z 컬럼을 골라 주세요."
       : undefined);
   if (axis) return axis;
+  if (fields.distinctXY && spec.x === spec.y) {
+    return "x와 y에 서로 다른 컬럼을 골라 주세요.";
+  }
 
-  if (spec.legend !== null) {
+  if (fields.legend !== false && spec.legend !== null) {
     const error = need(spec.legend, "legend", "categorical");
     if (error) return error;
     const distinct = byName.get(spec.legend)?.distinct;

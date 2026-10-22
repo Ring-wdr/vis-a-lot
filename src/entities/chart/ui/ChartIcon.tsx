@@ -35,6 +35,23 @@ const ICONS: Record<ChartType, ReactNode> = {
       strokeLinejoin="round"
     />
   ),
+  sankey: (
+    <g>
+      <path
+        d="M6 6C12 6 12 9 18 9M6 15C12 15 12 7 18 7M6 15C12 15 12 18 18 18"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity="0.5"
+        strokeWidth="3"
+      />
+      <g fill="currentColor">
+        <rect x="3" y="4" width="3" height="5" rx="1" />
+        <rect x="3" y="12" width="3" height="8" rx="1" />
+        <rect x="18" y="5" width="3" height="6" rx="1" />
+        <rect x="18" y="15" width="3" height="5" rx="1" />
+      </g>
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

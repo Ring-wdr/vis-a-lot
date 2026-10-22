@@ -35,6 +35,8 @@ const LONG_POLL_TIMEOUT_MS = 25_000;
 const MAX_FAVORITES = 20;
 const MAX_LEGEND_GROUPS = 8;
 const MAX_DELETIONS = 50;
+/** 데이터 표·다운로드를 쓰지 않는 차트(sankey 등) */
+const NO_ROWS = "이 차트는 데이터 표·다운로드를 쓰지 않습니다.";
 
 let pngVersion = 0;
 
@@ -445,9 +447,11 @@ export const chartApp = createServiceApp()
     const target = drawnItem(c.req.valid("param"));
     if ("error" in target) return reject(c, target);
     const { chart, item } = target;
+    const scope = itemRowsScope(chart, item);
+    if (!scope) return apiError(c, 409, NO_ROWS);
     const page = await getRuntime().db.call("itemRows", {
       dataset: chart.spec.dataset,
-      scope: itemRowsScope(chart, item),
+      scope,
       page: c.req.valid("json"),
     });
     if (!page) return apiError(c, 404, "unknown dataset");
@@ -457,9 +461,11 @@ export const chartApp = createServiceApp()
     const target = drawnItem(c.req.valid("param"));
     if ("error" in target) return reject(c, target);
     const { chart, item } = target;
+    const scope = itemRowsScope(chart, item);
+    if (!scope) return apiError(c, 409, NO_ROWS);
     const csv = await getRuntime().db.call("exportItemRows", {
       dataset: chart.spec.dataset,
-      scope: itemRowsScope(chart, item),
+      scope,
     });
     if (!csv) return apiError(c, 404, "unknown dataset");
     // Excel이 한글 머리글을 UTF-8로 읽도록 BOM을 붙인다.

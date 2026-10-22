@@ -15,7 +15,9 @@ import type { CsvOptions, CsvPreview } from "./data/csv-import";
 import type { ColumnInfo } from "./data/datasets";
 import type { ChartFilter } from "./data/filters";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
+import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
 import type { CategoryInput, CategoryMeta } from "./render/category";
+import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
@@ -100,6 +102,11 @@ export type DbMethods = {
     params: Omit<CategoryDataParams, "table"> & { dataset: string };
     result: CategoryData;
   };
+  /** sankey: SQL로 집계한 split 조합 × 출발 → 도착 흐름 */
+  sankeyData: {
+    params: Omit<SankeyDataParams, "table"> & { dataset: string };
+    result: SankeyData;
+  };
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
@@ -163,6 +170,17 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: CategoryMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderSankey: {
+    params: SankeyInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: SankeyMeta;
       worker: string;
       ms: number;
     };

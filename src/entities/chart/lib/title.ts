@@ -8,6 +8,7 @@ export const CHART_LABELS: Record<ChartType, string> = {
   bar: "Bar",
   boxplot: "Boxplot",
   line: "Line",
+  sankey: "Sankey",
 };
 
 /**

@@ -3,7 +3,7 @@
 import type { ItemRowsScope } from "../data/item-rows";
 import { markPoint } from "../render/category";
 import { regionTester } from "../render/region";
-import { POINT_CHARTS } from "./chart-fields";
+import { isRowChart, POINT_CHARTS } from "./chart-fields";
 import type { ChartItem, ChartRecord } from "./chart-store";
 
 /** 차트에 쓴 컬럼: split by → x → y → legend → 툴팁 순서, 겹치면 한 번만 */
@@ -44,11 +44,13 @@ function selectedMarks(chart: ChartRecord, item: ChartItem) {
   return marks;
 }
 
+/** 데이터 표·다운로드를 쓰지 않는 차트면 undefined */
 export function itemRowsScope(
   chart: ChartRecord,
   item: ChartItem,
-): ItemRowsScope {
+): ItemRowsScope | undefined {
   const { spec } = chart;
+  if (!isRowChart(spec.chartType)) return undefined;
   const scatter = POINT_CHARTS.includes(spec.chartType);
   return {
     chartType: spec.chartType,

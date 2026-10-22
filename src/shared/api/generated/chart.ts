@@ -2404,7 +2404,7 @@ export type components = {
     /** @example iot-100k */
     DatasetId: string;
     /** @enum {string} */
-    ChartType: "scatter" | "bar" | "boxplot" | "line";
+    ChartType: "scatter" | "bar" | "boxplot" | "line" | "sankey";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2555,7 +2555,8 @@ export type components = {
     };
     ItemMeta:
       | components["schemas"]["ScatterMeta"]
-      | components["schemas"]["CategoryMeta"];
+      | components["schemas"]["CategoryMeta"]
+      | components["schemas"]["SankeyMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2642,6 +2643,41 @@ export type components = {
       lo: number;
       hi: number;
       outlierCount: number;
+    };
+    SankeyMeta: {
+      /** @enum {string} */
+      chartType: "sankey";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      agg: components["schemas"]["AggFn"];
+      nodes: {
+        name: string;
+        /** @enum {string} */
+        side: "source" | "target";
+        x0: number;
+        y0: number;
+        x1: number;
+        y1: number;
+        in: number;
+        out: number;
+        legend?: number;
+      }[];
+      links: {
+        source: number;
+        target: number;
+        value: number;
+        y0: number;
+        y1: number;
+        width: number;
+      }[];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
     };
     ItemRowsResponse: {
       columns: {

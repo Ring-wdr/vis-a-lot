@@ -3,6 +3,7 @@
 import { History, LayoutGrid, TriangleAlert } from "lucide-react";
 import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
+import { drawsLegend } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
@@ -180,7 +181,7 @@ export function ChartGrid() {
                     }
                     chartId={current.chartId}
                     primaryJobId={current.jobId}
-                    hasLegend={current.spec.legend !== null}
+                    hasLegend={drawsLegend(current.spec)}
                     displaySize={displaySize}
                     tooltipColumns={current.spec.tooltip}
                   />
