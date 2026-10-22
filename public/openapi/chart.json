@@ -340,6 +340,22 @@
               }
             },
             "required": ["type"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["pan"]
+              },
+              "dx": {
+                "type": "number"
+              },
+              "dy": {
+                "type": "number"
+              }
+            },
+            "required": ["type", "dx", "dy"]
           }
         ]
       },
@@ -1959,7 +1975,7 @@
     "/charts/{chartId}/items/{itemKey}/view": {
       "post": {
         "tags": ["items"],
-        "summary": "확대 / 축소 / 초기화. 바뀐 범위로 그 item만 다시 그린다",
+        "summary": "확대 / 축소 / 초기화 / 이동. 바뀐 범위로 그 item만 다시 그린다",
         "security": [
           {
             "bearer": []

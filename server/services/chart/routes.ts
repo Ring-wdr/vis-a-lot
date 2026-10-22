@@ -109,7 +109,7 @@ export const changeView = createRoute({
   method: "post",
   path: "/charts/{chartId}/items/{itemKey}/view",
   tags: ["items"],
-  summary: "확대 / 축소 / 초기화. 바뀐 범위로 그 item만 다시 그린다",
+  summary: "확대 / 축소 / 초기화 / 이동. 바뀐 범위로 그 item만 다시 그린다",
   ...write,
   request: { params: ItemParams, body: jsonBody(ViewRequestSchema) },
   responses: { 202: accepted, ...itemErrors },

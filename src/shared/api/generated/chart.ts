@@ -491,7 +491,7 @@ export type paths = {
     };
     get?: never;
     put?: never;
-    /** 확대 / 축소 / 초기화. 바뀐 범위로 그 item만 다시 그린다 */
+    /** 확대 / 축소 / 초기화 / 이동. 바뀐 범위로 그 item만 다시 그린다 */
     post: {
       parameters: {
         query?: never;
@@ -1493,6 +1493,12 @@ export type components = {
       | {
           /** @enum {string} */
           type: "reset";
+        }
+      | {
+          /** @enum {string} */
+          type: "pan";
+          dx: number;
+          dy: number;
         };
     CreateChartResponse: {
       chartId: string;

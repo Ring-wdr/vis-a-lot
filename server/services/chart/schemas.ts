@@ -264,6 +264,8 @@ export const ViewRequestSchema = z
     z.object({ type: z.literal("zoomIn"), x: range, y: range }),
     z.object({ type: z.literal("zoomOut"), ratio: z.number().gt(1).max(10) }),
     z.object({ type: z.literal("reset") }),
+    /** 이동: 보이는 범위를 데이터 값 기준으로 (dx, dy)만큼 옮긴다. */
+    z.object({ type: z.literal("pan"), dx: finite, dy: finite }),
   ])
   .openapi("ViewRequest");
 
