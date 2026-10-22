@@ -141,12 +141,14 @@ function DrawnItem({
   // 같은 job에 다른 item이 함께 있어도(resize) 이 item이 끝났는지로 판단한다.
   const jobStatus = redrawing?.status;
   const redrawnUrl = redrawing?.image?.url;
+  const redrawError = redrawing?.error;
   useEffect(() => {
     if (!jobStatus || !isTerminal(jobStatus)) return;
     // draw job의 item 상태를 다시 받아 새 PNG로 바꾼다.
     client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
     if (jobStatus === "failed") {
-      showAlert("다시 그리기에 실패했습니다.");
+      // 서버가 준 사유(지운 데이터 등)가 있으면 그대로 보여준다.
+      showAlert(redrawError ?? "다시 그리기에 실패했습니다.");
       setItemJob(item.key, undefined);
     } else if (jobStatus !== "success" || item.image.url === redrawnUrl) {
       // 새 PNG가 grid에 반영된 뒤에 조작 차단을 푼다.
@@ -155,6 +157,7 @@ function DrawnItem({
   }, [
     jobStatus,
     redrawnUrl,
+    redrawError,
     item.image.url,
     item.key,
     primaryJobId,

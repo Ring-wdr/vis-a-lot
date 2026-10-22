@@ -36,7 +36,10 @@ import { deletePngs, putPng } from "../png-store";
 import { defaultLegendColor } from "../render/theme";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
-import { dataService } from "../services/chart/clients/data-service";
+import {
+  DataServiceError,
+  dataService,
+} from "../services/chart/clients/data-service";
 
 type Job = {
   id: string;
@@ -67,6 +70,33 @@ type RenderTarget =
 
 /** 사용자에게 그대로 보여줄 수 있는 job 실패 사유 */
 class JobError extends Error {}
+
+/** data 서비스가 모르는 데이터셋(404): 지운 업로드 */
+const DATASET_DELETED =
+  "삭제된 데이터라 그릴 수 없습니다. datastore에서 다른 데이터를 고르세요.";
+/** data 서비스가 준비되지 않았다고 답함(409) */
+const DATASET_NOT_READY = "데이터가 아직 준비되지 않았습니다.";
+const REDRAW_FAILED = "다시 그리지 못했습니다.";
+
+/** 사용자에게 보여줄 실패 사유. data 서비스 오류는 상태 코드로 가르고, 모르는 오류면 undefined */
+function reasonOf(err: unknown): string | undefined {
+  if (err instanceof JobError) return err.message;
+  if (err instanceof DataServiceError) {
+    if (err.status === 404) return DATASET_DELETED;
+    if (err.status === 409) return DATASET_NOT_READY;
+  }
+  return undefined;
+}
+
+/** job이 중간에 실패하면 끝나지 않은 item도 실패로 남긴다. 화면은 item이 끝나기를 기다리기 때문이다. */
+function failItems(job: Job, items: ChartItem[], error: string) {
+  for (const item of items) {
+    const state = job.items.get(item.key);
+    if (state && !isTerminal(state.status)) {
+      job.items.set(item.key, { ...state, status: "failed", error });
+    }
+  }
+}
 
 const jobs = new Map<string, Job>();
 const DATASET_POLL_MS = 300;
@@ -102,12 +132,10 @@ export function startJob(chart: ChartRecord): Job {
     .catch((err) => {
       if (err instanceof CancelledError) {
         job.status = "cancelled";
-      } else if (err instanceof JobError) {
-        job.status = "failed";
-        job.error = err.message;
       } else {
-        console.error(`job ${job.id} failed`, err);
         job.status = "failed";
+        job.error = reasonOf(err);
+        if (!job.error) console.error(`job ${job.id} failed`, err);
       }
     })
     .finally(() => {
@@ -365,12 +393,15 @@ export function startItemJob(
   for (const item of items) item.busyJobId = job.id;
 
   (async () => {
-    const data = await loadChartData(chart);
+    const data = await itemData(chart);
     await renderItems(job, data, items, { kind: "item", thumbnail: content });
     job.status = finalStatus(job);
   })()
     .catch((err) => {
-      console.error(`item job ${job.id} failed`, err);
+      const reason = reasonOf(err);
+      if (!reason) console.error(`item job ${job.id} failed`, err);
+      job.error = reason ?? REDRAW_FAILED;
+      failItems(job, items, job.error);
       job.status = "failed";
     })
     .finally(() => {
@@ -402,12 +433,15 @@ export function startDetailJob(
   item.detailJobs.set(sizeKey, job.id);
   const target = { kind: "detail", size, revision: item.revision } as const;
   (async () => {
-    const data = await loadChartData(chart);
+    const data = await itemData(chart);
     await renderItems(job, data, [item], target);
     job.status = finalStatus(job);
   })()
     .catch((err) => {
-      console.error(`detail job ${job.id} failed`, err);
+      const reason = reasonOf(err);
+      if (!reason) console.error(`detail job ${job.id} failed`, err);
+      job.error = reason ?? REDRAW_FAILED;
+      failItems(job, [item], job.error);
       job.status = "failed";
     })
     .finally(() => {
@@ -488,6 +522,16 @@ function finalStatus(job: Job): JobStatus {
 }
 
 /** 차트 데이터를 메모리 캐시에서 꺼내고, 밀려났으면 다시 조회한다. */
+/**
+ * item·크게 보기 job의 데이터. 캐시에서 밀려나 다시 조회해야 하면, 데이터셋이 남아 있는지 data 서비스에
+ * 먼저 묻는다. 지운 데이터면 404(DataServiceError)로 끝나 사유를 가를 수 있다.
+ */
+async function itemData(chart: ChartRecord) {
+  if (!getCachedChartData(chart.id))
+    await dataService.schema(chart.spec.dataset);
+  return loadChartData(chart);
+}
+
 async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const cached = getCachedChartData(chart.id);
   if (cached) return cached;

@@ -48,12 +48,25 @@ const bearer: Middleware = {
 };
 data.use(bearer);
 
+/** data 서비스가 실패로 답한 요청. 부르는 쪽은 status로 이유를 가른다 (404 모르는 데이터셋, 409 준비 전 등). */
+export class DataServiceError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 function unwrap<T>(
-  result: { data?: T; error?: { error: string } },
+  result: { data?: T; error?: { error: string }; response: Response },
   what: string,
 ) {
   if (result.data === undefined) {
-    throw new Error(`data service ${what}: ${result.error?.error ?? "failed"}`);
+    throw new DataServiceError(
+      result.response.status,
+      `data service ${what}: ${result.error?.error ?? "failed"}`,
+    );
   }
   return result.data;
 }

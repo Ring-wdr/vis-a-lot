@@ -895,7 +895,7 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
-        /** @description 등록하지 않은 데이터셋 */
+        /** @description 등록하지 않은 샘플이거나 적재에 실패한 데이터셋 */
         409: {
           headers: {
             [name: string]: unknown;

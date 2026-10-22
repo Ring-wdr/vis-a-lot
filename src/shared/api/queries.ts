@@ -19,7 +19,7 @@ import {
   type UploadTask,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
-import { api } from "./api";
+import { ApiRequestError, api } from "./api";
 
 /**
  * long polling 요청은 한 번 실패해도 멈추면 안 된다 (service worker 재시작 등).
@@ -78,12 +78,16 @@ export function useDatasets() {
   return useQuery(datasetsQuery);
 }
 
-/** 데이터셋 이름. 지웠거나 목록을 받기 전이면 id를 그대로 쓴다. */
+/** 목록에 없는 데이터셋(지운 업로드)의 이름 */
+export const DELETED_DATASET_NAME = "삭제된 데이터";
+
+/** 데이터셋 이름. 목록을 받기 전이면 id를, 목록에 없으면(지운 데이터) '삭제된 데이터'를 쓴다. */
 export function useDatasetNames() {
   const datasets = useDatasets().data?.datasets;
   return useMemo(() => {
     const names = new Map(datasets?.map((d) => [d.id, d.name]));
-    return (id: DatasetId) => names.get(id) ?? id;
+    return (id: DatasetId) =>
+      names.get(id) ?? (datasets ? DELETED_DATASET_NAME : id);
   }, [datasets]);
 }
 
@@ -193,13 +197,20 @@ export function useDatasetSchema(id: DatasetId) {
 
 /**
  * 컬럼 후보를 아직 못 보여주는 이유. 받는 중(loading)과 데이터가 없어서(missing·generating)를 나눠
- * '등록하세요' 안내가 단순히 받는 동안에 뜨지 않게 한다.
+ * '등록하세요' 안내가 단순히 받는 동안에 뜨지 않게 한다. deleted는 목록에 없는 데이터(지운 업로드)다.
  */
-export type SchemaState = "loading" | "missing" | "generating" | "ready";
+export type SchemaState =
+  | "loading"
+  | "missing"
+  | "generating"
+  | "ready"
+  | "deleted";
 
 export function useSchemaState(id: DatasetId): SchemaState {
   const status = useDatasetStatus(id);
   const schema = useDatasetSchema(id);
+  // 목록을 받았는데 없으면 지운 데이터다. 남아 있는 스키마 캐시보다 먼저 본다.
+  if (status.isSuccess && !status.data) return "deleted";
   if (schema.data) return "ready";
   const state = status.data?.state;
   if (state === "missing") return "missing";
@@ -393,6 +404,10 @@ export function useTooltipValues(
     enabled: rowId !== undefined && columns.length > 0,
     staleTime: Number.POSITIVE_INFINITY,
     ...TOOLTIP_RETRY,
+    // 404(지운 데이터셋·차트)는 다시 물어도 같다.
+    retry: (count, err) =>
+      !(err instanceof ApiRequestError && err.status === 404) &&
+      count < TOOLTIP_RETRY.retry,
   });
 }
 

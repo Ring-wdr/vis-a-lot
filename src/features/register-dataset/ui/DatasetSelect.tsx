@@ -1,6 +1,6 @@
 "use client";
 
-import { useDatasets } from "@/shared/api/queries";
+import { DELETED_DATASET_NAME, useDatasets } from "@/shared/api/queries";
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { LoadingText } from "@/shared/ui/Loading";
 import { Select } from "@/shared/ui/Select";
@@ -36,7 +36,11 @@ export function DatasetSelect({
   }));
   // 지운 데이터로 그린 탭도 고른 값이 보이도록 자리를 남긴다.
   if (list && !status) {
-    options.push({ value: dataset, label: "삭제된 데이터", disabled: true });
+    options.push({
+      value: dataset,
+      label: DELETED_DATASET_NAME,
+      disabled: true,
+    });
   }
 
   return (

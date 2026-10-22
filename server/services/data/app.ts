@@ -107,7 +107,12 @@ export const dataApp = createServiceApp()
   .openapi(routes.schema, async (c) => {
     const { datasetId } = c.req.valid("param");
     const columns = await db().call("datasetColumns", { dataset: datasetId });
-    if (!columns) return apiError(c, 409, "dataset is not registered");
+    if (!columns) {
+      // 모르는 데이터셋(지운 업로드)과 아직 등록하지 않은 샘플을 상태 코드로 나눈다.
+      const status = await db().call("datasetStatus", { id: datasetId });
+      if (!status) return apiError(c, 404, "unknown dataset");
+      return apiError(c, 409, "dataset is not registered");
+    }
     return c.json(
       { id: datasetId, ready: await isReady(datasetId), columns },
       200,
