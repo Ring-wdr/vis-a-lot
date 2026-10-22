@@ -1,5 +1,33 @@
 # Changelog
 
+## [Unreleased]
+
+원본 제품의 차트 속성(Title, Axes, Legend, Panel, Palette, Shape, Size, Point Label, Score, Prediction, Value, Focus, ToolTip, Expression)을 공통 속성과 item 개별 속성에 더했다. 차트별로 쓸 수 있는 구역은 원본의 'Availability of Chart-Specific Options' 표를 14종 차트에 옮겨 정한다.
+
+### 차트 속성
+- 속성 모델: `server/render/options.ts`(모양·기본값), `server/charts/chart-options.ts`(차트별 지원 표). 그릴 때 기본값 → 공통 → item 개별 순으로 깊게 합치고, 차트가 쓰지 않는 구역은 저장하지 않는다
+- 기본값은 지금까지의 PNG와 같다. 속성을 정하지 않으면 그림이 바뀌지 않는다
+- Title: 제목 바꾸기·부제목·글자·색·정렬 / Panel: 배경색·그라데이션·테두리·여백 / Legend 모양: 보이기·테두리·순서 뒤집기·글자
+- Axes: x·y 보이기, 축 제목, 최소·최대·로그(양수 범위에서만), 축선·그리드·눈금·라벨(각도·글자·색), 소수 자리, 시계열 형식. 확대 범위가 최소·최대보다 우선한다
+- Palette: legend 기본 색을 시작→중간→끝 그라데이션 단계로 (heatmap은 순차 색 척도)
+- Shape: 점 모양 5종, 채우기/테두리/둘 다, 투명도, 테두리 굵기 / Size: 점 크기 자동·고정·범위, 글자 크기 자동·범위, 선 굵기
+- Point Label: 막대 끝 값, 중앙값, 칸 값, 조각 값 등. 앞뒤 글자·소수 자리·각도·상자, 겹치면 건너뛴다
+- Score(scatter, line): rscore·fscore(legend별 ANOVA)·zscore·Cpk 상자
+- Prediction(scatter, line): 이동 평균, 단순·이중 지수 평활, Holt-Winters. 비운 매개변수는 자동 맞춤, 신뢰 구간 띠·설명
+- Value: 빈 칸 값(null to numeric), 이상치 제외(IQR·σ) / Focus: 조건(> ≥ < ≤ = ≠)에 맞는 점·막대·캔들·작업을 강조
+- Expression(scatter, line, bar): eval 없이 해석하는 식(x, y, + - * / ^, abs log ln sqrt exp round floor ceil min max pow)
+- ToolTip: 화면 툴팁의 제목·글자·배경·투명도·모서리·테두리·앞뒤 글자·소수 자리
+- 제외: Wafer·Selection·Multi Axis(해당 차트·기능 없음), pie·treemap·funnel의 Axes(축 없는 차트)
+
+### 화면
+- 전체 설정에 차트가 쓰는 속성 구역만 메뉴로 보인다. 구역마다 기본값으로 되돌리기
+- item 설정 → 개별 속성 팝업. 구역별·전체 공통 속성 따르기
+
+### API (호환 깨짐)
+- `CommonProps.options`, `ItemRestore.options`, `ItemState.options`, `ItemPropsRequest { options }`(item 속성 전체를 바꾼다, null이면 지운다)
+- `AxisMeta.log`: 로그 축이면 화면이 log10 공간에서 좌표를 환산한다
+- history 이벤트 `options`
+
 ## [0.10.0] - 2026-10-23
 
 데이터 테이블을 item 데이터와 전체 데이터 두 가지로 다시 정의하고, 서버의 SQL을 Kysely로 옮겼다.
