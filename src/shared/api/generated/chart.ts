@@ -2391,6 +2391,7 @@ export type components = {
       chartType: components["schemas"]["ChartType"];
       x: components["schemas"]["ColumnName"];
       y: components["schemas"]["ColumnName"];
+      z?: components["schemas"]["ColumnName"] | null;
       agg: components["schemas"]["AggFn"];
       legend: components["schemas"]["ColumnName"] | null;
       splitBy: components["schemas"]["ColumnName"][];

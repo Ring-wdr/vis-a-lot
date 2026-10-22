@@ -165,6 +165,8 @@ export type ChartSpec = {
   chartType: ChartType;
   x: ColumnName;
   y: ColumnName;
+  /** 세 번째 값 컬럼. 쓰는 차트만 고른다 (server/charts/chart-fields.ts). 예전 history에는 없다. */
+  z?: ColumnName | null;
   /** bar의 통계 함수 */
   agg: AggFn;
   /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */

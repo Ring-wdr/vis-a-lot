@@ -60,6 +60,8 @@ export const ChartSpecSchema = z
     chartType: ChartTypeSchema,
     x: ColumnNameSchema,
     y: ColumnNameSchema,
+    /** 세 번째 값 컬럼. 쓰는 차트만 고른다. 예전 history에는 없다. */
+    z: orNull(ColumnNameSchema).optional(),
     /** bar의 통계 함수 */
     agg: AggFnSchema,
     /** 색을 나눌 범주 컬럼. null이면 한 가지 색 */

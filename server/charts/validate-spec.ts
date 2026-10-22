@@ -3,6 +3,7 @@
 
 import type { ChartSpec } from "../api/types";
 import type { LogicalType } from "../data/dataset-schema";
+import { CHART_FIELDS } from "./chart-fields";
 
 export type SpecColumn = {
   name: string;
@@ -29,11 +30,15 @@ export function specError(
     }
   };
 
+  const fields = CHART_FIELDS[spec.chartType];
   const axis =
-    spec.chartType === "scatter"
-      ? (need(spec.x, "x", "numeric", "datetime") ??
-        need(spec.y, "y", "numeric"))
-      : (need(spec.x, "x", "categorical") ?? need(spec.y, "y", "numeric"));
+    need(spec.x, "x", ...fields.x) ??
+    (fields.y ? need(spec.y, "y", ...fields.y) : undefined) ??
+    (fields.z
+      ? spec.z
+        ? need(spec.z, "z", ...fields.z)
+        : "z 컬럼을 골라 주세요."
+      : undefined);
   if (axis) return axis;
 
   if (spec.legend !== null) {
