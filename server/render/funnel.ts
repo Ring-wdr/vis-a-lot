@@ -234,7 +234,7 @@ export function renderFunnel(
       ctx.fillStyle = THEME.textMuted;
       ctx.textAlign = "center";
       ctx.fillText(
-        `↓ ${percent(s.rate)}`,
+        `전환 ${percent(s.rate)}`,
         plot.left + plot.width / 2,
         (prev.rect.y + prev.rect.height + rect.y) / 2,
       );
