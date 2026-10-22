@@ -142,10 +142,12 @@ export type DbMethods = {
     params: Omit<GanttDataParams, "table"> & { dataset: string };
     result: GanttData;
   };
-  /** pie: bar와 같은 SQL 집계를 큰 순 조각(상위 N + 기타)으로 */
+  /** pie: bar와 같은 SQL 집계를 큰 순 조각(상위 N + 기타)으로. legend가 있으면 sunburst 바깥 고리도 붙인다. */
   pieData: {
     params: Omit<CategoryDataParams, "table" | "chartType" | "legend"> & {
       dataset: string;
+      /** sunburst 바깥 고리를 나눌 legend 컬럼. 없으면 조각만 */
+      sunburst?: string | null;
     };
     result: PieData;
   };

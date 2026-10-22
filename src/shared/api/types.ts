@@ -37,6 +37,7 @@ export type ColumnSummary = Data["ColumnSummary"];
 export type ColumnName = Chart["ColumnName"];
 export type AggFn = Chart["AggFn"];
 export type ChartType = Chart["ChartType"];
+export type ChartSubType = Chart["ChartSubType"];
 export type ChartSpec = Chart["ChartSpec"];
 export type ChartFilter = Chart["ChartFilter"];
 export type RangeFilter = Chart["RangeFilter"];

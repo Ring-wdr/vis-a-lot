@@ -29,6 +29,8 @@ export type BoxStats = {
   outlierCount: number;
   /** 그릴 이상치 (최대 OUTLIER_SAMPLE개) */
   outliers: number[];
+  /** boxplot 하위 차트 dot: 상자 위에 겹쳐 찍을 원값 표본 (최대 DOT_SAMPLE개). 요청하지 않으면 없다. */
+  dots?: number[];
 };
 
 export type CategoryGroup = {
@@ -58,8 +60,12 @@ export type CategoryDataParams = {
   splitBy: string[];
   legend: string | null;
   filters?: ChartFilter[];
+  /** boxplot: 상자마다 원값 표본(dots)도 가져온다 */
+  dots?: boolean;
 };
 const OUTLIER_SAMPLE = 200;
+/** dot boxplot에서 상자 하나에 찍는 점 수의 상한 */
+export const DOT_SAMPLE = 300;
 
 /** 통계 함수 조각. median의 percentile_cont … within group은 Postgres 계열 전용이다. */
 export const AGG_SQL: Record<AggFn, (y: Sql) => Sql> = {
@@ -187,6 +193,11 @@ export async function queryBoxData(
     (c) =>
       sql`${textSql(c.src)} as ${sql.id(c.alias)}, ${ident(c.src.name)} as ${sql.id(`${c.alias}_o`)}`,
   );
+  // dot 표본: 행 위치(ctid)의 해시 순으로 앞에서 DOT_SAMPLE개. 같은 데이터면 늘 같은 점을 고른다 (Postgres 계열 전용).
+  const dotHash = params.dots ? sql`, hashtext(ctid::text) as h` : sql``;
+  const dotSelect = params.dots
+    ? sql`, (array_agg(s.v order by s.h))[1:${sql.lit(DOT_SAMPLE)}] as dots`
+    : sql``;
   const aliases = keyNames.map((c) => sql.id(c.alias));
   const qAliases = list(keyNames.map((c) => sql.id("q", c.alias)));
   const orderAliases = list(keyNames.map((c) => sql.id("q", `${c.alias}_o`)));
@@ -199,7 +210,7 @@ export async function queryBoxData(
     db,
     sql`
     with s as (
-      select ${list(select)}, ${y}::float8 as v
+      select ${list(select)}, ${y}::float8 as v${dotHash}
       from ${tableSql(table)} where ${where}
     ),
     q as (
@@ -214,7 +225,7 @@ export async function queryBoxData(
       min(s.v) filter (where s.v >= ${lowFence}) as lo,
       max(s.v) filter (where s.v <= ${highFence}) as hi,
       count(*) filter (where s.v < ${lowFence} or s.v > ${highFence})::int as outlier_count,
-      (array_agg(s.v) filter (where s.v < ${lowFence} or s.v > ${highFence}))[1:${sql.lit(OUTLIER_SAMPLE)}] as outliers
+      (array_agg(s.v) filter (where s.v < ${lowFence} or s.v > ${highFence}))[1:${sql.lit(OUTLIER_SAMPLE)}] as outliers${dotSelect}
     from q join s on ${join}
     group by ${qAliases}, ${orderAliases}, q.n, q.mean, q.q1, q.median, q.q3
     order by ${orderAliases}`,
@@ -231,6 +242,7 @@ export async function queryBoxData(
       hi: row[o + 6] as number,
       outlierCount: row[o + 7] as number,
       outliers: (row[o + 8] as number[] | null) ?? [],
+      ...(params.dots ? { dots: (row[o + 9] as number[] | null) ?? [] } : {}),
     })).map((g) => ({
       values: g.values,
       categories: g.categories,

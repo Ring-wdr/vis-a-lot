@@ -163,6 +163,19 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
       plot.width;
   if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX)
     return undefined;
+  // 누적 막대: 범주 하나에 한 줄로 쌓여 있어 커서 높이로 어느 막대인지 찾는다.
+  if (meta.segments) {
+    const row = meta.segments[index] ?? [];
+    const g = row.findIndex((seg) => {
+      if (!seg) return false;
+      const a = yToPx(meta, seg[0]);
+      const b = yToPx(meta, seg[1]);
+      return py >= Math.min(a, b) - 1 && py <= Math.max(a, b) + 1;
+    });
+    if (g < 0) return undefined;
+    const { cx, width } = groupSlot(center, meta.markWidth, 1, 0, 0);
+    return { index, g, cx, width };
+  }
   const left = center - meta.markWidth / 2;
   const g = Math.min(
     meta.groupCount - 1,
@@ -228,15 +241,31 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
     const hit = hitCategory(meta, px, py);
     const value = hit && meta.bars?.[hit.index]?.[hit.g];
     if (!hit || value === undefined || value === null) return null;
+    const seg = meta.segments?.[hit.index]?.[hit.g];
     return {
-      highlight: highlightRect(meta, hit.cx, hit.width, 0, value),
+      highlight: highlightRect(
+        meta,
+        hit.cx,
+        hit.width,
+        seg ? seg[0] : 0,
+        seg ? seg[1] : value,
+      ),
       rows: [
         ...categoryRows(meta, hit.index, hit.g),
         {
           label: meta.agg ? AGG_LABELS[meta.agg] : "값",
           value: formatValue(value, "number"),
-          emphasis: true,
+          emphasis: meta.stack !== "stack100",
         },
+        ...(seg && meta.stack === "stack100"
+          ? [
+              {
+                label: "비율",
+                value: `${(seg[1] - seg[0]).toFixed(1)}%`,
+                emphasis: true,
+              },
+            ]
+          : []),
       ],
     };
   },
@@ -610,31 +639,67 @@ export const ganttStrategy: TooltipStrategy<GanttMeta> = {
   },
 };
 
-/** 커서가 가리키는 pie 조각. 원 밖이면 undefined */
-export function hitSlice(meta: PieMeta, px: number, py: number) {
+type PieChild = NonNullable<PieMeta["children"]>[number];
+
+/**
+ * 커서가 가리키는 pie 조각. 원(고리) 밖이면 undefined.
+ * pie3d는 눕힌 타원이라 세로를 펴서 원으로 보고, doughnut·sunburst의 가운데 빈 곳은 조각이 아니다.
+ * sunburst 바깥 고리면 child에 그 몫을 함께 준다.
+ */
+export function hitSlice(
+  meta: PieMeta,
+  px: number,
+  py: number,
+): (PieMeta["slices"][number] & { child?: PieChild }) | undefined {
+  const k = meta.radiusY ? meta.radiusY / meta.radius : 1;
   const dx = px - meta.center.x;
-  const dy = py - meta.center.y;
-  if (dx * dx + dy * dy > meta.radius * meta.radius) return undefined;
+  const dy = (py - meta.center.y) / k;
+  const d2 = dx * dx + dy * dy;
+  if (d2 > meta.radius * meta.radius) return undefined;
+  const inner = meta.innerRadius ?? 0;
+  if (d2 < inner * inner) return undefined;
   // 조각 각도는 12시(-π/2)에서 시작해 3π/2까지라 그 범위로 맞춘다.
   let angle = Math.atan2(dy, dx);
   if (angle < -Math.PI / 2) angle += Math.PI * 2;
-  return meta.slices.find((s) => angle >= s.start && angle <= s.end);
+  const within = (s: { start: number; end: number }) =>
+    angle >= s.start && angle <= s.end;
+  if (meta.ring !== undefined && d2 > meta.ring * meta.ring) {
+    const child = meta.children?.find(within);
+    const slice = child && meta.slices.find((s) => s.category === child.parent);
+    return slice && { ...slice, child };
+  }
+  return meta.slices.find(within);
 }
 
-/** 부채꼴 SVG path. 한 바퀴 전체면 원 두 반쪽으로 그린다 (시작점과 끝점이 같으면 호가 사라진다). */
+/**
+ * 부채꼴 SVG path. inner > 0이면 고리 조각, k < 1이면 세로로 눕힌 타원(pie3d).
+ * 한 바퀴 전체면 반쪽 호 둘로 그린다 (시작점과 끝점이 같으면 호가 사라진다).
+ */
 export function wedgePath(
   cx: number,
   cy: number,
   r: number,
   start: number,
   end: number,
+  inner = 0,
+  k = 1,
 ) {
-  const at = (a: number) => `${cx + Math.cos(a) * r} ${cy + Math.sin(a) * r}`;
+  const at = (a: number, rr: number) =>
+    `${cx + Math.cos(a) * rr} ${cy + Math.sin(a) * rr * k}`;
+  const arc = (rr: number, from: number, to: number, sweep: 0 | 1) => {
+    const large = Math.abs(to - from) > Math.PI ? 1 : 0;
+    return `A ${rr} ${rr * k} 0 ${large} ${sweep} ${at(to, rr)}`;
+  };
   if (end - start >= Math.PI * 2 - 1e-9) {
-    return `M ${at(start)} A ${r} ${r} 0 1 1 ${at(start + Math.PI)} A ${r} ${r} 0 1 1 ${at(start)} Z`;
+    const mid = start + Math.PI;
+    const outer = `M ${at(start, r)} ${arc(r, start, mid, 1)} ${arc(r, mid, start, 1)} Z`;
+    if (inner <= 0) return outer;
+    return `${outer} M ${at(start, inner)} ${arc(inner, start, mid, 0)} ${arc(inner, mid, start, 0)} Z`;
   }
-  const large = end - start > Math.PI ? 1 : 0;
-  return `M ${cx} ${cy} L ${at(start)} A ${r} ${r} 0 ${large} 1 ${at(end)} Z`;
+  if (inner <= 0) {
+    return `M ${cx} ${cy} L ${at(start, r)} ${arc(r, start, end, 1)} Z`;
+  }
+  return `M ${at(start, r)} ${arc(r, start, end, 1)} L ${at(end, inner)} ${arc(inner, end, start, 0)} Z`;
 }
 
 const OUTLINE_PAD = 3;
@@ -645,23 +710,35 @@ export const pieStrategy: TooltipStrategy<PieMeta> = {
     if (inLegendBox(meta, px, py)) return null;
     const slice = hitSlice(meta, px, py);
     if (!slice) return null;
+    const k = meta.radiusY ? meta.radiusY / meta.radius : 1;
+    const { child } = slice;
+    // sunburst 바깥 고리면 그 몫만, 아니면 조각(안쪽 고리) 둘레를 그린다.
+    const outer = child
+      ? meta.radius + OUTLINE_PAD
+      : (meta.ring ?? meta.radius) + OUTLINE_PAD;
+    const inner = child
+      ? (meta.ring ?? 0)
+      : Math.max(0, (meta.innerRadius ?? 0) - OUTLINE_PAD);
     return {
       outline: wedgePath(
         meta.center.x,
         meta.center.y,
-        meta.radius + OUTLINE_PAD,
-        slice.start,
-        slice.end,
+        outer,
+        (child ?? slice).start,
+        (child ?? slice).end,
+        inner,
+        k,
       ),
       rows: [
         { label: meta.legend?.title ?? "조각", value: slice.category },
+        ...(child ? [{ label: "나눈 값", value: child.category }] : []),
         {
           label: meta.agg ? AGG_LABELS[meta.agg] : "값",
-          value: formatValue(slice.value, "number"),
+          value: formatValue((child ?? slice).value, "number"),
         },
         {
-          label: "비율",
-          value: `${(slice.ratio * 100).toFixed(1)}%`,
+          label: child ? "조각 안 비율" : "비율",
+          value: `${((child ?? slice).ratio * 100).toFixed(1)}%`,
           emphasis: true,
         },
       ],

@@ -4,6 +4,7 @@ import {
   applyValueOptions,
   type CategoryInput,
   renderCategory,
+  stackSegments,
 } from "./category";
 import { renderHistogram } from "./histogram";
 import {
@@ -308,5 +309,100 @@ describe("waterfall 속성", () => {
     renderWaterfall(a.ctx, input(), noop);
     renderWaterfall(b.ctx, input({}), noop);
     expect(b.calls).toEqual(a.calls);
+  });
+});
+
+describe("bar 누적 (stack · stack100)", () => {
+  const stacked = (stack: "stack" | "stack100"): CategoryInput => ({
+    ...bar(),
+    categories: ["a", "b"],
+    bars: [
+      [10, 30],
+      [20, null],
+    ],
+    stack,
+    legend: {
+      title: "g",
+      values: ["p", "q"],
+      colors: ["#2a78d6", "#eb6834"],
+      position: "top",
+    },
+  });
+
+  it("stackSegments: legend 순서대로 쌓고, 끈 값과 빈 칸은 건너뛴다", () => {
+    expect(
+      stackSegments(
+        [
+          [10, 30],
+          [20, -5],
+        ],
+        [],
+        false,
+      ),
+    ).toEqual([
+      [
+        [0, 10],
+        [10, 40],
+      ],
+      [
+        [0, 20],
+        [0, -5],
+      ],
+    ]);
+    expect(stackSegments([[10, 30]], [true, false], true)).toEqual([
+      [null, [0, 100]],
+    ]);
+  });
+
+  it("stack은 범주 합계까지, stack100은 0~100% 축에 구간을 준다", () => {
+    const sum = renderCategory(recorder().ctx, stacked("stack"), noop);
+    expect(sum.stack).toBe("stack");
+    expect(sum.segments?.[0]).toEqual([
+      [0, 10],
+      [10, 40],
+    ]);
+    expect(sum.y.domain[1]).toBeGreaterThanOrEqual(40);
+
+    const pct = renderCategory(recorder().ctx, stacked("stack100"), noop);
+    expect(pct.y.domain).toEqual([0, 100]);
+    expect(pct.segments?.[0]).toEqual([
+      [0, 25],
+      [25, 100],
+    ]);
+    expect(pct.segments?.[1]).toEqual([[0, 100], null]);
+  });
+
+  it("나란히(기본)면 구간을 주지 않는다", () => {
+    const meta = renderCategory(recorder().ctx, bar(), noop);
+    expect(meta.segments).toBeUndefined();
+    expect(meta.stack).toBeUndefined();
+  });
+
+  it("누적 막대는 범주 하나에 한 줄로 쌓아 같은 x에 그린다", () => {
+    const { ctx, calls } = recorder();
+    renderCategory(ctx, stacked("stack"), noop);
+    // 앞의 roundRect는 legend 상자다. 막대는 마지막 셋(a 둘, b 하나)
+    const rects = calls.filter((c) => c.op === "roundRect").slice(-3);
+    // 범주 a의 두 막대는 x와 너비가 같다.
+    expect(rects[0].args[0]).toBe(rects[1].args[0]);
+    expect(rects[0].args[2]).toBe(rects[1].args[2]);
+  });
+});
+
+describe("boxplot dot", () => {
+  it("원값 표본을 상자 위에 점으로 찍고, metadata에는 넣지 않는다", () => {
+    const input: CategoryInput = {
+      ...bar(),
+      chartType: "boxplot",
+      bars: undefined,
+      categories: ["a"],
+      boxes: [[{ ...box(10, []), dots: [9, 10, 11, 50] }]],
+    };
+    const { ctx, calls } = recorder();
+    const meta = renderCategory(ctx, input, noop);
+    expect(calls.filter((c) => c.op === "arc").length).toBe(4);
+    // 표본 값도 축 범위에 든다.
+    expect(meta.y.domain[1]).toBeGreaterThanOrEqual(50);
+    expect(meta.boxes?.[0]?.[0]).not.toHaveProperty("dots");
   });
 });

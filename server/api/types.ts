@@ -167,6 +167,26 @@ export const CHART_TYPES = [
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
+/**
+ * 하위 차트. 차트마다 고를 수 있는 값은 server/charts/chart-fields.ts(SUB_TYPES)가 정하고, 첫 값이 기본이다.
+ * line: 원래 선 / ECDF / 정규 CDF / 정규 확률. bar: 나란히 / 누적 / 100% 누적. boxplot: 원래 / 점 겹치기.
+ * pie: 원래 / 도넛 / 3D / sunburst.
+ */
+export const CHART_SUB_TYPES = [
+  "none",
+  "ecdf",
+  "ncdf",
+  "probability",
+  "side",
+  "stack",
+  "stack100",
+  "dot",
+  "doughnut",
+  "pie3d",
+  "sunburst",
+] as const;
+export type ChartSubType = (typeof CHART_SUB_TYPES)[number];
+
 export type CommonProps = {
   /** legend가 없을 때의 색 */
   color: string;
@@ -193,6 +213,8 @@ export type ChartSpec = {
   /** 데이터셋 id (샘플 iot-100k …, 업로드 up-…) */
   dataset: string;
   chartType: ChartType;
+  /** 하위 차트. 없거나 그 차트에 없는 값이면 기본(첫 값). 예전 history에는 없다. */
+  subType?: ChartSubType | null;
   x: ColumnName;
   y: ColumnName;
   /** 세 번째 값 컬럼. 쓰는 차트만 고른다 (server/charts/chart-fields.ts). 예전 history에는 없다. */

@@ -3,7 +3,7 @@
 
 import type { Context } from "hono";
 import { isTerminal } from "../../api/types";
-import { DELETABLE_CHARTS } from "../../charts/chart-fields";
+import { canDelete } from "../../charts/chart-fields";
 import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
@@ -196,7 +196,7 @@ export const chartApp = createServiceApp()
     if ("error" in target) return reject(c, target);
     const { chart, item } = target;
     // bar/boxplot 같은 집계 차트는 점이 아니라 집계 값이라 지울 대상이 없다.
-    if (!DELETABLE_CHARTS.includes(chart.spec.chartType))
+    if (!canDelete(chart.spec))
       return apiError(c, 409, "점 삭제는 점을 그리는 차트에서만 됩니다.");
     if (item.deletions.length >= MAX_DELETIONS)
       return apiError(

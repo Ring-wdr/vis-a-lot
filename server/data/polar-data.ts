@@ -8,7 +8,12 @@ export const PIE_TOP_SLICES = 8;
 /** 상위 조각에 들지 못한 범주를 묶은 조각 */
 export const OTHERS_SLICE = "기타";
 
-export type PieSliceValue = { category: string; value: number };
+export type PieSliceValue = {
+  category: string;
+  value: number;
+  /** sunburst 바깥 고리: 이 조각을 legend 컬럼 값으로 나눈 값 (legend 값 순서). '기타' 조각에는 없다. */
+  children?: { category: string; value: number }[];
+};
 
 export type PieGroup = {
   /** split 컬럼 순서대로의 값 */
@@ -52,6 +57,36 @@ export function toPieData(data: CategoryData, top = PIE_TOP_SLICES): PieData {
   });
   const order = [...totals].sort((a, b) => b[1] - a[1]).map(([c]) => c);
   return { groups, colorOrder: order.length <= top ? order : null };
+}
+
+/**
+ * sunburst: 조각마다 (x 범주 × legend 값) 집계를 바깥 고리로 붙인다. 두 집계는 같은 split 순서로 묶여 있어
+ * split 값으로 짝을 짓는다. 음수·0·빈 값은 비율을 낼 수 없어 뺀다. '기타' 조각은 여러 범주를 합친 것이라 나누지 않는다.
+ */
+export function attachSunburst(pie: PieData, detail: CategoryData): PieData {
+  const legendValues = detail.legendValues ?? [];
+  const byKey = new Map(detail.groups.map((g) => [g.values.join("\u0000"), g]));
+  return {
+    ...pie,
+    groups: pie.groups.map((group) => {
+      const source = byKey.get(group.values.join("\u0000"));
+      if (!source) return group;
+      const rowOf = new Map(source.categories.map((c, i) => [c, i]));
+      return {
+        ...group,
+        slices: group.slices.map((slice) => {
+          const i = rowOf.get(slice.category);
+          if (slice.category === OTHERS_SLICE || i === undefined) return slice;
+          const children: { category: string; value: number }[] = [];
+          (source.bars?.[i] ?? []).forEach((value, g) => {
+            if (positive(value))
+              children.push({ category: legendValues[g] ?? "", value });
+          });
+          return { ...slice, children };
+        }),
+      };
+    }),
+  };
 }
 
 /** radar 축 수의 상한. 넘치면 item 안에서 값(절댓값 합)이 큰 축만 남긴다. */

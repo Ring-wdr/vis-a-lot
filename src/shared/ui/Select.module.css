@@ -70,6 +70,20 @@
   color: var(--ws-text-muted);
 }
 
+/* 아이콘이 있는 값(트리거). 아이콘은 줄 높이에 맞추고 라벨만 말줄임한다. */
+.iconLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.iconLabel > svg,
+.item > svg {
+  flex: none;
+  color: var(--ws-text-secondary);
+}
+
 /* 다중 선택에서 고른 개수 */
 .count {
   display: inline-grid;

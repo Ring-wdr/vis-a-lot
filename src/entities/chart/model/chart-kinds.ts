@@ -3,6 +3,7 @@
 
 import type {
   ChartSpec,
+  ChartSubType,
   ChartType,
   ColumnType,
   LegendPosition,
@@ -111,6 +112,52 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   funnel: ["select", "checkbox"],
 };
 
+/** 차트별 하위 차트. 첫 값이 기본이다. 서버 SUB_TYPES(server/charts/chart-fields.ts)와 맞춘다. */
+export const SUB_TYPES: Partial<Record<ChartType, readonly ChartSubType[]>> = {
+  line: ["none", "ecdf", "ncdf", "probability"],
+  bar: ["side", "stack", "stack100"],
+  boxplot: ["none", "dot"],
+  pie: ["none", "doughnut", "pie3d", "sunburst"],
+};
+
+export const SUB_TYPE_LABELS: Record<ChartSubType, string> = {
+  none: "기본",
+  ecdf: "ECDF",
+  ncdf: "NCDF",
+  probability: "Probability",
+  side: "Side",
+  stack: "Stack",
+  stack100: "Stack 100",
+  dot: "Dot",
+  doughnut: "Doughnut",
+  pie3d: "Pie 3D",
+  sunburst: "Sunburst",
+};
+
+type SubTypeSpec = Pick<ChartSpec, "chartType" | "subType">;
+
+/** 그릴 하위 차트. 없거나 그 차트에 없는 값이면 기본값, 하위 차트가 없는 차트면 undefined */
+export function subTypeOf(spec: SubTypeSpec): ChartSubType | undefined {
+  const list = SUB_TYPES[spec.chartType];
+  if (!list) return undefined;
+  return spec.subType && list.includes(spec.subType) ? spec.subType : list[0];
+}
+
+/** line의 분포 하위 차트(ECDF·정규 CDF·정규 확률). y 컬럼 값의 분포라 x 컬럼을 쓰지 않는다. */
+export function isDistributionLine(spec: SubTypeSpec) {
+  const sub = subTypeOf(spec);
+  return (
+    spec.chartType === "line" &&
+    (sub === "ecdf" || sub === "ncdf" || sub === "probability")
+  );
+}
+
+/** legend 컬럼을 고르는지. pie sunburst는 legend 컬럼을 바깥 고리로 쓴다. */
+export function usesLegendColumn(spec: SubTypeSpec) {
+  if (spec.chartType === "pie" && subTypeOf(spec) === "sunburst") return true;
+  return CHART_FIELDS[spec.chartType].legend !== false;
+}
+
 /** 공통 속성에 legend 위치가 없을 때 그 차트가 legend를 놓는 위치 */
 export function defaultLegendPosition(
   type: ChartType | undefined,
@@ -119,8 +166,10 @@ export function defaultLegendPosition(
 }
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */
-export function legendColumnOf(spec: Pick<ChartSpec, "chartType" | "legend">) {
-  return CHART_FIELDS[spec.chartType].legend === false ? null : spec.legend;
+export function legendColumnOf(
+  spec: Pick<ChartSpec, "chartType" | "legend" | "subType">,
+) {
+  return usesLegendColumn(spec) ? spec.legend : null;
 }
 
 /** PNG에 legend를 그리는지. legend 컬럼을 쓰지 않는 차트는 차트가 정한 값으로 늘 그린다. */
@@ -128,6 +177,16 @@ export function drawsLegend(spec: Pick<ChartSpec, "chartType" | "legend">) {
   return CHART_FIELDS[spec.chartType].legend === false || spec.legend !== null;
 }
 
-export function supports(type: ChartType | undefined, feature: ChartFeature) {
-  return type !== undefined && CHART_SUPPORT[type].includes(feature);
+/**
+ * 그린 차트가 기능을 쓸 수 있는지. 분포 line은 점 좌표가 컬럼 값이 아니라 지우기와 선택 필드를 쓰지 않는다
+ * (서버 canDelete·filtersRowsBySelection과 맞춘다).
+ */
+export function supports(spec: SubTypeSpec | undefined, feature: ChartFeature) {
+  if (!spec || !CHART_SUPPORT[spec.chartType].includes(feature)) return false;
+  if (
+    (feature === "delete" || feature === "selectField") &&
+    isDistributionLine(spec)
+  )
+    return false;
+  return true;
 }
