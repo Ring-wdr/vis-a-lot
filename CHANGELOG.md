@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.11.0] - 2026-10-23
 
 원본 제품의 차트 속성(Title, Axes, Legend, Panel, Palette, Shape, Size, Point Label, Score, Prediction, Value, Focus, ToolTip, Expression)을 공통 속성과 item 개별 속성에 더했다. 차트별로 쓸 수 있는 구역은 원본의 'Availability of Chart-Specific Options' 표를 14종 차트에 옮겨 정한다.
 
@@ -20,13 +20,17 @@
 - 제외: Wafer·Selection·Multi Axis(해당 차트·기능 없음), pie·treemap·funnel의 Axes(축 없는 차트)
 
 ### 화면
-- 전체 설정에 차트가 쓰는 속성 구역만 메뉴로 보인다. 구역마다 기본값으로 되돌리기
+- 전체 설정 팝업의 메뉴가 곧 원본 속성 구역이다. 차트가 쓰는 구역만 보이고, 구역마다 기본값으로 되돌리기
+- 기존 색상·legend·split by·툴팁 메뉴는 원본 구역 안으로 옮겼다: 팔레트(기본 색·범례 값별 색), 범례(위치), 제목(연결 문자 = split 구분 기호), 툴팁(가까운 점 표시). 저장 위치는 그대로라 예전 history·공유 링크가 그대로 열린다
+- 범례 구역은 범례 모양을 쓰지 않는 차트(heatmap·candle·waterfall)에도 위치 설정 때문에 둔다
 - item 설정 → 개별 속성 팝업. 구역별·전체 공통 속성 따르기
+- 메뉴·필드 라벨은 한글로만 적는다 (영문 병기를 뺐다. 이후 intl 대응)
 
 ### API (호환 깨짐)
 - `CommonProps.options`, `ItemRestore.options`, `ItemState.options`, `ItemPropsRequest { options }`(item 속성 전체를 바꾼다, null이면 지운다)
 - `AxisMeta.log`: 로그 축이면 화면이 log10 공간에서 좌표를 환산한다
 - history 이벤트 `options`
+- 축 제목을 켜면 기본 글자는 컬럼 라벨이다 (histogram y는 '개수')
 
 ## [0.10.0] - 2026-10-23
 
