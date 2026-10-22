@@ -7,6 +7,8 @@ export const THEME = {
   textMuted: "#8a8984",
   grid: "#e7e6e2",
   axis: "#c9c8c2",
+  /** 선택 영역 테두리 */
+  selection: "#2a78d6",
   font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 } as const;
 

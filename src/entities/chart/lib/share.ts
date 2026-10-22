@@ -24,12 +24,17 @@ export function restoreOf(detail: HistoryDetail): Record<string, ItemRestore> {
   const restore: Record<string, ItemRestore> = {};
   for (const [key, item] of Object.entries(detail.items)) {
     const hasLegendColors = Object.keys(item.legendColors ?? {}).length > 0;
+    const hasFavorites = (item.favorites?.length ?? 0) > 0;
+    const hasLegendGroups = (item.legendGroups?.length ?? 0) > 0;
     if (
       !item.view &&
       item.shapes.length === 0 &&
       !item.color &&
       !hasLegendColors &&
-      !item.legendPosition
+      !item.legendPosition &&
+      !item.selection &&
+      !hasFavorites &&
+      !hasLegendGroups
     )
       continue;
     restore[key] = {
@@ -38,6 +43,9 @@ export function restoreOf(detail: HistoryDetail): Record<string, ItemRestore> {
       color: item.color,
       ...(hasLegendColors ? { legendColors: item.legendColors } : {}),
       ...(item.legendPosition ? { legendPosition: item.legendPosition } : {}),
+      ...(item.selection ? { selection: item.selection } : {}),
+      ...(hasFavorites ? { favorites: item.favorites } : {}),
+      ...(hasLegendGroups ? { legendGroups: item.legendGroups } : {}),
     };
   }
   return restore;

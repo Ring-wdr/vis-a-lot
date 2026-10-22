@@ -15,6 +15,7 @@ import {
   cancelJob as cancel,
   getJob,
   type ItemSelection,
+  OTHERS_LABEL,
   propsOrNone,
   startDetailJob,
   startItemJob,
@@ -23,11 +24,14 @@ import {
   waitForUpdate,
 } from "../../jobs/job-manager";
 import { matchPng, putPng } from "../../png-store";
+import { defaultLegendColor } from "../../render/theme";
 import { getRuntime } from "../../runtime";
 import { apiError, createServiceApp } from "../common/http";
 import * as routes from "./routes";
 
 const LONG_POLL_TIMEOUT_MS = 25_000;
+const MAX_FAVORITES = 20;
+const MAX_LEGEND_GROUPS = 8;
 
 let pngVersion = 0;
 
@@ -166,6 +170,90 @@ export const chartApp = createServiceApp()
     target.item.shapes = [];
     recordEvent(target.chart, "clearShapes", target.item.key);
     return c.json(redrawJob(target.chart, [target.item.key]), 202);
+  })
+  .openapi(routes.setSelection, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { region } = c.req.valid("json");
+    if (!region && !target.item.selection)
+      return apiError(c, 409, "nothing is selected");
+    target.item.selection = region ?? undefined;
+    recordEvent(target.chart, "selection", target.item.key);
+    return c.json(redrawJob(target.chart, [target.item.key]), 202);
+  })
+  .openapi(routes.addFavorite, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    const name = c.req.valid("json").name.trim();
+    if (!item.selection) return apiError(c, 409, "선택한 영역이 없습니다.");
+    if (item.favorites.some((f) => f.name === name))
+      return apiError(c, 409, `'${name}' 즐겨찾기가 이미 있습니다.`);
+    if (item.favorites.length >= MAX_FAVORITES)
+      return apiError(c, 409, `즐겨찾기는 ${MAX_FAVORITES}개까지입니다.`);
+    item.favorites = [...item.favorites, { name, region: item.selection }];
+    recordEvent(target.chart, "favorite", item.key);
+    // 그림은 그대로지만 item 상태(즐겨찾기 목록)를 같은 길로 돌려주려고 다시 그린다.
+    return c.json(redrawJob(target.chart, [item.key], { content: false }), 202);
+  })
+  .openapi(routes.removeFavorite, (c) => {
+    const { chartId, itemKey, name } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (!item.favorites.some((f) => f.name === name))
+      return apiError(c, 404, "unknown favorite");
+    item.favorites = item.favorites.filter((f) => f.name !== name);
+    recordEvent(target.chart, "favorite", item.key);
+    return c.json(redrawJob(target.chart, [item.key], { content: false }), 202);
+  })
+  .openapi(routes.addLegendGroup, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const name = c.req.valid("json").name.trim();
+    if (!item.selection) return apiError(c, 409, "선택한 영역이 없습니다.");
+    // legend 항목 이름은 색을 찾는 키라 원래 legend 값과도 겹치면 안 된다.
+    const taken = new Set([...(item.meta?.legend?.values ?? []), OTHERS_LABEL]);
+    if (taken.has(name))
+      return apiError(c, 409, `'${name}' legend 항목이 이미 있습니다.`);
+    if (item.legendGroups.length >= MAX_LEGEND_GROUPS)
+      return apiError(c, 409, `새 범례는 ${MAX_LEGEND_GROUPS}개까지입니다.`);
+    const base =
+      (item.meta?.legend?.values.length ?? 1) - item.legendGroups.length;
+    item.legendGroups = [
+      ...item.legendGroups,
+      {
+        name,
+        color: defaultLegendColor(base + item.legendGroups.length),
+        region: item.selection,
+      },
+    ];
+    item.selection = undefined;
+    recordEvent(chart, "legend", item.key);
+    return c.json(redrawJob(chart, [item.key]), 202);
+  })
+  .openapi(routes.removeLegendGroup, (c) => {
+    const { chartId, itemKey, name } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (!item.legendGroups.some((g) => g.name === name))
+      return apiError(c, 404, "unknown legend group");
+    item.legendGroups = item.legendGroups.filter((g) => g.name !== name);
+    // 이 항목에 따로 정한 색도 함께 지운다.
+    if (item.props?.legendColors?.[name]) {
+      const { [name]: _removed, ...rest } = item.props.legendColors;
+      item.props = propsOrNone({
+        ...item.props,
+        legendColors: Object.keys(rest).length ? rest : undefined,
+      });
+    }
+    recordEvent(target.chart, "legend", item.key);
+    return c.json(redrawJob(target.chart, [item.key]), 202);
   })
   .openapi(routes.changeItemProps, (c) => {
     const { chartId, itemKey } = c.req.valid("param");

@@ -54,3 +54,19 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 한 줄 입력: 위에 설명, 아래 입력 */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field input {
+  padding: 6px 8px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: inherit;
+  font: inherit;
+}

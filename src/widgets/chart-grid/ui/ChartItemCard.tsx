@@ -9,6 +9,7 @@ import {
   useItemActionPending,
 } from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
+import { ItemContextMenu } from "@/features/item-actions/ui/ItemContextMenu";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { PaintToolbar } from "@/features/item-actions/ui/PaintToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
@@ -173,7 +174,13 @@ function DrawnItem({
       aria-label={item.label}
       onDoubleClick={doubleClickHandler(onDoubleClick)}
     >
-      <div className={styles.itemBody}>
+      {/* 우클릭 메뉴: 선택 영역을 즐겨찾기·새 범례로 남긴다. */}
+      <ItemContextMenu
+        item={item}
+        disabled={readOnly || busy}
+        className={styles.itemBody}
+        onAction={action.mutate}
+      >
         {mode === "normal" ? (
           <ItemTooltip
             image={image}
@@ -195,6 +202,7 @@ function DrawnItem({
             image={image}
             display={displaySize}
             alt={item.label}
+            hasSelection={item.selectedCount !== undefined}
             onAction={action.mutate}
           />
         )}
@@ -209,7 +217,7 @@ function DrawnItem({
             </div>
           )
         )}
-      </div>
+      </ItemContextMenu>
       {/* 페인트 모드에서만 차트 위 좌측 상단에 그리기 도구를 띄운다. 우측 도구처럼 커서를 올리면 보인다. */}
       {mode === "paint" && !readOnly && (
         <div className={styles.itemToolbar} data-side="left">

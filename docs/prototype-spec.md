@@ -136,7 +136,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 ├──────────────────────────────────────────────────────────────────────────┤
 │ [Scatter · 측정 시각 × 측정값 ×] [새 차트 · IoT 10만 행 ×] [+]   [필터 2] │ ← 탭
 ├──────────────────────────────────────────────────────────────────────────┤
-│ [↖][✥][🔍][🖌] ← 모드 바                                        [링크 복사] │ ← 탭 도구 줄
+│ [↖][✥][🔍][⬚][➰][🖌] ← 모드 바                                  [링크 복사] │ ← 탭 도구 줄
 ├──────────────────┬──────────────────────────────────┬─┬─────────────────┤
 │ 데이터    [▼]     │  ┌────────┐ ┌────────┐ ┌────────┐ │▮│ 필터            │
 │ 차트 종류 (아이콘)  │  │toolbar │ │toolbar │ │toolbar │ │ │ ▸ 측정 시각      │
@@ -155,7 +155,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 - **탭:** gallery와 history 모두 탭이 있다. 탭마다 작업 상태(데이터·설정·차트·진행)를 따로 가져 오가도 그대로 남는다.
   - gallery 탭은 작업 공간이다. `+`로 새 탭, datastore 팝업에서 준비된 데이터를 선택하고 `gallery에서 열기`를 누르면 그 데이터로 새 탭이 열린다. 마지막 하나는 닫을 수 없다.
   - history는 목록에서 고른 건마다 탭으로 열고(이미 열린 건이면 그 탭으로), `gallery에서 편집`은 새 gallery 탭으로 가져간다.
-- **모드 바:** 기본 / 이동 / 확대 / 페인트. 아이콘으로 표시하고 이름은 title로 보여준다. 이동·확대·페인트 모드는 그린 차트가 없거나 다시 보기 전용(history)이면 disabled이고 흐리게 보인다
+- **모드 바:** 기본 / 이동 / 확대 / 사각형 선택 / 자유형 선택 / 페인트. 아이콘으로 표시하고 이름은 title로 보여준다. 기본 외의 모드는 그린 차트가 없거나 다시 보기 전용(history)이면 disabled이고 흐리게 보인다
 - **페인트 도구:** 페인트 모드일 때만 item 좌측 상단에 우측 툴바와 같은 모양으로 띄운다. 사각형 / 선 / 자유곡선 / 텍스트 중 고르고(탭 안 모든 item이 같은 도구), 도형 undo와 전체 삭제도 여기에 둔다
 - **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, legend, 통계 함수(bar일 때만), split by, tooltip. `전체 설정`과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
 - **전체 설정 팝업:** 자주 바꾸지 않는 설정을 모은다. 왼쪽 메뉴로 고른다: 색상(공통 색 또는 legend 값별 색), legend(위치), split by(구분 기호), 툴팁(가까운 점 표시)
@@ -226,6 +226,12 @@ PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같�
 - 그리는 동안에는 화면에 임시 미리보기를 보여준다. 마우스를 떼면 서버에 저장하고 다시 그린다. PNG를 다시 받는 동안 그 item의 조작은 막는다.
 - 그린 뒤에는 수정할 수 없다. undo(마지막 도형 삭제)와 전체 삭제만 있다.
 - undo는 서버에서 마지막 도형을 삭제(`DELETE .../shapes/last`)하고 다시 그리는 방식이다. 이력은 세션 안에서만 유지하고, redo는 없다.
+
+### 4.6.1 영역 선택
+- 사각형 선택 / 자유형 선택 모드에서 차트 위를 끌어 영역을 고른다. 영역은 데이터 좌표(사각형 또는 닫힌 다각형)로 서버에 저장하고, 서버가 영역 테두리와 함께 바깥 점(막대/상자)을 흐리게 그려 PNG 제목 줄에 선택 수를 적는다. bar/boxplot은 막대 끝·상자 중앙값이 영역 안이면 선택이다.
+- 선택 모드에서 끌지 않고 클릭하면 선택을 푼다. item마다 선택 영역은 하나다.
+- 우클릭 메뉴(Base UI ContextMenu): `즐겨찾기에 추가…`(이름 붙여 영역을 남김), `새 범례…`(영역 안의 점을 새 legend 항목으로 칠하고 선택을 푼다. legend 컬럼이 없으면 나머지는 '기타'), `선택 해제`, `즐겨찾기 선택 ▸`(남긴 영역을 다시 선택), `즐겨찾기 삭제 ▸`, `새 범례 삭제 ▸`. 새 범례 색은 legend 항목처럼 PNG의 legend를 눌러 바꾼다.
+- 선택·즐겨찾기·새 범례는 item 상태라 history와 공유 링크로 되살아난다.
 
 ### 4.7 legend
 - 왼쪽 패널의 `legend` select로 색을 나눌 범주 컬럼을 고른다. 팔레트 8색을 돌려쓰지 않도록 고유값이 8개 이하인 컬럼(공장, 라인, 센서 종류, 근무조, 상태)만 고를 수 있다.
@@ -375,8 +381,11 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | metadata | `GET /charts/:chartId/items/:key/meta?size=` | 4.4 참고. `size=WxH`면 크게 보기 PNG의 metadata |
 | chart | 크게 보기 | `POST /charts/:chartId/items/:key/detail` | `{ itemSize }` 그려 둔 PNG가 있으면 `{ image }`, 없으면 그 한 장만 그리는 `{ jobId }` |
 | chart | 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
-| chart | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` |
+| chart | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` \| `{ type: 'pan', dx, dy }` |
 | chart | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
+| chart | 선택 영역 | `PUT .../items/:key/selection` | `{ region }` (사각형 또는 자유형, 데이터 좌표), `null`이면 해제 |
+| chart | 즐겨찾기 | `POST .../items/:key/favorites`<br>`DELETE .../items/:key/favorites/:name` | 지금 선택 영역을 이름 붙여 남김 / 삭제 |
+| chart | 새 범례 | `POST .../items/:key/legend-groups`<br>`DELETE .../items/:key/legend-groups/:name` | 지금 선택 영역을 새 legend 항목으로 / 삭제 |
 | chart | 개별 색상 | `PATCH .../items/:key/props` | `{ color }` 또는 `{ legendColor: { value, color } }`, `null`이면 공통 색으로 |
 | data | legend 값 목록 | `GET /datasets/:id/legend-values?column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
 | chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
