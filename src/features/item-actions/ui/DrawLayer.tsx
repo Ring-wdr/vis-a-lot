@@ -232,19 +232,8 @@ export function DrawLayer({
       role="application"
       aria-label={`${alt} 위에 ${TOOL_LABELS[tool]}`}
     >
-      {/* 이동하는 동안에는 PNG를 끈 만큼 옮겨 보여주고, 놓으면 서버가 옮긴 범위로 다시 그린다. */}
-      <div
-        className={styles.drawImage}
-        style={
-          draft?.kind === "pan"
-            ? {
-                transform: `translate(${((draft.to.x - draft.from.x) * display.width) / image.width}px, ${((draft.to.y - draft.from.y) * display.height) / image.height}px)`,
-              }
-            : undefined
-        }
-      >
-        <ChartImage data={image} alt={alt} />
-      </div>
+      {/* 이동하는 동안 그림은 그대로 두고 커서(grab)만 바꾼다. 놓으면 서버가 옮긴 범위로 다시 그린다. */}
+      <ChartImage data={image} alt={alt} />
       {overlay}
       <svg
         className={styles.drawPreview}
