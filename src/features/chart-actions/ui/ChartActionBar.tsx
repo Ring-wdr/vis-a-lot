@@ -9,6 +9,8 @@ import {
   SquareCheck,
   Table,
 } from "lucide-react";
+import { CHART_LABELS } from "@/entities/chart/lib/title";
+import { supports } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   downloadAllChartsExcel,
@@ -55,10 +57,15 @@ function ActionButton({
 
 const PICK_ITEM = "차트를 눌러 고른 뒤 쓸 수 있습니다";
 
+/** 이 차트 종류에서 못 쓰는 도구의 안내 */
+const unsupported = (name: string, chartType: string) =>
+  `${name} (${chartType}에서는 쓸 수 없음)`;
+
 /**
  * 모드 바 옆의 차트 도구: legend 체크박스 표시, 고른 차트 다운로드, 모든 차트 엑셀로 다운로드,
  * 고른 차트의 데이터 다운로드(CSV)와 데이터 표. 데이터는 선택 영역이 있으면 그 안의 행만이다.
  * 모드처럼 하나만 고르는 게 아니라 누를 때마다 바로 동작하는 버튼들이다.
+ * 체크박스 표시와 선택 필드(데이터 다운로드·데이터 테이블)는 차트 종류가 지원할 때만 켠다(CHART_SUPPORT).
  */
 export function ChartActionBar() {
   const current = useWorkspace((s) => s.current);
@@ -67,6 +74,10 @@ export function ChartActionBar() {
   const toggleCheckboxes = useWorkspace((s) => s.toggleLegendCheckboxes);
   const notify = useWorkspace((s) => s.notify);
   const drawn = current !== undefined;
+  const chartType = current?.spec.chartType;
+  const typeLabel = chartType ? CHART_LABELS[chartType] : "";
+  const checkboxOk = !chartType || supports(chartType, "checkbox");
+  const fieldOk = !chartType || supports(chartType, "selectField");
 
   const chartPng = useMutation({
     mutationFn: ({ jobId, key }: { jobId: string; key: string }) =>
@@ -110,15 +121,24 @@ export function ChartActionBar() {
     current && selectedItem
       ? { chartId: current.chartId, jobId: current.jobId, key: selectedItem }
       : undefined;
+  /** 선택 필드 도구(데이터 다운로드·테이블)의 라벨 */
+  const fieldLabel = (name: string) =>
+    !fieldOk
+      ? unsupported(name, typeLabel)
+      : target
+        ? name
+        : `${name} (${PICK_ITEM})`;
 
   return (
     <div className={styles.modeBar} role="toolbar" aria-label="차트 도구">
       <button
         type="button"
-        title="체크박스 표시"
+        title={
+          checkboxOk ? "체크박스 표시" : unsupported("체크박스 표시", typeLabel)
+        }
         aria-label="체크박스 표시"
-        aria-pressed={checkboxes}
-        disabled={!drawn}
+        aria-pressed={checkboxes && checkboxOk}
+        disabled={!drawn || !checkboxOk}
         onClick={toggleCheckboxes}
       >
         <SquareCheck size={16} strokeWidth={1.8} aria-hidden="true" />
@@ -138,17 +158,17 @@ export function ChartActionBar() {
         onClick={() => excel.mutate()}
       />
       <ActionButton
-        label={target ? "데이터 다운로드" : `데이터 다운로드 (${PICK_ITEM})`}
+        label={fieldLabel("데이터 다운로드")}
         Icon={Download}
         pending={data.isPending}
-        disabled={!target}
+        disabled={!target || !fieldOk}
         onClick={() => target && data.mutate(target)}
       />
       <ActionButton
-        label={target ? "데이터 테이블" : `데이터 테이블 (${PICK_ITEM})`}
+        label={fieldLabel("데이터 테이블")}
         Icon={Table}
         pending={table.isPending}
-        disabled={!target}
+        disabled={!target || !fieldOk}
         onClick={() => target && table.mutate(target)}
       />
     </div>

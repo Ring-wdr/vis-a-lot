@@ -2,11 +2,12 @@
 
 import { useEffect } from "react";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
+import { CHART_FIELDS } from "@/entities/chart/model/chart-kinds";
+import { ChartIcon } from "@/entities/chart/ui/ChartIcon";
 import {
-  axisColumns,
+  columnsOfTypes,
   fitSpecToSchema,
   legendColumns,
-  numericColumns,
 } from "@/entities/dataset/model/column-roles";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { GridPicker } from "@/features/change-grid/ui/GridPicker";
@@ -15,7 +16,6 @@ import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
 import {
   type AggFn,
   CHART_TYPES,
-  type ChartType,
   type ColumnInfo,
   type ColumnName,
 } from "@/shared/api/types";
@@ -34,35 +34,6 @@ const AGG_OPTIONS: SelectOption<AggFn>[] = AGG_FNS.map((fn) => ({
 
 function toOptions(columns: readonly ColumnInfo[]): Option<ColumnName>[] {
   return columns.map((c) => ({ value: c.name, label: c.label }));
-}
-
-function ChartIcon({ type }: { type: ChartType }) {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-      {type === "scatter" && (
-        <g fill="currentColor">
-          <circle cx="6" cy="16" r="2" />
-          <circle cx="10" cy="10" r="2" />
-          <circle cx="15" cy="13" r="2" />
-          <circle cx="18" cy="6" r="2" />
-        </g>
-      )}
-      {type === "bar" && (
-        <g fill="currentColor">
-          <rect x="4" y="12" width="4" height="8" rx="1" />
-          <rect x="10" y="6" width="4" height="14" rx="1" />
-          <rect x="16" y="9" width="4" height="11" rx="1" />
-        </g>
-      )}
-      {type === "boxplot" && (
-        <g fill="none" stroke="currentColor" strokeWidth="1.6">
-          <path d="M8 3v4M8 17v4M16 5v4M16 15v4" />
-          <rect x="5" y="7" width="6" height="10" rx="1" />
-          <rect x="13" y="9" width="6" height="6" rx="1" />
-        </g>
-      )}
-    </svg>
-  );
 }
 
 /**
@@ -96,6 +67,9 @@ export function ControlPanel() {
   }, [readOnly, columns, draft, updateDraft]);
 
   const allOptions = toOptions(columns ?? []);
+  const fields = CHART_FIELDS[draft.chartType];
+  const optionsOf = (types: readonly ColumnInfo["type"][]) =>
+    toOptions(columnsOfTypes(columns ?? [], types));
 
   return (
     <fieldset className={styles.controls} disabled={readOnly}>
@@ -132,20 +106,32 @@ export function ControlPanel() {
       <GridPicker />
 
       <Select
-        label="x"
+        label={fields.labels?.x ?? "x"}
         value={draft.x || null}
         placeholder={noColumns}
-        options={toOptions(axisColumns(columns ?? [], draft.chartType))}
+        options={optionsOf(fields.x)}
         onChange={(x) => updateDraft({ x })}
       />
 
-      <Select
-        label="y"
-        value={draft.y || null}
-        placeholder={noColumns}
-        options={toOptions(numericColumns(columns ?? []))}
-        onChange={(y) => updateDraft({ y })}
-      />
+      {fields.y && (
+        <Select
+          label={fields.labels?.y ?? "y"}
+          value={draft.y || null}
+          placeholder={noColumns}
+          options={optionsOf(fields.y)}
+          onChange={(y) => updateDraft({ y })}
+        />
+      )}
+
+      {fields.z && (
+        <Select
+          label={fields.labels?.z ?? "z"}
+          value={draft.z || null}
+          placeholder={noColumns}
+          options={optionsOf(fields.z)}
+          onChange={(z) => updateDraft({ z })}
+        />
+      )}
 
       <Select
         label="legend"
@@ -159,7 +145,7 @@ export function ControlPanel() {
         }
       />
 
-      {draft.chartType === "bar" && (
+      {fields.agg && (
         <Select
           label="통계 함수"
           value={draft.agg}

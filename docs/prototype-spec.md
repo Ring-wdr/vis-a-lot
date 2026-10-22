@@ -182,6 +182,22 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 
 PNG로 그리기 때문에 scatter의 점이 많아도 이미지 크기는 같다. 밀도 차트로 바꾸는 처리는 하지 않는다.
 
+컬럼 역할(x·y·z에 쓸 수 있는 타입, 통계 함수 사용)은 차트 종류별 표 하나로 정한다: 서버 `server/charts/chart-fields.ts`, 화면 `src/entities/chart/model/chart-kinds.ts`. z는 세 번째 값 컬럼으로, 쓰는 차트에서만 고른다.
+
+#### 차트별 상단 도구 줄
+
+그린 차트 종류가 지원하지 않는 모드·도구는 비활성(이유를 title로 안내)하고, 다른 차트를 그려 지금 모드를 못 쓰게 되면 기본 모드로 돌린다. 선택 필드 = 선택 영역 기준의 데이터 다운로드·데이터 테이블.
+
+| 기능 | scatter | bar | boxplot |
+|---|---|---|---|
+| 이동 | O | O | O |
+| 확대 | O | O | O |
+| 사각형/자유형 선택 | O | O | O |
+| 선택 필드 | O | O | O |
+| 사각형/자유형 삭제 | O | X | X |
+| 페인트 | O | O | O |
+| 체크박스 표시 | O | O | O |
+
 ### 4.3 Split by와 grid
 - 여러 컬럼을 고를 수 있는 selectbox이고, 클릭한 순서를 보장한다. 예: `a`(숫자) → `b` → `c` 순서로 고르면 item 이름은 `a-b-c`가 된다. 구분 기호는 전체 설정에서 바꿀 수 있다.
 - 어떤 컬럼이든 고유값을 그대로 category로 쓴다.

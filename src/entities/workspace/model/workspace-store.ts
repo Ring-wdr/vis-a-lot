@@ -1,6 +1,10 @@
 "use client";
 
 import { createStore } from "zustand";
+import {
+  type ChartFeature,
+  supports,
+} from "@/entities/chart/model/chart-kinds";
 import type { ChartSpec, CreateChartResponse } from "@/shared/api/types";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { DEFAULT_SERIES_COLOR } from "@/shared/lib/palette";
@@ -18,11 +22,26 @@ export const MODES = [
 ] as const;
 export type Mode = (typeof MODES)[number];
 
-/** scatter에서만 쓰는 모드 (점 삭제) */
-export const SCATTER_ONLY_MODES: readonly Mode[] = [
-  "rectDelete",
-  "lassoDelete",
-];
+/** 모드를 쓰려면 차트가 지원해야 하는 기능. 기본 모드는 모든 차트가 쓴다. */
+export const MODE_FEATURE: Record<Mode, ChartFeature | null> = {
+  normal: null,
+  pan: "pan",
+  zoom: "zoom",
+  rectSelect: "select",
+  lassoSelect: "select",
+  rectDelete: "delete",
+  lassoDelete: "delete",
+  paint: "paint",
+};
+
+/** 이 차트 종류에서 고를 수 있는 모드인지 */
+export function modeSupported(
+  mode: Mode,
+  chartType: ChartSpec["chartType"] | undefined,
+) {
+  const feature = MODE_FEATURE[mode];
+  return feature === null || supports(chartType, feature);
+}
 
 /** 페인트 모드에서 고르는 그리기 도구 */
 export const PAINT_TOOLS = ["rect", "line", "freehand", "text"] as const;
@@ -128,11 +147,10 @@ export function createWorkspaceStore({
         selectedItem: null,
         itemJobs: {},
         undoCounts: {},
-        // 점 삭제 모드는 scatter에서만 쓰므로 다른 차트를 그리면 기본 모드로 돌린다.
-        ...(SCATTER_ONLY_MODES.includes(s.mode) &&
-        current.spec.chartType !== "scatter"
-          ? { mode: "normal" as const }
-          : {}),
+        // 새 차트가 지원하지 않는 모드(예: pie의 이동)였으면 기본 모드로 돌린다.
+        ...(modeSupported(s.mode, current.spec.chartType)
+          ? {}
+          : { mode: "normal" as const }),
       })),
     replaceJob: (jobId, spec, page) =>
       set((s) =>

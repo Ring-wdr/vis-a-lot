@@ -502,6 +502,16 @@
           "y": {
             "$ref": "#/components/schemas/ColumnName"
           },
+          "z": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "agg": {
             "$ref": "#/components/schemas/AggFn"
           },
