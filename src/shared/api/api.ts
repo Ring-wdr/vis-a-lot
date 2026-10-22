@@ -329,6 +329,29 @@ export const api = {
       }),
     ),
 
+  /** 영역 안의 점을 지운다 (scatter). */
+  addDeletion: (chartId: string, itemKey: string, region: Region) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/deletions", {
+        params: { path: item(chartId, itemKey) },
+        body: { region },
+      }),
+    ),
+
+  undoDeletion: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.DELETE("/charts/{chartId}/items/{itemKey}/deletions/last", {
+        params: { path: item(chartId, itemKey) },
+      }),
+    ),
+
+  clearDeletions: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.DELETE("/charts/{chartId}/items/{itemKey}/deletions", {
+        params: { path: item(chartId, itemKey) },
+      }),
+    ),
+
   /** 선택 영역. null이면 선택 해제 */
   setSelection: (chartId: string, itemKey: string, region: Region | null) =>
     unwrap(

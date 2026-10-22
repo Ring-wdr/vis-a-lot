@@ -308,6 +308,7 @@ async function run(job: Job) {
       selection: restored?.selection,
       favorites: restored?.favorites ?? [],
       legendGroups: restored?.legendGroups ?? [],
+      deletions: restored?.deletions ?? [],
       props: propsOrNone({
         color: restored?.color,
         legendColors: restored?.legendColors,
@@ -484,6 +485,7 @@ function itemView(chart: ChartRecord, item: ChartItem) {
       name: g.name,
       color: groupColor(item, g),
     })),
+    deletionCount: item.deletions.length,
   } satisfies Partial<ItemState>;
 }
 
@@ -546,10 +548,7 @@ function legendInput(
     colors: [
       ...(values
         ? legendColors(chart, item, values)
-        : [
-            item.props?.legendColors?.[OTHERS_LABEL] ??
-              itemColor(chart, item),
-          ]),
+        : [item.props?.legendColors?.[OTHERS_LABEL] ?? itemColor(chart, item)]),
       ...groups.map((g) => groupColor(item, g)),
     ],
     position: legendPosition(chart, item),
@@ -667,6 +666,7 @@ function renderItem(
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),
+        deletions: item.deletions,
         legend: legend && {
           ...legend,
           // legend 컬럼이 없으면 모든 점이 '기타'(0)에서 출발한다.

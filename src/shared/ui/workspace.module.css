@@ -82,6 +82,19 @@
   padding: 0;
 }
 
+.badgedIcon {
+  position: relative;
+  display: inline-flex;
+}
+
+.iconBadge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  background: var(--ws-elevated);
+}
+
 .modeBar button:disabled,
 .chartTypes button:disabled {
   opacity: 0.4;
@@ -809,6 +822,13 @@
 .drawPreview .selectRegion {
   fill: rgb(var(--ws-accent-rgb) / 8%);
   stroke: var(--ws-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.drawPreview .deleteRegion {
+  fill: color-mix(in srgb, var(--ws-danger) 10%, transparent);
+  stroke: var(--ws-danger);
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
 }

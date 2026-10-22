@@ -24,6 +24,8 @@ export type DrawTool =
   | "zoom"
   | "rectSelect"
   | "lassoSelect"
+  | "rectDelete"
+  | "lassoDelete"
   | PaintTool;
 
 type Draft =
@@ -37,6 +39,8 @@ const TOOL_LABELS: Record<DrawTool, string> = {
   zoom: "확대 영역 선택",
   rectSelect: "사각형으로 선택",
   lassoSelect: "자유형으로 선택",
+  rectDelete: "사각형으로 지우기",
+  lassoDelete: "자유형으로 지우기",
   rect: "도형 그리기",
   line: "도형 그리기",
   freehand: "도형 그리기",
@@ -116,7 +120,7 @@ export function DrawLayer({
     }
     e.currentTarget.setPointerCapture(e.pointerId);
     setDraft(
-      tool === "freehand" || tool === "lassoSelect"
+      tool === "freehand" || tool === "lassoSelect" || tool === "lassoDelete"
         ? { kind: "freehand", points: [p] }
         : { kind: tool === "pan" ? "pan" : "drag", from: p, to: p },
     );
@@ -143,18 +147,23 @@ export function DrawLayer({
     const clearSelection = () => {
       if (hasSelection) onAction({ type: "select", region: null });
     };
-    if (finished.kind === "freehand" && tool === "lassoSelect") {
-      if (finished.points.length < 3 || isClick(finished.points))
-        return clearSelection();
-      onAction({
-        type: "select",
-        region: {
-          type: "lasso",
-          points: thin(finished.points, MAX_LASSO_POINTS).map((p) =>
-            pxToData(m, p),
-          ),
-        },
-      });
+    if (
+      finished.kind === "freehand" &&
+      (tool === "lassoSelect" || tool === "lassoDelete")
+    ) {
+      const click = finished.points.length < 3 || isClick(finished.points);
+      if (click) return tool === "lassoSelect" ? clearSelection() : undefined;
+      const region = {
+        type: "lasso" as const,
+        points: thin(finished.points, MAX_LASSO_POINTS).map((p) =>
+          pxToData(m, p),
+        ),
+      };
+      onAction(
+        tool === "lassoSelect"
+          ? { type: "select", region }
+          : { type: "deleteRegion", region },
+      );
       return;
     }
     if (finished.kind === "freehand") {
@@ -188,6 +197,11 @@ export function DrawLayer({
       });
     } else if (tool === "rectSelect") {
       onAction({ type: "select", region: { type: "rect", x0, y0, x1, y1 } });
+    } else if (tool === "rectDelete") {
+      onAction({
+        type: "deleteRegion",
+        region: { type: "rect", x0, y0, x1, y1 },
+      });
     } else if (tool === "rect" || tool === "line") {
       onAction({ type: "addShape", shape: { type: tool, x0, y0, x1, y1 } });
     }
@@ -249,7 +263,9 @@ export function DrawLayer({
                 ? styles.zoomRect
                 : tool === "rectSelect"
                   ? styles.selectRegion
-                  : undefined
+                  : tool === "rectDelete"
+                    ? styles.deleteRegion
+                    : undefined
             }
             x={Math.min(draft.from.x, draft.to.x)}
             y={Math.min(draft.from.y, draft.to.y)}
@@ -258,9 +274,13 @@ export function DrawLayer({
           />
         )}
         {draft?.kind === "freehand" &&
-          (tool === "lassoSelect" ? (
+          (tool === "lassoSelect" || tool === "lassoDelete" ? (
             <polygon
-              className={styles.selectRegion}
+              className={
+                tool === "lassoSelect"
+                  ? styles.selectRegion
+                  : styles.deleteRegion
+              }
               points={draft.points.map((p) => `${p.x},${p.y}`).join(" ")}
             />
           ) : (

@@ -166,6 +166,8 @@ export const ItemRestoreSchema = z
     selection: RegionSchema.optional(),
     favorites: z.array(FavoriteSchema).max(20).optional(),
     legendGroups: z.array(LegendGroupSchema).max(8).optional(),
+    /** 지운 영역 (scatter). 영역 안의 점은 그리지도, 세지도 않는다. */
+    deletions: z.array(RegionSchema).max(50).optional(),
     color: HexColorSchema.optional(),
     legendColors: ColorMapSchema.optional(),
     legendPosition: LegendPositionSchema.optional(),
@@ -236,6 +238,8 @@ export const ItemStateSchema = z
     favorites: z.array(FavoriteSchema),
     /** 선택 영역으로 만든 새 범례 */
     legendGroups: z.array(z.object({ name: z.string(), color: z.string() })),
+    /** 지운 영역 수. 되돌리기 버튼 활성화에 쓴다. */
+    deletionCount: z.number(),
   })
   .openapi("ItemState");
 
@@ -314,6 +318,10 @@ export const ViewRequestSchema = z
     z.object({ type: z.literal("pan"), dx: finite, dy: finite }),
   ])
   .openapi("ViewRequest");
+
+export const DeletionRequestSchema = z
+  .object({ region: RegionSchema })
+  .openapi("DeletionRequest");
 
 export const SelectionRequestSchema = z
   .object({ region: orNull(RegionSchema) })
@@ -491,6 +499,7 @@ export const HistoryEventTypeSchema = z
     "grid",
     "selection",
     "favorite",
+    "delete",
   ])
   .openapi("HistoryEventType");
 

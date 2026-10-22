@@ -11,6 +11,7 @@ import {
   CreateChartResponseSchema,
   DebugRenderRequestSchema,
   DebugRenderResponseSchema,
+  DeletionRequestSchema,
   DetailRequestSchema,
   DetailResponseSchema,
   GridRequestSchema,
@@ -142,6 +143,37 @@ export const clearShapes = createRoute({
   path: "/charts/{chartId}/items/{itemKey}/shapes",
   tags: ["items"],
   summary: "도형 전체 삭제",
+  ...write,
+  request: { params: ItemParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const addDeletion = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/deletions",
+  tags: ["items"],
+  summary:
+    "영역 안의 점 지우기 (scatter만). 데이터는 그대로 두고 그 item에서만 뺀다",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(DeletionRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const undoDeletion = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/deletions/last",
+  tags: ["items"],
+  summary: "마지막으로 지운 영역 되돌리기",
+  ...write,
+  request: { params: ItemParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const clearDeletions = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/deletions",
+  tags: ["items"],
+  summary: "지운 점 모두 되돌리기",
   ...write,
   request: { params: ItemParams },
   responses: { 202: accepted, ...itemErrors },

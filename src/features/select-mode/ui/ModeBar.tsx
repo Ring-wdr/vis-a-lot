@@ -2,23 +2,45 @@
 
 import {
   Lasso,
-  type LucideIcon,
+  type LucideProps,
   MousePointer2,
   Move,
   Paintbrush,
   ScanSearch,
   SquareDashed,
+  SquareDashedX,
+  X,
 } from "lucide-react";
+import type { ComponentType } from "react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { MODES, type Mode } from "@/entities/workspace/model/workspace-store";
+import {
+  MODES,
+  type Mode,
+  SCATTER_ONLY_MODES,
+} from "@/entities/workspace/model/workspace-store";
 import styles from "@/shared/ui/workspace.module.css";
 
-const MODE_UI: Record<Mode, { label: string; Icon: LucideIcon }> = {
+/** 자유형 삭제: lucide에 없어 올가미 오른쪽 아래에 x를 겹친다. */
+function LassoX(props: LucideProps) {
+  return (
+    <span className={styles.badgedIcon}>
+      <Lasso {...props} />
+      <X className={styles.iconBadge} size={9} strokeWidth={3} />
+    </span>
+  );
+}
+
+const MODE_UI: Record<
+  Mode,
+  { label: string; Icon: ComponentType<LucideProps> }
+> = {
   normal: { label: "기본", Icon: MousePointer2 },
   pan: { label: "이동", Icon: Move },
   zoom: { label: "확대", Icon: ScanSearch },
   rectSelect: { label: "사각형 선택", Icon: SquareDashed },
   lassoSelect: { label: "자유형 선택", Icon: Lasso },
+  rectDelete: { label: "사각형 삭제 (scatter)", Icon: SquareDashedX },
+  lassoDelete: { label: "자유형 삭제 (scatter)", Icon: LassoX },
   paint: { label: "페인트", Icon: Paintbrush },
 };
 
@@ -30,6 +52,7 @@ export function ModeBar() {
   const mode = useWorkspace((s) => s.mode);
   const setMode = useWorkspace((s) => s.setMode);
   const editable = useWorkspace((s) => !s.readOnly && s.current !== undefined);
+  const scatter = useWorkspace((s) => s.current?.spec.chartType === "scatter");
 
   return (
     <div className={styles.modeBar} role="toolbar" aria-label="모드">
@@ -42,7 +65,10 @@ export function ModeBar() {
             title={label}
             aria-label={label}
             aria-pressed={mode === m}
-            disabled={!editable && m !== "normal"}
+            disabled={
+              (!editable && m !== "normal") ||
+              (!scatter && SCATTER_ONLY_MODES.includes(m))
+            }
             onClick={() => setMode(m)}
           >
             <Icon size={16} strokeWidth={1.8} aria-hidden="true" />

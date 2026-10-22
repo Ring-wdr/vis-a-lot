@@ -61,6 +61,7 @@ export async function saveHistory(
       selection: item.selection,
       favorites: item.favorites,
       legendGroups: item.legendGroups,
+      deletions: item.deletions,
     };
   }
   const entry: HistoryDetail = {

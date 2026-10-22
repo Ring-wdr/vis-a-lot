@@ -146,6 +146,13 @@ export function ItemContextMenu({
               disabled={disabled}
               onSelect={(name) => onAction({ type: "removeFavorite", name })}
             />
+            <ContextMenu.Item
+              className={styles.menuItem}
+              disabled={item.deletionCount === 0}
+              onClick={() => onAction({ type: "clearDeletions" })}
+            >
+              지운 점 모두 되돌리기
+            </ContextMenu.Item>
             <NamedSubmenu
               label="새 범례 삭제"
               names={groups}

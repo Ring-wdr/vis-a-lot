@@ -23,6 +23,9 @@ export type ItemAction =
   | { type: "legendPosition"; position: LegendPosition | null }
   | { type: "clearShapes" }
   | { type: "select"; region: Region | null }
+  | { type: "deleteRegion"; region: Region }
+  | { type: "undoDeletion" }
+  | { type: "clearDeletions" }
   | { type: "addFavorite"; name: string }
   | { type: "removeFavorite"; name: string }
   | { type: "addLegendGroup"; name: string }
@@ -60,6 +63,12 @@ export function useItemAction(chartId: string, itemKey: string) {
           return api.clearShapes(chartId, itemKey);
         case "legendPosition":
           return api.setItemLegendPosition(chartId, itemKey, action.position);
+        case "deleteRegion":
+          return api.addDeletion(chartId, itemKey, action.region);
+        case "undoDeletion":
+          return api.undoDeletion(chartId, itemKey);
+        case "clearDeletions":
+          return api.clearDeletions(chartId, itemKey);
         case "select":
           return api.setSelection(chartId, itemKey, action.region);
         case "addFavorite":
