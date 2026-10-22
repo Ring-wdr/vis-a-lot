@@ -46,6 +46,8 @@ export type WorkspaceState = {
   page: number;
   /** 크게 보고 있는 item의 전체 순번. null이면 grid를 보여준다. */
   focus: number | null;
+  /** 마지막으로 누른 item 키. 차트·데이터 다운로드와 데이터 표가 이 item을 쓴다. */
+  selectedItem: string | null;
   mode: Mode;
   /** 페인트 모드에서 쓰는 그리기 도구. 탭 안의 모든 item이 같은 도구를 쓴다. */
   paintTool: PaintTool;
@@ -68,6 +70,7 @@ export type WorkspaceState = {
   replaceJob: (jobId: string, spec: ChartSpec, page?: number) => void;
   setPage: (page: number) => void;
   setFocus: (focus: number | null) => void;
+  setSelectedItem: (key: string | null) => void;
   setMode: (mode: Mode) => void;
   setPaintTool: (tool: PaintTool) => void;
   setShowNearest: (show: boolean) => void;
@@ -107,6 +110,7 @@ export function createWorkspaceStore({
     opening: false,
     page: 0,
     focus: null,
+    selectedItem: null,
     mode: "normal",
     paintTool: "rect",
     showNearest: true,
@@ -121,6 +125,7 @@ export function createWorkspaceStore({
         current,
         page: 0,
         focus: null,
+        selectedItem: null,
         itemJobs: {},
         undoCounts: {},
         // 점 삭제 모드는 scatter에서만 쓰므로 다른 차트를 그리면 기본 모드로 돌린다.
@@ -141,6 +146,7 @@ export function createWorkspaceStore({
       ),
     setPage: (page) => set({ page }),
     setFocus: (focus) => set({ focus }),
+    setSelectedItem: (selectedItem) => set({ selectedItem }),
     // 다시 보기 전용 화면은 일반 모드(툴팁)만 쓴다.
     setMode: (mode) => set((s) => (s.readOnly ? {} : { mode })),
     setPaintTool: (paintTool) => set({ paintTool }),

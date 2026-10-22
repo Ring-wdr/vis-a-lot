@@ -21,6 +21,7 @@
     "d3-array": "3.2.4",
     "d3-scale": "4.0.2",
     "d3-time-format": "4.1.0",
+    "exceljs": "4.4.0",
     "fflate": "0.8.3",
     "hono": "4.13.13",
     "idb-keyval": "6.3.0",

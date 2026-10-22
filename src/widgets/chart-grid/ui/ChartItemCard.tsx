@@ -133,6 +133,8 @@ function DrawnItem({
     (s) => s.current?.spec.common.legendPosition ?? "top",
   );
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
+  const selected = useWorkspace((s) => s.selectedItem === item.key);
+  const setSelectedItem = useWorkspace((s) => s.setSelectedItem);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
   const setItemJob = useWorkspace((s) => s.setItemJob);
   const client = useQueryClient();
@@ -183,6 +185,9 @@ function DrawnItem({
     <article
       className={styles.item}
       aria-label={item.label}
+      data-selected={selected || undefined}
+      onPointerDownCapture={() => setSelectedItem(item.key)}
+      onFocusCapture={() => setSelectedItem(item.key)}
       onDoubleClick={doubleClickHandler(onDoubleClick)}
     >
       {/* 우클릭 메뉴: 선택 영역을 즐겨찾기·새 범례로 남긴다. */}
