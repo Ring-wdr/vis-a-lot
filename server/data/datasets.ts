@@ -3,13 +3,24 @@
 
 import type { PGlite } from "@electric-sql/pglite";
 import { del, get, set } from "idb-keyval";
-import type { DatasetStatus, UploadInfo } from "../api/types";
+import type {
+  CsvCheck,
+  DatasetStatus,
+  StagedUpload,
+  UploadInfo,
+  UploadTask,
+} from "../api/types";
 import {
   type CsvFile,
   type CsvOptions,
+  type CsvPreview,
+  CsvRejectError,
   extractCsvFiles,
   type InspectedCsv,
   inspectCsv,
+  previewCsv,
+  tableColumnsOf,
+  withDefaults,
 } from "./csv-import";
 import {
   type ColumnSchema,
@@ -52,10 +63,13 @@ type MetaRow = {
 /** 메타에 남기는 업로드 정보 (원본 파일은 IndexedDB에 따로 둔다) */
 type StoredUpload = Omit<UploadInfo, "createdAt"> & { createdAt: number };
 
-/** 업로드 결과. 거절은 사용자에게 그대로 보여줄 사유와 함께 돌려준다. */
-export type UploadResult =
-  | { ok: true; status: DatasetStatus }
-  | { ok: false; error: string };
+/** 올려 둔 파일. 확인(commit)하거나 버릴 때까지 메모리에 둔다. */
+type Stage = { info: StagedUpload; files: CsvFile[] };
+
+/** 동시에 올려 둘 수 있는 파일 수. 넘으면 가장 오래된 것부터 버린다. */
+const MAX_STAGES = 3;
+/** long polling 한 번이 기다리는 최대 시간 */
+const TASK_WAIT_MS = 15_000;
 
 type Chunks = Iterable<{ csv: string; rows: number }>;
 
@@ -74,6 +88,12 @@ export class DatasetManager {
   /** 테이블 스키마. 테이블을 다시 만들 때만 바뀌므로 만들 때 지운다. */
   readonly #schemas = new Map<string, DatasetSchema>();
   #queue: Promise<void> = Promise.resolve();
+  readonly #stages = new Map<string, Stage>();
+  /** 확인을 누른 업로드의 진행. stageId로 찾는다. */
+  readonly #tasks = new Map<string, Omit<UploadTask, "version">>();
+  /** 진행이 바뀔 때마다 오른다. 업로드 진행 long polling이 이 값으로 바뀐 것을 안다. */
+  #version = 0;
+  readonly #waiters = new Set<() => void>();
 
   private constructor(db: PGlite) {
     this.#db = db;
@@ -162,59 +182,19 @@ export class DatasetManager {
     return queued;
   }
 
-  /** CSV 또는 zip을 검사해 받아들이면 적재를 시작한다. 스키마가 맞지 않으면 아무것도 남기지 않고 거절한다. */
-  async upload(input: {
-    name: string;
-    file: CsvFile;
-    options: CsvOptions;
-  }): Promise<UploadResult> {
-    const id = `up-${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
-    const files = await extractCsvFiles(input.file);
-    const inspected = await inspectCsv(files, input.options);
-    const upload: StoredUpload = {
-      fileName: input.file.name,
-      size: input.file.bytes.byteLength,
-      files: files.map((f) => ({ name: f.name, size: f.bytes.byteLength })),
-      createdAt: Date.now(),
-      options: input.options,
-      inferred: inspected.inferred,
-    };
-    await set(
-      rawKey(id),
-      files.map((f) => ({ name: f.name, blob: new Blob([f.bytes.slice()]) })),
-    );
-    await this.#db.query(
-      `insert into dataset_meta (id, kind, name, tbl, status, upload)
-       values ($1, 'upload', $2, $3, 'generating', $4)`,
-      [id, input.name, uploadTable(id), JSON.stringify(upload)],
-    );
-    return { ok: true, status: this.#import(id, input.name, inspected) };
+  /** 파일을 올려 둔다. zip이면 안의 CSV를 꺼내 두고, 미리보기·검사·확인은 stageId로 한다. */
+  async stage(file: CsvFile): Promise<StagedUpload> {
+    const files = await extractCsvFiles(file);
+    return this.#keepStage(file.name, file.bytes.byteLength, files);
   }
 
-  /**
-   * 업로드한 데이터셋의 이름이나 전처리 옵션을 바꾼다. 옵션이 바뀌면 원본으로 다시 검사해,
-   * 받아들일 수 있을 때만 테이블을 다시 만든다 (거절되면 기존 데이터를 그대로 둔다).
-   */
-  async edit(
-    id: string,
-    patch: { name?: string; options?: CsvOptions },
-  ): Promise<UploadResult | null> {
+  /** 업로드한 데이터셋을 다시 적재(수정)하려고 보관해 둔 원본을 올려 둔다. 모르는 데이터셋이면 null */
+  async stageExisting(id: string): Promise<StagedUpload | null> {
     const meta = await this.#metaOf(id);
     if (!meta || meta.kind !== "upload" || !meta.upload) return null;
-    if (this.#progress.has(id)) {
-      return { ok: false, error: "적재 중에는 수정할 수 없습니다." };
-    }
-    const name = patch.name ?? meta.name;
-    if (!patch.options) {
-      await this.#db.query(
-        "update dataset_meta set name = $2, updated_at = now() where id = $1",
-        [id, name],
-      );
-      return { ok: true, status: this.#statusOf(id, { ...meta, name }) };
-    }
     const stored = await get<{ name: string; blob: Blob }[]>(rawKey(id));
     if (!stored) {
-      return { ok: false, error: "원본 파일이 없어 다시 적재할 수 없습니다." };
+      throw new CsvRejectError("원본 파일이 없어 다시 적재할 수 없습니다.");
     }
     const files = await Promise.all(
       stored.map(async (f) => ({
@@ -222,18 +202,232 @@ export class DatasetManager {
         bytes: new Uint8Array(await f.blob.arrayBuffer()),
       })),
     );
-    const inspected = await inspectCsv(files, patch.options);
-    const upload: StoredUpload = {
-      ...meta.upload,
-      options: patch.options,
-      inferred: inspected.inferred,
+    return this.#keepStage(meta.upload.fileName, meta.upload.size, files, {
+      id,
+      name: meta.name,
+      options: withDefaults(meta.upload.options),
+    });
+  }
+
+  #keepStage(
+    fileName: string,
+    size: number,
+    files: CsvFile[],
+    dataset?: StagedUpload["dataset"],
+  ) {
+    const stageId = `st-${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+    const info: StagedUpload = {
+      stageId,
+      fileName,
+      size,
+      files: files.map((f) => ({ name: f.name, size: f.bytes.byteLength })),
+      dataset,
     };
+    this.#stages.set(stageId, { info, files });
+    while (this.#stages.size > MAX_STAGES) {
+      this.#stages.delete(this.#stages.keys().next().value as string);
+    }
+    return info;
+  }
+
+  #stageOf(stageId: string) {
+    const stage = this.#stages.get(stageId);
+    if (!stage) {
+      throw new CsvRejectError(
+        "올려 둔 파일이 없습니다. 파일을 다시 선택하세요.",
+      );
+    }
+    return stage;
+  }
+
+  /** 올려 둔 파일을 버린다 (팝업을 닫을 때). */
+  discardStage(stageId: string) {
+    this.#stages.delete(stageId);
+  }
+
+  /** 올려 둔 파일 중 하나(file 번째 CSV)의 앞부분 미리보기 */
+  async preview(
+    stageId: string,
+    file: number,
+    options: CsvOptions,
+  ): Promise<CsvPreview> {
+    const { files } = this.#stageOf(stageId);
+    const target = files[file];
+    if (!target) throw new CsvRejectError(`${file}번째 파일이 없습니다.`);
+    return previewCsv(target, options);
+  }
+
+  /** 적재하지 않고 파일 전체를 검사한다. 거절되면 CsvRejectError */
+  async check(stageId: string, options: CsvOptions): Promise<CsvCheck> {
+    const { files } = this.#stageOf(stageId);
+    const inspected = await inspectCsv(files, options);
+    return {
+      rows: inspected.rows,
+      skipped: inspected.skipped,
+      columns: inspected.columns,
+    };
+  }
+
+  /**
+   * 올려 둔 파일을 적재한다. 검사·변환부터 백그라운드에서 하고 진행은 task로 알린다.
+   * 수정(기존 데이터셋)이면 검사에서 거절될 때 지금 데이터를 그대로 둔다.
+   */
+  commit(
+    stageId: string,
+    input: { name: string; options: CsvOptions },
+  ): UploadTask {
+    const stage = this.#stageOf(stageId);
+    if (this.#tasks.get(stageId)?.state === "parse") {
+      throw new CsvRejectError("이미 적재를 시작했습니다.");
+    }
+    const replace = stage.info.dataset?.id;
+    if (replace && this.#progress.has(replace)) {
+      throw new CsvRejectError("적재 중에는 수정할 수 없습니다.");
+    }
+    const task: Omit<UploadTask, "version"> = {
+      state: "parse",
+      done: 0,
+      total: 1,
+    };
+    this.#tasks.set(stageId, task);
+    this.#notify();
+
+    let last = 0;
+    const onProgress = (done: number, total: number) => {
+      task.done = done;
+      task.total = total;
+      // 너무 잦은 깨우기는 피한다 (1% 단위).
+      if (done - last >= total / 100 || done === total) {
+        last = done;
+        this.#notify();
+      }
+    };
+
+    (async () => {
+      const inspected = await inspectCsv(
+        stage.files,
+        input.options,
+        onProgress,
+      );
+      const upload: StoredUpload = {
+        fileName: stage.info.fileName,
+        size: stage.info.size,
+        files: stage.info.files,
+        createdAt: Date.now(),
+        options: input.options,
+        inferred: inspected.columns.map((c) => ({
+          name: c.name,
+          type: c.inferred,
+        })),
+      };
+      let id: string;
+      if (replace) {
+        id = replace;
+        const meta = await this.#metaOf(id);
+        await this.#db.query(
+          `update dataset_meta set name = $2, upload = $3, status = 'generating', error = null,
+             columns = null, updated_at = now() where id = $1`,
+          [
+            id,
+            input.name,
+            JSON.stringify({
+              ...upload,
+              createdAt: meta?.upload?.createdAt ?? upload.createdAt,
+            }),
+          ],
+        );
+      } else {
+        id = `up-${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+        await set(
+          rawKey(id),
+          stage.files.map((f) => ({
+            name: f.name,
+            blob: new Blob([f.bytes.slice()]),
+          })),
+        );
+        await this.#db.query(
+          `insert into dataset_meta (id, kind, name, tbl, status, upload)
+           values ($1, 'upload', $2, $3, 'generating', $4)`,
+          [id, input.name, uploadTable(id), JSON.stringify(upload)],
+        );
+      }
+      task.datasetId = id;
+      this.#stages.delete(stageId);
+      this.#import(id, input.name, inspected);
+    })().catch((err) => {
+      task.state = "rejected";
+      task.error = err instanceof Error ? err.message : String(err);
+      if (!(err instanceof CsvRejectError))
+        console.error(`upload ${stageId} failed`, err);
+      this.#notify();
+    });
+    return this.#taskSnapshot(stageId) as UploadTask;
+  }
+
+  /** 업로드 진행. since와 같은 버전이면 바뀔 때까지(최대 15초) 기다린다. 모르는 stageId면 null */
+  async waitTask(stageId: string, since?: number): Promise<UploadTask | null> {
+    const deadline = Date.now() + TASK_WAIT_MS;
+    for (;;) {
+      const snapshot = await this.#taskStatus(stageId);
+      if (!snapshot || snapshot.version !== since || Date.now() >= deadline)
+        return snapshot;
+      await new Promise<void>((resolve) => {
+        const wake = () => {
+          clearTimeout(timer);
+          this.#waiters.delete(wake);
+          resolve();
+        };
+        const timer = setTimeout(wake, deadline - Date.now());
+        this.#waiters.add(wake);
+      });
+    }
+  }
+
+  /** 적재가 시작된 뒤에는 데이터셋 진행(copy·analyze)과 결과로 task 상태를 정한다. */
+  async #taskStatus(stageId: string): Promise<UploadTask | null> {
+    const task = this.#tasks.get(stageId);
+    if (!task) return null;
+    if (task.datasetId && task.state === "parse") {
+      const progress = this.#progress.get(task.datasetId);
+      if (progress) {
+        const copying = progress.phase === "analyze" ? "analyze" : "copy";
+        return {
+          ...task,
+          state: progress.done === 0 && copying === "copy" ? "queued" : copying,
+          done: progress.done,
+          total: progress.total,
+          version: this.#version,
+        };
+      }
+      const meta = await this.#metaOf(task.datasetId);
+      if (meta?.status === "ready") task.state = "done";
+      else if (meta?.status === "failed") {
+        task.state = "failed";
+        task.error = meta.error ?? undefined;
+      }
+    }
+    return this.#taskSnapshot(stageId);
+  }
+
+  #taskSnapshot(stageId: string): UploadTask | null {
+    const task = this.#tasks.get(stageId);
+    return task ? { ...task, version: this.#version } : null;
+  }
+
+  #notify() {
+    this.#version++;
+    for (const wake of [...this.#waiters]) wake();
+  }
+
+  /** 업로드한 데이터셋의 이름을 바꾼다. 모르는 데이터셋이면 null */
+  async rename(id: string, name: string): Promise<DatasetStatus | null> {
+    const meta = await this.#metaOf(id);
+    if (!meta || meta.kind !== "upload") return null;
     await this.#db.query(
-      `update dataset_meta set name = $2, upload = $3, status = 'generating', error = null,
-         columns = null, updated_at = now() where id = $1`,
-      [id, name, JSON.stringify(upload)],
+      "update dataset_meta set name = $2, updated_at = now() where id = $1",
+      [id, name],
     );
-    return { ok: true, status: this.#import(id, name, inspected) };
+    return this.#statusOf(id, { ...meta, name });
   }
 
   /** 업로드한 데이터셋을 지운다. 적재 중이면 지우지 않는다. */
@@ -363,6 +557,7 @@ export class DatasetManager {
             [id, `적재 실패: ${message}`],
           )
           .catch(() => undefined);
+        this.#notify();
         await this.#db
           .query("delete from dataset_meta where id = $1 and kind = 'sample'", [
             id,
@@ -375,7 +570,7 @@ export class DatasetManager {
   #import(id: string, name: string, inspected: InspectedCsv) {
     const queued = this.#queued(id, "upload", name, inspected.rows);
     const table = uploadTable(id);
-    const cols = inspected.columns
+    const cols = tableColumnsOf(inspected)
       .map((c) => `${ident(c.name)} ${SQL_TYPES[c.type]}`)
       .join(",\n  ");
     this.#enqueue(id, () =>
@@ -403,9 +598,11 @@ export class DatasetManager {
         { blob: new Blob([chunk.csv]) },
       );
       progress.done += chunk.rows;
+      this.#notify();
     }
 
     progress.phase = "analyze";
+    this.#notify();
     const columns = await this.#analyze(table);
     const generateMs = Math.round(performance.now() - started);
     await this.#db.query(
@@ -415,6 +612,7 @@ export class DatasetManager {
       [id, JSON.stringify(columns), progress.done, generateMs],
     );
     this.#progress.delete(id);
+    this.#notify();
   }
 
   /**
@@ -455,7 +653,10 @@ export class DatasetManager {
 
   #statusOf(id: string, meta: MetaRow | undefined): DatasetStatus {
     const progress = this.#progress.get(id);
-    const upload = meta?.upload ?? undefined;
+    // 예전에 저장한 옵션에는 나중에 생긴 항목이 없다.
+    const upload = meta?.upload
+      ? { ...meta.upload, options: withDefaults(meta.upload.options) }
+      : undefined;
     if (progress) return { ...progress, upload };
     const sample = sampleOf(id);
     const kind = meta?.kind ?? "sample";

@@ -9,6 +9,7 @@ import type {
   CommonProps,
   CreateChartRequest,
   CsvOptions,
+  CsvPreview,
   DatasetId,
   DebugRenderRequest,
   HistoryDetail,
@@ -86,26 +87,85 @@ export const api = {
       }),
     ),
 
-  /** CSV 또는 zip 업로드. 스키마가 맞지 않으면 422와 거절 사유가 온다. */
-  uploadDataset: (input: { file: File; name: string; options: CsvOptions }) => {
+  /** CSV 또는 zip을 올려 둔다. 옵션은 미리보기·검사로 정하고 commit으로 적재한다. */
+  stageUpload: (file: File) => {
     const form = new FormData();
-    form.set("file", input.file);
-    form.set("name", input.name);
-    form.set("options", JSON.stringify(input.options));
+    form.set("file", file);
     return unwrap(
-      dataClient.POST("/datasets/uploads", {
+      dataClient.POST("/datasets/staging", {
         // openapi-fetch는 FormData를 그대로 보내고 boundary는 브라우저가 붙인다.
         body: form as never,
       }),
     );
   },
 
-  /** 이름이나 전처리 옵션 변경. 옵션을 바꾸면 다시 검사해 거절되면 422 */
-  editDataset: (id: DatasetId, body: { name?: string; options?: CsvOptions }) =>
+  /** 업로드한 데이터셋의 원본을 다시 올려 둔다 (수정). */
+  stageDataset: (id: DatasetId) =>
+    unwrap(
+      dataClient.POST("/datasets/{datasetId}/staging", {
+        params: { path: dataset(id) },
+      }),
+    ),
+
+  discardStage: (stageId: string) =>
+    unwrap(
+      dataClient.DELETE("/datasets/staging/{stageId}", {
+        params: { path: { stageId } },
+      }),
+    ),
+
+  previewUpload: (
+    stageId: string,
+    body: { file: number; options: CsvOptions },
+    signal?: AbortSignal,
+  ) =>
+    as<CsvPreview>()(
+      unwrap(
+        dataClient.POST("/datasets/staging/{stageId}/preview", {
+          params: { path: { stageId } },
+          body,
+          signal,
+        }),
+      ),
+    ),
+
+  checkUpload: (stageId: string, options: CsvOptions) =>
+    unwrap(
+      dataClient.POST("/datasets/staging/{stageId}/check", {
+        params: { path: { stageId } },
+        body: { options },
+      }),
+    ),
+
+  commitUpload: (
+    stageId: string,
+    body: { name: string; options: CsvOptions },
+  ) =>
+    unwrap(
+      dataClient.POST("/datasets/staging/{stageId}/commit", {
+        params: { path: { stageId } },
+        body,
+      }),
+    ),
+
+  /** 업로드 진행 (long polling). since가 지금 버전과 같으면 바뀔 때까지 기다린다. */
+  uploadTask: (
+    stageId: string,
+    since: number | undefined,
+    signal?: AbortSignal,
+  ) =>
+    unwrap(
+      dataClient.GET("/datasets/staging/{stageId}/task", {
+        params: { path: { stageId }, query: { since } },
+        signal,
+      }),
+    ),
+
+  renameDataset: (id: DatasetId, name: string) =>
     unwrap(
       dataClient.PATCH("/datasets/{datasetId}", {
         params: { path: dataset(id) },
-        body,
+        body: { name },
       }),
     ),
 

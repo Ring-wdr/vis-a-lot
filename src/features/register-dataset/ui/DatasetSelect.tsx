@@ -15,7 +15,7 @@ const STATE_SUFFIX: Record<DatasetStatus["state"], string> = {
 };
 
 /**
- * 그릴 데이터 고르기. 샘플과 업로드한 데이터 중 등록한 것만 고를 수 있고, 등록·업로드는 상단 data 팝업에서 한다.
+ * 그릴 데이터 고르기. 샘플과 업로드한 데이터 중 등록한 것만 고를 수 있고, 샘플 등록은 상단 datastore, 파일은 upload 팝업에서 한다.
  * 컬럼은 데이터의 스키마에서 정해지므로, 등록하지 않은 데이터로는 그릴 수 없다.
  */
 export function DatasetSelect({
@@ -54,9 +54,9 @@ export function DatasetSelect({
             ) : status?.state === "generating" ? (
               `등록 중 ${Math.floor((status.done / Math.max(1, status.total)) * 100)}%`
             ) : status?.state === "missing" ? (
-              "미등록 · data에서 등록"
+              "미등록 · datastore에서 등록"
             ) : !status ? (
-              "data에서 다른 데이터를 고르세요"
+              "datastore에서 다른 데이터를 고르세요"
             ) : (
               ""
             )}

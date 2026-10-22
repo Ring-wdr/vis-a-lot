@@ -19,6 +19,120 @@
       }
     },
     "schemas": {
+      "CsvCheck": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "number"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/ColumnType"
+                },
+                "inferred": {
+                  "$ref": "#/components/schemas/ColumnType"
+                },
+                "included": {
+                  "type": "boolean"
+                },
+                "invalid": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "type", "inferred", "included", "invalid"]
+            }
+          }
+        },
+        "required": ["rows", "skipped", "columns"]
+      },
+      "ColumnType": {
+        "type": "string",
+        "enum": ["categorical", "numeric", "datetime"]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "unknown chart"
+          }
+        },
+        "required": ["error"]
+      },
+      "CheckUploadRequest": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "$ref": "#/components/schemas/CsvOptions"
+          }
+        },
+        "required": ["options"]
+      },
+      "CsvOptions": {
+        "type": "object",
+        "properties": {
+          "delimiter": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "header": {
+            "type": "boolean"
+          },
+          "nullValue": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2
+          },
+          "encoding": {
+            "type": "string",
+            "enum": ["auto", "utf-8", "euc-kr"]
+          },
+          "datetimeFormat": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "ignoreErrors": {
+            "type": "boolean"
+          },
+          "types": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ColumnType"
+            }
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "delimiter",
+          "header",
+          "nullValue",
+          "quote",
+          "encoding",
+          "datetimeFormat",
+          "ignoreErrors"
+        ]
+      },
       "ColumnSummary": {
         "anyOf": [
           {
@@ -100,20 +214,57 @@
         "maxLength": 63,
         "example": "factory"
       },
-      "ApiError": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "unknown chart"
-          }
-        },
-        "required": ["error"]
-      },
       "DatasetId": {
         "type": "string",
         "pattern": "^[a-z0-9-]{1,40}$",
         "example": "iot-100k"
+      },
+      "UploadTask": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "parse",
+              "queued",
+              "copy",
+              "analyze",
+              "done",
+              "rejected",
+              "failed"
+            ]
+          },
+          "done": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "version": {
+            "type": "number"
+          },
+          "datasetId": {
+            "$ref": "#/components/schemas/DatasetId"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["state", "done", "total", "version"]
+      },
+      "CommitUploadRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "options": {
+            "$ref": "#/components/schemas/CsvOptions"
+          }
+        },
+        "required": ["name", "options"]
       },
       "DatasetStatus": {
         "type": "object",
@@ -209,47 +360,6 @@
           "inferred"
         ]
       },
-      "CsvOptions": {
-        "type": "object",
-        "properties": {
-          "delimiter": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2
-          },
-          "header": {
-            "type": "boolean"
-          },
-          "nullValue": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "types": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/ColumnType"
-            }
-          }
-        },
-        "required": ["delimiter", "header", "nullValue"]
-      },
-      "ColumnType": {
-        "type": "string",
-        "enum": ["categorical", "numeric", "datetime"]
-      },
-      "EditDatasetRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "options": {
-            "$ref": "#/components/schemas/CsvOptions"
-          }
-        }
-      },
       "DataHealth": {
         "type": "object",
         "properties": {
@@ -301,6 +411,86 @@
           }
         },
         "required": ["datasets"]
+      },
+      "CsvPreview": {
+        "type": "object",
+        "properties": {
+          "raw": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "inferred": {
+                  "$ref": "#/components/schemas/ColumnType"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/ColumnType"
+                }
+              },
+              "required": ["name", "inferred", "type"]
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": ["string", "null"]
+              }
+            }
+          },
+          "invalid": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["raw", "columns", "rows", "invalid"]
+      },
+      "PreviewUploadRequest": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "options": {
+            "$ref": "#/components/schemas/CsvOptions"
+          }
+        },
+        "required": ["file", "options"]
+      },
+      "RenameDatasetRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": ["name"]
       },
       "DatasetSchema": {
         "type": "object",
@@ -430,29 +620,149 @@
         },
         "required": ["kind", "column", "values"]
       },
-      "UploadDatasetRequest": {
+      "StagedUpload": {
+        "type": "object",
+        "properties": {
+          "stageId": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "size"]
+            }
+          },
+          "dataset": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/DatasetId"
+              },
+              "name": {
+                "type": "string"
+              },
+              "options": {
+                "$ref": "#/components/schemas/CsvOptions"
+              }
+            },
+            "required": ["id", "name", "options"]
+          }
+        },
+        "required": ["stageId", "fileName", "size", "files"]
+      },
+      "StageUploadRequest": {
         "type": "object",
         "properties": {
           "file": {
             "type": "string",
             "format": "binary"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "options": {
-            "type": "string",
-            "description": "CsvOptions JSON"
           }
         },
-        "required": ["file", "name", "options"]
+        "required": ["file"]
       }
     },
     "parameters": {}
   },
   "paths": {
+    "/datasets/staging/{stageId}/check": {
+      "post": {
+        "tags": ["datasets"],
+        "summary": "적재하지 않고 파일 전체를 검사한다: 행 수, 컬럼별 타입과 변환 불가 값 수",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^st-[a-z0-9]{1,20}$"
+            },
+            "required": true,
+            "name": "stageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "검사 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsvCheck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/datasets/{datasetId}/columns/{column}/summary": {
       "get": {
         "tags": ["datasets"],
@@ -533,6 +843,90 @@
           },
           "409": {
             "description": "데이터셋이 아직 준비되지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets/staging/{stageId}/commit": {
+      "post": {
+        "tags": ["datasets"],
+        "summary": "올려 둔 파일을 적재한다. 검사·변환부터 백그라운드에서 하고 진행은 task long polling으로 받는다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^st-[a-z0-9]{1,20}$"
+            },
+            "required": true,
+            "name": "stageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "적재 시작",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTask"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등)",
             "content": {
               "application/json": {
                 "schema": {
@@ -692,7 +1086,7 @@
       },
       "patch": {
         "tags": ["datasets"],
-        "summary": "업로드한 데이터셋의 이름·전처리 옵션 변경. 옵션을 바꾸면 원본으로 다시 검사·적재한다",
+        "summary": "업로드한 데이터셋의 이름 변경",
         "security": [
           {
             "bearer": []
@@ -713,7 +1107,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EditDatasetRequest"
+                "$ref": "#/components/schemas/RenameDatasetRequest"
               }
             }
           }
@@ -768,9 +1162,56 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/datasets/staging/{stageId}": {
+      "delete": {
+        "tags": ["datasets"],
+        "summary": "올려 둔 파일을 버린다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^st-[a-z0-9]{1,20}$"
+            },
+            "required": true,
+            "name": "stageId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "버림"
           },
-          "422": {
-            "description": "CSV 검사에서 거절 (스키마 불일치 등)",
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
             "content": {
               "application/json": {
                 "schema": {
@@ -1006,6 +1447,90 @@
         }
       }
     },
+    "/datasets/staging/{stageId}/preview": {
+      "post": {
+        "tags": ["datasets"],
+        "summary": "올려 둔 파일 하나의 앞부분: 원본 줄, 컬럼과 추론 타입, 정한 타입으로 바꾼 앞쪽 행",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^st-[a-z0-9]{1,20}$"
+            },
+            "required": true,
+            "name": "stageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "미리보기",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsvPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/datasets/{datasetId}/schema": {
       "get": {
         "tags": ["datasets"],
@@ -1182,10 +1707,93 @@
         }
       }
     },
-    "/datasets/uploads": {
+    "/datasets/{datasetId}/staging": {
       "post": {
         "tags": ["datasets"],
-        "summary": "CSV 또는 zip(CSV 여러 개를 하나로 합침) 업로드. 파일마다 스키마가 다르면 거절한다",
+        "summary": "업로드한 데이터셋의 원본을 다시 올려 둔다. 옵션·타입을 바꿔 commit하면 그 데이터셋을 다시 적재한다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/DatasetId"
+            },
+            "required": true,
+            "name": "datasetId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "올려 둔 파일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StagedUpload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets/staging": {
+      "post": {
+        "tags": ["datasets"],
+        "summary": "CSV 또는 zip(CSV 여러 개를 하나로 합침)을 올려 둔다. 미리보기·검사로 옵션을 정한 뒤 commit으로 적재한다",
         "security": [
           {
             "bearer": []
@@ -1196,18 +1804,18 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/UploadDatasetRequest"
+                "$ref": "#/components/schemas/StageUploadRequest"
               }
             }
           }
         },
         "responses": {
-          "202": {
-            "description": "적재 시작",
+          "201": {
+            "description": "올려 둔 파일",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DatasetStatus"
+                  "$ref": "#/components/schemas/StagedUpload"
                 }
               }
             }
@@ -1243,7 +1851,89 @@
             }
           },
           "422": {
-            "description": "CSV 검사에서 거절 (스키마 불일치 등)",
+            "description": "CSV 검사에서 거절 (옵션·스키마 오류, 올려 둔 파일 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasets/staging/{stageId}/task": {
+      "get": {
+        "tags": ["datasets"],
+        "summary": "업로드 진행 (long polling). since가 지금 version과 같으면 바뀔 때까지 최대 15초 기다린다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^st-[a-z0-9]{1,20}$"
+            },
+            "required": true,
+            "name": "stageId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": ["integer", "null"]
+            },
+            "required": false,
+            "name": "since",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "진행",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTask"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "commit하지 않은 stage",
             "content": {
               "application/json": {
                 "schema": {

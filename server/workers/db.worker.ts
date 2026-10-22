@@ -7,14 +7,14 @@ import {
 } from "../data/chart-data";
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
-import { DatasetManager, type UploadResult } from "../data/datasets";
+import { DatasetManager } from "../data/datasets";
 import {
   getHistory,
   listHistory,
   openHistory,
   saveHistory,
 } from "../history/history-store";
-import type { DbMethods } from "../protocol";
+import type { DbMethods, Rejectable } from "../protocol";
 import { serveRpc, transfer } from "../rpc";
 
 const started = performance.now();
@@ -55,11 +55,9 @@ async function datasetOf(id: string) {
 }
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
-async function rejectable<T extends UploadResult | null>(
-  work: () => Promise<T>,
-): Promise<T | UploadResult> {
+async function rejectable<T>(work: () => Promise<T>): Promise<Rejectable<T>> {
   try {
-    return await work();
+    return { ok: true, value: await work() };
   } catch (err) {
     if (err instanceof CsvRejectError) return { ok: false, error: err.message };
     throw err;
@@ -101,20 +99,49 @@ serveRpc<DbMethods>({
     return datasets.ensure(id);
   },
 
-  async uploadDataset({ name, fileName, bytes, options }) {
+  async stageUpload({ fileName, bytes }) {
     const { datasets } = await ready;
     return rejectable(() =>
-      datasets.upload({
-        name,
-        file: { name: fileName, bytes: new Uint8Array(bytes) },
-        options,
-      }),
+      datasets.stage({ name: fileName, bytes: new Uint8Array(bytes) }),
     );
   },
 
-  async editDataset({ id, ...patch }) {
+  async stageDataset({ id }) {
     const { datasets } = await ready;
-    return rejectable(() => datasets.edit(id, patch));
+    const result = await rejectable(() => datasets.stageExisting(id));
+    if (!result.ok) return result;
+    return result.value && { ok: true as const, value: result.value };
+  },
+
+  async discardStage({ stageId }) {
+    const { datasets } = await ready;
+    datasets.discardStage(stageId);
+    return undefined;
+  },
+
+  async previewUpload({ stageId, file, options }) {
+    const { datasets } = await ready;
+    return rejectable(() => datasets.preview(stageId, file, options));
+  },
+
+  async checkUpload({ stageId, options }) {
+    const { datasets } = await ready;
+    return rejectable(() => datasets.check(stageId, options));
+  },
+
+  async commitUpload({ stageId, name, options }) {
+    const { datasets } = await ready;
+    return rejectable(async () => datasets.commit(stageId, { name, options }));
+  },
+
+  async uploadTask({ stageId, since }) {
+    const { datasets } = await ready;
+    return datasets.waitTask(stageId, since);
+  },
+
+  async renameDataset({ id, name }) {
+    const { datasets } = await ready;
+    return datasets.rename(id, name);
   },
 
   async removeDataset({ id }) {
