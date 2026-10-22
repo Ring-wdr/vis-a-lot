@@ -13,6 +13,7 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
+import { POINT_CHARTS } from "../charts/chart-fields";
 import {
   bumpRevision,
   type CachedChartData,
@@ -597,7 +598,8 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const { db } = getRuntime();
   const { spec } = chart;
   const result: CachedChartData =
-    spec.chartType === "scatter"
+    // 행 단위 점 차트(scatter, line)는 같은 원자료를 쓴다.
+    POINT_CHARTS.includes(spec.chartType)
       ? {
           kind: "scatter",
           ...(await db.call("chartData", {
@@ -614,7 +616,7 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
           kind: "category",
           ...(await db.call("categoryData", {
             dataset: spec.dataset,
-            chartType: spec.chartType,
+            chartType: spec.chartType === "bar" ? "bar" : "boxplot",
             x: spec.x,
             y: spec.y,
             agg: spec.agg,
@@ -667,6 +669,7 @@ function renderItem(
       "renderScatter",
       {
         ...common,
+        chartType: spec.chartType === "line" ? "line" : "scatter",
         xKind: columnOf(spec.x)?.type === "datetime" ? "time" : "number",
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),

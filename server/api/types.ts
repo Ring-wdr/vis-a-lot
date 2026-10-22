@@ -138,7 +138,7 @@ export type ApiError = { error: string };
 
 // ── 차트 ────────────────────────────────────────────────────────────
 
-export const CHART_TYPES = ["scatter", "bar", "boxplot"] as const;
+export const CHART_TYPES = ["scatter", "bar", "boxplot", "line"] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
 export type CommonProps = {

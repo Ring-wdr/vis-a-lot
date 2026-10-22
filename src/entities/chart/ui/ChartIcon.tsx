@@ -25,6 +25,16 @@ const ICONS: Record<ChartType, ReactNode> = {
       <rect x="13" y="9" width="6" height="6" rx="1" />
     </g>
   ),
+  line: (
+    <path
+      d="M3 17l5-6 4 3 4-7 5 5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

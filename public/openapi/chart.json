@@ -576,7 +576,7 @@
       },
       "ChartType": {
         "type": "string",
-        "enum": ["scatter", "bar", "boxplot"]
+        "enum": ["scatter", "bar", "boxplot", "line"]
       },
       "ColumnName": {
         "type": "string",
@@ -1074,7 +1074,7 @@
         "properties": {
           "chartType": {
             "type": "string",
-            "enum": ["scatter"]
+            "enum": ["scatter", "line"]
           },
           "plot": {
             "type": "object",

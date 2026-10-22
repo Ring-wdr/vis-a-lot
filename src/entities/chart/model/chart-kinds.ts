@@ -19,6 +19,7 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   scatter: { x: ["datetime", "numeric"], y: ["numeric"], agg: false },
   bar: { x: ["categorical"], y: ["numeric"], agg: true },
   boxplot: { x: ["categorical"], y: ["numeric"], agg: false },
+  line: { x: ["datetime", "numeric"], y: ["numeric"], agg: false },
 };
 
 /**
@@ -43,6 +44,7 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   scatter: ALL,
   bar: NO_DELETE,
   boxplot: NO_DELETE,
+  line: ALL,
 };
 
 export function supports(type: ChartType | undefined, feature: ChartFeature) {
