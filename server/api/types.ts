@@ -12,11 +12,13 @@ import type { AggFn } from "../data/schema";
 type ColumnName = string;
 
 import type { CategoryMeta } from "../render/category";
+import type { HeatmapMeta } from "../render/heatmap";
 import type { LegendPosition } from "../render/legend";
 import type { Region } from "../render/region";
 import type { SankeyMeta } from "../render/sankey";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
+import type { TreemapMeta } from "../render/treemap";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
 
 export type HealthResponse = {
@@ -145,6 +147,8 @@ export const CHART_TYPES = [
   "boxplot",
   "line",
   "sankey",
+  "heatmap",
+  "treemap",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -232,16 +236,23 @@ export type {
   AxisMeta,
   BoxStats,
   CategoryMeta,
+  HeatmapMeta,
   ItemView,
   Region,
   SankeyMeta,
   ScatterMeta,
   Shape,
   ShapeType,
+  TreemapMeta,
 };
 
 /** 차트 종류별 metadata */
-export type ItemMeta = ScatterMeta | CategoryMeta | SankeyMeta;
+export type ItemMeta =
+  | ScatterMeta
+  | CategoryMeta
+  | SankeyMeta
+  | HeatmapMeta
+  | TreemapMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

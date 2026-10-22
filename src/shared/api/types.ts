@@ -69,6 +69,8 @@ export type AxisMeta = Chart["AxisMeta"];
 export type ScatterMeta = Chart["ScatterMeta"];
 export type CategoryMeta = Chart["CategoryMeta"];
 export type SankeyMeta = Chart["SankeyMeta"];
+export type HeatmapMeta = Chart["HeatmapMeta"];
+export type TreemapMeta = Chart["TreemapMeta"];
 export type ItemMeta = Chart["ItemMeta"];
 export type HistoryEventType = Chart["HistoryEventType"];
 export type HistorySummary = Chart["HistorySummary"];
@@ -86,6 +88,8 @@ const CHART_TYPE_SET: Record<ChartType, true> = {
   boxplot: true,
   line: true,
   sankey: true,
+  heatmap: true,
+  treemap: true,
 };
 export const CHART_TYPES = Object.keys(CHART_TYPE_SET) as ChartType[];
 

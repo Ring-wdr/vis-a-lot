@@ -9,6 +9,8 @@ export const CHART_LABELS: Record<ChartType, string> = {
   boxplot: "Boxplot",
   line: "Line",
   sankey: "Sankey",
+  heatmap: "Heatmap",
+  treemap: "Treemap",
 };
 
 /**

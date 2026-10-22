@@ -27,7 +27,7 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot", "line", "sankey"])
+  .enum(["scatter", "bar", "boxplot", "line", "sankey", "heatmap", "treemap"])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -567,9 +567,71 @@ export const SankeyMetaSchema = z
   })
   .openapi("SankeyMeta");
 
+export const HeatmapMetaSchema = z
+  .object({
+    chartType: z.literal("heatmap"),
+    plot: PlotSchema,
+    /** x 범주 인덱스 공간 */
+    x: AxisMetaSchema,
+    /** y 범주 인덱스 공간 (0이 아래) */
+    y: AxisMetaSchema,
+    xTitle: z.string(),
+    yTitle: z.string(),
+    xCategories: z.array(z.string()),
+    /** 시계열 x: 구간 시작 시각(epoch ms)과 구간 길이 */
+    xStarts: z.array(z.number()).optional(),
+    timeBin: z.number().optional(),
+    yCategories: z.array(z.string()),
+    /** [x][y] 집계값 */
+    cells: z.array(z.array(z.number().nullable())),
+    agg: AggFnSchema,
+    /** 색 척도의 값 범위 */
+    colorDomain: range,
+    selected: z.number().optional(),
+    /** 선택 영역으로 만든 새 범례 */
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("HeatmapMeta");
+
+const TreemapNodeSchema = z.object({
+  name: z.string(),
+  /** legend 인덱스 (legend가 없으면 0) */
+  g: z.number(),
+  value: z.number(),
+  /** 레이아웃 좌표 [0,1]. y0이 아래, y1이 위 */
+  x0: z.number(),
+  y0: z.number(),
+  x1: z.number(),
+  y1: z.number(),
+});
+
+export const TreemapMetaSchema = z
+  .object({
+    chartType: z.literal("treemap"),
+    plot: PlotSchema,
+    /** 레이아웃 좌표 [0,1] */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    agg: AggFnSchema,
+    /** 보이는 잎 값의 합 */
+    total: z.number(),
+    leaves: z.array(TreemapNodeSchema),
+    /** legend가 있을 때의 부모 묶음 */
+    parents: z.array(TreemapNodeSchema),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("TreemapMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
-  .union([ScatterMetaSchema, CategoryMetaSchema, SankeyMetaSchema])
+  .union([
+    ScatterMetaSchema,
+    CategoryMetaSchema,
+    SankeyMetaSchema,
+    HeatmapMetaSchema,
+    TreemapMetaSchema,
+  ])
   .openapi("ItemMeta");
 
 // ── history ────────────────────────────────────────────────────

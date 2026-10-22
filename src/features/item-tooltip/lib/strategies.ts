@@ -4,9 +4,11 @@
 import type {
   AxisMeta,
   CategoryMeta,
+  HeatmapMeta,
   ItemMeta,
   SankeyMeta,
   ScatterMeta,
+  TreemapMeta,
 } from "@/shared/api/types";
 import { AGG_LABELS } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
@@ -302,12 +304,148 @@ export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
   },
 };
 
+/** 데이터 좌표 → PNG 좌표 (범주 인덱스 공간의 칸 경계를 그릴 때) */
+function dataToPx(meta: ItemMeta, x: number, y: number) {
+  const { plot } = meta;
+  const [x0, x1] = meta.x.domain;
+  const [y0, y1] = meta.y.domain;
+  return {
+    px: plot.left + ((x - x0) / (x1 - x0)) * plot.width,
+    py: plot.top + plot.height - ((y - y0) / (y1 - y0)) * plot.height,
+  };
+}
+
+/** 사각형을 그림 영역 안으로 잘라낸다. */
+function clipToPlot(
+  meta: ItemMeta,
+  rect: { x: number; y: number; width: number; height: number },
+) {
+  const { plot } = meta;
+  const left = Math.max(plot.left, rect.x);
+  const top = Math.max(plot.top, rect.y);
+  const right = Math.min(plot.left + plot.width, rect.x + rect.width);
+  const bottom = Math.min(plot.top + plot.height, rect.y + rect.height);
+  return {
+    x: left,
+    y: top,
+    width: Math.max(1, right - left),
+    height: Math.max(1, bottom - top),
+  };
+}
+
+/** heatmap: 커서 아래 칸(x·y 범주 인덱스를 반올림)의 범주와 값 */
+export const heatmapStrategy: TooltipStrategy<HeatmapMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const i = Math.round(invertAxis(meta.x, plot.left, plot.width, px, false));
+    const j = Math.round(invertAxis(meta.y, plot.top, plot.height, py, true));
+    const value = meta.cells[i]?.[j];
+    if (value === undefined || value === null) return null;
+    const a = dataToPx(meta, i - 0.5, j + 0.5);
+    const b = dataToPx(meta, i + 0.5, j - 0.5);
+    const start = meta.xStarts?.[i];
+    const xValue =
+      start !== undefined && meta.timeBin !== undefined
+        ? `${formatValue(start, "time")} ~ ${formatValue(start + meta.timeBin, "time")}`
+        : meta.xCategories[i];
+    return {
+      highlight: clipToPlot(meta, {
+        x: a.px - HIGHLIGHT_PAD,
+        y: a.py - HIGHLIGHT_PAD,
+        width: b.px - a.px + HIGHLIGHT_PAD * 2,
+        height: b.py - a.py + HIGHLIGHT_PAD * 2,
+      }),
+      rows: [
+        { label: meta.xTitle, value: xValue },
+        { label: meta.yTitle, value: meta.yCategories[j] },
+        {
+          label: AGG_LABELS[meta.agg],
+          value: formatValue(value, "number"),
+          emphasis: true,
+        },
+      ],
+    };
+  },
+};
+
+/** treemap: 커서 아래 잎의 이름·값·비율. 하이라이트는 잎 사각형이다. */
+export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const x = invertAxis(meta.x, plot.left, plot.width, px, false);
+    const y = invertAxis(meta.y, plot.top, plot.height, py, true);
+    const leaf = meta.leaves.find(
+      (r) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1,
+    );
+    if (!leaf) return null;
+    const a = dataToPx(meta, leaf.x0, leaf.y1);
+    const b = dataToPx(meta, leaf.x1, leaf.y0);
+    const percent = (v: number, of: number) =>
+      of > 0 ? `${((v / of) * 100).toFixed(1)}%` : "—";
+    const rows: TooltipRow[] = [{ label: "이름", value: leaf.name }];
+    const parent = meta.legend
+      ? meta.parents.find((p) => p.g === leaf.g)
+      : undefined;
+    if (meta.legend && parent) {
+      rows.push({
+        label: meta.legend.title,
+        value: meta.legend.values[leaf.g],
+      });
+    }
+    rows.push(
+      {
+        label: AGG_LABELS[meta.agg],
+        value: formatValue(leaf.value, "number"),
+        emphasis: true,
+      },
+      { label: "비율", value: percent(leaf.value, meta.total), emphasis: true },
+    );
+    if (parent) {
+      rows.push({
+        label: "묶음 안 비율",
+        value: percent(leaf.value, parent.value),
+      });
+    }
+    return {
+      highlight: clipToPlot(meta, {
+        x: a.px - 1,
+        y: a.py - 1,
+        width: b.px - a.px + 2,
+        height: b.py - a.py + 2,
+      }),
+      rows,
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
   boxplot: TooltipStrategy<CategoryMeta>;
   line: TooltipStrategy<ScatterMeta>;
   sankey: TooltipStrategy<SankeyMeta>;
+  heatmap: TooltipStrategy<HeatmapMeta>;
+  treemap: TooltipStrategy<TreemapMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -315,6 +453,8 @@ const STRATEGIES: {
   // 행 단위 점이 scatter와 같아 가장 가까운 점을 그대로 찾는다.
   line: scatterStrategy,
   sankey: sankeyStrategy,
+  heatmap: heatmapStrategy,
+  treemap: treemapStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

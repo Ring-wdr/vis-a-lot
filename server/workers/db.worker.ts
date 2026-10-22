@@ -8,6 +8,7 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { queryHeatmapData } from "../data/heatmap-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { querySankeyData } from "../data/sankey-data";
 import {
@@ -214,6 +215,11 @@ serveRpc<DbMethods>({
   async sankeyData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     return querySankeyData(db, schema, { ...params, table });
+  },
+
+  async heatmapData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryHeatmapData(db, schema, { ...params, table });
   },
 
   async itemRows({ dataset, scope, page }) {
