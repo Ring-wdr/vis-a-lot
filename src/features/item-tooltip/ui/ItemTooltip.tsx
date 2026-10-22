@@ -77,6 +77,10 @@ export function ItemTooltip({
   const extra = useTooltipValues(chartId, itemKey, rowId, columns);
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 커서가 이미 올라가 있을 때 레이어가 새로 생겨도(크게 보기, 모드 전환) 받아 오도록 여기서도 켠다.
+    setHovered(true);
+    // 실패한 채 남은 metadata는 커서를 움직이면 다시 받는다 (그사이 서버가 다시 그렸을 수 있다).
+    if (meta.isError && !meta.isFetching) meta.refetch();
     const rect = e.currentTarget.getBoundingClientRect();
     // 이미지가 늘어나 보일 때(resize 대기 중)도 PNG 좌표로 바꿔 계산한다.
     const scaleX = image.width / rect.width;
@@ -105,7 +109,8 @@ export function ItemTooltip({
       ref={layerRef}
       className={styles.tooltipLayer}
       style={{ width: display.width, height: display.height }}
-      onMouseEnter={() => setHovered(true)}
+      // 다시 그리는 동안 덮였던 레이어가 커서 아래에서 다시 드러나면 mousemove 없이 enter만 온다.
+      onMouseEnter={onMove}
       onMouseMove={onMove}
       onMouseLeave={() => setCursor(undefined)}
     >
@@ -185,7 +190,8 @@ export function ItemTooltip({
         )}
       {tooltipPosition &&
         hovered &&
-        meta.isPending &&
+        !meta.data &&
+        (meta.isPending || meta.isFetching) &&
         createPortal(
           <div
             className={`${styles.tooltip} ${styles.tooltipPortal}`}
