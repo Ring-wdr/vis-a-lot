@@ -714,6 +714,21 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "radar") {
+    return {
+      kind: "radar",
+      ...(await db.call("radarData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   return {
     kind: "category",
     ...(await db.call("categoryData", {
@@ -760,6 +775,7 @@ function renderItem(
     | "renderCandle"
     | "renderGantt"
     | "renderPie"
+    | "renderRadar"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -822,6 +838,35 @@ function renderItem(
           title: columnOf(spec.x)?.label ?? spec.x,
           values,
           colors: pieColors(chart, item, data, values),
+          position: legendPosition(chart, item),
+          hidden: item.props?.hiddenLegend,
+        },
+      },
+      options,
+    );
+  }
+  if (data.kind === "radar") {
+    const group = index === undefined ? undefined : data.groups[index];
+    const values = data.legendValues;
+    return render.call(
+      "renderRadar",
+      {
+        width: size.width,
+        height: size.height,
+        thumbnail: common.thumbnail,
+        title: item.label,
+        selection: item.selection,
+        color: common.color,
+        axisTitle: columnOf(spec.x)?.label ?? spec.x,
+        seriesName: columnOf(spec.y)?.label ?? spec.y,
+        axes: group?.axes ?? [],
+        cells: group?.cells ?? [],
+        agg: spec.agg,
+        // 새 범례(선택 영역 그룹)는 꼭짓점 색으로 칠하지 않아 legend에도 붙이지 않는다.
+        legend: values && {
+          title: legendTitle,
+          values,
+          colors: legendColors(chart, item, values),
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
         },

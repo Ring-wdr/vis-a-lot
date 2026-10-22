@@ -9,6 +9,7 @@ import type {
   HeatmapMeta,
   ItemMeta,
   PieMeta,
+  RadarMeta,
   SankeyMeta,
   ScatterMeta,
   TreemapMeta,
@@ -661,6 +662,47 @@ export const pieStrategy: TooltipStrategy<PieMeta> = {
   },
 };
 
+/** 커서에서 가장 가까운 radar 꼭짓점 [계열 순번, 축 순번]. NEAREST_MAX_PX 안에 없으면 undefined */
+export function nearestVertex(meta: RadarMeta, px: number, py: number) {
+  let best: [number, number] | undefined;
+  let bestD = NEAREST_MAX_PX * NEAREST_MAX_PX;
+  meta.series.forEach((s, k) => {
+    s.points.forEach((p, i) => {
+      if (!p) return;
+      const d = (p[0] - px) ** 2 + (p[1] - py) ** 2;
+      if (d <= bestD) {
+        bestD = d;
+        best = [k, i];
+      }
+    });
+  });
+  return best;
+}
+
+export const radarStrategy: TooltipStrategy<RadarMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    if (inLegendBox(meta, px, py)) return null;
+    const hit = nearestVertex(meta, px, py);
+    if (!hit) return null;
+    const [k, i] = hit;
+    const series = meta.series[k];
+    const point = series.points[i] as [number, number];
+    return {
+      marker: { px: point[0], py: point[1] },
+      rows: [
+        { label: meta.axisTitle, value: meta.axes[i] },
+        { label: meta.legend?.title ?? "계열", value: series.name },
+        {
+          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          value: formatValue(series.values[i], "number"),
+          emphasis: true,
+        },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -672,6 +714,7 @@ const STRATEGIES: {
   candle: TooltipStrategy<CandleMeta>;
   gantt: TooltipStrategy<GanttMeta>;
   pie: TooltipStrategy<PieMeta>;
+  radar: TooltipStrategy<RadarMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -684,6 +727,7 @@ const STRATEGIES: {
   candle: candleStrategy,
   gantt: ganttStrategy,
   pie: pieStrategy,
+  radar: radarStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

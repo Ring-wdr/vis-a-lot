@@ -38,6 +38,7 @@ export const ChartTypeSchema = z
     "candle",
     "gantt",
     "pie",
+    "radar",
   ])
   .openapi("ChartType");
 
@@ -723,6 +724,40 @@ export const PieMetaSchema = z
   })
   .openapi("PieMeta");
 
+export const RadarMetaSchema = z
+  .object({
+    chartType: z.literal("radar"),
+    plot: PlotSchema,
+    /** 고정 좌표 공간: 그림 영역 픽셀과 1:1 (x는 왼쪽, y는 아래쪽에서의 거리) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    center: PointSchema,
+    radius: z.number(),
+    /** x 컬럼 라벨 */
+    axisTitle: z.string(),
+    /** 축(x 범주). 12시부터 시계 방향 */
+    axes: z.array(z.string()),
+    /** 중심 → 바깥 값 범위 */
+    domain: range,
+    /** 보이는 계열만 */
+    series: z.array(
+      z.object({
+        name: z.string(),
+        color: z.string(),
+        /** legend 인덱스 (legend가 없으면 0) */
+        index: z.number(),
+        /** 축 순서대로의 값 */
+        values: z.array(z.number().nullable()),
+        /** 꼭짓점의 PNG 좌표. 값이 없는 축은 null */
+        points: z.array(z.tuple([z.number(), z.number()]).nullable()),
+      }),
+    ),
+    agg: AggFnSchema.optional(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("RadarMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
   .union([
@@ -734,6 +769,7 @@ export const ItemMetaSchema = z
     CandleMetaSchema,
     GanttMetaSchema,
     PieMetaSchema,
+    RadarMetaSchema,
   ])
   .openapi("ItemMeta");
 

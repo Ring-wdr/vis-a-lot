@@ -2414,7 +2414,8 @@ export type components = {
       | "treemap"
       | "candle"
       | "gantt"
-      | "pie";
+      | "pie"
+      | "radar";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2571,7 +2572,8 @@ export type components = {
       | components["schemas"]["TreemapMeta"]
       | components["schemas"]["CandleMeta"]
       | components["schemas"]["GanttMeta"]
-      | components["schemas"]["PieMeta"];
+      | components["schemas"]["PieMeta"]
+      | components["schemas"]["RadarMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2828,6 +2830,36 @@ export type components = {
         index: number;
       }[];
       total: number;
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    RadarMeta: {
+      /** @enum {string} */
+      chartType: "radar";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      center: {
+        x: number;
+        y: number;
+      };
+      radius: number;
+      axisTitle: string;
+      axes: string[];
+      domain: [number, number];
+      series: {
+        name: string;
+        color: string;
+        index: number;
+        values: (number | null)[];
+        points: ([number, number] | null)[];
+      }[];
       agg?: components["schemas"]["AggFn"];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];

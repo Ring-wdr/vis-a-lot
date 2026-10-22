@@ -53,3 +53,52 @@ export function toPieData(data: CategoryData, top = PIE_TOP_SLICES): PieData {
   const order = [...totals].sort((a, b) => b[1] - a[1]).map(([c]) => c);
   return { groups, colorOrder: order.length <= top ? order : null };
 }
+
+/** radar 축 수의 상한. 넘치면 item 안에서 값(절댓값 합)이 큰 축만 남긴다. */
+export const RADAR_MAX_AXES = 12;
+/** 다각형을 그리려면 축이 이만큼은 있어야 한다. */
+export const RADAR_MIN_AXES = 3;
+
+export type RadarGroup = {
+  /** split 컬럼 순서대로의 값 */
+  values: string[];
+  /** 축(x 범주). 원래(SQL) 순서이고, 12시 방향부터 시계 방향으로 놓는다. */
+  axes: string[];
+  /** [축][계열] 집계값. 그 조합에 데이터가 없으면 null. legend가 없으면 안쪽 길이는 1 */
+  cells: (number | null)[][];
+};
+
+export type RadarData = {
+  groups: RadarGroup[];
+  /** legend 값(계열) 목록. legend가 없으면 undefined */
+  legendValues?: string[];
+};
+
+/**
+ * bar 집계(legend 값별)를 radar 축으로 바꾼다. 축이 max개를 넘으면 item 안에서 계열 값의 절댓값 합이
+ * 큰 max개만 남기고, 남긴 축은 원래 순서를 지킨다 (순서가 바뀌면 다각형 모양이 흔들린다).
+ */
+export function toRadarData(
+  data: CategoryData,
+  max = RADAR_MAX_AXES,
+): RadarData {
+  const groups = data.groups.map((group) => {
+    const cells = group.bars ?? [];
+    const weight = (i: number) =>
+      (cells[i] ?? []).reduce<number>(
+        (sum, v) => sum + (v !== null && Number.isFinite(v) ? Math.abs(v) : 0),
+        0,
+      );
+    const kept = group.categories
+      .map((_, i) => i)
+      .sort((a, b) => weight(b) - weight(a))
+      .slice(0, max)
+      .sort((a, b) => a - b);
+    return {
+      values: group.values,
+      axes: kept.map((i) => group.categories[i]),
+      cells: kept.map((i) => cells[i]),
+    };
+  });
+  return { groups, legendValues: data.legendValues };
+}

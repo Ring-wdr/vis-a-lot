@@ -3,6 +3,7 @@ import type {
   CandleMeta,
   GanttMeta,
   PieMeta,
+  RadarMeta,
   ScatterMeta,
 } from "@/shared/api/types";
 import { PointIndex } from "./point-index";
@@ -15,7 +16,9 @@ import {
   ganttStrategy,
   hitSlice,
   invertAxis,
+  nearestVertex,
   pieStrategy,
+  radarStrategy,
   scatterStrategy,
   wedgePath,
 } from "./strategies";
@@ -343,5 +346,52 @@ describe("pie", () => {
 
   it("한 바퀴 전체 조각의 윤곽은 반원 두 개", () => {
     expect(wedgePath(0, 0, 10, 0, Math.PI * 2).match(/A /g)).toHaveLength(2);
+  });
+});
+
+describe("radar", () => {
+  const radar: RadarMeta = {
+    chartType: "radar",
+    plot: { left: 0, top: 0, width: 200, height: 200 },
+    x: { kind: "number", domain: [0, 200] },
+    y: { kind: "number", domain: [0, 200] },
+    center: { x: 100, y: 100 },
+    radius: 80,
+    axisTitle: "라인",
+    axes: ["L1", "L2", "L3"],
+    domain: [0, 10],
+    series: [
+      {
+        name: "주간",
+        color: "#2a78d6",
+        index: 0,
+        values: [10, 5, null],
+        points: [[100, 20], [135, 120], null],
+      },
+      {
+        name: "야간",
+        color: "#eb6834",
+        index: 1,
+        values: [2, 2, 2],
+        points: [
+          [100, 84],
+          [114, 108],
+          [86, 108],
+        ],
+      },
+    ],
+    agg: "avg",
+  };
+
+  it("가장 가까운 꼭짓점을 찾고, 멀면 없다", () => {
+    expect(nearestVertex(radar, 102, 24)).toEqual([0, 0]);
+    expect(nearestVertex(radar, 88, 110)).toEqual([1, 2]);
+    expect(nearestVertex(radar, 190, 190)).toBeUndefined();
+  });
+
+  it("축·계열·값을 보여주고 꼭짓점에 표시한다", () => {
+    const hit = radarStrategy.hitTest(radar, undefined, 133, 118);
+    expect(hit?.marker).toEqual({ px: 135, py: 120 });
+    expect(hit?.rows.map((r) => r.value)).toEqual(["L2", "주간", "5"]);
   });
 });

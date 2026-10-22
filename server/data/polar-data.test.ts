@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CategoryData } from "./category-data";
-import { OTHERS_SLICE, toPieData } from "./polar-data";
+import { OTHERS_SLICE, toPieData, toRadarData } from "./polar-data";
 
 /** split 조합마다 [범주, 값] 목록. legend 없는 bar 집계 모양으로 만든다. */
 const bars = (groups: [string, number | null][][]): CategoryData => ({
@@ -70,5 +70,34 @@ describe("toPieData", () => {
       ]),
     );
     expect(data.colorOrder).toEqual(["a", "b"]);
+  });
+});
+
+describe("toRadarData", () => {
+  it("축이 많으면 계열 값 절댓값 합이 큰 축만 남기고 원래 순서를 지킨다", () => {
+    const data = toRadarData(
+      {
+        legendValues: ["p", "q"],
+        groups: [
+          {
+            values: [],
+            categories: ["a", "b", "c", "d"],
+            bars: [
+              [1, 1],
+              [-9, null],
+              [0, 0],
+              [3, 2],
+            ],
+          },
+        ],
+      },
+      2,
+    );
+    expect(data.groups[0].axes).toEqual(["b", "d"]);
+    expect(data.groups[0].cells).toEqual([
+      [-9, null],
+      [3, 2],
+    ]);
+    expect(data.legendValues).toEqual(["p", "q"]);
   });
 });

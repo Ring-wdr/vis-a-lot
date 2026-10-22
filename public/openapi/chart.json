@@ -586,7 +586,8 @@
           "treemap",
           "candle",
           "gantt",
-          "pie"
+          "pie",
+          "radar"
         ]
       },
       "ColumnName": {
@@ -1095,6 +1096,9 @@
           },
           {
             "$ref": "#/components/schemas/PieMeta"
+          },
+          {
+            "$ref": "#/components/schemas/RadarMeta"
           }
         ]
       },
@@ -2074,6 +2078,133 @@
           "radius",
           "slices",
           "total"
+        ]
+      },
+      "RadarMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["radar"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "center": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": ["x", "y"]
+          },
+          "radius": {
+            "type": "number"
+          },
+          "axisTitle": {
+            "type": "string"
+          },
+          "axes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "domain": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "number"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": ["number", "null"]
+                  }
+                },
+                "points": {
+                  "type": "array",
+                  "items": {
+                    "type": ["array", "null"],
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": ["name", "color", "index", "values", "points"]
+            }
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "center",
+          "radius",
+          "axisTitle",
+          "axes",
+          "domain",
+          "series"
         ]
       },
       "ItemRowsResponse": {

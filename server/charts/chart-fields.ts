@@ -42,6 +42,7 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   candle: { x: ["datetime"], y: ["numeric"], agg: false, legend: false },
   gantt: { x: ["datetime"], y: ["categorical"], agg: false },
   pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
+  radar: { x: ["categorical"], y: ["numeric"], agg: true },
 };
 
 /** 점 하나하나를 그려 사각형·자유형 삭제를 할 수 있는 차트 */
