@@ -27,6 +27,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$is_generated" = true ] || ! echo "$branch" | grep -Eq "$allowed"; then
     echo "브랜치 이름 '$branch'은 규칙에 맞지 않습니다." >&2
     echo "작업 내용에 맞게 feat/<이름>, fix/<이름>처럼 영어 kebab-case 브랜치를 새로 만들어 push하세요." >&2
+    echo "자세한 규칙: .claude/skills/git-branch/SKILL.md" >&2
     status=1
   fi
 done
