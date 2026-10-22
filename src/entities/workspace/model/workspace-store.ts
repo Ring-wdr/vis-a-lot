@@ -5,15 +5,13 @@ import type { ChartSpec, CreateChartResponse } from "@/shared/api/types";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { DEFAULT_SERIES_COLOR } from "@/shared/lib/palette";
 
-export const MODES = [
-  "normal",
-  "zoom",
-  "rect",
-  "line",
-  "freehand",
-  "text",
-] as const;
+/** 상단 도구 줄의 모드. 그리기 도구는 페인트 모드 안에서 item 왼쪽 위 도구로 고른다. */
+export const MODES = ["normal", "zoom", "paint"] as const;
 export type Mode = (typeof MODES)[number];
+
+/** 페인트 모드에서 고르는 그리기 도구 */
+export const PAINT_TOOLS = ["rect", "line", "freehand", "text"] as const;
+export type PaintTool = (typeof PAINT_TOOLS)[number];
 
 export type DrawnChart = CreateChartResponse & { spec: ChartSpec };
 
@@ -34,6 +32,8 @@ export type WorkspaceState = {
   /** 크게 보고 있는 item의 전체 순번. null이면 grid를 보여준다. */
   focus: number | null;
   mode: Mode;
+  /** 페인트 모드에서 쓰는 그리기 도구. 탭 안의 모든 item이 같은 도구를 쓴다. */
+  paintTool: PaintTool;
   /** scatter 툴팁에 가까운 점(x, y, tooltip 컬럼)을 보여줄지. 화면 표시만 바꾸므로 차트 설정(spec)에 넣지 않는다. */
   showNearest: boolean;
   /** item grid 영역의 크기. draw할 때 item PNG 크기를 정하는 데 쓴다. */
@@ -52,6 +52,7 @@ export type WorkspaceState = {
   setPage: (page: number) => void;
   setFocus: (focus: number | null) => void;
   setMode: (mode: Mode) => void;
+  setPaintTool: (tool: PaintTool) => void;
   setShowNearest: (show: boolean) => void;
   setGridArea: (size: Size) => void;
   setItemJob: (key: string, jobId: string | undefined) => void;
@@ -89,6 +90,7 @@ export function createWorkspaceStore({
     page: 0,
     focus: null,
     mode: "normal",
+    paintTool: "rect",
     showNearest: true,
     itemJobs: {},
     undoCounts: {},
@@ -111,6 +113,7 @@ export function createWorkspaceStore({
     setFocus: (focus) => set({ focus }),
     // 다시 보기 전용 화면은 일반 모드(툴팁)만 쓴다.
     setMode: (mode) => set((s) => (s.readOnly ? {} : { mode })),
+    setPaintTool: (paintTool) => set({ paintTool }),
     setShowNearest: (showNearest) => set({ showNearest }),
     setGridArea: (gridArea) => set({ gridArea }),
     setItemJob: (key, jobId) =>

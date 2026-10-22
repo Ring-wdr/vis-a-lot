@@ -9,7 +9,7 @@ import {
   pxToData,
 } from "@/entities/chart/lib/coords";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
-import type { Mode } from "@/entities/workspace/model/workspace-store";
+import type { PaintTool } from "@/entities/workspace/model/workspace-store";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { itemMetaQuery, useItemMeta } from "@/shared/api/queries";
 import type {
@@ -18,7 +18,8 @@ import type {
 } from "@/shared/api/types";
 import styles from "@/shared/ui/workspace.module.css";
 
-type DrawMode = Exclude<Mode, "normal">;
+/** 확대 영역 선택 또는 페인트 도구 */
+export type DrawTool = "zoom" | PaintTool;
 
 type Draft =
   | { kind: "drag"; from: Point; to: Point }
@@ -33,13 +34,13 @@ const FREEHAND_STEP_PX = 2;
  * 손을 떼면 데이터 좌표로 바꿔 서버에 보낸다. 서버가 PNG에 다시 그려 준다.
  */
 export function DrawLayer({
-  mode,
+  tool,
   image,
   display,
   alt,
   onAction,
 }: {
-  mode: DrawMode;
+  tool: DrawTool;
   image: ChartImageData;
   /** 화면에 보이는 크기. resize 대기 중에는 PNG 크기와 다를 수 있다. */
   display: { width: number; height: number };
@@ -66,7 +67,7 @@ export function DrawLayer({
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 || draft?.kind === "text") return;
     const p = toPoint(e);
-    if (mode === "text") {
+    if (tool === "text") {
       // 이어지는 mousedown이 포커스를 옮겨 방금 띄운 입력창을 닫지 않게 한다.
       e.preventDefault();
       setText("");
@@ -75,7 +76,7 @@ export function DrawLayer({
     }
     e.currentTarget.setPointerCapture(e.pointerId);
     setDraft(
-      mode === "freehand"
+      tool === "freehand"
         ? { kind: "freehand", points: [p] }
         : { kind: "drag", from: p, to: p },
     );
@@ -118,13 +119,13 @@ export function DrawLayer({
       return;
     const [x0, y0] = pxToData(m, from);
     const [x1, y1] = pxToData(m, to);
-    if (mode === "zoom") {
+    if (tool === "zoom") {
       onAction({
         type: "view",
         body: { type: "zoomIn", x: [x0, x1], y: [y0, y1] },
       });
-    } else if (mode === "rect" || mode === "line") {
-      onAction({ type: "addShape", shape: { type: mode, x0, y0, x1, y1 } });
+    } else if (tool === "rect" || tool === "line") {
+      onAction({ type: "addShape", shape: { type: tool, x0, y0, x1, y1 } });
     }
   };
 
@@ -142,13 +143,13 @@ export function DrawLayer({
     <div
       ref={ref}
       className={styles.drawLayer}
-      data-mode={mode}
+      data-tool={tool}
       style={{ width: display.width, height: display.height }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="application"
-      aria-label={`${alt} 위에 ${mode === "zoom" ? "확대 영역 선택" : "도형 그리기"}`}
+      aria-label={`${alt} 위에 ${tool === "zoom" ? "확대 영역 선택" : "도형 그리기"}`}
     >
       <ChartImage data={image} alt={alt} />
       <svg
@@ -157,7 +158,7 @@ export function DrawLayer({
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        {draft?.kind === "drag" && mode === "line" && (
+        {draft?.kind === "drag" && tool === "line" && (
           <line
             x1={draft.from.x}
             y1={draft.from.y}
@@ -165,9 +166,9 @@ export function DrawLayer({
             y2={draft.to.y}
           />
         )}
-        {draft?.kind === "drag" && mode !== "line" && (
+        {draft?.kind === "drag" && tool !== "line" && (
           <rect
-            className={mode === "zoom" ? styles.zoomRect : undefined}
+            className={tool === "zoom" ? styles.zoomRect : undefined}
             x={Math.min(draft.from.x, draft.to.x)}
             y={Math.min(draft.from.y, draft.to.y)}
             width={Math.abs(draft.to.x - draft.from.x)}
