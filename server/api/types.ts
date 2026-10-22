@@ -11,6 +11,7 @@ import type { AggFn } from "../data/schema";
 /** 컬럼 이름. 데이터셋마다 다르며 스키마로 확인한다. */
 type ColumnName = string;
 
+import type { CandleMeta } from "../render/candle";
 import type { CategoryMeta } from "../render/category";
 import type { HeatmapMeta } from "../render/heatmap";
 import type { LegendPosition } from "../render/legend";
@@ -149,6 +150,7 @@ export const CHART_TYPES = [
   "sankey",
   "heatmap",
   "treemap",
+  "candle",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -235,6 +237,7 @@ export type ChartImage = { url: string; width: number; height: number };
 export type {
   AxisMeta,
   BoxStats,
+  CandleMeta,
   CategoryMeta,
   HeatmapMeta,
   ItemView,
@@ -252,7 +255,8 @@ export type ItemMeta =
   | CategoryMeta
   | SankeyMeta
   | HeatmapMeta
-  | TreemapMeta;
+  | TreemapMeta
+  | CandleMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

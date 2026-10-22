@@ -79,6 +79,13 @@ const ICONS: Record<ChartType, ReactNode> = {
       <rect x="14" y="14" width="6" height="6" rx="1" opacity="0.35" />
     </g>
   ),
+  candle: (
+    <g stroke="currentColor" strokeWidth="1.6">
+      <path d="M7 3v18M17 5v14" fill="none" />
+      <rect x="4.5" y="7" width="5" height="9" rx="1" fill="currentColor" />
+      <rect x="14.5" y="9" width="5" height="6" rx="1" fill="none" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { ScatterMeta } from "@/shared/api/types";
+import type { CandleMeta, ScatterMeta } from "@/shared/api/types";
 import { PointIndex } from "./point-index";
 import {
   barStrategy,
   boxplotStrategy,
+  candleAt,
+  candleStrategy,
   invertAxis,
   scatterStrategy,
 } from "./strategies";
@@ -173,5 +175,55 @@ describe("legend가 있는 bar", () => {
 
   it("legend 상자 위에서는 툴팁을 띄우지 않는다", () => {
     expect(barStrategy.hitTest(meta, undefined, 50, 10)).toBeNull();
+  });
+});
+
+describe("candle 툴팁", () => {
+  const meta: CandleMeta = {
+    chartType: "candle",
+    plot: { left: 0, top: 0, width: 300, height: 100 },
+    x: { kind: "time", domain: [0, 3000] },
+    y: { kind: "number", domain: [0, 10] },
+    interval: 1000,
+    bodyWidth: 70,
+    // 1000~2000 구간은 숨겨서 빠졌다.
+    candles: {
+      t: [0, 2000],
+      open: [5, 6],
+      high: [9, 8],
+      low: [3, 6],
+      close: [3, 7],
+      count: [3, 2],
+      g: [1, 0],
+    },
+    legend: {
+      title: "캔들",
+      values: ["상승", "하락"],
+      colors: ["#e34948", "#2a78d6"],
+      box: { x: 0, y: -30, width: 10, height: 10 },
+      entries: [],
+      hidden: 0,
+    },
+  };
+
+  it("구간 시작 목록에서 시각이 든 캔들을 찾는다", () => {
+    expect(candleAt(meta.candles.t, 1000, 2500)).toBe(1);
+    expect(candleAt(meta.candles.t, 1000, 1500)).toBe(-1);
+    expect(candleAt(meta.candles.t, 1000, -1)).toBe(-1);
+  });
+
+  it("가리킨 캔들의 OHLC와 심지 범위 하이라이트", () => {
+    const hit = candleStrategy.hitTest(meta, undefined, 50, 50);
+    expect(hit?.rows.find((r) => r.label === "캔들")?.value).toBe("하락");
+    expect(hit?.rows.find((r) => r.label === "종가")?.value).toBe("3");
+    expect(hit?.rows.find((r) => r.label === "개수")?.value).toBe("3");
+    // 가운데 50, 몸통 70을 3px 여유로 감싸고, 세로는 고가 9 ~ 저가 3
+    expect(hit?.highlight).toMatchObject({
+      x: 12,
+      width: 76,
+      y: 7,
+      height: 66,
+    });
+    expect(candleStrategy.hitTest(meta, undefined, 150, 50)).toBeNull();
   });
 });

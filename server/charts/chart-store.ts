@@ -11,6 +11,7 @@ import type {
   ItemSize,
   LegendGroup,
 } from "../api/types";
+import type { CandleData } from "../data/candle-data";
 import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
 import type { HeatmapData } from "../data/heatmap-data";
@@ -86,6 +87,7 @@ export type CachedChartData = (
   | ({ kind: "category" } & CategoryData)
   | ({ kind: "sankey" } & SankeyData)
   | ({ kind: "heatmap" } & HeatmapData)
+  | ({ kind: "candle" } & CandleData)
 ) & { groupOf: Map<string, number> };
 
 const charts = new Map<string, ChartRecord>();

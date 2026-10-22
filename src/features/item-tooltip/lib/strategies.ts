@@ -3,6 +3,7 @@
 
 import type {
   AxisMeta,
+  CandleMeta,
   CategoryMeta,
   HeatmapMeta,
   ItemMeta,
@@ -167,7 +168,7 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
   return { index, g, cx, width };
 }
 
-function yToPx(meta: CategoryMeta, v: number) {
+function yToPx(meta: ItemMeta, v: number) {
   const { plot } = meta;
   const [d0, d1] = meta.y.domain;
   return plot.top + plot.height - ((v - d0) / (d1 - d0)) * plot.height;
@@ -187,7 +188,7 @@ const HIGHLIGHT_PAD = 3;
 
 /** 막대/상자의 세로 범위(데이터 값)를 감싸는 사각형. 그림 영역 밖으로는 나가지 않는다. */
 function highlightRect(
-  meta: CategoryMeta,
+  meta: ItemMeta,
   cx: number,
   width: number,
   from: number,
@@ -438,6 +439,68 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
   },
 };
 
+/** 시각 x가 든 캔들 인덱스. 구간 시작(t) 오름차순에서 이진 탐색한다. 없으면 -1 */
+export function candleAt(t: readonly number[], interval: number, x: number) {
+  let lo = 0;
+  let hi = t.length - 1;
+  let found = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (t[mid] <= x) {
+      found = mid;
+      lo = mid + 1;
+    } else hi = mid - 1;
+  }
+  return found !== -1 && x < t[found] + interval ? found : -1;
+}
+
+export const candleStrategy: TooltipStrategy<CandleMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot, candles, interval } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const x = invertAxis(meta.x, plot.left, plot.width, px, false);
+    const i = candleAt(candles.t, interval, x);
+    if (i === -1) return null;
+    const [d0, d1] = meta.x.domain;
+    const cx =
+      plot.left + ((candles.t[i] + interval / 2 - d0) / (d1 - d0)) * plot.width;
+    const num = (v: number) => formatValue(v, "number");
+    const g = candles.g[i];
+    return {
+      highlight: highlightRect(
+        meta,
+        cx,
+        meta.bodyWidth,
+        candles.low[i],
+        candles.high[i],
+      ),
+      rows: [
+        {
+          label: "구간",
+          value: `${formatValue(candles.t[i], "time")} ~ ${formatValue(candles.t[i] + interval, "time")}`,
+        },
+        ...(meta.legend
+          ? [{ label: meta.legend.title, value: meta.legend.values[g] }]
+          : []),
+        { label: "시가", value: num(candles.open[i]) },
+        { label: "고가", value: num(candles.high[i]) },
+        { label: "저가", value: num(candles.low[i]) },
+        { label: "종가", value: num(candles.close[i]), emphasis: true },
+        { label: "개수", value: num(candles.count[i]) },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -446,6 +509,7 @@ const STRATEGIES: {
   sankey: TooltipStrategy<SankeyMeta>;
   heatmap: TooltipStrategy<HeatmapMeta>;
   treemap: TooltipStrategy<TreemapMeta>;
+  candle: TooltipStrategy<CandleMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -455,6 +519,7 @@ const STRATEGIES: {
   sankey: sankeyStrategy,
   heatmap: heatmapStrategy,
   treemap: treemapStrategy,
+  candle: candleStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

@@ -71,6 +71,7 @@ export type CategoryMeta = Chart["CategoryMeta"];
 export type SankeyMeta = Chart["SankeyMeta"];
 export type HeatmapMeta = Chart["HeatmapMeta"];
 export type TreemapMeta = Chart["TreemapMeta"];
+export type CandleMeta = Chart["CandleMeta"];
 export type ItemMeta = Chart["ItemMeta"];
 export type HistoryEventType = Chart["HistoryEventType"];
 export type HistorySummary = Chart["HistorySummary"];
@@ -90,6 +91,7 @@ const CHART_TYPE_SET: Record<ChartType, true> = {
   sankey: true,
   heatmap: true,
   treemap: true,
+  candle: true,
 };
 export const CHART_TYPES = Object.keys(CHART_TYPE_SET) as ChartType[];
 

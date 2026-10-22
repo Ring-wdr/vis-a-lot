@@ -27,7 +27,16 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot", "line", "sankey", "heatmap", "treemap"])
+  .enum([
+    "scatter",
+    "bar",
+    "boxplot",
+    "line",
+    "sankey",
+    "heatmap",
+    "treemap",
+    "candle",
+  ])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -623,6 +632,32 @@ export const TreemapMetaSchema = z
   })
   .openapi("TreemapMeta");
 
+export const CandleMetaSchema = z
+  .object({
+    chartType: z.literal("candle"),
+    plot: PlotSchema,
+    /** 시계열(epoch ms) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 구간 길이(ms) */
+    interval: z.number(),
+    /** 몸통 픽셀 너비 */
+    bodyWidth: z.number(),
+    /** 그린 캔들 (숨긴 legend 값은 빠진다). t는 구간 시작, g는 legend 인덱스 (상승 0, 하락 1, 새 범례는 그 뒤) */
+    candles: z.object({
+      t: z.array(z.number()),
+      open: z.array(z.number()),
+      high: z.array(z.number()),
+      low: z.array(z.number()),
+      close: z.array(z.number()),
+      count: z.array(z.number()),
+      g: z.array(z.number()),
+    }),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("CandleMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
   .union([
@@ -631,6 +666,7 @@ export const ItemMetaSchema = z
     SankeyMetaSchema,
     HeatmapMetaSchema,
     TreemapMetaSchema,
+    CandleMetaSchema,
   ])
   .openapi("ItemMeta");
 

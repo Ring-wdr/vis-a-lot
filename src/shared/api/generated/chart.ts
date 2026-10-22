@@ -2411,7 +2411,8 @@ export type components = {
       | "line"
       | "sankey"
       | "heatmap"
-      | "treemap";
+      | "treemap"
+      | "candle";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2565,7 +2566,8 @@ export type components = {
       | components["schemas"]["CategoryMeta"]
       | components["schemas"]["SankeyMeta"]
       | components["schemas"]["HeatmapMeta"]
-      | components["schemas"]["TreemapMeta"];
+      | components["schemas"]["TreemapMeta"]
+      | components["schemas"]["CandleMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2742,6 +2744,31 @@ export type components = {
         x1: number;
         y1: number;
       }[];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    CandleMeta: {
+      /** @enum {string} */
+      chartType: "candle";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      interval: number;
+      bodyWidth: number;
+      candles: {
+        t: number[];
+        open: number[];
+        high: number[];
+        low: number[];
+        close: number[];
+        count: number[];
+        g: number[];
+      };
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };
