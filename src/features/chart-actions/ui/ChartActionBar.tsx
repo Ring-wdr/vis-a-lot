@@ -2,19 +2,24 @@
 
 import { useMutation } from "@tanstack/react-query";
 import {
+  Download,
   FileSpreadsheet,
   ImageDown,
   type LucideIcon,
   SquareCheck,
+  Table,
 } from "lucide-react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   downloadAllChartsExcel,
   downloadChartPng,
+  downloadItemData,
+  drawnItemState,
 } from "@/features/chart-actions/model/chart-download";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Spinner } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
+import { openDataTable } from "./DataTableDialog";
 
 /** 누르면 바로 동작하는 도구 버튼. 진행 중이면 아이콘 대신 spinner를 보인다. */
 function ActionButton({
@@ -51,7 +56,8 @@ function ActionButton({
 const PICK_ITEM = "차트를 눌러 고른 뒤 쓸 수 있습니다";
 
 /**
- * 모드 바 옆의 차트 도구: legend 체크박스 표시, 고른 차트 다운로드, 모든 차트 엑셀로 다운로드.
+ * 모드 바 옆의 차트 도구: legend 체크박스 표시, 고른 차트 다운로드, 모든 차트 엑셀로 다운로드,
+ * 고른 차트의 데이터 다운로드(CSV)와 데이터 표. 데이터는 선택 영역이 있으면 그 안의 행만이다.
  * 모드처럼 하나만 고르는 게 아니라 누를 때마다 바로 동작하는 버튼들이다.
  */
 export function ChartActionBar() {
@@ -80,6 +86,30 @@ export function ChartActionBar() {
     },
     onError: (err) => notify(err.message),
   });
+  const data = useMutation({
+    mutationFn: (args: { chartId: string; jobId: string; key: string }) =>
+      downloadItemData(args.chartId, args.jobId, args.key),
+    onError: (err) => notify(err.message),
+  });
+  const table = useMutation({
+    mutationFn: async (args: {
+      chartId: string;
+      jobId: string;
+      key: string;
+    }) => {
+      const item = await drawnItemState(args.jobId, args.key);
+      openDataTable(
+        { chartId: args.chartId, itemKey: args.key, label: item.label },
+        item.image.url,
+      );
+    },
+    onError: (err) => notify(err.message),
+  });
+  /** 고른 item을 대상으로 하는 도구의 인자. 그린 차트나 고른 item이 없으면 undefined */
+  const target =
+    current && selectedItem
+      ? { chartId: current.chartId, jobId: current.jobId, key: selectedItem }
+      : undefined;
 
   return (
     <div className={styles.modeBar} role="toolbar" aria-label="차트 도구">
@@ -97,12 +127,8 @@ export function ChartActionBar() {
         label={selectedItem ? "차트 다운로드" : `차트 다운로드 (${PICK_ITEM})`}
         Icon={ImageDown}
         pending={chartPng.isPending}
-        disabled={!drawn || !selectedItem}
-        onClick={() =>
-          current &&
-          selectedItem &&
-          chartPng.mutate({ jobId: current.jobId, key: selectedItem })
-        }
+        disabled={!target}
+        onClick={() => target && chartPng.mutate(target)}
       />
       <ActionButton
         label="모든 차트 엑셀로 다운로드"
@@ -110,6 +136,20 @@ export function ChartActionBar() {
         pending={excel.isPending}
         disabled={!drawn}
         onClick={() => excel.mutate()}
+      />
+      <ActionButton
+        label={target ? "데이터 다운로드" : `데이터 다운로드 (${PICK_ITEM})`}
+        Icon={Download}
+        pending={data.isPending}
+        disabled={!target}
+        onClick={() => target && data.mutate(target)}
+      />
+      <ActionButton
+        label={target ? "데이터 테이블" : `데이터 테이블 (${PICK_ITEM})`}
+        Icon={Table}
+        pending={table.isPending}
+        disabled={!target}
+        onClick={() => target && table.mutate(target)}
       />
     </div>
   );

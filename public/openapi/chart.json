@@ -1396,6 +1396,86 @@
           "outlierCount"
         ]
       },
+      "ItemRowsResponse": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "$ref": "#/components/schemas/ColumnName"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/ColumnType"
+                }
+              },
+              "required": ["name", "label", "type"]
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "selected": {
+            "type": "boolean"
+          }
+        },
+        "required": ["columns", "rows", "total", "selected"]
+      },
+      "ColumnType": {
+        "type": "string",
+        "enum": ["categorical", "numeric", "datetime"]
+      },
+      "ItemRowsRequest": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "column": {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              "desc": {
+                "type": "boolean"
+              }
+            },
+            "required": ["column", "desc"]
+          }
+        },
+        "required": ["offset", "limit"]
+      },
       "JobStateResponse": {
         "type": "object",
         "properties": {
@@ -2871,6 +2951,97 @@
         }
       }
     },
+    "/charts/{chartId}/items/{itemKey}/rows/export": {
+      "post": {
+        "tags": ["data"],
+        "summary": "item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV (머리글은 컬럼 라벨)",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item, 또는 지운 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": ["ops"],
@@ -3166,6 +3337,107 @@
           },
           "404": {
             "description": "metadata가 아직 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/items/{itemKey}/rows": {
+      "post": {
+        "tags": ["data"],
+        "summary": "item이 그린 행 한 페이지 (차트에 쓴 컬럼). 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemRowsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "행",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemRowsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item, 또는 지운 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않음",
             "content": {
               "application/json": {
                 "schema": {

@@ -1036,6 +1036,90 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/charts/{chartId}/items/{itemKey}/rows/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description CSV (머리글은 컬럼 라벨) */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "text/csv": string;
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item, 또는 지운 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/health": {
     parameters: {
       query?: never;
@@ -1341,6 +1425,94 @@ export type paths = {
     };
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/charts/{chartId}/items/{itemKey}/rows": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** item이 그린 행 한 페이지 (차트에 쓴 컬럼). 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ItemRowsRequest"];
+        };
+      };
+      responses: {
+        /** @description 행 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ItemRowsResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item, 또는 지운 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
     delete?: never;
     options?: never;
     head?: never;
@@ -2469,6 +2641,26 @@ export type components = {
       lo: number;
       hi: number;
       outlierCount: number;
+    };
+    ItemRowsResponse: {
+      columns: {
+        name: components["schemas"]["ColumnName"];
+        label: string;
+        type: components["schemas"]["ColumnType"];
+      }[];
+      rows: (string | number | null)[][];
+      total: number;
+      selected: boolean;
+    };
+    /** @enum {string} */
+    ColumnType: "categorical" | "numeric" | "datetime";
+    ItemRowsRequest: {
+      offset: number;
+      limit: number;
+      sort?: {
+        column: components["schemas"]["ColumnName"];
+        desc: boolean;
+      };
     };
     JobStateResponse: {
       jobId: string;

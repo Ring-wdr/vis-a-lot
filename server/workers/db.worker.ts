@@ -8,6 +8,7 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { exportItemRows, queryItemRows } from "../data/item-rows";
 import {
   getHistory,
   listHistory,
@@ -207,6 +208,20 @@ serveRpc<DbMethods>({
     return params.chartType === "bar"
       ? queryBarData(db, schema, input)
       : queryBoxData(db, schema, input);
+  },
+
+  async itemRows({ dataset, scope, page }) {
+    const { datasets } = await ready;
+    if (!(await datasets.table(dataset))) return null;
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryItemRows(db, table, schema, scope, page);
+  },
+
+  async exportItemRows({ dataset, scope }) {
+    const { datasets } = await ready;
+    if (!(await datasets.table(dataset))) return null;
+    const { db, schema, table } = await datasetOf(dataset);
+    return exportItemRows(db, table, schema, scope);
   },
 
   async rowValues({ dataset, rowId, columns }) {

@@ -14,6 +14,7 @@ import type {
   DebugRenderRequest,
   HistoryDetail,
   ItemMeta,
+  ItemRowsRequest,
   ItemSize,
   JobStateResponse,
   LegendPosition,
@@ -297,6 +298,31 @@ export const api = {
         body,
       }),
     ),
+
+  // ── chart 서비스: 데이터 표 / 다운로드 ──────────────────────
+  /** item이 그린 행 한 페이지. 선택 영역이 있으면 그 안의 행만 온다. */
+  itemRows: (
+    chartId: string,
+    itemKey: string,
+    body: ItemRowsRequest,
+    signal?: AbortSignal,
+  ) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/rows", {
+        params: { path: item(chartId, itemKey) },
+        body,
+        signal,
+      }),
+    ),
+
+  /** item이 그린 행 전체 CSV */
+  exportItemRows: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/rows/export", {
+        params: { path: item(chartId, itemKey) },
+        parseAs: "blob",
+      }),
+    ) as Promise<Blob>,
 
   // ── chart 서비스: item 조작 ─────────────────────────────────
   changeView: (chartId: string, itemKey: string, body: ViewRequest) =>

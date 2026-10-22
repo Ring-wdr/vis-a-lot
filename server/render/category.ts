@@ -109,6 +109,19 @@ function truncate(ctx: Ctx, text: string, maxWidth: number) {
   return `${text.slice(0, end)}…`;
 }
 
+/**
+ * 범주 i의 g번째 막대/상자를 대표하는 데이터 좌표. x는 범주 인덱스 공간에서 그 막대/상자의 가운데,
+ * y는 막대 끝 값이나 상자 중앙값이다. 선택·새 범례 영역 판정에 쓴다.
+ */
+export function markPoint(
+  i: number,
+  g: number,
+  groupCount: number,
+  value: number,
+): [number, number] {
+  return [i - MARK_RATIO / 2 + (MARK_RATIO / groupCount) * (g + 0.5), value];
+}
+
 /** 범주 i 안에서 g번째 막대/상자의 가운데 x와 너비 */
 export function groupSlot(
   center: number,
@@ -138,12 +151,7 @@ export function renderCategory(
   );
   const inSelection = input.selection && regionTester(input.selection);
   let selectedCount = 0;
-  /** 범주 i의 g번째 막대/상자를 대표하는 데이터 좌표 (x는 범주 인덱스 공간) */
-  const markPoint = (i: number, g: number, value: number) =>
-    [
-      i - MARK_RATIO / 2 + (MARK_RATIO / groupCount) * (g + 0.5),
-      value,
-    ] as const;
+
   /** 막대/상자의 legend 인덱스. 새 범례 영역 안이면 덧붙인 항목이다. */
   const legendIndexOf = (g: number, point: readonly [number, number]) => {
     for (let k = groups.length - 1; k >= 0; k--) {
@@ -167,7 +175,7 @@ export function renderCategory(
       for (let g = 0; g < groupCount; g++) {
         const v = markValue(i, g);
         if (v === null) continue;
-        const point = markPoint(i, g, v);
+        const point = markPoint(i, g, groupCount, v);
         if (!off[legendIndexOf(g, point)] && inSelection(...point))
           selectedCount++;
       }
@@ -288,7 +296,7 @@ export function renderCategory(
         const r = Math.min(RADIUS, w / 2, h);
         // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
         const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
-        const point = markPoint(i, g, v);
+        const point = markPoint(i, g, groupCount, v);
         const index = legendIndexOf(g, point);
         if (off[index]) return;
         ctx.fillStyle = colorOf(index);
@@ -306,7 +314,7 @@ export function renderCategory(
         if (!b) return;
         const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
         const half = w / 2;
-        const point = markPoint(i, g, b.median);
+        const point = markPoint(i, g, groupCount, b.median);
         const index = legendIndexOf(g, point);
         if (off[index]) return;
         const color = colorOf(index);
