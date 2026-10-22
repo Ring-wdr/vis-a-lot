@@ -9,7 +9,7 @@ import {
   getDetail,
   getItem,
 } from "../../charts/chart-store";
-import { zoomIn, zoomOut } from "../../charts/item-view";
+import { pan, zoomIn, zoomOut } from "../../charts/item-view";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
@@ -124,6 +124,12 @@ export const chartApp = createServiceApp()
     if (body.type === "zoomIn") {
       const view = zoomIn(body.x, body.y);
       if (!view) return apiError(c, 400, "empty range");
+      item.view = view;
+    } else if (body.type === "pan") {
+      const base = item.view ?? item.fullView;
+      if (!base) return apiError(c, 409, "item has no range yet");
+      const view = pan(base, body.dx, body.dy);
+      if (!view) return apiError(c, 400, "empty move");
       item.view = view;
     } else if (body.type === "zoomOut") {
       if (!item.view) return apiError(c, 409, "item is not zoomed");

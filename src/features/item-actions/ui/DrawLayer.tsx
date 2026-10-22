@@ -18,13 +18,23 @@ import type {
 } from "@/shared/api/types";
 import styles from "@/shared/ui/workspace.module.css";
 
-/** 확대 영역 선택 또는 페인트 도구 */
-export type DrawTool = "zoom" | PaintTool;
+/** 이동, 확대 영역 선택 또는 페인트 도구 */
+export type DrawTool = "pan" | "zoom" | PaintTool;
 
 type Draft =
   | { kind: "drag"; from: Point; to: Point }
+  | { kind: "pan"; from: Point; to: Point }
   | { kind: "freehand"; points: Point[] }
   | { kind: "text"; at: Point };
+
+const TOOL_LABELS: Record<DrawTool, string> = {
+  pan: "이동",
+  zoom: "확대 영역 선택",
+  rect: "도형 그리기",
+  line: "도형 그리기",
+  freehand: "도형 그리기",
+  text: "도형 그리기",
+};
 
 const MIN_DRAG_PX = 4;
 const FREEHAND_STEP_PX = 2;
@@ -61,7 +71,8 @@ export function DrawLayer({
 
   const toPoint = (e: React.PointerEvent) => {
     const p = eventToPng(e, e.currentTarget, image);
-    return meta.data ? clampToPlot(meta.data, p) : p;
+    // 이동은 그림 영역 밖까지 끌어도 끈 만큼 옮긴다.
+    return meta.data && tool !== "pan" ? clampToPlot(meta.data, p) : p;
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -78,14 +89,14 @@ export function DrawLayer({
     setDraft(
       tool === "freehand"
         ? { kind: "freehand", points: [p] }
-        : { kind: "drag", from: p, to: p },
+        : { kind: tool === "pan" ? "pan" : "drag", from: p, to: p },
     );
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!draft || draft.kind === "text") return;
     const p = toPoint(e);
-    if (draft.kind === "drag") {
+    if (draft.kind === "drag" || draft.kind === "pan") {
       setDraft({ ...draft, to: p });
     } else {
       const last = draft.points[draft.points.length - 1];
@@ -119,7 +130,13 @@ export function DrawLayer({
       return;
     const [x0, y0] = pxToData(m, from);
     const [x1, y1] = pxToData(m, to);
-    if (tool === "zoom") {
+    if (finished.kind === "pan") {
+      // 끈 방향으로 그림이 따라오도록 보이는 범위는 반대로 옮긴다.
+      onAction({
+        type: "view",
+        body: { type: "pan", dx: x0 - x1, dy: y0 - y1 },
+      });
+    } else if (tool === "zoom") {
       onAction({
         type: "view",
         body: { type: "zoomIn", x: [x0, x1], y: [y0, y1] },
@@ -149,9 +166,21 @@ export function DrawLayer({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="application"
-      aria-label={`${alt} 위에 ${tool === "zoom" ? "확대 영역 선택" : "도형 그리기"}`}
+      aria-label={`${alt} 위에 ${TOOL_LABELS[tool]}`}
     >
-      <ChartImage data={image} alt={alt} />
+      {/* 이동하는 동안에는 PNG를 끈 만큼 옮겨 보여주고, 놓으면 서버가 옮긴 범위로 다시 그린다. */}
+      <div
+        className={styles.drawImage}
+        style={
+          draft?.kind === "pan"
+            ? {
+                transform: `translate(${((draft.to.x - draft.from.x) * display.width) / image.width}px, ${((draft.to.y - draft.from.y) * display.height) / image.height}px)`,
+              }
+            : undefined
+        }
+      >
+        <ChartImage data={image} alt={alt} />
+      </div>
       <svg
         className={styles.drawPreview}
         viewBox={`0 0 ${image.width} ${image.height}`}

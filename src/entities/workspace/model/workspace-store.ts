@@ -6,7 +6,7 @@ import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { DEFAULT_SERIES_COLOR } from "@/shared/lib/palette";
 
 /** 상단 도구 줄의 모드. 그리기 도구는 페인트 모드 안에서 item 왼쪽 위 도구로 고른다. */
-export const MODES = ["normal", "zoom", "paint"] as const;
+export const MODES = ["normal", "pan", "zoom", "paint"] as const;
 export type Mode = (typeof MODES)[number];
 
 /** 페인트 모드에서 고르는 그리기 도구 */
