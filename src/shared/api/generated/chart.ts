@@ -2171,6 +2171,12 @@ export type components = {
         }
       | {
           legendPosition: components["schemas"]["LegendPosition"] | null;
+        }
+      | {
+          legendVisible: {
+            value: string;
+            visible: boolean;
+          };
         };
     ViewRequest:
       | {
@@ -2260,6 +2266,7 @@ export type components = {
         [key: string]: components["schemas"]["HexColor"];
       };
       legendPosition?: components["schemas"]["LegendPosition"];
+      hiddenLegend?: string[];
     };
     ItemView: {
       x: [number, number];
@@ -2424,6 +2431,11 @@ export type components = {
           width: number;
           height: number;
         };
+        marker: {
+          x: number;
+          y: number;
+        };
+        visible: boolean;
       }[];
       hidden: number;
     };

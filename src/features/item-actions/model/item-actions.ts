@@ -21,6 +21,7 @@ export type ItemAction =
   | { type: "color"; color: string | null }
   | { type: "legendColor"; value: string; color: string | null }
   | { type: "legendPosition"; position: LegendPosition | null }
+  | { type: "legendVisible"; value: string; visible: boolean }
   | { type: "clearShapes" }
   | { type: "select"; region: Region | null }
   | { type: "deleteRegion"; region: Region }
@@ -69,6 +70,13 @@ export function useItemAction(chartId: string, itemKey: string) {
           return api.undoDeletion(chartId, itemKey);
         case "clearDeletions":
           return api.clearDeletions(chartId, itemKey);
+        case "legendVisible":
+          return api.setItemLegendVisible(
+            chartId,
+            itemKey,
+            action.value,
+            action.visible,
+          );
         case "select":
           return api.setSelection(chartId, itemKey, action.region);
         case "addFavorite":

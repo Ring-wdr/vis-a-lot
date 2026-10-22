@@ -415,6 +415,20 @@ export const api = {
       }),
     ),
 
+  /** legend 체크박스: 값 하나를 보이거나 숨긴다. */
+  setItemLegendVisible: (
+    chartId: string,
+    itemKey: string,
+    value: string,
+    visible: boolean,
+  ) =>
+    unwrap(
+      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
+        params: { path: item(chartId, itemKey) },
+        body: { legendVisible: { value, visible } },
+      }),
+    ),
+
   /** 크게 보기용 PNG. 그 크기로 그려 둔 게 있으면 image, 없으면 그리는 job이 온다. */
   itemDetail: (chartId: string, itemKey: string, itemSize: ItemSize) =>
     unwrap(

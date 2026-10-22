@@ -155,6 +155,8 @@ export type ItemProps = {
   color?: string;
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
+  /** legend 체크박스로 끈 값. 그 값의 점(막대/상자)은 그리지 않는다. */
+  hiddenLegend?: string[];
 };
 
 export type ChartSpec = {
@@ -196,6 +198,7 @@ export type ItemRestore = {
   color?: string;
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
+  hiddenLegend?: string[];
 };
 
 export type CreateChartRequest = {
@@ -258,7 +261,8 @@ export type ResizeRequest = { itemSize: ItemSize; keys: string[] };
 export type ItemPropsRequest =
   | { color: string | null }
   | { legendColor: { value: string; color: string | null } }
-  | { legendPosition: LegendPosition | null };
+  | { legendPosition: LegendPosition | null }
+  | { legendVisible: { value: string; visible: boolean } };
 
 export type LegendValuesResponse = { column: ColumnName; values: string[] };
 

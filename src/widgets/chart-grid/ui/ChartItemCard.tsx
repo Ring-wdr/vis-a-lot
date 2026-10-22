@@ -11,6 +11,7 @@ import {
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemContextMenu } from "@/features/item-actions/ui/ItemContextMenu";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
+import { LegendCheckboxes } from "@/features/item-actions/ui/LegendCheckboxes";
 import { PaintToolbar } from "@/features/item-actions/ui/PaintToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
@@ -168,6 +169,16 @@ function DrawnItem({
     setItemJob,
   ]);
 
+  const checkboxes = (
+    <LegendCheckboxes
+      image={image}
+      display={displaySize}
+      alt={item.label}
+      disabled={readOnly || busy}
+      onAction={action.mutate}
+    />
+  );
+
   return (
     <article
       className={styles.item}
@@ -189,6 +200,7 @@ function DrawnItem({
             itemKey={item.key}
             columns={tooltipColumns}
             display={displaySize}
+            overlay={checkboxes}
             onLegendColor={
               readOnly
                 ? undefined
@@ -203,6 +215,7 @@ function DrawnItem({
             display={displaySize}
             alt={item.label}
             hasSelection={item.selectedCount !== undefined}
+            overlay={checkboxes}
             onAction={action.mutate}
           />
         )}

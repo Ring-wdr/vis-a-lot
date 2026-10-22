@@ -8,6 +8,7 @@ import { AGG_LABELS, type AggFn } from "../data/schema";
 import {
   drawLegendAround,
   framePlot,
+  hiddenIndexes,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
@@ -143,13 +144,16 @@ export function renderCategory(
       i - MARK_RATIO / 2 + (MARK_RATIO / groupCount) * (g + 0.5),
       value,
     ] as const;
-  const colorOf = (g: number, point: readonly [number, number]) => {
+  /** 막대/상자의 legend 인덱스. 새 범례 영역 안이면 덧붙인 항목이다. */
+  const legendIndexOf = (g: number, point: readonly [number, number]) => {
     for (let k = groups.length - 1; k >= 0; k--) {
-      if (groups[k](point[0], point[1]))
-        return input.legend?.colors[groupCount + k] ?? input.color;
+      if (groups[k](point[0], point[1])) return groupCount + k;
     }
-    return input.legend?.colors[g] ?? input.color;
+    return g;
   };
+  const colorOf = (index: number) => input.legend?.colors[index] ?? input.color;
+  // 체크박스로 끈 legend 값의 막대/상자는 그리지 않는다.
+  const off = hiddenIndexes(input.legend);
   /** 선택이 있으면 바깥 막대/상자는 흐리게 */
   const alphaOf = (point: readonly [number, number]) =>
     !inSelection || inSelection(point[0], point[1]) ? 1 : 0.2;
@@ -162,7 +166,10 @@ export function renderCategory(
     for (let i = 0; i < n; i++) {
       for (let g = 0; g < groupCount; g++) {
         const v = markValue(i, g);
-        if (v !== null && inSelection(...markPoint(i, g, v))) selectedCount++;
+        if (v === null) continue;
+        const point = markPoint(i, g, v);
+        if (!off[legendIndexOf(g, point)] && inSelection(...point))
+          selectedCount++;
       }
     }
   }
@@ -282,7 +289,9 @@ export function renderCategory(
         // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
         const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
         const point = markPoint(i, g, v);
-        ctx.fillStyle = colorOf(g, point);
+        const index = legendIndexOf(g, point);
+        if (off[index]) return;
+        ctx.fillStyle = colorOf(index);
         ctx.globalAlpha = alphaOf(point);
         ctx.beginPath();
         ctx.roundRect(cx - w / 2, top, w, Math.max(h, 1), radii);
@@ -298,7 +307,9 @@ export function renderCategory(
         const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
         const half = w / 2;
         const point = markPoint(i, g, b.median);
-        const color = colorOf(g, point);
+        const index = legendIndexOf(g, point);
+        if (off[index]) return;
+        const color = colorOf(index);
         const alpha = alphaOf(point);
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = color;

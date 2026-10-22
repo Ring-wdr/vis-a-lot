@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import {
   clampToPlot,
   eventToPng,
@@ -79,8 +79,11 @@ export function DrawLayer({
   display,
   alt,
   hasSelection = false,
+  overlay,
   onAction,
 }: {
+  /** PNG 위에 겹칠 조작 (legend 체크박스) */
+  overlay?: ReactNode;
   tool: DrawTool;
   /** 선택 영역이 있으면 선택 모드에서 클릭만 해도 선택을 푼다. */
   hasSelection?: boolean;
@@ -242,6 +245,7 @@ export function DrawLayer({
       >
         <ChartImage data={image} alt={alt} />
       </div>
+      {overlay}
       <svg
         className={styles.drawPreview}
         viewBox={`0 0 ${image.width} ${image.height}`}

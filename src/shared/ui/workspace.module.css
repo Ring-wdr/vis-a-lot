@@ -56,6 +56,14 @@
   gap: 4px;
 }
 
+/* 모드 바와 차트 도구 사이 구분선 */
+.toolbarDivider {
+  align-self: stretch;
+  width: 1px;
+  margin: 8px 0;
+  background: var(--ws-border);
+}
+
 .modeBar button,
 .chartTypes button,
 .secondaryButton {
@@ -1047,6 +1055,25 @@
   outline: 2px solid var(--ws-accent);
   outline-offset: 1px;
   background: rgb(var(--ws-accent-rgb) / 8%);
+}
+
+/* legend 체크박스: 색 표시(●) 가운데에 겹친다. 색 버튼보다 위에 둔다. */
+.legendCheckLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.legendCheck {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  accent-color: var(--ws-accent);
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .legendList {
