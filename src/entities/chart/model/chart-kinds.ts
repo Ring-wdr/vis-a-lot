@@ -37,6 +37,7 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
     agg: true,
     legend: false,
   },
+  treemap: { x: ["categorical"], y: ["numeric"], agg: true },
 };
 
 /**
@@ -64,6 +65,7 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   line: ALL,
   sankey: ["select", "checkbox"],
   heatmap: ["pan", "zoom", "select", "paint"],
+  treemap: ["pan", "zoom", "select", "checkbox"],
 };
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */

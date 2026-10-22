@@ -10,6 +10,7 @@ export const CHART_LABELS: Record<ChartType, string> = {
   line: "Line",
   sankey: "Sankey",
   heatmap: "Heatmap",
+  treemap: "Treemap",
 };
 
 /**

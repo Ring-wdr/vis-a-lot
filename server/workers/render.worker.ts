@@ -3,6 +3,7 @@ import { renderCategory } from "../render/category";
 import { renderHeatmap } from "../render/heatmap";
 import { renderSankey } from "../render/sankey";
 import { renderScatter } from "../render/scatter";
+import { renderTreemap } from "../render/treemap";
 import { serveRpc, transfer, type WorkerScope } from "../rpc";
 
 const workerName = (globalThis as unknown as WorkerScope).name;
@@ -155,6 +156,26 @@ serveRpc<RenderMethods>({
     const thumb =
       thumbInput &&
       (await drawPng(thumbInput, (ctx) => renderHeatmap(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderTreemap({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderTreemap(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderTreemap(ctx, thumbInput, noop)))
         .png;
     progress({ stage: "encode", ratio: 1 });
     return transfer(

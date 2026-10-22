@@ -72,6 +72,13 @@ const ICONS: Record<ChartType, ReactNode> = {
       <rect x="15.5" y="15.5" width="4.5" height="4.5" rx="0.8" opacity="0.3" />
     </g>
   ),
+  treemap: (
+    <g fill="currentColor">
+      <rect x="4" y="4" width="9" height="16" rx="1" />
+      <rect x="14" y="4" width="6" height="9" rx="1" opacity="0.6" />
+      <rect x="14" y="14" width="6" height="6" rx="1" opacity="0.35" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

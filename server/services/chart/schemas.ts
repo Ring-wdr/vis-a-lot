@@ -27,7 +27,7 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot", "line", "sankey", "heatmap"])
+  .enum(["scatter", "bar", "boxplot", "line", "sankey", "heatmap", "treemap"])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -593,6 +593,36 @@ export const HeatmapMetaSchema = z
   })
   .openapi("HeatmapMeta");
 
+const TreemapNodeSchema = z.object({
+  name: z.string(),
+  /** legend 인덱스 (legend가 없으면 0) */
+  g: z.number(),
+  value: z.number(),
+  /** 레이아웃 좌표 [0,1]. y0이 아래, y1이 위 */
+  x0: z.number(),
+  y0: z.number(),
+  x1: z.number(),
+  y1: z.number(),
+});
+
+export const TreemapMetaSchema = z
+  .object({
+    chartType: z.literal("treemap"),
+    plot: PlotSchema,
+    /** 레이아웃 좌표 [0,1] */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    agg: AggFnSchema,
+    /** 보이는 잎 값의 합 */
+    total: z.number(),
+    leaves: z.array(TreemapNodeSchema),
+    /** legend가 있을 때의 부모 묶음 */
+    parents: z.array(TreemapNodeSchema),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("TreemapMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
   .union([
@@ -600,6 +630,7 @@ export const ItemMetaSchema = z
     CategoryMetaSchema,
     SankeyMetaSchema,
     HeatmapMetaSchema,
+    TreemapMetaSchema,
   ])
   .openapi("ItemMeta");
 

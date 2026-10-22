@@ -576,7 +576,15 @@
       },
       "ChartType": {
         "type": "string",
-        "enum": ["scatter", "bar", "boxplot", "line", "sankey", "heatmap"]
+        "enum": [
+          "scatter",
+          "bar",
+          "boxplot",
+          "line",
+          "sankey",
+          "heatmap",
+          "treemap"
+        ]
       },
       "ColumnName": {
         "type": "string",
@@ -1072,6 +1080,9 @@
           },
           {
             "$ref": "#/components/schemas/HeatmapMeta"
+          },
+          {
+            "$ref": "#/components/schemas/TreemapMeta"
           }
         ]
       },
@@ -1619,6 +1630,121 @@
           "cells",
           "agg",
           "colorDomain"
+        ]
+      },
+      "TreemapMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["treemap"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "agg": {
+            "$ref": "#/components/schemas/AggFn"
+          },
+          "total": {
+            "type": "number"
+          },
+          "leaves": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "g": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "x0": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "g", "value", "x0", "y0", "x1", "y1"]
+            }
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "g": {
+                  "type": "number"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "x0": {
+                  "type": "number"
+                },
+                "y0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number"
+                },
+                "y1": {
+                  "type": "number"
+                }
+              },
+              "required": ["name", "g", "value", "x0", "y0", "x1", "y1"]
+            }
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "agg",
+          "total",
+          "leaves",
+          "parents"
         ]
       },
       "ItemRowsResponse": {

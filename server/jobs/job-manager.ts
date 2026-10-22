@@ -647,7 +647,8 @@ async function queryChartData(
     kind: "category",
     ...(await db.call("categoryData", {
       dataset: spec.dataset,
-      chartType: spec.chartType === "bar" ? "bar" : "boxplot",
+      // treemap은 bar와 같은 범주 × legend 값 집계를 쓴다.
+      chartType: spec.chartType === "boxplot" ? "boxplot" : "bar",
       x: spec.x,
       y: spec.y,
       agg: spec.agg,
@@ -680,7 +681,11 @@ function renderItem(
   size: ItemSize,
   thumbnail: boolean,
   options: PoolCallOptions<
-    "renderScatter" | "renderCategory" | "renderSankey" | "renderHeatmap"
+    | "renderScatter"
+    | "renderCategory"
+    | "renderSankey"
+    | "renderHeatmap"
+    | "renderTreemap"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -782,6 +787,25 @@ function renderItem(
     );
   }
   const group = index === undefined ? undefined : data.groups[index];
+  if (spec.chartType === "treemap") {
+    // 새 범례(선택 영역)는 treemap에 쓰지 않는다. legend 값이 곧 부모 묶음이다.
+    return render.call(
+      "renderTreemap",
+      {
+        ...common,
+        categories: group?.categories ?? [],
+        bars: group?.bars,
+        agg: spec.agg,
+        legend: legendInput(
+          chart,
+          { ...item, legendGroups: [] },
+          legendTitle,
+          data.legendValues,
+        ),
+      },
+      options,
+    );
+  }
   return render.call(
     "renderCategory",
     {

@@ -8,6 +8,7 @@ import type {
   ItemMeta,
   SankeyMeta,
   ScatterMeta,
+  TreemapMeta,
 } from "@/shared/api/types";
 import { AGG_LABELS } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
@@ -377,6 +378,66 @@ export const heatmapStrategy: TooltipStrategy<HeatmapMeta> = {
   },
 };
 
+/** treemap: 커서 아래 잎의 이름·값·비율. 하이라이트는 잎 사각형이다. */
+export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const x = invertAxis(meta.x, plot.left, plot.width, px, false);
+    const y = invertAxis(meta.y, plot.top, plot.height, py, true);
+    const leaf = meta.leaves.find(
+      (r) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1,
+    );
+    if (!leaf) return null;
+    const a = dataToPx(meta, leaf.x0, leaf.y1);
+    const b = dataToPx(meta, leaf.x1, leaf.y0);
+    const percent = (v: number, of: number) =>
+      of > 0 ? `${((v / of) * 100).toFixed(1)}%` : "—";
+    const rows: TooltipRow[] = [{ label: "이름", value: leaf.name }];
+    const parent = meta.legend
+      ? meta.parents.find((p) => p.g === leaf.g)
+      : undefined;
+    if (meta.legend && parent) {
+      rows.push({
+        label: meta.legend.title,
+        value: meta.legend.values[leaf.g],
+      });
+    }
+    rows.push(
+      {
+        label: AGG_LABELS[meta.agg],
+        value: formatValue(leaf.value, "number"),
+        emphasis: true,
+      },
+      { label: "비율", value: percent(leaf.value, meta.total), emphasis: true },
+    );
+    if (parent) {
+      rows.push({
+        label: "묶음 안 비율",
+        value: percent(leaf.value, parent.value),
+      });
+    }
+    return {
+      highlight: clipToPlot(meta, {
+        x: a.px - 1,
+        y: a.py - 1,
+        width: b.px - a.px + 2,
+        height: b.py - a.py + 2,
+      }),
+      rows,
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -384,6 +445,7 @@ const STRATEGIES: {
   line: TooltipStrategy<ScatterMeta>;
   sankey: TooltipStrategy<SankeyMeta>;
   heatmap: TooltipStrategy<HeatmapMeta>;
+  treemap: TooltipStrategy<TreemapMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -392,6 +454,7 @@ const STRATEGIES: {
   line: scatterStrategy,
   sankey: sankeyStrategy,
   heatmap: heatmapStrategy,
+  treemap: treemapStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

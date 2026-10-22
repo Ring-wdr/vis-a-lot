@@ -21,6 +21,7 @@ import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { HeatmapInput, HeatmapMeta } from "./render/heatmap";
 import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
+import type { TreemapInput, TreemapMeta } from "./render/treemap";
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
 export type Rejectable<T> =
@@ -199,6 +200,17 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: HeatmapMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderTreemap: {
+    params: TreemapInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: TreemapMeta;
       worker: string;
       ms: number;
     };
