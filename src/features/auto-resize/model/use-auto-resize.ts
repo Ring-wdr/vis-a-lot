@@ -67,3 +67,43 @@ export function useAutoResize(
       });
   }, [chartId, job, jobStatus, sizeKey, itemJobs, setItemJob, retryTick]);
 }
+
+/**
+ * 공통 속성이 바뀐 뒤 아직 다시 그리지 않은(stale) item을 현재 페이지에서만 다시 그린다.
+ * 공통 속성은 보고 있던 페이지만 바로 그리므로, 다른 페이지는 이동해서 보일 때 이 규칙으로 그린다.
+ */
+export function useStaleRefresh(
+  chartId: string | undefined,
+  /** 현재 페이지 item 상태 */
+  job: JobStateResponse | undefined,
+  /** job 전체 상태 */
+  jobStatus: JobStateResponse["status"] | undefined,
+) {
+  const itemJobs = useWorkspace((s) => s.itemJobs);
+  const setItemJob = useWorkspace((s) => s.setItemJob);
+  const inFlight = useRef(false);
+  const [retryTick, setRetryTick] = useState(0);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryTick은 실패한 요청을 다시 확인하게 하는 트리거다.
+  useEffect(() => {
+    if (!chartId || !job || !jobStatus || !isTerminal(jobStatus)) return;
+    if (inFlight.current) return;
+    const keys = job.items
+      .filter((i) => i.stale && i.status === "success" && !itemJobs[i.key])
+      .map((i) => i.key);
+    if (keys.length === 0) return;
+    inFlight.current = true;
+    api
+      .refreshItems(chartId, keys)
+      .then(({ jobId }) => {
+        for (const key of keys) setItemJob(key, jobId);
+      })
+      .catch((err: unknown) => {
+        console.warn("stale item 다시 그리기 요청 실패, 다시 시도합니다", err);
+        setTimeout(() => setRetryTick((n) => n + 1), RETRY_MS);
+      })
+      .finally(() => {
+        inFlight.current = false;
+      });
+  }, [chartId, job, jobStatus, itemJobs, setItemJob, retryTick]);
+}

@@ -217,6 +217,21 @@
         "properties": {
           "common": {
             "$ref": "#/components/schemas/CommonProps"
+          },
+          "visible": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "required": ["start", "count"]
           }
         },
         "required": ["common"]
@@ -3362,6 +3377,9 @@
           },
           "deletionCount": {
             "type": "number"
+          },
+          "stale": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -3382,6 +3400,20 @@
       "ItemStage": {
         "type": "string",
         "enum": ["query", "aggregate", "render", "encode"]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        },
+        "required": ["keys"]
       },
       "ResizeRequest": {
         "type": "object",
@@ -4203,7 +4235,7 @@
     "/charts/{chartId}/common": {
       "patch": {
         "tags": ["charts"],
-        "summary": "공통 속성. 개별 속성을 모두 덮어쓰고 전체를 다시 그린다",
+        "summary": "공통 속성. 개별 속성을 모두 덮어쓰고, visible 범위는 바로, 나머지는 볼 때(refresh) 다시 그린다",
         "security": [
           {
             "bearer": []
@@ -5394,6 +5426,99 @@
           },
           "404": {
             "description": "없음"
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/refresh": {
+      "post": {
+        "tags": ["charts"],
+        "summary": "공통 속성이 바뀐 뒤 아직 다시 그리지 않은(stale) item을 다시 그린다. 화면이 그 페이지를 볼 때 부른다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "다시 그리는 job. long polling으로 진행 상태를 받는다",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemJobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 차트",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "렌더링 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }

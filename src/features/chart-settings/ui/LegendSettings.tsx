@@ -20,7 +20,7 @@ export function LegendSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
   const columns = useColumns(draft.dataset);
-  const { common, change, pending } = useChangeCommon();
+  const { common, change } = useChangeCommon();
   const legend = legendColumnOf(draft);
 
   return (
@@ -31,7 +31,7 @@ export function LegendSettings() {
       </h4>
       <LegendPositionPicker
         value={common.legendPosition ?? defaultLegendPosition(draft.chartType)}
-        disabled={readOnly || pending}
+        disabled={readOnly}
         onSelect={(legendPosition) => change({ ...common, legendPosition })}
       />
       {!drawsLegend(draft) && (

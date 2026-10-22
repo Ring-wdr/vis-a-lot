@@ -15,6 +15,11 @@ export function ItemOptionsButton({
   disabled: boolean;
 }) {
   const setOptionsItem = useWorkspace((s) => s.setOptionsItem);
+  const setOptionsScope = useWorkspace((s) => s.setOptionsScope);
+  // 같은 item을 다시 고르면 아직 보내지 않은 값을 덮어쓰지 않는다.
+  const unsent = useWorkspace(
+    (s) => s.optionsItem?.key === item.key && s.optionsItem.dirty === true,
+  );
   const openRightPanel = useTabs((s) => s.openRightPanel);
   return (
     <section className={styles.settingsGroup}>
@@ -24,7 +29,8 @@ export function ItemOptionsButton({
         className={styles.linkButton}
         disabled={disabled}
         onClick={() => {
-          setOptionsItem(item);
+          if (unsent) setOptionsScope("item");
+          else setOptionsItem(item);
           openRightPanel("options");
         }}
       >

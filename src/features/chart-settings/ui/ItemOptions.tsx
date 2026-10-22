@@ -25,7 +25,7 @@ export function ItemOptions({
 }: {
   item: OptionsItem;
   sections: readonly OptionSection[];
-  /** 그 item을 다시 그리는 중이면 바꾸지 않는다 (서버가 거절한다). */
+  /** 그 item을 다시 그리는 중. 입력은 막지 않고, 끝난 뒤 마지막 값을 보낸다. */
   busy: boolean;
   onChange: (options: ChartOptionsPatch | undefined) => void;
 }) {
@@ -46,13 +46,14 @@ export function ItemOptions({
           patch,
         )}
         patch={patch}
-        disabled={readOnly || busy}
+        disabled={readOnly}
         onChange={onChange}
         resetLabel="이 구역은 공통 속성 따르기"
       />
       <p className={styles.muted}>
-        바꾸면 이 item만 다시 그립니다. 공통 속성을 바꾸면 item별 속성은 모두
-        공통 속성으로 바뀝니다.
+        {busy || item.dirty
+          ? "바꾼 값을 모아 이 item만 다시 그립니다."
+          : "바꾸면 이 item만 다시 그립니다. 공통 속성을 바꾸면 item별 속성은 모두 공통 속성으로 바뀝니다."}
       </p>
     </>
   );

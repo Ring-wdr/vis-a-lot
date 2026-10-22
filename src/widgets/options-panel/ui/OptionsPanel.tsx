@@ -18,7 +18,6 @@ import {
   commonSectionShown,
 } from "@/features/chart-settings/ui/CommonOptions";
 import { ItemOptions } from "@/features/chart-settings/ui/ItemOptions";
-import { useItemAction } from "@/features/item-actions/model/item-actions";
 import type { ChartOptionsBody } from "@/shared/api/types";
 import styles from "./OptionsPanel.module.css";
 
@@ -109,7 +108,7 @@ export function OptionsPanel() {
   );
 }
 
-/** item 범위: 그 item의 조작 요청으로 속성을 보내고, 패널이 보여줄 값도 바로 바꾼다. */
+/** item 범위: 바꾼 값은 패널에 바로 보이고, 서버에는 useItemOptionsSync가 묶어서 보낸다. */
 function ItemScope({
   item,
   sections,
@@ -117,29 +116,27 @@ function ItemScope({
   item: OptionsItem;
   sections: OptionTab["sections"];
 }) {
-  const action = useItemAction(item.chartId, item.key);
-  const setOptionsItem = useWorkspace((s) => s.setOptionsItem);
+  const updateOptionsItem = useWorkspace((s) => s.updateOptionsItem);
   const busy = useWorkspace((s) => s.itemJobs[item.key] !== undefined);
 
-  const change = (options: ChartOptionsPatch | undefined) => {
-    const body = (options ?? null) as ChartOptionsBody | null;
-    setOptionsItem({ ...item, options: body ?? undefined });
-    action.mutate({ type: "options", options: body });
-  };
+  const change = (options: ChartOptionsPatch | undefined) =>
+    updateOptionsItem({
+      options: options as ChartOptionsBody | undefined,
+      dirty: true,
+    });
 
   return (
     <>
       <ItemOptions
         item={item}
         sections={sections}
-        busy={busy || action.isPending}
+        busy={busy}
         onChange={change}
       />
       {item.options && (
         <button
           type="button"
           className={styles.followAll}
-          disabled={busy || action.isPending}
           onClick={() => change(undefined)}
         >
           모두 공통 속성 따르기

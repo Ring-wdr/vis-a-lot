@@ -404,8 +404,58 @@ export function startItemJob(
     );
   }
   const job = redrawJob(chart, items);
-  // 전체를 다시 그리는 job(공통 속성 변경)은 grid가 바라보는 primary job이 된다.
+  // 전체를 다시 그리는 job(grid 크기 변경)은 grid가 바라보는 primary job이 된다.
   if (primary) chart.primaryJobId = job.id;
+  runItemJob(job, items, { content, record });
+  return job;
+}
+
+/**
+ * 공통 속성 변경 job. 모든 item의 내용이 바뀌지만 visible 범위(보고 있는 페이지)와 아직 그림이 없는 item만
+ * 바로 그린다. 나머지는 예전 PNG를 둔 채 stale로 표시하고, 화면이 그 페이지를 볼 때 refresh로 그린다.
+ * item이 많아도(split 최대 30,000) 바꿀 때마다 드는 렌더 비용과 기다림이 한 페이지 분량으로 줄어든다.
+ */
+export function startCommonJob(
+  chart: ChartRecord,
+  visible: { start: number; count: number } | undefined,
+): Job {
+  const items = chart.items ?? [];
+  const now = new Set(
+    (visible
+      ? items.slice(visible.start, visible.start + visible.count)
+      : items
+    ).map((i) => i.key),
+  );
+  for (const item of items) if (!item.image) now.add(item.key);
+  deletePngs(items.flatMap(bumpRevision)).catch((err) =>
+    console.warn("stale detail png cleanup failed", err),
+  );
+  const job = redrawJob(chart, items);
+  chart.primaryJobId = job.id;
+  for (const item of items) {
+    if (now.has(item.key)) continue;
+    item.stale = true;
+    Object.assign(job.items.get(item.key) as ItemState, itemView(chart, item), {
+      status: "success",
+      stage: undefined,
+      stageProgress: 1,
+    });
+  }
+  runItemJob(
+    job,
+    items.filter((i) => now.has(i.key)),
+    { content: true, record: true },
+  );
+  return job;
+}
+
+/** item들을 그리는 job을 돌린다. 끝나면 item 조작 차단을 풀고, 원하면 history에 남긴다. */
+function runItemJob(
+  job: Job,
+  items: ChartItem[],
+  { content, record }: { content: boolean; record: boolean },
+) {
+  const { chart } = job;
   for (const item of items) item.busyJobId = job.id;
 
   (async () => {
@@ -428,7 +478,6 @@ export function startItemJob(
       touch(job);
       if (record) persistHistory(chart);
     });
-  return job;
 }
 
 /**
@@ -499,6 +548,7 @@ function itemView(chart: ChartRecord, item: ChartItem) {
       color: groupColor(item, g),
     })),
     deletionCount: item.deletions.length,
+    stale: item.stale,
   } satisfies Partial<ItemState>;
 }
 
@@ -1176,6 +1226,7 @@ async function renderItems(
             return;
           }
           await storeResult(chart, item, result);
+          item.stale = undefined;
           item.meta = result.meta;
           item.selectedCount = result.meta.selected;
           if (!item.view) {

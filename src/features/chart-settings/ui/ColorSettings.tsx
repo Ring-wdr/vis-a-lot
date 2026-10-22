@@ -31,7 +31,8 @@ export function ColorSettings() {
     legend,
     dataset.data?.state === "ready",
   );
-  const { change, pending } = useChangeCommon();
+  // 바꾸는 동안 입력을 막지 않는다. 보내기는 useCommonSync가 묶어서 한다.
+  const { change } = useChangeCommon();
 
   const legendColorOf = (value: string, index: number) =>
     draft.common.legendColors?.[value] ?? defaultLegendColor(index);
@@ -43,7 +44,7 @@ export function ColorSettings() {
           <h4 className={settingsStyles.heading}>기본 색</h4>
           <ColorSwatches
             value={draft.common.color}
-            disabled={readOnly || pending}
+            disabled={readOnly}
             onSelect={(color) => change({ ...draft.common, color })}
           />
           <p className={styles.muted}>{colorName(draft.common.color)}</p>
@@ -71,7 +72,7 @@ export function ColorSettings() {
                     style={{ background: color }}
                     color={color}
                     label={`${value} 색 바꾸기`}
-                    disabled={readOnly || pending}
+                    disabled={readOnly}
                     onCommit={(next) =>
                       change({
                         ...draft.common,
@@ -91,7 +92,6 @@ export function ColorSettings() {
             <button
               type="button"
               className={styles.linkButton}
-              disabled={pending}
               onClick={() =>
                 change({ ...draft.common, legendColors: undefined })
               }

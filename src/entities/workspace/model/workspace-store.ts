@@ -83,11 +83,18 @@ export type WorkspaceState = {
    * (다시 draw하면 다른 차트라 쓰지 않는다).
    */
   optionsItem: OptionsItem | null;
+  /**
+   * 공통 속성을 바꿨지만 아직 서버에 보내지 않았다. 연달아 바꾸면 멈춘 뒤 마지막 값만 한 번 보낸다 (useCommonSync).
+   */
+  commonDirty: boolean;
+  setCommonDirty: (dirty: boolean) => void;
   /** 차트 속성 패널이 편집하는 범위 */
   optionsScope: "common" | "item";
   /** item을 고르고 그 item 범위로 바꾼다. */
   setOptionsItem: (item: OptionsItem) => void;
   setOptionsScope: (scope: "common" | "item") => void;
+  /** 고른 item의 속성만 바꾼다 (범위는 그대로) */
+  updateOptionsItem: (patch: Partial<OptionsItem>) => void;
   /** item grid 영역의 크기. draw할 때 item PNG 크기를 정하는 데 쓴다. */
   gridArea?: Size;
   /** item 단위로 다시 그리는 중인 job (item 키 → job id) */
@@ -119,8 +126,10 @@ export type OptionsItem = {
   chartId: string;
   key: string;
   label: string;
-  /** item에 따로 정한 속성 (ItemState.options) */
+  /** item에 따로 정한 속성 (ItemState.options). 패널에서 바꾸면 보내기 전에도 바로 바뀐다. */
   options: ChartOptionsBody | undefined;
+  /** 바꿨지만 아직 서버에 보내지 않았다 (useItemOptionsSync) */
+  dirty?: boolean;
 };
 
 export const DEFAULT_SPEC: ChartSpec = {
@@ -161,6 +170,12 @@ export function createWorkspaceStore({
     optionsScope: "common",
     setOptionsItem: (optionsItem) => set({ optionsItem, optionsScope: "item" }),
     setOptionsScope: (optionsScope) => set({ optionsScope }),
+    updateOptionsItem: (patch) =>
+      set((s) => ({
+        optionsItem: s.optionsItem && { ...s.optionsItem, ...patch },
+      })),
+    commonDirty: false,
+    setCommonDirty: (commonDirty) => set({ commonDirty }),
     itemJobs: {},
     undoCounts: {},
     notices: [],

@@ -63,6 +63,11 @@ export type ChartItem = {
   props?: ItemProps;
   /** item 단위 다시 그리기가 진행 중이면 그 job id */
   busyJobId?: string;
+  /**
+   * 그림 내용(공통 속성)이 바뀌었지만 아직 다시 그리지 않았다. 공통 속성은 보이는 페이지만 바로 그리고,
+   * 나머지는 화면이 그 페이지를 볼 때 다시 그린다 (refresh).
+   */
+  stale?: boolean;
 };
 
 export type ItemDetail = { image: ChartImage; meta: ItemMeta };

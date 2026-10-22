@@ -27,10 +27,15 @@
 - 왼쪽 "전체 설정"은 공통 범위로, item 설정의 "개별 속성 편집"은 그 item 범위로 패널을 연다
 - 패널이 좁으면(300px 이하) 라벨과 입력을 위아래로 쌓는다
 
+### 성능
+- 공통 속성을 바꾸면 보고 있는 페이지만 바로 다시 그린다. 나머지 item은 예전 PNG를 둔 채 stale로 표시하고, 그 페이지를 볼 때 다시 그린다 (화면 크기 변경과 같은 규칙). split item이 많아도 한 번 바꿀 때 드는 렌더가 한 페이지 분량이다
+- 공통·개별 속성을 연달아 바꾸면 0.5초 동안 더 바꾸지 않을 때 마지막 값만 한 번 보낸다. 다시 그리는 동안에도 입력을 막지 않고, 끝나면 마지막 값을 보낸다. 패널을 닫아도 남은 값은 보낸다
+
 ### API (호환 깨짐)
 - `CommonProps.options`, `ItemRestore.options`, `ItemState.options`, `ItemPropsRequest { options }`(item 속성 전체를 바꾼다, null이면 지운다)
 - `AxisMeta.log`: 로그 축이면 화면이 log10 공간에서 좌표를 환산한다
 - history 이벤트 `options`
+- `CommonPropsRequest.visible`(바로 그릴 범위), `ItemState.stale`, `POST /charts/{chartId}/refresh`(stale item 다시 그리기)
 
 ## [0.10.0] - 2026-10-23
 

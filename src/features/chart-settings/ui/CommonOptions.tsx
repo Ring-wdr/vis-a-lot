@@ -65,7 +65,7 @@ export function CommonOptions({
         supported={(s) => supportsOption(chartType, s)}
         resolved={mergeOptions<ChartOptions>(DEFAULT_OPTIONS, patch)}
         patch={patch}
-        disabled={readOnly || pending}
+        disabled={readOnly}
         onChange={(options) =>
           change({ ...common, options: options as CommonProps["options"] })
         }
@@ -73,9 +73,11 @@ export function CommonOptions({
         extras={SECTION_EXTRAS}
       />
       <p className={styles.muted}>
-        {appliesToCurrent
-          ? "바꾸면 전체를 다시 그리고, item별로 정한 속성은 모두 공통 속성으로 바뀝니다."
-          : "다음 draw에 적용됩니다."}
+        {!appliesToCurrent
+          ? "다음 draw에 적용됩니다."
+          : pending
+            ? "바꾼 값을 모아 보내는 중입니다. 보고 있는 페이지부터 다시 그립니다."
+            : "바꾸면 보고 있는 페이지부터 다시 그리고, 다른 페이지는 볼 때 그립니다. item별로 정한 속성은 모두 공통 속성으로 바뀝니다."}
       </p>
     </>
   );

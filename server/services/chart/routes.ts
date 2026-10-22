@@ -25,6 +25,7 @@ import {
   JobQuerySchema,
   JobStateResponseSchema,
   NameRequestSchema,
+  RefreshRequestSchema,
   ResizeRequestSchema,
   SampleRowsResponseSchema,
   SelectionRequestSchema,
@@ -258,7 +259,8 @@ export const changeCommon = createRoute({
   method: "patch",
   path: "/charts/{chartId}/common",
   tags: ["charts"],
-  summary: "공통 속성. 개별 속성을 모두 덮어쓰고 전체를 다시 그린다",
+  summary:
+    "공통 속성. 개별 속성을 모두 덮어쓰고, visible 범위는 바로, 나머지는 볼 때(refresh) 다시 그린다",
   ...write,
   request: { params: ChartParams, body: jsonBody(CommonPropsRequestSchema) },
   responses: { 202: accepted, ...chartErrors },
@@ -282,6 +284,17 @@ export const resize = createRoute({
     "화면 크기 변경. 요청한 item만 새 크기로 다시 그린다 (history에 남기지 않음)",
   ...read,
   request: { params: ChartParams, body: jsonBody(ResizeRequestSchema) },
+  responses: { 202: accepted, ...chartErrors },
+});
+
+export const refreshItems = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/refresh",
+  tags: ["charts"],
+  summary:
+    "공통 속성이 바뀐 뒤 아직 다시 그리지 않은(stale) item을 다시 그린다. 화면이 그 페이지를 볼 때 부른다",
+  ...read,
+  request: { params: ChartParams, body: jsonBody(RefreshRequestSchema) },
   responses: { 202: accepted, ...chartErrors },
 });
 
