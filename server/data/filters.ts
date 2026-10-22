@@ -1,5 +1,7 @@
 // 차트 필터 → SQL 조건. 값은 모두 바인딩 파라미터로 넘기고, 컬럼은 데이터셋 스키마로 확인해 인용한다.
 
+import { sql } from "kysely";
+import type { Sql } from "../db/database";
 import {
   columnOf,
   type DatasetSchema,
@@ -31,43 +33,34 @@ export type ExcludeFilter = {
 export type ChartFilter = RangeFilter | ExcludeFilter;
 
 /**
- * where 절 뒤에 붙일 조건(`and (...)`)과 파라미터. 파라미터 번호는 firstParam부터 쓴다.
+ * 필터마다의 where 조건 조각. 값은 바인딩으로 넣으므로 다른 조건과 자유롭게 이어 붙인다 (allOf).
  * 스키마에 없는 컬럼이거나 컬럼 타입과 필터 종류가 맞지 않으면 SchemaError를 던진다.
  */
 export function filterSql(
   schema: DatasetSchema,
   filters: readonly ChartFilter[] | undefined,
-  firstParam = 1,
-): { sql: string; params: unknown[] } {
-  const parts: string[] = [];
-  const params: unknown[] = [];
-  const param = (value: unknown) => {
-    params.push(value);
-    return `$${firstParam + params.length - 1}`;
-  };
+): Sql[] {
+  const parts: Sql[] = [];
   for (const f of filters ?? []) {
     if (f.kind === "range") {
       const column = columnOf(schema, f.column, "numeric", "datetime");
       const v = numericSql(column);
-      const lo = param(f.min);
-      const hi = param(f.max);
       const inside = f.inverse
-        ? `(${v} < ${lo}::float8 or ${v} > ${hi}::float8)`
-        : `(${v} >= ${lo}::float8 and ${v} <= ${hi}::float8)`;
+        ? sql`(${v} < ${f.min}::float8 or ${v} > ${f.max}::float8)`
+        : sql`(${v} >= ${f.min}::float8 and ${v} <= ${f.max}::float8)`;
       // null은 비교식에서 빠지므로, 포함할 때만 따로 붙인다.
       parts.push(
-        f.includeNull ? `(${inside} or ${ident(column.name)} is null)` : inside,
+        f.includeNull
+          ? sql`(${inside} or ${ident(column.name)} is null)`
+          : inside,
       );
     } else {
       const column = columnOf(schema, f.column, "categorical");
       if (f.values.length === 0) continue;
       parts.push(
-        `not (${textSql(column)} in (select jsonb_array_elements_text(${param(JSON.stringify(f.values))}::jsonb)))`,
+        sql`not (${textSql(column)} in (select jsonb_array_elements_text(${JSON.stringify(f.values)}::jsonb)))`,
       );
     }
   }
-  return {
-    sql: parts.map((p) => ` and ${p}`).join(""),
-    params,
-  };
+  return parts;
 }

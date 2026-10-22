@@ -1,8 +1,9 @@
 // DB Worker 안에서 도는 데이터셋 관리자. 샘플(생성기) 데이터셋과 업로드한 CSV 데이터셋의 테이블 생성,
 // COPY 적재, 컬럼 통계를 맡는다. 데이터셋은 id로 구분하고, 테이블 이름은 메타에 적어 둔다.
+// 메타(dataset_meta)는 Kysely 빌더로, 컬럼이 정해지지 않은 데이터셋 테이블은 sql 조각으로 다룬다.
 
-import type { PGlite } from "@electric-sql/pglite";
 import { del, get, set } from "idb-keyval";
+import { type Selectable, sql } from "kysely";
 import type {
   CsvCheck,
   DatasetStatus,
@@ -10,6 +11,8 @@ import type {
   UploadInfo,
   UploadTask,
 } from "../api/types";
+import type { DatasetMetaTable, Db, Sql } from "../db/database";
+import { copyFrom } from "../db/pglite-native";
 import {
   type CsvFile,
   type CsvOptions,
@@ -23,18 +26,23 @@ import {
   withDefaults,
 } from "./csv-import";
 import {
+  allOf,
   type ColumnSchema,
   columnOf,
   type DatasetSchema,
   ident,
   type LogicalType,
+  list,
   readTableSchema,
+  tableSql,
 } from "./dataset-schema";
 import { type ChartFilter, filterSql } from "./filters";
 import { generateCsvChunks } from "./generator";
 import {
-  createReadingsSql,
+  COLUMNS,
+  type ColumnType,
   GENERATOR_VERSION,
+  type RowSize,
   readingsTable,
   SAMPLES,
   sampleIdOf,
@@ -42,26 +50,34 @@ import {
 } from "./schema";
 
 /** 적재가 끝난 뒤 센 컬럼별 고유값 수 */
-type ColumnStat = { name: string; distinct: number };
+export type ColumnStat = { name: string; distinct: number };
 
 /** 스키마 + 고유값 수. 고유값은 적재가 끝나야 알 수 있어 그 전에는 null이다. */
 export type ColumnInfo = ColumnSchema & { distinct: number | null };
 
-type MetaRow = {
-  id: string;
-  kind: "sample" | "upload";
-  name: string;
-  tbl: string;
-  status: "generating" | "ready" | "failed";
-  columns: ColumnStat[] | null;
-  row_count: number | null;
-  generate_ms: number | null;
-  upload: StoredUpload | null;
-  error: string | null;
-};
+/** 메타에서 읽는 컬럼 */
+const META_COLUMNS = [
+  "id",
+  "kind",
+  "name",
+  "tbl",
+  "status",
+  "columns",
+  "row_count",
+  "generate_ms",
+  "upload",
+  "error",
+] as const;
+
+type MetaRow = Pick<
+  Selectable<DatasetMetaTable>,
+  (typeof META_COLUMNS)[number]
+>;
 
 /** 메타에 남기는 업로드 정보 (원본 파일은 IndexedDB에 따로 둔다) */
-type StoredUpload = Omit<UploadInfo, "createdAt"> & { createdAt: number };
+export type StoredUpload = Omit<UploadInfo, "createdAt"> & {
+  createdAt: number;
+};
 
 /** 올려 둔 파일. 확인(commit)하거나 버릴 때까지 메모리에 둔다. */
 type Stage = { info: StagedUpload; files: CsvFile[] };
@@ -75,14 +91,36 @@ type Chunks = Iterable<{ csv: string; rows: number }>;
 
 const rawKey = (id: string) => `upload:${id}`;
 
-const SQL_TYPES: Record<LogicalType, string> = {
-  numeric: "double precision",
-  datetime: "timestamptz",
-  categorical: "text",
+/** 업로드 테이블의 컬럼 타입 */
+const SQL_TYPES: Record<LogicalType, Sql> = {
+  numeric: sql`double precision`,
+  datetime: sql`timestamptz`,
+  categorical: sql`text`,
 };
 
+/** 샘플(생성기) 테이블의 컬럼 타입 */
+const READINGS_TYPES: Record<ColumnType, Sql> = {
+  time: sql`timestamptz not null`,
+  string: sql`text not null`,
+  number: sql`double precision`,
+};
+
+/** 샘플 테이블과, 화면에 보일 컬럼 라벨(컬럼 주석)을 만드는 문장들 */
+function createReadingsSql(rows: RowSize): Sql[] {
+  const table = readingsTable(rows);
+  const cols = COLUMNS.map(
+    (c) => sql`${ident(c.name)} ${READINGS_TYPES[c.type]}`,
+  );
+  // comment on은 바인딩을 받지 않으므로 라벨은 글자로 넣는다.
+  const comments = COLUMNS.map(
+    (c) =>
+      sql`comment on column ${sql.id(table, c.name)} is ${sql.lit(c.label)}`,
+  );
+  return [sql`create table ${tableSql(table)} (${list(cols)})`, ...comments];
+}
+
 export class DatasetManager {
-  readonly #db: PGlite;
+  readonly #db: Db;
   /** 적재 중인 데이터셋의 진행 상태. DB를 거치지 않고 바로 응답하기 위해 메모리에 둔다. */
   readonly #progress = new Map<string, DatasetStatus>();
   /** 테이블 스키마. 테이블을 다시 만들 때만 바뀌므로 만들 때 지운다. */
@@ -95,45 +133,61 @@ export class DatasetManager {
   #version = 0;
   readonly #waiters = new Set<() => void>();
 
-  private constructor(db: PGlite) {
+  private constructor(db: Db) {
     this.#db = db;
   }
 
-  static async open(db: PGlite) {
-    await db.exec(`
-      create table if not exists dataset_meta (
-        id text primary key,
-        kind text not null,
-        name text not null,
-        tbl text not null,
-        status text not null,
-        generator_version int,
-        columns jsonb,
-        row_count int,
-        generate_ms int,
-        upload jsonb,
-        error text,
-        created_at timestamptz not null default now(),
-        updated_at timestamptz not null default now()
-      );
-    `);
+  static async open(db: Db) {
+    await db.schema
+      .createTable("dataset_meta")
+      .ifNotExists()
+      .addColumn("id", "text", (c) => c.primaryKey())
+      .addColumn("kind", "text", (c) => c.notNull())
+      .addColumn("name", "text", (c) => c.notNull())
+      .addColumn("tbl", "text", (c) => c.notNull())
+      .addColumn("status", "text", (c) => c.notNull())
+      .addColumn("generator_version", "integer")
+      .addColumn("columns", "jsonb")
+      .addColumn("row_count", "integer")
+      .addColumn("generate_ms", "integer")
+      .addColumn("upload", "jsonb")
+      .addColumn("error", "text")
+      .addColumn("created_at", "timestamptz", (c) =>
+        c.notNull().defaultTo(sql`now()`),
+      )
+      .addColumn("updated_at", "timestamptz", (c) =>
+        c.notNull().defaultTo(sql`now()`),
+      )
+      .execute();
     await migrateRowsMeta(db);
     // 적재 도중 새로고침된 데이터셋은 다시 만들 수 없으니 버린다. 샘플은 생성기 버전이 바뀌어도 버린다.
     // 업로드는 원본이 남아 있으므로 실패로 남겨 두고 '수정'으로 다시 적재할 수 있게 한다.
-    const stale = await db.query<Pick<MetaRow, "id" | "kind" | "tbl">>(
-      `select id, kind, tbl from dataset_meta
-       where status = 'generating' or (kind = 'sample' and generator_version <> $1)`,
-      [GENERATOR_VERSION],
-    );
-    for (const { id, kind, tbl } of stale.rows) {
-      await db.exec(`drop table if exists ${tbl}`);
+    const stale = await db
+      .selectFrom("dataset_meta")
+      .select(["id", "kind", "tbl"])
+      .where((eb) =>
+        eb.or([
+          eb("status", "=", "generating"),
+          eb.and([
+            eb("kind", "=", "sample"),
+            eb("generator_version", "<>", GENERATOR_VERSION),
+          ]),
+        ]),
+      )
+      .execute();
+    for (const { id, kind, tbl } of stale) {
+      await db.schema.dropTable(tbl).ifExists().execute();
       if (kind === "sample") {
-        await db.query("delete from dataset_meta where id = $1", [id]);
+        await db.deleteFrom("dataset_meta").where("id", "=", id).execute();
       } else {
-        await db.query(
-          "update dataset_meta set status = 'failed', error = $2 where id = $1",
-          [id, "적재 도중 중단되었습니다. 수정으로 다시 적재하세요."],
-        );
+        await db
+          .updateTable("dataset_meta")
+          .set({
+            status: "failed",
+            error: "적재 도중 중단되었습니다. 수정으로 다시 적재하세요.",
+          })
+          .where("id", "=", id)
+          .execute();
       }
     }
     return new DatasetManager(db);
@@ -166,12 +220,24 @@ export class DatasetManager {
     const queued = this.#queued(id, "sample", sample.name, sample.rows);
     const table = readingsTable(sample.rows);
     this.#enqueue(id, async () => {
-      await this.#db.query(
-        `insert into dataset_meta (id, kind, name, tbl, status, generator_version)
-         values ($1, 'sample', $2, $3, 'generating', $4)
-         on conflict (id) do update set status = 'generating', generator_version = $4, updated_at = now()`,
-        [id, sample.name, table, GENERATOR_VERSION],
-      );
+      await this.#db
+        .insertInto("dataset_meta")
+        .values({
+          id,
+          kind: "sample",
+          name: sample.name,
+          tbl: table,
+          status: "generating",
+          generator_version: GENERATOR_VERSION,
+        })
+        .onConflict((oc) =>
+          oc.column("id").doUpdateSet({
+            status: "generating",
+            generator_version: GENERATOR_VERSION,
+            updated_at: sql<Date>`now()`,
+          }),
+        )
+        .execute();
       await this.#fill(
         id,
         table,
@@ -324,18 +390,21 @@ export class DatasetManager {
       if (replace) {
         id = replace;
         const meta = await this.#metaOf(id);
-        await this.#db.query(
-          `update dataset_meta set name = $2, upload = $3, status = 'generating', error = null,
-             columns = null, updated_at = now() where id = $1`,
-          [
-            id,
-            input.name,
-            JSON.stringify({
+        await this.#db
+          .updateTable("dataset_meta")
+          .set({
+            name: input.name,
+            upload: JSON.stringify({
               ...upload,
               createdAt: meta?.upload?.createdAt ?? upload.createdAt,
             }),
-          ],
-        );
+            status: "generating",
+            error: null,
+            columns: null,
+            updated_at: sql<Date>`now()`,
+          })
+          .where("id", "=", id)
+          .execute();
       } else {
         id = `up-${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
         await set(
@@ -345,11 +414,17 @@ export class DatasetManager {
             blob: new Blob([f.bytes.slice()]),
           })),
         );
-        await this.#db.query(
-          `insert into dataset_meta (id, kind, name, tbl, status, upload)
-           values ($1, 'upload', $2, $3, 'generating', $4)`,
-          [id, input.name, uploadTable(id), JSON.stringify(upload)],
-        );
+        await this.#db
+          .insertInto("dataset_meta")
+          .values({
+            id,
+            kind: "upload",
+            name: input.name,
+            tbl: uploadTable(id),
+            status: "generating",
+            upload: JSON.stringify(upload),
+          })
+          .execute();
       }
       task.datasetId = id;
       this.#stages.delete(stageId);
@@ -423,10 +498,11 @@ export class DatasetManager {
   async rename(id: string, name: string): Promise<DatasetStatus | null> {
     const meta = await this.#metaOf(id);
     if (!meta || meta.kind !== "upload") return null;
-    await this.#db.query(
-      "update dataset_meta set name = $2, updated_at = now() where id = $1",
-      [id, name],
-    );
+    await this.#db
+      .updateTable("dataset_meta")
+      .set({ name, updated_at: sql<Date>`now()` })
+      .where("id", "=", id)
+      .execute();
     return this.#statusOf(id, { ...meta, name });
   }
 
@@ -435,8 +511,8 @@ export class DatasetManager {
     const meta = await this.#metaOf(id);
     if (!meta || meta.kind !== "upload") return "missing";
     if (this.#progress.has(id)) return "busy";
-    await this.#db.exec(`drop table if exists ${meta.tbl}`);
-    await this.#db.query("delete from dataset_meta where id = $1", [id]);
+    await this.#db.schema.dropTable(meta.tbl).ifExists().execute();
+    await this.#db.deleteFrom("dataset_meta").where("id", "=", id).execute();
     await del(rawKey(id));
     this.#schemas.delete(id);
     return "removed";
@@ -475,11 +551,13 @@ export class DatasetManager {
 
   /** 준비가 끝난 데이터셋의 컬럼별 고유값 수. 아직이면 null */
   async #stats(id: string) {
-    const res = await this.#db.query<Pick<MetaRow, "columns">>(
-      "select columns from dataset_meta where id = $1 and status = 'ready'",
-      [id],
-    );
-    return res.rows[0]?.columns ?? null;
+    const row = await this.#db
+      .selectFrom("dataset_meta")
+      .select("columns")
+      .where("id", "=", id)
+      .where("status", "=", "ready")
+      .executeTakeFirst();
+    return row?.columns ?? null;
   }
 
   /** 준비가 끝났는지 (조회·집계를 받을 수 있는지) */
@@ -502,13 +580,15 @@ export class DatasetManager {
     const stats = await this.#stats(id);
     const table = await this.table(id);
     if (!schema || !stats || !table) throw new Error("dataset is not ready");
-    const names = cols.map((c) => ident(columnOf(schema, c).name)).join(", ");
+    const names = list(cols.map((c) => ident(columnOf(schema, c).name)));
+    const from = tableSql(table);
     // 필터가 있으면 고유값 곱으로 어림할 수 없으니 실제로 센다.
     if (filters && filters.length > 0) {
-      const filter = filterSql(schema, filters);
-      const res = await this.#db.query<{ count: number }>(
-        `select count(*)::int as count from (select distinct ${names} from ${table} where true${filter.sql}) s`,
-        filter.params,
+      const where = allOf([sql`true`, ...filterSql(schema, filters)]);
+      const res = await sql<{
+        count: number;
+      }>`select count(*)::int as count from (select distinct ${names} from ${from} where ${where}) s`.execute(
+        this.#db,
       );
       return { count: res.rows[0].count, exact: true };
     }
@@ -519,8 +599,10 @@ export class DatasetManager {
     );
     if (cols.length === 1) return { count: upper, exact: true };
     if (upper <= limit) return { count: upper, exact: false };
-    const res = await this.#db.query<{ count: number }>(
-      `select count(*)::int as count from (select distinct ${names} from ${table}) s`,
+    const res = await sql<{
+      count: number;
+    }>`select count(*)::int as count from (select distinct ${names} from ${from}) s`.execute(
+      this.#db,
     );
     return { count: res.rows[0].count, exact: true };
   }
@@ -552,16 +634,18 @@ export class DatasetManager {
         this.#progress.delete(id);
         const message = err instanceof Error ? err.message : String(err);
         await this.#db
-          .query(
-            `update dataset_meta set status = 'failed', error = $2 where id = $1 and kind = 'upload'`,
-            [id, `적재 실패: ${message}`],
-          )
+          .updateTable("dataset_meta")
+          .set({ status: "failed", error: `적재 실패: ${message}` })
+          .where("id", "=", id)
+          .where("kind", "=", "upload")
+          .execute()
           .catch(() => undefined);
         this.#notify();
         await this.#db
-          .query("delete from dataset_meta where id = $1 and kind = 'sample'", [
-            id,
-          ])
+          .deleteFrom("dataset_meta")
+          .where("id", "=", id)
+          .where("kind", "=", "sample")
+          .execute()
           .catch(() => undefined);
       }),
     );
@@ -570,33 +654,33 @@ export class DatasetManager {
   #import(id: string, name: string, inspected: InspectedCsv) {
     const queued = this.#queued(id, "upload", name, inspected.rows);
     const table = uploadTable(id);
-    const cols = tableColumnsOf(inspected)
-      .map((c) => `${ident(c.name)} ${SQL_TYPES[c.type]}`)
-      .join(",\n  ");
+    const cols = tableColumnsOf(inspected).map(
+      (c) => sql`${ident(c.name)} ${SQL_TYPES[c.type]}`,
+    );
     this.#enqueue(id, () =>
       this.#fill(
         id,
         table,
-        `create table ${table} (\n  ${cols}\n)`,
+        [sql`create table ${tableSql(table)} (${list(cols)})`],
         inspected.chunks,
       ),
     );
     return { ...queued };
   }
 
-  async #fill(id: string, table: string, createSql: string, chunks: Chunks) {
+  /** 테이블을 다시 만들고(지우기·만들기는 예전 exec 한 번처럼 한 트랜잭션) CSV 조각을 COPY로 적재한다. */
+  async #fill(id: string, table: string, create: Sql[], chunks: Chunks) {
     const started = performance.now();
     const progress = this.#progress.get(id) as DatasetStatus;
 
     this.#schemas.delete(id);
-    await this.#db.exec(`drop table if exists ${table}; ${createSql};`);
+    await this.#db.transaction().execute(async (trx) => {
+      await trx.schema.dropTable(table).ifExists().execute();
+      for (const statement of create) await statement.execute(trx);
+    });
 
     for (const chunk of chunks) {
-      await this.#db.query(
-        `copy ${table} from '/dev/blob' with (format csv)`,
-        [],
-        { blob: new Blob([chunk.csv]) },
-      );
+      await copyFrom(this.#db, table, new Blob([chunk.csv]));
       progress.done += chunk.rows;
       this.#notify();
     }
@@ -605,12 +689,18 @@ export class DatasetManager {
     this.#notify();
     const columns = await this.#analyze(table);
     const generateMs = Math.round(performance.now() - started);
-    await this.#db.query(
-      `update dataset_meta set status = 'ready', columns = $2, row_count = $3, generate_ms = $4,
-         error = null, updated_at = now()
-       where id = $1`,
-      [id, JSON.stringify(columns), progress.done, generateMs],
-    );
+    await this.#db
+      .updateTable("dataset_meta")
+      .set({
+        status: "ready",
+        columns: JSON.stringify(columns),
+        row_count: progress.done,
+        generate_ms: generateMs,
+        error: null,
+        updated_at: sql<Date>`now()`,
+      })
+      .where("id", "=", id)
+      .execute();
     this.#progress.delete(id);
     this.#notify();
   }
@@ -623,12 +713,15 @@ export class DatasetManager {
     const schema = await readTableSchema(this.#db, table);
     if (!schema) throw new Error(`table ${table} not found`);
     // 결과 키는 순서대로 c0, c1 …로 받는다 (이름에 무엇이 들어 있어도 된다).
-    const select = schema.columns
-      .map((c, i) => `count(distinct ${ident(c.name)})::int as c${i}`)
-      .join(", ");
-    const res = await this.#db.query<Record<string, number>>(
-      `select ${select} from ${table}`,
+    const select = list(
+      schema.columns.map(
+        (c, i) =>
+          sql`count(distinct ${ident(c.name)})::int as ${sql.id(`c${i}`)}`,
+      ),
     );
+    const res = await sql<
+      Record<string, number>
+    >`select ${select} from ${tableSql(table)}`.execute(this.#db);
     const counts = res.rows[0];
     return schema.columns.map((c, i) => ({
       name: c.name,
@@ -637,18 +730,19 @@ export class DatasetManager {
   }
 
   async #meta() {
-    const res = await this.#db.query<MetaRow>(
-      "select id, kind, name, tbl, status, columns, row_count, generate_ms, upload, error from dataset_meta",
-    );
-    return new Map(res.rows.map((r) => [r.id, r]));
+    const rows = await this.#db
+      .selectFrom("dataset_meta")
+      .select(META_COLUMNS)
+      .execute();
+    return new Map(rows.map((r) => [r.id, r]));
   }
 
   async #metaOf(id: string): Promise<MetaRow | undefined> {
-    const res = await this.#db.query<MetaRow>(
-      "select id, kind, name, tbl, status, columns, row_count, generate_ms, upload, error from dataset_meta where id = $1",
-      [id],
-    );
-    return res.rows[0];
+    return this.#db
+      .selectFrom("dataset_meta")
+      .select(META_COLUMNS)
+      .where("id", "=", id)
+      .executeTakeFirst();
   }
 
   #statusOf(id: string, meta: MetaRow | undefined): DatasetStatus {
@@ -702,37 +796,35 @@ function uploadTable(id: string) {
 }
 
 /** 행 수로 구분하던 예전 메타(datasets 테이블)를 id 기반 메타로 옮긴다. 테이블은 그대로 쓴다. */
-async function migrateRowsMeta(db: PGlite) {
-  const old = await db.query<{ exists: boolean }>(
-    "select to_regclass('datasets') is not null as exists",
-  );
+async function migrateRowsMeta(db: Db) {
+  const old = await sql<{
+    exists: boolean;
+  }>`select to_regclass('datasets') is not null as exists`.execute(db);
   if (!old.rows[0].exists) return;
-  const rows = await db.query<{
-    rows: number;
-    generator_version: number;
-    status: string;
-    columns: ColumnStat[] | null;
-    generate_ms: number | null;
-  }>(
-    "select rows, generator_version, status, columns, generate_ms from datasets where status = 'ready'",
-  );
-  for (const r of rows.rows) {
+  const rows = await db
+    .selectFrom("datasets")
+    .select(["rows", "generator_version", "status", "columns", "generate_ms"])
+    .where("status", "=", "ready")
+    .execute();
+  for (const r of rows) {
     const id = sampleIdOf(r.rows);
     const sample = id && sampleOf(id);
     if (!sample) continue;
-    await db.query(
-      `insert into dataset_meta (id, kind, name, tbl, status, generator_version, columns, row_count, generate_ms)
-       values ($1, 'sample', $2, $3, 'ready', $4, $5, $6, $7) on conflict (id) do nothing`,
-      [
+    await db
+      .insertInto("dataset_meta")
+      .values({
         id,
-        sample.name,
-        readingsTable(sample.rows),
-        r.generator_version,
-        JSON.stringify(r.columns),
-        r.rows,
-        r.generate_ms,
-      ],
-    );
+        kind: "sample",
+        name: sample.name,
+        tbl: readingsTable(sample.rows),
+        status: "ready",
+        generator_version: r.generator_version,
+        columns: JSON.stringify(r.columns),
+        row_count: r.rows,
+        generate_ms: r.generate_ms,
+      })
+      .onConflict((oc) => oc.column("id").doNothing())
+      .execute();
   }
-  await db.exec("drop table datasets");
+  await db.schema.dropTable("datasets").execute();
 }

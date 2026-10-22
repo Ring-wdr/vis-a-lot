@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import { binIndexOf } from "../render/histogram";
 import { schemaOf } from "./dataset-schema";
 import { binEdges, histogramBins, queryHistogramData } from "./histogram-data";
@@ -47,10 +48,11 @@ const schema = schemaOf([
   { name: "value", type: "numeric", label: "측정값", nullable: true },
 ]);
 
-let db: PGlite;
+let db: Db;
 beforeAll(async () => {
-  db = new PGlite();
-  await db.exec(`
+  const pglite = new PGlite();
+  db = createDb(pglite);
+  await pglite.exec(`
     create table t (line text, kind text, value float8);
     insert into t
       select case when i % 2 = 0 then 'A' else 'B' end,

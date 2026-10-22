@@ -2,14 +2,22 @@
 // 단계가 많으면 위에서부터 FUNNEL_MAX_STAGES - 1개만 두고 나머지 행은 '기타' 하나로 다시 집계한다.
 // 평균·중앙값처럼 더할 수 없는 통계도 맞도록 '기타'는 값을 더하지 않고 원래 행에서 다시 센다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db } from "../db/database";
 import {
   AGG_SQL,
   type CategoryData,
   type CategoryDataParams,
   queryBarData,
 } from "./category-data";
-import { columnOf, type DatasetSchema, ident, textSql } from "./dataset-schema";
+import {
+  allOf,
+  columnOf,
+  type DatasetSchema,
+  ident,
+  tableSql,
+  textSql,
+} from "./dataset-schema";
 import { filterSql } from "./filters";
 
 /** 한 item에 그리는 단계 수 상한 ('기타' 포함). legend 팔레트 8색에 맞춘다. */
@@ -40,7 +48,7 @@ export function rankStages(
 }
 
 export async function queryFunnelData(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: Omit<CategoryDataParams, "chartType" | "legend">,
 ): Promise<CategoryData> {
@@ -75,7 +83,7 @@ export async function queryFunnelData(
 
 /** 넘친 split 조합마다 '기타'로 묶을 범주의 행만 모아 다시 집계한다. */
 async function queryOthers(
-  db: PGlite,
+  db: Db,
   schema: DatasetSchema,
   params: Omit<CategoryDataParams, "chartType" | "legend">,
   overflow: { group: { values: string[] }; rest: string[] }[],
@@ -83,23 +91,27 @@ async function queryOthers(
   const x = columnOf(schema, params.x, "categorical");
   const y = ident(columnOf(schema, params.y, "numeric").name);
   const split = params.splitBy.map((c) => columnOf(schema, c));
-  const filter = filterSql(schema, params.filters);
   const splitKey = split.length
-    ? split.map((c) => `coalesce(${textSql(c)}, '')`).join(" || chr(31) || ")
-    : "''";
+    ? sql.join(
+        split.map((c) => sql`coalesce(${textSql(c)}, '')`),
+        sql` || chr(31) || `,
+      )
+    : sql`''`;
   const keys = overflow.flatMap((o) =>
     o.rest.map((c) => `${keyOf(o.group.values)}\u001e${c}`),
   );
-  const keyParam = `$${filter.params.length + 1}`;
-  const sql = `select ${splitKey} as k, ${AGG_SQL[params.agg](y)}::float8 as v
-    from ${params.table}
-    where ${y} is not null${filter.sql}
-      and (${splitKey} || chr(30) || coalesce(${textSql(x)}, '')) in
-        (select jsonb_array_elements_text(${keyParam}::jsonb))
-    group by 1`;
-  const res = await db.query<{ k: string; v: number | null }>(sql, [
-    ...filter.params,
-    JSON.stringify(keys),
+  const where = allOf([
+    sql`${y} is not null`,
+    ...filterSql(schema, params.filters),
+    sql`(${splitKey} || chr(30) || coalesce(${textSql(x)}, '')) in
+        (select jsonb_array_elements_text(${JSON.stringify(keys)}::jsonb))`,
   ]);
+  const res = await sql<{
+    k: string;
+    v: number | null;
+  }>`select ${splitKey} as k, ${AGG_SQL[params.agg](y)}::float8 as v
+    from ${tableSql(params.table)}
+    where ${where}
+    group by 1`.execute(db);
   return new Map(res.rows.map((r) => [r.k, r.v]));
 }

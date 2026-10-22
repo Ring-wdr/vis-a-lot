@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import { schemaOf } from "./dataset-schema";
 import { querySampleRows, SAMPLE_ROWS, samplePercent } from "./sample-rows";
 
@@ -8,11 +9,12 @@ const schema = schemaOf([
   { name: "line", type: "categorical", label: "라인", nullable: false },
 ]);
 
-let db: PGlite;
+let db: Db;
 beforeAll(async () => {
-  db = new PGlite();
+  const pglite = new PGlite();
+  db = createDb(pglite);
   // 10만 행 중 라인 A가 9만, B가 1만
-  await db.exec(`
+  await pglite.exec(`
     create table t as
     select g::float8 as id, case when g % 10 = 0 then 'B' else 'A' end as line
     from generate_series(1, 100000) g;

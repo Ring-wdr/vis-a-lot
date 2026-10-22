@@ -1,5 +1,6 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, type Db } from "../db/database";
 import { funnelLayout, stageCenter } from "../render/funnel";
 import { schemaOf } from "./dataset-schema";
 import { queryFunnelData, rankStages } from "./funnel-data";
@@ -57,11 +58,12 @@ const schema = schemaOf([
   { name: "value", type: "numeric", label: "값", nullable: true },
 ]);
 
-let db: PGlite;
+let db: Db;
 beforeAll(async () => {
-  db = new PGlite();
+  const pglite = new PGlite();
+  db = createDb(pglite);
   // A: s0..s9 단계, 단계 k의 값은 10 - k (행 하나씩). B: s0, s1만
-  await db.exec(`
+  await pglite.exec(`
     create table t (line text, step text, value float8);
     insert into t select 'A', 's' || k, 10 - k from generate_series(0, 9) as k;
     insert into t values ('A', 's9', 3), ('B', 's0', 2), ('B', 's1', 7);

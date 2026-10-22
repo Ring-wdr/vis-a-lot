@@ -68,25 +68,6 @@ export const COLUMNS = [
 
 export type ColumnName = (typeof COLUMNS)[number]["name"];
 
-const SQL_TYPES: Record<ColumnType, string> = {
-  time: "timestamptz not null",
-  string: "text not null",
-  number: "double precision",
-};
-
 export function readingsTable(rows: RowSize) {
   return `readings_${rows}`;
-}
-
-/** 테이블과, 화면에 보일 컬럼 라벨(컬럼 주석)을 만든다. */
-export function createReadingsSql(rows: RowSize) {
-  const table = readingsTable(rows);
-  const cols = COLUMNS.map((c) => `${c.name} ${SQL_TYPES[c.type]}`).join(
-    ",\n  ",
-  );
-  const comments = COLUMNS.map(
-    (c) =>
-      `comment on column ${table}.${c.name} is '${c.label.replaceAll("'", "''")}'`,
-  ).join(";\n");
-  return `create table ${table} (\n  ${cols}\n);\n${comments}`;
 }

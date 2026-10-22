@@ -1,11 +1,13 @@
 // 필터 패널이 아코디언을 열 때 받는 컬럼 요약. 숫자·시계열은 범위, 범주는 값별 개수다.
 
-import type { PGlite } from "@electric-sql/pglite";
+import { sql } from "kysely";
+import type { Db } from "../db/database";
 import {
   columnOf,
   type DatasetSchema,
   ident,
   numericSql,
+  tableSql,
   textSql,
 } from "./dataset-schema";
 
@@ -30,18 +32,20 @@ export type ColumnSummary =
     };
 
 export async function queryColumnSummary(
-  db: PGlite,
+  db: Db,
   table: string,
   schema: DatasetSchema,
   name: string,
 ): Promise<ColumnSummary> {
   const column = columnOf(schema, name);
   const col = ident(column.name);
+  const from = tableSql(table);
   if (column.type === "categorical") {
-    const res = await db.query<{ value: string | null; count: number }>(
-      `select ${textSql(column)} as value, count(*)::int as count
-       from ${table} group by ${col} order by ${col}`,
-    );
+    const res = await sql<{
+      value: string | null;
+      count: number;
+    }>`select ${textSql(column)} as value, count(*)::int as count
+       from ${from} group by ${col} order by ${col}`.execute(db);
     const nullCount = res.rows.find((r) => r.value === null)?.count ?? 0;
     const values = res.rows
       .filter((r): r is { value: string; count: number } => r.value !== null)
@@ -55,16 +59,14 @@ export async function queryColumnSummary(
     };
   }
   const v = numericSql(column);
-  const res = await db.query<{
+  const res = await sql<{
     min: number | null;
     max: number | null;
     null_count: number;
     count: number;
-  }>(
-    `select min(${v})::float8 as min, max(${v})::float8 as max,
+  }>`select min(${v})::float8 as min, max(${v})::float8 as max,
        count(*) filter (where ${col} is null)::int as null_count, count(*)::int as count
-     from ${table}`,
-  );
+     from ${from}`.execute(db);
   const r = res.rows[0];
   return {
     kind: "range",
