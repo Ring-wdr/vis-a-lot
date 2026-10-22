@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Type,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   type ChartOptions,
   type ChartOptionsPatch,
@@ -52,7 +53,16 @@ export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
  * 전체 설정 · 차트 속성 구역 하나. 공통 속성의 options에 저장하고, 바로 다시 그리는 규칙은 useChangeCommon을 따른다
  * (item에 따로 정한 속성은 모두 덮어쓴다).
  */
-export function CommonOptionSettings({ section }: { section: OptionSection }) {
+export function CommonOptionSettings({
+  section,
+  supported,
+  children,
+}: {
+  section: OptionSection;
+  /** false면 이 차트가 쓰지 않는 구역이라 children(같은 구역의 기존 설정)만 보인다. */
+  supported: boolean;
+  children?: ReactNode;
+}) {
   const readOnly = useWorkspace((s) => s.readOnly);
   const { common, change, pending, appliesToCurrent } = useChangeCommon();
   const patch = common.options as ChartOptionsPatch | undefined;
@@ -73,7 +83,10 @@ export function CommonOptionSettings({ section }: { section: OptionSection }) {
             : undefined
         }
         resetLabel="기본값으로 되돌리기"
-      />
+        showFields={supported}
+      >
+        {children}
+      </OptionSectionForm>
       <p className={styles.muted}>
         {appliesToCurrent
           ? "바꾸면 전체를 다시 그리고, item별로 정한 속성은 모두 공통 속성으로 바뀝니다."

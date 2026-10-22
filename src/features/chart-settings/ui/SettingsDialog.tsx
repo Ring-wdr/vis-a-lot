@@ -1,8 +1,7 @@
 "use client";
 
-import { List, MessageSquare, Palette, Split } from "lucide-react";
 import { overlay } from "overlay-kit";
-import { useId, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import {
   OPTION_SECTIONS,
   type OptionSection,
@@ -23,30 +22,34 @@ import styles from "./SettingsDialog.module.css";
 import { SplitSettings } from "./SplitSettings";
 import { TooltipSettings } from "./TooltipSettings";
 
-const MENUS = [
-  { id: "color", label: "색상", Icon: Palette, Body: ColorSettings },
-  { id: "legend", label: "legend", Icon: List, Body: LegendSettings },
-  { id: "split", label: "split by", Icon: Split, Body: SplitSettings },
-  { id: "tooltip", label: "툴팁", Icon: MessageSquare, Body: TooltipSettings },
-] as const;
-type MenuId = (typeof MENUS)[number]["id"] | OptionSection;
+/**
+ * 속성 모델(common.options) 밖에 저장하지만 원본에서 같은 구역에 있는 설정. 그 구역의 필드 표 위에 붙인다.
+ * 저장 위치는 예전 history·공유 링크와 맞추려고 그대로 둔다.
+ */
+const SECTION_EXTRAS: Partial<Record<OptionSection, () => ReactNode>> = {
+  // Title · Concat String: split 조합 이름을 잇는 문자 (spec.splitSeparator)
+  title: SplitSettings,
+  // Palette · Default Color, Name/Color (common.color, common.legendColors)
+  palette: ColorSettings,
+  // Legend · Position (common.legendPosition)
+  legend: LegendSettings,
+  // 화면 툴팁의 가까운 점 표시 (작업 화면 상태)
+  tooltip: TooltipSettings,
+};
+
+/** 차트가 이 구역을 쓰지 않아도 메뉴에 두는 구역. legend 위치는 legend를 그리는 모든 차트에 쓴다. */
+const ALWAYS_SHOWN: readonly OptionSection[] = ["legend"];
 
 function SettingsBody({ onClose }: { onClose: () => void }) {
-  const [menu, setMenu] = useState<MenuId>("color");
   const titleId = useId();
   const chartType = useWorkspace((s) => s.draft.chartType);
   // 차트 속성 구역은 고른 차트 종류가 쓰는 것만 보인다.
-  const sections = OPTION_SECTIONS.filter((s) => supportsOption(chartType, s));
-  const menus = [
-    ...MENUS,
-    ...sections.map((id) => ({
-      id,
-      label: SECTION_LABELS[id],
-      Icon: SECTION_ICONS[id],
-    })),
-  ];
-  const active = menus.some((m) => m.id === menu) ? menu : "color";
-  const fixed = MENUS.find((m) => m.id === active);
+  const sections = OPTION_SECTIONS.filter(
+    (s) => supportsOption(chartType, s) || ALWAYS_SHOWN.includes(s),
+  );
+  const [menu, setMenu] = useState<OptionSection>(sections[0]);
+  const active = sections.includes(menu) ? menu : sections[0];
+  const Extra = SECTION_EXTRAS[active];
 
   return (
     <div className={styles.body}>
@@ -55,28 +58,29 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
       </h2>
       <div className={styles.layout}>
         <nav className={styles.menu} aria-label="설정 메뉴">
-          {menus.map(({ id, label, Icon }, i) => (
-            <button
-              key={id}
-              type="button"
-              className={i === MENUS.length ? styles.menuDivider : undefined}
-              aria-current={active === id || undefined}
-              onClick={() => setMenu(id)}
-            >
-              <Icon size={14} aria-hidden="true" />
-              {label}
-            </button>
-          ))}
+          {sections.map((id) => {
+            const Icon = SECTION_ICONS[id];
+            return (
+              <button
+                key={id}
+                type="button"
+                aria-current={active === id || undefined}
+                onClick={() => setMenu(id)}
+              >
+                <Icon size={14} aria-hidden="true" />
+                {SECTION_LABELS[id]}
+              </button>
+            );
+          })}
         </nav>
         <div className={styles.content}>
-          {fixed ? (
-            <fixed.Body />
-          ) : (
-            <CommonOptionSettings
-              key={active}
-              section={active as OptionSection}
-            />
-          )}
+          <CommonOptionSettings
+            key={active}
+            section={active}
+            supported={supportsOption(chartType, active)}
+          >
+            {Extra && <Extra />}
+          </CommonOptionSettings>
         </div>
       </div>
       <div className={dialogStyles.actions}>

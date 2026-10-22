@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useState } from "react";
 import type {
   ChartOptions,
   ChartOptionsPatch,
@@ -35,6 +35,8 @@ export function OptionSectionForm({
   onReset,
   resetLabel,
   disabled,
+  showFields = true,
+  children,
 }: {
   section: OptionSection;
   resolved: ChartOptions;
@@ -44,6 +46,10 @@ export function OptionSectionForm({
   onReset?: () => void;
   resetLabel: string;
   disabled: boolean;
+  /** false면 필드 표를 그리지 않는다 (차트가 이 구역을 쓰지 않아 children만 보일 때) */
+  showFields?: boolean;
+  /** 구역 제목 아래, 필드 표 위에 붙는 내용 (속성 모델 밖에 저장하는 같은 구역 설정) */
+  children?: ReactNode;
 }) {
   const hint = SECTION_HINTS[section];
   const set = (path: string, value: unknown) =>
@@ -52,26 +58,29 @@ export function OptionSectionForm({
   return (
     <div className={formStyles.form}>
       <h3 className={formStyles.heading}>{SECTION_LABELS[section]}</h3>
-      {hint && <p className={styles.muted}>{hint}</p>}
-      <div className={formStyles.fields}>
-        {SECTION_FIELDS[section].map((field) =>
-          field.when && !field.when(resolved) ? null : field.kind ===
-            "heading" ? (
-            <h4 key={`h-${field.label}`} className={formStyles.subheading}>
-              {field.label}
-            </h4>
-          ) : (
-            <FieldInput
-              key={field.path}
-              field={field}
-              value={getPath(resolved, field.path)}
-              disabled={disabled}
-              onCommit={(value) => set(field.path, value)}
-            />
-          ),
-        )}
-      </div>
-      {onReset && (
+      {children}
+      {showFields && hint && <p className={styles.muted}>{hint}</p>}
+      {showFields && (
+        <div className={formStyles.fields}>
+          {SECTION_FIELDS[section].map((field) =>
+            field.when && !field.when(resolved) ? null : field.kind ===
+              "heading" ? (
+              <h4 key={`h-${field.label}`} className={formStyles.subheading}>
+                {field.label}
+              </h4>
+            ) : (
+              <FieldInput
+                key={field.path}
+                field={field}
+                value={getPath(resolved, field.path)}
+                disabled={disabled}
+                onCommit={(value) => set(field.path, value)}
+              />
+            ),
+          )}
+        </div>
+      )}
+      {showFields && onReset && (
         <button
           type="button"
           className={styles.linkButton}

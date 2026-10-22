@@ -60,14 +60,6 @@
   padding-right: 4px;
 }
 
-/* 차트 속성 구역의 첫 메뉴 위 구분선 */
-.menu .menuDivider {
-  margin-top: 6px;
-  border-top: 1px solid var(--ws-border);
-  border-radius: 0;
-  padding-top: 10px;
-}
-
 .section {
   display: flex;
   flex-direction: column;

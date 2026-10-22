@@ -35,20 +35,20 @@ export type OptionField =
   | { kind: "heading"; label: string; when?: (o: ChartOptions) => boolean };
 
 export const SECTION_LABELS: Record<OptionSection, string> = {
-  title: "제목 (Title)",
-  axes: "축 (Axes)",
-  legend: "legend 모양",
-  panel: "패널 (Panel)",
-  palette: "팔레트 (Palette)",
-  shape: "모양 (Shape)",
-  size: "크기 (Size)",
-  pointLabel: "점 라벨 (Point Label)",
-  score: "점수 (Score)",
-  prediction: "예측 (Prediction)",
-  value: "값 (Value)",
-  focus: "강조 (Focus)",
-  tooltip: "툴팁 모양",
-  expression: "식 (Expression)",
+  title: "제목",
+  axes: "축",
+  legend: "범례",
+  panel: "패널",
+  palette: "팔레트",
+  shape: "모양",
+  size: "크기",
+  pointLabel: "점 라벨",
+  score: "점수",
+  prediction: "예측",
+  value: "값",
+  focus: "강조",
+  tooltip: "툴팁",
+  expression: "식",
 };
 
 /** 구역 아래에 붙는 도움말 */
@@ -56,7 +56,7 @@ export const SECTION_HINTS: Partial<Record<OptionSection, string>> = {
   title: "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다.",
   axes: "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다. 로그 축은 양수 값 축에서만 적용됩니다.",
   score:
-    "rscore: x·y 상관계수, fscore: legend 그룹 간 One-way ANOVA F, zscore: 값이 하한~상한 안에 들 확률, cpk: 공정 능력. zscore·cpk는 상한·하한이 있어야 계산합니다.",
+    "상관계수: x·y 상관계수, 분산분석 F: 범례 그룹 간 일원 분산분석 F, 규격 내 확률: 값이 하한~상한 안에 들 확률, 공정 능력: Cpk. 이 둘은 상한·하한이 있어야 계산합니다.",
   value: "빈 칸 값은 그 조합에 데이터가 없는 칸에 씁니다.",
   focus: "조건에 맞는 점(막대)을 강조합니다.",
   expression:
@@ -84,7 +84,7 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
   const p = `axes.${axis}`;
   return [
     { kind: "heading", label: name },
-    { kind: "boolean", path: `${p}.visible`, label: "축 보이기 (Visible)" },
+    { kind: "boolean", path: `${p}.visible`, label: "축 보이기" },
     { kind: "boolean", path: `${p}.title.visible`, label: "축 제목 보이기" },
     {
       kind: "text",
@@ -96,7 +96,7 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
     {
       kind: "number",
       path: `${p}.min`,
-      label: "최솟값 (Min)",
+      label: "최솟값",
       min: -1e15,
       max: 1e15,
       nullable: true,
@@ -104,12 +104,12 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
     {
       kind: "number",
       path: `${p}.max`,
-      label: "최댓값 (Max)",
+      label: "최댓값",
       min: -1e15,
       max: 1e15,
       nullable: true,
     },
-    { kind: "boolean", path: `${p}.log`, label: "로그 축 (Log)" },
+    { kind: "boolean", path: `${p}.log`, label: "로그 축" },
     { kind: "boolean", path: `${p}.line.visible`, label: "축 선 보이기" },
     {
       kind: "number",
@@ -130,7 +130,7 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
       step: 0.5,
     },
     { kind: "color", path: `${p}.grid.color`, label: "그리드 색" },
-    { kind: "boolean", path: `${p}.tick.visible`, label: "눈금 보이기 (Tick)" },
+    { kind: "boolean", path: `${p}.tick.visible`, label: "눈금 보이기" },
     {
       kind: "number",
       path: `${p}.tick.count`,
@@ -166,7 +166,7 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
     {
       kind: "number",
       path: `${p}.decimals`,
-      label: "소수 자리 (Numeric)",
+      label: "소수 자리",
       min: 0,
       max: 10,
       nullable: true,
@@ -174,7 +174,7 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
     {
       kind: "text",
       path: `${p}.dateFormat`,
-      label: "날짜 형식 (DateTime)",
+      label: "날짜 형식",
       maxLength: 40,
       placeholder: "예: %m/%d %H:%M · 비우면 자동",
     },
@@ -205,20 +205,20 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       max: 40,
     },
     { kind: "boolean", path: "title.bold", label: "굵게" },
-    { kind: "color", path: "title.color", label: "글자 색 (Font Color)" },
+    { kind: "color", path: "title.color", label: "글자 색" },
     {
       kind: "select",
       path: "title.align",
-      label: "정렬 (Align)",
+      label: "정렬",
       options: ALIGNS,
     },
   ],
   axes: [...axisFields("x", "X축"), ...axisFields("y", "Y축")],
   legend: [
-    { kind: "boolean", path: "legend.visible", label: "legend 보이기" },
+    { kind: "boolean", path: "legend.visible", label: "범례 보이기" },
     { kind: "boolean", path: "legend.border", label: "테두리 보이기" },
     { kind: "color", path: "legend.borderColor", label: "테두리 색" },
-    { kind: "boolean", path: "legend.reverse", label: "순서 뒤집기 (Reverse)" },
+    { kind: "boolean", path: "legend.reverse", label: "순서 뒤집기" },
     {
       kind: "number",
       path: "legend.fontSize",
@@ -229,11 +229,11 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     { kind: "color", path: "legend.fontColor", label: "글자 색" },
   ],
   panel: [
-    { kind: "color", path: "panel.backColor", label: "배경 색 (Back Color)" },
-    { kind: "boolean", path: "panel.gradient", label: "그라데이션 (Gradient)" },
-    { kind: "boolean", path: "panel.border", label: "테두리 (Border)" },
+    { kind: "color", path: "panel.backColor", label: "배경 색" },
+    { kind: "boolean", path: "panel.gradient", label: "그라데이션" },
+    { kind: "boolean", path: "panel.border", label: "테두리" },
     { kind: "color", path: "panel.borderColor", label: "테두리 색" },
-    { kind: "heading", label: "여백 (Margin)" },
+    { kind: "heading", label: "여백" },
     ...(["top", "right", "bottom", "left"] as const).map(
       (side): OptionField => ({
         kind: "number",
@@ -250,40 +250,40 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "boolean",
       path: "palette.gradient",
-      label: "그라데이션 색 쓰기 (Use Gradation Color)",
+      label: "그라데이션 색 쓰기",
     },
-    { kind: "color", path: "palette.start", label: "시작 색 (Start)" },
+    { kind: "color", path: "palette.start", label: "시작 색" },
     {
       kind: "color",
       path: "palette.middle",
-      label: "중간 색 (Middle)",
+      label: "중간 색",
       optional: true,
     },
-    { kind: "color", path: "palette.end", label: "끝 색 (End)" },
+    { kind: "color", path: "palette.end", label: "끝 색" },
     {
       kind: "number",
       path: "palette.steps",
-      label: "단계 수 (Grade Count, 0 = legend 값 수)",
+      label: "단계 수 (0이면 범례 값 수)",
       min: 0,
       max: 64,
     },
     {
       kind: "boolean",
       path: "palette.reverse",
-      label: "색 순서 뒤집기 (Color Order Reverse)",
+      label: "색 순서 뒤집기",
     },
   ],
   shape: [
     {
       kind: "select",
       path: "shape.type",
-      label: "기본 모양 (Default Shape)",
+      label: "기본 모양",
       options: SHAPES,
     },
     {
       kind: "select",
       path: "shape.style",
-      label: "적용 (Both / Border / Brush)",
+      label: "적용",
       options: [
         { value: "both", label: "채우기 + 테두리" },
         { value: "border", label: "테두리만" },
@@ -308,12 +308,12 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     },
   ],
   size: [
-    { kind: "heading", label: "점 크기 (Point Size)" },
-    { kind: "boolean", path: "size.pointAuto", label: "자동 (Auto Size)" },
+    { kind: "heading", label: "점 크기" },
+    { kind: "boolean", path: "size.pointAuto", label: "자동" },
     {
       kind: "number",
       path: "size.pointFixed",
-      label: "고정 크기 (Fix Size)",
+      label: "고정 크기",
       min: 0.5,
       max: 40,
       step: 0.5,
@@ -322,7 +322,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "size.pointMin",
-      label: "최소 (Min Size)",
+      label: "최소",
       min: 0.5,
       max: 40,
       step: 0.5,
@@ -330,13 +330,13 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "size.pointMax",
-      label: "최대 (Max Size)",
+      label: "최대",
       min: 0.5,
       max: 40,
       step: 0.5,
     },
-    { kind: "heading", label: "글자 크기 (Font Size)" },
-    { kind: "boolean", path: "size.fontAuto", label: "자동 (Auto Size)" },
+    { kind: "heading", label: "글자 크기" },
+    { kind: "boolean", path: "size.fontAuto", label: "자동" },
     {
       kind: "number",
       path: "size.fontMin",
@@ -351,11 +351,11 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       min: 6,
       max: 40,
     },
-    { kind: "heading", label: "선 (Line Size)" },
+    { kind: "heading", label: "선" },
     {
       kind: "number",
       path: "size.lineWidth",
-      label: "선 굵기 (Line Width)",
+      label: "선 굵기",
       min: 0.5,
       max: 10,
       step: 0.5,
@@ -376,7 +376,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "pointLabel.angle",
-      label: "각도 (Angle)",
+      label: "각도",
       min: -90,
       max: 90,
       step: 5,
@@ -392,45 +392,45 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "text",
       path: "pointLabel.prefix",
-      label: "앞 글자 (Prefix)",
+      label: "앞 글자",
       maxLength: 20,
     },
     {
       kind: "text",
       path: "pointLabel.suffix",
-      label: "뒤 글자 (Suffix)",
+      label: "뒤 글자",
       maxLength: 20,
     },
     {
       kind: "number",
       path: "pointLabel.decimals",
-      label: "소수 자리 (Decimal Places)",
+      label: "소수 자리",
       min: 0,
       max: 10,
       nullable: true,
     },
-    { kind: "heading", label: "상자 (Box)" },
+    { kind: "heading", label: "상자" },
     { kind: "boolean", path: "pointLabel.box.visible", label: "상자 보이기" },
     { kind: "color", path: "pointLabel.box.background", label: "배경 색" },
     { kind: "color", path: "pointLabel.box.border", label: "테두리 색" },
   ],
   score: [
-    { kind: "boolean", path: "score.visible", label: "점수 보이기 (Visible)" },
+    { kind: "boolean", path: "score.visible", label: "점수 보이기" },
     {
       kind: "multi",
       path: "score.kinds",
-      label: "점수 목록 (Score List)",
+      label: "점수 목록",
       options: [
-        { value: "rscore", label: "rscore" },
-        { value: "fscore", label: "fscore" },
-        { value: "zscore", label: "zscore" },
-        { value: "cpk", label: "cpk" },
+        { value: "rscore", label: "상관계수 (r)" },
+        { value: "fscore", label: "분산분석 F" },
+        { value: "zscore", label: "규격 내 확률 (z)" },
+        { value: "cpk", label: "공정 능력 (Cpk)" },
       ],
     },
     {
       kind: "number",
       path: "score.ucl",
-      label: "상한 (UCL)",
+      label: "상한",
       min: -1e15,
       max: 1e15,
       nullable: true,
@@ -438,7 +438,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "score.lcl",
-      label: "하한 (LCL)",
+      label: "하한",
       min: -1e15,
       max: 1e15,
       nullable: true,
@@ -466,40 +466,40 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "boolean",
       path: "prediction.enabled",
-      label: "예측 보이기 (IsPredict)",
+      label: "예측 보이기",
     },
     {
       kind: "select",
       path: "prediction.method",
       label: "방법",
       options: [
-        { value: "sma", label: "단순 이동 평균 (SMA)" },
-        { value: "ses", label: "단순 지수 평활 (SES)" },
-        { value: "des", label: "이중 지수 평활 (DES)" },
-        { value: "holtWinters", label: "Holt-Winters 지수 평활" },
+        { value: "sma", label: "단순 이동 평균" },
+        { value: "ses", label: "단순 지수 평활" },
+        { value: "des", label: "이중 지수 평활" },
+        { value: "holtWinters", label: "홀트-윈터스 지수 평활" },
       ],
     },
     {
       kind: "number",
       path: "prediction.period",
-      label: "예측 개수 (Predict Period)",
+      label: "예측 개수",
       min: 1,
       max: 500,
     },
     {
       kind: "boolean",
       path: "prediction.showInterval",
-      label: "신뢰 구간 (Show Interval)",
+      label: "신뢰 구간",
     },
     {
       kind: "boolean",
       path: "prediction.description",
-      label: "설명 보이기 (Description)",
+      label: "설명 보이기",
     },
     {
       kind: "number",
       path: "prediction.window",
-      label: "이동 평균 길이 (Average Size)",
+      label: "이동 평균 길이",
       min: 2,
       max: 500,
       when: isMethod("sma"),
@@ -507,7 +507,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "prediction.alpha",
-      label: "alpha (수준, 비우면 자동)",
+      label: "수준 계수 α (비우면 자동)",
       min: 0,
       max: 1,
       step: 0.05,
@@ -517,7 +517,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "prediction.beta",
-      label: "beta (추세, 비우면 자동)",
+      label: "추세 계수 β (비우면 자동)",
       min: 0,
       max: 1,
       step: 0.05,
@@ -527,7 +527,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "prediction.gamma",
-      label: "gamma (계절, 비우면 자동)",
+      label: "계절 계수 γ (비우면 자동)",
       min: 0,
       max: 1,
       step: 0.05,
@@ -537,7 +537,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "select",
       path: "prediction.trend",
-      label: "추세 방식 (Trend Type)",
+      label: "추세 방식",
       options: [
         { value: "additive", label: "덧셈" },
         { value: "multiplicative", label: "곱셈" },
@@ -547,7 +547,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "prediction.seasonLength",
-      label: "계절 길이 (Frequency)",
+      label: "계절 길이",
       min: 2,
       max: 500,
       when: isMethod("holtWinters"),
@@ -555,7 +555,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "select",
       path: "prediction.seasonal",
-      label: "계절 방식 (Seasonal Type)",
+      label: "계절 방식",
       options: [
         { value: "additive", label: "덧셈" },
         { value: "multiplicative", label: "곱셈" },
@@ -565,7 +565,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "boolean",
       path: "prediction.damped",
-      label: "감쇠 (Damped)",
+      label: "감쇠",
       when: isMethod("holtWinters"),
     },
   ],
@@ -573,7 +573,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "value.nullNumeric",
-      label: "빈 칸 값 (Null to Numeric, 비우면 그리지 않음)",
+      label: "빈 칸 값 (비우면 그리지 않음)",
       min: -1e15,
       max: 1e15,
       nullable: true,
@@ -581,12 +581,12 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "boolean",
       path: "value.outlier",
-      label: "이상치 빼기 (Apply Outliers)",
+      label: "이상치 빼기",
     },
     {
       kind: "select",
       path: "value.outlierMethod",
-      label: "이상치 방식 (Outlier Type)",
+      label: "이상치 방식",
       options: [
         { value: "iqr", label: "IQR (Q1 − k·IQR .. Q3 + k·IQR)" },
         { value: "sigma", label: "정규분포 (평균 ± k·σ)" },
@@ -595,7 +595,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "value.outlierK",
-      label: "k (Outlier K)",
+      label: "k",
       min: 0,
       max: 10,
       step: 0.1,
@@ -606,7 +606,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "select",
       path: "focus.target",
-      label: "대상 (Target Item)",
+      label: "대상",
       options: [
         { value: "x", label: "x 값" },
         { value: "y", label: "y 값" },
@@ -615,27 +615,27 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "select",
       path: "focus.operator",
-      label: "조건 (Operand)",
+      label: "조건",
       options: FOCUS_OPERATORS.map((value) => ({ value, label: value })),
     },
     {
       kind: "number",
       path: "focus.value",
-      label: "값 (Value)",
+      label: "값",
       min: -1e15,
       max: 1e15,
     },
-    { kind: "color", path: "focus.color", label: "색 (Color)" },
+    { kind: "color", path: "focus.color", label: "색" },
     {
       kind: "select",
       path: "focus.shape",
-      label: "모양 (Shape)",
+      label: "모양",
       options: SHAPES,
     },
     {
       kind: "number",
       path: "focus.size",
-      label: "크기 (Size)",
+      label: "크기",
       min: 0.5,
       max: 40,
       step: 0.5,
@@ -643,14 +643,14 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "boolean",
       path: "focus.legendSingleColor",
-      label: "나머지는 한 가지 색 (LegendSingleColor)",
+      label: "나머지는 한 가지 색",
     },
   ],
   tooltip: [
     {
       kind: "text",
       path: "tooltip.title",
-      label: "제목 (Title)",
+      label: "제목",
       maxLength: 80,
       placeholder: "비우면 제목 없음",
     },
@@ -666,30 +666,30 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "tooltip.transparency",
-      label: "투명도 (Transparency)",
+      label: "투명도",
       min: 0,
       max: 1,
       step: 0.05,
     },
-    { kind: "boolean", path: "tooltip.round", label: "둥근 모서리 (Round)" },
+    { kind: "boolean", path: "tooltip.round", label: "둥근 모서리" },
     { kind: "boolean", path: "tooltip.border", label: "테두리 보이기" },
     { kind: "color", path: "tooltip.borderColor", label: "테두리 색" },
     {
       kind: "text",
       path: "tooltip.prefix",
-      label: "앞 글자 (Prefix)",
+      label: "앞 글자",
       maxLength: 20,
     },
     {
       kind: "text",
       path: "tooltip.suffix",
-      label: "뒤 글자 (Suffix)",
+      label: "뒤 글자",
       maxLength: 20,
     },
     {
       kind: "number",
       path: "tooltip.decimals",
-      label: "소수 자리 (Format)",
+      label: "소수 자리",
       min: 0,
       max: 10,
       nullable: true,
@@ -699,14 +699,14 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "text",
       path: "expression.x",
-      label: "X 값 (XValue)",
+      label: "X 값",
       maxLength: 120,
       placeholder: "예: x * 2",
     },
     {
       kind: "text",
       path: "expression.y",
-      label: "Y 값 (YValue)",
+      label: "Y 값",
       maxLength: 120,
       placeholder: "예: log(y)",
     },
