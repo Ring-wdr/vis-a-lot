@@ -16,6 +16,7 @@ import {
   type DatasetStatus,
   isTerminal,
   type JobStateResponse,
+  type UploadTask,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
 import { api } from "./api";
@@ -101,16 +102,8 @@ export function useGenerateDataset() {
   });
 }
 
-export function useUploadDataset() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: api.uploadDataset,
-    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.datasets }),
-  });
-}
-
 /** 다시 적재하거나 지운 데이터셋은 스키마·요약이 달라지므로 딸린 query를 버리고 목록을 다시 받는다. */
-function useDatasetChanged() {
+export function useDatasetChanged() {
   const client = useQueryClient();
   return (id: DatasetId) => {
     client.removeQueries({ queryKey: queryKeys.dataset(id) });
@@ -121,18 +114,53 @@ function useDatasetChanged() {
   };
 }
 
-export function useEditDataset() {
+export function useRenameDataset() {
   const changed = useDatasetChanged();
   return useMutation({
-    mutationFn: ({
-      id,
-      ...body
-    }: {
-      id: DatasetId;
-      name?: string;
-      options?: CsvOptions;
-    }) => api.editDataset(id, body),
+    mutationFn: ({ id, name }: { id: DatasetId; name: string }) =>
+      api.renameDataset(id, name),
     onSuccess: (_, { id }) => changed(id),
+  });
+}
+
+/** 업로드 팝업의 미리보기. 옵션을 바꾸는 동안에는 직전 결과를 그대로 보여준다. */
+export function useUploadPreview(
+  stageId: string | undefined,
+  file: number,
+  options: CsvOptions,
+) {
+  return useQuery({
+    queryKey: ["upload-preview", stageId, file, options],
+    queryFn: ({ signal }) =>
+      api.previewUpload(stageId as string, { file, options }, signal),
+    enabled: stageId !== undefined,
+    placeholderData: keepPreviousData,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+const UPLOAD_TASK_DONE = new Set(["done", "rejected", "failed"]);
+
+/**
+ * 확인을 누른 업로드의 진행 (long polling). 직전 버전을 since로 보내 바뀔 때만 응답을 받고,
+ * 끝나면(done·rejected·failed) 멈춘다. attempt는 다시 확인을 누를 때마다 새로 받기 위한 값이다.
+ */
+export function useUploadTask(stageId: string | undefined, attempt: number) {
+  const client = useQueryClient();
+  const queryKey = ["upload-task", stageId, attempt];
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      const prev = client.getQueryData<UploadTask>(queryKey);
+      return api.uploadTask(stageId as string, prev?.version, signal);
+    },
+    enabled: stageId !== undefined && attempt > 0,
+    refetchInterval: (query) =>
+      query.state.data && UPLOAD_TASK_DONE.has(query.state.data.state)
+        ? false
+        : 1,
+    refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
   });
 }
 
