@@ -2,6 +2,7 @@
 
 import { type ReactNode, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
@@ -20,6 +21,11 @@ import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { LoadingText, Skeleton } from "@/shared/ui/Loading";
 import styles from "@/shared/ui/workspace.module.css";
+import {
+  formatTooltipText,
+  resolveTooltipOptions,
+  tooltipBoxStyle,
+} from "./tooltip-options";
 
 type Cursor = { x: number; y: number };
 
@@ -40,7 +46,10 @@ export function ItemTooltip({
   display,
   onLegendColor,
   overlay,
+  itemOptions,
 }: {
+  /** item에 따로 정한 차트 속성. 툴팁 모양(tooltip 구역)을 공통 속성 위에 덮는다. */
+  itemOptions?: ChartOptionsPatch;
   /** PNG 위에 겹칠 조작 (legend 체크박스) */
   overlay?: ReactNode;
   image: ChartImageData;
@@ -64,6 +73,16 @@ export function ItemTooltip({
   );
   const columnInfo = useColumns(dataset);
   const showNearest = useWorkspace((s) => s.showNearest);
+  const spec = useWorkspace((s) => s.current?.spec);
+  const look = resolveTooltipOptions(
+    spec?.chartType,
+    spec?.common.options as ChartOptionsPatch | undefined,
+    itemOptions,
+  );
+  const text = (value: string) =>
+    look ? formatTooltipText(value, look) : value;
+  // 정한 글자 색은 줄 이름(dt)과 값(dd)에 모두 입힌다 (기본은 테마의 보조 글자 색).
+  const rowStyle = look && { color: look.fontColor };
 
   const strategy = meta.data ? strategyFor(meta.data) : undefined;
   const prepared = useMemo(
@@ -179,25 +198,32 @@ export function ItemTooltip({
           <div
             role="tooltip"
             className={`${styles.tooltip} ${styles.tooltipPortal}`}
-            style={tooltipPosition}
+            style={
+              look
+                ? { ...tooltipBoxStyle(look), ...tooltipPosition }
+                : tooltipPosition
+            }
           >
+            {look?.title && <strong>{look.title}</strong>}
             <dl>
               {hit.rows.map((row) => (
                 <div
                   key={row.label}
                   className={row.emphasis ? styles.emphasis : undefined}
                 >
-                  <dt>{row.label}</dt>
-                  <dd>{row.value}</dd>
+                  <dt style={rowStyle}>{row.label}</dt>
+                  <dd style={rowStyle}>{text(row.value)}</dd>
                 </div>
               ))}
               {hit.rowId !== undefined &&
                 columns.map((c) => (
                   <div key={c} className={styles.emphasis}>
-                    <dt>{columnInfo.label(c)}</dt>
-                    <dd>
+                    <dt style={rowStyle}>{columnInfo.label(c)}</dt>
+                    <dd style={rowStyle}>
                       {extra.data && rowId === hit.rowId ? (
-                        formatValue(extra.data.values[c], columnInfo.type(c))
+                        text(
+                          formatValue(extra.data.values[c], columnInfo.type(c)),
+                        )
                       ) : extra.isError ? (
                         // 받지 못했으면 자리 표시를 계속 두지 않고 사유를 남긴다.
                         <span className={styles.muted} title={extraFailure}>

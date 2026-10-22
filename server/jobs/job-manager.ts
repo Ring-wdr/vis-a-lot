@@ -18,6 +18,7 @@ import {
   legendColumnOf,
   POINT_CHARTS,
 } from "../charts/chart-fields";
+import { resolveOptions } from "../charts/chart-options";
 import {
   bumpRevision,
   type CachedChartData,
@@ -40,6 +41,7 @@ import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
 import { CANDLE_LEGEND } from "../render/candle";
+import { gradientColors, legendStyleOf } from "../render/style";
 import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
@@ -322,6 +324,7 @@ async function run(job: Job) {
         legendColors: restored?.legendColors,
         legendPosition: restored?.legendPosition,
         hiddenLegend: restored?.hiddenLegend,
+        options: restored?.options,
       }),
     };
   });
@@ -488,6 +491,7 @@ function itemView(chart: ChartRecord, item: ChartItem) {
     color: itemColor(chart, item),
     customColor: hasCustomColor(item),
     legendPosition: item.props?.legendPosition,
+    options: item.props?.options,
     selectedCount: item.selection ? item.selectedCount : undefined,
     favorites: item.favorites,
     legendGroups: item.legendGroups.map((g) => ({
@@ -503,7 +507,8 @@ export function propsOrNone(props: ItemProps): ItemProps | undefined {
   return props.color ||
     props.legendColors ||
     props.legendPosition ||
-    props.hiddenLegend?.length
+    props.hiddenLegend?.length ||
+    props.options
     ? props
     : undefined;
 }
@@ -523,7 +528,19 @@ export function itemColor(chart: ChartRecord, item: ChartItem) {
   return item.props?.color ?? chart.spec.common.color;
 }
 
-/** legend 값별 색: item 개별 색 → 공통 속성의 legend 색 → 팔레트 기본 색 순서로 고른다. */
+/** item에 적용할 차트 속성 (기본값 → 공통 → 개별) */
+function optionsFor(chart: ChartRecord, item: ChartItem) {
+  return resolveOptions(
+    chart.spec.chartType,
+    chart.spec.common.options,
+    item.props?.options,
+  );
+}
+
+/**
+ * legend 값별 색: item 개별 색 → 공통 속성의 legend 색 → 기본 색 순서로 고른다.
+ * 기본 색은 palette.gradient가 켜져 있으면 값 순서대로 그라데이션 단계, 아니면 차트가 정한 색이나 팔레트 순서다.
+ */
 export function legendColors(
   chart: ChartRecord,
   item: ChartItem,
@@ -531,10 +548,15 @@ export function legendColors(
   /** 차트가 정한 기본 색 (candle의 상승/하락). 없으면 팔레트 순서 */
   defaults?: readonly string[],
 ) {
+  const { palette } = optionsFor(chart, item);
+  const gradient = palette.gradient
+    ? gradientColors(palette, values.length)
+    : undefined;
   return values.map(
     (v, i) =>
       item.props?.legendColors?.[v] ??
       chart.spec.common.legendColors?.[v] ??
+      gradient?.[i] ??
       defaults?.[i] ??
       defaultLegendColor(i),
   );
@@ -572,6 +594,7 @@ function legendInput(
     ],
     position: legendPosition(chart, item),
     hidden: item.props?.hiddenLegend,
+    style: legendStyleOf(optionsFor(chart, item)),
   };
 }
 
@@ -791,7 +814,7 @@ function renderItem(
   item: ChartItem,
   size: ItemSize,
   thumbnail: boolean,
-  options: PoolCallOptions<
+  poolOptions: PoolCallOptions<
     | "renderScatter"
     | "renderCategory"
     | "renderSankey"
@@ -812,7 +835,14 @@ function renderItem(
   const columnOf = (name: string | null) =>
     chart.columns?.find((c) => c.name === name);
   const legendTitle = columnOf(spec.legend)?.label ?? spec.legend ?? "";
+  // 기본값 → 공통 → 개별 순으로 합친 차트 속성. 차트가 쓰지 않는 구역은 기본값이다.
+  const options = resolveOptions(
+    spec.chartType,
+    spec.common.options,
+    item.props?.options,
+  );
   const common = {
+    options,
     width: size.width,
     height: size.height,
     thumbnail: thumbnail ? THUMBNAIL_SIZE : undefined,
@@ -832,6 +862,8 @@ function renderItem(
       {
         ...common,
         chartType: spec.chartType === "line" ? "line" : "scatter",
+        xTitle: columnOf(spec.x)?.label ?? spec.x,
+        yTitle: columnOf(spec.y)?.label ?? spec.y,
         xKind: columnOf(spec.x)?.type === "datetime" ? "time" : "number",
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
@@ -845,7 +877,7 @@ function renderItem(
             new Uint8Array(group.end - group.start),
         },
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "pie") {
@@ -854,6 +886,7 @@ function renderItem(
     return render.call(
       "renderPie",
       {
+        options,
         width: size.width,
         height: size.height,
         thumbnail: common.thumbnail,
@@ -868,9 +901,10 @@ function renderItem(
           colors: pieColors(chart, item, data, values),
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
+          style: legendStyleOf(options),
         },
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "radar") {
@@ -879,6 +913,7 @@ function renderItem(
     return render.call(
       "renderRadar",
       {
+        options,
         width: size.width,
         height: size.height,
         thumbnail: common.thumbnail,
@@ -897,9 +932,10 @@ function renderItem(
           colors: legendColors(chart, item, values),
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
+          style: legendStyleOf(options),
         },
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "histogram") {
@@ -908,11 +944,15 @@ function renderItem(
       "renderHistogram",
       {
         ...common,
+        axisTitles: {
+          x: columnOf(spec.x)?.label ?? spec.x,
+          y: "개수",
+        },
         bins: data.bins,
         counts: group?.counts ?? [],
         legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "candle") {
@@ -939,7 +979,7 @@ function renderItem(
           CANDLE_LEGEND.colors,
         ) as NonNullable<ReturnType<typeof legendInput>>,
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "gantt") {
@@ -953,7 +993,7 @@ function renderItem(
         bars: group?.bars ?? { r: [], s: [], e: [], g: [], n: [] },
         legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "sankey") {
@@ -968,6 +1008,7 @@ function renderItem(
     return render.call(
       "renderSankey",
       {
+        options,
         width: common.width,
         height: common.height,
         thumbnail: common.thumbnail,
@@ -980,7 +1021,7 @@ function renderItem(
         agg: spec.agg,
         legend,
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "heatmap") {
@@ -1006,10 +1047,11 @@ function renderItem(
                 values: groups.map((g) => g.name),
                 colors: groups.map((g) => groupColor(item, g)),
                 position: legendPosition(chart, item),
+                style: legendStyleOf(options),
               }
             : undefined,
       },
-      options,
+      poolOptions,
     );
   }
   const group = index === undefined ? undefined : data.groups[index];
@@ -1030,7 +1072,7 @@ function renderItem(
           stages,
         ),
       },
-      options,
+      poolOptions,
     );
   }
   if (spec.chartType === "waterfall") {
@@ -1038,6 +1080,10 @@ function renderItem(
       "renderWaterfall",
       {
         ...common,
+        axisTitles: {
+          x: columnOf(spec.x)?.label ?? spec.x,
+          y: columnOf(spec.y)?.label ?? spec.y,
+        },
         categories: group?.categories ?? [],
         values: group?.bars?.map((row) => row[0]) ?? [],
         agg: spec.agg,
@@ -1049,7 +1095,7 @@ function renderItem(
           waterfallDefaultColors(common.color),
         ),
       },
-      options,
+      poolOptions,
     );
   }
   if (spec.chartType === "treemap") {
@@ -1068,13 +1114,17 @@ function renderItem(
           data.legendValues,
         ),
       },
-      options,
+      poolOptions,
     );
   }
   return render.call(
     "renderCategory",
     {
       ...common,
+      axisTitles: {
+        x: columnOf(spec.x)?.label ?? spec.x,
+        y: columnOf(spec.y)?.label ?? spec.y,
+      },
       chartType: spec.chartType === "bar" ? "bar" : "boxplot",
       categories: group?.categories ?? [],
       bars: group?.bars,
@@ -1082,7 +1132,7 @@ function renderItem(
       agg: spec.chartType === "bar" ? spec.agg : undefined,
       legend: legendInput(chart, item, legendTitle, data.legendValues),
     },
-    options,
+    poolOptions,
   );
 }
 

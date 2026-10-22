@@ -235,6 +235,9 @@
           },
           "legendPosition": {
             "$ref": "#/components/schemas/LegendPosition"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ChartOptions"
           }
         },
         "required": ["color"]
@@ -247,6 +250,598 @@
       "LegendPosition": {
         "type": "string",
         "enum": ["top", "bottom", "left", "right"]
+      },
+      "ChartOptions": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "subtitle": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "bold": {
+                "type": "boolean"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "align": {
+                "type": "string",
+                "enum": ["left", "center", "right"]
+              }
+            }
+          },
+          "axes": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "$ref": "#/components/schemas/AxisOptions"
+              },
+              "y": {
+                "$ref": "#/components/schemas/AxisOptions"
+              }
+            }
+          },
+          "legend": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "border": {
+                "type": "boolean"
+              },
+              "borderColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "reverse": {
+                "type": "boolean"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "fontColor": {
+                "$ref": "#/components/schemas/HexColor"
+              }
+            }
+          },
+          "panel": {
+            "type": "object",
+            "properties": {
+              "backColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "gradient": {
+                "type": "boolean"
+              },
+              "border": {
+                "type": "boolean"
+              },
+              "borderColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "margin": {
+                "type": "object",
+                "properties": {
+                  "top": {
+                    "type": "number"
+                  },
+                  "right": {
+                    "type": "number"
+                  },
+                  "bottom": {
+                    "type": "number"
+                  },
+                  "left": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "palette": {
+            "type": "object",
+            "properties": {
+              "gradient": {
+                "type": "boolean"
+              },
+              "start": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "middle": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/HexColor"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [""]
+                  }
+                ]
+              },
+              "end": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "steps": {
+                "type": "number"
+              },
+              "reverse": {
+                "type": "boolean"
+              }
+            }
+          },
+          "shape": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "$ref": "#/components/schemas/PointShape"
+              },
+              "style": {
+                "type": "string",
+                "enum": ["both", "border", "brush"]
+              },
+              "transparency": {
+                "type": "number"
+              },
+              "borderWidth": {
+                "type": "number"
+              }
+            }
+          },
+          "size": {
+            "type": "object",
+            "properties": {
+              "pointAuto": {
+                "type": "boolean"
+              },
+              "pointFixed": {
+                "type": "number"
+              },
+              "pointMin": {
+                "type": "number"
+              },
+              "pointMax": {
+                "type": "number"
+              },
+              "fontAuto": {
+                "type": "boolean"
+              },
+              "fontMin": {
+                "type": "number"
+              },
+              "fontMax": {
+                "type": "number"
+              },
+              "lineWidth": {
+                "type": "number"
+              }
+            }
+          },
+          "pointLabel": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "position": {
+                "type": "string",
+                "enum": ["top", "center", "bottom"]
+              },
+              "angle": {
+                "type": "number"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "prefix": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "suffix": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "decimals": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "box": {
+                "type": "object",
+                "properties": {
+                  "visible": {
+                    "type": "boolean"
+                  },
+                  "background": {
+                    "$ref": "#/components/schemas/HexColor"
+                  },
+                  "border": {
+                    "$ref": "#/components/schemas/HexColor"
+                  }
+                }
+              }
+            }
+          },
+          "score": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "kinds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["rscore", "fscore", "zscore", "cpk"]
+                },
+                "maxItems": 4
+              },
+              "ucl": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lcl": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "fontColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "backColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "borderColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "borderWidth": {
+                "type": "number"
+              }
+            }
+          },
+          "prediction": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "method": {
+                "type": "string",
+                "enum": ["sma", "ses", "des", "holtWinters"]
+              },
+              "period": {
+                "type": "number"
+              },
+              "showInterval": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "boolean"
+              },
+              "window": {
+                "type": "number"
+              },
+              "alpha": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "beta": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "gamma": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "seasonLength": {
+                "type": "number"
+              },
+              "trend": {
+                "type": "string",
+                "enum": ["additive", "multiplicative"]
+              },
+              "seasonal": {
+                "type": "string",
+                "enum": ["additive", "multiplicative"]
+              },
+              "damped": {
+                "type": "boolean"
+              }
+            }
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "nullNumeric": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outlier": {
+                "type": "boolean"
+              },
+              "outlierMethod": {
+                "type": "string",
+                "enum": ["iqr", "sigma"]
+              },
+              "outlierK": {
+                "type": "number"
+              }
+            }
+          },
+          "focus": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "target": {
+                "type": "string",
+                "enum": ["x", "y"]
+              },
+              "operator": {
+                "type": "string",
+                "enum": [">", ">=", "<", "<=", "=", "!="]
+              },
+              "value": {
+                "type": "number"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "shape": {
+                "$ref": "#/components/schemas/PointShape"
+              },
+              "size": {
+                "type": "number"
+              },
+              "legendSingleColor": {
+                "type": "boolean"
+              }
+            }
+          },
+          "tooltip": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "fontColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "background": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "transparency": {
+                "type": "number"
+              },
+              "round": {
+                "type": "boolean"
+              },
+              "border": {
+                "type": "boolean"
+              },
+              "borderColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "prefix": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "suffix": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "decimals": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "expression": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "y": {
+                "type": "string",
+                "maxLength": 120
+              }
+            }
+          }
+        }
+      },
+      "AxisOptions": {
+        "type": "object",
+        "properties": {
+          "visible": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 80
+              }
+            }
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "log": {
+            "type": "boolean"
+          },
+          "line": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "width": {
+                "type": "number"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              }
+            }
+          },
+          "grid": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "width": {
+                "type": "number"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              }
+            }
+          },
+          "tick": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "count": {
+                "type": "number"
+              },
+              "length": {
+                "type": "number"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              }
+            }
+          },
+          "label": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "angle": {
+                "type": "number"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              }
+            }
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dateFormat": {
+            "type": "string",
+            "maxLength": 40
+          }
+        }
+      },
+      "PointShape": {
+        "type": "string",
+        "enum": ["circle", "square", "triangle", "diamond", "cross"]
       },
       "GridRequest": {
         "type": "object",
@@ -368,6 +963,22 @@
               }
             },
             "required": ["legendVisible"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "options": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ChartOptions"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": ["options"]
           }
         ]
       },
@@ -712,6 +1323,9 @@
               "type": "string"
             },
             "maxItems": 16
+          },
+          "options": {
+            "$ref": "#/components/schemas/ChartOptions"
           }
         },
         "required": ["shapes"]
@@ -911,6 +1525,7 @@
           "grid",
           "selection",
           "favorite",
+          "options",
           "delete"
         ]
       },
@@ -992,6 +1607,9 @@
                 "type": "number"
               },
               "favorite": {
+                "type": "number"
+              },
+              "options": {
                 "type": "number"
               },
               "delete": {
@@ -1216,6 +1834,9 @@
                 "type": "number"
               }
             ]
+          },
+          "log": {
+            "type": "boolean"
           }
         },
         "required": ["kind", "domain"]
@@ -2711,6 +3332,9 @@
           },
           "legendPosition": {
             "$ref": "#/components/schemas/LegendPosition"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ChartOptions"
           },
           "selectedCount": {
             "type": "number"

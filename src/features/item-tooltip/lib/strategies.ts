@@ -65,7 +65,11 @@ export function invertAxis(
 ) {
   const t = (pixel - start) / length;
   const ratio = flipped ? 1 - t : t;
-  return axis.domain[0] + ratio * (axis.domain[1] - axis.domain[0]);
+  const [lo, hi] = axis.domain;
+  // 로그 축은 log10 공간에서 고르게 나뉜다.
+  if (axis.log && lo > 0 && hi > 0)
+    return 10 ** (Math.log10(lo) + ratio * (Math.log10(hi) - Math.log10(lo)));
+  return lo + ratio * (hi - lo);
 }
 
 const NEAREST_MAX_PX = 24;

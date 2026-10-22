@@ -1,6 +1,9 @@
 // line 렌더러의 선 그리기. 축·legend·툴팁 metadata는 scatter 렌더러(renderScatter)가 그대로 만들고,
 // 여기서는 legend 계열별로 x 순 정렬한 점을 픽셀 열 단위로 줄여(M4) 선으로 잇는다.
 
+import type { PointShape, ShapeOptions } from "./options";
+import { drawPoint } from "./style";
+
 type Ctx = OffscreenCanvasRenderingContext2D;
 
 /**
@@ -115,6 +118,19 @@ export type LineDrawInput = {
   selected?: Uint8Array;
   plot: { left: number; width: number };
   compact?: boolean;
+  /** 선 굵기 (size.lineWidth). 없으면 1.5, 섬네일 1 */
+  lineWidth?: number;
+  /** 선과 점의 투명도(globalAlpha, shape.transparency). 없으면 1 */
+  alpha?: number;
+  /** 점이 적을 때 찍는 점의 모양 (shape·size). 없으면 반지름 2.5 원 */
+  dot?: {
+    shape: PointShape;
+    radius: number;
+    style: ShapeOptions["style"];
+    borderWidth: number;
+    /** style both 테두리 색 (배경색) */
+    stroke: string;
+  };
 };
 
 /** 계열마다 선을 긋는다. 점이 적으면 작은 점도 함께 찍는다. */
@@ -123,13 +139,20 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
   const range: [number, number] = [plot.left, plot.left + plot.width];
   const total = series.reduce((sum, s) => sum + s.length, 0);
   const dots = !input.compact && total <= 400;
-  ctx.lineWidth = input.compact ? 1 : 1.5;
+  ctx.lineWidth = input.lineWidth ?? (input.compact ? 1 : 1.5);
+  const alpha = input.alpha ?? 1;
+  const { dot } = input;
+  // 기본 점(원·채우기·테두리 없음)은 빠른 arc로 그린다.
+  const plainDot =
+    !dot ||
+    (dot.shape === "circle" && dot.style !== "border" && dot.borderWidth === 0);
+  const dotRadius = dot?.radius ?? 2.5;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   // 선택이 있으면 바깥(0)은 계열 전체를 흐리게 깔고, 그 위에 안쪽(1) 구간만 진하게 그린다.
   const layers = selected ? [0, 1] : [1];
   for (const layer of layers) {
-    ctx.globalAlpha = layer === 0 ? 0.2 : 1;
+    ctx.globalAlpha = (layer === 0 ? 0.2 : 1) * alpha;
     series.forEach((order, g) => {
       if (order.length === 0) return;
       ctx.strokeStyle = colors[g];
@@ -153,9 +176,27 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
         for (const [from, to] of runs) {
           for (let k = from; k < to; k++) {
             const i = order[k];
-            ctx.beginPath();
-            ctx.arc(sx[i], sy[i], 2.5, 0, Math.PI * 2);
-            ctx.fill();
+            if (plainDot || !dot) {
+              ctx.beginPath();
+              ctx.arc(sx[i], sy[i], dotRadius, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              const lineWidth = ctx.lineWidth;
+              drawPoint(
+                ctx,
+                dot.shape,
+                sx[i],
+                sy[i],
+                dotRadius,
+                dot.style,
+                dot.borderWidth,
+                colors[g],
+                dot.stroke,
+              );
+              ctx.lineWidth = lineWidth;
+              ctx.strokeStyle = colors[g];
+              ctx.fillStyle = colors[g];
+            }
           }
         }
       }

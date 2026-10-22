@@ -32,6 +32,7 @@ const EVENT_LABELS: Record<HistoryEventType, string> = {
   legend: "legend",
   common: "공통 속성",
   grid: "grid",
+  options: "개별 속성",
 };
 
 const STATUS_LABELS = { cancelled: "취소", failed: "실패" } as const;

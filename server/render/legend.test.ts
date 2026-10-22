@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { framePlot, type LegendInput } from "./legend";
+import { drawLegendAround, framePlot, type LegendInput } from "./legend";
+import { DEFAULT_OPTIONS, mergeOptions } from "./options";
 
 /** 글자 하나를 7px로 재는 가짜 canvas */
 const ctx = {
@@ -27,5 +28,77 @@ describe("framePlot", () => {
       expect(Number.isInteger(plot.left)).toBe(true);
       expect(Number.isInteger(plot.width)).toBe(true);
     }
+  });
+});
+
+/** 그리기 호출을 받아 넘기는 가짜 canvas */
+const drawCtx = new Proxy(
+  {
+    font: "",
+    canvas: { width: 300, height: 200 },
+    measureText: (text: string) => ({ width: text.length * 7 }),
+  } as Record<string, unknown>,
+  {
+    get: (target, key: string) => (key in target ? target[key] : () => {}),
+    set: (target, key: string, value) => {
+      target[key] = value;
+      return true;
+    },
+  },
+) as unknown as OffscreenCanvasRenderingContext2D;
+
+describe("legend 모양", () => {
+  const input: LegendInput = {
+    title: "t",
+    values: ["a", "b", "c"],
+    colors: ["#000000", "#111111", "#222222"],
+  };
+
+  it("기본값이면 지금까지와 같은 그림 영역", () => {
+    expect(framePlot(ctx, 300, 200, 20, input, DEFAULT_OPTIONS)).toEqual(
+      framePlot(ctx, 300, 200, 20, input),
+    );
+    expect(framePlot(ctx, 300, 200, 20, input)).toEqual({
+      left: 34,
+      top: 54,
+      width: 252,
+      height: 120,
+    });
+  });
+
+  it("뒤집어도 항목은 원래 인덱스를 가진다", () => {
+    const o = mergeOptions(DEFAULT_OPTIONS, { legend: { reverse: true } });
+    const plot = framePlot(drawCtx, 300, 200, 20, input, o);
+    const meta = drawLegendAround(drawCtx, input, plot, 20, o);
+    expect(meta.entries.map((e) => [e.value, e.index])).toEqual([
+      ["c", 2],
+      ["b", 1],
+      ["a", 0],
+    ]);
+  });
+
+  it("숨기면 자리를 두지 않고 빈 metadata", () => {
+    const o = mergeOptions(DEFAULT_OPTIONS, { legend: { visible: false } });
+    expect(framePlot(ctx, 300, 200, 20, input, o).top).toBe(28);
+    const meta = drawLegendAround(
+      drawCtx,
+      input,
+      { left: 0, top: 0, width: 1, height: 1 },
+      20,
+      o,
+    );
+    expect(meta.entries).toEqual([]);
+  });
+
+  it("panel 여백만큼 그림 영역이 줄어든다", () => {
+    const o = mergeOptions(DEFAULT_OPTIONS, {
+      panel: { margin: { top: 10, left: 5, right: 7, bottom: 3 } },
+    });
+    expect(framePlot(ctx, 300, 200, 20, undefined, o)).toEqual({
+      left: 39,
+      top: 38,
+      width: 240,
+      height: 133,
+    });
   });
 });

@@ -5,16 +5,19 @@ import styles from "@/shared/ui/workspace.module.css";
 import settingsStyles from "./SettingsDialog.module.css";
 
 /**
- * 전체 설정 · 툴팁. 화면 표시만 바꾸므로 다시 그리지 않고 바로 적용된다.
+ * 전체 설정 · 툴팁의 가까운 점 표시 (scatter, line). 화면 표시만 바꾸므로 다시 그리지 않고 바로 적용된다.
  * 다시 보기(history)에서도 바꿀 수 있다.
  */
 export function TooltipSettings() {
   const showNearest = useWorkspace((s) => s.showNearest);
   const setShowNearest = useWorkspace((s) => s.setShowNearest);
+  const chartType = useWorkspace((s) => s.draft.chartType);
+  // 가까운 점은 점을 그리는 차트(scatter, line)의 툴팁에만 있다.
+  if (chartType !== "scatter" && chartType !== "line") return null;
 
   return (
     <div className={settingsStyles.section}>
-      <h3 className={settingsStyles.heading}>scatter 툴팁</h3>
+      <h4 className={settingsStyles.heading}>가까운 점</h4>
       <label className={settingsStyles.row}>
         <input
           type="checkbox"

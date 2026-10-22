@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
@@ -18,7 +19,7 @@ const POSITION_LABELS: Record<LegendPosition, string> = {
 };
 
 /**
- * item 설정 팝업 본문: legend 위치와 색. 바꿀 때마다 그 item만 다시 그린다.
+ * item 설정 팝업 본문: legend 위치와 색, (children) 차트 속성. 바꿀 때마다 그 item만 다시 그린다.
  * legend 값과 지금 그린 색은 PNG metadata에서 읽는다.
  */
 export function ItemSettings({
@@ -28,7 +29,10 @@ export function ItemSettings({
   disabled,
   open,
   onAction,
+  children,
 }: {
+  /** 끝에 붙는 묶음 (차트 속성 편집 진입점) */
+  children?: ReactNode;
   item: ItemState & { image: NonNullable<ItemState["image"]> };
   hasLegend: boolean;
   /** 공통 속성의 legend 위치 */
@@ -111,6 +115,7 @@ export function ItemSettings({
           </button>
         )}
       </section>
+      {children}
     </div>
   );
 }

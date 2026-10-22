@@ -395,3 +395,17 @@ describe("radar", () => {
     expect(hit?.rows.map((r) => r.value)).toEqual(["L2", "주간", "5"]);
   });
 });
+
+describe("invertAxis 로그 축", () => {
+  it("log10 공간에서 보간한다", () => {
+    const axis = {
+      kind: "number" as const,
+      domain: [1, 1000] as [number, number],
+      log: true,
+    };
+    expect(invertAxis(axis, 0, 300, 100, false)).toBeCloseTo(10);
+    expect(invertAxis({ ...axis, log: false }, 0, 300, 150, false)).toBeCloseTo(
+      500.5,
+    );
+  });
+});

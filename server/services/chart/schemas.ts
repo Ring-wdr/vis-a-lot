@@ -45,6 +45,170 @@ export const ChartTypeSchema = z
   ])
   .openapi("ChartType");
 
+// ── 차트 속성(옵션) ──────────────────────────────────────────────
+// 모양은 server/render/options.ts의 ChartOptions를 따른다. 저장하는 값은 모든 필드가 선택인 부분 값이다.
+
+const num = (min: number, max: number) =>
+  finite.pipe(z.number().min(min).max(max));
+const text = (max = 80) => z.string().max(max);
+const opt = <T extends z.ZodRawShape>(shape: T) => z.object(shape).partial();
+
+const PointShapeSchema = z
+  .enum(["circle", "square", "triangle", "diamond", "cross"])
+  .openapi("PointShape");
+
+const AxisOptionsSchema = opt({
+  visible: z.boolean(),
+  title: opt({ visible: z.boolean(), text: text() }),
+  min: orNull(finite),
+  max: orNull(finite),
+  log: z.boolean(),
+  line: opt({ visible: z.boolean(), width: num(0, 10), color: HexColorSchema }),
+  grid: opt({ visible: z.boolean(), width: num(0, 10), color: HexColorSchema }),
+  tick: opt({
+    visible: z.boolean(),
+    count: num(1, 20),
+    length: num(0, 20),
+    color: HexColorSchema,
+  }),
+  label: opt({
+    visible: z.boolean(),
+    angle: num(-90, 90),
+    fontSize: num(6, 40),
+    color: HexColorSchema,
+  }),
+  decimals: orNull(num(0, 10)),
+  dateFormat: text(40),
+}).openapi("AxisOptions");
+
+export const ChartOptionsSchema = opt({
+  title: opt({
+    visible: z.boolean(),
+    text: text(),
+    subtitle: text(),
+    fontSize: num(6, 40),
+    bold: z.boolean(),
+    color: HexColorSchema,
+    align: z.enum(["left", "center", "right"]),
+  }),
+  axes: opt({ x: AxisOptionsSchema, y: AxisOptionsSchema }),
+  legend: opt({
+    visible: z.boolean(),
+    border: z.boolean(),
+    borderColor: HexColorSchema,
+    reverse: z.boolean(),
+    fontSize: num(6, 40),
+    fontColor: HexColorSchema,
+  }),
+  panel: opt({
+    backColor: HexColorSchema,
+    gradient: z.boolean(),
+    border: z.boolean(),
+    borderColor: HexColorSchema,
+    margin: opt({
+      top: num(0, 200),
+      right: num(0, 200),
+      bottom: num(0, 200),
+      left: num(0, 200),
+    }),
+  }),
+  palette: opt({
+    gradient: z.boolean(),
+    start: HexColorSchema,
+    middle: z.union([HexColorSchema, z.literal("")]),
+    end: HexColorSchema,
+    steps: num(0, 64),
+    reverse: z.boolean(),
+  }),
+  shape: opt({
+    type: PointShapeSchema,
+    style: z.enum(["both", "border", "brush"]),
+    transparency: num(0, 1),
+    borderWidth: num(0, 10),
+  }),
+  size: opt({
+    pointAuto: z.boolean(),
+    pointFixed: num(0.5, 40),
+    pointMin: num(0.5, 40),
+    pointMax: num(0.5, 40),
+    fontAuto: z.boolean(),
+    fontMin: num(6, 40),
+    fontMax: num(6, 40),
+    lineWidth: num(0.5, 10),
+  }),
+  pointLabel: opt({
+    visible: z.boolean(),
+    position: z.enum(["top", "center", "bottom"]),
+    angle: num(-90, 90),
+    fontSize: num(6, 40),
+    color: HexColorSchema,
+    prefix: text(20),
+    suffix: text(20),
+    decimals: orNull(num(0, 10)),
+    box: opt({
+      visible: z.boolean(),
+      background: HexColorSchema,
+      border: HexColorSchema,
+    }),
+  }),
+  score: opt({
+    visible: z.boolean(),
+    kinds: z.array(z.enum(["rscore", "fscore", "zscore", "cpk"])).max(4),
+    ucl: orNull(finite),
+    lcl: orNull(finite),
+    fontSize: num(6, 40),
+    fontColor: HexColorSchema,
+    backColor: HexColorSchema,
+    borderColor: HexColorSchema,
+    borderWidth: num(0, 10),
+  }),
+  prediction: opt({
+    enabled: z.boolean(),
+    method: z.enum(["sma", "ses", "des", "holtWinters"]),
+    period: num(1, 500),
+    showInterval: z.boolean(),
+    description: z.boolean(),
+    window: num(2, 500),
+    alpha: orNull(num(0, 1)),
+    beta: orNull(num(0, 1)),
+    gamma: orNull(num(0, 1)),
+    seasonLength: num(2, 500),
+    trend: z.enum(["additive", "multiplicative"]),
+    seasonal: z.enum(["additive", "multiplicative"]),
+    damped: z.boolean(),
+  }),
+  value: opt({
+    nullNumeric: orNull(finite),
+    outlier: z.boolean(),
+    outlierMethod: z.enum(["iqr", "sigma"]),
+    outlierK: num(0, 10),
+  }),
+  focus: opt({
+    enabled: z.boolean(),
+    target: z.enum(["x", "y"]),
+    operator: z.enum([">", ">=", "<", "<=", "=", "!="]),
+    value: finite,
+    color: HexColorSchema,
+    shape: PointShapeSchema,
+    size: num(0.5, 40),
+    legendSingleColor: z.boolean(),
+  }),
+  tooltip: opt({
+    title: text(),
+    fontSize: num(6, 40),
+    fontColor: HexColorSchema,
+    background: HexColorSchema,
+    transparency: num(0, 1),
+    round: z.boolean(),
+    border: z.boolean(),
+    borderColor: HexColorSchema,
+    prefix: text(20),
+    suffix: text(20),
+    decimals: orNull(num(0, 10)),
+  }),
+  expression: opt({ x: text(120), y: text(120) }),
+}).openapi("ChartOptions");
+
 export const LegendPositionSchema = z
   .enum(["top", "bottom", "left", "right"])
   .openapi("LegendPosition");
@@ -57,6 +221,8 @@ export const CommonPropsSchema = z
     legendColors: ColorMapSchema.optional(),
     /** legend 위치. 없으면 위 */
     legendPosition: LegendPositionSchema.optional(),
+    /** 차트 속성. 차트가 쓰지 않는 구역은 저장하지 않는다. */
+    options: ChartOptionsSchema.optional(),
   })
   .openapi("CommonProps");
 
@@ -191,6 +357,8 @@ export const ItemRestoreSchema = z
     legendPosition: LegendPositionSchema.optional(),
     /** legend 체크박스로 끈 값 */
     hiddenLegend: z.array(z.string()).max(16).optional(),
+    /** item 개별 차트 속성 */
+    options: ChartOptionsSchema.optional(),
   })
   .openapi("ItemRestore");
 
@@ -253,6 +421,8 @@ export const ItemStateSchema = z
     customColor: z.boolean(),
     /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
     legendPosition: LegendPositionSchema.optional(),
+    /** item에 따로 정한 차트 속성. 없으면 공통 속성을 따른다. */
+    options: ChartOptionsSchema.optional(),
     /** 선택 영역 안의 점(막대/상자) 수. 선택이 없으면 없다. */
     selectedCount: z.number().optional(),
     favorites: z.array(FavoriteSchema),
@@ -387,6 +557,8 @@ export const ItemPropsRequestSchema = z
     z.object({
       legendVisible: z.object({ value: z.string(), visible: z.boolean() }),
     }),
+    /** item 개별 차트 속성 전체를 바꾼다. null이면 지우고 공통 속성을 따른다. */
+    z.object({ options: orNull(ChartOptionsSchema) }),
   ])
   .openapi("ItemPropsRequest");
 
@@ -463,6 +635,8 @@ export const AxisMetaSchema = z
     kind: z.enum(["number", "time"]),
     /** 데이터 값 기준 범위 (시계열은 epoch ms) */
     domain: range,
+    /** 로그 축으로 그렸는지. 픽셀 ↔ 값 환산을 log10 공간에서 한다. */
+    log: z.boolean().optional(),
   })
   .openapi("AxisMeta");
 
@@ -885,6 +1059,7 @@ export const HistoryEventTypeSchema = z
     "grid",
     "selection",
     "favorite",
+    "options",
     "delete",
   ])
   .openapi("HistoryEventType");
