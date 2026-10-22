@@ -133,17 +133,19 @@ export function ControlPanel() {
         />
       )}
 
-      <Select
-        label="legend"
-        value={draft.legend ?? NO_LEGEND}
-        options={[
-          { value: NO_LEGEND, label: "없음" },
-          ...toOptions(legendColumns(columns ?? [])),
-        ]}
-        onChange={(legend) =>
-          updateDraft({ legend: legend === NO_LEGEND ? null : legend })
-        }
-      />
+      {fields.legend !== false && (
+        <Select
+          label="legend"
+          value={draft.legend ?? NO_LEGEND}
+          options={[
+            { value: NO_LEGEND, label: "없음" },
+            ...toOptions(legendColumns(columns ?? [])),
+          ]}
+          onChange={(legend) =>
+            updateDraft({ legend: legend === NO_LEGEND ? null : legend })
+          }
+        />
+      )}
 
       {fields.agg && (
         <Select

@@ -162,6 +162,17 @@ export function ItemTooltip({
           }}
         />
       )}
+      {cursor && hit?.outline && (
+        // sankey: 가리킨 흐름 띠. PNG 좌표 path를 보이는 크기로 늘려 겹친다.
+        <svg
+          className={styles.hitOutline}
+          viewBox={`0 0 ${image.width} ${image.height}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path d={hit.outline} />
+        </svg>
+      )}
       {tooltipPosition &&
         hit &&
         createPortal(

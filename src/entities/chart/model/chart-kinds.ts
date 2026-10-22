@@ -1,7 +1,7 @@
 // 차트 종류별 컬럼 역할과 상단 도구 줄에서 쓸 수 있는 기능. 새 차트는 여기에 한 줄씩 더한다.
 // 서버의 같은 표(server/charts/chart-fields.ts)와 컬럼 타입이 맞아야 한다.
 
-import type { ChartType, ColumnType } from "@/shared/api/types";
+import type { ChartSpec, ChartType, ColumnType } from "@/shared/api/types";
 
 export type ChartFields = {
   x: readonly ColumnType[];
@@ -13,12 +13,22 @@ export type ChartFields = {
   labels?: Partial<Record<"x" | "y" | "z", string>>;
   /** 통계 함수(spec.agg)를 고르는지 */
   agg: boolean;
+  /** false면 legend 컬럼을 고르지 않는다. 차트가 정한 값(예: sankey 출발 노드)으로 legend를 그린다. */
+  legend?: false;
 };
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   scatter: { x: ["datetime", "numeric"], y: ["numeric"], agg: false },
   bar: { x: ["categorical"], y: ["numeric"], agg: true },
   boxplot: { x: ["categorical"], y: ["numeric"], agg: false },
+  sankey: {
+    x: ["categorical"],
+    y: ["categorical"],
+    z: ["numeric"],
+    labels: { x: "출발 (x)", y: "도착 (y)", z: "흐름 값 (z)" },
+    agg: true,
+    legend: false,
+  },
 };
 
 /**
@@ -43,7 +53,18 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   scatter: ALL,
   bar: NO_DELETE,
   boxplot: NO_DELETE,
+  sankey: ["select", "checkbox"],
 };
+
+/** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */
+export function legendColumnOf(spec: Pick<ChartSpec, "chartType" | "legend">) {
+  return CHART_FIELDS[spec.chartType].legend === false ? null : spec.legend;
+}
+
+/** PNG에 legend를 그리는지. legend 컬럼을 쓰지 않는 차트는 차트가 정한 값으로 늘 그린다. */
+export function drawsLegend(spec: Pick<ChartSpec, "chartType" | "legend">) {
+  return CHART_FIELDS[spec.chartType].legend === false || spec.legend !== null;
+}
 
 export function supports(type: ChartType | undefined, feature: ChartFeature) {
   return type !== undefined && CHART_SUPPORT[type].includes(feature);

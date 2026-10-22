@@ -5,12 +5,14 @@ import type {
   AxisMeta,
   CategoryMeta,
   ItemMeta,
+  SankeyMeta,
   ScatterMeta,
 } from "@/shared/api/types";
 import { AGG_LABELS } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
 import { groupSlot } from "./group-slot";
 import { PointIndex } from "./point-index";
+import { hitSankey, linkOutline } from "./sankey-hit";
 
 export type TooltipRow = { label: string; value: string; emphasis?: boolean };
 
@@ -19,6 +21,8 @@ export type TooltipHit = {
   marker?: { px: number; py: number };
   /** 가리킨 막대/상자를 감싸는 사각형 (PNG 좌표). bar, boxplot */
   highlight?: { x: number; y: number; width: number; height: number };
+  /** 가리킨 흐름 띠의 윤곽 (SVG path, PNG 좌표). sankey */
+  outline?: string;
   rows: TooltipRow[];
   /** 추가 컬럼을 서버에서 가져올 행. 없으면 서버 호출을 하지 않는다. */
   rowId?: number;
@@ -250,14 +254,64 @@ export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
   },
 };
 
+/** 흐름이면 출발 → 도착과 값, 노드면 이름과 들어오고 나가는 합 */
+export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    if (inLegendBox(meta, px, py)) return null;
+    const hit = hitSankey(meta, px, py);
+    if (!hit) return null;
+    const num = (v: number) => formatValue(v, "number");
+    const valueLabel = AGG_LABELS[meta.agg];
+    if (hit.kind === "link") {
+      const link = meta.links[hit.index];
+      return {
+        outline: linkOutline(meta, link),
+        rows: [
+          { label: "출발", value: meta.nodes[link.source].name },
+          { label: "도착", value: meta.nodes[link.target].name },
+          { label: valueLabel, value: num(link.value), emphasis: true },
+        ],
+      };
+    }
+    const node = meta.nodes[hit.index];
+    return {
+      highlight: {
+        x: node.x0 - HIGHLIGHT_PAD,
+        y: node.y0 - HIGHLIGHT_PAD,
+        width: node.x1 - node.x0 + HIGHLIGHT_PAD * 2,
+        height: Math.max(1, node.y1 - node.y0) + HIGHLIGHT_PAD * 2,
+      },
+      rows: [
+        {
+          label: node.side === "source" ? "출발 노드" : "도착 노드",
+          value: node.name,
+        },
+        {
+          label: "들어오는 합",
+          value: num(node.in),
+          emphasis: node.side === "target",
+        },
+        {
+          label: "나가는 합",
+          value: num(node.out),
+          emphasis: node.side === "source",
+        },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
   boxplot: TooltipStrategy<CategoryMeta>;
+  sankey: TooltipStrategy<SankeyMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
   boxplot: boxplotStrategy,
+  sankey: sankeyStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {
