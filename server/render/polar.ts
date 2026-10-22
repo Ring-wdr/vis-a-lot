@@ -2,7 +2,10 @@
 // 화면의 선택·좌표 변환은 meta.plot + meta.x/y만 보므로, 그림 영역 픽셀과 1:1인 "데이터 좌표"를 준다.
 // x = 그림 영역 왼쪽에서의 거리, y = 그림 영역 아래쪽에서의 거리 (y축은 위로 갈수록 커진다).
 
+import { drawTitle } from "./frame";
+import { type ChartOptions, DEFAULT_OPTIONS } from "./options";
 import type { AxisMeta } from "./scatter";
+import { fontPx } from "./style";
 import { THEME } from "./theme";
 
 type Ctx = OffscreenCanvasRenderingContext2D;
@@ -25,28 +28,26 @@ export function fixedSpace(plot: Plot) {
   };
 }
 
-/** 제목(왼쪽)과 요약(오른쪽) 한 줄. bar/boxplot과 같은 자리·글꼴이다. */
+/** 제목(왼쪽)과 요약(오른쪽) 한 줄. bar/boxplot과 같은 자리·글꼴이고 options.title을 따른다. */
 export function drawHeader(
   ctx: Ctx,
   plot: Plot,
   title: string,
   summary: readonly string[],
+  options: ChartOptions = DEFAULT_OPTIONS,
 ) {
-  ctx.fillStyle = THEME.textPrimary;
-  ctx.font = `600 12px ${THEME.font}`;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(title, plot.left, 17, plot.width);
-  ctx.fillStyle = THEME.textMuted;
-  ctx.font = `11px ${THEME.font}`;
-  ctx.textAlign = "right";
-  ctx.fillText(summary.filter(Boolean).join(" · "), plot.left + plot.width, 17);
+  drawTitle(ctx, plot, title, [...summary], options);
 }
 
 /** 그릴 게 없을 때 그림 영역 가운데 안내 문구 */
-export function drawEmpty(ctx: Ctx, plot: Plot, text: string) {
+export function drawEmpty(
+  ctx: Ctx,
+  plot: Plot,
+  text: string,
+  options: ChartOptions = DEFAULT_OPTIONS,
+) {
   ctx.fillStyle = THEME.textMuted;
-  ctx.font = `12px ${THEME.font}`;
+  ctx.font = `${fontPx(options, 12)}px ${THEME.font}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, plot.left + plot.width / 2, plot.top + plot.height / 2);

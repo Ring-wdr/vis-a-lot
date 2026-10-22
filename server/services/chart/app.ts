@@ -3,7 +3,8 @@
 
 import type { Context } from "hono";
 import { isTerminal } from "../../api/types";
-import { DELETABLE_CHARTS } from "../../charts/chart-fields";
+import { canDelete } from "../../charts/chart-fields";
+import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
   getChart,
@@ -195,7 +196,7 @@ export const chartApp = createServiceApp()
     if ("error" in target) return reject(c, target);
     const { chart, item } = target;
     // bar/boxplot 같은 집계 차트는 점이 아니라 집계 값이라 지울 대상이 없다.
-    if (!DELETABLE_CHARTS.includes(chart.spec.chartType))
+    if (!canDelete(chart.spec))
       return apiError(c, 409, "점 삭제는 점을 그리는 차트에서만 됩니다.");
     if (item.deletions.length >= MAX_DELETIONS)
       return apiError(
@@ -335,6 +336,11 @@ export const chartApp = createServiceApp()
       if (visible) hidden.delete(value);
       else hidden.add(value);
       props.hiddenLegend = hidden.size ? [...hidden] : undefined;
+    } else if ("options" in body) {
+      props.options = pickSupported(
+        target.chart.spec.chartType,
+        body.options ?? undefined,
+      );
     } else if (body.color === null) {
       // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
       props.color = undefined;
@@ -345,7 +351,11 @@ export const chartApp = createServiceApp()
     item.props = propsOrNone(props);
     recordEvent(
       target.chart,
-      "color" in body || "legendColor" in body ? "color" : "legend",
+      "color" in body || "legendColor" in body
+        ? "color"
+        : "options" in body
+          ? "options"
+          : "legend",
       item.key,
     );
     return c.json(redrawJob(target.chart, [item.key]), 202);
@@ -355,7 +365,14 @@ export const chartApp = createServiceApp()
     const target = idleChart(c.req.valid("param").chartId);
     if ("error" in target) return reject(c, target);
     const { chart, items } = target;
-    chart.spec = { ...chart.spec, common: { ...c.req.valid("json").common } };
+    const common = c.req.valid("json").common;
+    chart.spec = {
+      ...chart.spec,
+      common: {
+        ...common,
+        options: pickSupported(chart.spec.chartType, common.options),
+      },
+    };
     for (const item of items) item.props = undefined;
     recordEvent(chart, "common");
     return c.json(

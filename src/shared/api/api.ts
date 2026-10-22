@@ -4,6 +4,7 @@
 import { chartClient, dataClient } from "./clients";
 import type {
   ChartFilter,
+  ChartOptionsBody,
   ChartSpec,
   ColumnName,
   CommonProps,
@@ -474,6 +475,18 @@ export const api = {
       }),
     ),
 
+  /** item 개별 차트 속성 전체를 바꾼다. null이면 지우고 공통 속성을 따른다. */
+  setItemOptions: (
+    chartId: string,
+    itemKey: string,
+    options: ChartOptionsBody | null,
+  ) =>
+    unwrap(
+      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
+        params: { path: item(chartId, itemKey) },
+        body: { options },
+      }),
+    ),
   setItemLegendPosition: (
     chartId: string,
     itemKey: string,

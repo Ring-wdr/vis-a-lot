@@ -8,6 +8,7 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import type {
+  ChartOptionsBody,
   LegendPosition,
   Region,
   Shape,
@@ -22,6 +23,11 @@ export type ItemAction =
   | { type: "legendColor"; value: string; color: string | null }
   | { type: "legendPosition"; position: LegendPosition | null }
   | { type: "legendVisible"; value: string; visible: boolean }
+  /** item 개별 차트 속성 전체. null이면 지우고 공통 속성을 따른다. */
+  | {
+      type: "options";
+      options: ChartOptionsBody | null;
+    }
   | { type: "clearShapes" }
   | { type: "select"; region: Region | null }
   | { type: "deleteRegion"; region: Region }
@@ -77,6 +83,8 @@ export function useItemAction(chartId: string, itemKey: string) {
             action.value,
             action.visible,
           );
+        case "options":
+          return api.setItemOptions(chartId, itemKey, action.options);
         case "select":
           return api.setSelection(chartId, itemKey, action.region);
         case "addFavorite":

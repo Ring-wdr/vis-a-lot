@@ -34,13 +34,13 @@ export const MODE_FEATURE: Record<Mode, ChartFeature | null> = {
   paint: "paint",
 };
 
-/** 이 차트 종류에서 고를 수 있는 모드인지 */
+/** 이 차트 종류(하위 차트까지)에서 고를 수 있는 모드인지 */
 export function modeSupported(
   mode: Mode,
-  chartType: ChartSpec["chartType"] | undefined,
+  spec: Pick<ChartSpec, "chartType" | "subType"> | undefined,
 ) {
   const feature = MODE_FEATURE[mode];
-  return feature === null || supports(chartType, feature);
+  return feature === null || supports(spec, feature);
 }
 
 /** 페인트 모드에서 고르는 그리기 도구 */
@@ -148,7 +148,7 @@ export function createWorkspaceStore({
         itemJobs: {},
         undoCounts: {},
         // 새 차트가 지원하지 않는 모드(예: pie의 이동)였으면 기본 모드로 돌린다.
-        ...(modeSupported(s.mode, current.spec.chartType)
+        ...(modeSupported(s.mode, current.spec)
           ? {}
           : { mode: "normal" as const }),
       })),

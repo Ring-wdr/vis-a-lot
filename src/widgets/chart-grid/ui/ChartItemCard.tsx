@@ -4,7 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect } from "react";
 import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
+import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import { ItemOptionsButton } from "@/features/chart-settings/ui/ItemOptionsDialog";
 import {
   useItemAction,
   useItemActionPending,
@@ -18,6 +20,7 @@ import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
   type ChartImage,
+  type ChartOptionsBody,
   type ColumnName,
   type ItemSize,
   type ItemStage,
@@ -207,6 +210,7 @@ function DrawnItem({
             chartId={chartId}
             itemKey={item.key}
             columns={tooltipColumns}
+            itemOptions={item.options as ChartOptionsPatch | undefined}
             display={displaySize}
             overlay={checkboxes}
             onLegendColor={
@@ -259,6 +263,20 @@ function DrawnItem({
             busy={busy}
             hasLegend={hasLegend}
             commonPosition={commonPosition}
+            optionsSettings={
+              <ItemOptionsButton
+                itemKey={item.key}
+                label={item.label}
+                options={item.options as ChartOptionsPatch | undefined}
+                disabled={busy}
+                onChange={(options) =>
+                  action.mutate({
+                    type: "options",
+                    options: options as ChartOptionsBody | null,
+                  })
+                }
+              />
+            }
             onAction={action.mutate}
           />
         )}

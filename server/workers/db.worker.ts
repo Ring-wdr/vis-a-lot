@@ -15,7 +15,7 @@ import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
-import { toPieData, toRadarData } from "../data/polar-data";
+import { attachSunburst, toPieData, toRadarData } from "../data/polar-data";
 import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
 import { createDb } from "../db/database";
@@ -256,7 +256,7 @@ serveRpc<DbMethods>({
     return queryGanttData(db, schema, { ...params, table });
   },
 
-  async pieData({ dataset, ...params }) {
+  async pieData({ dataset, sunburst, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     const bars = await queryBarData(db, schema, {
       ...params,
@@ -264,7 +264,15 @@ serveRpc<DbMethods>({
       chartType: "bar",
       legend: null,
     });
-    return toPieData(bars);
+    const pie = toPieData(bars);
+    if (!sunburst) return pie;
+    const detail = await queryBarData(db, schema, {
+      ...params,
+      table,
+      chartType: "bar",
+      legend: sunburst,
+    });
+    return attachSunburst(pie, detail);
   },
 
   async radarData({ dataset, ...params }) {

@@ -140,9 +140,15 @@ const ICONS: Record<ChartType, ReactNode> = {
   ),
 };
 
-export function ChartIcon({ type }: { type: ChartType }) {
+export function ChartIcon({
+  type,
+  size = 22,
+}: {
+  type: ChartType;
+  size?: number;
+}) {
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
       {ICONS[type]}
     </svg>
   );

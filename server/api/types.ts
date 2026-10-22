@@ -18,6 +18,7 @@ import type { GanttMeta } from "../render/gantt";
 import type { HeatmapMeta } from "../render/heatmap";
 import type { HistogramMeta } from "../render/histogram";
 import type { LegendPosition } from "../render/legend";
+import type { ChartOptionsPatch } from "../render/options";
 import type { PieMeta } from "../render/pie";
 import type { RadarMeta } from "../render/radar";
 import type { Region } from "../render/region";
@@ -166,6 +167,26 @@ export const CHART_TYPES = [
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
+/**
+ * 하위 차트. 차트마다 고를 수 있는 값은 server/charts/chart-fields.ts(SUB_TYPES)가 정하고, 첫 값이 기본이다.
+ * line: 원래 선 / ECDF / 정규 CDF / 정규 확률. bar: 나란히 / 누적 / 100% 누적. boxplot: 원래 / 점 겹치기.
+ * pie: 원래 / 도넛 / 3D / sunburst.
+ */
+export const CHART_SUB_TYPES = [
+  "none",
+  "ecdf",
+  "ncdf",
+  "probability",
+  "side",
+  "stack",
+  "stack100",
+  "dot",
+  "doughnut",
+  "pie3d",
+  "sunburst",
+] as const;
+export type ChartSubType = (typeof CHART_SUB_TYPES)[number];
+
 export type CommonProps = {
   /** legend가 없을 때의 색 */
   color: string;
@@ -173,6 +194,8 @@ export type CommonProps = {
   legendColors?: Record<string, string>;
   /** legend 위치. 없으면 위 */
   legendPosition?: LegendPosition;
+  /** 차트 속성. 차트가 쓰지 않는 구역은 저장하지 않는다 (server/charts/chart-options.ts). */
+  options?: ChartOptionsPatch;
 };
 
 /** item 개별 속성. 공통 속성보다 우선한다. */
@@ -182,12 +205,16 @@ export type ItemProps = {
   legendPosition?: LegendPosition;
   /** legend 체크박스로 끈 값. 그 값의 점(막대/상자)은 그리지 않는다. */
   hiddenLegend?: string[];
+  /** 차트 속성. 공통 속성의 options 위에 덮는다. */
+  options?: ChartOptionsPatch;
 };
 
 export type ChartSpec = {
   /** 데이터셋 id (샘플 iot-100k …, 업로드 up-…) */
   dataset: string;
   chartType: ChartType;
+  /** 하위 차트. 없거나 그 차트에 없는 값이면 기본(첫 값). 예전 history에는 없다. */
+  subType?: ChartSubType | null;
   x: ColumnName;
   y: ColumnName;
   /** 세 번째 값 컬럼. 쓰는 차트만 고른다 (server/charts/chart-fields.ts). 예전 history에는 없다. */
@@ -226,6 +253,7 @@ export type ItemRestore = {
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
   hiddenLegend?: string[];
+  options?: ChartOptionsPatch;
 };
 
 export type CreateChartRequest = {
@@ -311,7 +339,8 @@ export type ItemPropsRequest =
   | { color: string | null }
   | { legendColor: { value: string; color: string | null } }
   | { legendPosition: LegendPosition | null }
-  | { legendVisible: { value: string; visible: boolean } };
+  | { legendVisible: { value: string; visible: boolean } }
+  | { options: ChartOptionsPatch | null };
 
 export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
@@ -372,6 +401,8 @@ export type ItemState = {
   customColor: boolean;
   /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
   legendPosition?: LegendPosition;
+  /** item에 따로 정한 차트 속성. 없으면 공통 속성을 따른다. */
+  options?: ChartOptionsPatch;
   /** 선택 영역 안의 점(막대/상자) 수. 선택이 없으면 없다. */
   selectedCount?: number;
   favorites: Favorite[];
@@ -396,6 +427,7 @@ export const HISTORY_EVENT_TYPES = [
   "grid",
   "selection",
   "favorite",
+  "options",
   "delete",
 ] as const;
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];

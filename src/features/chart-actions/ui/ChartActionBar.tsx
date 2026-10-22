@@ -10,7 +10,7 @@ import {
   Table,
   TableProperties,
 } from "lucide-react";
-import { CHART_LABELS, chartTitle } from "@/entities/chart/lib/title";
+import { chartKindLabel, chartTitle } from "@/entities/chart/lib/title";
 import { supports } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -78,8 +78,8 @@ export function ChartActionBar() {
   const notify = useWorkspace((s) => s.notify);
   const drawn = current !== undefined;
   const chartType = current?.spec.chartType;
-  const typeLabel = chartType ? CHART_LABELS[chartType] : "";
-  const checkboxOk = !chartType || supports(chartType, "checkbox");
+  const typeLabel = current ? chartKindLabel(current.spec) : "";
+  const checkboxOk = !chartType || supports(current?.spec, "checkbox");
   const columns = useColumns(current?.spec.dataset ?? "");
 
   const chartPng = useMutation({

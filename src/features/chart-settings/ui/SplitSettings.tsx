@@ -5,7 +5,7 @@ import { useColumns } from "@/shared/api/queries";
 import styles from "@/shared/ui/workspace.module.css";
 import settingsStyles from "./SettingsDialog.module.css";
 
-/** 전체 설정 · split by: 조합 이름을 이을 구분 기호. 다음 draw에 적용된다. */
+/** 전체 설정 · 제목의 연결 문자: split 조합 이름을 이을 기호. 다음 draw에 적용된다. */
 export function SplitSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
@@ -18,7 +18,7 @@ export function SplitSettings() {
 
   return (
     <div className={settingsStyles.section}>
-      <h3 className={settingsStyles.heading}>구분 기호</h3>
+      <h4 className={settingsStyles.heading}>연결 문자</h4>
       <label className={settingsStyles.row}>
         <span>기호</span>
         <input

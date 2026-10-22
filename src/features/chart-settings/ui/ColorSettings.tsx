@@ -16,7 +16,7 @@ import { useChangeCommon } from "../model/use-change-common";
 import settingsStyles from "./SettingsDialog.module.css";
 
 /**
- * 전체 설정 · 색상. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
+ * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
  * 바로 다시 그리는 규칙은 useChangeCommon을 따른다.
  */
 export function ColorSettings() {
@@ -31,7 +31,7 @@ export function ColorSettings() {
     legend,
     dataset.data?.state === "ready",
   );
-  const { change, pending, appliesToCurrent } = useChangeCommon();
+  const { change, pending } = useChangeCommon();
 
   const legendColorOf = (value: string, index: number) =>
     draft.common.legendColors?.[value] ?? defaultLegendColor(index);
@@ -40,7 +40,7 @@ export function ColorSettings() {
     <div className={settingsStyles.section}>
       {legend === null ? (
         <>
-          <h3 className={settingsStyles.heading}>공통 색상</h3>
+          <h4 className={settingsStyles.heading}>기본 색</h4>
           <ColorSwatches
             value={draft.common.color}
             disabled={readOnly || pending}
@@ -50,9 +50,9 @@ export function ColorSettings() {
         </>
       ) : (
         <>
-          <h3 className={settingsStyles.heading}>
-            legend 색상 · {columns.label(legend)}
-          </h3>
+          <h4 className={settingsStyles.heading}>
+            범례 값별 색 · {columns.label(legend)}
+          </h4>
           {legendValues.isPending &&
             (dataset.data?.state === "ready" ? (
               <LegendListSkeleton />
@@ -101,11 +101,6 @@ export function ColorSettings() {
           )}
         </>
       )}
-      <p className={styles.muted}>
-        {appliesToCurrent
-          ? "바꾸면 전체를 다시 그리고, item별 개별 색상은 모두 공통 색으로 바뀝니다."
-          : "다음 draw에 적용됩니다."}
-      </p>
     </div>
   );
 }

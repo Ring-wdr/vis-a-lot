@@ -1,7 +1,7 @@
 "use client";
 
 import { ArchiveRestore, RotateCcw, Settings, ZoomOut } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
 import { Popover } from "@/shared/ui/Popover";
@@ -19,8 +19,11 @@ export function ItemToolbar({
   busy,
   hasLegend = false,
   commonPosition = "top",
+  optionsSettings,
   onAction,
 }: {
+  /** 설정 팝업 끝에 붙는 차트 속성 편집 진입점 (chart-settings 기능이 그린다) */
+  optionsSettings?: ReactNode;
   item: ItemState;
   /** legend가 있으면 개별 색을 legend 값별로 바꾸고 위치를 고른다. */
   hasLegend?: boolean;
@@ -94,7 +97,9 @@ export function ItemToolbar({
               disabled={disabled}
               open={settingsOpened}
               onAction={onAction}
-            />
+            >
+              {optionsSettings}
+            </ItemSettings>
           )}
         </Popover>
       )}

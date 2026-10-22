@@ -5,12 +5,20 @@
 
 import { scaleLinear } from "d3-scale";
 import { AGG_LABELS, type AggFn } from "../data/schema";
+import { drawAxisTitles, timeFormat } from "./axis-style";
+import { drawTitle } from "./frame";
 import {
   drawLegendAround,
   framePlot,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import {
+  type ChartOptions,
+  optionsOf,
+  type PaletteOptions,
+  type ValueOptions,
+} from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -19,6 +27,14 @@ import {
   type ProgressFn,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
+import {
+  createLabelGuard,
+  drawPanel,
+  drawPointLabel,
+  fontPx,
+  gradientColors,
+  surfaceOf,
+} from "./style";
 import { THEME } from "./theme";
 
 export type HeatmapMeta = {
@@ -47,6 +63,8 @@ export type HeatmapMeta = {
 };
 
 export type HeatmapInput = {
+  /** 차트 속성. 없으면 기본값 (optionsOf) */
+  options?: ChartOptions;
   width: number;
   height: number;
   title: string;
@@ -112,16 +130,59 @@ export function colorDomainOf(
   return [min, max];
 }
 
-/** 값 → 순차 색. domain을 단계 수만큼 고르게 나눠 이어 칠한다. */
-export function sequentialColor(domain: [number, number]) {
+/**
+ * 색 척도의 색 단계. palette.gradient가 켜져 있으면 시작→(중간)→끝(뒤집기 반영) 색을,
+ * steps가 있으면 그 수만큼 끊어진 단계(discrete)로 쓴다. 아니면 기본 순차 색(이어 칠하기)이다.
+ */
+export function rampOf(palette?: PaletteOptions): {
+  colors: readonly string[];
+  discrete: boolean;
+} {
+  if (!palette?.gradient) return { colors: SEQUENTIAL_RAMP, discrete: false };
+  if (palette.steps > 0)
+    return {
+      colors: gradientColors(palette, Math.max(2, Math.round(palette.steps))),
+      discrete: true,
+    };
+  const stops = [palette.start, palette.middle, palette.end].filter(Boolean);
+  if (palette.reverse) stops.reverse();
+  return { colors: stops, discrete: false };
+}
+
+/**
+ * 값 → 순차 색. domain을 단계 수만큼 고르게 나눠 이어 칠한다.
+ * palette를 주면 rampOf의 색으로, 끊어진 단계면 값이 든 단계의 색 하나로 칠한다.
+ */
+export function sequentialColor(
+  domain: [number, number],
+  palette?: PaletteOptions,
+): (v: number) => string {
   const [d0, d1] = domain;
-  const stops = SEQUENTIAL_RAMP.map(
-    (_, i) => d0 + ((d1 - d0) * i) / (SEQUENTIAL_RAMP.length - 1),
+  const { colors, discrete } = rampOf(palette);
+  if (discrete) {
+    return (v: number) => {
+      const t = (v - d0) / (d1 - d0 || 1);
+      const k = Math.floor(t * colors.length);
+      return colors[Math.min(colors.length - 1, Math.max(0, k))];
+    };
+  }
+  const stops = colors.map(
+    (_, i) => d0 + ((d1 - d0) * i) / (colors.length - 1),
   );
   return scaleLinear<string>()
     .domain(stops)
-    .range([...SEQUENTIAL_RAMP])
+    .range([...colors])
     .clamp(true);
+}
+
+/** value.nullNumeric이 있으면 빈 칸(null)을 그 값으로 채운다. 없으면 그대로 */
+export function fillNulls(
+  cells: (number | null)[][],
+  value: ValueOptions,
+): (number | null)[][] {
+  const fill = value.nullNumeric;
+  if (fill === null) return cells;
+  return cells.map((col) => col.map((v) => v ?? fill));
 }
 
 /** 범주 축 하나의 글자를 겹치지 않게 건너뛸 간격 */
@@ -142,13 +203,16 @@ export function renderHeatmap(
   input: HeatmapInput,
   progress: ProgressFn,
 ): HeatmapMeta {
-  const { width, height, xCategories, yCategories, cells, view } = input;
+  const o = optionsOf(input);
+  const { width, height, xCategories, yCategories, view } = input;
+  // 빈 칸을 값으로 채우면 metadata(툴팁)도 채운 값을 본다.
+  const cells = fillNulls(input.cells, o.value);
   const nx = xCategories.length;
   const ny = yCategories.length;
   const groups = (input.groups ?? []).map(regionTester);
   const inSelection = input.selection && regionTester(input.selection);
   const colorDomain = colorDomainOf(cells);
-  const color = sequentialColor(colorDomain);
+  const color = sequentialColor(colorDomain, o.palette);
 
   /** 칸 색: 새 범례 영역 안이면 그 항목 색, 아니면 값의 순차 색 */
   const fillOf = (i: number, j: number, v: number) => {
@@ -166,18 +230,48 @@ export function renderHeatmap(
     });
   }
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
 
   // ── 축 (aggregate) ────────────────────────────────────────────
-  ctx.font = `11px ${THEME.font}`;
+  const xAxisO = o.axes.x;
+  const yAxisO = o.axes.y;
+  const xFont = fontPx(o, 11, xAxisO.label.fontSize);
+  const yFont = fontPx(o, 11, yAxisO.label.fontSize);
+  // 시계열 x는 dateFormat을 정하면 구간 시작 시각을 그 형식으로 다시 적는다.
+  const xLabels =
+    input.xStarts && xAxisO.dateFormat.trim()
+      ? (() => {
+          const starts = input.xStarts;
+          const fmt = timeFormat(xAxisO.dateFormat, [
+            starts[0] ?? 0,
+            starts[starts.length - 1] ?? 0,
+          ]);
+          return xCategories.map((c, i) =>
+            starts[i] === undefined ? c : fmt(starts[i]),
+          );
+        })()
+      : xCategories;
+  ctx.font = `${yFont}px ${THEME.font}`;
   const yLabelWidth = Math.min(
     Y_LABEL_MAX,
     Math.max(10, ...yCategories.map((c) => ctx.measureText(c).width)),
   );
+  ctx.font = `${xFont}px ${THEME.font}`;
+  const xLabelWidth = Math.min(
+    80,
+    Math.max(10, ...xLabels.map((c) => ctx.measureText(c).width)),
+  );
   let plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, yLabelWidth, input.legend);
+    : framePlot(
+        ctx,
+        width,
+        height,
+        yLabelWidth,
+        input.legend,
+        o,
+        xAxisO.label.angle ? xLabelWidth : undefined,
+      );
   // legend 상자는 색 막대까지 포함한 폭을 기준으로 놓는다.
   const legendFrame = plot;
   if (!input.compact) {
@@ -204,69 +298,121 @@ export function renderHeatmap(
   // ── 축 글자, 제목, 색 막대, legend (섬네일은 그림 영역만 그린다) ────────
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    ctx.fillStyle = THEME.textSecondary;
-    // y 범주: 보이는 범주만, 겹치면 건너뛴다.
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
+    // 칸이 그림 영역을 덮으므로 그리드·축 선은 그리지 않는다. 눈금 선(tick.length)과 글자만 축 속성을 따른다.
+    const yTick =
+      yAxisO.visible && yAxisO.tick.visible
+        ? Math.round(yAxisO.tick.length)
+        : 0;
+    const xTick =
+      xAxisO.visible && xAxisO.tick.visible
+        ? Math.round(xAxisO.tick.length)
+        : 0;
     const yFirst = Math.max(0, Math.ceil(yDomain[0]));
     const yLast = Math.min(ny - 1, Math.floor(yDomain[1]));
-    const yStep = labelStep(14, bandY);
-    for (let j = yFirst; j <= yLast; j += yStep) {
-      ctx.fillText(
-        truncate(ctx, yCategories[j], yLabelWidth),
-        plot.left - 6,
-        y(j),
-      );
-    }
-    // x 범주
+    const yStep = labelStep(yFont + 3, bandY);
     const xFirst = Math.max(0, Math.ceil(xDomain[0]));
     const xLast = Math.min(nx - 1, Math.floor(xDomain[1]));
-    const widest = Math.max(
-      1,
-      ...xCategories
-        .slice(xFirst, xLast + 1)
-        .map((c) => ctx.measureText(c).width),
-    );
-    const xStep = labelStep(Math.min(widest, 80) + 8, bandX);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (let i = xFirst; i <= xLast; i += xStep) {
-      ctx.fillText(
-        truncate(ctx, xCategories[i], bandX * xStep - 4),
-        x(i),
-        plot.top + plot.height + 7,
-      );
+    if (yTick > 0 || xTick > 0) {
+      ctx.strokeStyle = yAxisO.tick.color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let j = yFirst; yTick > 0 && j <= yLast; j += yStep) {
+        const ty = Math.round(y(j)) + 0.5;
+        ctx.moveTo(plot.left - yTick, ty);
+        ctx.lineTo(plot.left, ty);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = xAxisO.tick.color;
+      ctx.beginPath();
+      for (let i = xFirst; xTick > 0 && i <= xLast; i++) {
+        const tx = Math.round(x(i)) + 0.5;
+        ctx.moveTo(tx, plot.top + plot.height);
+        ctx.lineTo(tx, plot.top + plot.height + xTick);
+      }
+      ctx.stroke();
     }
+    // y 범주: 보이는 범주만, 겹치면 건너뛴다.
+    if (yAxisO.visible && yAxisO.label.visible) {
+      ctx.font = `${yFont}px ${THEME.font}`;
+      ctx.fillStyle = yAxisO.label.color;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let j = yFirst; j <= yLast; j += yStep) {
+        ctx.fillText(
+          truncate(ctx, yCategories[j], yLabelWidth),
+          plot.left - 6 - yTick,
+          y(j),
+        );
+      }
+    }
+    // x 범주
+    if (xAxisO.visible && xAxisO.label.visible) {
+      ctx.font = `${xFont}px ${THEME.font}`;
+      ctx.fillStyle = xAxisO.label.color;
+      const top = plot.top + plot.height + 7 + xTick;
+      if (xAxisO.label.angle) {
+        const xStep = labelStep(xFont + 2, bandX);
+        const rad = (-xAxisO.label.angle * Math.PI) / 180;
+        ctx.textAlign = xAxisO.label.angle > 0 ? "right" : "left";
+        ctx.textBaseline = "middle";
+        for (let i = xFirst; i <= xLast; i += xStep) {
+          ctx.save();
+          ctx.translate(x(i), top);
+          ctx.rotate(rad);
+          ctx.fillText(truncate(ctx, xLabels[i], 80), 0, 0);
+          ctx.restore();
+        }
+      } else {
+        const widest = Math.max(
+          1,
+          ...xLabels
+            .slice(xFirst, xLast + 1)
+            .map((c) => ctx.measureText(c).width),
+        );
+        const xStep = labelStep(Math.min(widest, 80) + 8, bandX);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for (let i = xFirst; i <= xLast; i += xStep) {
+          ctx.fillText(truncate(ctx, xLabels[i], bandX * xStep - 4), x(i), top);
+        }
+      }
+    }
+    drawAxisTitles(
+      ctx,
+      plot,
+      o,
+      { x: input.xTitle, y: input.yTitle },
+      yLabelWidth,
+      xAxisO.label.angle ? xLabelWidth : undefined,
+    );
 
     // ── 제목 ──────────────────────────────────────────────────────
-    ctx.fillStyle = THEME.textPrimary;
-    ctx.font = `600 12px ${THEME.font}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(input.title, plot.left, 17, plot.width);
-    ctx.fillStyle = THEME.textMuted;
-    ctx.font = `11px ${THEME.font}`;
-    ctx.textAlign = "right";
-    ctx.fillText(
+    // 요약 글자는 색 막대까지 포함한 폭의 오른쪽 끝에 둔다.
+    drawTitle(
+      ctx,
+      legendFrame,
+      input.title,
       [
         AGG_LABELS[input.agg],
         `${nx} × ${ny} 칸`,
         inSelection ? `${selectedCount}개 선택` : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-      legendFrame.left + legendFrame.width,
-      17,
+      ],
+      o,
     );
 
-    drawColorBar(ctx, colorDomain, {
-      left: plot.left + plot.width + 12,
-      top: plot.top,
-      height: plot.height,
-    });
+    drawColorBar(
+      ctx,
+      colorDomain,
+      {
+        left: plot.left + plot.width + 12,
+        top: plot.top,
+        height: plot.height,
+      },
+      o,
+    );
 
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, legendFrame, yLabelWidth)
+      ? drawLegendAround(ctx, input.legend, legendFrame, yLabelWidth, o)
       : undefined;
   }
 
@@ -305,6 +451,18 @@ export function renderHeatmap(
     if (i % 50 === 0) progress("render", (i - iFrom) / (iTo - iFrom + 1));
   }
   ctx.globalAlpha = 1;
+  // 칸 값 글자: 칸 가운데 기준, 겹치면 건너뛴다.
+  if (o.pointLabel.visible && !input.compact) {
+    const guard = createLabelGuard();
+    const font = fontPx(o, 10, o.pointLabel.fontSize);
+    for (let i = iFrom; i <= iTo; i++) {
+      for (let j = jFrom; j <= jTo; j++) {
+        const v = cells[i]?.[j];
+        if (v === null || v === undefined) continue;
+        drawPointLabel(ctx, x(i), y(j), v, o.pointLabel, font, guard);
+      }
+    }
+  }
   if (input.selection) {
     drawSelection(
       ctx,
@@ -342,27 +500,38 @@ export function renderHeatmap(
   };
 }
 
-/** 그림 오른쪽의 세로 색 막대. 위가 큰 값이다. */
+/** 그림 오른쪽의 세로 색 막대. 위가 큰 값이다. 끊어진 단계(palette.steps)면 단계마다 한 색 칸이다. */
 function drawColorBar(
   ctx: Ctx,
   domain: [number, number],
   { left, top, height }: { left: number; top: number; height: number },
+  o: ChartOptions,
 ) {
-  const gradient = ctx.createLinearGradient(0, top + height, 0, top);
-  SEQUENTIAL_RAMP.forEach((c, i) => {
-    gradient.addColorStop(i / (SEQUENTIAL_RAMP.length - 1), c);
-  });
-  ctx.fillStyle = gradient;
-  ctx.fillRect(left, top, BAR_WIDTH, height);
+  const { colors, discrete } = rampOf(o.palette);
+  if (discrete) {
+    const step = height / colors.length;
+    colors.forEach((c, k) => {
+      ctx.fillStyle = c;
+      // 아래가 첫 단계(작은 값)
+      ctx.fillRect(left, top + height - step * (k + 1), BAR_WIDTH, step);
+    });
+  } else {
+    const gradient = ctx.createLinearGradient(0, top + height, 0, top);
+    colors.forEach((c, i) => {
+      gradient.addColorStop(i / (colors.length - 1), c);
+    });
+    ctx.fillStyle = gradient;
+    ctx.fillRect(left, top, BAR_WIDTH, height);
+  }
   const scale = scaleLinear()
     .domain(domain)
     .range([top + height, top]);
   const ticks = scale.ticks(Math.max(2, Math.min(5, Math.floor(height / 40))));
   const format = scale.tickFormat(5);
-  ctx.strokeStyle = THEME.surface;
+  ctx.strokeStyle = surfaceOf(o);
   ctx.lineWidth = 1;
   ctx.fillStyle = THEME.textSecondary;
-  ctx.font = `11px ${THEME.font}`;
+  ctx.font = `${fontPx(o, 11)}px ${THEME.font}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   for (const t of ticks) {

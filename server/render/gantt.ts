@@ -4,6 +4,10 @@
 
 import { scaleLinear } from "d3-scale";
 import type { GanttBars } from "../data/gantt-data";
+import { focusTest } from "./analytics/focus";
+import { drawAxisTitles, drawXAxis, timeFormat } from "./axis-style";
+import { timeXAxis } from "./candle";
+import { drawTitle } from "./frame";
 import {
   drawLegendAround,
   framePlot,
@@ -11,16 +15,24 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
   compactPlot,
   type ItemView,
   type ProgressFn,
-  xAxis,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import { THEME } from "./theme";
+import {
+  alphaOf,
+  createLabelGuard,
+  drawPanel,
+  drawPointLabel,
+  fontPx,
+  surfaceOf,
+} from "./style";
+import { OTHERS_COLOR, THEME } from "./theme";
 
 export type GanttMeta = {
   chartType: "gantt";
@@ -47,6 +59,8 @@ export type GanttMeta = {
 };
 
 export type GanttInput = {
+  /** 차트 속성. 없으면 기본값 (optionsOf) */
+  options?: ChartOptions;
   width: number;
   height: number;
   title: string;
@@ -148,11 +162,31 @@ function truncate(ctx: Ctx, text: string, maxWidth: number) {
   return `${text.slice(0, end)}…`;
 }
 
+const HOUR_MS = 3_600_000;
+
+/**
+ * focus 조건에 맞는 막대. target x는 막대 시작 시각(epoch ms), y는 구간 길이(시간 단위)로 견준다.
+ * focus가 꺼져 있으면 undefined
+ */
+export function ganttFocus(
+  bars: GanttBars,
+  o: ChartOptions,
+): Uint8Array | undefined {
+  if (!o.focus.enabled) return undefined;
+  const test = focusTest(o.focus);
+  const out = new Uint8Array(bars.s.length);
+  for (let j = 0; j < out.length; j++) {
+    out[j] = test(bars.s[j], (bars.e[j] - bars.s[j]) / HOUR_MS) ? 1 : 0;
+  }
+  return out;
+}
+
 export function renderGantt(
   ctx: Ctx,
   input: GanttInput,
   progress: ProgressFn,
 ): GanttMeta {
+  const o = optionsOf(input);
   const { width, height, rows, bars, view } = input;
   const rowCount = rows.length;
   const n = bars.s.length;
@@ -181,30 +215,38 @@ export function renderGantt(
       if (inside[j]) selectedCount++;
     }
   }
-  const colorOf = (i: number) => input.legend?.colors[i] ?? input.color;
+  const focus = ganttFocus(bars, o);
+  // focus: 조건에 맞는 막대는 focus 색, legendSingleColor면 나머지는 회색 한 가지
+  const colorOf = (j: number) =>
+    focus?.[j]
+      ? o.focus.color
+      : focus && o.focus.legendSingleColor
+        ? OTHERS_COLOR
+        : (input.legend?.colors[index[j]] ?? input.color);
 
-  ctx.fillStyle = THEME.surface;
-  ctx.fillRect(0, 0, width, height);
+  drawPanel(ctx, width, height, o);
 
   // ── 축 (aggregate) ────────────────────────────────────────────
+  const yAxisO = o.axes.y;
   const yDomain = view?.y ?? full.y;
   const xDomain = view?.x ?? full.x;
-  ctx.font = `11px ${THEME.font}`;
+  const rowFont = fontPx(o, 11, yAxisO.label.fontSize);
+  ctx.font = `${rowFont}px ${THEME.font}`;
   const labelWidth = Math.min(
     ROW_LABEL_MAX,
     Math.max(10, ...rows.map((r) => ctx.measureText(r).width)),
   );
   const plot = input.compact
     ? compactPlot(width, height)
-    : framePlot(ctx, width, height, labelWidth, input.legend);
+    : framePlot(ctx, width, height, labelWidth, input.legend, o);
   const y = scaleLinear()
     .domain(yDomain)
     .range([plot.top + plot.height, plot.top]);
-  const {
-    scale: x,
-    ticks: xTicks,
-    format: xFormat,
-  } = xAxis("time", xDomain, [plot.left, plot.left + plot.width], false);
+  const { scale: x, ticks: xTicks } = timeXAxis(
+    [xDomain[0], xDomain[1]],
+    [plot.left, plot.left + plot.width],
+  );
+  const xFormat = timeFormat(o.axes.x.dateFormat, [xDomain[0], xDomain[1]]);
   const band = plot.height / (yDomain[1] - yDomain[0]);
   const barHeight = Math.max(1, band * BAR_RATIO);
 
@@ -264,64 +306,72 @@ export function renderGantt(
   // ── 그리드와 축, 제목, legend ───────────────────────────────────
   let legendMeta: LegendMeta | undefined;
   if (!input.compact) {
-    ctx.strokeStyle = THEME.grid;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = THEME.textSecondary;
+    // y(작업 행): 행 사이 구분선은 y 그리드 속성, 행 이름은 y 눈금 글자 속성을 따른다.
+    const tick =
+      yAxisO.visible && yAxisO.tick.visible
+        ? Math.round(yAxisO.tick.length)
+        : 0;
+    ctx.strokeStyle = yAxisO.grid.color;
+    ctx.lineWidth = yAxisO.grid.width;
+    ctx.fillStyle = yAxisO.label.color;
+    ctx.font = `${rowFont}px ${THEME.font}`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     // 보이는 행만 라벨을 달고, 행이 좁으면 건너뛴다.
     const first = Math.max(0, Math.ceil(rowCount - 1 - yDomain[1]));
     const last = Math.min(rowCount - 1, Math.floor(rowCount - 1 - yDomain[0]));
-    const step = Math.max(1, Math.ceil(13 / Math.max(band, 1)));
+    const step = Math.max(1, Math.ceil((rowFont + 2) / Math.max(band, 1)));
     for (let i = first; i <= last; i++) {
       const cy = y(rowY(rowCount, i));
       // 행 사이 구분선
       const ty = Math.round(cy + band / 2) + 0.5;
-      if (band >= 4 && ty < plot.top + plot.height) {
+      if (yAxisO.grid.visible && band >= 4 && ty < plot.top + plot.height) {
         ctx.beginPath();
         ctx.moveTo(plot.left, ty);
         ctx.lineTo(plot.left + plot.width, ty);
         ctx.stroke();
       }
-      if ((i - first) % step === 0)
-        ctx.fillText(truncate(ctx, rows[i], labelWidth), plot.left - 6, cy);
+      if ((i - first) % step !== 0 || !yAxisO.visible) continue;
+      if (tick > 0) {
+        ctx.save();
+        ctx.strokeStyle = yAxisO.tick.color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(plot.left - tick, Math.round(cy) + 0.5);
+        ctx.lineTo(plot.left, Math.round(cy) + 0.5);
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (yAxisO.label.visible)
+        ctx.fillText(
+          truncate(ctx, rows[i], labelWidth),
+          plot.left - 6 - tick,
+          cy,
+        );
     }
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (const t of xTicks) {
-      ctx.fillText(
-        xFormat(t),
-        Math.round(x(t)) + 0.5,
-        plot.top + plot.height + 7,
-      );
+    if (yAxisO.visible && yAxisO.line.visible) {
+      ctx.strokeStyle = yAxisO.line.color;
+      ctx.lineWidth = yAxisO.line.width;
+      ctx.beginPath();
+      ctx.moveTo(plot.left + 0.5, plot.top);
+      ctx.lineTo(plot.left + 0.5, plot.top + plot.height);
+      ctx.stroke();
     }
-    ctx.strokeStyle = THEME.axis;
-    ctx.beginPath();
-    ctx.moveTo(plot.left, plot.top + plot.height + 0.5);
-    ctx.lineTo(plot.left + plot.width, plot.top + plot.height + 0.5);
-    ctx.stroke();
-
-    ctx.fillStyle = THEME.textPrimary;
-    ctx.font = `600 12px ${THEME.font}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(input.title, plot.left, 17, plot.width);
-    ctx.fillStyle = THEME.textMuted;
-    ctx.font = `11px ${THEME.font}`;
-    ctx.textAlign = "right";
-    ctx.fillText(
+    drawXAxis(ctx, plot, x, xTicks, xFormat, o);
+    drawAxisTitles(ctx, plot, o, { x: "시간", y: input.rowTitle }, labelWidth);
+    drawTitle(
+      ctx,
+      plot,
+      input.title,
       [
         `${rowCount.toLocaleString()}개 행`,
         `${n.toLocaleString()}개 구간`,
         inSelection ? `${selectedCount.toLocaleString()}개 선택` : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
-      plot.left + plot.width,
-      17,
+      ],
+      o,
     );
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, plot, labelWidth)
+      ? drawLegendAround(ctx, input.legend, plot, labelWidth, o)
       : undefined;
   }
 
@@ -339,18 +389,56 @@ export function renderGantt(
       plot.top + plot.height / 2,
     );
   }
+  // 막대 모양: 채우기·테두리(style), 투명도, 테두리 굵기
+  const { style, borderWidth, transparency } = o.shape;
+  const alpha = alphaOf(transparency, 1);
+  const stroke = surfaceOf(o);
   for (let j = 0; j < n; j++) {
     if (owner[j] !== j) continue;
     const cy = y(rowY(rowCount, bars.r[j]));
-    ctx.globalAlpha = inside[j] ? 1 : 0.2;
-    ctx.fillStyle = colorOf(index[j]);
+    ctx.globalAlpha = inside[j] ? alpha : alpha * 0.2;
+    const color = colorOf(j);
     // 이웃 막대가 같은 경계를 쓰도록 정수 픽셀에 맞춘다 (반투명 틈이 생기지 않게).
     const left = Math.round(plot.left + px0[j]);
     const right = Math.max(left + 1, Math.round(plot.left + drawEnd[j]));
-    ctx.fillRect(left, cy - barHeight / 2, right - left, barHeight);
+    if (style !== "border") {
+      ctx.fillStyle = color;
+      ctx.fillRect(left, cy - barHeight / 2, right - left, barHeight);
+    }
+    if (style === "border" || borderWidth > 0) {
+      const bw = style === "border" ? Math.max(1, borderWidth) : borderWidth;
+      ctx.strokeStyle = style === "border" ? color : stroke;
+      ctx.lineWidth = bw;
+      ctx.strokeRect(
+        left + bw / 2,
+        cy - barHeight / 2 + bw / 2,
+        Math.max(0, right - left - bw),
+        Math.max(0, barHeight - bw),
+      );
+    }
     if (j % 2000 === 0) progress("render", j / n);
   }
   ctx.globalAlpha = 1;
+  // 막대 글자: legend가 있으면 legend 값, 없으면 구간 길이(시간). 겹치면 건너뛴다.
+  if (o.pointLabel.visible && !input.compact) {
+    const guard = createLabelGuard();
+    const font = fontPx(o, 10, o.pointLabel.fontSize);
+    for (let j = 0; j < n; j++) {
+      if (owner[j] !== j) continue;
+      const cy = y(rowY(rowCount, bars.r[j]));
+      const cx = plot.left + (px0[j] + drawEnd[j]) / 2;
+      const anchor =
+        o.pointLabel.position === "top"
+          ? cy - barHeight / 2
+          : o.pointLabel.position === "bottom"
+            ? cy + barHeight / 2
+            : cy;
+      const value = input.legend
+        ? (input.legend.values[index[j]] ?? "")
+        : (bars.e[j] - bars.s[j]) / HOUR_MS;
+      drawPointLabel(ctx, cx, anchor, value, o.pointLabel, font, guard);
+    }
+  }
   if (input.selection) {
     drawSelection(
       ctx,

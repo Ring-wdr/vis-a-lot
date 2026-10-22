@@ -2,7 +2,14 @@
 
 import { useEffect } from "react";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
-import { CHART_FIELDS } from "@/entities/chart/model/chart-kinds";
+import {
+  CHART_FIELDS,
+  isDistributionLine,
+  SUB_TYPE_LABELS,
+  SUB_TYPES,
+  subTypeOf,
+  usesLegendColumn,
+} from "@/entities/chart/model/chart-kinds";
 import { ChartIcon } from "@/entities/chart/ui/ChartIcon";
 import {
   columnsOfTypes,
@@ -16,6 +23,7 @@ import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
 import {
   type AggFn,
   CHART_TYPES,
+  type ChartType,
   type ColumnInfo,
   type ColumnName,
 } from "@/shared/api/types";
@@ -31,6 +39,13 @@ const AGG_OPTIONS: SelectOption<AggFn>[] = AGG_FNS.map((fn) => ({
   value: fn,
   label: AGG_LABELS[fn],
 }));
+const CHART_OPTIONS: SelectOption<ChartType>[] = CHART_TYPES.map((type) => ({
+  value: type,
+  label: CHART_LABELS[type],
+  icon: <ChartIcon type={type} size={16} />,
+}));
+/** 하위 차트가 없는 차트의 서브 차트 칸 */
+const NO_SUB_TYPE = "none";
 
 function toOptions(columns: readonly ColumnInfo[]): Option<ColumnName>[] {
   return columns.map((c) => ({ value: c.name, label: c.label }));
@@ -68,6 +83,10 @@ export function ControlPanel() {
 
   const allOptions = toOptions(columns ?? []);
   const fields = CHART_FIELDS[draft.chartType];
+  const subTypes = SUB_TYPES[draft.chartType];
+  // 분포 line(ECDF 등)은 y 컬럼 하나의 분포라 x를 고르지 않는다.
+  const distribution = isDistributionLine(draft);
+  const sunburst = draft.chartType === "pie" && subTypeOf(draft) === "sunburst";
   const optionsOf = (types: readonly ColumnInfo["type"][]) =>
     toOptions(columnsOfTypes(columns ?? [], types));
 
@@ -78,44 +97,54 @@ export function ControlPanel() {
         onChange={(dataset) => updateDraft({ dataset })}
       />
 
-      <fieldset className={styles.field}>
-        <legend>차트 종류</legend>
-        <div className={styles.chartTypes}>
-          {CHART_TYPES.map((type) => (
-            <button
-              key={type}
-              type="button"
-              aria-pressed={draft.chartType === type}
-              title={CHART_LABELS[type]}
-              onClick={() => {
-                // 차트 종류마다 x축에 쓸 수 있는 타입이 달라 그에 맞게 바로잡는다.
-                const next = { ...draft, chartType: type };
-                updateDraft({
-                  chartType: type,
-                  ...(columns && fitSpecToSchema(next, columns)),
-                });
-              }}
-            >
-              <ChartIcon type={type} />
-              <span>{CHART_LABELS[type]}</span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {/* 차트 종류가 늘어도 한 줄 높이를 지키도록 버튼 격자 대신 select 둘을 나란히 둔다. */}
+      <div className={styles.chartPicker}>
+        <Select
+          label="차트"
+          value={draft.chartType}
+          options={CHART_OPTIONS}
+          onChange={(type) => {
+            if (type === draft.chartType) return;
+            // 차트 종류마다 x축에 쓸 수 있는 타입이 달라 그에 맞게 바로잡는다. 하위 차트는 기본으로 돌린다.
+            const next = { ...draft, chartType: type, subType: null };
+            updateDraft({
+              chartType: type,
+              subType: null,
+              ...(columns && fitSpecToSchema(next, columns)),
+            });
+          }}
+        />
+        <Select
+          label="서브 차트"
+          value={subTypeOf(draft) ?? NO_SUB_TYPE}
+          disabled={!subTypes}
+          options={
+            subTypes
+              ? subTypes.map((sub) => ({
+                  value: sub,
+                  label: SUB_TYPE_LABELS[sub],
+                }))
+              : [{ value: NO_SUB_TYPE, label: "없음" }]
+          }
+          onChange={(subType) => updateDraft({ subType })}
+        />
+      </div>
 
       <GridPicker />
 
-      <Select
-        label={fields.labels?.x ?? "x"}
-        value={draft.x || null}
-        placeholder={noColumns}
-        options={optionsOf(fields.x)}
-        onChange={(x) => updateDraft({ x })}
-      />
+      {!distribution && (
+        <Select
+          label={fields.labels?.x ?? "x"}
+          value={draft.x || null}
+          placeholder={noColumns}
+          options={optionsOf(fields.x)}
+          onChange={(x) => updateDraft({ x })}
+        />
+      )}
 
       {fields.y && (
         <Select
-          label={fields.labels?.y ?? "y"}
+          label={distribution ? "분포를 볼 값 (y)" : (fields.labels?.y ?? "y")}
           value={draft.y || null}
           placeholder={noColumns}
           options={optionsOf(fields.y)}
@@ -133,9 +162,9 @@ export function ControlPanel() {
         />
       )}
 
-      {fields.legend !== false && (
+      {usesLegendColumn(draft) && (
         <Select
-          label="legend"
+          label={sunburst ? "legend (바깥 고리)" : "legend"}
           value={draft.legend ?? NO_LEGEND}
           options={[
             { value: NO_LEGEND, label: "없음" },

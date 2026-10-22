@@ -59,6 +59,7 @@ export async function saveHistory(
       legendColors: item.props?.legendColors,
       legendPosition: item.props?.legendPosition,
       hiddenLegend: item.props?.hiddenLegend,
+      options: item.props?.options,
       selection: item.selection,
       favorites: item.favorites,
       legendGroups: item.legendGroups,

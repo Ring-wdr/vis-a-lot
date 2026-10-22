@@ -1,7 +1,7 @@
 // item 하나가 그린 행의 범위. 데이터 표와 데이터 다운로드가 DB에 넘긴다.
 
 import type { ItemRowsScope } from "../data/item-rows";
-import { markPoint } from "../render/category";
+import { markPoint, stackPoint } from "../render/category";
 import { histogramMarkPoint } from "../render/histogram";
 import { regionTester } from "../render/region";
 import { stepPoint, WATERFALL_KINDS } from "../render/waterfall";
@@ -49,8 +49,13 @@ function selectedMarks(chart: ChartRecord, item: ChartItem) {
           ? meta.bars?.[i]?.[g]
           : meta.boxes?.[i]?.[g]?.median;
       if (value === null || value === undefined) continue;
-      if (inside(...markPoint(i, g, meta.groupCount, value)))
-        marks.push([category, legendValues?.[g] ?? null]);
+      // 누적 막대는 구간 가운데로 판정한다. 그리지 않은(끈) 막대는 고르지 않는다.
+      const seg = meta.segments?.[i]?.[g];
+      if (meta.segments && !seg) continue;
+      const point = seg
+        ? stackPoint(i, seg)
+        : markPoint(i, g, meta.groupCount, value);
+      if (inside(...point)) marks.push([category, legendValues?.[g] ?? null]);
     }
   });
   return marks;
@@ -108,7 +113,7 @@ export function itemRowsScope(
   item: ChartItem,
 ): ItemRowsScope {
   const { spec } = chart;
-  if (!filtersRowsBySelection(spec.chartType)) {
+  if (!filtersRowsBySelection(spec)) {
     return {
       chartType: spec.chartType,
       x: spec.x,
@@ -119,7 +124,9 @@ export function itemRowsScope(
       columns: allColumns(chart),
       filters: spec.filters,
       deletions: [],
-      hiddenLegend: item.props?.hiddenLegend,
+      // pie의 legend 체크박스는 조각(x 범주)을 끈다. sunburst의 legend 컬럼(바깥 고리) 값이 아니다.
+      hiddenLegend:
+        spec.chartType === "pie" ? undefined : item.props?.hiddenLegend,
     };
   }
   const scatter = POINT_CHARTS.includes(spec.chartType);

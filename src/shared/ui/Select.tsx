@@ -6,7 +6,13 @@ import type { ReactNode } from "react";
 import { useDialogContainer } from "./Dialog";
 import styles from "./Select.module.css";
 
-export type SelectOption<T> = { value: T; label: string; disabled?: boolean };
+export type SelectOption<T> = {
+  value: T;
+  label: string;
+  disabled?: boolean;
+  /** 라벨 앞 아이콘. 목록과 고른 값(트리거)에 함께 보인다. */
+  icon?: ReactNode;
+};
 
 /**
  * 단일 선택. 다중 선택(OrderedSelect)과 같은 트리거·팝업 모양을 쓴다.
@@ -32,6 +38,11 @@ export function Select<T extends string | number>({
   disabled?: boolean;
 }) {
   const dialog = useDialogContainer();
+  const placeholderNode = (
+    <span className={styles.placeholder}>{placeholder}</span>
+  );
+  // 아이콘이 있으면 트리거에도 아이콘과 라벨을 함께 그린다.
+  const withIcons = options.some((o) => o.icon);
   return (
     <div className={styles.field}>
       <BaseSelect.Root
@@ -49,10 +60,21 @@ export function Select<T extends string | number>({
         <BaseSelect.Trigger className={styles.trigger}>
           <BaseSelect.Value
             className={styles.value}
-            placeholder={
-              <span className={styles.placeholder}>{placeholder}</span>
-            }
-          />
+            placeholder={placeholderNode}
+          >
+            {withIcons
+              ? (current: T | null) => {
+                  const o = options.find((x) => x.value === current);
+                  if (!o) return placeholderNode;
+                  return (
+                    <span className={styles.iconLabel}>
+                      {o.icon}
+                      <span className={styles.itemLabel}>{o.label}</span>
+                    </span>
+                  );
+                }
+              : undefined}
+          </BaseSelect.Value>
           <BaseSelect.Icon className={styles.chevron}>
             <ChevronDown size={14} aria-hidden="true" />
           </BaseSelect.Icon>
@@ -78,6 +100,7 @@ export function Select<T extends string | number>({
                     <span className={styles.check}>
                       <BaseSelect.ItemIndicator>✓</BaseSelect.ItemIndicator>
                     </span>
+                    {o.icon}
                     <BaseSelect.ItemText className={styles.itemLabel}>
                       {o.label}
                     </BaseSelect.ItemText>
