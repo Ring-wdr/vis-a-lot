@@ -1,4 +1,4 @@
-// 차트 이미지 다운로드: 고른 item 하나는 PNG로, 모든 item은 엑셀(xlsx) 한 파일에 grid 배치로 넣는다.
+// 차트 도구의 다운로드: 고른 item의 PNG와 데이터(CSV), 모든 item을 grid 배치로 넣은 엑셀(xlsx).
 
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemState } from "@/shared/api/types";
@@ -16,15 +16,28 @@ async function fetchPng(url: string) {
 }
 
 /** item 하나의 지금 상태. since=-1이라 long polling을 기다리지 않고 바로 받는다. */
-async function itemState(jobId: string, key: string) {
+export async function drawnItemState(jobId: string, key: string) {
   const state = await api.jobItems(jobId, [key], -1);
-  return state.items[0];
+  const item = state.items[0];
+  if (!item?.image) throw new Error("아직 그려지지 않은 차트입니다.");
+  return { ...item, image: item.image };
+}
+
+/** 고른 item이 그린 데이터(선택 영역이 있으면 그 안)를 '이름.csv'로 내려받는다. */
+export async function downloadItemData(
+  chartId: string,
+  jobId: string,
+  key: string,
+) {
+  const item = await drawnItemState(jobId, key);
+  const csv = await api.exportItemRows(chartId, key);
+  const suffix = item.selectedCount !== undefined ? "_선택" : "";
+  saveBlob(csv, `${safeFileName(item.label)}${suffix}.csv`);
 }
 
 /** 고른 item의 PNG를 '이름.png'로 내려받는다. */
 export async function downloadChartPng(jobId: string, key: string) {
-  const item = await itemState(jobId, key);
-  if (!item?.image) throw new Error("아직 그려지지 않은 차트입니다.");
+  const item = await drawnItemState(jobId, key);
   const png = await fetchPng(item.image.url);
   saveBlob(
     new Blob([png], { type: "image/png" }),

@@ -14,6 +14,7 @@ import type { ColumnSummary } from "./data/column-summary";
 import type { CsvOptions, CsvPreview } from "./data/csv-import";
 import type { ColumnInfo } from "./data/datasets";
 import type { ChartFilter } from "./data/filters";
+import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 
@@ -110,6 +111,24 @@ export type DbMethods = {
   columnSummary: {
     params: { dataset: string; column: string };
     result: ColumnSummary;
+  };
+  /** 데이터 표: item이 그린 행 한 페이지. 모르는 데이터셋(지운 업로드)이면 null */
+  itemRows: {
+    params: {
+      dataset: string;
+      scope: ItemRowsScope;
+      page: {
+        offset: number;
+        limit: number;
+        sort?: { column: string; desc: boolean };
+      };
+    };
+    result: ItemRowsPage | null;
+  };
+  /** 데이터 다운로드: item이 그린 행 전체 CSV. 모르는 데이터셋이면 null */
+  exportItemRows: {
+    params: { dataset: string; scope: ItemRowsScope };
+    result: Blob | null;
   };
   /** 툴팁 추가 컬럼 조회. 모르는 데이터셋(지운 업로드)이면 null */
   rowValues: {

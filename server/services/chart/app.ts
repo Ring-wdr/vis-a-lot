@@ -9,6 +9,7 @@ import {
   getDetail,
   getItem,
 } from "../../charts/chart-store";
+import { itemRowsScope } from "../../charts/item-scope";
 import { pan, zoomIn, zoomOut } from "../../charts/item-view";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
@@ -54,6 +55,21 @@ function editableItem(
   if (!chart || !item) return { status: 404, error: "unknown item" };
   if (!item.image) return { status: 409, error: "item is not drawn yet" };
   if (item.busyJobId) return { status: 409, error: "item is being redrawn" };
+  return { chart, item };
+}
+
+/** 행 조회용 item. 다시 그리는 중이어도 된다 (조건은 서버에 저장된 상태로 정해진다). */
+function drawnItem({
+  chartId,
+  itemKey,
+}: {
+  chartId: string;
+  itemKey: string;
+}): Rejected | { chart: Chart; item: Item } {
+  const chart = getChart(chartId);
+  const item = chart && getItem(chart, itemKey);
+  if (!chart || !item) return { status: 404, error: "unknown item" };
+  if (!item.image) return { status: 409, error: "item is not drawn yet" };
   return { chart, item };
 }
 
@@ -422,6 +438,32 @@ export const chartApp = createServiceApp()
     });
     if (!values) return apiError(c, 404, "unknown dataset");
     return c.json({ values }, 200);
+  })
+  // 데이터 표: item이 그린 행을 페이지 단위로. 선택 영역이 있으면 그 안의 행만 준다.
+  .openapi(routes.itemRows, async (c) => {
+    const target = drawnItem(c.req.valid("param"));
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const page = await getRuntime().db.call("itemRows", {
+      dataset: chart.spec.dataset,
+      scope: itemRowsScope(chart, item),
+      page: c.req.valid("json"),
+    });
+    if (!page) return apiError(c, 404, "unknown dataset");
+    return c.json({ ...page, selected: item.selection !== undefined }, 200);
+  })
+  .openapi(routes.exportItemRows, async (c) => {
+    const target = drawnItem(c.req.valid("param"));
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const csv = await getRuntime().db.call("exportItemRows", {
+      dataset: chart.spec.dataset,
+      scope: itemRowsScope(chart, item),
+    });
+    if (!csv) return apiError(c, 404, "unknown dataset");
+    // Excel이 한글 머리글을 UTF-8로 읽도록 BOM을 붙인다.
+    const body = await new Blob(["\uFEFF", csv]).arrayBuffer();
+    return c.body(body, 200, { "content-type": "text/csv; charset=utf-8" });
   })
   // `<img src>` 요청도 service worker를 거쳐 여기로 온다.
   .openapi(routes.png, async (c) => {

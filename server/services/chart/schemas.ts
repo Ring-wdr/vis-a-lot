@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi";
 import {
   AggFnSchema,
   ColumnNameSchema,
+  ColumnTypeSchema,
   DatasetIdSchema,
   FiltersSchema,
 } from "../common/dataset";
@@ -371,6 +372,36 @@ export const ItemPropsRequestSchema = z
     }),
   ])
   .openapi("ItemPropsRequest");
+
+// ── 데이터 표 / 다운로드 ─────────────────────────────────────────
+
+export const ItemRowsRequestSchema = z
+  .object({
+    offset: z.number().int().min(0),
+    limit: z.number().int().min(1).max(500),
+    /** 없으면 저장된 순서 */
+    sort: z.object({ column: ColumnNameSchema, desc: z.boolean() }).optional(),
+  })
+  .openapi("ItemRowsRequest");
+
+export const ItemRowsResponseSchema = z
+  .object({
+    /** 차트에 쓴 컬럼 (split by → x → y → legend → 툴팁) */
+    columns: z.array(
+      z.object({
+        name: ColumnNameSchema,
+        label: z.string(),
+        type: ColumnTypeSchema,
+      }),
+    ),
+    /** 컬럼 순서대로의 값. 시각은 epoch ms */
+    rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+    /** 조건에 맞는 전체 행 수 */
+    total: z.number(),
+    /** 선택 영역 안의 행만 담았는지 */
+    selected: z.boolean(),
+  })
+  .openapi("ItemRowsResponse");
 
 export const TooltipRequestSchema = z
   .object({ rowId: finite, columns: z.array(ColumnNameSchema) })
