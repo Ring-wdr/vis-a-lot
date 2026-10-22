@@ -13,7 +13,7 @@ import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import styles from "@/shared/ui/workspace.module.css";
 import { useChangeCommon } from "../model/use-change-common";
-import settingsStyles from "./SettingsDialog.module.css";
+import settingsStyles from "./SettingsSection.module.css";
 
 /**
  * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.

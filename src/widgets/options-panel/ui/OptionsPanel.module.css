@@ -1,0 +1,134 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--ws-border);
+  background: var(--ws-panel);
+  /* 좁아지면 필드 줄을 위아래로 쌓는다 (OptionSectionForm.module.css) */
+  container-type: inline-size;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px 8px;
+  font-size: 13px;
+}
+
+.close {
+  display: inline-grid;
+  place-items: center;
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: color-mix(in srgb, var(--ws-panel), var(--ws-text) 6%);
+  color: var(--ws-text);
+}
+
+/* 범위: 공통 | item */
+.segment {
+  display: flex;
+  gap: 2px;
+  margin: 0 14px 8px;
+  padding: 2px;
+  border: none;
+  min-width: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ws-panel), var(--ws-text) 6%);
+}
+
+.segment button {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ws-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.segment button[aria-pressed="true"] {
+  background: var(--ws-elevated);
+  color: var(--ws-text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(var(--ws-shadow-rgb) / 12%);
+}
+
+/* 묶음 탭: 모양 | 분석 */
+.tabs {
+  display: flex;
+  gap: 16px;
+  padding: 0 14px;
+}
+
+.tabs button {
+  padding: 6px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ws-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tabs button[aria-selected="true"] {
+  border-bottom-color: var(--ws-accent);
+  color: var(--ws-text);
+  font-weight: 600;
+}
+
+/* 구역 목록과 안내를 한 번에 스크롤한다 */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
+.body > p {
+  padding: 0 14px;
+}
+
+.followAll {
+  align-self: flex-start;
+  margin: 0 14px;
+  border: none;
+  background: none;
+  color: var(--ws-accent);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.followAll:disabled {
+  color: var(--ws-text-muted);
+  cursor: default;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

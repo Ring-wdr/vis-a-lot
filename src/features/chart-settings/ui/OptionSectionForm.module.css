@@ -81,3 +81,11 @@
   border: 1px solid var(--ws-border);
   border-radius: 4px;
 }
+
+/* 패널이 좁으면 라벨과 입력을 위아래로 쌓는다 */
+@container (max-width: 300px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}

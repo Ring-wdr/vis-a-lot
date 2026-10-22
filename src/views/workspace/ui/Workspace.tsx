@@ -20,6 +20,7 @@ import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
 import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
 import { FilterPanel } from "@/widgets/filter-panel/ui/FilterPanel";
 import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
+import { OptionsPanel } from "@/widgets/options-panel/ui/OptionsPanel";
 import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
 import { TabToolbar } from "@/widgets/tab-toolbar/ui/TabToolbar";
 
@@ -119,7 +120,7 @@ export function Workspace() {
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
   const emptyHistory = useTabs((s) => s.emptyHistory);
   const store = tab?.store ?? emptyHistory;
-  const filterOpen = useTabs((s) => s.filterPanelOpen);
+  const rightPanel = useTabs((s) => s.rightPanel);
 
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
@@ -135,9 +136,9 @@ export function Workspace() {
         <main className={styles.main}>
           <ChartGrid />
         </main>
-        {filterOpen && (
-          <div className={styles.filterDrawer}>
-            <FilterPanel />
+        {rightPanel && (
+          <div className={styles.filterDrawer} data-panel={rightPanel}>
+            {rightPanel === "filter" ? <FilterPanel /> : <OptionsPanel />}
           </div>
         )}
       </div>

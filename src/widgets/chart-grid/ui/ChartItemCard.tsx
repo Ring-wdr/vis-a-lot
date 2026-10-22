@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
 import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { ItemOptionsButton } from "@/features/chart-settings/ui/ItemOptionsDialog";
+import { ItemOptionsButton } from "@/features/chart-settings/ui/ItemOptionsButton";
 import {
   useItemAction,
   useItemActionPending,
@@ -20,7 +20,6 @@ import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
   type ChartImage,
-  type ChartOptionsBody,
   type ColumnName,
   type ItemSize,
   type ItemStage,
@@ -265,16 +264,13 @@ function DrawnItem({
             commonPosition={commonPosition}
             optionsSettings={
               <ItemOptionsButton
-                itemKey={item.key}
-                label={item.label}
-                options={item.options as ChartOptionsPatch | undefined}
+                item={{
+                  chartId,
+                  key: item.key,
+                  label: item.label,
+                  options: item.options,
+                }}
                 disabled={busy}
-                onChange={(options) =>
-                  action.mutate({
-                    type: "options",
-                    options: options as ChartOptionsBody | null,
-                  })
-                }
               />
             }
             onAction={action.mutate}

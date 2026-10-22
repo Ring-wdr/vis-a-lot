@@ -1,22 +1,25 @@
 "use client";
 
 import { Settings2 } from "lucide-react";
-import {
-  useWorkspace,
-  useWorkspaceStore,
-} from "@/entities/workspace/model/workspace-scope";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import styles from "@/shared/ui/workspace.module.css";
-import { openSettingsDialog } from "./SettingsDialog";
 
-/** 왼쪽 패널 하단: 색상, split 구분 기호처럼 자주 바꾸지 않는 설정을 팝업으로 모은다. */
+/** 왼쪽 패널 하단: 오른쪽 차트 속성 패널을 공통 속성 범위로 열고 닫는다. */
 export function SettingsButton() {
-  const store = useWorkspaceStore();
   const color = useWorkspace((s) => s.draft.common.color);
+  const setOptionsScope = useWorkspace((s) => s.setOptionsScope);
+  const open = useTabs((s) => s.rightPanel === "options");
+  const toggle = useTabs((s) => s.toggleRightPanel);
   return (
     <button
       type="button"
       className={styles.secondaryButton}
-      onClick={() => openSettingsDialog(store)}
+      aria-pressed={open}
+      onClick={() => {
+        setOptionsScope("common");
+        toggle("options");
+      }}
     >
       <Settings2 size={14} aria-hidden="true" />
       전체 설정
