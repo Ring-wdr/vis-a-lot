@@ -646,6 +646,20 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "gantt") {
+    return {
+      kind: "gantt",
+      ...(await db.call("ganttData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   if (spec.chartType === "sankey") {
     return {
       kind: "sankey",
@@ -705,6 +719,7 @@ function renderItem(
     | "renderHeatmap"
     | "renderTreemap"
     | "renderCandle"
+    | "renderGantt"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -772,6 +787,20 @@ function renderItem(
           [...CANDLE_LEGEND.values],
           CANDLE_LEGEND.colors,
         ) as NonNullable<ReturnType<typeof legendInput>>,
+      },
+      options,
+    );
+  }
+  if (data.kind === "gantt") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderGantt",
+      {
+        ...common,
+        rowTitle: columnOf(spec.y)?.label ?? spec.y,
+        rows: group?.rows ?? [],
+        bars: group?.bars ?? { r: [], s: [], e: [], g: [], n: [] },
+        legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
       options,
     );

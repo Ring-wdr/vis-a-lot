@@ -2412,7 +2412,8 @@ export type components = {
       | "sankey"
       | "heatmap"
       | "treemap"
-      | "candle";
+      | "candle"
+      | "gantt";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2567,7 +2568,8 @@ export type components = {
       | components["schemas"]["SankeyMeta"]
       | components["schemas"]["HeatmapMeta"]
       | components["schemas"]["TreemapMeta"]
-      | components["schemas"]["CandleMeta"];
+      | components["schemas"]["CandleMeta"]
+      | components["schemas"]["GanttMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2769,6 +2771,32 @@ export type components = {
         count: number[];
         g: number[];
       };
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    GanttMeta: {
+      /** @enum {string} */
+      chartType: "gantt";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      rowTitle: string;
+      rows: string[];
+      barHeight: number;
+      bars: {
+        r: number[];
+        s: number[];
+        e: number[];
+        g: number[];
+        n: number[];
+        m: number[];
+      };
+      truncated: boolean;
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };

@@ -5,6 +5,7 @@ import type {
   AxisMeta,
   CandleMeta,
   CategoryMeta,
+  GanttMeta,
   HeatmapMeta,
   ItemMeta,
   SankeyMeta,
@@ -501,6 +502,105 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
   },
 };
 
+/** 기간을 '2시간 5분', '35초'처럼 가장 큰 단위와 그다음 단위로 */
+export function formatDuration(ms: number) {
+  const units: [number, string][] = [
+    [86_400_000, "일"],
+    [3_600_000, "시간"],
+    [60_000, "분"],
+    [1000, "초"],
+  ];
+  const i = units.findIndex(([size]) => ms >= size);
+  if (i === -1) return `${Math.round(ms)}ms`;
+  const [size, name] = units[i];
+  const head = `${Math.floor(ms / size)}${name}`;
+  const next = units[i + 1];
+  const rest = next && Math.floor((ms % size) / next[0]);
+  return rest ? `${head} ${rest}${next[1]}` : head;
+}
+
+/** 행마다 막대 인덱스 범위 [시작, 끝). 막대는 행 → 시작 순으로 온다. */
+export function ganttRowRanges(meta: GanttMeta) {
+  const start = new Int32Array(meta.rows.length).fill(-1);
+  const end = new Int32Array(meta.rows.length).fill(-1);
+  meta.bars.r.forEach((r, j) => {
+    if (start[r] === -1) start[r] = j;
+    end[r] = j + 1;
+  });
+  return { start, end };
+}
+
+const GANTT_SLOP_PX = 2;
+
+export const ganttStrategy: TooltipStrategy<GanttMeta> = {
+  prepare: (meta) => ganttRowRanges(meta),
+  hitTest(meta, prepared, px, py) {
+    const { plot, bars, rows } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const yv = invertAxis(meta.y, plot.top, plot.height, py, true);
+    const row = rows.length - 1 - Math.round(yv);
+    if (row < 0 || row >= rows.length) return null;
+    const cy = yToPx(meta, rows.length - 1 - row);
+    if (Math.abs(py - cy) > meta.barHeight / 2 + GANTT_SLOP_PX) return null;
+    const { start, end } = prepared as ReturnType<typeof ganttRowRanges>;
+    if (start[row] === -1) return null;
+    const [d0, d1] = meta.x.domain;
+    const toPx = (v: number) => plot.left + ((v - d0) / (d1 - d0)) * plot.width;
+    // 시작 순으로 놓여 있으니 커서 앞에서 시작한 마지막 막대를 찾는다.
+    let lo = start[row];
+    let hi = end[row] - 1;
+    let found = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (toPx(bars.s[mid]) - GANTT_SLOP_PX <= px) {
+        found = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
+    }
+    if (found === -1) return null;
+    const x0 = toPx(bars.s[found]);
+    const x1 = Math.max(toPx(bars.e[found]), x0 + 1);
+    if (px > x1 + GANTT_SLOP_PX) return null;
+    const left = Math.max(plot.left, x0);
+    const right = Math.min(plot.left + plot.width, x1);
+    const g = bars.g[found];
+    const merged = bars.m[found];
+    return {
+      highlight: {
+        x: left - HIGHLIGHT_PAD,
+        y: cy - meta.barHeight / 2 - HIGHLIGHT_PAD,
+        width: right - left + HIGHLIGHT_PAD * 2,
+        height: meta.barHeight + HIGHLIGHT_PAD * 2,
+      },
+      rows: [
+        { label: meta.rowTitle, value: rows[row] },
+        ...(meta.legend
+          ? [{ label: meta.legend.title, value: meta.legend.values[g] }]
+          : []),
+        { label: "시작", value: formatValue(bars.s[found], "time") },
+        { label: "끝", value: formatValue(bars.e[found], "time") },
+        {
+          label: "길이",
+          value: formatDuration(bars.e[found] - bars.s[found]),
+          emphasis: true,
+        },
+        { label: "개수", value: formatValue(bars.n[found], "number") },
+        ...(merged > 1
+          ? [{ label: "합친 구간", value: `${merged.toLocaleString()}개` }]
+          : []),
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -510,6 +610,7 @@ const STRATEGIES: {
   heatmap: TooltipStrategy<HeatmapMeta>;
   treemap: TooltipStrategy<TreemapMeta>;
   candle: TooltipStrategy<CandleMeta>;
+  gantt: TooltipStrategy<GanttMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -520,6 +621,7 @@ const STRATEGIES: {
   heatmap: heatmapStrategy,
   treemap: treemapStrategy,
   candle: candleStrategy,
+  gantt: ganttStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

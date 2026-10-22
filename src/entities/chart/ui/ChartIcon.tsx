@@ -86,6 +86,13 @@ const ICONS: Record<ChartType, ReactNode> = {
       <rect x="14.5" y="9" width="5" height="6" rx="1" fill="none" />
     </g>
   ),
+  gantt: (
+    <g fill="currentColor">
+      <rect x="3" y="5" width="9" height="3.5" rx="1" />
+      <rect x="9" y="10.25" width="10" height="3.5" rx="1" />
+      <rect x="6" y="15.5" width="7" height="3.5" rx="1" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {

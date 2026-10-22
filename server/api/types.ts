@@ -13,6 +13,7 @@ type ColumnName = string;
 
 import type { CandleMeta } from "../render/candle";
 import type { CategoryMeta } from "../render/category";
+import type { GanttMeta } from "../render/gantt";
 import type { HeatmapMeta } from "../render/heatmap";
 import type { LegendPosition } from "../render/legend";
 import type { Region } from "../render/region";
@@ -151,6 +152,7 @@ export const CHART_TYPES = [
   "heatmap",
   "treemap",
   "candle",
+  "gantt",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -239,6 +241,7 @@ export type {
   BoxStats,
   CandleMeta,
   CategoryMeta,
+  GanttMeta,
   HeatmapMeta,
   ItemView,
   Region,
@@ -256,7 +259,8 @@ export type ItemMeta =
   | SankeyMeta
   | HeatmapMeta
   | TreemapMeta
-  | CandleMeta;
+  | CandleMeta
+  | GanttMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

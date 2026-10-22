@@ -36,6 +36,7 @@ export const ChartTypeSchema = z
     "heatmap",
     "treemap",
     "candle",
+    "gantt",
   ])
   .openapi("ChartType");
 
@@ -658,6 +659,35 @@ export const CandleMetaSchema = z
   })
   .openapi("CandleMeta");
 
+export const GanttMetaSchema = z
+  .object({
+    chartType: z.literal("gantt"),
+    plot: PlotSchema,
+    /** 시계열(epoch ms) */
+    x: AxisMetaSchema,
+    /** 행 인덱스 공간. 행 i의 가운데는 rows.length - 1 - i */
+    y: AxisMetaSchema,
+    /** y 컬럼 이름(라벨) */
+    rowTitle: z.string(),
+    rows: z.array(z.string()),
+    /** 막대 픽셀 높이 */
+    barHeight: z.number(),
+    /** 그린 막대. r 행 번호, s·e 시작·끝, g legend 인덱스, n 행 수, m 같은 픽셀 칸에 합친 막대 수. 행 → 시작 순 */
+    bars: z.object({
+      r: z.array(z.number()),
+      s: z.array(z.number()),
+      e: z.array(z.number()),
+      g: z.array(z.number()),
+      n: z.array(z.number()),
+      m: z.array(z.number()),
+    }),
+    /** 막대가 상한을 넘어 metadata에서 뺀 게 있는지 */
+    truncated: z.boolean(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("GanttMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
   .union([
@@ -667,6 +697,7 @@ export const ItemMetaSchema = z
     HeatmapMetaSchema,
     TreemapMetaSchema,
     CandleMetaSchema,
+    GanttMetaSchema,
   ])
   .openapi("ItemMeta");
 

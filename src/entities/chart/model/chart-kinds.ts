@@ -39,6 +39,12 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   },
   treemap: { x: ["categorical"], y: ["numeric"], agg: true },
   candle: { x: ["datetime"], y: ["numeric"], agg: false, legend: false },
+  gantt: {
+    x: ["datetime"],
+    y: ["categorical"],
+    labels: { y: "y (작업 행)" },
+    agg: false,
+  },
 };
 
 /**
@@ -68,6 +74,7 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   heatmap: ["pan", "zoom", "select", "paint"],
   treemap: ["pan", "zoom", "select", "checkbox"],
   candle: ["pan", "zoom", "select", "paint", "checkbox"],
+  gantt: ["pan", "zoom", "select", "paint", "checkbox"],
 };
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */

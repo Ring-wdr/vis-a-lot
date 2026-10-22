@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { CandleMeta, ScatterMeta } from "@/shared/api/types";
+import type { CandleMeta, GanttMeta, ScatterMeta } from "@/shared/api/types";
 import { PointIndex } from "./point-index";
 import {
   barStrategy,
   boxplotStrategy,
   candleAt,
   candleStrategy,
+  formatDuration,
+  ganttStrategy,
   invertAxis,
   scatterStrategy,
 } from "./strategies";
@@ -225,5 +227,63 @@ describe("candle 툴팁", () => {
       height: 66,
     });
     expect(candleStrategy.hitTest(meta, undefined, 150, 50)).toBeNull();
+  });
+});
+
+describe("gantt 툴팁", () => {
+  // 행 2개(높이 100 → 행마다 50px), 시간 0~1000을 200px에
+  const meta: GanttMeta = {
+    chartType: "gantt",
+    plot: { left: 0, top: 0, width: 200, height: 100 },
+    x: { kind: "time", domain: [0, 1000] },
+    y: { kind: "number", domain: [-0.5, 1.5] },
+    rowTitle: "설비",
+    rows: ["M1", "M2"],
+    barHeight: 35,
+    bars: {
+      r: [0, 0, 1],
+      s: [0, 500, 200],
+      e: [500, 1000, 400],
+      g: [1, 0, 1],
+      n: [3, 2, 1],
+      m: [1, 4, 1],
+    },
+    truncated: false,
+    legend: {
+      title: "상태",
+      values: ["경고", "정상"],
+      colors: ["#eb6834", "#2a78d6"],
+      box: { x: 0, y: -30, width: 10, height: 10 },
+      entries: [],
+      hidden: 0,
+    },
+  };
+  const prepared = ganttStrategy.prepare(meta);
+
+  it("첫 행은 위, 커서 시각이 든 막대를 찾는다", () => {
+    const hit = ganttStrategy.hitTest(meta, prepared, 150, 25);
+    expect(hit?.rows).toEqual([
+      { label: "설비", value: "M1" },
+      { label: "상태", value: "경고" },
+      { label: "시작", value: expect.any(String) },
+      { label: "끝", value: expect.any(String) },
+      { label: "길이", value: "500ms", emphasis: true },
+      { label: "개수", value: "2" },
+      { label: "합친 구간", value: "4개" },
+    ]);
+    expect(hit?.highlight).toMatchObject({ x: 97, width: 106 });
+    // 아래 행(M2)은 40~80px에만 막대가 있다.
+    expect(ganttStrategy.hitTest(meta, prepared, 60, 75)?.rows[0].value).toBe(
+      "M2",
+    );
+    expect(ganttStrategy.hitTest(meta, prepared, 120, 75)).toBeNull();
+    // 행 사이(막대 높이 밖)
+    expect(ganttStrategy.hitTest(meta, prepared, 60, 49)).toBeNull();
+  });
+
+  it("기간을 큰 단위 둘로 읽는다", () => {
+    expect(formatDuration(2 * 3_600_000 + 5 * 60_000 + 3000)).toBe("2시간 5분");
+    expect(formatDuration(35_000)).toBe("35초");
+    expect(formatDuration(86_400_000)).toBe("1일");
   });
 });
