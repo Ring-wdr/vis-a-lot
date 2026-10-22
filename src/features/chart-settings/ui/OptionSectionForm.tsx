@@ -36,7 +36,6 @@ export function OptionSectionForm({
   resetLabel,
   disabled,
   showFields = true,
-  showHeading = true,
   children,
 }: {
   section: OptionSection;
@@ -49,8 +48,6 @@ export function OptionSectionForm({
   disabled: boolean;
   /** false면 필드 표를 그리지 않는다 (차트가 이 구역을 쓰지 않아 children만 보일 때) */
   showFields?: boolean;
-  /** false면 구역 제목을 그리지 않는다 (아코디언 머리에 이미 있을 때) */
-  showHeading?: boolean;
   /** 구역 제목 아래, 필드 표 위에 붙는 내용 (속성 모델 밖에 저장하는 같은 구역 설정) */
   children?: ReactNode;
 }) {
@@ -60,9 +57,7 @@ export function OptionSectionForm({
 
   return (
     <div className={formStyles.form}>
-      {showHeading && (
-        <h3 className={formStyles.heading}>{SECTION_LABELS[section]}</h3>
-      )}
+      <h3 className={formStyles.heading}>{SECTION_LABELS[section]}</h3>
       {children}
       {showFields && hint && <p className={styles.muted}>{hint}</p>}
       {showFields && (

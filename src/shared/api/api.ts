@@ -500,24 +500,11 @@ export const api = {
     ),
 
   // ── chart 서비스: 차트 전체 ─────────────────────────────────
-  /** visible 범위(보고 있는 페이지)만 바로 다시 그리고, 나머지는 refreshItems로 볼 때 그린다. */
-  updateCommon: (
-    chartId: string,
-    common: CommonProps,
-    visible?: { start: number; count: number },
-  ) =>
+  updateCommon: (chartId: string, common: CommonProps) =>
     unwrap(
       chartClient.PATCH("/charts/{chartId}/common", {
         params: { path: { chartId } },
-        body: { common, visible },
-      }),
-    ),
-
-  refreshItems: (chartId: string, keys: string[]) =>
-    unwrap(
-      chartClient.POST("/charts/{chartId}/refresh", {
-        params: { path: { chartId } },
-        body: { keys },
+        body: { common },
       }),
     ),
 

@@ -20,7 +20,6 @@ import {
   type ItemSelection,
   OTHERS_LABEL,
   propsOrNone,
-  startCommonJob,
   startDetailJob,
   startItemJob,
   startJob,
@@ -366,8 +365,7 @@ export const chartApp = createServiceApp()
     const target = idleChart(c.req.valid("param").chartId);
     if ("error" in target) return reject(c, target);
     const { chart, items } = target;
-    const body = c.req.valid("json");
-    const { common } = body;
+    const common = c.req.valid("json").common;
     chart.spec = {
       ...chart.spec,
       common: {
@@ -377,7 +375,14 @@ export const chartApp = createServiceApp()
     };
     for (const item of items) item.props = undefined;
     recordEvent(chart, "common");
-    return c.json({ jobId: startCommonJob(chart, body.visible).id }, 202);
+    return c.json(
+      redrawJob(
+        chart,
+        items.map((i) => i.key),
+        { primary: true },
+      ),
+      202,
+    );
   })
   // grid 크기 변경: item 크기가 바뀌므로 draw 없이 바로 전체를 다시 그린다.
   .openapi(routes.changeGrid, (c) => {
@@ -414,25 +419,6 @@ export const chartApp = createServiceApp()
         chart,
         targets.map((i) => i.key),
         { record: false, content: false },
-      ),
-      202,
-    );
-  })
-  // 공통 속성이 바뀐 뒤 아직 다시 그리지 않은 item: 화면이 그 페이지를 볼 때 요청한 것만 그린다.
-  .openapi(routes.refreshItems, (c) => {
-    const chart = getChart(c.req.valid("param").chartId);
-    if (!chart?.items) return apiError(c, 404, "unknown chart");
-    const keys = new Set(c.req.valid("json").keys);
-    const targets = chart.items.filter(
-      (i) => keys.has(i.key) && i.stale && !i.busyJobId,
-    );
-    if (targets.length === 0) return apiError(c, 409, "no item to refresh");
-    return c.json(
-      redrawJob(
-        chart,
-        targets.map((i) => i.key),
-        // history 목록 섬네일은 첫 item으로 만든다. 첫 item을 새로 그리면 history도 다시 저장한다.
-        { record: targets.some((i) => i === chart.items?.[0]) },
       ),
       202,
     );

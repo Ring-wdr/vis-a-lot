@@ -10,7 +10,7 @@ import { useColumns } from "@/shared/api/queries";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import styles from "@/shared/ui/workspace.module.css";
 import { useChangeCommon } from "../model/use-change-common";
-import settingsStyles from "./SettingsSection.module.css";
+import settingsStyles from "./SettingsDialog.module.css";
 
 /**
  * 전체 설정 · 범례 위치. 모든 item에 적용되고 item에 따로 정한 위치는 덮어쓴다.
@@ -20,7 +20,7 @@ export function LegendSettings() {
   const draft = useWorkspace((s) => s.draft);
   const readOnly = useWorkspace((s) => s.readOnly);
   const columns = useColumns(draft.dataset);
-  const { common, change } = useChangeCommon();
+  const { common, change, pending } = useChangeCommon();
   const legend = legendColumnOf(draft);
 
   return (
@@ -31,7 +31,7 @@ export function LegendSettings() {
       </h4>
       <LegendPositionPicker
         value={common.legendPosition ?? defaultLegendPosition(draft.chartType)}
-        disabled={readOnly}
+        disabled={readOnly || pending}
         onSelect={(legendPosition) => change({ ...common, legendPosition })}
       />
       {!drawsLegend(draft) && (

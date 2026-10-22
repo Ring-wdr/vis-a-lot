@@ -565,7 +565,7 @@ export type paths = {
     delete?: never;
     options?: never;
     head?: never;
-    /** 공통 속성. 개별 속성을 모두 덮어쓰고, visible 범위는 바로, 나머지는 볼 때(refresh) 다시 그린다 */
+    /** 공통 속성. 개별 속성을 모두 덮어쓰고 전체를 다시 그린다 */
     patch: {
       parameters: {
         query?: never;
@@ -1650,93 +1650,6 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  "/charts/{chartId}/refresh": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** 공통 속성이 바뀐 뒤 아직 다시 그리지 않은(stale) item을 다시 그린다. 화면이 그 페이지를 볼 때 부른다 */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          chartId: string;
-        };
-        cookie?: never;
-      };
-      requestBody: {
-        content: {
-          "application/json": components["schemas"]["RefreshRequest"];
-        };
-      };
-      responses: {
-        /** @description 다시 그리는 job. long polling으로 진행 상태를 받는다 */
-        202: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ItemJobResponse"];
-          };
-        };
-        /** @description 요청 형식 오류 */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 토큰 없음, 만료, 위조 */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description scope 부족 */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 모르는 차트 */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 렌더링 중 */
-        409: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/charts/{chartId}/items/{itemKey}/favorites/{name}": {
     parameters: {
       query?: never;
@@ -2472,10 +2385,6 @@ export type components = {
         };
     CommonPropsRequest: {
       common: components["schemas"]["CommonProps"];
-      visible?: {
-        start: number;
-        count: number;
-      };
     };
     CommonProps: {
       color: components["schemas"]["HexColor"];
@@ -3373,13 +3282,9 @@ export type components = {
         color: string;
       }[];
       deletionCount: number;
-      stale?: boolean;
     };
     /** @enum {string} */
     ItemStage: "query" | "aggregate" | "render" | "encode";
-    RefreshRequest: {
-      keys: string[];
-    };
     ResizeRequest: {
       itemSize: components["schemas"]["ItemSize"];
       keys: string[];

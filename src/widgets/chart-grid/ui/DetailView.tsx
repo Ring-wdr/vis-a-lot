@@ -15,9 +15,8 @@ import { drawsLegend } from "@/entities/chart/model/chart-kinds";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
-import { useStaleRefresh } from "@/features/auto-resize/model/use-auto-resize";
 import { useItemDetail } from "@/features/item-detail/model/use-item-detail";
-import { useJobProgress, useJobRange } from "@/shared/api/queries";
+import { useJobRange } from "@/shared/api/queries";
 import { type ItemState, isTerminal } from "@/shared/api/types";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
@@ -73,9 +72,6 @@ export function DetailView({
   const offset = strip.data?.offset ?? 0;
   const thumbs = strip.data?.items ?? [];
   const item = thumbs[focus - offset];
-  // 공통 속성이 바뀐 뒤 아직 예전 그림인 item(크게 보는 item과 아래 섬네일 줄)을 다시 그린다.
-  const progress = useJobProgress(current.jobId);
-  useStaleRefresh(current.chartId, strip.data, progress.data?.status);
 
   const displaySize = useMemo(
     () => (mainArea ? detailSizeFor(mainArea) : undefined),

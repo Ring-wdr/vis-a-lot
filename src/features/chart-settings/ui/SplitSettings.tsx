@@ -3,7 +3,7 @@
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
 import styles from "@/shared/ui/workspace.module.css";
-import settingsStyles from "./SettingsSection.module.css";
+import settingsStyles from "./SettingsDialog.module.css";
 
 /** 전체 설정 · 제목의 연결 문자: split 조합 이름을 이을 기호. 다음 draw에 적용된다. */
 export function SplitSettings() {

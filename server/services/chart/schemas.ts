@@ -430,8 +430,6 @@ export const ItemStateSchema = z
     legendGroups: z.array(z.object({ name: z.string(), color: z.string() })),
     /** 지운 영역 수. 되돌리기 버튼 활성화에 쓴다. */
     deletionCount: z.number(),
-    /** 공통 속성이 바뀐 뒤 아직 다시 그리지 않아 예전 PNG를 보여주는 중 */
-    stale: z.boolean().optional(),
   })
   .openapi("ItemState");
 
@@ -529,21 +527,8 @@ export const AddShapeRequestSchema = z
   .openapi("AddShapeRequest");
 
 export const CommonPropsRequestSchema = z
-  .object({
-    common: CommonPropsSchema,
-    /** 바로 다시 그릴 item 범위(보고 있는 페이지). 없으면 전체. 나머지는 refresh로 볼 때 그린다. */
-    visible: z
-      .object({
-        start: z.number().int().min(0),
-        count: z.number().int().min(1).max(100),
-      })
-      .optional(),
-  })
+  .object({ common: CommonPropsSchema })
   .openapi("CommonPropsRequest");
-
-export const RefreshRequestSchema = z
-  .object({ keys: z.array(z.string()).min(1).max(100) })
-  .openapi("RefreshRequest");
 
 export const GridRequestSchema = z
   .object({ grid: GridSchema, itemSize: ItemSizeSchema })

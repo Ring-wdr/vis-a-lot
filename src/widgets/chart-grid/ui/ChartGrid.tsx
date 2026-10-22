@@ -5,10 +5,7 @@ import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { drawsLegend } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import {
-  useAutoResize,
-  useStaleRefresh,
-} from "@/features/auto-resize/model/use-auto-resize";
+import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -92,13 +89,6 @@ export function ChartGrid() {
     job.data,
     progress.data?.status,
     detailOpen ? undefined : displaySize,
-  );
-  // 공통 속성이 바뀐 뒤 아직 예전 그림인 item은 이 페이지가 보일 때 다시 그린다.
-  // 크게 보는 동안에는 grid가 보이지 않으니 크게 보기 화면이 보이는 item만 다시 그린다 (DetailView).
-  useStaleRefresh(
-    current?.chartId,
-    detailOpen ? undefined : job.data,
-    progress.data?.status,
   );
 
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.

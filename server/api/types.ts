@@ -301,14 +301,7 @@ export type NameRequest = { name: string };
 export type AddShapeRequest = { shape: Shape };
 
 /** 공통 속성 변경. 개별 속성을 모두 덮어쓰고 전체를 다시 그린다. */
-export type CommonPropsRequest = {
-  common: CommonProps;
-  /** 바로 다시 그릴 item 범위(보고 있는 페이지). 없으면 전체 */
-  visible?: { start: number; count: number };
-};
-
-/** 예전 내용으로 남아 있는(stale) item을 다시 그린다. */
-export type RefreshRequest = { keys: string[] };
+export type CommonPropsRequest = { common: CommonProps };
 
 /** grid 크기 변경. item 크기가 바뀌므로 전체를 다시 그린다. */
 export type GridRequest = { grid: ChartSpec["grid"]; itemSize: ItemSize };
@@ -393,8 +386,6 @@ export type ItemState = {
   favorites: Favorite[];
   legendGroups: { name: string; color: string }[];
   deletionCount: number;
-  /** 공통 속성이 바뀐 뒤 아직 다시 그리지 않아 예전 PNG를 보여주는 중 */
-  stale?: boolean;
 };
 
 /** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */

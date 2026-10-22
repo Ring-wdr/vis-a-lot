@@ -12,10 +12,7 @@ import {
 } from "lucide-react";
 import { CHART_LABELS, chartTitle } from "@/entities/chart/lib/title";
 import { supports } from "@/entities/chart/model/chart-kinds";
-import {
-  useWorkspace,
-  useWorkspaceMutating,
-} from "@/entities/workspace/model/workspace-scope";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   downloadAllChartsExcel,
   downloadChartPng,
@@ -61,7 +58,6 @@ function ActionButton({
 }
 
 const PICK_ITEM = "차트를 눌러 고른 뒤 쓸 수 있습니다";
-const SYNCING = "바꾼 설정을 반영하는 중입니다";
 
 /** 이 차트 종류에서 못 쓰는 도구의 안내 */
 const unsupported = (name: string, chartType: string) =>
@@ -85,35 +81,16 @@ export function ChartActionBar() {
   const typeLabel = chartType ? CHART_LABELS[chartType] : "";
   const checkboxOk = !chartType || supports(chartType, "checkbox");
   const columns = useColumns(current?.spec.dataset ?? "");
-  // 바꾼 설정을 아직 서버에 보내지 않았거나 보내는 중이면 PNG를 받지 않는다 (예전 설정의 그림이 저장된다).
-  // 보낸 뒤 다시 그리는 중이거나 예전 그림(stale)인 item은 받을 때 새 그림을 기다린다 (chart-download).
-  const commonUnsent = useWorkspace((s) => s.commonDirty);
-  const itemUnsent = useWorkspace((s) => s.optionsItem?.dirty === true);
-  const commonSending = useWorkspaceMutating("common");
-  const syncing = commonUnsent || itemUnsent || commonSending;
-  // item 단위 다시 그리기(개별 속성, 페이지 이동, 화면 크기)는 primary job 상태에 끝날 때만 반영되므로 막는다.
-  const itemJobs = useWorkspace((s) => s.itemJobs);
 
   const chartPng = useMutation({
-    mutationFn: ({
-      chartId,
-      jobId,
-      key,
-    }: {
-      chartId: string;
-      jobId: string;
-      key: string;
-    }) => downloadChartPng(chartId, jobId, key),
+    mutationFn: ({ jobId, key }: { jobId: string; key: string }) =>
+      downloadChartPng(jobId, key),
     onError: (err) => notify(err.message),
   });
   const excel = useMutation({
     mutationFn: () => {
       if (!current) throw new Error("그린 차트가 없습니다.");
-      return downloadAllChartsExcel(
-        current.chartId,
-        current.jobId,
-        current.spec,
-      );
+      return downloadAllChartsExcel(current.jobId, current.spec);
     },
     onSuccess: ({ written, total }) => {
       if (written < total)
@@ -147,9 +124,6 @@ export function ChartActionBar() {
     current && selectedItem
       ? { chartId: current.chartId, jobId: current.jobId, key: selectedItem }
       : undefined;
-  const pngBlocked =
-    syncing || (target !== undefined && itemJobs[target.key] !== undefined);
-  const excelBlocked = syncing || Object.keys(itemJobs).length > 0;
   /** 고른 item을 쓰는 도구의 라벨 */
   const itemLabel = (name: string) =>
     target ? name : `${name} (${PICK_ITEM})`;
@@ -169,27 +143,17 @@ export function ChartActionBar() {
         <SquareCheck size={16} strokeWidth={1.8} aria-hidden="true" />
       </button>
       <ActionButton
-        label={
-          !target
-            ? `차트 다운로드 (${PICK_ITEM})`
-            : pngBlocked
-              ? `차트 다운로드 (${SYNCING})`
-              : "차트 다운로드"
-        }
+        label={selectedItem ? "차트 다운로드" : `차트 다운로드 (${PICK_ITEM})`}
         Icon={ImageDown}
         pending={chartPng.isPending}
-        disabled={!target || pngBlocked}
+        disabled={!target}
         onClick={() => target && chartPng.mutate(target)}
       />
       <ActionButton
-        label={
-          excelBlocked
-            ? `모든 차트 엑셀로 다운로드 (${SYNCING})`
-            : "모든 차트 엑셀로 다운로드"
-        }
+        label="모든 차트 엑셀로 다운로드"
         Icon={FileSpreadsheet}
         pending={excel.isPending}
-        disabled={!drawn || excelBlocked}
+        disabled={!drawn}
         onClick={() => excel.mutate()}
       />
       <ActionButton

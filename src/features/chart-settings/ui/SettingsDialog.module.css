@@ -1,0 +1,99 @@
+.dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  font-size: 16px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 220px;
+  max-height: min(70vh, 640px);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--ws-border);
+}
+
+.menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ws-text-secondary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu button:hover {
+  background: var(--ws-panel);
+}
+
+.menu button[aria-current="true"] {
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+  font-weight: 600;
+}
+
+.content {
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.heading {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ws-text-secondary);
+}
+
+.input {
+  width: 72px;
+  padding: 5px 8px;
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  background: var(--ws-elevated);
+  color: var(--ws-text);
+  font: inherit;
+}
+
+.close {
+  border: 1px solid var(--ws-border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  background: var(--ws-elevated);
+  color: var(--ws-text);
+  cursor: pointer;
+}

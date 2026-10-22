@@ -53,15 +53,10 @@ export type TabsState = {
     historyId: string,
   ) => { tab: WorkspaceTab; created: boolean } | undefined;
   close: (id: string) => void;
-  /**
-   * 오른쪽 패널(필터 또는 차트 속성). 한 번에 하나만 연다. 탭을 바꿔도 열고 닫은 상태는 그대로 둔다.
-   */
-  rightPanel: RightPanel | null;
-  toggleRightPanel: (panel: RightPanel) => void;
-  openRightPanel: (panel: RightPanel | null) => void;
+  /** 오른쪽 필터 패널. 탭을 바꿔도 열고 닫은 상태는 그대로 둔다. */
+  filterPanelOpen: boolean;
+  toggleFilterPanel: () => void;
 };
-
-export type RightPanel = "filter" | "options";
 
 function galleryTab(draft?: Partial<ChartSpec>): WorkspaceTab {
   return {
@@ -83,10 +78,9 @@ export function createTabsStore() {
     setView: (view) => {
       if (!get().locked) set({ view });
     },
-    rightPanel: null,
-    toggleRightPanel: (panel) =>
-      set((s) => ({ rightPanel: s.rightPanel === panel ? null : panel })),
-    openRightPanel: (rightPanel) => set({ rightPanel }),
+    filterPanelOpen: false,
+    toggleFilterPanel: () =>
+      set((s) => ({ filterPanelOpen: !s.filterPanelOpen })),
     activate: (id) => {
       if (get().locked) return;
       const tab = get().tabs.find((t) => t.id === id);

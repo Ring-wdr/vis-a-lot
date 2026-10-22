@@ -2,7 +2,7 @@
 
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import styles from "@/shared/ui/workspace.module.css";
-import settingsStyles from "./SettingsSection.module.css";
+import settingsStyles from "./SettingsDialog.module.css";
 
 /**
  * 전체 설정 · 툴팁의 가까운 점 표시 (scatter, line). 화면 표시만 바꾸므로 다시 그리지 않고 바로 적용된다.

@@ -8,7 +8,6 @@ import {
   useWorkspaceStore,
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
-import { useCommonSync } from "@/features/chart-settings/model/use-change-common";
 import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
 import { useDrawState } from "@/features/draw-chart/model/draw-state";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
@@ -21,8 +20,6 @@ import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
 import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
 import { FilterPanel } from "@/widgets/filter-panel/ui/FilterPanel";
 import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
-import { useItemOptionsSync } from "@/widgets/options-panel/model/use-item-options-sync";
-import { OptionsPanel } from "@/widgets/options-panel/ui/OptionsPanel";
 import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
 import { TabToolbar } from "@/widgets/tab-toolbar/ui/TabToolbar";
 
@@ -76,9 +73,6 @@ function DrawLock() {
 
 function GallerySidebar() {
   useOpenSharedLink();
-  // 차트 속성 패널을 닫아도 남은 변경을 보내도록 패널 밖에 둔다.
-  useCommonSync();
-  useItemOptionsSync();
   return (
     <>
       <div className={styles.panelBody}>
@@ -125,7 +119,7 @@ export function Workspace() {
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
   const emptyHistory = useTabs((s) => s.emptyHistory);
   const store = tab?.store ?? emptyHistory;
-  const rightPanel = useTabs((s) => s.rightPanel);
+  const filterOpen = useTabs((s) => s.filterPanelOpen);
 
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
@@ -141,9 +135,9 @@ export function Workspace() {
         <main className={styles.main}>
           <ChartGrid />
         </main>
-        {rightPanel && (
-          <div className={styles.filterDrawer} data-panel={rightPanel}>
-            {rightPanel === "filter" ? <FilterPanel /> : <OptionsPanel />}
+        {filterOpen && (
+          <div className={styles.filterDrawer}>
+            <FilterPanel />
           </div>
         )}
       </div>
