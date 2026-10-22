@@ -34,6 +34,7 @@ import { specError } from "../charts/validate-spec";
 import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
 import { deletePngs, putPng } from "../png-store";
+import { CANDLE_LEGEND } from "../render/candle";
 import { defaultLegendColor } from "../render/theme";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -518,11 +519,14 @@ export function legendColors(
   chart: ChartRecord,
   item: ChartItem,
   values: string[],
+  /** 차트가 정한 기본 색 (candle의 상승/하락). 없으면 팔레트 순서 */
+  defaults?: readonly string[],
 ) {
   return values.map(
     (v, i) =>
       item.props?.legendColors?.[v] ??
       chart.spec.common.legendColors?.[v] ??
+      defaults?.[i] ??
       defaultLegendColor(i),
   );
 }
@@ -544,6 +548,7 @@ function legendInput(
   item: ChartItem,
   title: string,
   values: string[] | undefined,
+  defaults?: readonly string[],
 ) {
   const groups = item.legendGroups;
   if (!values && groups.length === 0) return undefined;
@@ -552,7 +557,7 @@ function legendInput(
     values: [...(values ?? [OTHERS_LABEL]), ...groups.map((g) => g.name)],
     colors: [
       ...(values
-        ? legendColors(chart, item, values)
+        ? legendColors(chart, item, values, defaults)
         : [item.props?.legendColors?.[OTHERS_LABEL] ?? itemColor(chart, item)]),
       ...groups.map((g) => groupColor(item, g)),
     ],
@@ -628,6 +633,33 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "candle") {
+    return {
+      kind: "candle",
+      ...(await db.call("candleData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
+  if (spec.chartType === "gantt") {
+    return {
+      kind: "gantt",
+      ...(await db.call("ganttData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   if (spec.chartType === "sankey") {
     return {
       kind: "sankey",
@@ -686,6 +718,8 @@ function renderItem(
     | "renderSankey"
     | "renderHeatmap"
     | "renderTreemap"
+    | "renderCandle"
+    | "renderGantt"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -726,6 +760,47 @@ function renderItem(
             data.legend?.index.slice(group.start, group.end) ??
             new Uint8Array(group.end - group.start),
         },
+      },
+      options,
+    );
+  }
+  if (data.kind === "candle") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderCandle",
+      {
+        ...common,
+        interval: data.interval,
+        candles: group ?? {
+          t: [],
+          open: [],
+          high: [],
+          low: [],
+          close: [],
+          count: [],
+        },
+        // 데이터 컬럼 대신 상승/하락 두 항목이 legend다.
+        legend: legendInput(
+          chart,
+          item,
+          CANDLE_LEGEND.title,
+          [...CANDLE_LEGEND.values],
+          CANDLE_LEGEND.colors,
+        ) as NonNullable<ReturnType<typeof legendInput>>,
+      },
+      options,
+    );
+  }
+  if (data.kind === "gantt") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderGantt",
+      {
+        ...common,
+        rowTitle: columnOf(spec.y)?.label ?? spec.y,
+        rows: group?.rows ?? [],
+        bars: group?.bars ?? { r: [], s: [], e: [], g: [], n: [] },
+        legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
       options,
     );

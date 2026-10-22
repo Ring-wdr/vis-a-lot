@@ -8,16 +8,20 @@ import type {
   StagedUpload,
   UploadTask,
 } from "./api/types";
+import type { CandleData, CandleDataParams } from "./data/candle-data";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
 import type { ColumnSummary } from "./data/column-summary";
 import type { CsvOptions, CsvPreview } from "./data/csv-import";
 import type { ColumnInfo } from "./data/datasets";
 import type { ChartFilter } from "./data/filters";
+import type { GanttData, GanttDataParams } from "./data/gantt-data";
 import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
+import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
+import type { GanttInput, GanttMeta } from "./render/gantt";
 import type { HeatmapInput, HeatmapMeta } from "./render/heatmap";
 import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
@@ -115,6 +119,16 @@ export type DbMethods = {
     params: Omit<HeatmapDataParams, "table"> & { dataset: string };
     result: HeatmapData;
   };
+  /** candle: 자동 시간 구간별 OHLC */
+  candleData: {
+    params: Omit<CandleDataParams, "table"> & { dataset: string };
+    result: CandleData;
+  };
+  /** gantt: 행마다 같은 legend 값이 이어지는 구간 */
+  ganttData: {
+    params: Omit<GanttDataParams, "table"> & { dataset: string };
+    result: GanttData;
+  };
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
@@ -211,6 +225,28 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: TreemapMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderCandle: {
+    params: CandleInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: CandleMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderGantt: {
+    params: GanttInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: GanttMeta;
       worker: string;
       ms: number;
     };

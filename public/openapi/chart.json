@@ -583,7 +583,9 @@
           "line",
           "sankey",
           "heatmap",
-          "treemap"
+          "treemap",
+          "candle",
+          "gantt"
         ]
       },
       "ColumnName": {
@@ -1083,6 +1085,12 @@
           },
           {
             "$ref": "#/components/schemas/TreemapMeta"
+          },
+          {
+            "$ref": "#/components/schemas/CandleMeta"
+          },
+          {
+            "$ref": "#/components/schemas/GanttMeta"
           }
         ]
       },
@@ -1745,6 +1753,215 @@
           "total",
           "leaves",
           "parents"
+        ]
+      },
+      "CandleMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["candle"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "interval": {
+            "type": "number"
+          },
+          "bodyWidth": {
+            "type": "number"
+          },
+          "candles": {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "open": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "high": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "low": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "close": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "count": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "g": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": ["t", "open", "high", "low", "close", "count", "g"]
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "interval",
+          "bodyWidth",
+          "candles"
+        ]
+      },
+      "GanttMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["gantt"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "rowTitle": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "barHeight": {
+            "type": "number"
+          },
+          "bars": {
+            "type": "object",
+            "properties": {
+              "r": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "s": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "e": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "g": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "n": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "m": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": ["r", "s", "e", "g", "n", "m"]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "rowTitle",
+          "rows",
+          "barHeight",
+          "bars",
+          "truncated"
         ]
       },
       "ItemRowsResponse": {

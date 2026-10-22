@@ -1,5 +1,7 @@
 import type { RenderMethods } from "../protocol";
+import { renderCandle } from "../render/candle";
 import { renderCategory } from "../render/category";
+import { renderGantt } from "../render/gantt";
 import { renderHeatmap } from "../render/heatmap";
 import { renderSankey } from "../render/sankey";
 import { renderScatter } from "../render/scatter";
@@ -176,6 +178,46 @@ serveRpc<RenderMethods>({
     const thumb =
       thumbInput &&
       (await drawPng(thumbInput, (ctx) => renderTreemap(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderCandle({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderCandle(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderCandle(ctx, thumbInput, noop)))
+        .png;
+    progress({ stage: "encode", ratio: 1 });
+    return transfer(
+      { png, thumb, meta, worker: workerName, ms: performance.now() - started },
+      thumb ? [png, thumb] : [png],
+    );
+  },
+
+  async renderGantt({ thumbnail, ...input }, { progress }) {
+    const started = performance.now();
+    const { png, meta } = await drawPng(
+      input,
+      (ctx) =>
+        renderGantt(ctx, input, (stage, ratio) => progress({ stage, ratio })),
+      () => progress({ stage: "encode", ratio: 0 }),
+    );
+    const thumbInput = thumbnail && { ...input, ...thumbnail, compact: true };
+    const thumb =
+      thumbInput &&
+      (await drawPng(thumbInput, (ctx) => renderGantt(ctx, thumbInput, noop)))
         .png;
     progress({ stage: "encode", ratio: 1 });
     return transfer(

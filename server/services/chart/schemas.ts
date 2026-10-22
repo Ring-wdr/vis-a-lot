@@ -27,7 +27,17 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot", "line", "sankey", "heatmap", "treemap"])
+  .enum([
+    "scatter",
+    "bar",
+    "boxplot",
+    "line",
+    "sankey",
+    "heatmap",
+    "treemap",
+    "candle",
+    "gantt",
+  ])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -623,6 +633,61 @@ export const TreemapMetaSchema = z
   })
   .openapi("TreemapMeta");
 
+export const CandleMetaSchema = z
+  .object({
+    chartType: z.literal("candle"),
+    plot: PlotSchema,
+    /** 시계열(epoch ms) */
+    x: AxisMetaSchema,
+    y: AxisMetaSchema,
+    /** 구간 길이(ms) */
+    interval: z.number(),
+    /** 몸통 픽셀 너비 */
+    bodyWidth: z.number(),
+    /** 그린 캔들 (숨긴 legend 값은 빠진다). t는 구간 시작, g는 legend 인덱스 (상승 0, 하락 1, 새 범례는 그 뒤) */
+    candles: z.object({
+      t: z.array(z.number()),
+      open: z.array(z.number()),
+      high: z.array(z.number()),
+      low: z.array(z.number()),
+      close: z.array(z.number()),
+      count: z.array(z.number()),
+      g: z.array(z.number()),
+    }),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("CandleMeta");
+
+export const GanttMetaSchema = z
+  .object({
+    chartType: z.literal("gantt"),
+    plot: PlotSchema,
+    /** 시계열(epoch ms) */
+    x: AxisMetaSchema,
+    /** 행 인덱스 공간. 행 i의 가운데는 rows.length - 1 - i */
+    y: AxisMetaSchema,
+    /** y 컬럼 이름(라벨) */
+    rowTitle: z.string(),
+    rows: z.array(z.string()),
+    /** 막대 픽셀 높이 */
+    barHeight: z.number(),
+    /** 그린 막대. r 행 번호, s·e 시작·끝, g legend 인덱스, n 행 수, m 같은 픽셀 칸에 합친 막대 수. 행 → 시작 순 */
+    bars: z.object({
+      r: z.array(z.number()),
+      s: z.array(z.number()),
+      e: z.array(z.number()),
+      g: z.array(z.number()),
+      n: z.array(z.number()),
+      m: z.array(z.number()),
+    }),
+    /** 막대가 상한을 넘어 metadata에서 뺀 게 있는지 */
+    truncated: z.boolean(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("GanttMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
   .union([
@@ -631,6 +696,8 @@ export const ItemMetaSchema = z
     SankeyMetaSchema,
     HeatmapMetaSchema,
     TreemapMetaSchema,
+    CandleMetaSchema,
+    GanttMetaSchema,
   ])
   .openapi("ItemMeta");
 

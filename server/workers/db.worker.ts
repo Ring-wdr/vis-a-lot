@@ -1,4 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
+import { queryCandleData } from "../data/candle-data";
 import { queryBarData, queryBoxData } from "../data/category-data";
 import {
   queryChartData,
@@ -8,6 +9,7 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { querySankeyData } from "../data/sankey-data";
@@ -220,6 +222,16 @@ serveRpc<DbMethods>({
   async heatmapData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     return queryHeatmapData(db, schema, { ...params, table });
+  },
+
+  async candleData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryCandleData(db, schema, { ...params, table });
+  },
+
+  async ganttData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryGanttData(db, schema, { ...params, table });
   },
 
   async itemRows({ dataset, scope, page }) {
