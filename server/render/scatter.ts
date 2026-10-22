@@ -84,17 +84,33 @@ type Ctx = OffscreenCanvasRenderingContext2D;
 
 const CHUNK = 50_000;
 
-function niceDomain(values: Float64Array): [number, number] {
+/** 값이 하나뿐일 때 양쪽으로 벌리는 폭. 시계열은 1ms가 아니라 앞뒤 1분을 보여준다. */
+const SINGLE_VALUE_PAD = { number: 1, time: 60_000 } as const;
+
+export function niceDomain(
+  values: Float64Array,
+  kind: AxisKind = "number",
+): [number, number] {
   const [min, max] = extent(values) as [number | undefined, number | undefined];
   if (min === undefined || max === undefined) return [0, 1];
-  if (min === max) return [min - 1, max + 1];
+  if (min === max)
+    return [min - SINGLE_VALUE_PAD[kind], max + SINGLE_VALUE_PAD[kind]];
   return [min, max];
 }
 
-function timeFormatter(domain: [number, number]) {
+/** 시계열 눈금 글자: 보이는 범위가 좁을수록 초·밀리초까지 적어 눈금끼리 같은 글자가 되지 않게 한다. */
+export function timeFormatter(domain: [number, number]) {
   const span = domain[1] - domain[0];
   const fmt = utcFormat(
-    span > 2 * DAY_MS ? "%m/%d" : span > DAY_MS / 4 ? "%m/%d %H시" : "%H:%M",
+    span > 2 * DAY_MS
+      ? "%m/%d"
+      : span > DAY_MS / 4
+        ? "%m/%d %H시"
+        : span > 10 * 60_000
+          ? "%H:%M"
+          : span > 5_000
+            ? "%H:%M:%S"
+            : "%H:%M:%S.%L",
   );
   // 축은 KST로 읽히게 한다.
   return (v: number) => fmt(new Date(v + KST_OFFSET_MS));
@@ -138,6 +154,36 @@ export function withoutDeleted(input: ScatterInput): ScatterInput {
   };
 }
 
+/**
+ * x축: 위치는 시계열도 숫자(epoch ms) 선형 축으로 계산한다. scaleUtc는 범위를 Date로 바꾸며
+ * 밀리초 아래를 버려서, 1ms보다 좁게 확대하면 점이 한쪽 끝으로 밀려 보였다.
+ * 시계열은 눈금 자리와 글자만 scaleUtc에서 받는다. nice는 확대하지 않은 숫자 축에만 건다.
+ */
+export function xAxis(
+  kind: AxisKind,
+  domain: [number, number],
+  range: [number, number],
+  nice: boolean,
+) {
+  const scale = scaleLinear().domain(domain).range(range);
+  if (nice && kind !== "time") scale.nice(5);
+  const count = Math.max(2, Math.floor((range[1] - range[0]) / 90));
+  if (kind !== "time") {
+    return { scale, ticks: scale.ticks(count), format: scale.tickFormat(5) };
+  }
+  const ticks = scaleUtc()
+    .domain(domain)
+    .ticks(count)
+    .map(Number)
+    .filter((t) => t >= domain[0] && t <= domain[1]);
+  return {
+    scale,
+    // 1ms보다 좁으면 눈금이 없을 수 있어 가운데 하나를 둔다.
+    ticks: ticks.length > 0 ? ticks : [(domain[0] + domain[1]) / 2],
+    format: timeFormatter(domain),
+  };
+}
+
 export function renderScatter(
   ctx: Ctx,
   rawInput: ScatterInput,
@@ -152,7 +198,7 @@ export function renderScatter(
 
   // ── 축 범위와 눈금 (aggregate) ─────────────────────────────────
   const { view } = input;
-  const xDomain = view?.x ?? niceDomain(xs);
+  const xDomain = view?.x ?? niceDomain(xs, input.xKind);
   const yDomain = view?.y ?? niceDomain(ys);
   const y = scaleLinear().domain(yDomain);
   if (!view) y.nice(5);
@@ -169,23 +215,16 @@ export function renderScatter(
     : framePlot(ctx, width, height, yLabelWidth, input.legend);
   y.range([plot.top + plot.height, plot.top]);
 
-  const x =
-    input.xKind === "time"
-      ? scaleUtc()
-          .domain(xDomain)
-          .range([plot.left, plot.left + plot.width])
-      : scaleLinear()
-          .domain(xDomain)
-          .range([plot.left, plot.left + plot.width]);
-  if (!view && input.xKind !== "time") x.nice(5);
-  const xTicks = x.ticks(Math.max(2, Math.floor(plot.width / 90))) as (
-    | number
-    | Date
-  )[];
-  const xFormat =
-    input.xKind === "time"
-      ? timeFormatter(xDomain)
-      : (x as ReturnType<typeof scaleLinear<number>>).tickFormat(5);
+  const {
+    scale: x,
+    ticks: xTicks,
+    format: xFormat,
+  } = xAxis(
+    input.xKind,
+    xDomain,
+    [plot.left, plot.left + plot.width],
+    !view,
+  );
 
   // 픽셀 단위로 점을 줄인다. 툴팁의 "가장 가까운 점"은 이 점들 안에서 찾는다.
   const cell = new Int32Array(plot.width * plot.height).fill(-1);
@@ -220,7 +259,7 @@ export function renderScatter(
       selected[i] = 1;
       selectedCount++;
     }
-    const cx = x(xs[i]) as number;
+    const cx = x(xs[i]);
     const cy = y(ys[i]);
     sx[i] = cx;
     sy[i] = cy;
@@ -263,7 +302,7 @@ export function renderScatter(
     ctx.textBaseline = "top";
     for (const t of xTicks) {
       const v = +t;
-      const tx = Math.round(x(v) as number) + 0.5;
+      const tx = Math.round(x(v)) + 0.5;
       ctx.fillText(xFormat(v), tx, plot.top + plot.height + 7);
     }
     ctx.strokeStyle = THEME.axis;
@@ -353,7 +392,7 @@ export function renderScatter(
     drawSelection(
       ctx,
       selection,
-      (v) => x(v) as number,
+      (v) => x(v),
       (v) => y(v),
       THEME.selection,
     );
@@ -362,7 +401,7 @@ export function renderScatter(
   drawShapes(
     ctx,
     input.shapes,
-    (v) => x(v) as number,
+    (v) => x(v),
     (v) => y(v),
   );
   ctx.restore();

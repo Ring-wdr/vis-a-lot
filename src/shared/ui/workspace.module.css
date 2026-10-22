@@ -798,17 +798,11 @@
 }
 
 .drawLayer[data-tool="pan"] {
-  overflow: hidden;
   cursor: grab;
 }
 
 .drawLayer[data-tool="pan"]:active {
   cursor: grabbing;
-}
-
-.drawImage {
-  width: 100%;
-  height: 100%;
 }
 
 .drawLayer img {
