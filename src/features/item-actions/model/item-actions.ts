@@ -7,7 +7,12 @@ import {
   useWorkspaceMutationKey,
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
-import type { LegendPosition, Shape, ViewRequest } from "@/shared/api/types";
+import type {
+  LegendPosition,
+  Region,
+  Shape,
+  ViewRequest,
+} from "@/shared/api/types";
 
 export type ItemAction =
   | { type: "view"; body: ViewRequest }
@@ -16,7 +21,16 @@ export type ItemAction =
   | { type: "color"; color: string | null }
   | { type: "legendColor"; value: string; color: string | null }
   | { type: "legendPosition"; position: LegendPosition | null }
-  | { type: "clearShapes" };
+  | { type: "legendVisible"; value: string; visible: boolean }
+  | { type: "clearShapes" }
+  | { type: "select"; region: Region | null }
+  | { type: "deleteRegion"; region: Region }
+  | { type: "undoDeletion" }
+  | { type: "clearDeletions" }
+  | { type: "addFavorite"; name: string }
+  | { type: "removeFavorite"; name: string }
+  | { type: "addLegendGroup"; name: string }
+  | { type: "removeLegendGroup"; name: string };
 
 /**
  * item 단위 조작. 서버는 바뀐 상태를 저장하고 그 item만 다시 그리는 job id를 돌려준다.
@@ -50,6 +64,29 @@ export function useItemAction(chartId: string, itemKey: string) {
           return api.clearShapes(chartId, itemKey);
         case "legendPosition":
           return api.setItemLegendPosition(chartId, itemKey, action.position);
+        case "deleteRegion":
+          return api.addDeletion(chartId, itemKey, action.region);
+        case "undoDeletion":
+          return api.undoDeletion(chartId, itemKey);
+        case "clearDeletions":
+          return api.clearDeletions(chartId, itemKey);
+        case "legendVisible":
+          return api.setItemLegendVisible(
+            chartId,
+            itemKey,
+            action.value,
+            action.visible,
+          );
+        case "select":
+          return api.setSelection(chartId, itemKey, action.region);
+        case "addFavorite":
+          return api.addFavorite(chartId, itemKey, action.name);
+        case "removeFavorite":
+          return api.removeFavorite(chartId, itemKey, action.name);
+        case "addLegendGroup":
+          return api.addLegendGroup(chartId, itemKey, action.name);
+        case "removeLegendGroup":
+          return api.removeLegendGroup(chartId, itemKey, action.name);
       }
     },
     onSuccess: ({ jobId }, action) => {

@@ -9,7 +9,10 @@ import {
   useItemActionPending,
 } from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
+import { ItemContextMenu } from "@/features/item-actions/ui/ItemContextMenu";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
+import { LegendCheckboxes } from "@/features/item-actions/ui/LegendCheckboxes";
+import { PaintToolbar } from "@/features/item-actions/ui/PaintToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
@@ -124,11 +127,14 @@ function DrawnItem({
   onDoubleClick?: () => void;
 }) {
   const mode = useWorkspace((s) => s.mode);
+  const paintTool = useWorkspace((s) => s.paintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
   const commonPosition = useWorkspace(
     (s) => s.current?.spec.common.legendPosition ?? "top",
   );
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
+  const selected = useWorkspace((s) => s.selectedItem === item.key);
+  const setSelectedItem = useWorkspace((s) => s.setSelectedItem);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
   const setItemJob = useWorkspace((s) => s.setItemJob);
   const client = useQueryClient();
@@ -165,13 +171,32 @@ function DrawnItem({
     setItemJob,
   ]);
 
+  const checkboxes = (
+    <LegendCheckboxes
+      image={image}
+      display={displaySize}
+      alt={item.label}
+      disabled={readOnly || busy}
+      onAction={action.mutate}
+    />
+  );
+
   return (
     <article
       className={styles.item}
       aria-label={item.label}
+      data-selected={selected || undefined}
+      onPointerDownCapture={() => setSelectedItem(item.key)}
+      onFocusCapture={() => setSelectedItem(item.key)}
       onDoubleClick={doubleClickHandler(onDoubleClick)}
     >
-      <div className={styles.itemBody}>
+      {/* 우클릭 메뉴: 선택 영역을 즐겨찾기·새 범례로 남긴다. */}
+      <ItemContextMenu
+        item={item}
+        disabled={readOnly || busy}
+        className={styles.itemBody}
+        onAction={action.mutate}
+      >
         {mode === "normal" ? (
           <ItemTooltip
             image={image}
@@ -180,6 +205,7 @@ function DrawnItem({
             itemKey={item.key}
             columns={tooltipColumns}
             display={displaySize}
+            overlay={checkboxes}
             onLegendColor={
               readOnly
                 ? undefined
@@ -189,10 +215,12 @@ function DrawnItem({
           />
         ) : (
           <DrawLayer
-            mode={mode}
+            tool={mode === "paint" ? paintTool : mode}
             image={image}
             display={displaySize}
             alt={item.label}
+            hasSelection={item.selectedCount !== undefined}
+            overlay={checkboxes}
             onAction={action.mutate}
           />
         )}
@@ -207,7 +235,18 @@ function DrawnItem({
             </div>
           )
         )}
-      </div>
+      </ItemContextMenu>
+      {/* 페인트 모드에서만 차트 위 좌측 상단에 그리기 도구를 띄운다. 우측 도구처럼 커서를 올리면 보인다. */}
+      {mode === "paint" && !readOnly && (
+        <div className={styles.itemToolbar} data-side="left">
+          <PaintToolbar
+            item={item}
+            busy={busy}
+            undoCount={undoCount}
+            onAction={action.mutate}
+          />
+        </div>
+      )}
       {/* 차트 위 우측 상단에 떠 있는 도구. 커서를 올리거나 포커스가 들어오면 보인다. */}
       <div className={styles.itemToolbar}>
         {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
@@ -215,7 +254,6 @@ function DrawnItem({
           <ItemToolbar
             item={item}
             busy={busy}
-            undoCount={undoCount}
             hasLegend={hasLegend}
             commonPosition={commonPosition}
             onAction={action.mutate}

@@ -7,9 +7,11 @@ import { utcFormat } from "d3-time-format";
 import {
   drawLegendAround,
   framePlot,
+  hiddenIndexes,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import { drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
 
@@ -41,6 +43,8 @@ export type ScatterMeta = {
     g?: number[];
   };
   total: number;
+  /** 선택 영역 안에 든 점 수. 선택이 없으면 없다. */
+  selected?: number;
   legend?: LegendMeta;
 };
 
@@ -55,6 +59,15 @@ export type ScatterInput = {
   color: string;
   /** legend가 있으면 점마다 legend 인덱스로 색을 고른다. */
   legend?: LegendInput & { index: Uint8Array };
+  /**
+   * 새 범례 영역. 영역 안의 점은 legend 끝에 덧붙인 항목(legend.values의 뒤쪽)으로 칠한다.
+   * 겹치면 나중 영역이 이긴다.
+   */
+  groups?: readonly Region[];
+  /** 선택 영역. 바깥 점은 흐리게 그린다. */
+  selection?: Region;
+  /** 지운 영역. 안의 점은 없던 것으로 보고 그리지도, 세지도 않는다. */
+  deletions?: readonly Region[];
   /** 확대한 범위. 없으면 데이터 전체 범위를 보기 좋게 맞춘다. */
   view?: ItemView;
   shapes: readonly Shape[];
@@ -98,11 +111,39 @@ export function compactPlot(width: number, height: number) {
   };
 }
 
+/** 지운 영역 안의 점을 뺀 입력. 지운 영역이 없으면 그대로 돌려준다. */
+export function withoutDeleted(input: ScatterInput): ScatterInput {
+  const tests = (input.deletions ?? []).map(regionTester);
+  if (tests.length === 0) return input;
+  const { xs, ys, ids, legend } = input;
+  const keep: number[] = [];
+  for (let i = 0; i < xs.length; i++) {
+    if (!tests.some((inside) => inside(xs[i], ys[i]))) keep.push(i);
+  }
+  const pick = <T extends Float64Array | Uint8Array>(src: T, out: T) => {
+    keep.forEach((k, j) => {
+      out[j] = src[k];
+    });
+    return out;
+  };
+  return {
+    ...input,
+    xs: pick(xs, new Float64Array(keep.length)),
+    ys: pick(ys, new Float64Array(keep.length)),
+    ids: pick(ids, new Float64Array(keep.length)),
+    legend: legend && {
+      ...legend,
+      index: pick(legend.index, new Uint8Array(keep.length)),
+    },
+  };
+}
+
 export function renderScatter(
   ctx: Ctx,
-  input: ScatterInput,
+  rawInput: ScatterInput,
   progress: ProgressFn,
 ): ScatterMeta {
+  const input = withoutDeleted(rawInput);
   const { width, height, xs, ys } = input;
   const n = xs.length;
 
@@ -156,11 +197,34 @@ export function renderScatter(
   const keptG: number[] = [];
   const sx = new Float32Array(n);
   const sy = new Float32Array(n);
+  // 점마다의 legend 인덱스. 새 범례 영역 안의 점은 덧붙인 항목으로 바꾼다.
+  const groups = (input.groups ?? []).map(regionTester);
+  const groupIndex = input.legend && new Uint8Array(input.legend.index);
+  const groupBase = (input.legend?.values.length ?? 0) - groups.length;
+  // 체크박스로 끈 legend 값의 점은 그리지도, 툴팁으로 찾지도 않는다.
+  const off = hiddenIndexes(input.legend);
+  const { selection } = input;
+  const inSelection = selection && regionTester(selection);
+  const selected = selection ? new Uint8Array(n) : undefined;
+  let selectedCount = 0;
   for (let i = 0; i < n; i++) {
+    if (groupIndex) {
+      for (let k = groups.length - 1; k >= 0; k--) {
+        if (groups[k](xs[i], ys[i])) {
+          groupIndex[i] = groupBase + k;
+          break;
+        }
+      }
+    }
+    if (inSelection && selected && inSelection(xs[i], ys[i])) {
+      selected[i] = 1;
+      selectedCount++;
+    }
     const cx = x(xs[i]) as number;
     const cy = y(ys[i]);
     sx[i] = cx;
     sy[i] = cy;
+    if (groupIndex && off[groupIndex[i]]) continue;
     const ix = Math.round(cx - plot.left);
     const iy = Math.round(cy - plot.top);
     if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
@@ -172,7 +236,7 @@ export function renderScatter(
         keptX.push(xs[i]);
         keptY.push(ys[i]);
         keptId.push(input.ids[i]);
-        if (input.legend) keptG.push(input.legend.index[i]);
+        if (groupIndex) keptG.push(groupIndex[i]);
       }
     }
     if (i % CHUNK === 0) progress("aggregate", i / n);
@@ -217,7 +281,13 @@ export function renderScatter(
     ctx.fillStyle = THEME.textMuted;
     ctx.font = `11px ${THEME.font}`;
     ctx.textAlign = "right";
-    ctx.fillText(`${n.toLocaleString()} pts`, plot.left + plot.width, 17);
+    ctx.fillText(
+      selection
+        ? `${selectedCount.toLocaleString()} / ${n.toLocaleString()} pts 선택`
+        : `${n.toLocaleString()} pts`,
+      plot.left + plot.width,
+      17,
+    );
 
     // ── legend ────────────────────────────────────────────────
     legendMeta = input.legend
@@ -242,36 +312,53 @@ export function renderScatter(
     // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (fillStyle 전환을 줄인다).
     const { legend } = input;
     const passes = legend ? legend.colors : [input.color];
+    // 선택이 있으면 바깥 점(0)을 먼저 흐리게, 안쪽 점(1)을 그 위에 그린다.
+    const layers = selected ? [0, 1] : [1];
     // 섬네일은 점이 적어도 테두리 원 대신 작은 점으로 그린다.
     const small = !input.compact && n <= 400;
     const size = input.compact || n > 50_000 ? 1.5 : 2.5;
     const half = size / 2;
-    passes.forEach((color, g) => {
-      ctx.fillStyle = color;
-      if (small) {
-        // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 한다.
-        ctx.strokeStyle = THEME.surface;
-        ctx.lineWidth = 2;
-      } else {
-        // 점이 많으면 작은 반투명 점으로 밀도를 보여준다.
-        ctx.globalAlpha = n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6;
-      }
-      for (let i = 0; i < n; i++) {
-        if (legend && legend.index[i] !== g) continue;
+    const baseAlpha = small ? 1 : n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6;
+    const steps = layers.length * passes.length;
+    layers.forEach((layer, l) => {
+      passes.forEach((color, g) => {
+        if (off[g]) return;
+        ctx.fillStyle = color;
+        // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 하고,
+        // 많으면 작은 반투명 점으로 밀도를 보여준다. 선택 바깥 점은 더 옅게 그린다.
+        ctx.globalAlpha = layer === 0 ? baseAlpha * 0.2 : baseAlpha;
         if (small) {
-          ctx.beginPath();
-          ctx.arc(sx[i], sy[i], 4, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.fill();
-        } else {
-          ctx.fillRect(sx[i] - half, sy[i] - half, size, size);
+          ctx.strokeStyle = THEME.surface;
+          ctx.lineWidth = 2;
         }
-        if (i % CHUNK === 0) progress("render", (g + i / n) / passes.length);
-      }
+        for (let i = 0; i < n; i++) {
+          if (groupIndex && groupIndex[i] !== g) continue;
+          if (selected && selected[i] !== layer) continue;
+          if (small) {
+            ctx.beginPath();
+            ctx.arc(sx[i], sy[i], 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+          } else {
+            ctx.fillRect(sx[i] - half, sy[i] - half, size, size);
+          }
+          if (i % CHUNK === 0)
+            progress("render", (l * passes.length + g + i / n) / steps);
+        }
+      });
     });
   }
-  // 도형은 점 위에, 같은 그림 영역 clip 안에 그린다.
   ctx.globalAlpha = 1;
+  if (selection) {
+    drawSelection(
+      ctx,
+      selection,
+      (v) => x(v) as number,
+      (v) => y(v),
+      THEME.selection,
+    );
+  }
+  // 도형은 점 위에, 같은 그림 영역 clip 안에 그린다.
   drawShapes(
     ctx,
     input.shapes,
@@ -295,6 +382,7 @@ export function renderScatter(
       ...(input.legend ? { g: keptG } : {}),
     },
     total: n,
+    ...(selection ? { selected: selectedCount } : {}),
     legend: legendMeta,
   };
 }

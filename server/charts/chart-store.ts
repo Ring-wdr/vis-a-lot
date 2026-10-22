@@ -3,14 +3,17 @@
 import type {
   ChartImage,
   ChartSpec,
+  Favorite,
   HistoryEvent,
   ItemMeta,
   ItemProps,
   ItemRestore,
   ItemSize,
+  LegendGroup,
 } from "../api/types";
 import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
+import type { Region } from "../render/region";
 import type { ItemView } from "../render/scatter";
 import type { Shape } from "../render/shapes";
 import type { SpecColumn } from "./validate-spec";
@@ -40,6 +43,16 @@ export type ChartItem = {
   fullView?: ItemView;
   /** 데이터 좌표로 저장한 도형. 그린 순서대로 쌓이고 undo는 마지막 것을 뺀다. */
   shapes: Shape[];
+  /** 선택 영역. 바깥 점은 흐리게 그리고, 데이터 다운로드·표는 이 영역 안 행만 쓴다. */
+  selection?: Region;
+  /** 마지막으로 그린 선택 영역 안의 점(막대/상자) 수 */
+  selectedCount?: number;
+  /** 이름 붙여 남긴 선택 영역 */
+  favorites: Favorite[];
+  /** 선택 영역으로 만든 새 범례. 순서대로 legend 끝에 붙는다. */
+  legendGroups: LegendGroup[];
+  /** 지운 영역 (scatter). 그린 순서대로 쌓이고 되돌리기는 마지막 것을 뺀다. */
+  deletions: Region[];
   /** 개별 속성. split 조합 키에 붙어 있어 다시 불러와도 유지된다. 없으면 공통 속성을 따른다. */
   props?: ItemProps;
   /** item 단위 다시 그리기가 진행 중이면 그 job id */

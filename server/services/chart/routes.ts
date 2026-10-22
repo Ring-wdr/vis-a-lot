@@ -11,6 +11,7 @@ import {
   CreateChartResponseSchema,
   DebugRenderRequestSchema,
   DebugRenderResponseSchema,
+  DeletionRequestSchema,
   DetailRequestSchema,
   DetailResponseSchema,
   GridRequestSchema,
@@ -19,9 +20,13 @@ import {
   ItemJobResponseSchema,
   ItemMetaSchema,
   ItemPropsRequestSchema,
+  ItemRowsRequestSchema,
+  ItemRowsResponseSchema,
   JobQuerySchema,
   JobStateResponseSchema,
+  NameRequestSchema,
   ResizeRequestSchema,
+  SelectionRequestSchema,
   TooltipRequestSchema,
   TooltipResponseSchema,
   ViewRequestSchema,
@@ -109,7 +114,7 @@ export const changeView = createRoute({
   method: "post",
   path: "/charts/{chartId}/items/{itemKey}/view",
   tags: ["items"],
-  summary: "확대 / 축소 / 초기화. 바뀐 범위로 그 item만 다시 그린다",
+  summary: "확대 / 축소 / 초기화 / 이동. 바뀐 범위로 그 item만 다시 그린다",
   ...write,
   request: { params: ItemParams, body: jsonBody(ViewRequestSchema) },
   responses: { 202: accepted, ...itemErrors },
@@ -142,6 +147,90 @@ export const clearShapes = createRoute({
   summary: "도형 전체 삭제",
   ...write,
   request: { params: ItemParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const addDeletion = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/deletions",
+  tags: ["items"],
+  summary:
+    "영역 안의 점 지우기 (scatter만). 데이터는 그대로 두고 그 item에서만 뺀다",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(DeletionRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const undoDeletion = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/deletions/last",
+  tags: ["items"],
+  summary: "마지막으로 지운 영역 되돌리기",
+  ...write,
+  request: { params: ItemParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const clearDeletions = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/deletions",
+  tags: ["items"],
+  summary: "지운 점 모두 되돌리기",
+  ...write,
+  request: { params: ItemParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const setSelection = createRoute({
+  method: "put",
+  path: "/charts/{chartId}/items/{itemKey}/selection",
+  tags: ["items"],
+  summary: "선택 영역 (데이터 좌표). null이면 선택 해제",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(SelectionRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+const NamedParams = ItemParams.extend({ name: pathParam("name") });
+
+export const addFavorite = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/favorites",
+  tags: ["items"],
+  summary: "지금 선택 영역을 이름 붙여 즐겨찾기에 추가",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(NameRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const removeFavorite = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/favorites/{name}",
+  tags: ["items"],
+  summary: "즐겨찾기 삭제",
+  ...write,
+  request: { params: NamedParams },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const addLegendGroup = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/legend-groups",
+  tags: ["items"],
+  summary:
+    "지금 선택 영역을 새 범례로. 영역 안의 점을 새 legend 항목 색으로 칠하고 선택은 푼다",
+  ...write,
+  request: { params: ItemParams, body: jsonBody(NameRequestSchema) },
+  responses: { 202: accepted, ...itemErrors },
+});
+
+export const removeLegendGroup = createRoute({
+  method: "delete",
+  path: "/charts/{chartId}/items/{itemKey}/legend-groups/{name}",
+  tags: ["items"],
+  summary: "새 범례 삭제",
+  ...write,
+  request: { params: NamedParams },
   responses: { 202: accepted, ...itemErrors },
 });
 
@@ -246,6 +335,45 @@ export const tooltip = createRoute({
     ...badRequest,
     ...authErrors,
     404: errorResponse("모르는 차트, 또는 지운 데이터셋"),
+  },
+});
+
+// ── 데이터 표 / 다운로드 ───────────────────────────────────────
+
+const rowsErrors = {
+  ...badRequest,
+  ...authErrors,
+  404: errorResponse("모르는 item, 또는 지운 데이터셋"),
+  ...conflict("아직 그려지지 않음"),
+};
+
+export const itemRows = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/rows",
+  tags: ["data"],
+  summary:
+    "item이 그린 행 한 페이지 (차트에 쓴 컬럼). 선택 영역이 있으면 그 안의 행만, 지운 점은 뺀다",
+  ...read,
+  request: { params: ItemParams, body: jsonBody(ItemRowsRequestSchema) },
+  responses: {
+    200: jsonResponse(ItemRowsResponseSchema, "행"),
+    ...rowsErrors,
+  },
+});
+
+export const exportItemRows = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/rows/export",
+  tags: ["data"],
+  summary: "item이 그린 행 전체를 CSV로 (데이터 표와 같은 조건)",
+  ...read,
+  request: { params: ItemParams },
+  responses: {
+    200: {
+      description: "CSV (머리글은 컬럼 라벨)",
+      content: { "text/csv": { schema: z.string() } },
+    },
+    ...rowsErrors,
   },
 });
 

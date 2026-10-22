@@ -56,6 +56,14 @@
   gap: 4px;
 }
 
+/* 모드 바와 차트 도구 사이 구분선 */
+.toolbarDivider {
+  align-self: stretch;
+  width: 1px;
+  margin: 8px 0;
+  background: var(--ws-border);
+}
+
 .modeBar button,
 .chartTypes button,
 .secondaryButton {
@@ -80,6 +88,19 @@
   width: 32px;
   height: 30px;
   padding: 0;
+}
+
+.badgedIcon {
+  position: relative;
+  display: inline-flex;
+}
+
+.iconBadge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  background: var(--ws-elevated);
 }
 
 .modeBar button:disabled,
@@ -392,6 +413,12 @@
   background: var(--ws-surface);
 }
 
+/* 누른 item: 다운로드·데이터 표의 대상 */
+.item[data-selected] {
+  border-color: var(--ws-accent);
+  box-shadow: 0 0 0 1px var(--ws-accent);
+}
+
 /* item 도구는 차트 위 우측 상단에 띄운다. 자리를 차지하지 않으니 PNG가 카드 전체를 쓴다.
    평소에는 숨기고, 커서를 올리거나 포커스가 들어오거나 설정 팝업이 열려 있으면 보인다. */
 .itemToolbar {
@@ -409,6 +436,11 @@
   box-shadow: 0 2px 8px rgb(var(--ws-shadow-rgb) / 10%);
   opacity: 0;
   transition: opacity 120ms;
+}
+
+.itemToolbar[data-side="left"] {
+  right: auto;
+  left: 4px;
 }
 
 .item:hover .itemToolbar,
@@ -721,6 +753,19 @@
   cursor: pointer;
 }
 
+.itemActions > button[aria-pressed="true"] {
+  border-color: var(--ws-accent);
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+}
+
+.itemActionsDivider {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 2px;
+  background: var(--ws-border);
+}
+
 .itemActions > button:hover:not(:disabled) {
   border-color: var(--ws-border);
   background: var(--ws-elevated);
@@ -748,8 +793,22 @@
   user-select: none;
 }
 
-.drawLayer[data-mode="text"] {
+.drawLayer[data-tool="text"] {
   cursor: text;
+}
+
+.drawLayer[data-tool="pan"] {
+  overflow: hidden;
+  cursor: grab;
+}
+
+.drawLayer[data-tool="pan"]:active {
+  cursor: grabbing;
+}
+
+.drawImage {
+  width: 100%;
+  height: 100%;
 }
 
 .drawLayer img {
@@ -772,6 +831,20 @@
 .drawPreview polyline,
 .drawPreview line {
   fill: none;
+}
+
+.drawPreview .selectRegion {
+  fill: rgb(var(--ws-accent-rgb) / 8%);
+  stroke: var(--ws-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.drawPreview .deleteRegion {
+  fill: color-mix(in srgb, var(--ws-danger) 10%, transparent);
+  stroke: var(--ws-danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
 }
 
 .drawPreview .zoomRect {
@@ -990,6 +1063,25 @@
   background: rgb(var(--ws-accent-rgb) / 8%);
 }
 
+/* legend 체크박스: 색 표시(●) 가운데에 겹친다. 색 버튼보다 위에 둔다. */
+.legendCheckLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.legendCheck {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  accent-color: var(--ws-accent);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .legendList {
   display: flex;
   flex-direction: column;
@@ -1097,4 +1189,55 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--ws-text-secondary);
+}
+
+/* item 우클릭 메뉴 (Base UI ContextMenu) */
+.menuPositioner {
+  z-index: 20;
+  outline: 0;
+}
+
+.menu {
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--ws-border);
+  border-radius: 8px;
+  background: var(--ws-elevated);
+  box-shadow: 0 8px 24px rgb(var(--ws-shadow-rgb) / 12%);
+  font-size: 13px;
+  outline: 0;
+}
+
+.menuLabel {
+  padding: 4px 8px;
+  color: var(--ws-text-secondary);
+  font-size: 12px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: default;
+  user-select: none;
+  outline: 0;
+}
+
+.menuItem[data-highlighted],
+.menuItem[data-popup-open] {
+  background: var(--ws-accent-soft);
+  color: var(--ws-accent);
+}
+
+.menuItem[data-disabled] {
+  opacity: 0.4;
+}
+
+.menuSeparator {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--ws-border);
 }

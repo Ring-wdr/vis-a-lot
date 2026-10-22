@@ -305,10 +305,15 @@ async function run(job: Job) {
       detailJobs: new Map(),
       view: restored?.view,
       shapes: restored?.shapes ?? [],
+      selection: restored?.selection,
+      favorites: restored?.favorites ?? [],
+      legendGroups: restored?.legendGroups ?? [],
+      deletions: restored?.deletions ?? [],
       props: propsOrNone({
         color: restored?.color,
         legendColors: restored?.legendColors,
         legendPosition: restored?.legendPosition,
+        hiddenLegend: restored?.hiddenLegend,
       }),
     };
   });
@@ -460,6 +465,13 @@ function initialState(chart: ChartRecord, item: ChartItem): ItemState {
     status: "queued",
     stage: "query",
     stageProgress: 1,
+    ...itemView(chart, item),
+  };
+}
+
+/** 그린 결과와 item 조작 상태. 다시 그릴 때마다 job의 item 상태에 그대로 옮긴다. */
+function itemView(chart: ChartRecord, item: ChartItem) {
+  return {
     image: item.image,
     thumbnail: item.thumbnail,
     revision: item.revision,
@@ -468,12 +480,22 @@ function initialState(chart: ChartRecord, item: ChartItem): ItemState {
     color: itemColor(chart, item),
     customColor: hasCustomColor(item),
     legendPosition: item.props?.legendPosition,
-  };
+    selectedCount: item.selection ? item.selectedCount : undefined,
+    favorites: item.favorites,
+    legendGroups: item.legendGroups.map((g) => ({
+      name: g.name,
+      color: groupColor(item, g),
+    })),
+    deletionCount: item.deletions.length,
+  } satisfies Partial<ItemState>;
 }
 
 /** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
 export function propsOrNone(props: ItemProps): ItemProps | undefined {
-  return props.color || props.legendColors || props.legendPosition
+  return props.color ||
+    props.legendColors ||
+    props.legendPosition ||
+    props.hiddenLegend?.length
     ? props
     : undefined;
 }
@@ -503,6 +525,43 @@ export function legendColors(
       defaultLegendColor(i),
   );
 }
+
+/** 새 범례 색: legend 색을 바꿨으면 그 색, 아니면 만들 때 정한 색 */
+export function groupColor(
+  item: ChartItem,
+  group: { name: string; color: string },
+) {
+  return item.props?.legendColors?.[group.name] ?? group.color;
+}
+
+/**
+ * legend 입력. 새 범례가 있으면 원래 legend 뒤에 덧붙이고, 원래 legend가 없으면
+ * 나머지 점을 '기타' 하나로 둔다. legend도 새 범례도 없으면 undefined.
+ */
+function legendInput(
+  chart: ChartRecord,
+  item: ChartItem,
+  title: string,
+  values: string[] | undefined,
+) {
+  const groups = item.legendGroups;
+  if (!values && groups.length === 0) return undefined;
+  return {
+    title: values ? title : "범례",
+    values: [...(values ?? [OTHERS_LABEL]), ...groups.map((g) => g.name)],
+    colors: [
+      ...(values
+        ? legendColors(chart, item, values)
+        : [item.props?.legendColors?.[OTHERS_LABEL] ?? itemColor(chart, item)]),
+      ...groups.map((g) => groupColor(item, g)),
+    ],
+    position: legendPosition(chart, item),
+    hidden: item.props?.hiddenLegend,
+  };
+}
+
+/** 새 범례만 있을 때 나머지 점의 legend 이름 */
+export const OTHERS_LABEL = "기타";
 
 /** 개별 색이나 legend 개별 색을 하나라도 지정했는지 */
 export function hasCustomColor(item: ChartItem) {
@@ -597,10 +656,13 @@ function renderItem(
     color: itemColor(chart, item),
     view: item.view,
     shapes: item.shapes,
+    selection: item.selection,
+    groups: item.legendGroups.map((g) => g.region),
   };
   if (data.kind === "scatter") {
     const group =
       index === undefined ? { start: 0, end: 0 } : data.groups[index];
+    const legend = legendInput(chart, item, legendTitle, data.legend?.values);
     return render.call(
       "renderScatter",
       {
@@ -609,12 +671,13 @@ function renderItem(
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),
-        legend: data.legend && {
-          title: legendTitle,
-          values: data.legend.values,
-          colors: legendColors(chart, item, data.legend.values),
-          position: legendPosition(chart, item),
-          index: data.legend.index.slice(group.start, group.end),
+        deletions: item.deletions,
+        legend: legend && {
+          ...legend,
+          // legend 컬럼이 없으면 모든 점이 '기타'(0)에서 출발한다.
+          index:
+            data.legend?.index.slice(group.start, group.end) ??
+            new Uint8Array(group.end - group.start),
         },
       },
       options,
@@ -630,12 +693,7 @@ function renderItem(
       bars: group?.bars,
       boxes: group?.boxes,
       agg: spec.chartType === "bar" ? spec.agg : undefined,
-      legend: data.legendValues && {
-        title: legendTitle,
-        values: data.legendValues,
-        colors: legendColors(chart, item, data.legendValues),
-        position: legendPosition(chart, item),
-      },
+      legend: legendInput(chart, item, legendTitle, data.legendValues),
     },
     options,
   );
@@ -682,18 +740,14 @@ async function renderItems(
           }
           await storeResult(chart, item, result);
           item.meta = result.meta;
+          item.selectedCount = result.meta.selected;
           if (!item.view) {
             item.fullView = {
               x: result.meta.x.domain,
               y: result.meta.y.domain,
             };
           }
-          state.image = item.image;
-          state.thumbnail = item.thumbnail;
-          state.revision = item.revision;
-          state.color = itemColor(chart, item);
-          state.customColor = hasCustomColor(item);
-          state.legendPosition = item.props?.legendPosition;
+          Object.assign(state, itemView(chart, item));
           state.status = "success";
           syncPrimary(chart, item);
         })
@@ -719,14 +773,7 @@ function syncPrimary(chart: ChartRecord, item: ChartItem) {
   const primary = chart.primaryJobId ? jobs.get(chart.primaryJobId) : undefined;
   const state = primary?.items.get(item.key);
   if (!primary || !state) return;
-  state.image = item.image;
-  state.thumbnail = item.thumbnail;
-  state.revision = item.revision;
-  state.zoomed = item.view !== undefined;
-  state.shapeCount = item.shapes.length;
-  state.color = itemColor(chart, item);
-  state.customColor = hasCustomColor(item);
-  state.legendPosition = item.props?.legendPosition;
+  Object.assign(state, itemView(chart, item));
   touch(primary);
 }
 

@@ -14,8 +14,11 @@ import type {
   DebugRenderRequest,
   HistoryDetail,
   ItemMeta,
+  ItemRowsRequest,
   ItemSize,
+  JobStateResponse,
   LegendPosition,
+  Region,
   Shape,
   TooltipRequest,
   ViewRequest,
@@ -219,11 +222,13 @@ export const api = {
     since: number,
     signal?: AbortSignal,
   ) =>
-    unwrap(
-      chartClient.GET("/jobs/{jobId}", {
-        params: { path: { jobId }, query: { page, pageSize, since } },
-        signal,
-      }),
+    as<JobStateResponse>()(
+      unwrap(
+        chartClient.GET("/jobs/{jobId}", {
+          params: { path: { jobId }, query: { page, pageSize, since } },
+          signal,
+        }),
+      ),
     ),
 
   /** 페이지 경계와 상관없이 offset 순번부터 count개 item의 상태를 long polling으로 받는다. */
@@ -234,14 +239,16 @@ export const api = {
     since: number,
     signal?: AbortSignal,
   ) =>
-    unwrap(
-      chartClient.GET("/jobs/{jobId}", {
-        params: {
-          path: { jobId },
-          query: { offset, pageSize: count, since },
-        },
-        signal,
-      }),
+    as<JobStateResponse>()(
+      unwrap(
+        chartClient.GET("/jobs/{jobId}", {
+          params: {
+            path: { jobId },
+            query: { offset, pageSize: count, since },
+          },
+          signal,
+        }),
+      ),
     ),
 
   /** 지정한 item들의 상태를 long polling으로 받는다. */
@@ -251,11 +258,13 @@ export const api = {
     since: number,
     signal?: AbortSignal,
   ) =>
-    unwrap(
-      chartClient.GET("/jobs/{jobId}", {
-        params: { path: { jobId }, query: { items: keys.join(","), since } },
-        signal,
-      }),
+    as<JobStateResponse>()(
+      unwrap(
+        chartClient.GET("/jobs/{jobId}", {
+          params: { path: { jobId }, query: { items: keys.join(","), since } },
+          signal,
+        }),
+      ),
     ),
 
   cancelJob: (jobId: string) =>
@@ -290,6 +299,31 @@ export const api = {
       }),
     ),
 
+  // ── chart 서비스: 데이터 표 / 다운로드 ──────────────────────
+  /** item이 그린 행 한 페이지. 선택 영역이 있으면 그 안의 행만 온다. */
+  itemRows: (
+    chartId: string,
+    itemKey: string,
+    body: ItemRowsRequest,
+    signal?: AbortSignal,
+  ) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/rows", {
+        params: { path: item(chartId, itemKey) },
+        body,
+        signal,
+      }),
+    ),
+
+  /** item이 그린 행 전체 CSV */
+  exportItemRows: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/rows/export", {
+        params: { path: item(chartId, itemKey) },
+        parseAs: "blob",
+      }),
+    ) as Promise<Blob>,
+
   // ── chart 서비스: item 조작 ─────────────────────────────────
   changeView: (chartId: string, itemKey: string, body: ViewRequest) =>
     unwrap(
@@ -321,6 +355,71 @@ export const api = {
       }),
     ),
 
+  /** 영역 안의 점을 지운다 (scatter). */
+  addDeletion: (chartId: string, itemKey: string, region: Region) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/deletions", {
+        params: { path: item(chartId, itemKey) },
+        body: { region },
+      }),
+    ),
+
+  undoDeletion: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.DELETE("/charts/{chartId}/items/{itemKey}/deletions/last", {
+        params: { path: item(chartId, itemKey) },
+      }),
+    ),
+
+  clearDeletions: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.DELETE("/charts/{chartId}/items/{itemKey}/deletions", {
+        params: { path: item(chartId, itemKey) },
+      }),
+    ),
+
+  /** 선택 영역. null이면 선택 해제 */
+  setSelection: (chartId: string, itemKey: string, region: Region | null) =>
+    unwrap(
+      chartClient.PUT("/charts/{chartId}/items/{itemKey}/selection", {
+        params: { path: item(chartId, itemKey) },
+        body: { region },
+      }),
+    ),
+
+  /** 지금 선택 영역을 즐겨찾기에 이름 붙여 남긴다. */
+  addFavorite: (chartId: string, itemKey: string, name: string) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/favorites", {
+        params: { path: item(chartId, itemKey) },
+        body: { name },
+      }),
+    ),
+
+  removeFavorite: (chartId: string, itemKey: string, name: string) =>
+    unwrap(
+      chartClient.DELETE("/charts/{chartId}/items/{itemKey}/favorites/{name}", {
+        params: { path: { ...item(chartId, itemKey), name } },
+      }),
+    ),
+
+  /** 지금 선택 영역을 새 범례로 만든다. */
+  addLegendGroup: (chartId: string, itemKey: string, name: string) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/legend-groups", {
+        params: { path: item(chartId, itemKey) },
+        body: { name },
+      }),
+    ),
+
+  removeLegendGroup: (chartId: string, itemKey: string, name: string) =>
+    unwrap(
+      chartClient.DELETE(
+        "/charts/{chartId}/items/{itemKey}/legend-groups/{name}",
+        { params: { path: { ...item(chartId, itemKey), name } } },
+      ),
+    ),
+
   setItemColor: (chartId: string, itemKey: string, color: string | null) =>
     unwrap(
       chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
@@ -339,6 +438,20 @@ export const api = {
       chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
         params: { path: item(chartId, itemKey) },
         body: { legendColor: { value, color } },
+      }),
+    ),
+
+  /** legend 체크박스: 값 하나를 보이거나 숨긴다. */
+  setItemLegendVisible: (
+    chartId: string,
+    itemKey: string,
+    value: string,
+    visible: boolean,
+  ) =>
+    unwrap(
+      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
+        params: { path: item(chartId, itemKey) },
+        body: { legendVisible: { value, visible } },
       }),
     ),
 

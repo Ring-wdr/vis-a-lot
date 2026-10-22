@@ -25,8 +25,11 @@ const EVENT_LABELS: Record<HistoryEventType, string> = {
   shape: "도형",
   undo: "되돌리기",
   clearShapes: "도형 삭제",
+  selection: "선택",
+  favorite: "즐겨찾기",
+  delete: "점 삭제",
   color: "개별 색",
-  legend: "legend 위치",
+  legend: "legend",
   common: "공통 속성",
   grid: "grid",
 };

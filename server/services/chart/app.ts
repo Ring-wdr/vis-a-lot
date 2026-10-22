@@ -9,12 +9,14 @@ import {
   getDetail,
   getItem,
 } from "../../charts/chart-store";
-import { zoomIn, zoomOut } from "../../charts/item-view";
+import { itemRowsScope } from "../../charts/item-scope";
+import { pan, zoomIn, zoomOut } from "../../charts/item-view";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
   getJob,
   type ItemSelection,
+  OTHERS_LABEL,
   propsOrNone,
   startDetailJob,
   startItemJob,
@@ -23,11 +25,15 @@ import {
   waitForUpdate,
 } from "../../jobs/job-manager";
 import { matchPng, putPng } from "../../png-store";
+import { defaultLegendColor } from "../../render/theme";
 import { getRuntime } from "../../runtime";
 import { apiError, createServiceApp } from "../common/http";
 import * as routes from "./routes";
 
 const LONG_POLL_TIMEOUT_MS = 25_000;
+const MAX_FAVORITES = 20;
+const MAX_LEGEND_GROUPS = 8;
+const MAX_DELETIONS = 50;
 
 let pngVersion = 0;
 
@@ -49,6 +55,21 @@ function editableItem(
   if (!chart || !item) return { status: 404, error: "unknown item" };
   if (!item.image) return { status: 409, error: "item is not drawn yet" };
   if (item.busyJobId) return { status: 409, error: "item is being redrawn" };
+  return { chart, item };
+}
+
+/** 행 조회용 item. 다시 그리는 중이어도 된다 (조건은 서버에 저장된 상태로 정해진다). */
+function drawnItem({
+  chartId,
+  itemKey,
+}: {
+  chartId: string;
+  itemKey: string;
+}): Rejected | { chart: Chart; item: Item } {
+  const chart = getChart(chartId);
+  const item = chart && getItem(chart, itemKey);
+  if (!chart || !item) return { status: 404, error: "unknown item" };
+  if (!item.image) return { status: 409, error: "item is not drawn yet" };
   return { chart, item };
 }
 
@@ -125,6 +146,12 @@ export const chartApp = createServiceApp()
       const view = zoomIn(body.x, body.y);
       if (!view) return apiError(c, 400, "empty range");
       item.view = view;
+    } else if (body.type === "pan") {
+      const base = item.view ?? item.fullView;
+      if (!base) return apiError(c, 409, "item has no range yet");
+      const view = pan(base, body.dx, body.dy);
+      if (!view) return apiError(c, 400, "empty move");
+      item.view = view;
     } else if (body.type === "zoomOut") {
       if (!item.view) return apiError(c, 409, "item is not zoomed");
       item.view = zoomOut(item.view, item.fullView, body.ratio);
@@ -161,6 +188,128 @@ export const chartApp = createServiceApp()
     recordEvent(target.chart, "clearShapes", target.item.key);
     return c.json(redrawJob(target.chart, [target.item.key]), 202);
   })
+  .openapi(routes.addDeletion, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    // bar/boxplot은 점이 아니라 집계 값이라 지울 대상이 없다.
+    if (chart.spec.chartType !== "scatter")
+      return apiError(c, 409, "점 삭제는 scatter 차트에서만 됩니다.");
+    if (item.deletions.length >= MAX_DELETIONS)
+      return apiError(
+        c,
+        409,
+        `삭제는 ${MAX_DELETIONS}번까지 쌓을 수 있습니다.`,
+      );
+    item.deletions = [...item.deletions, c.req.valid("json").region];
+    recordEvent(chart, "delete", item.key);
+    return c.json(redrawJob(chart, [item.key]), 202);
+  })
+  .openapi(routes.undoDeletion, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (item.deletions.length === 0) return apiError(c, 409, "no deletions");
+    item.deletions = item.deletions.slice(0, -1);
+    recordEvent(target.chart, "delete", item.key);
+    return c.json(redrawJob(target.chart, [item.key]), 202);
+  })
+  .openapi(routes.clearDeletions, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (item.deletions.length === 0) return apiError(c, 409, "no deletions");
+    item.deletions = [];
+    recordEvent(target.chart, "delete", item.key);
+    return c.json(redrawJob(target.chart, [item.key]), 202);
+  })
+  .openapi(routes.setSelection, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { region } = c.req.valid("json");
+    if (!region && !target.item.selection)
+      return apiError(c, 409, "nothing is selected");
+    target.item.selection = region ?? undefined;
+    recordEvent(target.chart, "selection", target.item.key);
+    return c.json(redrawJob(target.chart, [target.item.key]), 202);
+  })
+  .openapi(routes.addFavorite, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    const name = c.req.valid("json").name.trim();
+    if (!item.selection) return apiError(c, 409, "선택한 영역이 없습니다.");
+    if (item.favorites.some((f) => f.name === name))
+      return apiError(c, 409, `'${name}' 즐겨찾기가 이미 있습니다.`);
+    if (item.favorites.length >= MAX_FAVORITES)
+      return apiError(c, 409, `즐겨찾기는 ${MAX_FAVORITES}개까지입니다.`);
+    item.favorites = [...item.favorites, { name, region: item.selection }];
+    recordEvent(target.chart, "favorite", item.key);
+    // 그림은 그대로지만 item 상태(즐겨찾기 목록)를 같은 길로 돌려주려고 다시 그린다.
+    return c.json(redrawJob(target.chart, [item.key], { content: false }), 202);
+  })
+  .openapi(routes.removeFavorite, (c) => {
+    const { chartId, itemKey, name } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (!item.favorites.some((f) => f.name === name))
+      return apiError(c, 404, "unknown favorite");
+    item.favorites = item.favorites.filter((f) => f.name !== name);
+    recordEvent(target.chart, "favorite", item.key);
+    return c.json(redrawJob(target.chart, [item.key], { content: false }), 202);
+  })
+  .openapi(routes.addLegendGroup, (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const name = c.req.valid("json").name.trim();
+    if (!item.selection) return apiError(c, 409, "선택한 영역이 없습니다.");
+    // legend 항목 이름은 색을 찾는 키라 원래 legend 값과도 겹치면 안 된다.
+    const taken = new Set([...(item.meta?.legend?.values ?? []), OTHERS_LABEL]);
+    if (taken.has(name))
+      return apiError(c, 409, `'${name}' legend 항목이 이미 있습니다.`);
+    if (item.legendGroups.length >= MAX_LEGEND_GROUPS)
+      return apiError(c, 409, `새 범례는 ${MAX_LEGEND_GROUPS}개까지입니다.`);
+    const base =
+      (item.meta?.legend?.values.length ?? 1) - item.legendGroups.length;
+    item.legendGroups = [
+      ...item.legendGroups,
+      {
+        name,
+        color: defaultLegendColor(base + item.legendGroups.length),
+        region: item.selection,
+      },
+    ];
+    item.selection = undefined;
+    recordEvent(chart, "legend", item.key);
+    return c.json(redrawJob(chart, [item.key]), 202);
+  })
+  .openapi(routes.removeLegendGroup, (c) => {
+    const { chartId, itemKey, name } = c.req.valid("param");
+    const target = editableItem(chartId, itemKey);
+    if ("error" in target) return reject(c, target);
+    const { item } = target;
+    if (!item.legendGroups.some((g) => g.name === name))
+      return apiError(c, 404, "unknown legend group");
+    item.legendGroups = item.legendGroups.filter((g) => g.name !== name);
+    // 이 항목에 따로 정한 색도 함께 지운다.
+    if (item.props?.legendColors?.[name]) {
+      const { [name]: _removed, ...rest } = item.props.legendColors;
+      item.props = propsOrNone({
+        ...item.props,
+        legendColors: Object.keys(rest).length ? rest : undefined,
+      });
+    }
+    recordEvent(target.chart, "legend", item.key);
+    return c.json(redrawJob(target.chart, [item.key]), 202);
+  })
   .openapi(routes.changeItemProps, (c) => {
     const { chartId, itemKey } = c.req.valid("param");
     const target = editableItem(chartId, itemKey);
@@ -179,6 +328,12 @@ export const chartApp = createServiceApp()
         : undefined;
     } else if ("legendPosition" in body) {
       props.legendPosition = body.legendPosition ?? undefined;
+    } else if ("legendVisible" in body) {
+      const { value, visible } = body.legendVisible;
+      const hidden = new Set(props.hiddenLegend);
+      if (visible) hidden.delete(value);
+      else hidden.add(value);
+      props.hiddenLegend = hidden.size ? [...hidden] : undefined;
     } else if (body.color === null) {
       // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
       props.color = undefined;
@@ -189,7 +344,7 @@ export const chartApp = createServiceApp()
     item.props = propsOrNone(props);
     recordEvent(
       target.chart,
-      "legendPosition" in body ? "legend" : "color",
+      "color" in body || "legendColor" in body ? "color" : "legend",
       item.key,
     );
     return c.json(redrawJob(target.chart, [item.key]), 202);
@@ -283,6 +438,32 @@ export const chartApp = createServiceApp()
     });
     if (!values) return apiError(c, 404, "unknown dataset");
     return c.json({ values }, 200);
+  })
+  // 데이터 표: item이 그린 행을 페이지 단위로. 선택 영역이 있으면 그 안의 행만 준다.
+  .openapi(routes.itemRows, async (c) => {
+    const target = drawnItem(c.req.valid("param"));
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const page = await getRuntime().db.call("itemRows", {
+      dataset: chart.spec.dataset,
+      scope: itemRowsScope(chart, item),
+      page: c.req.valid("json"),
+    });
+    if (!page) return apiError(c, 404, "unknown dataset");
+    return c.json({ ...page, selected: item.selection !== undefined }, 200);
+  })
+  .openapi(routes.exportItemRows, async (c) => {
+    const target = drawnItem(c.req.valid("param"));
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    const csv = await getRuntime().db.call("exportItemRows", {
+      dataset: chart.spec.dataset,
+      scope: itemRowsScope(chart, item),
+    });
+    if (!csv) return apiError(c, 404, "unknown dataset");
+    // Excel이 한글 머리글을 UTF-8로 읽도록 BOM을 붙인다.
+    const body = await new Blob(["\uFEFF", csv]).arrayBuffer();
+    return c.body(body, 200, { "content-type": "text/csv; charset=utf-8" });
   })
   // `<img src>` 요청도 service worker를 거쳐 여기로 온다.
   .openapi(routes.png, async (c) => {

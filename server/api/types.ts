@@ -13,6 +13,7 @@ type ColumnName = string;
 
 import type { CategoryMeta } from "../render/category";
 import type { LegendPosition } from "../render/legend";
+import type { Region } from "../render/region";
 import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { JobStateResponseSchema } from "../services/chart/schemas";
@@ -154,6 +155,8 @@ export type ItemProps = {
   color?: string;
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
+  /** legend 체크박스로 끈 값. 그 값의 점(막대/상자)은 그리지 않는다. */
+  hiddenLegend?: string[];
 };
 
 export type ChartSpec = {
@@ -178,13 +181,24 @@ export type ChartSpec = {
 
 export type ItemSize = { width: number; height: number };
 
+/** 이름 붙여 남긴 선택 영역 */
+export type Favorite = { name: string; region: Region };
+
+/** 선택 영역으로 만든 새 범례. 영역 안의 점을 이 항목 색으로 칠한다. */
+export type LegendGroup = { name: string; color: string; region: Region };
+
 /** 복원할 item 상태. split 조합 키에 붙는다. */
 export type ItemRestore = {
   view?: ItemView;
   shapes: Shape[];
+  selection?: Region;
+  favorites?: Favorite[];
+  legendGroups?: LegendGroup[];
+  deletions?: Region[];
   color?: string;
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
+  hiddenLegend?: string[];
 };
 
 export type CreateChartRequest = {
@@ -210,6 +224,7 @@ export type {
   BoxStats,
   CategoryMeta,
   ItemView,
+  Region,
   ScatterMeta,
   Shape,
   ShapeType,
@@ -221,7 +236,12 @@ export type ItemMeta = ScatterMeta | CategoryMeta;
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }
   | { type: "zoomOut"; ratio: number }
-  | { type: "reset" };
+  | { type: "reset" }
+  | { type: "pan"; dx: number; dy: number };
+
+export type DeletionRequest = { region: Region };
+export type SelectionRequest = { region: Region | null };
+export type NameRequest = { name: string };
 
 export type AddShapeRequest = { shape: Shape };
 
@@ -241,7 +261,8 @@ export type ResizeRequest = { itemSize: ItemSize; keys: string[] };
 export type ItemPropsRequest =
   | { color: string | null }
   | { legendColor: { value: string; color: string | null } }
-  | { legendPosition: LegendPosition | null };
+  | { legendPosition: LegendPosition | null }
+  | { legendVisible: { value: string; visible: boolean } };
 
 export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
@@ -302,6 +323,11 @@ export type ItemState = {
   customColor: boolean;
   /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
   legendPosition?: LegendPosition;
+  /** 선택 영역 안의 점(막대/상자) 수. 선택이 없으면 없다. */
+  selectedCount?: number;
+  favorites: Favorite[];
+  legendGroups: { name: string; color: string }[];
+  deletionCount: number;
 };
 
 /** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
@@ -319,6 +345,9 @@ export const HISTORY_EVENT_TYPES = [
   "legend",
   "common",
   "grid",
+  "selection",
+  "favorite",
+  "delete",
 ] as const;
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];
 

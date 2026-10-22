@@ -26,6 +26,19 @@ export function zoomIn(x: Range, y: Range): ItemView | undefined {
   return { x: nx, y: ny };
 }
 
+/** 보이는 범위를 데이터 값 기준으로 옮긴다. 확대하지 않았으면 전체 범위에서 출발한다. */
+export function pan(
+  current: ItemView,
+  dx: number,
+  dy: number,
+): ItemView | undefined {
+  if (dx === 0 && dy === 0) return undefined;
+  return {
+    x: [current.x[0] + dx, current.x[1] + dx],
+    y: [current.y[0] + dy, current.y[1] + dy],
+  };
+}
+
 /** 현재 범위를 ratio배로 넓힌다. 전체 범위를 모두 덮으면 확대 해제(undefined). */
 export function zoomOut(
   current: ItemView,

@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi";
 import {
   AggFnSchema,
   ColumnNameSchema,
+  ColumnTypeSchema,
   DatasetIdSchema,
   FiltersSchema,
 } from "../common/dataset";
@@ -20,10 +21,10 @@ export const HexColorSchema = z
   .regex(/^#[0-9a-f]{6}$/i, "must be #rrggbb")
   .openapi("HexColor", { example: "#2a78d6" });
 
-/** legend 값 → 색. legend 값은 8개 이하라 그 이상은 잘못된 요청으로 본다. */
+/** legend 값 → 색. legend 값 8개와 새 범례 8개까지라 그 이상은 잘못된 요청으로 본다. */
 const ColorMapSchema = z
   .record(z.string(), HexColorSchema)
-  .refine((m) => Object.keys(m).length <= 8, "at most 8 legend colors");
+  .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
   .enum(["scatter", "bar", "boxplot"])
@@ -120,14 +121,59 @@ export const ShapeSchema = z
   ])
   .openapi("Shape");
 
+/** 차트 위 영역 (데이터 좌표). 자유형은 시작점과 끝점을 이어 닫는다. */
+export const RegionSchema = z
+  .discriminatedUnion("type", [
+    z.object({
+      type: z.literal("rect"),
+      x0: finite,
+      y0: finite,
+      x1: finite,
+      y1: finite,
+    }),
+    z.object({
+      type: z.literal("lasso"),
+      points: z
+        .array(z.tuple([finite, finite]))
+        .min(3)
+        .max(2000),
+    }),
+  ])
+  .openapi("Region");
+
+/** 이름 붙인 영역 (즐겨찾기, 새 범례). 이름은 item 안에서 겹치지 않는다. */
+const RegionNameSchema = z
+  .string()
+  .max(40)
+  .refine((t) => t.trim().length > 0, "empty name");
+
+export const FavoriteSchema = z
+  .object({ name: RegionNameSchema, region: RegionSchema })
+  .openapi("Favorite");
+
+export const LegendGroupSchema = z
+  .object({
+    name: RegionNameSchema,
+    color: HexColorSchema,
+    region: RegionSchema,
+  })
+  .openapi("LegendGroup");
+
 /** 복원할 item 상태. split 조합 키에 붙는다. */
 export const ItemRestoreSchema = z
   .object({
     view: ItemViewSchema.optional(),
     shapes: z.array(ShapeSchema),
+    selection: RegionSchema.optional(),
+    favorites: z.array(FavoriteSchema).max(20).optional(),
+    legendGroups: z.array(LegendGroupSchema).max(8).optional(),
+    /** 지운 영역 (scatter). 영역 안의 점은 그리지도, 세지도 않는다. */
+    deletions: z.array(RegionSchema).max(50).optional(),
     color: HexColorSchema.optional(),
     legendColors: ColorMapSchema.optional(),
     legendPosition: LegendPositionSchema.optional(),
+    /** legend 체크박스로 끈 값 */
+    hiddenLegend: z.array(z.string()).max(16).optional(),
   })
   .openapi("ItemRestore");
 
@@ -190,6 +236,13 @@ export const ItemStateSchema = z
     customColor: z.boolean(),
     /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
     legendPosition: LegendPositionSchema.optional(),
+    /** 선택 영역 안의 점(막대/상자) 수. 선택이 없으면 없다. */
+    selectedCount: z.number().optional(),
+    favorites: z.array(FavoriteSchema),
+    /** 선택 영역으로 만든 새 범례 */
+    legendGroups: z.array(z.object({ name: z.string(), color: z.string() })),
+    /** 지운 영역 수. 되돌리기 버튼 활성화에 쓴다. */
+    deletionCount: z.number(),
   })
   .openapi("ItemState");
 
@@ -264,8 +317,23 @@ export const ViewRequestSchema = z
     z.object({ type: z.literal("zoomIn"), x: range, y: range }),
     z.object({ type: z.literal("zoomOut"), ratio: z.number().gt(1).max(10) }),
     z.object({ type: z.literal("reset") }),
+    /** 이동: 보이는 범위를 데이터 값 기준으로 (dx, dy)만큼 옮긴다. */
+    z.object({ type: z.literal("pan"), dx: finite, dy: finite }),
   ])
   .openapi("ViewRequest");
+
+export const DeletionRequestSchema = z
+  .object({ region: RegionSchema })
+  .openapi("DeletionRequest");
+
+export const SelectionRequestSchema = z
+  .object({ region: orNull(RegionSchema) })
+  .openapi("SelectionRequest");
+
+/** 지금 선택 영역에 이름을 붙여 즐겨찾기나 새 범례로 남긴다. */
+export const NameRequestSchema = z
+  .object({ name: RegionNameSchema })
+  .openapi("NameRequest");
 
 export const AddShapeRequestSchema = z
   .object({ shape: ShapeSchema })
@@ -284,7 +352,8 @@ export const ResizeRequestSchema = z
   .openapi("ResizeRequest");
 
 /**
- * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치다.
+ * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치,
+ * legendVisible은 legend 체크박스로 값 하나를 켜고 끈다.
  * null이면 공통 속성을 따르도록 되돌린다. color: null은 legend 값별 색까지 모두 되돌린다.
  */
 export const ItemPropsRequestSchema = z
@@ -297,8 +366,42 @@ export const ItemPropsRequestSchema = z
       }),
     }),
     z.object({ legendPosition: orNull(LegendPositionSchema) }),
+    /** legend 체크박스: 값 하나를 보이거나 숨긴다. */
+    z.object({
+      legendVisible: z.object({ value: z.string(), visible: z.boolean() }),
+    }),
   ])
   .openapi("ItemPropsRequest");
+
+// ── 데이터 표 / 다운로드 ─────────────────────────────────────────
+
+export const ItemRowsRequestSchema = z
+  .object({
+    offset: z.number().int().min(0),
+    limit: z.number().int().min(1).max(500),
+    /** 없으면 저장된 순서 */
+    sort: z.object({ column: ColumnNameSchema, desc: z.boolean() }).optional(),
+  })
+  .openapi("ItemRowsRequest");
+
+export const ItemRowsResponseSchema = z
+  .object({
+    /** 차트에 쓴 컬럼 (split by → x → y → legend → 툴팁) */
+    columns: z.array(
+      z.object({
+        name: ColumnNameSchema,
+        label: z.string(),
+        type: ColumnTypeSchema,
+      }),
+    ),
+    /** 컬럼 순서대로의 값. 시각은 epoch ms */
+    rows: z.array(z.array(z.union([z.string(), z.number(), z.null()]))),
+    /** 조건에 맞는 전체 행 수 */
+    total: z.number(),
+    /** 선택 영역 안의 행만 담았는지 */
+    selected: z.boolean(),
+  })
+  .openapi("ItemRowsResponse");
 
 export const TooltipRequestSchema = z
   .object({ rowId: finite, columns: z.array(ColumnNameSchema) })
@@ -348,6 +451,10 @@ export const LegendMetaSchema = z
         color: z.string(),
         index: z.number(),
         rect: RectSchema,
+        /** 색 표시(●)의 가운데. 체크박스를 이 자리에 겹친다. */
+        marker: z.object({ x: z.number(), y: z.number() }),
+        /** 체크박스로 끈 값이면 false */
+        visible: z.boolean(),
       }),
     ),
     hidden: z.number(),
@@ -372,6 +479,7 @@ export const ScatterMetaSchema = z
       g: z.array(z.number()).optional(),
     }),
     total: z.number(),
+    selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
   })
   .openapi("ScatterMeta");
@@ -409,6 +517,7 @@ export const CategoryMetaSchema = z
     bars: z.array(z.array(z.number().nullable())).optional(),
     /** 툴팁용 통계. 이상치 값 목록은 빼고 개수만 둔다. */
     boxes: z.array(z.array(orNull(BoxSummarySchema))).optional(),
+    selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
   })
   .openapi("CategoryMeta");
@@ -430,6 +539,9 @@ export const HistoryEventTypeSchema = z
     "legend",
     "common",
     "grid",
+    "selection",
+    "favorite",
+    "delete",
   ])
   .openapi("HistoryEventType");
 

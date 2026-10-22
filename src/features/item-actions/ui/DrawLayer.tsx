@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import {
   clampToPlot,
   eventToPng,
@@ -9,7 +9,7 @@ import {
   pxToData,
 } from "@/entities/chart/lib/coords";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
-import type { Mode } from "@/entities/workspace/model/workspace-store";
+import type { PaintTool } from "@/entities/workspace/model/workspace-store";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { itemMetaQuery, useItemMeta } from "@/shared/api/queries";
 import type {
@@ -18,28 +18,75 @@ import type {
 } from "@/shared/api/types";
 import styles from "@/shared/ui/workspace.module.css";
 
-type DrawMode = Exclude<Mode, "normal">;
+/** 이동, 확대 영역 선택, 영역 선택 또는 페인트 도구 */
+export type DrawTool =
+  | "pan"
+  | "zoom"
+  | "rectSelect"
+  | "lassoSelect"
+  | "rectDelete"
+  | "lassoDelete"
+  | PaintTool;
 
 type Draft =
   | { kind: "drag"; from: Point; to: Point }
+  | { kind: "pan"; from: Point; to: Point }
   | { kind: "freehand"; points: Point[] }
   | { kind: "text"; at: Point };
 
+const TOOL_LABELS: Record<DrawTool, string> = {
+  pan: "이동",
+  zoom: "확대 영역 선택",
+  rectSelect: "사각형으로 선택",
+  lassoSelect: "자유형으로 선택",
+  rectDelete: "사각형으로 지우기",
+  lassoDelete: "자유형으로 지우기",
+  rect: "도형 그리기",
+  line: "도형 그리기",
+  freehand: "도형 그리기",
+  text: "도형 그리기",
+};
+
 const MIN_DRAG_PX = 4;
 const FREEHAND_STEP_PX = 2;
+/** 서버가 받는 자유형 영역의 꼭짓점 수 상한 */
+const MAX_LASSO_POINTS = 2000;
+
+/** 꼭짓점이 많으면 고르게 솎아 상한 안으로 줄인다. */
+function thin<T>(points: T[], max: number) {
+  if (points.length <= max) return points;
+  const step = points.length / max;
+  return Array.from({ length: max }, (_, i) => points[Math.floor(i * step)]);
+}
+
+/** 드래그가 거의 움직이지 않았는지 (클릭) */
+function isClick(points: Point[]) {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  return (
+    Math.max(...xs) - Math.min(...xs) < MIN_DRAG_PX &&
+    Math.max(...ys) - Math.min(...ys) < MIN_DRAG_PX
+  );
+}
 
 /**
  * 확대와 도형 그리기 레이어. 그리는 동안에는 화면에서 임시 미리보기만 보여주고,
  * 손을 떼면 데이터 좌표로 바꿔 서버에 보낸다. 서버가 PNG에 다시 그려 준다.
  */
 export function DrawLayer({
-  mode,
+  tool,
   image,
   display,
   alt,
+  hasSelection = false,
+  overlay,
   onAction,
 }: {
-  mode: DrawMode;
+  /** PNG 위에 겹칠 조작 (legend 체크박스) */
+  overlay?: ReactNode;
+  tool: DrawTool;
+  /** 선택 영역이 있으면 선택 모드에서 클릭만 해도 선택을 푼다. */
+  hasSelection?: boolean;
   image: ChartImageData;
   /** 화면에 보이는 크기. resize 대기 중에는 PNG 크기와 다를 수 있다. */
   display: { width: number; height: number };
@@ -60,13 +107,14 @@ export function DrawLayer({
 
   const toPoint = (e: React.PointerEvent) => {
     const p = eventToPng(e, e.currentTarget, image);
-    return meta.data ? clampToPlot(meta.data, p) : p;
+    // 이동은 그림 영역 밖까지 끌어도 끈 만큼 옮긴다.
+    return meta.data && tool !== "pan" ? clampToPlot(meta.data, p) : p;
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 || draft?.kind === "text") return;
     const p = toPoint(e);
-    if (mode === "text") {
+    if (tool === "text") {
       // 이어지는 mousedown이 포커스를 옮겨 방금 띄운 입력창을 닫지 않게 한다.
       e.preventDefault();
       setText("");
@@ -75,16 +123,16 @@ export function DrawLayer({
     }
     e.currentTarget.setPointerCapture(e.pointerId);
     setDraft(
-      mode === "freehand"
+      tool === "freehand" || tool === "lassoSelect" || tool === "lassoDelete"
         ? { kind: "freehand", points: [p] }
-        : { kind: "drag", from: p, to: p },
+        : { kind: tool === "pan" ? "pan" : "drag", from: p, to: p },
     );
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!draft || draft.kind === "text") return;
     const p = toPoint(e);
-    if (draft.kind === "drag") {
+    if (draft.kind === "drag" || draft.kind === "pan") {
       setDraft({ ...draft, to: p });
     } else {
       const last = draft.points[draft.points.length - 1];
@@ -99,6 +147,28 @@ export function DrawLayer({
     const finished = draft;
     setDraft(undefined);
     const m = await getMeta();
+    const clearSelection = () => {
+      if (hasSelection) onAction({ type: "select", region: null });
+    };
+    if (
+      finished.kind === "freehand" &&
+      (tool === "lassoSelect" || tool === "lassoDelete")
+    ) {
+      const click = finished.points.length < 3 || isClick(finished.points);
+      if (click) return tool === "lassoSelect" ? clearSelection() : undefined;
+      const region = {
+        type: "lasso" as const,
+        points: thin(finished.points, MAX_LASSO_POINTS).map((p) =>
+          pxToData(m, p),
+        ),
+      };
+      onAction(
+        tool === "lassoSelect"
+          ? { type: "select", region }
+          : { type: "deleteRegion", region },
+      );
+      return;
+    }
     if (finished.kind === "freehand") {
       if (finished.points.length < 2) return;
       onAction({
@@ -111,20 +181,32 @@ export function DrawLayer({
       return;
     }
     const { from, to } = finished;
-    if (
-      Math.abs(to.x - from.x) < MIN_DRAG_PX &&
-      Math.abs(to.y - from.y) < MIN_DRAG_PX
-    )
+    if (isClick([from, to])) {
+      if (tool === "rectSelect") clearSelection();
       return;
+    }
     const [x0, y0] = pxToData(m, from);
     const [x1, y1] = pxToData(m, to);
-    if (mode === "zoom") {
+    if (finished.kind === "pan") {
+      // 끈 방향으로 그림이 따라오도록 보이는 범위는 반대로 옮긴다.
+      onAction({
+        type: "view",
+        body: { type: "pan", dx: x0 - x1, dy: y0 - y1 },
+      });
+    } else if (tool === "zoom") {
       onAction({
         type: "view",
         body: { type: "zoomIn", x: [x0, x1], y: [y0, y1] },
       });
-    } else if (mode === "rect" || mode === "line") {
-      onAction({ type: "addShape", shape: { type: mode, x0, y0, x1, y1 } });
+    } else if (tool === "rectSelect") {
+      onAction({ type: "select", region: { type: "rect", x0, y0, x1, y1 } });
+    } else if (tool === "rectDelete") {
+      onAction({
+        type: "deleteRegion",
+        region: { type: "rect", x0, y0, x1, y1 },
+      });
+    } else if (tool === "rect" || tool === "line") {
+      onAction({ type: "addShape", shape: { type: tool, x0, y0, x1, y1 } });
     }
   };
 
@@ -142,22 +224,35 @@ export function DrawLayer({
     <div
       ref={ref}
       className={styles.drawLayer}
-      data-mode={mode}
+      data-tool={tool}
       style={{ width: display.width, height: display.height }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="application"
-      aria-label={`${alt} 위에 ${mode === "zoom" ? "확대 영역 선택" : "도형 그리기"}`}
+      aria-label={`${alt} 위에 ${TOOL_LABELS[tool]}`}
     >
-      <ChartImage data={image} alt={alt} />
+      {/* 이동하는 동안에는 PNG를 끈 만큼 옮겨 보여주고, 놓으면 서버가 옮긴 범위로 다시 그린다. */}
+      <div
+        className={styles.drawImage}
+        style={
+          draft?.kind === "pan"
+            ? {
+                transform: `translate(${((draft.to.x - draft.from.x) * display.width) / image.width}px, ${((draft.to.y - draft.from.y) * display.height) / image.height}px)`,
+              }
+            : undefined
+        }
+      >
+        <ChartImage data={image} alt={alt} />
+      </div>
+      {overlay}
       <svg
         className={styles.drawPreview}
         viewBox={`0 0 ${image.width} ${image.height}`}
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        {draft?.kind === "drag" && mode === "line" && (
+        {draft?.kind === "drag" && tool === "line" && (
           <line
             x1={draft.from.x}
             y1={draft.from.y}
@@ -165,20 +260,38 @@ export function DrawLayer({
             y2={draft.to.y}
           />
         )}
-        {draft?.kind === "drag" && mode !== "line" && (
+        {draft?.kind === "drag" && tool !== "line" && (
           <rect
-            className={mode === "zoom" ? styles.zoomRect : undefined}
+            className={
+              tool === "zoom"
+                ? styles.zoomRect
+                : tool === "rectSelect"
+                  ? styles.selectRegion
+                  : tool === "rectDelete"
+                    ? styles.deleteRegion
+                    : undefined
+            }
             x={Math.min(draft.from.x, draft.to.x)}
             y={Math.min(draft.from.y, draft.to.y)}
             width={Math.abs(draft.to.x - draft.from.x)}
             height={Math.abs(draft.to.y - draft.from.y)}
           />
         )}
-        {draft?.kind === "freehand" && (
-          <polyline
-            points={draft.points.map((p) => `${p.x},${p.y}`).join(" ")}
-          />
-        )}
+        {draft?.kind === "freehand" &&
+          (tool === "lassoSelect" || tool === "lassoDelete" ? (
+            <polygon
+              className={
+                tool === "lassoSelect"
+                  ? styles.selectRegion
+                  : styles.deleteRegion
+              }
+              points={draft.points.map((p) => `${p.x},${p.y}`).join(" ")}
+            />
+          ) : (
+            <polyline
+              points={draft.points.map((p) => `${p.x},${p.y}`).join(" ")}
+            />
+          ))}
       </svg>
       {draft?.kind === "text" && (
         <input

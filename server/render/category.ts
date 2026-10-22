@@ -8,9 +8,11 @@ import { AGG_LABELS, type AggFn } from "../data/schema";
 import {
   drawLegendAround,
   framePlot,
+  hiddenIndexes,
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
   compactPlot,
@@ -38,6 +40,8 @@ export type CategoryMeta = {
   bars?: (number | null)[][];
   /** 툴팁용 통계. 이상치 값 목록은 빼고 개수만 둔다. */
   boxes?: (Omit<BoxStats, "outliers"> | null)[][];
+  /** 선택 영역 안에 든 막대/상자 수. 선택이 없으면 없다. */
+  selected?: number;
   legend?: LegendMeta;
 };
 
@@ -54,6 +58,10 @@ export type CategoryInput = {
   legend?: LegendInput;
   view?: ItemView;
   shapes: readonly Shape[];
+  /** 새 범례 영역. 막대 끝/상자 중앙값이 영역 안이면 legend 끝에 덧붙인 항목 색으로 칠한다. */
+  groups?: readonly Region[];
+  /** 선택 영역. 바깥 막대/상자는 흐리게 그린다. */
+  selection?: Region;
   /** 섬네일: 축·제목·legend 없이 그림 영역만 그린다. */
   compact?: boolean;
 };
@@ -101,6 +109,19 @@ function truncate(ctx: Ctx, text: string, maxWidth: number) {
   return `${text.slice(0, end)}…`;
 }
 
+/**
+ * 범주 i의 g번째 막대/상자를 대표하는 데이터 좌표. x는 범주 인덱스 공간에서 그 막대/상자의 가운데,
+ * y는 막대 끝 값이나 상자 중앙값이다. 선택·새 범례 영역 판정에 쓴다.
+ */
+export function markPoint(
+  i: number,
+  g: number,
+  groupCount: number,
+  value: number,
+): [number, number] {
+  return [i - MARK_RATIO / 2 + (MARK_RATIO / groupCount) * (g + 0.5), value];
+}
+
 /** 범주 i 안에서 g번째 막대/상자의 가운데 x와 너비 */
 export function groupSlot(
   center: number,
@@ -122,8 +143,44 @@ export function renderCategory(
 ): CategoryMeta {
   const { width, height, categories, view } = input;
   const n = categories.length;
-  const groupCount = input.legend?.values.length ?? 1;
-  const colorOf = (g: number) => input.legend?.colors[g] ?? input.color;
+  const groups = (input.groups ?? []).map(regionTester);
+  // 새 범례 항목은 legend 끝에 붙어 있다. 막대/상자 자리는 원래 legend 값 수만큼만 나눈다.
+  const groupCount = Math.max(
+    1,
+    (input.legend?.values.length ?? 1) - groups.length,
+  );
+  const inSelection = input.selection && regionTester(input.selection);
+  let selectedCount = 0;
+
+  /** 막대/상자의 legend 인덱스. 새 범례 영역 안이면 덧붙인 항목이다. */
+  const legendIndexOf = (g: number, point: readonly [number, number]) => {
+    for (let k = groups.length - 1; k >= 0; k--) {
+      if (groups[k](point[0], point[1])) return groupCount + k;
+    }
+    return g;
+  };
+  const colorOf = (index: number) => input.legend?.colors[index] ?? input.color;
+  // 체크박스로 끈 legend 값의 막대/상자는 그리지 않는다.
+  const off = hiddenIndexes(input.legend);
+  /** 선택이 있으면 바깥 막대/상자는 흐리게 */
+  const alphaOf = (point: readonly [number, number]) =>
+    !inSelection || inSelection(point[0], point[1]) ? 1 : 0.2;
+  /** 막대는 끝 값, 상자는 중앙값이 대표 값이다. */
+  const markValue = (i: number, g: number) =>
+    input.chartType === "bar"
+      ? (input.bars?.[i]?.[g] ?? null)
+      : (input.boxes?.[i]?.[g]?.median ?? null);
+  if (inSelection) {
+    for (let i = 0; i < n; i++) {
+      for (let g = 0; g < groupCount; g++) {
+        const v = markValue(i, g);
+        if (v === null) continue;
+        const point = markPoint(i, g, groupCount, v);
+        if (!off[legendIndexOf(g, point)] && inSelection(...point))
+          selectedCount++;
+      }
+    }
+  }
 
   ctx.fillStyle = THEME.surface;
   ctx.fillRect(0, 0, width, height);
@@ -206,9 +263,13 @@ export function renderCategory(
     ctx.font = `11px ${THEME.font}`;
     ctx.textAlign = "right";
     ctx.fillText(
-      input.chartType === "bar"
-        ? `${input.agg ? AGG_LABELS[input.agg] : ""} · ${n}개 범주`
-        : `${n}개 범주`,
+      [
+        input.chartType === "bar" && input.agg ? AGG_LABELS[input.agg] : "",
+        `${n}개 범주`,
+        inSelection ? `${selectedCount}개 선택` : "",
+      ]
+        .filter(Boolean)
+        .join(" · "),
       plot.left + plot.width,
       17,
     );
@@ -235,10 +296,15 @@ export function renderCategory(
         const r = Math.min(RADIUS, w / 2, h);
         // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
         const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
-        ctx.fillStyle = colorOf(g);
+        const point = markPoint(i, g, groupCount, v);
+        const index = legendIndexOf(g, point);
+        if (off[index]) return;
+        ctx.fillStyle = colorOf(index);
+        ctx.globalAlpha = alphaOf(point);
         ctx.beginPath();
         ctx.roundRect(cx - w / 2, top, w, Math.max(h, 1), radii);
         ctx.fill();
+        ctx.globalAlpha = 1;
       });
       if (i % 200 === 0) progress("render", i / n);
     });
@@ -248,7 +314,12 @@ export function renderCategory(
         if (!b) return;
         const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
         const half = w / 2;
-        const color = colorOf(g);
+        const point = markPoint(i, g, groupCount, b.median);
+        const index = legendIndexOf(g, point);
+        if (off[index]) return;
+        const color = colorOf(index);
+        const alpha = alphaOf(point);
+        ctx.globalAlpha = alpha;
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.5;
         // 수염
@@ -265,10 +336,10 @@ export function renderCategory(
         // 상자
         const top = y(b.q3);
         const h = Math.max(1, y(b.q1) - top);
-        ctx.globalAlpha = 0.22;
+        ctx.globalAlpha = 0.22 * alpha;
         ctx.fillStyle = color;
         ctx.fillRect(cx - half, top, w, h);
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = alpha;
         ctx.strokeRect(cx - half, top, w, h);
         // 중앙값
         ctx.strokeStyle = THEME.textPrimary;
@@ -279,7 +350,7 @@ export function renderCategory(
         ctx.stroke();
         // 이상치
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.6;
+        ctx.globalAlpha = 0.6 * alpha;
         for (const o of b.outliers) {
           ctx.beginPath();
           ctx.arc(cx, y(o), 2, 0, Math.PI * 2);
@@ -289,6 +360,15 @@ export function renderCategory(
       });
       if (i % 50 === 0) progress("render", i / n);
     });
+  }
+  if (input.selection) {
+    drawSelection(
+      ctx,
+      input.selection,
+      (v) => x(v),
+      (v) => y(v),
+      THEME.selection,
+    );
   }
   drawShapes(
     ctx,
@@ -317,6 +397,7 @@ export function renderCategory(
         return rest;
       }),
     ),
+    ...(inSelection ? { selected: selectedCount } : {}),
     legend: legendMeta,
   };
 }

@@ -14,7 +14,14 @@ export type LegendInput = {
   colors: string[];
   /** 없으면 위 */
   position?: LegendPosition;
+  /** 체크박스로 끈 값. 표시는 남기되 속을 비우고 글자를 흐리게 그린다. */
+  hidden?: readonly string[];
 };
+
+/** legend 인덱스별로 끈 값인지. 렌더러가 그 값의 점(막대/상자)을 건너뛴다. */
+export function hiddenIndexes(legend: LegendInput | undefined) {
+  return legend?.values.map((v) => legend.hidden?.includes(v) ?? false) ?? [];
+}
 
 export type LegendMeta = {
   title: string;
@@ -23,7 +30,15 @@ export type LegendMeta = {
   colors: string[];
   box: Rect;
   /** 화면에 다 들어가지 못한 항목은 빠지고 hidden 수로만 남는다. */
-  entries: { value: string; color: string; index: number; rect: Rect }[];
+  entries: {
+    value: string;
+    color: string;
+    index: number;
+    rect: Rect;
+    /** 색 표시(●)의 가운데 */
+    marker: { x: number; y: number };
+    visible: boolean;
+  }[];
   hidden: number;
 };
 
@@ -136,9 +151,23 @@ function drawBox(ctx: Ctx, box: Rect) {
   ctx.stroke();
 }
 
-function drawMarker(ctx: Ctx, cx: number, cy: number, color: string) {
+function drawMarker(
+  ctx: Ctx,
+  cx: number,
+  cy: number,
+  color: string,
+  visible: boolean,
+) {
   // 마커는 데이터 색, 글자는 텍스트 색 (텍스트에 데이터 색을 입히지 않는다)
   ctx.beginPath();
+  if (!visible) {
+    // 끈 값은 속이 빈 테두리만 그린다.
+    ctx.arc(cx, cy, MARKER_R - 1, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    return;
+  }
   ctx.arc(cx, cy, MARKER_R, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
@@ -191,8 +220,9 @@ function drawVerticalLegend(
     const rowY = y + PAD + ROW_HEIGHT * (i + 1);
     const midY = rowY + ROW_HEIGHT / 2;
     const cx = x + PAD + MARKER_R;
-    drawMarker(ctx, cx, midY, legend.colors[i]);
-    ctx.fillStyle = THEME.textSecondary;
+    const visible = !legend.hidden?.includes(legend.values[i]);
+    drawMarker(ctx, cx, midY, legend.colors[i], visible);
+    ctx.fillStyle = visible ? THEME.textSecondary : THEME.textMuted;
     ctx.fillText(
       truncate(ctx, legend.values[i], textWidth - MARKER_R * 2 - 4),
       cx + MARKER_R + 4,
@@ -203,6 +233,8 @@ function drawVerticalLegend(
       color: legend.colors[i],
       index: i,
       rect: { x: x + 2, y: rowY, width: width - 4, height: ROW_HEIGHT },
+      marker: { x: cx, y: midY },
+      visible,
     });
   }
   if (hidden) {
@@ -251,6 +283,8 @@ function drawLegend(
       color: legend.colors[i],
       index: i,
       rect: { x: cursor - 2, y, width: width + 4, height: BOX_HEIGHT },
+      marker: { x: cursor + MARKER_R, y: y + BOX_HEIGHT / 2 },
+      visible: !legend.hidden?.includes(label),
     });
     cursor += width + GAP;
   }
@@ -269,9 +303,9 @@ function drawLegend(
   ctx.fillStyle = THEME.textMuted;
   ctx.fillText(titleText, x + PAD, midY);
   for (const entry of entries) {
-    const cx = entry.rect.x + 2 + MARKER_R;
-    drawMarker(ctx, cx, midY, entry.color);
-    ctx.fillStyle = THEME.textSecondary;
+    const cx = entry.marker.x;
+    drawMarker(ctx, cx, midY, entry.color, entry.visible);
+    ctx.fillStyle = entry.visible ? THEME.textSecondary : THEME.textMuted;
     ctx.fillText(entry.value, cx + MARKER_R + 4, midY);
   }
   if (hidden) {
