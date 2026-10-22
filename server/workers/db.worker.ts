@@ -11,6 +11,7 @@ import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
 import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
+import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { toPieData, toRadarData } from "../data/polar-data";
 import { querySankeyData } from "../data/sankey-data";
@@ -223,6 +224,11 @@ serveRpc<DbMethods>({
   async heatmapData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     return queryHeatmapData(db, schema, { ...params, table });
+  },
+
+  async histogramData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryHistogramData(db, schema, { ...params, table });
   },
 
   async candleData({ dataset, ...params }) {

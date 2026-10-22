@@ -587,7 +587,8 @@
           "candle",
           "gantt",
           "pie",
-          "radar"
+          "radar",
+          "histogram"
         ]
       },
       "ColumnName": {
@@ -1099,6 +1100,9 @@
           },
           {
             "$ref": "#/components/schemas/RadarMeta"
+          },
+          {
+            "$ref": "#/components/schemas/HistogramMeta"
           }
         ]
       },
@@ -2205,6 +2209,81 @@
           "axes",
           "domain",
           "series"
+        ]
+      },
+      "HistogramMeta": {
+        "type": "object",
+        "properties": {
+          "chartType": {
+            "type": "string",
+            "enum": ["histogram"]
+          },
+          "plot": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "number"
+              },
+              "top": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": ["left", "top", "width", "height"]
+          },
+          "x": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "y": {
+            "$ref": "#/components/schemas/AxisMeta"
+          },
+          "bins": {
+            "type": "object",
+            "properties": {
+              "lo": {
+                "type": "number"
+              },
+              "step": {
+                "type": "number"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": ["lo", "step", "count"]
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "groupCount": {
+            "type": "number"
+          },
+          "selected": {
+            "type": "number"
+          },
+          "legend": {
+            "$ref": "#/components/schemas/LegendMeta"
+          }
+        },
+        "required": [
+          "chartType",
+          "plot",
+          "x",
+          "y",
+          "bins",
+          "counts",
+          "groupCount"
         ]
       },
       "ItemRowsResponse": {

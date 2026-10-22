@@ -15,6 +15,7 @@ import type { CandleMeta } from "../render/candle";
 import type { CategoryMeta } from "../render/category";
 import type { GanttMeta } from "../render/gantt";
 import type { HeatmapMeta } from "../render/heatmap";
+import type { HistogramMeta } from "../render/histogram";
 import type { LegendPosition } from "../render/legend";
 import type { PieMeta } from "../render/pie";
 import type { RadarMeta } from "../render/radar";
@@ -157,6 +158,7 @@ export const CHART_TYPES = [
   "gantt",
   "pie",
   "radar",
+  "histogram",
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -247,6 +249,7 @@ export type {
   CategoryMeta,
   GanttMeta,
   HeatmapMeta,
+  HistogramMeta,
   ItemView,
   PieMeta,
   RadarMeta,
@@ -268,7 +271,8 @@ export type ItemMeta =
   | CandleMeta
   | GanttMeta
   | PieMeta
-  | RadarMeta;
+  | RadarMeta
+  | HistogramMeta;
 
 export type ViewRequest =
   | { type: "zoomIn"; x: [number, number]; y: [number, number] }

@@ -43,6 +43,7 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   gantt: { x: ["datetime"], y: ["categorical"], agg: false },
   pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
   radar: { x: ["categorical"], y: ["numeric"], agg: true },
+  histogram: { x: ["numeric"], y: null, agg: false },
 };
 
 /** 점 하나하나를 그려 사각형·자유형 삭제를 할 수 있는 차트 */
@@ -60,6 +61,7 @@ export const ROW_CHARTS = [
   "bar",
   "boxplot",
   "line",
+  "histogram",
 ] as const satisfies readonly ChartType[];
 
 export function isRowChart(

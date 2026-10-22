@@ -7,6 +7,7 @@ import type {
   CategoryMeta,
   GanttMeta,
   HeatmapMeta,
+  HistogramMeta,
   ItemMeta,
   PieMeta,
   RadarMeta,
@@ -703,6 +704,66 @@ export const radarStrategy: TooltipStrategy<RadarMeta> = {
   },
 };
 
+/** 데이터 x 값 → PNG x 좌표 */
+function xToPx(meta: ItemMeta, v: number) {
+  const { plot } = meta;
+  const [d0, d1] = meta.x.domain;
+  return plot.left + ((v - d0) / (d1 - d0)) * plot.width;
+}
+
+/** legend 체크박스로 끈 값인지 */
+function legendHidden(meta: ItemMeta, index: number) {
+  return meta.legend?.entries.find((e) => e.index === index)?.visible === false;
+}
+
+/** 커서가 가리키는 구간과, legend가 있으면 그 구간 안의 막대 칸 */
+export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot, bins } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const v = invertAxis(meta.x, plot.left, plot.width, px, false);
+    const pos = (v - bins.lo) / bins.step;
+    const i = Math.min(bins.count - 1, Math.floor(pos));
+    if (pos < 0 || pos > bins.count) return null;
+    const g = Math.min(
+      meta.groupCount - 1,
+      Math.max(0, Math.floor((pos - i) * meta.groupCount)),
+    );
+    if (legendHidden(meta, g)) return null;
+    const count = meta.counts[i]?.[g] ?? 0;
+    const from = bins.lo + bins.step * i;
+    const to = from + bins.step;
+    const num = (n: number) => formatValue(n, "number");
+    // 마지막 구간만 끝값을 포함한다.
+    const range = `${num(from)} ~ ${num(to)}${i === bins.count - 1 ? "" : " 미만"}`;
+    const left = xToPx(meta, from + (bins.step * g) / meta.groupCount);
+    const right = xToPx(meta, from + (bins.step * (g + 1)) / meta.groupCount);
+    const rows: TooltipRow[] = [{ label: "구간", value: range }];
+    if (meta.legend)
+      rows.push({ label: meta.legend.title, value: meta.legend.values[g] });
+    rows.push({ label: "개수", value: num(count), emphasis: true });
+    return {
+      highlight: highlightRect(
+        meta,
+        (left + right) / 2,
+        right - left,
+        0,
+        count,
+      ),
+      rows,
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -715,6 +776,7 @@ const STRATEGIES: {
   gantt: TooltipStrategy<GanttMeta>;
   pie: TooltipStrategy<PieMeta>;
   radar: TooltipStrategy<RadarMeta>;
+  histogram: TooltipStrategy<HistogramMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -728,6 +790,7 @@ const STRATEGIES: {
   gantt: ganttStrategy,
   pie: pieStrategy,
   radar: radarStrategy,
+  histogram: histogramStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

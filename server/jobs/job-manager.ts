@@ -657,6 +657,19 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "histogram") {
+    return {
+      kind: "histogram",
+      ...(await db.call("histogramData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        splitBy: spec.splitBy,
+        legend: spec.legend,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   if (spec.chartType === "candle") {
     return {
       kind: "candle",
@@ -776,6 +789,7 @@ function renderItem(
     | "renderGantt"
     | "renderPie"
     | "renderRadar"
+    | "renderHistogram"
   >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
@@ -870,6 +884,19 @@ function renderItem(
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
         },
+      },
+      options,
+    );
+  }
+  if (data.kind === "histogram") {
+    const group = index === undefined ? undefined : data.groups[index];
+    return render.call(
+      "renderHistogram",
+      {
+        ...common,
+        bins: data.bins,
+        counts: group?.counts ?? [],
+        legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
       options,
     );

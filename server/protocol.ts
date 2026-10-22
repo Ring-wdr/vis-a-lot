@@ -17,6 +17,7 @@ import type { ColumnInfo } from "./data/datasets";
 import type { ChartFilter } from "./data/filters";
 import type { GanttData, GanttDataParams } from "./data/gantt-data";
 import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
+import type { HistogramData, HistogramDataParams } from "./data/histogram-data";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
 import type { PieData, RadarData } from "./data/polar-data";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
@@ -24,6 +25,7 @@ import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { GanttInput, GanttMeta } from "./render/gantt";
 import type { HeatmapInput, HeatmapMeta } from "./render/heatmap";
+import type { HistogramInput, HistogramMeta } from "./render/histogram";
 import type { PieInput, PieMeta } from "./render/pie";
 import type { RadarInput, RadarMeta } from "./render/radar";
 import type { SankeyInput, SankeyMeta } from "./render/sankey";
@@ -121,6 +123,11 @@ export type DbMethods = {
   heatmapData: {
     params: Omit<HeatmapDataParams, "table"> & { dataset: string };
     result: HeatmapData;
+  };
+  /** histogram: 전체 범위에서 정한 구간 × split 조합 × legend 값 개수 */
+  histogramData: {
+    params: Omit<HistogramDataParams, "table"> & { dataset: string };
+    result: HistogramData;
   };
   /** candle: 자동 시간 구간별 OHLC */
   candleData: {
@@ -286,6 +293,17 @@ export type RenderMethods = {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
       meta: RadarMeta;
+      worker: string;
+      ms: number;
+    };
+    progress: { stage: RenderStage | "encode"; ratio: number };
+  };
+  renderHistogram: {
+    params: HistogramInput & { thumbnail?: Size };
+    result: {
+      png: ArrayBuffer;
+      thumb?: ArrayBuffer;
+      meta: HistogramMeta;
       worker: string;
       ms: number;
     };

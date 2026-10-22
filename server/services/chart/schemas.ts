@@ -39,6 +39,7 @@ export const ChartTypeSchema = z
     "gantt",
     "pie",
     "radar",
+    "histogram",
   ])
   .openapi("ChartType");
 
@@ -759,6 +760,25 @@ export const RadarMetaSchema = z
   .openapi("RadarMeta");
 
 /** 차트 종류별 metadata */
+export const HistogramMetaSchema = z
+  .object({
+    chartType: z.literal("histogram"),
+    plot: PlotSchema,
+    /** 값 공간 */
+    x: AxisMetaSchema,
+    /** 개수 */
+    y: AxisMetaSchema,
+    /** 구간: lo부터 step 간격으로 count개. 마지막 구간만 끝값을 포함한다. */
+    bins: z.object({ lo: z.number(), step: z.number(), count: z.number() }),
+    /** [구간][legend 값] 개수 */
+    counts: z.array(z.array(z.number())),
+    /** 구간 하나에 나란히 놓는 막대 수 (legend 값 수, 없으면 1) */
+    groupCount: z.number(),
+    selected: z.number().optional(),
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("HistogramMeta");
+
 export const ItemMetaSchema = z
   .union([
     ScatterMetaSchema,
@@ -770,6 +790,7 @@ export const ItemMetaSchema = z
     GanttMetaSchema,
     PieMetaSchema,
     RadarMetaSchema,
+    HistogramMetaSchema,
   ])
   .openapi("ItemMeta");
 

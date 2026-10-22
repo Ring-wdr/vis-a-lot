@@ -47,6 +47,7 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   },
   pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
   radar: { x: ["categorical"], y: ["numeric"], agg: true },
+  histogram: { x: ["numeric"], y: null, agg: false },
 };
 
 /**
@@ -81,6 +82,7 @@ export const CHART_SUPPORT: Record<ChartType, readonly ChartFeature[]> = {
   pie: ["select", "checkbox"],
   // 고정 좌표 차트: 선택(꼭짓점)과 체크박스(계열 숨기기)만
   radar: ["select", "checkbox"],
+  histogram: NO_DELETE,
 };
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */

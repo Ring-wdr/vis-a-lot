@@ -114,6 +114,15 @@ const ICONS: Record<ChartType, ReactNode> = {
       />
     </g>
   ),
+  histogram: (
+    <g fill="currentColor">
+      <rect x="3" y="15" width="3.5" height="5" />
+      <rect x="7" y="9" width="3.5" height="11" />
+      <rect x="11" y="5" width="3.5" height="15" />
+      <rect x="15" y="11" width="3.5" height="9" />
+      <rect x="19" y="16" width="2.5" height="4" />
+    </g>
+  ),
 };
 
 export function ChartIcon({ type }: { type: ChartType }) {
