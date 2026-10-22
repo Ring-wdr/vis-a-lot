@@ -8,6 +8,8 @@ import type {
   GanttMeta,
   HeatmapMeta,
   ItemMeta,
+  PieMeta,
+  RadarMeta,
   SankeyMeta,
   ScatterMeta,
   TreemapMeta,
@@ -601,6 +603,106 @@ export const ganttStrategy: TooltipStrategy<GanttMeta> = {
   },
 };
 
+/** 커서가 가리키는 pie 조각. 원 밖이면 undefined */
+export function hitSlice(meta: PieMeta, px: number, py: number) {
+  const dx = px - meta.center.x;
+  const dy = py - meta.center.y;
+  if (dx * dx + dy * dy > meta.radius * meta.radius) return undefined;
+  // 조각 각도는 12시(-π/2)에서 시작해 3π/2까지라 그 범위로 맞춘다.
+  let angle = Math.atan2(dy, dx);
+  if (angle < -Math.PI / 2) angle += Math.PI * 2;
+  return meta.slices.find((s) => angle >= s.start && angle <= s.end);
+}
+
+/** 부채꼴 SVG path. 한 바퀴 전체면 원 두 반쪽으로 그린다 (시작점과 끝점이 같으면 호가 사라진다). */
+export function wedgePath(
+  cx: number,
+  cy: number,
+  r: number,
+  start: number,
+  end: number,
+) {
+  const at = (a: number) => `${cx + Math.cos(a) * r} ${cy + Math.sin(a) * r}`;
+  if (end - start >= Math.PI * 2 - 1e-9) {
+    return `M ${at(start)} A ${r} ${r} 0 1 1 ${at(start + Math.PI)} A ${r} ${r} 0 1 1 ${at(start)} Z`;
+  }
+  const large = end - start > Math.PI ? 1 : 0;
+  return `M ${cx} ${cy} L ${at(start)} A ${r} ${r} 0 ${large} 1 ${at(end)} Z`;
+}
+
+const OUTLINE_PAD = 3;
+
+export const pieStrategy: TooltipStrategy<PieMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    if (inLegendBox(meta, px, py)) return null;
+    const slice = hitSlice(meta, px, py);
+    if (!slice) return null;
+    return {
+      outline: wedgePath(
+        meta.center.x,
+        meta.center.y,
+        meta.radius + OUTLINE_PAD,
+        slice.start,
+        slice.end,
+      ),
+      rows: [
+        { label: meta.legend?.title ?? "조각", value: slice.category },
+        {
+          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          value: formatValue(slice.value, "number"),
+        },
+        {
+          label: "비율",
+          value: `${(slice.ratio * 100).toFixed(1)}%`,
+          emphasis: true,
+        },
+      ],
+    };
+  },
+};
+
+/** 커서에서 가장 가까운 radar 꼭짓점 [계열 순번, 축 순번]. NEAREST_MAX_PX 안에 없으면 undefined */
+export function nearestVertex(meta: RadarMeta, px: number, py: number) {
+  let best: [number, number] | undefined;
+  let bestD = NEAREST_MAX_PX * NEAREST_MAX_PX;
+  meta.series.forEach((s, k) => {
+    s.points.forEach((p, i) => {
+      if (!p) return;
+      const d = (p[0] - px) ** 2 + (p[1] - py) ** 2;
+      if (d <= bestD) {
+        bestD = d;
+        best = [k, i];
+      }
+    });
+  });
+  return best;
+}
+
+export const radarStrategy: TooltipStrategy<RadarMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    if (inLegendBox(meta, px, py)) return null;
+    const hit = nearestVertex(meta, px, py);
+    if (!hit) return null;
+    const [k, i] = hit;
+    const series = meta.series[k];
+    const point = series.points[i] as [number, number];
+    return {
+      marker: { px: point[0], py: point[1] },
+      rows: [
+        { label: meta.axisTitle, value: meta.axes[i] },
+        { label: meta.legend?.title ?? "계열", value: series.name },
+        {
+          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          value: formatValue(series.values[i], "number"),
+          emphasis: true,
+        },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
@@ -611,6 +713,8 @@ const STRATEGIES: {
   treemap: TooltipStrategy<TreemapMeta>;
   candle: TooltipStrategy<CandleMeta>;
   gantt: TooltipStrategy<GanttMeta>;
+  pie: TooltipStrategy<PieMeta>;
+  radar: TooltipStrategy<RadarMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -622,6 +726,8 @@ const STRATEGIES: {
   treemap: treemapStrategy,
   candle: candleStrategy,
   gantt: ganttStrategy,
+  pie: pieStrategy,
+  radar: radarStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

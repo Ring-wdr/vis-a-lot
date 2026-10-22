@@ -12,6 +12,7 @@ import { DatasetManager } from "../data/datasets";
 import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
+import { toPieData, toRadarData } from "../data/polar-data";
 import { querySankeyData } from "../data/sankey-data";
 import {
   getHistory,
@@ -232,6 +233,27 @@ serveRpc<DbMethods>({
   async ganttData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     return queryGanttData(db, schema, { ...params, table });
+  },
+
+  async pieData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    const bars = await queryBarData(db, schema, {
+      ...params,
+      table,
+      chartType: "bar",
+      legend: null,
+    });
+    return toPieData(bars);
+  },
+
+  async radarData({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    const bars = await queryBarData(db, schema, {
+      ...params,
+      table,
+      chartType: "bar",
+    });
+    return toRadarData(bars);
   },
 
   async itemRows({ dataset, scope, page }) {

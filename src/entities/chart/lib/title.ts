@@ -13,6 +13,8 @@ export const CHART_LABELS: Record<ChartType, string> = {
   treemap: "Treemap",
   candle: "Candle",
   gantt: "Gantt",
+  pie: "Pie",
+  radar: "Radar",
 };
 
 /**

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { CandleMeta, GanttMeta, ScatterMeta } from "@/shared/api/types";
+import type {
+  CandleMeta,
+  GanttMeta,
+  PieMeta,
+  RadarMeta,
+  ScatterMeta,
+} from "@/shared/api/types";
 import { PointIndex } from "./point-index";
 import {
   barStrategy,
@@ -8,8 +14,13 @@ import {
   candleStrategy,
   formatDuration,
   ganttStrategy,
+  hitSlice,
   invertAxis,
+  nearestVertex,
+  pieStrategy,
+  radarStrategy,
   scatterStrategy,
+  wedgePath,
 } from "./strategies";
 
 const meta: ScatterMeta = {
@@ -285,5 +296,102 @@ describe("gantt 툴팁", () => {
     expect(formatDuration(2 * 3_600_000 + 5 * 60_000 + 3000)).toBe("2시간 5분");
     expect(formatDuration(35_000)).toBe("35초");
     expect(formatDuration(86_400_000)).toBe("1일");
+  });
+});
+
+describe("pie", () => {
+  const pie: PieMeta = {
+    chartType: "pie",
+    plot: { left: 0, top: 0, width: 200, height: 200 },
+    x: { kind: "number", domain: [0, 200] },
+    y: { kind: "number", domain: [0, 200] },
+    center: { x: 100, y: 100 },
+    radius: 80,
+    slices: [
+      {
+        category: "a",
+        value: 3,
+        ratio: 0.75,
+        start: -Math.PI / 2,
+        end: Math.PI,
+        color: "#2a78d6",
+        index: 0,
+      },
+      {
+        category: "b",
+        value: 1,
+        ratio: 0.25,
+        start: Math.PI,
+        end: (Math.PI * 3) / 2,
+        color: "#eb6834",
+        index: 1,
+      },
+    ],
+    total: 4,
+    agg: "sum",
+  };
+
+  it("커서 각도로 조각을 찾고, 원 밖이면 없다", () => {
+    expect(hitSlice(pie, 150, 100)?.category).toBe("a"); // 3시
+    expect(hitSlice(pie, 60, 60)?.category).toBe("b"); // 10시 반
+    expect(hitSlice(pie, 101, 30)?.category).toBe("a"); // 12시 바로 오른쪽
+    expect(hitSlice(pie, 195, 100)).toBeUndefined();
+  });
+
+  it("조각 범주·값·비율과 윤곽을 준다", () => {
+    const hit = pieStrategy.hitTest(pie, undefined, 60, 60);
+    expect(hit?.rows.map((r) => r.value)).toEqual(["b", "1", "25.0%"]);
+    expect(hit?.outline).toMatch(/^M 100 100 L /);
+  });
+
+  it("한 바퀴 전체 조각의 윤곽은 반원 두 개", () => {
+    expect(wedgePath(0, 0, 10, 0, Math.PI * 2).match(/A /g)).toHaveLength(2);
+  });
+});
+
+describe("radar", () => {
+  const radar: RadarMeta = {
+    chartType: "radar",
+    plot: { left: 0, top: 0, width: 200, height: 200 },
+    x: { kind: "number", domain: [0, 200] },
+    y: { kind: "number", domain: [0, 200] },
+    center: { x: 100, y: 100 },
+    radius: 80,
+    axisTitle: "라인",
+    axes: ["L1", "L2", "L3"],
+    domain: [0, 10],
+    series: [
+      {
+        name: "주간",
+        color: "#2a78d6",
+        index: 0,
+        values: [10, 5, null],
+        points: [[100, 20], [135, 120], null],
+      },
+      {
+        name: "야간",
+        color: "#eb6834",
+        index: 1,
+        values: [2, 2, 2],
+        points: [
+          [100, 84],
+          [114, 108],
+          [86, 108],
+        ],
+      },
+    ],
+    agg: "avg",
+  };
+
+  it("가장 가까운 꼭짓점을 찾고, 멀면 없다", () => {
+    expect(nearestVertex(radar, 102, 24)).toEqual([0, 0]);
+    expect(nearestVertex(radar, 88, 110)).toEqual([1, 2]);
+    expect(nearestVertex(radar, 190, 190)).toBeUndefined();
+  });
+
+  it("축·계열·값을 보여주고 꼭짓점에 표시한다", () => {
+    const hit = radarStrategy.hitTest(radar, undefined, 133, 118);
+    expect(hit?.marker).toEqual({ px: 135, py: 120 });
+    expect(hit?.rows.map((r) => r.value)).toEqual(["L2", "주간", "5"]);
   });
 });

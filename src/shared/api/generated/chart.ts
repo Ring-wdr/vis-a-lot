@@ -2413,7 +2413,9 @@ export type components = {
       | "heatmap"
       | "treemap"
       | "candle"
-      | "gantt";
+      | "gantt"
+      | "pie"
+      | "radar";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2569,7 +2571,9 @@ export type components = {
       | components["schemas"]["HeatmapMeta"]
       | components["schemas"]["TreemapMeta"]
       | components["schemas"]["CandleMeta"]
-      | components["schemas"]["GanttMeta"];
+      | components["schemas"]["GanttMeta"]
+      | components["schemas"]["PieMeta"]
+      | components["schemas"]["RadarMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2797,6 +2801,66 @@ export type components = {
         m: number[];
       };
       truncated: boolean;
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    PieMeta: {
+      /** @enum {string} */
+      chartType: "pie";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      center: {
+        x: number;
+        y: number;
+      };
+      radius: number;
+      slices: {
+        category: string;
+        value: number;
+        ratio: number;
+        start: number;
+        end: number;
+        color: string;
+        index: number;
+      }[];
+      total: number;
+      agg?: components["schemas"]["AggFn"];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    RadarMeta: {
+      /** @enum {string} */
+      chartType: "radar";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      center: {
+        x: number;
+        y: number;
+      };
+      radius: number;
+      axisTitle: string;
+      axes: string[];
+      domain: [number, number];
+      series: {
+        name: string;
+        color: string;
+        index: number;
+        values: (number | null)[];
+        points: ([number, number] | null)[];
+      }[];
+      agg?: components["schemas"]["AggFn"];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };
