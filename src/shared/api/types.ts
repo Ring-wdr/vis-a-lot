@@ -42,6 +42,8 @@ export type ChartFilter = Chart["ChartFilter"];
 export type RangeFilter = Chart["RangeFilter"];
 export type ExcludeFilter = Chart["ExcludeFilter"];
 export type CommonProps = Chart["CommonProps"];
+/** 차트 속성 부분 값 (공통·item 개별). 화면 쪽 모양·기본값은 entities/chart/model/chart-options */
+export type ChartOptionsBody = Chart["ChartOptions"];
 export type LegendPosition = Chart["LegendPosition"];
 export type ItemSize = Chart["ItemSize"];
 export type ItemView = Chart["ItemView"];
