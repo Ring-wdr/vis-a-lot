@@ -12,6 +12,7 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import type { ChartOptions } from "./options";
 import { drawEmpty, drawHeader, fixedSpace } from "./polar";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
@@ -50,6 +51,8 @@ export type RadarMeta = {
 };
 
 export type RadarInput = {
+  /** 차트 속성. 없으면 기본값 (optionsOf) */
+  options?: ChartOptions;
   width: number;
   height: number;
   title: string;

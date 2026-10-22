@@ -18,6 +18,7 @@ import type { GanttMeta } from "../render/gantt";
 import type { HeatmapMeta } from "../render/heatmap";
 import type { HistogramMeta } from "../render/histogram";
 import type { LegendPosition } from "../render/legend";
+import type { ChartOptionsPatch } from "../render/options";
 import type { PieMeta } from "../render/pie";
 import type { RadarMeta } from "../render/radar";
 import type { Region } from "../render/region";
@@ -173,6 +174,8 @@ export type CommonProps = {
   legendColors?: Record<string, string>;
   /** legend 위치. 없으면 위 */
   legendPosition?: LegendPosition;
+  /** 차트 속성. 차트가 쓰지 않는 구역은 저장하지 않는다 (server/charts/chart-options.ts). */
+  options?: ChartOptionsPatch;
 };
 
 /** item 개별 속성. 공통 속성보다 우선한다. */
@@ -182,6 +185,8 @@ export type ItemProps = {
   legendPosition?: LegendPosition;
   /** legend 체크박스로 끈 값. 그 값의 점(막대/상자)은 그리지 않는다. */
   hiddenLegend?: string[];
+  /** 차트 속성. 공통 속성의 options 위에 덮는다. */
+  options?: ChartOptionsPatch;
 };
 
 export type ChartSpec = {
@@ -226,6 +231,7 @@ export type ItemRestore = {
   legendColors?: Record<string, string>;
   legendPosition?: LegendPosition;
   hiddenLegend?: string[];
+  options?: ChartOptionsPatch;
 };
 
 export type CreateChartRequest = {
@@ -311,7 +317,8 @@ export type ItemPropsRequest =
   | { color: string | null }
   | { legendColor: { value: string; color: string | null } }
   | { legendPosition: LegendPosition | null }
-  | { legendVisible: { value: string; visible: boolean } };
+  | { legendVisible: { value: string; visible: boolean } }
+  | { options: ChartOptionsPatch | null };
 
 export type LegendValuesResponse = { column: ColumnName; values: string[] };
 
@@ -372,6 +379,8 @@ export type ItemState = {
   customColor: boolean;
   /** item에 따로 정한 legend 위치. 없으면 공통 속성을 따른다. */
   legendPosition?: LegendPosition;
+  /** item에 따로 정한 차트 속성. 없으면 공통 속성을 따른다. */
+  options?: ChartOptionsPatch;
   /** 선택 영역 안의 점(막대/상자) 수. 선택이 없으면 없다. */
   selectedCount?: number;
   favorites: Favorite[];
@@ -396,6 +405,7 @@ export const HISTORY_EVENT_TYPES = [
   "grid",
   "selection",
   "favorite",
+  "options",
   "delete",
 ] as const;
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];

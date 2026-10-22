@@ -12,6 +12,7 @@ import {
   type LegendMeta,
 } from "./legend";
 import { drawLines, seriesOrder } from "./line";
+import type { ChartOptions } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
 import { THEME } from "./theme";
@@ -51,6 +52,8 @@ export type ScatterMeta = {
 };
 
 export type ScatterInput = {
+  /** 차트 속성. 없으면 기본값 (optionsOf) */
+  options?: ChartOptions;
   /** line이면 점 대신 legend 계열별로 x 순 점을 선으로 잇는다. 없으면 scatter */
   chartType?: "scatter" | "line";
   width: number;

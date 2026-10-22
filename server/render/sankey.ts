@@ -18,6 +18,7 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import type { ChartOptions } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
@@ -69,6 +70,8 @@ export type SankeyMeta = {
 };
 
 export type SankeyInput = {
+  /** 차트 속성. 없으면 기본값 (optionsOf) */
+  options?: ChartOptions;
   width: number;
   height: number;
   title: string;

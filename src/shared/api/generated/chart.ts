@@ -2392,11 +2392,190 @@ export type components = {
         [key: string]: components["schemas"]["HexColor"];
       };
       legendPosition?: components["schemas"]["LegendPosition"];
+      options?: components["schemas"]["ChartOptions"];
     };
     /** @example #2a78d6 */
     HexColor: string;
     /** @enum {string} */
     LegendPosition: "top" | "bottom" | "left" | "right";
+    ChartOptions: {
+      title?: {
+        visible?: boolean;
+        text?: string;
+        subtitle?: string;
+        fontSize?: number;
+        bold?: boolean;
+        color?: components["schemas"]["HexColor"];
+        /** @enum {string} */
+        align?: "left" | "center" | "right";
+      };
+      axes?: {
+        x?: components["schemas"]["AxisOptions"];
+        y?: components["schemas"]["AxisOptions"];
+      };
+      legend?: {
+        visible?: boolean;
+        border?: boolean;
+        borderColor?: components["schemas"]["HexColor"];
+        reverse?: boolean;
+        fontSize?: number;
+        fontColor?: components["schemas"]["HexColor"];
+      };
+      panel?: {
+        backColor?: components["schemas"]["HexColor"];
+        gradient?: boolean;
+        border?: boolean;
+        borderColor?: components["schemas"]["HexColor"];
+        margin?: {
+          top?: number;
+          right?: number;
+          bottom?: number;
+          left?: number;
+        };
+      };
+      palette?: {
+        gradient?: boolean;
+        start?: components["schemas"]["HexColor"];
+        middle?: components["schemas"]["HexColor"] | "";
+        end?: components["schemas"]["HexColor"];
+        steps?: number;
+        reverse?: boolean;
+      };
+      shape?: {
+        type?: components["schemas"]["PointShape"];
+        /** @enum {string} */
+        style?: "both" | "border" | "brush";
+        transparency?: number;
+        borderWidth?: number;
+      };
+      size?: {
+        pointAuto?: boolean;
+        pointFixed?: number;
+        pointMin?: number;
+        pointMax?: number;
+        fontAuto?: boolean;
+        fontMin?: number;
+        fontMax?: number;
+        lineWidth?: number;
+      };
+      pointLabel?: {
+        visible?: boolean;
+        /** @enum {string} */
+        position?: "top" | "center" | "bottom";
+        angle?: number;
+        fontSize?: number;
+        color?: components["schemas"]["HexColor"];
+        prefix?: string;
+        suffix?: string;
+        decimals?: number | null;
+        box?: {
+          visible?: boolean;
+          background?: components["schemas"]["HexColor"];
+          border?: components["schemas"]["HexColor"];
+        };
+      };
+      score?: {
+        visible?: boolean;
+        kinds?: ("rscore" | "fscore" | "zscore" | "cpk")[];
+        ucl?: number | null;
+        lcl?: number | null;
+        fontSize?: number;
+        fontColor?: components["schemas"]["HexColor"];
+        backColor?: components["schemas"]["HexColor"];
+        borderColor?: components["schemas"]["HexColor"];
+        borderWidth?: number;
+      };
+      prediction?: {
+        enabled?: boolean;
+        /** @enum {string} */
+        method?: "sma" | "ses" | "des" | "holtWinters";
+        period?: number;
+        showInterval?: boolean;
+        description?: boolean;
+        window?: number;
+        alpha?: number | null;
+        beta?: number | null;
+        gamma?: number | null;
+        seasonLength?: number;
+        /** @enum {string} */
+        trend?: "additive" | "multiplicative";
+        /** @enum {string} */
+        seasonal?: "additive" | "multiplicative";
+        damped?: boolean;
+      };
+      value?: {
+        nullNumeric?: number | null;
+        outlier?: boolean;
+        /** @enum {string} */
+        outlierMethod?: "iqr" | "sigma";
+        outlierK?: number;
+      };
+      focus?: {
+        enabled?: boolean;
+        /** @enum {string} */
+        target?: "x" | "y";
+        /** @enum {string} */
+        operator?: ">" | ">=" | "<" | "<=" | "=" | "!=";
+        value?: number;
+        color?: components["schemas"]["HexColor"];
+        shape?: components["schemas"]["PointShape"];
+        size?: number;
+        legendSingleColor?: boolean;
+      };
+      tooltip?: {
+        title?: string;
+        fontSize?: number;
+        fontColor?: components["schemas"]["HexColor"];
+        background?: components["schemas"]["HexColor"];
+        transparency?: number;
+        round?: boolean;
+        border?: boolean;
+        borderColor?: components["schemas"]["HexColor"];
+        prefix?: string;
+        suffix?: string;
+        decimals?: number | null;
+      };
+      expression?: {
+        x?: string;
+        y?: string;
+      };
+    };
+    AxisOptions: {
+      visible?: boolean;
+      title?: {
+        visible?: boolean;
+        text?: string;
+      };
+      min?: number | null;
+      max?: number | null;
+      log?: boolean;
+      line?: {
+        visible?: boolean;
+        width?: number;
+        color?: components["schemas"]["HexColor"];
+      };
+      grid?: {
+        visible?: boolean;
+        width?: number;
+        color?: components["schemas"]["HexColor"];
+      };
+      tick?: {
+        visible?: boolean;
+        count?: number;
+        length?: number;
+        color?: components["schemas"]["HexColor"];
+      };
+      label?: {
+        visible?: boolean;
+        angle?: number;
+        fontSize?: number;
+        color?: components["schemas"]["HexColor"];
+      };
+      decimals?: number | null;
+      dateFormat?: string;
+    };
+    /** @enum {string} */
+    PointShape: "circle" | "square" | "triangle" | "diamond" | "cross";
     GridRequest: {
       grid: components["schemas"]["Grid"];
       itemSize: components["schemas"]["ItemSize"];
@@ -2427,6 +2606,9 @@ export type components = {
             value: string;
             visible: boolean;
           };
+        }
+      | {
+          options: components["schemas"]["ChartOptions"] | null;
         };
     ViewRequest:
       | {
@@ -2532,6 +2714,7 @@ export type components = {
       };
       legendPosition?: components["schemas"]["LegendPosition"];
       hiddenLegend?: string[];
+      options?: components["schemas"]["ChartOptions"];
     };
     ItemView: {
       x: [number, number];
@@ -2595,6 +2778,7 @@ export type components = {
       | "grid"
       | "selection"
       | "favorite"
+      | "options"
       | "delete";
     HistorySummary: {
       id: string;
@@ -2623,6 +2807,7 @@ export type components = {
         grid?: number;
         selection?: number;
         favorite?: number;
+        options?: number;
         delete?: number;
       };
       thumbnail?: string;
@@ -3088,6 +3273,7 @@ export type components = {
       color: string;
       customColor: boolean;
       legendPosition?: components["schemas"]["LegendPosition"];
+      options?: components["schemas"]["ChartOptions"];
       selectedCount?: number;
       favorites: components["schemas"]["Favorite"][];
       legendGroups: {

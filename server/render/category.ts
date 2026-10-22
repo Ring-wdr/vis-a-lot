@@ -12,6 +12,7 @@ import {
   type LegendInput,
   type LegendMeta,
 } from "./legend";
+import type { ChartOptions } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -46,6 +47,8 @@ export type CategoryMeta = {
 };
 
 export type CategoryInput = {
+  /** 차트 속성. 없으면 기본값 (optionsOf) */
+  options?: ChartOptions;
   chartType: "bar" | "boxplot";
   width: number;
   height: number;

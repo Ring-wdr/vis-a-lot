@@ -18,6 +18,7 @@ import {
   legendColumnOf,
   POINT_CHARTS,
 } from "../charts/chart-fields";
+import { resolveOptions } from "../charts/chart-options";
 import {
   bumpRevision,
   type CachedChartData,
@@ -322,6 +323,7 @@ async function run(job: Job) {
         legendColors: restored?.legendColors,
         legendPosition: restored?.legendPosition,
         hiddenLegend: restored?.hiddenLegend,
+        options: restored?.options,
       }),
     };
   });
@@ -488,6 +490,7 @@ function itemView(chart: ChartRecord, item: ChartItem) {
     color: itemColor(chart, item),
     customColor: hasCustomColor(item),
     legendPosition: item.props?.legendPosition,
+    options: item.props?.options,
     selectedCount: item.selection ? item.selectedCount : undefined,
     favorites: item.favorites,
     legendGroups: item.legendGroups.map((g) => ({
@@ -503,7 +506,8 @@ export function propsOrNone(props: ItemProps): ItemProps | undefined {
   return props.color ||
     props.legendColors ||
     props.legendPosition ||
-    props.hiddenLegend?.length
+    props.hiddenLegend?.length ||
+    props.options
     ? props
     : undefined;
 }
@@ -791,7 +795,7 @@ function renderItem(
   item: ChartItem,
   size: ItemSize,
   thumbnail: boolean,
-  options: PoolCallOptions<
+  poolOptions: PoolCallOptions<
     | "renderScatter"
     | "renderCategory"
     | "renderSankey"
@@ -812,7 +816,14 @@ function renderItem(
   const columnOf = (name: string | null) =>
     chart.columns?.find((c) => c.name === name);
   const legendTitle = columnOf(spec.legend)?.label ?? spec.legend ?? "";
+  // 기본값 → 공통 → 개별 순으로 합친 차트 속성. 차트가 쓰지 않는 구역은 기본값이다.
+  const options = resolveOptions(
+    spec.chartType,
+    spec.common.options,
+    item.props?.options,
+  );
   const common = {
+    options,
     width: size.width,
     height: size.height,
     thumbnail: thumbnail ? THUMBNAIL_SIZE : undefined,
@@ -845,7 +856,7 @@ function renderItem(
             new Uint8Array(group.end - group.start),
         },
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "pie") {
@@ -854,6 +865,7 @@ function renderItem(
     return render.call(
       "renderPie",
       {
+        options,
         width: size.width,
         height: size.height,
         thumbnail: common.thumbnail,
@@ -870,7 +882,7 @@ function renderItem(
           hidden: item.props?.hiddenLegend,
         },
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "radar") {
@@ -879,6 +891,7 @@ function renderItem(
     return render.call(
       "renderRadar",
       {
+        options,
         width: size.width,
         height: size.height,
         thumbnail: common.thumbnail,
@@ -899,7 +912,7 @@ function renderItem(
           hidden: item.props?.hiddenLegend,
         },
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "histogram") {
@@ -912,7 +925,7 @@ function renderItem(
         counts: group?.counts ?? [],
         legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "candle") {
@@ -939,7 +952,7 @@ function renderItem(
           CANDLE_LEGEND.colors,
         ) as NonNullable<ReturnType<typeof legendInput>>,
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "gantt") {
@@ -953,7 +966,7 @@ function renderItem(
         bars: group?.bars ?? { r: [], s: [], e: [], g: [], n: [] },
         legend: legendInput(chart, item, legendTitle, data.legendValues),
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "sankey") {
@@ -968,6 +981,7 @@ function renderItem(
     return render.call(
       "renderSankey",
       {
+        options,
         width: common.width,
         height: common.height,
         thumbnail: common.thumbnail,
@@ -980,7 +994,7 @@ function renderItem(
         agg: spec.agg,
         legend,
       },
-      options,
+      poolOptions,
     );
   }
   if (data.kind === "heatmap") {
@@ -1009,7 +1023,7 @@ function renderItem(
               }
             : undefined,
       },
-      options,
+      poolOptions,
     );
   }
   const group = index === undefined ? undefined : data.groups[index];
@@ -1030,7 +1044,7 @@ function renderItem(
           stages,
         ),
       },
-      options,
+      poolOptions,
     );
   }
   if (spec.chartType === "waterfall") {
@@ -1049,7 +1063,7 @@ function renderItem(
           waterfallDefaultColors(common.color),
         ),
       },
-      options,
+      poolOptions,
     );
   }
   if (spec.chartType === "treemap") {
@@ -1068,7 +1082,7 @@ function renderItem(
           data.legendValues,
         ),
       },
-      options,
+      poolOptions,
     );
   }
   return render.call(
@@ -1082,7 +1096,7 @@ function renderItem(
       agg: spec.chartType === "bar" ? spec.agg : undefined,
       legend: legendInput(chart, item, legendTitle, data.legendValues),
     },
-    options,
+    poolOptions,
   );
 }
 
