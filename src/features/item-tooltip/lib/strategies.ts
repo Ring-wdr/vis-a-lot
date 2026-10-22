@@ -4,6 +4,7 @@
 import type {
   AxisMeta,
   CategoryMeta,
+  HeatmapMeta,
   ItemMeta,
   SankeyMeta,
   ScatterMeta,
@@ -302,12 +303,87 @@ export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
   },
 };
 
+/** 데이터 좌표 → PNG 좌표 (범주 인덱스 공간의 칸 경계를 그릴 때) */
+function dataToPx(meta: ItemMeta, x: number, y: number) {
+  const { plot } = meta;
+  const [x0, x1] = meta.x.domain;
+  const [y0, y1] = meta.y.domain;
+  return {
+    px: plot.left + ((x - x0) / (x1 - x0)) * plot.width,
+    py: plot.top + plot.height - ((y - y0) / (y1 - y0)) * plot.height,
+  };
+}
+
+/** 사각형을 그림 영역 안으로 잘라낸다. */
+function clipToPlot(
+  meta: ItemMeta,
+  rect: { x: number; y: number; width: number; height: number },
+) {
+  const { plot } = meta;
+  const left = Math.max(plot.left, rect.x);
+  const top = Math.max(plot.top, rect.y);
+  const right = Math.min(plot.left + plot.width, rect.x + rect.width);
+  const bottom = Math.min(plot.top + plot.height, rect.y + rect.height);
+  return {
+    x: left,
+    y: top,
+    width: Math.max(1, right - left),
+    height: Math.max(1, bottom - top),
+  };
+}
+
+/** heatmap: 커서 아래 칸(x·y 범주 인덱스를 반올림)의 범주와 값 */
+export const heatmapStrategy: TooltipStrategy<HeatmapMeta> = {
+  prepare: () => undefined,
+  hitTest(meta, _prepared, px, py) {
+    const { plot } = meta;
+    if (inLegendBox(meta, px, py)) return null;
+    if (
+      px < plot.left ||
+      px > plot.left + plot.width ||
+      py < plot.top ||
+      py > plot.top + plot.height
+    ) {
+      return null;
+    }
+    const i = Math.round(invertAxis(meta.x, plot.left, plot.width, px, false));
+    const j = Math.round(invertAxis(meta.y, plot.top, plot.height, py, true));
+    const value = meta.cells[i]?.[j];
+    if (value === undefined || value === null) return null;
+    const a = dataToPx(meta, i - 0.5, j + 0.5);
+    const b = dataToPx(meta, i + 0.5, j - 0.5);
+    const start = meta.xStarts?.[i];
+    const xValue =
+      start !== undefined && meta.timeBin !== undefined
+        ? `${formatValue(start, "time")} ~ ${formatValue(start + meta.timeBin, "time")}`
+        : meta.xCategories[i];
+    return {
+      highlight: clipToPlot(meta, {
+        x: a.px - HIGHLIGHT_PAD,
+        y: a.py - HIGHLIGHT_PAD,
+        width: b.px - a.px + HIGHLIGHT_PAD * 2,
+        height: b.py - a.py + HIGHLIGHT_PAD * 2,
+      }),
+      rows: [
+        { label: meta.xTitle, value: xValue },
+        { label: meta.yTitle, value: meta.yCategories[j] },
+        {
+          label: AGG_LABELS[meta.agg],
+          value: formatValue(value, "number"),
+          emphasis: true,
+        },
+      ],
+    };
+  },
+};
+
 const STRATEGIES: {
   scatter: TooltipStrategy<ScatterMeta>;
   bar: TooltipStrategy<CategoryMeta>;
   boxplot: TooltipStrategy<CategoryMeta>;
   line: TooltipStrategy<ScatterMeta>;
   sankey: TooltipStrategy<SankeyMeta>;
+  heatmap: TooltipStrategy<HeatmapMeta>;
 } = {
   scatter: scatterStrategy,
   bar: barStrategy,
@@ -315,6 +391,7 @@ const STRATEGIES: {
   // 행 단위 점이 scatter와 같아 가장 가까운 점을 그대로 찾는다.
   line: scatterStrategy,
   sankey: sankeyStrategy,
+  heatmap: heatmapStrategy,
 };
 
 export function strategyFor<M extends ItemMeta>(meta: M) {

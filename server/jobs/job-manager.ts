@@ -613,6 +613,21 @@ async function queryChartData(
       groupOf,
     };
   }
+  if (spec.chartType === "heatmap") {
+    return {
+      kind: "heatmap",
+      ...(await db.call("heatmapData", {
+        dataset: spec.dataset,
+        x: spec.x,
+        y: spec.y,
+        z: spec.z ?? "",
+        agg: spec.agg,
+        splitBy: spec.splitBy,
+        filters: spec.filters,
+      })),
+      groupOf,
+    };
+  }
   if (spec.chartType === "sankey") {
     return {
       kind: "sankey",
@@ -664,7 +679,9 @@ function renderItem(
   item: ChartItem,
   size: ItemSize,
   thumbnail: boolean,
-  options: PoolCallOptions<"renderScatter" | "renderCategory" | "renderSankey">,
+  options: PoolCallOptions<
+    "renderScatter" | "renderCategory" | "renderSankey" | "renderHeatmap"
+  >,
 ): Promise<RenderOutput> {
   const { render } = getRuntime();
   const { spec } = chart;
@@ -731,6 +748,35 @@ function renderItem(
         links: group?.links ?? [],
         agg: spec.agg,
         legend,
+      },
+      options,
+    );
+  }
+  if (data.kind === "heatmap") {
+    const group = index === undefined ? undefined : data.groups[index];
+    // legend 컬럼은 쓰지 않는다. 선택 영역으로 만든 새 범례만 legend 상자에 둔다.
+    const groups = item.legendGroups;
+    return render.call(
+      "renderHeatmap",
+      {
+        ...common,
+        xTitle: columnOf(spec.x)?.label ?? spec.x,
+        yTitle: columnOf(spec.y)?.label ?? spec.y,
+        xCategories: group?.xCategories ?? [],
+        xStarts: group?.xStarts,
+        timeBin: data.timeBin,
+        yCategories: group?.yCategories ?? [],
+        cells: group?.cells ?? [],
+        agg: spec.agg,
+        legend:
+          groups.length > 0
+            ? {
+                title: "범례",
+                values: groups.map((g) => g.name),
+                colors: groups.map((g) => groupColor(item, g)),
+                position: legendPosition(chart, item),
+              }
+            : undefined,
       },
       options,
     );

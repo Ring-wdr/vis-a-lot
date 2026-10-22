@@ -2404,7 +2404,7 @@ export type components = {
     /** @example iot-100k */
     DatasetId: string;
     /** @enum {string} */
-    ChartType: "scatter" | "bar" | "boxplot" | "line" | "sankey";
+    ChartType: "scatter" | "bar" | "boxplot" | "line" | "sankey" | "heatmap";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2556,7 +2556,8 @@ export type components = {
     ItemMeta:
       | components["schemas"]["ScatterMeta"]
       | components["schemas"]["CategoryMeta"]
-      | components["schemas"]["SankeyMeta"];
+      | components["schemas"]["SankeyMeta"]
+      | components["schemas"]["HeatmapMeta"];
     ScatterMeta: {
       /** @enum {string} */
       chartType: "scatter" | "line";
@@ -2676,6 +2677,29 @@ export type components = {
         y1: number;
         width: number;
       }[];
+      selected?: number;
+      legend?: components["schemas"]["LegendMeta"];
+    };
+    HeatmapMeta: {
+      /** @enum {string} */
+      chartType: "heatmap";
+      plot: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+      };
+      x: components["schemas"]["AxisMeta"];
+      y: components["schemas"]["AxisMeta"];
+      xTitle: string;
+      yTitle: string;
+      xCategories: string[];
+      xStarts?: number[];
+      timeBin?: number;
+      yCategories: string[];
+      cells: (number | null)[][];
+      agg: components["schemas"]["AggFn"];
+      colorDomain: [number, number];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };

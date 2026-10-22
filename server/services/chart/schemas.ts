@@ -27,7 +27,7 @@ const ColorMapSchema = z
   .refine((m) => Object.keys(m).length <= 16, "at most 16 legend colors");
 
 export const ChartTypeSchema = z
-  .enum(["scatter", "bar", "boxplot", "line", "sankey"])
+  .enum(["scatter", "bar", "boxplot", "line", "sankey", "heatmap"])
   .openapi("ChartType");
 
 export const LegendPositionSchema = z
@@ -567,9 +567,40 @@ export const SankeyMetaSchema = z
   })
   .openapi("SankeyMeta");
 
+export const HeatmapMetaSchema = z
+  .object({
+    chartType: z.literal("heatmap"),
+    plot: PlotSchema,
+    /** x 범주 인덱스 공간 */
+    x: AxisMetaSchema,
+    /** y 범주 인덱스 공간 (0이 아래) */
+    y: AxisMetaSchema,
+    xTitle: z.string(),
+    yTitle: z.string(),
+    xCategories: z.array(z.string()),
+    /** 시계열 x: 구간 시작 시각(epoch ms)과 구간 길이 */
+    xStarts: z.array(z.number()).optional(),
+    timeBin: z.number().optional(),
+    yCategories: z.array(z.string()),
+    /** [x][y] 집계값 */
+    cells: z.array(z.array(z.number().nullable())),
+    agg: AggFnSchema,
+    /** 색 척도의 값 범위 */
+    colorDomain: range,
+    selected: z.number().optional(),
+    /** 선택 영역으로 만든 새 범례 */
+    legend: LegendMetaSchema.optional(),
+  })
+  .openapi("HeatmapMeta");
+
 /** 차트 종류별 metadata */
 export const ItemMetaSchema = z
-  .union([ScatterMetaSchema, CategoryMetaSchema, SankeyMetaSchema])
+  .union([
+    ScatterMetaSchema,
+    CategoryMetaSchema,
+    SankeyMetaSchema,
+    HeatmapMetaSchema,
+  ])
   .openapi("ItemMeta");
 
 // ── history ────────────────────────────────────────────────────
