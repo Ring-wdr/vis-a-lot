@@ -431,7 +431,8 @@ export const chartApp = createServiceApp()
       redrawJob(
         chart,
         targets.map((i) => i.key),
-        { record: false },
+        // history 목록 섬네일은 첫 item으로 만든다. 첫 item을 새로 그리면 history도 다시 저장한다.
+        { record: targets.some((i) => i === chart.items?.[0]) },
       ),
       202,
     );

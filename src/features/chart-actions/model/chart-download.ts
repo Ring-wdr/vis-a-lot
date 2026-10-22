@@ -15,6 +15,56 @@ async function fetchPng(url: string) {
   return res.arrayBuffer();
 }
 
+/** 공통 속성이 바뀐 뒤 예전 그림(stale)인 item을 새로 그릴 때까지 기다리는 최대 시간 */
+const FRESH_TIMEOUT_MS = 120_000;
+const FRESH_POLL_MS = 300;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * item들의 지금 상태. 공통 속성이 바뀐 뒤 아직 예전 그림(stale)인 item은 새 설정으로 다시 그리게 하고
+ * 끝날 때까지 기다린다. 다른 페이지에 있어 화면이 아직 그리지 않은 item도 받을 때는 새 그림이어야 한다.
+ * 이미 다시 그리는 중이면(공통 속성 변경, 페이지 이동, 화면 크기 변경) 그 job이 끝나기를 기다린다.
+ * 한 번도 그리지 않은 item(처음 draw 중)은 기다리지 않는다. 받는 쪽이 그림 없는 item으로 처리한다.
+ */
+async function freshStates(
+  chartId: string,
+  jobId: string,
+  keys: string[],
+  onRefresh?: (pending: number) => void,
+): Promise<ItemState[]> {
+  const deadline = Date.now() + FRESH_TIMEOUT_MS;
+  for (;;) {
+    const states: ItemState[] = [];
+    for (let i = 0; i < keys.length; i += RANGE_SIZE) {
+      const state = await api.jobItems(
+        jobId,
+        keys.slice(i, i + RANGE_SIZE),
+        -1,
+      );
+      states.push(...state.items);
+    }
+    const stale = states.filter((s) => s.stale).map((s) => s.key);
+    // 예전 그림을 둔 채 다시 그리는 중인 item
+    const redrawing = states.filter(
+      (s) => s.image && (s.status === "queued" || s.status === "running"),
+    );
+    if (stale.length === 0 && redrawing.length === 0) return states;
+    if (Date.now() > deadline)
+      throw new Error(
+        "새 설정으로 다시 그리는 데 시간이 너무 걸립니다. 잠시 뒤 다시 받아 주세요.",
+      );
+    onRefresh?.(stale.length + redrawing.length);
+    for (let i = 0; i < stale.length; i += RANGE_SIZE) {
+      // 이미 다시 그리는 중인 item뿐이면 409다. 그 job이 끝나기를 기다린다.
+      await api
+        .refreshItems(chartId, stale.slice(i, i + RANGE_SIZE))
+        .catch(() => {});
+    }
+    await sleep(FRESH_POLL_MS);
+  }
+}
+
 /** item 하나의 지금 상태. since=-1이라 long polling을 기다리지 않고 바로 받는다. */
 export async function drawnItemState(jobId: string, key: string) {
   const state = await api.jobItems(jobId, [key], -1);
@@ -35,8 +85,13 @@ export async function downloadItemData(
   saveBlob(csv, `${safeFileName(item.label)}${suffix}.csv`);
 }
 
-/** 고른 item의 PNG를 '이름.png'로 내려받는다. */
-export async function downloadChartPng(jobId: string, key: string) {
+/** 고른 item의 PNG를 '이름.png'로 내려받는다. 예전 그림(stale)이면 새 설정으로 그린 뒤 받는다. */
+export async function downloadChartPng(
+  chartId: string,
+  jobId: string,
+  key: string,
+) {
+  await freshStates(chartId, jobId, [key]);
   const item = await drawnItemState(jobId, key);
   const png = await fetchPng(item.image.url);
   saveBlob(
@@ -70,14 +125,30 @@ const GAP_PX = 16;
  * onProgress는 넣은 item 수를 알린다.
  */
 export async function downloadAllChartsExcel(
+  chartId: string,
   jobId: string,
   spec: ChartSpec,
   onProgress?: (done: number, total: number) => void,
+  /** 예전 그림(stale)인 item을 새로 그리는 동안 남은 수 */
+  onRefresh?: (pending: number) => void,
 ) {
-  const [{ default: ExcelJS }, { items, total }] = await Promise.all([
+  const [{ default: ExcelJS }, listed] = await Promise.all([
     import("exceljs"),
     allItems(jobId, MAX_EXCEL_ITEMS),
   ]);
+  const { total } = listed;
+  // 다른 페이지의 item은 공통 속성이 바뀐 뒤 아직 예전 그림일 수 있다. 넣기 전에 새로 그린다.
+  const items = listed.items.some(
+    (i) =>
+      i.stale || (i.image && (i.status === "queued" || i.status === "running")),
+  )
+    ? await freshStates(
+        chartId,
+        jobId,
+        listed.items.map((i) => i.key),
+        onRefresh,
+      )
+    : listed.items;
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet("차트");
   const list = book.addWorksheet("목록");

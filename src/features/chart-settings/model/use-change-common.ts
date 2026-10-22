@@ -63,6 +63,7 @@ export function useCommonSync() {
   const dirty = useWorkspace((s) => s.commonDirty);
   const setCommonDirty = useWorkspace((s) => s.setCommonDirty);
   const page = useWorkspace((s) => s.page);
+  const focus = useWorkspace((s) => s.focus);
   const replaceJob = useWorkspace((s) => s.replaceJob);
   const notify = useWorkspace((s) => s.notify);
   const updateOptionsItem = useWorkspace((s) => s.updateOptionsItem);
@@ -100,10 +101,12 @@ export function useCommonSync() {
     // 그사이 legend·데이터를 바꿨으면 그린 차트에는 적용하지 않는다 (다음 draw에 쓰인다).
     if (!current || !appliesToCurrent) return;
     const pageSize = current.spec.grid.rows * current.spec.grid.cols;
+    // 크게 보는 중이면 그 item이 있는 페이지를 바로 그린다 (grid로 돌아가면 그 페이지를 보여준다).
+    const shown = focus !== null ? Math.floor(focus / pageSize) : page;
     apply.mutate({
       chartId: current.chartId,
       next: common,
-      visible: { start: page * pageSize, count: pageSize },
+      visible: { start: shown * pageSize, count: pageSize },
     });
   }, [
     dirty,
@@ -113,6 +116,7 @@ export function useCommonSync() {
     appliesToCurrent,
     common,
     page,
+    focus,
     setCommonDirty,
     apply.mutate,
   ]);

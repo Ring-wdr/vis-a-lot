@@ -1205,7 +1205,10 @@ async function renderItems(
         touch(job);
       };
       const size = target.kind === "detail" ? target.size : chart.itemSize;
-      const thumbnail = target.kind === "item" && target.thumbnail;
+      // 공통 속성이 바뀐 뒤 아직 예전 그림(stale)인 item은 크기만 바꾸는 다시 그리기(resize, grid)여도
+      // 섬네일을 새 내용으로 다시 그린다. 렌더가 끝나면 stale을 지우므로 여기서 미리 정한다.
+      const thumbnail =
+        target.kind === "item" && (target.thumbnail || item.stale === true);
       return renderItem(chart, data, item, size, thumbnail, {
         signal,
         onStart: () => {

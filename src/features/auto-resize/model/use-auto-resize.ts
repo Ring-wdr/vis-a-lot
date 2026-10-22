@@ -83,20 +83,36 @@ export function useStaleRefresh(
   const setItemJob = useWorkspace((s) => s.setItemJob);
   const inFlight = useRef(false);
   const [retryTick, setRetryTick] = useState(0);
+  // 다시 그리기를 요청한 key. 끝났는데도 stale이면 다시 그리기가 실패한 것이라 같은 공통 속성 job 안에서는
+  // 다시 요청하지 않는다 (실패 알림이 반복해서 뜨지 않게). 공통 속성을 다시 바꾸면(job이 바뀌면) 비운다.
+  const jobId = job?.jobId;
+  const requested = useRef({ jobId, keys: new Set<string>() });
+  if (jobId !== undefined && requested.current.jobId !== jobId)
+    requested.current = { jobId, keys: new Set() };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: retryTick은 실패한 요청을 다시 확인하게 하는 트리거다.
   useEffect(() => {
     if (!chartId || !job || !jobStatus || !isTerminal(jobStatus)) return;
     if (inFlight.current) return;
+    const tried = requested.current.keys;
     const keys = job.items
-      .filter((i) => i.stale && i.status === "success" && !itemJobs[i.key])
+      .filter(
+        (i) =>
+          i.stale &&
+          i.status === "success" &&
+          !itemJobs[i.key] &&
+          !tried.has(i.key),
+      )
       .map((i) => i.key);
     if (keys.length === 0) return;
     inFlight.current = true;
     api
       .refreshItems(chartId, keys)
       .then(({ jobId }) => {
-        for (const key of keys) setItemJob(key, jobId);
+        for (const key of keys) {
+          tried.add(key);
+          setItemJob(key, jobId);
+        }
       })
       .catch((err: unknown) => {
         console.warn("stale item 다시 그리기 요청 실패, 다시 시도합니다", err);

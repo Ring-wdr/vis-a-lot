@@ -94,7 +94,12 @@ export function ChartGrid() {
     detailOpen ? undefined : displaySize,
   );
   // 공통 속성이 바뀐 뒤 아직 예전 그림인 item은 이 페이지가 보일 때 다시 그린다.
-  useStaleRefresh(current?.chartId, job.data, progress.data?.status);
+  // 크게 보는 동안에는 grid가 보이지 않으니 크게 보기 화면이 보이는 item만 다시 그린다 (DetailView).
+  useStaleRefresh(
+    current?.chartId,
+    detailOpen ? undefined : job.data,
+    progress.data?.status,
+  );
 
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.
   useEffect(() => {
