@@ -27,10 +27,12 @@ import {
 } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { CommonProps } from "@/shared/api/types";
-import styles from "@/shared/ui/workspace.module.css";
+import { settingsStyles } from "@/shared/ui/settings-styles";
 import { hasSection, removeSection } from "../model/option-fields";
 import { useChangeCommon } from "../model/use-change-common";
 import { OptionSectionForm } from "./OptionSectionForm";
+
+const s = settingsStyles();
 
 export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
   title: Type,
@@ -70,7 +72,7 @@ export function CommonOptionSettings({
     change({ ...common, options: options as CommonProps["options"] });
 
   return (
-    <div className={styles.popoverBody}>
+    <div className={s.popoverBody()}>
       <OptionSectionForm
         section={section}
         resolved={mergeOptions<ChartOptions>(DEFAULT_OPTIONS, patch)}
@@ -87,7 +89,7 @@ export function CommonOptionSettings({
       >
         {children}
       </OptionSectionForm>
-      <p className={styles.muted}>
+      <p className="text-xs text-fg-muted">
         {appliesToCurrent
           ? "바꾸면 전체를 다시 그리고, item별로 정한 속성은 모두 공통 속성으로 바뀝니다."
           : "다음 draw에 적용됩니다."}

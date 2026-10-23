@@ -6,12 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check",
+    "lint": "biome check && stylelint \"**/*.css\"",
     "format": "biome format --write",
     "test": "vitest run",
     "gen:api": "tsx scripts/gen-api.mts",
     "gen:api:check": "tsx scripts/gen-api.mts --check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint:css": "stylelint \"**/*.css\""
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
@@ -39,11 +40,14 @@
     "papaparse": "5.7.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "tailwind-merge": "3.7.0",
+    "tailwind-variants": "3.3.1",
     "zod": "4.6.7",
     "zustand": "5.0.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.2",
+    "@biomejs/biome": "2.6.2",
+    "@tailwindcss/postcss": "4.3.3",
     "@types/d3-array": "3.2.2",
     "@types/d3-hierarchy": "3.1.7",
     "@types/d3-sankey": "0.12.4",
@@ -55,6 +59,8 @@
     "@types/react-dom": "^19",
     "husky": "9.1.7",
     "openapi-typescript": "7.13.0",
+    "stylelint": "17.16.0",
+    "tailwindcss": "4.3.3",
     "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "5.0.5"

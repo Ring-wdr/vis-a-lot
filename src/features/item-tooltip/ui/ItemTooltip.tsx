@@ -17,10 +17,10 @@ import type {
   ColumnName,
 } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/tw";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { LoadingText, Skeleton } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 import {
   formatTooltipText,
   resolveTooltipOptions,
@@ -134,22 +134,25 @@ export function ItemTooltip({
     // biome-ignore lint/a11y/noStaticElementInteractions: 마우스 위치를 읽는 시각 보조 레이어. 같은 정보는 이후 표 보기로 제공한다.
     <div
       ref={layerRef}
-      className={styles.tooltipLayer}
+      // 도구를 쓰지 않는 일반 모드는 기본 커서. 가리킨 점·막대는 표시(hitMarker·hitBox)로 보여준다.
+      className="relative cursor-default"
       style={{ width: display.width, height: display.height }}
       // 다시 그리는 동안 덮였던 레이어가 커서 아래에서 다시 드러나면 mousemove 없이 enter만 온다.
       onMouseEnter={onMove}
       onMouseMove={onMove}
       onMouseLeave={() => setCursor(undefined)}
     >
-      <ChartImage data={image} alt={alt} />
+      {/* resize 대기 중에는 기존 PNG를 칸 크기에 맞게 늘리거나 줄여 보여준다. */}
+      <ChartImage data={image} alt={alt} className="size-full" />
       {overlay}
       {meta.data?.legend && onLegendColor && (
         // PNG에 그려진 legend 항목 자리에 색 선택 버튼을 겹친다 (위치는 metadata).
-        <div className={styles.legendHitLayer}>
+        <div className="pointer-events-none absolute inset-0">
           {meta.data.legend.entries.map((entry) => (
             <ColorPickerButton
               key={entry.value}
-              className={styles.legendHit}
+              // PNG에 그려진 legend 항목 위에 겹치는 투명 버튼
+              className="pointer-events-auto absolute cursor-pointer rounded-sm hover:bg-accent/8 hover:outline-2 hover:outline-offset-1 hover:outline-accent focus-visible:bg-accent/8 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
               style={{
                 left: entry.rect.x * sx,
                 top: entry.rect.y * sy,
@@ -165,14 +168,14 @@ export function ItemTooltip({
       )}
       {cursor && hit?.marker && (
         <span
-          className={styles.hitMarker}
+          className="pointer-events-none absolute size-2.5 -translate-1/2 rounded-full border-2 border-chart-ink ring-2 ring-chart-paper"
           style={{ left: hit.marker.px * sx, top: hit.marker.py * sy }}
         />
       )}
       {cursor && hit?.highlight && (
         // bar/boxplot: 가리킨 막대/상자를 감싸는 사각형
         <span
-          className={styles.hitBox}
+          className="pointer-events-none absolute rounded-sm border-2 border-chart-ink ring-2 ring-chart-paper"
           style={{
             left: hit.highlight.x * sx,
             top: hit.highlight.y * sy,
@@ -184,12 +187,15 @@ export function ItemTooltip({
       {cursor && hit?.outline && (
         // sankey: 가리킨 흐름 띠. PNG 좌표 path를 보이는 크기로 늘려 겹친다.
         <svg
-          className={styles.hitOutline}
+          className="pointer-events-none absolute inset-0 size-full overflow-visible"
           viewBox={`0 0 ${image.width} ${image.height}`}
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <path d={hit.outline} />
+          <path
+            d={hit.outline}
+            className="fill-none stroke-chart-ink stroke-2 [stroke-linejoin:round] [vector-effect:non-scaling-stroke]"
+          />
         </svg>
       )}
       {tooltipPosition &&
@@ -197,7 +203,7 @@ export function ItemTooltip({
         createPortal(
           <div
             role="tooltip"
-            className={`${styles.tooltip} ${styles.tooltipPortal}`}
+            className={tooltipBox}
             style={
               look
                 ? { ...tooltipBoxStyle(look), ...tooltipPosition }
@@ -205,32 +211,51 @@ export function ItemTooltip({
             }
           >
             {look?.title && <strong>{look.title}</strong>}
-            <dl>
+            <dl className="flex flex-col gap-0.5">
               {hit.rows.map((row) => (
-                <div
-                  key={row.label}
-                  className={row.emphasis ? styles.emphasis : undefined}
-                >
-                  <dt style={rowStyle}>{row.label}</dt>
-                  <dd style={rowStyle}>{text(row.value)}</dd>
+                <div key={row.label} className={tooltipRow}>
+                  <dt
+                    className={cn(row.emphasis && "text-fg")}
+                    style={rowStyle}
+                  >
+                    {row.label}
+                  </dt>
+                  <dd
+                    className={cn(
+                      tooltipValue,
+                      row.emphasis && "font-semibold",
+                    )}
+                    style={rowStyle}
+                  >
+                    {text(row.value)}
+                  </dd>
                 </div>
               ))}
               {hit.rowId !== undefined &&
                 columns.map((c) => (
-                  <div key={c} className={styles.emphasis}>
-                    <dt style={rowStyle}>{columnInfo.label(c)}</dt>
-                    <dd style={rowStyle}>
+                  <div key={c} className={tooltipRow}>
+                    <dt className="text-fg" style={rowStyle}>
+                      {columnInfo.label(c)}
+                    </dt>
+                    <dd
+                      className={cn(tooltipValue, "font-semibold")}
+                      style={rowStyle}
+                    >
                       {extra.data && rowId === hit.rowId ? (
                         text(
                           formatValue(extra.data.values[c], columnInfo.type(c)),
                         )
                       ) : extra.isError ? (
                         // 받지 못했으면 자리 표시를 계속 두지 않고 사유를 남긴다.
-                        <span className={styles.muted} title={extraFailure}>
+                        <span
+                          className="text-xs text-fg-muted"
+                          title={extraFailure}
+                        >
                           –
                         </span>
                       ) : (
-                        <Skeleton className={styles.tooltipValueSkeleton} />
+                        // tooltip 컬럼 값을 서버에서 받는 동안의 자리
+                        <Skeleton className="mt-1 w-12" />
                       )}
                     </dd>
                   </div>
@@ -244,10 +269,7 @@ export function ItemTooltip({
         !meta.data &&
         (meta.isPending || meta.isFetching) &&
         createPortal(
-          <div
-            className={`${styles.tooltip} ${styles.tooltipPortal}`}
-            style={tooltipPosition}
-          >
+          <div className={tooltipBox} style={tooltipPosition}>
             <LoadingText>불러오는 중</LoadingText>
           </div>,
           document.body,
@@ -255,6 +277,12 @@ export function ItemTooltip({
     </div>
   );
 }
+
+/** body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다. 폭은 TOOLTIP_WIDTH와 같아야 한다. */
+const tooltipBox =
+  "pointer-events-none fixed z-tooltip w-50 rounded-md border border-line bg-elevated px-2.5 py-2 text-xs shadow-md";
+const tooltipRow = "flex justify-between gap-3 text-fg-secondary";
+const tooltipValue = "text-fg tabular-nums";
 
 const ROW_HEIGHT = 18;
 const TOOLTIP_PADDING = 20;

@@ -11,7 +11,6 @@ import { filterOf, sameFilters } from "@/features/data-filter/model/filters";
 import { ColumnFilter } from "@/features/data-filter/ui/ColumnFilter";
 import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
-import styles from "./FilterPanel.module.css";
 
 const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
 
@@ -35,21 +34,31 @@ export function FilterPanel() {
   const pending = drawn && !readOnly && !sameFilters(filters, applied);
 
   return (
-    <section className={styles.panel} aria-label="필터">
-      <header className={styles.header}>
+    <section
+      className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-line bg-panel"
+      aria-label="필터"
+    >
+      <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
         <strong>필터</strong>
-        {count > 0 && <span className={styles.count}>{count}</span>}
+        {count > 0 && (
+          <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent">
+            {count}
+          </span>
+        )}
         {count > 0 && !readOnly && (
           <button
             type="button"
-            className={styles.clear}
+            className="ml-auto cursor-pointer text-xs text-accent"
             onClick={() => updateDraft({ filters: [] })}
           >
             모두 지우기
           </button>
         )}
       </header>
-      <p className={styles.note} data-pending={pending || undefined}>
+      <p
+        className="px-3.5 pb-2.5 text-xs text-fg-muted data-pending:text-accent"
+        data-pending={pending || undefined}
+      >
         {readOnly
           ? "이 차트에 적용된 필터입니다."
           : pending
@@ -69,45 +78,59 @@ export function FilterPanel() {
       )}
       {schemaState === "loading" && (
         // 컬럼 이름 자리를 잡아 둔다.
-        <div className={styles.list} aria-busy="true">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto border-t border-line"
+          aria-busy="true"
+        >
           {SKELETON_WIDTHS.map((width, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: 받기 전 자리 표시용
-            <div key={i} className={`${styles.item} ${styles.skeletonRow}`}>
+            <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: 받기 전 자리 표시용
+              key={i}
+              // 컬럼을 받는 동안의 자리: 아코디언 머리(h-8.5) + 아래 테두리와 같은 높이
+              className="box-content flex h-8.5 items-center border-b border-line px-3.5"
+            >
               <Skeleton width={width} />
             </div>
           ))}
         </div>
       )}
       {schemaState === "ready" && (
-        <Accordion.Root multiple className={styles.list}>
+        <Accordion.Root
+          multiple
+          className="min-h-0 flex-1 overflow-y-auto border-t border-line"
+        >
           {columns.map((c) => {
             const active = filterOf(filters, c.name) !== undefined;
             return (
               <Accordion.Item
                 key={c.name}
                 value={c.name}
-                className={styles.item}
+                className="border-b border-line"
               >
-                <Accordion.Header className={styles.itemHeader}>
-                  <Accordion.Trigger className={styles.trigger}>
-                    <span className={styles.name}>{c.label}</span>
-                    <span className={styles.type}>
+                <Accordion.Header>
+                  {/* 머리는 h3이라 브라우저 기본으로 굵었고, 버튼이 font: inherit로 그 굵기를 물려받았다. */}
+                  <Accordion.Trigger className="group/trigger flex h-8.5 w-full cursor-pointer items-center gap-1.5 px-3.5 text-left text-ui font-bold text-fg hover:bg-panel-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
+                    <span className="min-w-0 flex-1 truncate">{c.label}</span>
+                    <span className="text-2xs text-fg-muted">
                       {COLUMN_TYPE_LABELS[c.type]}
                     </span>
                     {active && (
                       <>
-                        <span className={styles.activeDot} aria-hidden="true" />
-                        <span className={styles.srOnly}>필터 적용됨</span>
+                        <span
+                          className="size-2 rounded-full bg-accent"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">필터 적용됨</span>
                       </>
                     )}
                     <ChevronDown
                       size={14}
-                      className={styles.chevron}
+                      className="flex-none text-fg-muted transition-transform duration-150 ease-[ease] group-data-panel-open/trigger:rotate-180"
                       aria-hidden="true"
                     />
                   </Accordion.Trigger>
                 </Accordion.Header>
-                <Accordion.Panel className={styles.itemPanel}>
+                <Accordion.Panel className="px-3.5 pt-0.5 pb-3.5">
                   <ColumnFilter column={c.name} />
                 </Accordion.Panel>
               </Accordion.Item>

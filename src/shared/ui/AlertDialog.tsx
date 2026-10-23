@@ -1,8 +1,8 @@
 "use client";
 
 import { overlay } from "overlay-kit";
-import { Dialog } from "./Dialog";
-import styles from "./Dialog.module.css";
+import { button } from "./button";
+import { Dialog, dialogActions } from "./Dialog";
 
 /**
  * 화면 어디서든 띄우는 알림 팝업. 팝업 상태는 overlay-kit이 들고 있어 본문 상태와 섞이지 않는다.
@@ -11,8 +11,8 @@ export function showAlert(message: string) {
   overlay.open(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={close} onExited={unmount}>
       <p>{message}</p>
-      <form method="dialog" className={styles.actions}>
-        <button type="submit" className={styles.primary}>
+      <form method="dialog" className={dialogActions}>
+        <button type="submit" className={button({ variant: "primary" })}>
           확인
         </button>
       </form>
@@ -28,17 +28,13 @@ export function showConfirm(
   return overlay.openAsync<boolean>(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={() => close(false)} onExited={unmount}>
       <p>{message}</p>
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.secondary}
-          onClick={() => close(false)}
-        >
+      <div className={dialogActions}>
+        <button type="button" className={button()} onClick={() => close(false)}>
           취소
         </button>
         <button
           type="button"
-          className={styles.primary}
+          className={button({ variant: "primary" })}
           onClick={() => close(true)}
         >
           {confirmLabel}
@@ -66,7 +62,7 @@ export function showPrompt(
           close(value.trim() || null);
         }}
       >
-        <label className={styles.field}>
+        <label className="flex flex-col gap-2">
           <span>{message}</span>
           <input
             name="value"
@@ -74,18 +70,19 @@ export function showPrompt(
             maxLength={maxLength}
             required
             autoFocus
+            className="rounded-md border border-line bg-elevated px-2 py-1.5"
             onFocus={(e) => e.currentTarget.select()}
           />
         </label>
-        <div className={styles.actions}>
+        <div className={dialogActions}>
           <button
             type="button"
-            className={styles.secondary}
+            className={button()}
             onClick={() => close(null)}
           >
             취소
           </button>
-          <button type="submit" className={styles.primary}>
+          <button type="submit" className={button({ variant: "primary" })}>
             {confirmLabel}
           </button>
         </div>

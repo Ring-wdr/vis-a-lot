@@ -21,8 +21,8 @@ import {
 } from "@/features/chart-actions/model/chart-download";
 import { useColumns } from "@/shared/api/queries";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { toolButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 import { openDataTable, openSampleTable } from "./DataTableDialog";
 
 /** 누르면 바로 동작하는 도구 버튼. 진행 중이면 아이콘 대신 spinner를 보인다. */
@@ -42,6 +42,7 @@ function ActionButton({
   return (
     <button
       type="button"
+      className={toolButton()}
       title={label}
       aria-label={label}
       aria-busy={pending || undefined}
@@ -129,9 +130,10 @@ export function ChartActionBar() {
     target ? name : `${name} (${PICK_ITEM})`;
 
   return (
-    <div className={styles.modeBar} role="toolbar" aria-label="차트 도구">
+    <div className="flex gap-1" role="toolbar" aria-label="차트 도구">
       <button
         type="button"
+        className={toolButton()}
         title={
           checkboxOk ? "체크박스 표시" : unsupported("체크박스 표시", typeLabel)
         }

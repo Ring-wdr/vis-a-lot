@@ -4,8 +4,8 @@ import { ArchiveRestore, RotateCcw, Settings, ZoomOut } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
+import { itemButton } from "@/shared/ui/button";
 import { Popover } from "@/shared/ui/Popover";
-import styles from "@/shared/ui/workspace.module.css";
 import { ItemSettings } from "./ItemSettings";
 
 const ZOOM_OUT_RATIO = 2;
@@ -39,12 +39,13 @@ export function ItemToolbar({
 
   return (
     <div
-      className={styles.itemActions}
+      className="flex gap-0.5"
       role="toolbar"
       aria-label={`${item.label} 도구`}
     >
       <button
         type="button"
+        className={itemButton()}
         title="축소"
         aria-label="축소"
         disabled={disabled || !item.zoomed}
@@ -59,6 +60,7 @@ export function ItemToolbar({
       </button>
       <button
         type="button"
+        className={itemButton()}
         title="확대 초기화"
         aria-label="확대 초기화"
         disabled={disabled || !item.zoomed}
@@ -70,6 +72,7 @@ export function ItemToolbar({
       {item.deletionCount > 0 && (
         <button
           type="button"
+          className={itemButton()}
           title="지운 점 되돌리기"
           aria-label="지운 점 되돌리기"
           disabled={disabled}
@@ -81,6 +84,7 @@ export function ItemToolbar({
       {drawn && item.image && (
         <Popover
           triggerLabel="item 설정"
+          triggerClassName={itemButton()}
           disabled={busy}
           width={300}
           onOpen={() => setSettingsOpened(true)}

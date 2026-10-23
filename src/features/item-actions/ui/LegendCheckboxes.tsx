@@ -5,7 +5,6 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ChartImage } from "@/shared/api/types";
-import styles from "@/shared/ui/workspace.module.css";
 
 /**
  * PNG legend 항목의 색 표시(●) 자리에 체크박스를 겹친다. 위치는 metadata에서 읽는다.
@@ -35,12 +34,13 @@ export function LegendCheckboxes({
   const sy = display.height / image.height;
 
   return (
-    <div className={styles.legendCheckLayer}>
+    // legend 체크박스: 색 표시(●) 가운데에 겹친다. 색 버튼보다 위에 둔다.
+    <div className="z-raised pointer-events-none absolute inset-0">
       {legend.entries.map((entry) => (
         <input
           key={entry.value}
           type="checkbox"
-          className={styles.legendCheck}
+          className="pointer-events-auto absolute m-0 size-3 -translate-1/2 cursor-pointer accent-accent"
           style={{ left: entry.marker.x * sx, top: entry.marker.y * sy }}
           aria-label={`${alt} · ${entry.value} 보이기`}
           checked={entry.visible}

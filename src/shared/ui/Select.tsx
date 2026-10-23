@@ -4,7 +4,9 @@ import { Select as BaseSelect } from "@base-ui/react/select";
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { useDialogContainer } from "./Dialog";
-import styles from "./Select.module.css";
+import { selectStyles } from "./select-styles";
+
+const s = selectStyles();
 
 export type SelectOption<T> = {
   value: T;
@@ -39,12 +41,12 @@ export function Select<T extends string | number>({
 }) {
   const dialog = useDialogContainer();
   const placeholderNode = (
-    <span className={styles.placeholder}>{placeholder}</span>
+    <span className={s.placeholder()}>{placeholder}</span>
   );
   // 아이콘이 있으면 트리거에도 아이콘과 라벨을 함께 그린다.
   const withIcons = options.some((o) => o.icon);
   return (
-    <div className={styles.field}>
+    <div className={s.field()}>
       <BaseSelect.Root
         items={options}
         value={value}
@@ -53,29 +55,26 @@ export function Select<T extends string | number>({
           if (next !== null) onChange(next as T);
         }}
       >
-        <div className={styles.labelRow}>
-          <BaseSelect.Label className={styles.label}>{label}</BaseSelect.Label>
+        <div className={s.labelRow()}>
+          <BaseSelect.Label className={s.label()}>{label}</BaseSelect.Label>
           {aside}
         </div>
-        <BaseSelect.Trigger className={styles.trigger}>
-          <BaseSelect.Value
-            className={styles.value}
-            placeholder={placeholderNode}
-          >
+        <BaseSelect.Trigger className={s.trigger()}>
+          <BaseSelect.Value className={s.value()} placeholder={placeholderNode}>
             {withIcons
               ? (current: T | null) => {
                   const o = options.find((x) => x.value === current);
                   if (!o) return placeholderNode;
                   return (
-                    <span className={styles.iconLabel}>
-                      {o.icon}
-                      <span className={styles.itemLabel}>{o.label}</span>
+                    <span className={s.iconLabel()}>
+                      <span className={s.icon()}>{o.icon}</span>
+                      <span className={s.itemLabel()}>{o.label}</span>
                     </span>
                   );
                 }
               : undefined}
           </BaseSelect.Value>
-          <BaseSelect.Icon className={styles.chevron}>
+          <BaseSelect.Icon className={s.chevron()}>
             <ChevronDown size={14} aria-hidden="true" />
           </BaseSelect.Icon>
         </BaseSelect.Trigger>
@@ -83,25 +82,25 @@ export function Select<T extends string | number>({
         <BaseSelect.Portal container={dialog ?? undefined}>
           <BaseSelect.Positioner
             positionMethod={dialog ? "fixed" : undefined}
-            className={styles.positioner}
+            className={s.positioner()}
             alignItemWithTrigger={false}
             align="start"
             sideOffset={4}
           >
-            <BaseSelect.Popup className={styles.popup}>
+            <BaseSelect.Popup className={s.popup()}>
               <BaseSelect.List>
                 {options.map((o) => (
                   <BaseSelect.Item
                     key={String(o.value)}
                     value={o.value}
                     disabled={o.disabled}
-                    className={styles.item}
+                    className={s.item()}
                   >
-                    <span className={styles.check}>
+                    <span className={s.check()}>
                       <BaseSelect.ItemIndicator>✓</BaseSelect.ItemIndicator>
                     </span>
-                    {o.icon}
-                    <BaseSelect.ItemText className={styles.itemLabel}>
+                    {o.icon && <span className={s.icon()}>{o.icon}</span>}
+                    <BaseSelect.ItemText className={s.itemLabel()}>
                       {o.label}
                     </BaseSelect.ItemText>
                   </BaseSelect.Item>

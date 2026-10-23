@@ -5,7 +5,6 @@ import { useColumnSummary } from "@/shared/api/queries";
 import type { ColumnName } from "@/shared/api/types";
 import { LoadingText } from "@/shared/ui/Loading";
 import { filterOf, withFilter } from "../model/filters";
-import styles from "./DataFilter.module.css";
 import { RangeFilterBody } from "./RangeFilterBody";
 import { ValuesFilterBody } from "./ValuesFilterBody";
 
@@ -23,14 +22,17 @@ export function ColumnFilter({ column }: { column: ColumnName }) {
 
   if (summary.isPending) {
     return (
-      <div className={styles.pending} aria-busy="true">
+      <div
+        className="flex items-center gap-2 text-xs text-fg-muted"
+        aria-busy="true"
+      >
         <LoadingText>값 범위를 불러오는 중</LoadingText>
       </div>
     );
   }
   if (summary.error) {
     return (
-      <p role="alert" className={styles.error}>
+      <p role="alert" className="text-xs text-danger">
         {summary.error.message === "dataset is not ready"
           ? "데이터가 준비되면 필터를 쓸 수 있습니다."
           : summary.error.message}

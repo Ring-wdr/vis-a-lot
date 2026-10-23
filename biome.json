@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -16,6 +16,15 @@
       "!public/mockServiceWorker.js"
     ]
   },
+  "plugins": [
+    "./biome-plugins/tailwind-classes.grit",
+    "./biome-plugins/tailwind-scale.grit"
+  ],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -24,7 +33,20 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "preset": "recommended",
+      "nursery": {
+        "useTailwindSortedClasses": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "useTailwindShorthandClasses": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noTailwindLegacyUtilities": "error",
+        "noTailwindRawColors": "error",
+        "useTailwindStaticClassStrings": "error"
+      }
     },
     "domains": {
       "next": "recommended",
@@ -51,6 +73,10 @@
                   {
                     "group": ["@server/**", "**/server/**"],
                     "message": "화면은 서버 코드를 import하지 않는다. OAS에서 생성한 @/shared/api/types를 쓴다."
+                  },
+                  {
+                    "group": ["**/*.module.css"],
+                    "message": "스타일은 Tailwind 클래스로 쓴다. 토큰·reset은 app/globals.css 한 곳에 둔다."
                   }
                 ]
               }
@@ -59,5 +85,10 @@
         }
       }
     }
-  ]
+  ],
+  "tailwind": {
+    "stylesheet": "./app/globals.css",
+    "mergeFunctions": ["cn"],
+    "variantFunctions": ["tv"]
+  }
 }

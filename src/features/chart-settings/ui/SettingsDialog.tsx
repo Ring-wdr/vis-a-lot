@@ -12,15 +12,17 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
-import { Dialog } from "@/shared/ui/Dialog";
-import dialogStyles from "@/shared/ui/Dialog.module.css";
+import { button } from "@/shared/ui/button";
+import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { SECTION_LABELS } from "../model/option-fields";
 import { ColorSettings } from "./ColorSettings";
 import { LegendSettings } from "./LegendSettings";
 import { CommonOptionSettings, SECTION_ICONS } from "./OptionSettings";
-import styles from "./SettingsDialog.module.css";
 import { SplitSettings } from "./SplitSettings";
+import { settingsDialog } from "./settings-dialog-styles";
 import { TooltipSettings } from "./TooltipSettings";
+
+const sd = settingsDialog();
 
 /**
  * 속성 모델(common.options) 밖에 저장하지만 원본에서 같은 구역에 있는 설정. 그 구역의 필드 표 위에 붙인다.
@@ -52,18 +54,19 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
   const Extra = SECTION_EXTRAS[active];
 
   return (
-    <div className={styles.body}>
-      <h2 id={titleId} className={styles.title}>
+    <div className={sd.body()}>
+      <h2 id={titleId} className={sd.title()}>
         전체 설정
       </h2>
-      <div className={styles.layout}>
-        <nav className={styles.menu} aria-label="설정 메뉴">
+      <div className={sd.layout()}>
+        <nav className={sd.menu()} aria-label="설정 메뉴">
           {sections.map((id) => {
             const Icon = SECTION_ICONS[id];
             return (
               <button
                 key={id}
                 type="button"
+                className={sd.menuItem()}
                 aria-current={active === id || undefined}
                 onClick={() => setMenu(id)}
               >
@@ -73,7 +76,7 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
             );
           })}
         </nav>
-        <div className={styles.content}>
+        <div className={sd.content()}>
           <CommonOptionSettings
             key={active}
             section={active}
@@ -83,8 +86,8 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
           </CommonOptionSettings>
         </div>
       </div>
-      <div className={dialogStyles.actions}>
-        <button type="button" className={styles.close} onClick={onClose}>
+      <div className={dialogActions}>
+        <button type="button" className={button()} onClick={onClose}>
           닫기
         </button>
       </div>
@@ -102,7 +105,7 @@ export function openSettingsDialog(store: WorkspaceStore) {
       isOpen={isOpen}
       onClose={close}
       onExited={unmount}
-      className={styles.dialog}
+      className={sd.dialog()}
     >
       <WorkspaceScope store={store}>
         <SettingsBody onClose={close} />

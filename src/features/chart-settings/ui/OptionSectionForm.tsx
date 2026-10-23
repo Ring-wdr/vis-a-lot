@@ -8,8 +8,8 @@ import type {
 } from "@/entities/chart/model/chart-options";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
+import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
-import styles from "@/shared/ui/workspace.module.css";
 import {
   getPath,
   type OptionField,
@@ -18,7 +18,12 @@ import {
   SECTION_LABELS,
   setPath,
 } from "../model/option-fields";
-import formStyles from "./OptionSectionForm.module.css";
+
+const row =
+  "grid grid-cols-[minmax(0,1fr)_9.375rem] items-center gap-2 text-fg-secondary";
+const check = "flex items-center gap-1.5 text-fg-secondary";
+const control =
+  "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg";
 
 /** 숫자·글자 입력은 멈춘 뒤 이만큼 지나야(또는 칸을 벗어나야) 반영한다. 바꿀 때마다 다시 그리기 때문이다. */
 const COMMIT_DELAY_MS = 600;
@@ -56,16 +61,19 @@ export function OptionSectionForm({
     onChange(setPath(patch, path, value));
 
   return (
-    <div className={formStyles.form}>
-      <h3 className={formStyles.heading}>{SECTION_LABELS[section]}</h3>
+    <div className="flex flex-col gap-2.5 text-ui">
+      <h3 className="text-ui font-semibold">{SECTION_LABELS[section]}</h3>
       {children}
-      {showFields && hint && <p className={styles.muted}>{hint}</p>}
+      {showFields && hint && <p className="text-xs text-fg-muted">{hint}</p>}
       {showFields && (
-        <div className={formStyles.fields}>
+        <div className="flex flex-col gap-1.5">
           {SECTION_FIELDS[section].map((field) =>
             field.when && !field.when(resolved) ? null : field.kind ===
               "heading" ? (
-              <h4 key={`h-${field.label}`} className={formStyles.subheading}>
+              <h4
+                key={`h-${field.label}`}
+                className="mt-1.5 text-xs font-semibold text-fg-secondary"
+              >
                 {field.label}
               </h4>
             ) : (
@@ -83,7 +91,7 @@ export function OptionSectionForm({
       {showFields && onReset && (
         <button
           type="button"
-          className={styles.linkButton}
+          className={linkButton()}
           disabled={disabled}
           onClick={onReset}
         >
@@ -109,7 +117,7 @@ function FieldInput({
   switch (field.kind) {
     case "boolean":
       return (
-        <label className={formStyles.check}>
+        <label className={check}>
           <input
             type="checkbox"
             checked={value === true}
@@ -121,11 +129,11 @@ function FieldInput({
       );
     case "select":
       return (
-        <label className={formStyles.row} htmlFor={id}>
+        <label className={row} htmlFor={id}>
           <span>{field.label}</span>
           <select
             id={id}
-            className={formStyles.control}
+            className={control}
             value={String(value)}
             disabled={disabled}
             onChange={(e) => onCommit(e.target.value)}
@@ -141,10 +149,12 @@ function FieldInput({
     case "multi": {
       const selected = Array.isArray(value) ? (value as string[]) : [];
       return (
-        <fieldset className={formStyles.multi}>
-          <legend>{field.label}</legend>
+        <fieldset className="flex flex-wrap gap-x-3 gap-y-1">
+          <legend className="mb-0.5 w-full text-fg-secondary">
+            {field.label}
+          </legend>
           {field.options.map((o) => (
-            <label key={o.value} className={formStyles.check}>
+            <label key={o.value} className={check}>
               <input
                 type="checkbox"
                 checked={selected.includes(o.value)}
@@ -169,22 +179,22 @@ function FieldInput({
     case "color": {
       const color = typeof value === "string" ? value : "";
       return (
-        <div className={formStyles.row}>
+        <div className={row}>
           <span id={id}>{field.label}</span>
-          <span className={formStyles.colorCell}>
+          <span className="flex items-center gap-1.5">
             <ColorPickerButton
-              className={formStyles.swatch}
+              className="size-5.5 flex-none rounded-sm border border-line"
               style={{ background: color || "transparent" }}
               color={color || "#ffffff"}
               label={`${field.label} 바꾸기`}
               disabled={disabled}
               onCommit={onCommit}
             />
-            <code>{color || "없음"}</code>
+            <code className="text-2xs text-fg-muted">{color || "없음"}</code>
             {field.optional && color && (
               <button
                 type="button"
-                className={styles.linkButton}
+                className={linkButton()}
                 disabled={disabled}
                 onClick={() => onCommit("")}
               >
@@ -197,7 +207,7 @@ function FieldInput({
     }
     case "number":
       return (
-        <label className={formStyles.row} htmlFor={id}>
+        <label className={row} htmlFor={id}>
           <span>{field.label}</span>
           <DraftInput
             id={id}
@@ -215,7 +225,7 @@ function FieldInput({
       );
     case "text":
       return (
-        <label className={formStyles.row} htmlFor={id}>
+        <label className={row} htmlFor={id}>
           <span>{field.label}</span>
           <DraftInput
             id={id}
@@ -276,7 +286,7 @@ function DraftInput({
   return (
     <input
       {...inputProps}
-      className={formStyles.control}
+      className={control}
       value={text}
       onChange={(e) => setText(e.target.value)}
       onBlur={() => commit(text)}
