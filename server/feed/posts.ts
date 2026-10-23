@@ -16,6 +16,7 @@ import type {
   UpdatePostRequest,
 } from "../services/feed/modules/posts/schemas";
 import { resolveGroup } from "./access";
+import { mentionIds, recordMentions } from "./comments/mentions";
 import {
   type Actor,
   defineOps,
@@ -183,6 +184,15 @@ async function applyUpdate(
   // 새로 엮인 사람을 먼저 구독시켜 배정 알림을 받게 한다
   await autoSubscribe(ctx, post.id, involved);
   for (const event of events) await recordEvent(ctx, event);
+  // 설명에 새로 멘션된 사람
+  if (set.body !== undefined) {
+    const before = new Set(mentionIds(post.body));
+    await recordMentions(
+      ctx,
+      post,
+      mentionIds(patch.body).filter((id) => !before.has(id)),
+    );
+  }
 }
 
 async function touch(ctx: OpCtx, postId: string) {
@@ -358,6 +368,11 @@ export const postsOps = defineOps({
         oldValue: null,
         newValue: args.assigneeId,
       });
+    await recordMentions(
+      ctx,
+      { id, group_id: group.id },
+      mentionIds(args.body),
+    );
     await recomputeProgress(ctx, args.parentId ?? null);
     return detailOf(ctx, actor, id);
   },

@@ -188,6 +188,8 @@ export async function dispatchEvent(
   ctx: OpCtx,
   event: EventRecord,
   extraRecipients: string[],
+  /** 이 이벤트로는 알리지 않을 사람 (같은 댓글로 멘션 알림을 받는 사람 등) */
+  excludedRecipients: string[] = [],
 ): Promise<void> {
   const kind = notifyKindOf(event.kind);
   if (!kind) return;
@@ -207,7 +209,10 @@ export async function dispatchEvent(
     .where("posts.id", "=", event.postId)
     .executeTakeFirst();
   if (!post) return;
-  const ids = await recipientsOf(ctx, kind, event, post, extraRecipients);
+  const excluded = new Set(excludedRecipients);
+  const ids = (
+    await recipientsOf(ctx, kind, event, post, extraRecipients)
+  ).filter((id) => !excluded.has(id));
   if (ids.length === 0) return;
 
   // 비활성 사용자와, 비공개 그룹에서 멤버가 아닌 사람은 뺀다

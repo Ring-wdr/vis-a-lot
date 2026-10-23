@@ -219,68 +219,68 @@ export function FeedSidebar() {
   const systemAdmin = me.data?.isAdmin === true;
 
   return (
-    <nav
-      className="flex h-full flex-col gap-0.5 overflow-y-auto p-2"
-      aria-label="피드"
-    >
-      <Link
-        href={FEED.home}
-        className="mb-2 px-2 py-1.5 text-base font-bold text-fg no-underline"
-      >
-        피드
-      </Link>
-      <SideLink href={FEED.home} icon={<Home size={ICON} />}>
-        홈
-      </SideLink>
-      <SideLink href={FEED.my} icon={<ClipboardList size={ICON} />}>
-        내 작업
-      </SideLink>
-      <SideLink href={FEED.inbox} icon={<Bell size={ICON} />}>
-        알림함
-        {!!unread.data && (
-          <span className={countBadge()}>
-            {unread.data > 99 ? "99+" : unread.data}
-            <span className="sr-only">개 안읽음</span>
-          </span>
+    <nav className="h-full overflow-y-auto p-2" aria-label="피드">
+      {/* 안쪽 상자는 내용만큼 늘어나 스크롤되고(항목이 찌그러지지 않게), 짧으면 화면 높이를 채워 개발 장치를 아래에 붙인다 */}
+      <div className="flex min-h-full flex-col gap-0.5">
+        <Link
+          href={FEED.home}
+          className="mb-2 px-2 py-1.5 text-base font-bold text-fg no-underline"
+        >
+          피드
+        </Link>
+        <SideLink href={FEED.home} icon={<Home size={ICON} />}>
+          홈
+        </SideLink>
+        <SideLink href={FEED.my} icon={<ClipboardList size={ICON} />}>
+          내 작업
+        </SideLink>
+        <SideLink href={FEED.inbox} icon={<Bell size={ICON} />}>
+          알림함
+          {!!unread.data && (
+            <span className={countBadge()}>
+              {unread.data > 99 ? "99+" : unread.data}
+              <span className="sr-only">개 안읽음</span>
+            </span>
+          )}
+        </SideLink>
+
+        <ul className="flex flex-col">
+          {groups.data?.map((g) => (
+            <GroupLinks
+              key={g.id}
+              group={g}
+              admin={g.myRole === "admin" || systemAdmin}
+            />
+          ))}
+        </ul>
+        {groups.isPending && (
+          <p className="px-2 py-1 text-xs text-fg-muted">그룹을 불러오는 중</p>
         )}
-      </SideLink>
+        {groups.isError && (
+          <p className="px-2 py-1 text-xs text-fg-muted">
+            그룹을 불러오지 못했습니다 ({groups.error.message})
+          </p>
+        )}
 
-      <ul className="flex flex-col">
-        {groups.data?.map((g) => (
-          <GroupLinks
-            key={g.id}
-            group={g}
-            admin={g.myRole === "admin" || systemAdmin}
-          />
-        ))}
-      </ul>
-      {groups.isPending && (
-        <p className="px-2 py-1 text-xs text-fg-muted">그룹을 불러오는 중</p>
-      )}
-      {groups.isError && (
-        <p className="px-2 py-1 text-xs text-fg-muted">
-          그룹을 불러오지 못했습니다 ({groups.error.message})
-        </p>
-      )}
+        <SavedViewLinks />
 
-      <SavedViewLinks />
-
-      <div className="mt-auto flex flex-col gap-0.5 border-t border-line pt-2">
-        {systemAdmin && (
-          <SideLink href={FEED.admin} icon={<Shield size={ICON} />}>
-            관리 콘솔
+        <div className="mt-auto flex flex-col gap-0.5 border-t border-line pt-2">
+          {systemAdmin && (
+            <SideLink href={FEED.admin} icon={<Shield size={ICON} />}>
+              관리 콘솔
+            </SideLink>
+          )}
+          <p className={sideHeading({ class: "mt-1" })}>개발 장치</p>
+          <SideLink href={FEED.devOutbox} icon={<Mail size={ICON} />}>
+            발송 로그
           </SideLink>
-        )}
-        <p className={sideHeading({ class: "mt-1" })}>개발 장치</p>
-        <SideLink href={FEED.devOutbox} icon={<Mail size={ICON} />}>
-          발송 로그
-        </SideLink>
-        <SideLink href={FEED.devSeed} icon={<Database size={ICON} />}>
-          시드
-        </SideLink>
-        <SideLink href={FEED.devClock} icon={<Clock size={ICON} />}>
-          시계
-        </SideLink>
+          <SideLink href={FEED.devSeed} icon={<Database size={ICON} />}>
+            시드
+          </SideLink>
+          <SideLink href={FEED.devClock} icon={<Clock size={ICON} />}>
+            시계
+          </SideLink>
+        </div>
       </div>
     </nav>
   );
