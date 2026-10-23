@@ -118,8 +118,12 @@ export function eventText(e: FeedEvent, ctx: EventTextContext): string {
       return `진행률을 ${e.oldValue ?? 0}% → ${e.newValue ?? 0}%로 바꿨습니다`;
     case "comment":
       return "댓글을 남겼습니다";
-    case "mention":
-      return "댓글에서 멘션했습니다";
+    case "mention": {
+      const where = e.commentId ? "댓글에서" : "설명에서";
+      return e.newValue
+        ? `${where} ${ctx.userName(e.newValue)}님을 멘션했습니다`
+        : `${where} 멘션했습니다`;
+    }
     case "review_requested":
       return "완료를 요청했습니다";
     case "approved":

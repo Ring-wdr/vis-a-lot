@@ -14,9 +14,11 @@ import { useGroupMap } from "@/shared/api/feed/lookups";
 import { usePost } from "@/shared/api/feed/post-queries";
 import { button } from "@/shared/ui/button";
 import { EmptyState, LoadingText, Skeleton } from "@/shared/ui/Loading";
-import { PostActivity, PostAttachments, PostComments } from "./PostActivity";
+import { PostActivity } from "./PostActivity";
+import { PostAttachments } from "./PostAttachments";
 import { PostBody } from "./PostBody";
 import { PostChecklist } from "./PostChecklist";
+import { PostComments } from "./PostComments";
 import { PostContent } from "./PostContent";
 import { PostFields } from "./PostFields";
 import { PostHeader } from "./PostHeader";
@@ -104,7 +106,7 @@ export function PostDetail({
             <PostChecklist post={p} />
             <PostRelations post={p} />
             <PostAttachments post={p} />
-            <PostComments />
+            <PostComments post={p} />
             <PostActivity post={p} group={group} />
           </div>
         </div>

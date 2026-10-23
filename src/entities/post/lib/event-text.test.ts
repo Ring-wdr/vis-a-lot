@@ -76,6 +76,15 @@ describe("활동 로그 문장", () => {
     expect(
       eventSentence(ev({ kind: "overdue", newValue: "2026-10-20" }), ctx),
     ).toBe("기한(2026-10-20)이 지났습니다");
+    expect(
+      eventSentence(
+        ev({ kind: "mention", newValue: "u2", commentId: "c1" }),
+        ctx,
+      ),
+    ).toBe("김지훈님이 댓글에서 이서연님을 멘션했습니다");
+    expect(eventSentence(ev({ kind: "mention", newValue: "u2" }), ctx)).toBe(
+      "김지훈님이 설명에서 이서연님을 멘션했습니다",
+    );
   });
 
   it("상대 시각", () => {
