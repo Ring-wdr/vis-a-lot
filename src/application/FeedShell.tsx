@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { openQuickCreate } from "@/features/create-post/ui/quick-create";
+import { PresentBar } from "@/features/present-mode/ui/PresentBar";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { FeedSidebar } from "@/widgets/feed-sidebar/ui/FeedSidebar";
@@ -10,7 +11,7 @@ import { PostPeek } from "@/widgets/post-detail/ui/PostPeek";
 import { FeedTopBar } from "./FeedTopBar";
 import { useSchedulerTick } from "./use-scheduler-tick";
 
-/** 발표 모드(?present=1): 사이드바를 숨기고 글씨를 키운다. */
+/** 발표 모드(?present=1): 사이드바를 숨기고, 상단 바를 "발표 끝내기"만 남기고, 글씨를 키운다. */
 export const usePresentMode = () => useSearchParams().get("present") === "1";
 
 /** 입력 중이 아닐 때 C: 빠른 생성 (지금 보고 있는 그룹을 기본값으로) */
@@ -77,11 +78,15 @@ export function FeedShell({
         </>
       )}
       <div className="flex min-w-0 flex-1 flex-col">
-        <FeedTopBar
-          showMenu={!present}
-          menuOpen={open}
-          onToggleMenu={() => setOpen((v) => !v)}
-        />
+        {present ? (
+          <PresentBar />
+        ) : (
+          <FeedTopBar
+            showMenu
+            menuOpen={open}
+            onToggleMenu={() => setOpen((v) => !v)}
+          />
+        )}
         {notice}
         <main
           className={cn(
