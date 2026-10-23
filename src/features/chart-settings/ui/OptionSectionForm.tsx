@@ -23,7 +23,7 @@ const row =
   "grid grid-cols-[minmax(0,1fr)_9.375rem] items-center gap-2 text-fg-secondary";
 const check = "flex items-center gap-1.5 text-fg-secondary";
 const control =
-  "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg leading-[inherit]";
+  "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg";
 
 /** 숫자·글자 입력은 멈춘 뒤 이만큼 지나야(또는 칸을 벗어나야) 반영한다. 바꿀 때마다 다시 그리기 때문이다. */
 const COMMIT_DELAY_MS = 600;

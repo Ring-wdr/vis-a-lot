@@ -315,7 +315,7 @@ function UploadBody({
                   >
                     <button
                       type="button"
-                      className="block max-w-32.5 cursor-pointer truncate text-left text-xs leading-[inherit]"
+                      className="block max-w-32.5 cursor-pointer truncate text-left text-xs"
                       aria-pressed={i === fileIndex}
                       title={`${f.name} · ${formatBytes(f.size)}`}
                       onClick={() => setFileIndex(i)}

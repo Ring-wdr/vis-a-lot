@@ -207,7 +207,7 @@ export function OrderedSelect<T extends string>({
               aria-label={label}
             >
               <Combobox.Input
-                className="w-full border-b border-line px-2.5 py-2 leading-[inherit] outline-none"
+                className="w-full border-b border-line px-2.5 py-2 outline-none"
                 placeholder="검색"
                 aria-label="옵션 검색"
                 onKeyDown={(e) => {

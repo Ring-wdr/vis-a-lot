@@ -188,7 +188,7 @@ function DataTable<P extends TablePage>({
                       <button
                         type="button"
                         className={cn(
-                          "inline-flex max-w-full cursor-pointer items-center gap-1 leading-[inherit] font-semibold text-fg-secondary",
+                          "inline-flex max-w-full cursor-pointer items-center gap-1 font-semibold text-fg-secondary",
                           c.type !== "categorical" && "flex-row-reverse",
                         )}
                         title={`${c.label} (${c.name}) 정렬`}

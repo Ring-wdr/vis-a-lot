@@ -70,7 +70,7 @@ export function showPrompt(
             maxLength={maxLength}
             required
             autoFocus
-            className="rounded-md border border-line bg-elevated px-2 py-1.5 leading-[inherit]"
+            className="rounded-md border border-line bg-elevated px-2 py-1.5"
             onFocus={(e) => e.currentTarget.select()}
           />
         </label>

@@ -80,7 +80,7 @@ function StatusCell({
         <span className="text-fg-muted">미등록</span>
         <button
           type="button"
-          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-xs leading-[inherit] text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-xs text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
           disabled={generating}
           onClick={(e) => {
             e.stopPropagation();
@@ -209,7 +209,7 @@ function DatastoreBody({
           <input
             id={searchId}
             type="search"
-            className="min-w-0 flex-1 bg-transparent text-ui leading-[inherit] text-fg outline-none"
+            className="min-w-0 flex-1 bg-transparent text-ui text-fg outline-none"
             placeholder="이름 검색"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -315,7 +315,7 @@ function DatastoreBody({
                     {/* 키보드로 고르는 자리. 행 클릭과 같은 일을 한다. */}
                     <button
                       type="button"
-                      className="max-w-full cursor-pointer truncate text-left text-ui leading-[inherit]"
+                      className="max-w-full cursor-pointer truncate text-left text-ui"
                       aria-pressed={picked === status.id}
                       title={info?.fileName ?? status.name}
                       onClick={() => setPicked(status.id)}

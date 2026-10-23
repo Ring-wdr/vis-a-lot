@@ -103,7 +103,7 @@ export function PreviewGrid({
               >
                 <select
                   aria-label={`${c.name} 타입`}
-                  className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-xs leading-[inherit]"
+                  className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-xs"
                   value={c.chosen ?? AUTO}
                   disabled={!c.included}
                   onChange={(e) =>

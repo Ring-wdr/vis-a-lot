@@ -30,7 +30,7 @@ export function AppHeader() {
   const locked = useTabs((s) => s.locked);
   return (
     <header className="col-span-full flex items-center gap-6 border-b border-line px-4">
-      <span className="w-57 font-bold">vis-a-lot</span>
+      <span className="w-57 text-base font-bold">vis-a-lot</span>
       <nav className="flex items-center gap-1" aria-label="화면">
         <button
           type="button"

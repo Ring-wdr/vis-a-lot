@@ -13,7 +13,7 @@ import { segmented } from "@/shared/ui/segmented";
 const option = "flex min-w-0 flex-col gap-1 text-ui";
 const optionLabel = "p-0 font-medium text-xs text-fg-secondary";
 const input =
-  "min-w-0 rounded-md border border-line bg-elevated px-2 py-1 text-ui leading-[inherit]";
+  "min-w-0 rounded-md border border-line bg-elevated px-2 py-1 text-ui";
 const hint = "m-0 text-2xs text-fg-muted leading-normal";
 const seg = segmented();
 

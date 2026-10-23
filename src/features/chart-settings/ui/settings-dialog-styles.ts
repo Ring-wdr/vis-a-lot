@@ -16,7 +16,6 @@ export const settingsDialog = tv({
     section: "flex flex-col gap-2.5 text-ui",
     heading: "text-ui font-semibold",
     row: "flex items-center gap-2 text-fg-secondary",
-    input:
-      "w-18 rounded-md border border-line bg-elevated px-2 py-1 leading-[inherit] text-fg",
+    input: "w-18 rounded-md border border-line bg-elevated px-2 py-1 text-fg",
   },
 });
