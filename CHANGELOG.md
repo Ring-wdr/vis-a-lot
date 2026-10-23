@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+화면 스타일을 CSS Modules에서 Tailwind CSS v4로 옮겼다. 여러 기능이 함께 import하던 공용 모듈과 자손 선택자 때문에 스타일이 다른 컴포넌트로 새던 문제를 구조적으로 막는다. 규칙은 `docs/styling.md`에 있다.
+
+### 스타일
+- CSS Modules 23개(3,734줄)를 지우고 각 컴포넌트에 Tailwind 클래스를 둔다. CSS 파일은 `app/globals.css`(토큰·요소 기본값) 하나만 남긴다
+- 토큰: 쓰임새 이름 색(기본 팔레트는 끈다), rem 글자 크기(`text-ui` 13px가 본문 기본)와 짝지은 줄 높이, 그림자
+- 여러 곳이 같이 쓰는 모양은 `tv()` recipe로 모은다(`button`, `toolButton`, `selectStyles`, `segmented` …)
+- 간격·radius를 테마 축척에 맞췄다. 줄 높이가 토큰 값이 되어 필드와 메뉴가 1–3px씩 높아졌다
+- 팝업 하단 primary 버튼이 secondary와 같은 높이가 된다
+
+### 개발 환경
+- Biome 2.6: Tailwind 규칙(클래스 정렬, 축약, v3 이름, 팔레트 색, 조합한 클래스 문자열)과 GritQL 플러그인 두 개(자손 변형·토큰 밖 색·`!important`, 축척 밖 값)
+- Stylelint: 스타일이 새는 선택자와 토큰 밖 색을 막는다. `pnpm lint`가 Biome 다음에 돌린다
+- `*.module.css` import를 막는다
+- 데이터 테이블의 빈 채움 행 a11y lint 오류를 이유를 적어 끈다
+
 ## [0.12.0] - 2026-10-23
 
 원본 제품의 하위 차트(서브 차트)를 기본 차트에 더했다. 차트를 고르면 그 차트의 서브 차트를 고를 수 있고, 첫 값이 기본이다.
