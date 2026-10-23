@@ -30,12 +30,12 @@ export function SplitSettings() {
           onChange={(e) => updateDraft({ splitSeparator: e.target.value })}
         />
       </label>
-      <p className="text-fg-muted text-xs">
+      <p className="text-xs text-fg-muted">
         예: {names.join(draft.splitSeparator)}
         {draft.splitBy.length === 0 &&
           " (split by를 고르면 그 컬럼으로 보입니다)"}
       </p>
-      <p className="text-fg-muted text-xs">다음 draw에 적용됩니다.</p>
+      <p className="text-xs text-fg-muted">다음 draw에 적용됩니다.</p>
     </div>
   );
 }

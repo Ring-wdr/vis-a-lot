@@ -113,7 +113,7 @@ export function GridPicker() {
                   <button
                     key={`${row}-${col}`}
                     type="button"
-                    className="aspect-square cursor-pointer rounded-xs border border-line bg-elevated focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1 data-active:border-accent data-selected:not-data-active:border-accent-line data-active:bg-accent-soft"
+                    className="aspect-square cursor-pointer rounded-xs border border-line bg-elevated focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent data-active:border-accent data-active:bg-accent-soft data-selected:not-data-active:border-accent-line"
                     aria-label={`${cell.rows}행 ${cell.cols}열`}
                     data-active={
                       (row < preview.rows && col < preview.cols) || undefined
@@ -133,7 +133,7 @@ export function GridPicker() {
               })}
             </div>
             <span
-              className="text-center text-fg-secondary text-xs"
+              className="text-center text-xs text-fg-secondary"
               aria-live="polite"
             >
               {preview.rows}행 × {preview.cols}열

@@ -50,25 +50,25 @@ export function TabBar({ view }: { view: View }) {
   const lockedHint = locked ? TABS_LOCKED_HINT : undefined;
 
   return (
-    <div className="col-span-full flex min-w-0 items-end gap-1 border-line border-b bg-panel px-3">
+    <div className="col-span-full flex min-w-0 items-end gap-1 border-b border-line bg-panel px-3">
       <div
         role="tablist"
         aria-label={`${view} 탭`}
-        className="flex min-w-0 items-end gap-0.5 overflow-x-auto [scrollbar-width:thin]"
+        className="flex min-w-0 [scrollbar-width:thin] items-end gap-0.5 overflow-x-auto"
         title={lockedHint}
       >
         {mine.map((tab) => (
           <div
             key={tab.id}
             // 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다.
-            className="group/tab -mb-px flex h-7.5 w-50 flex-none items-center rounded-t-md border border-transparent border-b-0 text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
+            className="group/tab -mb-px flex h-7.5 w-50 flex-none items-center rounded-t-md border border-b-0 border-transparent text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
             data-active={tab.id === active || undefined}
           >
             <button
               type="button"
               role="tab"
               aria-selected={tab.id === active}
-              className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-xs disabled:cursor-not-allowed disabled:opacity-45 group-data-active/tab:font-semibold"
+              className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-xs group-data-active/tab:font-semibold disabled:cursor-not-allowed disabled:opacity-45"
               disabled={locked && tab.id !== active}
               onClick={() => activate(tab.id)}
             >
@@ -89,7 +89,7 @@ export function TabBar({ view }: { view: View }) {
           </div>
         ))}
         {view === "history" && mine.length === 0 && (
-          <span className="self-center px-1 pb-1.5 text-fg-muted text-xs">
+          <span className="self-center px-1 pb-1.5 text-xs text-fg-muted">
             왼쪽 목록에서 고르면 탭으로 열립니다.
           </span>
         )}
@@ -119,7 +119,7 @@ function FilterToggle() {
   return (
     <button
       type="button"
-      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1.25 rounded-md border border-line bg-elevated px-2.5 py-0.75 text-fg-secondary text-xs aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1.25 rounded-md border border-line bg-elevated px-2.5 py-0.75 text-xs text-fg-secondary aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
       aria-pressed={open}
       onClick={toggle}
     >

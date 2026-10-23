@@ -35,7 +35,7 @@ export function FilterPanel() {
 
   return (
     <section
-      className="flex min-h-0 min-w-0 flex-1 flex-col border-line border-l bg-panel"
+      className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-line bg-panel"
       aria-label="필터"
     >
       <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
@@ -48,7 +48,7 @@ export function FilterPanel() {
         {count > 0 && !readOnly && (
           <button
             type="button"
-            className="ml-auto cursor-pointer text-accent text-xs"
+            className="ml-auto cursor-pointer text-xs text-accent"
             onClick={() => updateDraft({ filters: [] })}
           >
             모두 지우기
@@ -56,7 +56,7 @@ export function FilterPanel() {
         )}
       </header>
       <p
-        className="px-3.5 pb-2.5 text-fg-muted text-xs data-pending:text-accent"
+        className="px-3.5 pb-2.5 text-xs text-fg-muted data-pending:text-accent"
         data-pending={pending || undefined}
       >
         {readOnly
@@ -79,7 +79,7 @@ export function FilterPanel() {
       {schemaState === "loading" && (
         // 컬럼 이름 자리를 잡아 둔다.
         <div
-          className="min-h-0 flex-1 overflow-y-auto border-line border-t"
+          className="min-h-0 flex-1 overflow-y-auto border-t border-line"
           aria-busy="true"
         >
           {SKELETON_WIDTHS.map((width, i) => (
@@ -87,7 +87,7 @@ export function FilterPanel() {
               // biome-ignore lint/suspicious/noArrayIndexKey: 받기 전 자리 표시용
               key={i}
               // 컬럼을 받는 동안의 자리: 아코디언 머리와 같은 높이
-              className="flex h-9.25 items-center border-line border-b px-3.5"
+              className="flex h-9.25 items-center border-b border-line px-3.5"
             >
               <Skeleton width={width} />
             </div>
@@ -97,7 +97,7 @@ export function FilterPanel() {
       {schemaState === "ready" && (
         <Accordion.Root
           multiple
-          className="min-h-0 flex-1 overflow-y-auto border-line border-t"
+          className="min-h-0 flex-1 overflow-y-auto border-t border-line"
         >
           {columns.map((c) => {
             const active = filterOf(filters, c.name) !== undefined;
@@ -105,11 +105,11 @@ export function FilterPanel() {
               <Accordion.Item
                 key={c.name}
                 value={c.name}
-                className="border-line border-b"
+                className="border-b border-line"
               >
                 <Accordion.Header>
                   {/* 머리는 h3이라 브라우저 기본으로 굵었고, 버튼이 font: inherit로 그 굵기를 물려받았다. */}
-                  <Accordion.Trigger className="group/trigger flex w-full cursor-pointer items-center gap-1.5 px-3.5 py-2.25 text-left font-bold text-fg text-ui hover:bg-panel-subtle focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2">
+                  <Accordion.Trigger className="group/trigger flex w-full cursor-pointer items-center gap-1.5 px-3.5 py-2.25 text-left text-ui font-bold text-fg hover:bg-panel-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
                     <span className="min-w-0 flex-1 truncate">{c.label}</span>
                     <span className="text-2xs text-fg-muted">
                       {COLUMN_TYPE_LABELS[c.type]}

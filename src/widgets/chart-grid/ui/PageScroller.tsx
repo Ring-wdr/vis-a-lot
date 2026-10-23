@@ -23,7 +23,7 @@ import {
 
 // 화살표 모양은 ::after 테두리로 그린 작은 삼각형
 const arrow = tv({
-  base: "relative aspect-square w-full flex-none cursor-default bg-panel text-fg-secondary after:absolute after:inset-0 after:m-auto after:size-0 after:border-x-4 after:border-x-transparent after:content-[''] enabled:active:bg-panel-active enabled:hover:bg-panel-strong enabled:hover:text-fg disabled:text-fg-muted/50",
+  base: "relative aspect-square w-full flex-none cursor-default bg-panel text-fg-secondary after:absolute after:inset-0 after:m-auto after:size-0 after:border-x-4 after:border-x-transparent after:content-[''] enabled:hover:bg-panel-strong enabled:hover:text-fg enabled:active:bg-panel-active disabled:text-fg-muted/50",
   variants: {
     dir: {
       up: "after:border-b-4 after:border-b-current",
@@ -203,7 +203,7 @@ export function PageScroller({
     <div
       // Windows 방식 스크롤바: 위 화살표 · 트랙(+thumb) · 아래 화살표.
       // 폭은 grid-layout.ts의 PAGE_SCROLLER_WIDTH와 같아야 PNG 크기 계산이 맞는다.
-      className="flex w-4 flex-none touch-none select-none flex-col rounded-[0.1875rem] border border-line bg-panel outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="flex w-4 flex-none touch-none flex-col rounded-[0.1875rem] border border-line bg-panel outline-none select-none focus-visible:ring-2 focus-visible:ring-accent"
       role="scrollbar"
       aria-controls={controls}
       aria-orientation="vertical"
@@ -250,7 +250,7 @@ export function PageScroller({
       >
         {!disabled && (
           <div
-            className="absolute top-0 right-0.5 left-0.5 rounded-xs bg-fg-muted/70 not-data-dragging:hover:bg-fg-muted data-dragging:bg-fg-secondary"
+            className="absolute inset-x-0.5 top-0 rounded-xs bg-fg-muted/70 not-data-dragging:hover:bg-fg-muted data-dragging:bg-fg-secondary"
             data-dragging={dragTop !== null || undefined}
             // thumb 길이와 위치는 페이지 수와 현재 페이지로 계산한 값이다.
             style={{ height: thumb, transform: `translateY(${top}px)` }}

@@ -58,7 +58,7 @@ export function BootCheck() {
 
   return (
     <main className="flex flex-col gap-6 p-6">
-      <h1 className="font-bold text-[2em]">구조 확인</h1>
+      <h1 className="text-[2em] font-bold">구조 확인</h1>
 
       <section>
         <h2 className={heading}>DB Worker (PGlite)</h2>
@@ -110,7 +110,7 @@ export function BootCheck() {
         <div className="flex flex-wrap gap-3">
           {items.map((it) => (
             <figure key={it.key}>
-              <div className="flex h-50 w-80 items-center justify-center border border-line text-fg-muted text-ui">
+              <div className="flex h-50 w-80 items-center justify-center border border-line text-ui text-fg-muted">
                 {it.error ? (
                   <span role="alert">{it.error}</span>
                 ) : it.result ? (
@@ -120,7 +120,7 @@ export function BootCheck() {
                 )}
               </div>
               {it.result && (
-                <figcaption className="mt-1 text-fg-muted text-xs">
+                <figcaption className="mt-1 text-xs text-fg-muted">
                   {it.result.worker} · {Math.round(it.result.renderMs)}ms
                 </figcaption>
               )}

@@ -5,7 +5,7 @@ export const settingsStyles = tv({
   slots: {
     popoverBody: "flex flex-col gap-2.5 text-ui",
     group: "flex flex-col items-start gap-2",
-    groupTitle: "font-semibold text-fg-secondary text-xs",
+    groupTitle: "text-xs font-semibold text-fg-secondary",
     legendList: "flex flex-col gap-1.5",
     legendItem: "flex items-center gap-2 text-xs",
     legendSwatch:

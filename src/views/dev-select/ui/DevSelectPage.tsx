@@ -37,7 +37,7 @@ export function DevSelectPage() {
 
   return (
     <main className="flex max-w-90 flex-col gap-4 p-6">
-      <h1 className="font-bold text-base">OrderedSelect</h1>
+      <h1 className="text-base font-bold">OrderedSelect</h1>
       <label className="flex gap-1.5 text-ui">
         <input
           type="checkbox"

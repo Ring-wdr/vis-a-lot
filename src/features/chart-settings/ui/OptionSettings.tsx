@@ -89,7 +89,7 @@ export function CommonOptionSettings({
       >
         {children}
       </OptionSectionForm>
-      <p className="text-fg-muted text-xs">
+      <p className="text-xs text-fg-muted">
         {appliesToCurrent
           ? "바꾸면 전체를 다시 그리고, item별로 정한 속성은 모두 공통 속성으로 바뀝니다."
           : "다음 draw에 적용됩니다."}

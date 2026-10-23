@@ -80,7 +80,7 @@ function StatusCell({
         <span className="text-fg-muted">미등록</span>
         <button
           type="button"
-          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-on-accent text-xs leading-[inherit] disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-xs leading-[inherit] text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
           disabled={generating}
           onClick={(e) => {
             e.stopPropagation();
@@ -102,7 +102,7 @@ function StatusCell({
   if (status.state === "generating") {
     const ratio = status.done / Math.max(1, status.total);
     return (
-      <span className="inline-flex items-center gap-1.5 text-fg-secondary text-xs">
+      <span className="inline-flex items-center gap-1.5 text-xs text-fg-secondary">
         <progress
           className="w-16"
           value={status.phase === "analyze" ? undefined : ratio}
@@ -196,7 +196,7 @@ function DatastoreBody({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <h2 id={titleId} className="font-bold text-base">
+      <h2 id={titleId} className="text-base font-bold">
         데이터 스토어
       </h2>
 
@@ -209,7 +209,7 @@ function DatastoreBody({
           <input
             id={searchId}
             type="search"
-            className="min-w-0 flex-1 bg-transparent text-fg text-ui leading-[inherit] outline-none"
+            className="min-w-0 flex-1 bg-transparent text-ui leading-[inherit] text-fg outline-none"
             placeholder="이름 검색"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -307,7 +307,7 @@ function DatastoreBody({
                   }}
                 >
                   <td
-                    className={cn(cell, "in-data-sample:text-xs text-fg-muted")}
+                    className={cn(cell, "text-fg-muted in-data-sample:text-xs")}
                   >
                     {index}
                   </td>
@@ -385,7 +385,7 @@ function DatastoreBody({
         </p>
       )}
 
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-fg-secondary text-xs">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-xs text-fg-secondary">
         <span>
           내 저장소 사용량{" "}
           {usage?.usage !== undefined ? formatBytes(usage.usage) : "–"}

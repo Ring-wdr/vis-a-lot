@@ -168,7 +168,7 @@ export function ChartGrid() {
   return (
     // grid와 하단 바를 세로로 쌓는다. 하단 바 높이(32px + 위 여백 12px)는
     // grid-layout.ts의 GRID_FOOTER_HEIGHT와 같아야 PNG 크기 계산이 맞는다.
-    <div ref={areaRef} className="relative flex h-full w-full flex-col">
+    <div ref={areaRef} className="relative flex size-full flex-col">
       {!current &&
         (opening ? (
           // history·공유 링크의 차트를 여는 중: 그 grid 모양대로 자리를 잡아 둔다.
@@ -253,7 +253,7 @@ export function ChartGrid() {
                 {moving && (
                   // 스크롤 중 보이는 페이지와 조회한 페이지가 다를 때 grid를 덮는 안내
                   <div
-                    className="absolute inset-0 z-2 flex items-center justify-center gap-2 rounded-md bg-overlay text-fg-secondary text-sm tabular-nums"
+                    className="absolute inset-0 z-2 flex items-center justify-center gap-2 rounded-md bg-overlay text-sm text-fg-secondary tabular-nums"
                     aria-live="polite"
                   >
                     <Spinner />
@@ -272,9 +272,9 @@ export function ChartGrid() {
               />
             </div>
           )}
-          <div className="mt-3 flex h-8 items-center gap-3 text-fg-secondary text-xs">
+          <div className="mt-3 flex h-8 items-center gap-3 text-xs text-fg-secondary">
             {job.error ? (
-              <span role="alert" className="text-danger text-xs">
+              <span role="alert" className="text-xs text-danger">
                 {job.error.message}
               </span>
             ) : (

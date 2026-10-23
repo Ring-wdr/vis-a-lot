@@ -90,7 +90,7 @@ export function ValuesFilterBody({
     <div className="flex flex-col gap-2 text-xs">
       <input
         type="search"
-        className="rounded-md border border-line bg-elevated px-2 py-1.25 text-fg text-xs"
+        className="rounded-md border border-line bg-elevated px-2 py-1.25 text-xs text-fg"
         placeholder={`${summary.values.length.toLocaleString()}개 값에서 검색`}
         aria-label="값 검색"
         value={keyword}
@@ -125,7 +125,7 @@ export function ValuesFilterBody({
         <div
           ref={listRef}
           // 드래그 선택 중 글자가 선택되거나, touch에서 세로 스크롤 외 동작이 끼어들지 않게 한다.
-          className="max-h-60 touch-pan-y select-none overflow-y-auto overscroll-contain rounded-md border border-line bg-elevated data-dragging:cursor-ns-resize"
+          className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain rounded-md border border-line bg-elevated select-none data-dragging:cursor-ns-resize"
           data-dragging={preview ? "" : undefined}
           {...drag.listProps}
         >

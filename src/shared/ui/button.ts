@@ -23,7 +23,7 @@ export const button = tv({
 
 /** 글자만 있는 버튼. 다시 보기 전용 패널(<fieldset disabled>, group/controls)에서는 숨긴다. */
 export const linkButton = tv({
-  base: "inline-flex cursor-pointer items-center gap-1 self-start text-accent text-xs group-disabled/controls:hidden",
+  base: "inline-flex cursor-pointer items-center gap-1 self-start text-xs text-accent group-disabled/controls:hidden",
 });
 
 /** 도구 줄의 아이콘 버튼(모드, 차트 도구). 켜진 상태는 aria-pressed로 표시한다. */
@@ -36,5 +36,5 @@ export const toolButton = tv({
  * 커서를 올리면 켜진 버튼도 hover 바탕을 보인다.
  */
 export const itemButton = tv({
-  base: "inline-grid h-5.5 w-6 cursor-pointer place-items-center rounded-sm border border-transparent text-fg-secondary text-ui enabled:hover:border-line enabled:hover:bg-elevated disabled:cursor-not-allowed disabled:opacity-35 aria-pressed:not-hover:border-accent aria-pressed:not-hover:bg-accent-soft aria-pressed:text-accent",
+  base: "inline-grid h-5.5 w-6 cursor-pointer place-items-center rounded-sm border border-transparent text-ui text-fg-secondary enabled:hover:border-line enabled:hover:bg-elevated disabled:cursor-not-allowed disabled:opacity-35 aria-pressed:text-accent aria-pressed:not-hover:border-accent aria-pressed:not-hover:bg-accent-soft",
 });

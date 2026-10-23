@@ -152,7 +152,7 @@ export function ItemTooltip({
             <ColorPickerButton
               key={entry.value}
               // PNG에 그려진 legend 항목 위에 겹치는 투명 버튼
-              className="pointer-events-auto absolute cursor-pointer rounded-sm hover:bg-accent/8 hover:outline-2 hover:outline-accent hover:outline-offset-1 focus-visible:bg-accent/8 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1"
+              className="pointer-events-auto absolute cursor-pointer rounded-sm hover:bg-accent/8 hover:outline-2 hover:outline-offset-1 hover:outline-accent focus-visible:bg-accent/8 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
               style={{
                 left: entry.rect.x * sx,
                 top: entry.rect.y * sy,
@@ -194,7 +194,7 @@ export function ItemTooltip({
         >
           <path
             d={hit.outline}
-            className="fill-none stroke-2 stroke-chart-ink [stroke-linejoin:round] [vector-effect:non-scaling-stroke]"
+            className="fill-none stroke-chart-ink stroke-2 [stroke-linejoin:round] [vector-effect:non-scaling-stroke]"
           />
         </svg>
       )}
@@ -248,7 +248,7 @@ export function ItemTooltip({
                       ) : extra.isError ? (
                         // 받지 못했으면 자리 표시를 계속 두지 않고 사유를 남긴다.
                         <span
-                          className="text-fg-muted text-xs"
+                          className="text-xs text-fg-muted"
                           title={extraFailure}
                         >
                           –

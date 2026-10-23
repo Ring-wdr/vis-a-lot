@@ -8,7 +8,7 @@ import { ShareButton } from "@/features/share-chart/ui/ShareButton";
 export function TabToolbar() {
   return (
     // 탭 바 바로 아래, 탭 내용과 같은 배경이라 그 탭에 속해 보인다.
-    <div className="col-span-full flex items-center gap-3 border-line border-b bg-surface px-4">
+    <div className="col-span-full flex items-center gap-3 border-b border-line bg-surface px-4">
       <ModeBar />
       {/* 모드 바와 차트 도구 사이 구분선 */}
       <span className="my-2 w-px self-stretch bg-line" aria-hidden="true" />

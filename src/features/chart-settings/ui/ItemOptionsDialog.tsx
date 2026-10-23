@@ -153,7 +153,7 @@ function ItemOptionsBody({
               resetLabel="이 구역은 공통 속성 따르기"
             />
           )}
-          <p className="text-fg-muted text-xs">
+          <p className="text-xs text-fg-muted">
             바꾸면 이 item만 다시 그립니다. 전체 설정에서 공통 속성을 바꾸면
             item별 속성은 모두 공통 속성으로 바뀝니다.
           </p>

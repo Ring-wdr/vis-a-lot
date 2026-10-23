@@ -114,7 +114,7 @@ export function HistoryList() {
 
   if (list.error) {
     return (
-      <p role="alert" className="text-danger text-xs">
+      <p role="alert" className="text-xs text-danger">
         {list.error.message}
       </p>
     );
@@ -185,7 +185,7 @@ export function HistoryList() {
               )}
             </span>
             <span className={historyText}>
-              <span className="font-semibold text-xs">
+              <span className="text-xs font-semibold">
                 {chartTitle(entry.spec, columnsOf(entry.dataset))}
               </span>
               <span className={muted}>

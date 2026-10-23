@@ -259,7 +259,7 @@ export function DrawLayer({
       />
       {overlay}
       <svg
-        className="pointer-events-none absolute inset-0 size-full fill-chart-ink-soft stroke-2 stroke-chart-ink [stroke-linecap:round] [stroke-linejoin:round]"
+        className="pointer-events-none absolute inset-0 size-full fill-chart-ink-soft stroke-chart-ink stroke-2 [stroke-linecap:round] [stroke-linejoin:round]"
         viewBox={`0 0 ${image.width} ${image.height}`}
         preserveAspectRatio="none"
         aria-hidden="true"

@@ -108,7 +108,7 @@ export function ItemContextMenu({
         <ContextMenu.Positioner className={menuPositioner}>
           <ContextMenu.Popup className={menu}>
             <ContextMenu.Group>
-              <ContextMenu.GroupLabel className="px-2 py-1 text-fg-secondary text-xs">
+              <ContextMenu.GroupLabel className="px-2 py-1 text-xs text-fg-secondary">
                 {selected
                   ? `선택 ${item.selectedCount?.toLocaleString()}개`
                   : "선택한 영역 없음"}

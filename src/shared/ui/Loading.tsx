@@ -27,7 +27,7 @@ const emptyState = tv({
   slots: {
     root: "flex h-full min-h-40 flex-col items-center justify-center gap-1.5 p-6 text-center text-fg-muted",
     icon: "mb-1 grid size-11 place-items-center rounded-xl bg-panel text-fg-secondary",
-    title: "font-semibold text-fg text-sm",
+    title: "text-sm font-semibold text-fg",
     body: "max-w-80 text-xs leading-normal",
   },
   variants: {
@@ -90,7 +90,7 @@ export function Skeleton({
   return (
     <span
       className={cn(
-        "block h-2.5 animate-shimmer rounded-sm bg-linear-to-r bg-size-[200%_100%] from-line via-panel to-line motion-reduce:animate-none",
+        "block h-2.5 animate-shimmer rounded-sm bg-linear-to-r from-line via-panel to-line bg-size-[200%_100%] motion-reduce:animate-none",
         width && SKELETON_WIDTH[width],
         className,
       )}
@@ -148,7 +148,7 @@ export function BootScreen({
       aria-busy={!error}
     >
       <div className="flex w-[min(20rem,calc(100vw-2rem))] flex-col items-center gap-3.5 text-center">
-        <span className="font-bold text-xl">vis-a-lot</span>
+        <span className="text-xl font-bold">vis-a-lot</span>
         <ol className="flex gap-1.5" aria-hidden="true">
           {BOOT_STEPS.map((s, i) => (
             <li
@@ -162,7 +162,7 @@ export function BootScreen({
         </ol>
         {error ? (
           <>
-            <p role="alert" className="text-danger text-ui">
+            <p role="alert" className="text-ui text-danger">
               {BOOT_MESSAGES[step]}에 실패했습니다: {error}
             </p>
             <button
@@ -174,7 +174,7 @@ export function BootScreen({
             </button>
           </>
         ) : (
-          <output className="inline-flex items-center gap-2 text-fg-secondary text-ui">
+          <output className="inline-flex items-center gap-2 text-ui text-fg-secondary">
             <Spinner />
             {BOOT_MESSAGES[step]}
           </output>

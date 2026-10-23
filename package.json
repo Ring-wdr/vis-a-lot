@@ -46,7 +46,7 @@
     "zustand": "5.0.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.2",
+    "@biomejs/biome": "2.6.2",
     "@tailwindcss/postcss": "4.3.3",
     "@types/d3-array": "3.2.2",
     "@types/d3-hierarchy": "3.1.7",

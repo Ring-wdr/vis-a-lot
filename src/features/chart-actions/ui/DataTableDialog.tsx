@@ -133,16 +133,16 @@ function DataTable<P extends TablePage>({
   return (
     <div className="flex flex-col gap-2.5">
       <header className="flex items-baseline gap-2.5">
-        <h2 id={titleId} className="font-bold text-base">
+        <h2 id={titleId} className="text-base font-bold">
           {source.title}
         </h2>
-        <span className="text-fg-muted text-ui">
+        <span className="text-ui text-fg-muted">
           {first ? source.summary(first) + filterNote(first) : "불러오는 중"}
         </span>
       </header>
 
       {failed ? (
-        <p role="alert" className="text-danger text-ui">
+        <p role="alert" className="text-ui text-danger">
           {failed.message}
         </p>
       ) : first && total === 0 ? (
@@ -188,7 +188,7 @@ function DataTable<P extends TablePage>({
                       <button
                         type="button"
                         className={cn(
-                          "inline-flex max-w-full cursor-pointer items-center gap-1 font-semibold text-fg-secondary leading-[inherit]",
+                          "inline-flex max-w-full cursor-pointer items-center gap-1 leading-[inherit] font-semibold text-fg-secondary",
                           c.type !== "categorical" && "flex-row-reverse",
                         )}
                         title={`${c.label} (${c.name}) 정렬`}

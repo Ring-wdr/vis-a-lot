@@ -28,7 +28,7 @@ export function LoginForm({ notice }: { notice?: string }) {
       }}
     >
       {notice && !submit.error && (
-        <p className="rounded-md bg-accent-soft px-2.5 py-2 text-fg-secondary text-ui">
+        <p className="rounded-md bg-accent-soft px-2.5 py-2 text-ui text-fg-secondary">
           {notice}
         </p>
       )}
@@ -57,13 +57,13 @@ export function LoginForm({ notice }: { notice?: string }) {
         />
       </label>
       {submit.error && (
-        <p id={errorId} role="alert" className="text-danger text-ui">
+        <p id={errorId} role="alert" className="text-ui text-danger">
           {submit.error.message}
         </p>
       )}
       <button
         type="submit"
-        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-3 py-2.5 font-semibold text-on-accent text-sm disabled:cursor-progress disabled:opacity-60"
+        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-3 py-2.5 text-sm font-semibold text-on-accent disabled:cursor-progress disabled:opacity-60"
         disabled={submit.isPending}
       >
         {submit.isPending ? (
@@ -75,7 +75,7 @@ export function LoginForm({ notice }: { notice?: string }) {
           "로그인"
         )}
       </button>
-      <p className="text-center text-fg-muted text-xs">
+      <p className="text-center text-xs text-fg-muted">
         데모 계정: <code className={code}>demo</code> /{" "}
         <code className={code}>demo1234</code>
       </p>

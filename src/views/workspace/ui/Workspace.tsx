@@ -104,7 +104,7 @@ function HistorySidebar() {
         </section>
         {viewing && (
           <section
-            className={cn(panelSection, "mt-5 border-line border-t pt-4")}
+            className={cn(panelSection, "mt-5 border-t border-line pt-4")}
           >
             <h2 className={sectionTitle}>설정 (보기 전용)</h2>
             <ControlPanel />
@@ -140,7 +140,7 @@ export function Workspace() {
         <TabBar view={view} />
         <TabToolbar />
         {/* 왼쪽 패널: 설정은 스크롤되고 동작 버튼은 하단에 고정된다. */}
-        <aside className="col-1 row-4 flex min-h-0 flex-col border-line border-r bg-panel">
+        <aside className="col-1 row-4 flex min-h-0 flex-col border-r border-line bg-panel">
           {view === "gallery" ? <GallerySidebar /> : <HistorySidebar />}
         </aside>
         {/* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */}

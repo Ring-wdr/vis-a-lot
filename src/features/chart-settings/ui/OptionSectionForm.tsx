@@ -62,9 +62,9 @@ export function OptionSectionForm({
 
   return (
     <div className="flex flex-col gap-2.5 text-ui">
-      <h3 className="font-semibold text-ui">{SECTION_LABELS[section]}</h3>
+      <h3 className="text-ui font-semibold">{SECTION_LABELS[section]}</h3>
       {children}
-      {showFields && hint && <p className="text-fg-muted text-xs">{hint}</p>}
+      {showFields && hint && <p className="text-xs text-fg-muted">{hint}</p>}
       {showFields && (
         <div className="flex flex-col gap-1.5">
           {SECTION_FIELDS[section].map((field) =>
@@ -72,7 +72,7 @@ export function OptionSectionForm({
               "heading" ? (
               <h4
                 key={`h-${field.label}`}
-                className="mt-1.5 font-semibold text-fg-secondary text-xs"
+                className="mt-1.5 text-xs font-semibold text-fg-secondary"
               >
                 {field.label}
               </h4>

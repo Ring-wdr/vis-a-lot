@@ -91,12 +91,12 @@ export function RangeFilterBody({
             <Slider.Indicator className="h-full rounded-xs bg-accent group-data-inverse/slider:bg-line" />
             <Slider.Thumb
               index={0}
-              className="size-3.5 rounded-full border-2 border-accent bg-elevated shadow-xs focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 data-disabled:border-fg-muted"
+              className="size-3.5 rounded-full border-2 border-accent bg-elevated shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-disabled:border-fg-muted"
               getAriaLabel={() => "최솟값"}
             />
             <Slider.Thumb
               index={1}
-              className="size-3.5 rounded-full border-2 border-accent bg-elevated shadow-xs focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 data-disabled:border-fg-muted"
+              className="size-3.5 rounded-full border-2 border-accent bg-elevated shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-disabled:border-fg-muted"
               getAriaLabel={() => "최댓값"}
             />
           </Slider.Track>

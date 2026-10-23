@@ -203,7 +203,7 @@ export function DetailView({
         >
           <ChevronsRight size={14} aria-hidden="true" />
         </button>
-        <span className="min-w-[13ch] flex-none text-right text-fg-secondary text-xs tabular-nums">
+        <span className="min-w-[13ch] flex-none text-right text-xs text-fg-secondary tabular-nums">
           {(focus + 1).toLocaleString()} / {totalItems.toLocaleString()}
         </span>
       </nav>

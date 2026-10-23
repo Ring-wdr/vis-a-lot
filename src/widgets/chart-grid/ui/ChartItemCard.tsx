@@ -52,7 +52,7 @@ const busyOverlay =
  * 커서가 없는 기기에서는 늘 보인다.
  */
 const itemToolbar = tv({
-  base: "absolute top-1 z-3 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 focus-within:opacity-100 hover-none:opacity-100 group-hover/item:opacity-100 has-[:popover-open]:opacity-100",
+  base: "absolute top-1 z-3 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 group-hover/item:opacity-100 focus-within:opacity-100 has-[:popover-open]:opacity-100 hover-none:opacity-100",
   variants: { side: { left: "left-1", right: "right-1" } },
   defaultVariants: { side: "right" },
 });
@@ -72,7 +72,7 @@ function Pending({
         ? STAGE_LABELS[stage]
         : (placeholder ?? "준비 중");
   return (
-    <div className="flex w-[min(8.75rem,90%)] flex-col items-center gap-2 text-center text-fg-muted text-xs">
+    <div className="flex w-[min(8.75rem,90%)] flex-col items-center gap-2 text-center text-xs text-fg-muted">
       <Spinner size="lg" />
       <span>{label}</span>
       {/* 대기 → 렌더링으로 넘어갈 때 줄이 생기며 밀리지 않도록 진행 막대 자리는 늘 둔다. */}
@@ -369,17 +369,17 @@ export function ChartItemCard({
       <div className={itemBody}>
         {/* 그림이 없으면 PNG 제목 대신 이름을 띄운다. */}
         <span
-          className="absolute top-2 left-2.5 max-w-[calc(100%-3.75rem)] truncate font-semibold text-xs"
+          className="absolute top-2 left-2.5 max-w-[calc(100%-3.75rem)] truncate text-xs font-semibold"
           title={item?.label}
         >
           {item?.label ?? "…"}
         </span>
         {item?.status === "failed" ? (
-          <p role="alert" className="text-danger text-xs">
+          <p role="alert" className="text-xs text-danger">
             렌더 실패: {item.error}
           </p>
         ) : item?.status === "cancelled" ? (
-          <p className="text-fg-muted text-xs">취소됨</p>
+          <p className="text-xs text-fg-muted">취소됨</p>
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}

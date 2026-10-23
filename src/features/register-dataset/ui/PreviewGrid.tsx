@@ -126,7 +126,7 @@ export function PreviewGrid({
                   ))}
                 </select>
                 {c.included && c.invalid ? (
-                  <span className="mt-0.5 block font-normal text-2xs text-danger">
+                  <span className="mt-0.5 block text-2xs font-normal text-danger">
                     변환 불가 {c.invalid.toLocaleString()}개
                   </span>
                 ) : null}
@@ -149,7 +149,7 @@ export function PreviewGrid({
                     key={c}
                     className={cn(
                       cell,
-                      "text-right data-invalid:bg-danger/10 data-invalid:text-danger data-null:not-data-invalid:text-fg-muted data-null:italic",
+                      "text-right data-invalid:bg-danger/10 data-invalid:text-danger data-null:italic data-null:not-data-invalid:text-fg-muted",
                     )}
                     data-excluded={!column?.included || undefined}
                     data-invalid={bad || undefined}

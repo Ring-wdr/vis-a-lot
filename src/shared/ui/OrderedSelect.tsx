@@ -203,11 +203,11 @@ export function OrderedSelect<T extends string>({
             className="z-50"
           >
             <Combobox.Popup
-              className="w-[max(var(--anchor-width),13.75rem)] max-w-(--available-width) overflow-hidden rounded-lg border border-line bg-elevated text-fg text-ui shadow-lg"
+              className="w-[max(var(--anchor-width),13.75rem)] max-w-(--available-width) overflow-hidden rounded-lg border border-line bg-elevated text-ui text-fg shadow-lg"
               aria-label={label}
             >
               <Combobox.Input
-                className="w-full border-line border-b px-2.5 py-1.75 leading-[inherit] outline-none"
+                className="w-full border-b border-line px-2.5 py-1.75 leading-[inherit] outline-none"
                 placeholder="검색"
                 aria-label="옵션 검색"
                 onKeyDown={(e) => {
@@ -220,13 +220,13 @@ export function OrderedSelect<T extends string>({
                   toggle(keyboardHighlight.current);
                 }}
               />
-              <Combobox.Empty className="not-empty:p-2.5 not-empty:text-fg-muted not-empty:text-xs">
+              <Combobox.Empty className="not-empty:p-2.5 not-empty:text-xs not-empty:text-fg-muted">
                 일치하는 항목이 없습니다
               </Combobox.Empty>
               <Combobox.List
                 ref={setListElement}
                 aria-label={`${label} 옵션`}
-                className="max-h-70 touch-pan-y select-none overflow-y-auto overscroll-contain outline-none data-dragging:cursor-ns-resize"
+                className="max-h-70 touch-pan-y overflow-y-auto overscroll-contain outline-none select-none data-dragging:cursor-ns-resize"
                 data-dragging={preview ? "" : undefined}
                 hidden={filtered.length === 0}
                 {...drag.listProps}

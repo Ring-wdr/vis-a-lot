@@ -59,7 +59,7 @@ function TaskProgress({ task }: { task: UploadTask }) {
     failed: "실패",
   }[task.state];
   return (
-    <output className="flex items-center gap-2.5 text-fg-secondary text-ui">
+    <output className="flex items-center gap-2.5 text-ui text-fg-secondary">
       <progress
         className="w-60"
         value={
@@ -219,7 +219,7 @@ function UploadBody({
       aria-labelledby={titleId}
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id={titleId} className="font-bold text-base">
+        <h2 id={titleId} className="text-base font-bold">
           {dataset ? "데이터 수정" : "파일 열기"}
         </h2>
         <div className="flex gap-2">
@@ -347,7 +347,7 @@ function UploadBody({
           }}
         >
           {preview.data ? (
-            <pre className="m-0 whitespace-pre px-2.5 py-2 font-code text-xs leading-relaxed">
+            <pre className="m-0 px-2.5 py-2 font-code text-xs leading-relaxed whitespace-pre">
               {preview.data.raw.join("\n")}
             </pre>
           ) : staging || preview.isFetching ? (
@@ -418,7 +418,7 @@ function UploadBody({
               {failure}
             </p>
           ) : checkResult ? (
-            <output className="m-0 block text-fg-secondary text-ui">
+            <output className="m-0 block text-ui text-fg-secondary">
               검사 통과 · {checkResult.rows.toLocaleString()}행
               {checkResult.skipped > 0 &&
                 ` · 건너뛴 행 ${checkResult.skipped.toLocaleString()}개`}
