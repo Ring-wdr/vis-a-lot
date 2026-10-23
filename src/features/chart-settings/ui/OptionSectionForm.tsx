@@ -11,11 +11,12 @@ import { useDebounced } from "@/shared/lib/use-debounced";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import {
+  fieldsOf,
   getPath,
   type OptionField,
-  SECTION_FIELDS,
   SECTION_HINTS,
   SECTION_LABELS,
+  SECTION_PARTS,
   setPath,
 } from "../model/option-fields";
 
@@ -29,11 +30,12 @@ const control =
 const COMMIT_DELAY_MS = 600;
 
 /**
- * 속성 구역 하나의 편집 폼. 필드 표(SECTION_FIELDS)대로 그리고, 바꾼 값을 부분 값(patch)에 넣어 onChange로 넘긴다.
+ * 속성 구역 하나의 편집 폼. 필드 표(SECTION_FIELDS, 하위 항목이 있으면 그 항목의 필드)대로 그리고, 바꾼 값을 부분 값(patch)에 넣어 onChange로 넘긴다.
  * 보이는 값(resolved)은 기본값·공통 속성까지 합친 값이다.
  */
 export function OptionSectionForm({
   section,
+  part,
   resolved,
   patch,
   onChange,
@@ -44,6 +46,8 @@ export function OptionSectionForm({
   children,
 }: {
   section: OptionSection;
+  /** 하위 항목이 있는 구역(축)에서 보일 항목. 없으면 첫 항목 */
+  part?: string;
   resolved: ChartOptions;
   patch: ChartOptionsPatch | undefined;
   onChange: (next: ChartOptionsPatch) => void;
@@ -57,17 +61,22 @@ export function OptionSectionForm({
   children?: ReactNode;
 }) {
   const hint = SECTION_HINTS[section];
+  const parts = SECTION_PARTS[section];
+  const partLabel = (parts?.find((p) => p.id === part) ?? parts?.[0])?.label;
   const set = (path: string, value: unknown) =>
     onChange(setPath(patch, path, value));
 
   return (
     <div className="flex flex-col gap-2.5 text-ui">
-      <h3 className="text-ui font-semibold">{SECTION_LABELS[section]}</h3>
+      <h3 className="text-ui font-semibold">
+        {SECTION_LABELS[section]}
+        {partLabel && ` · ${partLabel}`}
+      </h3>
       {children}
       {showFields && hint && <p className="text-xs text-fg-muted">{hint}</p>}
       {showFields && (
         <div className="flex flex-col gap-1.5">
-          {SECTION_FIELDS[section].map((field) =>
+          {fieldsOf(section, part).map((field) =>
             field.when && !field.when(resolved) ? null : field.kind ===
               "heading" ? (
               <h4

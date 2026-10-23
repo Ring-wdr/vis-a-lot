@@ -8,10 +8,10 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
+import { settingsStyles } from "@/shared/ui/settings-styles";
 import { useChangeCommon } from "../model/use-change-common";
-import { settingsDialog } from "./settings-dialog-styles";
 
-const sd = settingsDialog();
+const s = settingsStyles();
 
 /**
  * 전체 설정 · 범례 위치. 모든 item에 적용되고 item에 따로 정한 위치는 덮어쓴다.
@@ -25,8 +25,8 @@ export function LegendSettings() {
   const legend = legendColumnOf(draft);
 
   return (
-    <div className={sd.section()}>
-      <h4 className={sd.heading()}>
+    <div className={s.section()}>
+      <h4 className={s.heading()}>
         위치
         {legend !== null && ` · ${columns.label(legend)}`}
       </h4>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import { settingsStyles } from "@/shared/ui/settings-styles";
 import { settingsDialog } from "./settings-dialog-styles";
 
 const sd = settingsDialog();
+const s = settingsStyles();
 
 /**
  * 전체 설정 · 툴팁의 가까운 점 표시 (scatter, line). 화면 표시만 바꾸므로 다시 그리지 않고 바로 적용된다.
@@ -17,8 +19,8 @@ export function TooltipSettings() {
   if (chartType !== "scatter" && chartType !== "line") return null;
 
   return (
-    <div className={sd.section()}>
-      <h4 className={sd.heading()}>가까운 점</h4>
+    <div className={s.section()}>
+      <h4 className={s.heading()}>가까운 점</h4>
       <label className={sd.row()}>
         <input
           type="checkbox"

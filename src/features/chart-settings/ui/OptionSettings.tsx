@@ -57,10 +57,13 @@ export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
  */
 export function CommonOptionSettings({
   section,
+  part,
   supported,
   children,
 }: {
   section: OptionSection;
+  /** 하위 항목이 있는 구역(축)에서 보일 항목 */
+  part?: string;
   /** false면 이 차트가 쓰지 않는 구역이라 children(같은 구역의 기존 설정)만 보인다. */
   supported: boolean;
   children?: ReactNode;
@@ -75,6 +78,7 @@ export function CommonOptionSettings({
     <div className={s.popoverBody()}>
       <OptionSectionForm
         section={section}
+        part={part}
         resolved={mergeOptions<ChartOptions>(DEFAULT_OPTIONS, patch)}
         patch={patch}
         disabled={readOnly || pending}

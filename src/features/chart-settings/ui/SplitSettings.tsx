@@ -2,9 +2,11 @@
 
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
+import { settingsStyles } from "@/shared/ui/settings-styles";
 import { settingsDialog } from "./settings-dialog-styles";
 
 const sd = settingsDialog();
+const s = settingsStyles();
 
 /** 전체 설정 · 제목의 연결 문자: split 조합 이름을 이을 기호. 다음 draw에 적용된다. */
 export function SplitSettings() {
@@ -18,8 +20,8 @@ export function SplitSettings() {
       : ["공장", "라인", "설비"];
 
   return (
-    <div className={sd.section()}>
-      <h4 className={sd.heading()}>연결 문자</h4>
+    <div className={s.section()}>
+      <h4 className={s.heading()}>연결 문자</h4>
       <label className={sd.row()}>
         <span>기호</span>
         <input

@@ -80,10 +80,9 @@ const SHAPES: Choice[] = POINT_SHAPES.map((value) => ({
   }[value],
 }));
 
-function axisFields(axis: "x" | "y", name: string): OptionField[] {
+function axisFields(axis: "x" | "y"): OptionField[] {
   const p = `axes.${axis}`;
   return [
-    { kind: "heading", label: name },
     { kind: "boolean", path: `${p}.visible`, label: "축 보이기" },
     { kind: "boolean", path: `${p}.title.visible`, label: "축 제목 보이기" },
     {
@@ -181,6 +180,23 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
   ];
 }
 
+/** 필드가 많아 하위 메뉴로 나눠 보이는 구역. 메뉴에서 구역 아래에 하위 항목으로 붙는다. */
+export type SectionPart = { id: string; label: string; fields: OptionField[] };
+
+export const SECTION_PARTS: Partial<Record<OptionSection, SectionPart[]>> = {
+  axes: [
+    { id: "x", label: "X축", fields: axisFields("x") },
+    { id: "y", label: "Y축", fields: axisFields("y") },
+  ],
+};
+
+/** 구역(과 하위 항목)의 필드. 하위 항목이 있는 구역은 고른 항목의 필드만 보인다. */
+export function fieldsOf(section: OptionSection, part?: string): OptionField[] {
+  const parts = SECTION_PARTS[section];
+  if (!parts) return SECTION_FIELDS[section];
+  return (parts.find((p) => p.id === part) ?? parts[0]).fields;
+}
+
 const isMethod =
   (...methods: ChartOptions["prediction"]["method"][]) =>
   (o: ChartOptions) =>
@@ -213,7 +229,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       options: ALIGNS,
     },
   ],
-  axes: [...axisFields("x", "X축"), ...axisFields("y", "Y축")],
+  axes: [...axisFields("x"), ...axisFields("y")],
   legend: [
     { kind: "boolean", path: "legend.visible", label: "범례 보이기" },
     { kind: "boolean", path: "legend.border", label: "테두리 보이기" },

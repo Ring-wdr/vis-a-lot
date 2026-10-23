@@ -14,10 +14,10 @@ import {
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
-import { SECTION_LABELS } from "../model/option-fields";
 import { ColorSettings } from "./ColorSettings";
 import { LegendSettings } from "./LegendSettings";
-import { CommonOptionSettings, SECTION_ICONS } from "./OptionSettings";
+import { CommonOptionSettings } from "./OptionSettings";
+import { type MenuTarget, resolveTarget, SectionMenu } from "./SectionMenu";
 import { SplitSettings } from "./SplitSettings";
 import { settingsDialog } from "./settings-dialog-styles";
 import { TooltipSettings } from "./TooltipSettings";
@@ -49,9 +49,9 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
   const sections = OPTION_SECTIONS.filter(
     (s) => supportsOption(chartType, s) || ALWAYS_SHOWN.includes(s),
   );
-  const [menu, setMenu] = useState<OptionSection>(sections[0]);
-  const active = sections.includes(menu) ? menu : sections[0];
-  const Extra = SECTION_EXTRAS[active];
+  const [menu, setMenu] = useState<MenuTarget>();
+  const active = resolveTarget(menu, sections) ?? { section: sections[0] };
+  const Extra = SECTION_EXTRAS[active.section];
 
   return (
     <div className={sd.body()}>
@@ -59,28 +59,18 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
         전체 설정
       </h2>
       <div className={sd.layout()}>
-        <nav className={sd.menu()} aria-label="설정 메뉴">
-          {sections.map((id) => {
-            const Icon = SECTION_ICONS[id];
-            return (
-              <button
-                key={id}
-                type="button"
-                className={sd.menuItem()}
-                aria-current={active === id || undefined}
-                onClick={() => setMenu(id)}
-              >
-                <Icon size={14} aria-hidden="true" />
-                {SECTION_LABELS[id]}
-              </button>
-            );
-          })}
-        </nav>
+        <SectionMenu
+          label="설정 메뉴"
+          sections={sections}
+          active={active}
+          onSelect={setMenu}
+        />
         <div className={sd.content()}>
           <CommonOptionSettings
-            key={active}
-            section={active}
-            supported={supportsOption(chartType, active)}
+            key={`${active.section}-${active.part}`}
+            section={active.section}
+            part={active.part}
+            supported={supportsOption(chartType, active.section)}
           >
             {Extra && <Extra />}
           </CommonOptionSettings>

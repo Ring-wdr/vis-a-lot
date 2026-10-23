@@ -1,11 +1,12 @@
 import { tv } from "@/shared/lib/tw";
 
-/** 공통 색 설정, item 설정 팝업, item 개별 속성 팝업이 같이 쓰는 묶음과 legend 색 목록 */
+/** 전체 설정과 item 속성 팝업이 같이 쓰는 묶음과 legend 색 목록 */
 export const settingsStyles = tv({
   slots: {
     popoverBody: "flex flex-col gap-2.5 text-ui",
-    group: "flex flex-col items-start gap-2",
-    groupTitle: "text-xs font-semibold text-fg-secondary",
+    // 설정 팝업 구역 안의 묶음 (색상, legend 위치, 연결 문자 …)
+    section: "flex flex-col gap-2.5 text-ui",
+    heading: "text-ui font-semibold",
     legendList: "flex flex-col gap-1.5",
     legendItem: "flex items-center gap-2 text-xs",
     legendSwatch:

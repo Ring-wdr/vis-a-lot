@@ -14,9 +14,7 @@ import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import { useChangeCommon } from "../model/use-change-common";
-import { settingsDialog } from "./settings-dialog-styles";
 
-const sd = settingsDialog();
 const s = settingsStyles();
 
 /**
@@ -41,10 +39,10 @@ export function ColorSettings() {
     draft.common.legendColors?.[value] ?? defaultLegendColor(index);
 
   return (
-    <div className={sd.section()}>
+    <div className={s.section()}>
       {legend === null ? (
         <>
-          <h4 className={sd.heading()}>기본 색</h4>
+          <h4 className={s.heading()}>기본 색</h4>
           <ColorSwatches
             value={draft.common.color}
             disabled={readOnly || pending}
@@ -56,7 +54,7 @@ export function ColorSettings() {
         </>
       ) : (
         <>
-          <h4 className={sd.heading()}>
+          <h4 className={s.heading()}>
             범례 값별 색 · {columns.label(legend)}
           </h4>
           {legendValues.isPending &&

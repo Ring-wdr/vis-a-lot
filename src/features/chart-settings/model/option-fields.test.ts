@@ -5,10 +5,12 @@ import {
 } from "@/entities/chart/model/chart-options";
 import { parseNumber } from "../ui/OptionSectionForm";
 import {
+  fieldsOf,
   getPath,
   hasSection,
   removeSection,
   SECTION_FIELDS,
+  SECTION_PARTS,
   setPath,
 } from "./option-fields";
 
@@ -21,6 +23,23 @@ describe("option fields", () => {
         expect(getPath(DEFAULT_OPTIONS, field.path)).not.toBeUndefined();
       }
     }
+  });
+
+  it("하위 항목은 구역 필드를 나눠 갖고, 각자 자기 경로만 쓴다", () => {
+    for (const [section, parts] of Object.entries(SECTION_PARTS)) {
+      const all = parts.flatMap((p) => p.fields);
+      expect(all).toEqual(
+        SECTION_FIELDS[section as keyof typeof SECTION_PARTS],
+      );
+      for (const part of parts) {
+        for (const field of fieldsOf(section as never, part.id)) {
+          if (field.kind === "heading") continue;
+          expect(field.path.startsWith(`${section}.${part.id}.`)).toBe(true);
+        }
+      }
+    }
+    expect(fieldsOf("axes")).toBe(SECTION_PARTS.axes?.[0].fields);
+    expect(fieldsOf("title")).toBe(SECTION_FIELDS.title);
   });
 
   it("setPath는 원본을 바꾸지 않고 깊은 경로에 값을 넣는다", () => {
