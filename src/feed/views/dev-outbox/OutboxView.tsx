@@ -60,8 +60,9 @@ export function OutboxView() {
           배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다.
         </EmptyState>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-line bg-elevated">
-          <table className="w-full border-collapse text-ui">
+        <div className="relative overflow-x-auto rounded-lg border border-line bg-elevated">
+          {/* 좁은 화면에서 내용 칸이 찌그러지지 않게 표 폭을 두고 가로로 스크롤한다 */}
+          <table className="w-full min-w-160 border-collapse text-ui">
             <thead className="bg-panel text-xs text-fg-muted">
               <tr>
                 <th className={cell()}>시각</th>

@@ -9,7 +9,8 @@ import { tv } from "@/shared/lib/tw";
 /** 밑줄 탭. 링크(지금 탭은 aria-current="page")나 버튼에 단다 */
 export const tabStyles = tv({
   slots: {
-    list: "flex min-w-0 gap-1 overflow-x-auto border-b border-line",
+    // relative: 탭 안의 sr-only 글자가 스크롤 상자 밖으로 나가 페이지를 넓히지 않게 한다
+    list: "relative flex min-w-0 gap-1 overflow-x-auto border-b border-line",
     tab: "-mb-px inline-flex h-9 flex-none cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-2.5 text-ui whitespace-nowrap text-fg-secondary no-underline hover:text-fg aria-[current=page]:border-accent aria-[current=page]:font-semibold aria-[current=page]:text-fg",
     count:
       "rounded-full bg-panel-strong px-1.5 text-2xs text-fg-secondary tabular-nums",

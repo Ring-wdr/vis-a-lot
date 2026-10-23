@@ -114,7 +114,11 @@ export function PostFields({
 }) {
   const { run, pending } = usePostAction();
   const users = useUserMap();
-  const o = useGroupOptions(post.groupId);
+  const o = useGroupOptions(post.groupId, [
+    post.assigneeId,
+    post.requesterId,
+    ...post.stakeholderIds,
+  ]);
   const editable = post.permissions.edit;
   const disabled = !editable || !!pending;
   const save = (patch: UpdatePostRequest) =>
