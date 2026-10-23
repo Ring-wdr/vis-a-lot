@@ -16,7 +16,7 @@ export const selectStyles = tv({
     icon: "inline-flex flex-none text-fg-secondary",
     // 다중 선택에서 고른 개수
     count:
-      "inline-grid h-4.5 min-w-4.5 flex-none place-items-center rounded-full bg-accent px-1.25 text-2xs text-on-accent tabular-nums",
+      "inline-grid h-4.5 min-w-4.5 flex-none place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent tabular-nums",
     chevron: "inline-grid flex-none place-items-center text-fg-muted",
     positioner: "z-50 outline-none",
     popup:

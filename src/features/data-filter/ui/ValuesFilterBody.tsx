@@ -90,7 +90,7 @@ export function ValuesFilterBody({
     <div className="flex flex-col gap-2 text-xs">
       <input
         type="search"
-        className="rounded-md border border-line bg-elevated px-2 py-1.25 text-xs text-fg"
+        className="rounded-md border border-line bg-elevated px-2 py-1 text-xs text-fg"
         placeholder={`${summary.values.length.toLocaleString()}개 값에서 검색`}
         aria-label="값 검색"
         value={keyword}

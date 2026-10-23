@@ -44,7 +44,7 @@ const hint = "m-0 text-2xs text-fg-muted leading-normal";
 const pane = "min-h-0 min-w-0 rounded-md border border-line bg-surface";
 // 비활성화(적재 중)만 묶고 모양은 없는 fieldset
 const plainFieldset = "flex min-h-0 min-w-0 flex-1 flex-col";
-const fileCell = "border-line border-b px-2 py-1.25 text-left";
+const fileCell = "border-line border-b px-2 py-1 text-left";
 
 /** 적재 진행 한 줄 */
 function TaskProgress({ task }: { task: UploadTask }) {

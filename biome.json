@@ -16,7 +16,10 @@
       "!public/mockServiceWorker.js"
     ]
   },
-  "plugins": ["./biome-plugins/tailwind-classes.grit"],
+  "plugins": [
+    "./biome-plugins/tailwind-classes.grit",
+    "./biome-plugins/tailwind-scale.grit"
+  ],
   "css": {
     "parser": {
       "tailwindDirectives": true

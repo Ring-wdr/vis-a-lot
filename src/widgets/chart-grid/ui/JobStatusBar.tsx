@@ -10,7 +10,7 @@ const bar =
 
 // 단계 이름 길이가 바뀌어도 오른쪽 칸들이 밀리지 않도록 가장 긴 이름만큼 자리를 둔다.
 const status = tv({
-  base: "inline-flex min-w-[9.5em] flex-none items-center gap-1.25 rounded-full bg-accent-soft px-2 py-0.75 font-semibold text-accent",
+  base: "inline-flex min-w-[9.5em] flex-none items-center gap-1 rounded-full bg-accent-soft px-2 py-1 font-semibold text-accent",
   variants: {
     tone: {
       done: "bg-panel text-fg",
@@ -22,7 +22,7 @@ const status = tv({
 // 묶음은 줄어들지 않는다. 줄어들면 내용이 넘쳐 뒤 묶음과 겹친다.
 // 폭이 모자라면 하단 바가 끝에서 잘라낸다.
 const group = "inline-flex flex-none items-center gap-1.5";
-const metaItem = "inline-flex items-center gap-0.75 data-zero:opacity-40";
+const metaItem = "inline-flex items-center gap-1 data-zero:opacity-40";
 
 const STATUS_LABEL: Record<JobStateResponse["status"], string> = {
   init: "대기",

@@ -207,7 +207,7 @@ export function OrderedSelect<T extends string>({
               aria-label={label}
             >
               <Combobox.Input
-                className="w-full border-b border-line px-2.5 py-1.75 leading-[inherit] outline-none"
+                className="w-full border-b border-line px-2.5 py-2 leading-[inherit] outline-none"
                 placeholder="검색"
                 aria-label="옵션 검색"
                 onKeyDown={(e) => {
@@ -260,7 +260,7 @@ export function OrderedSelect<T extends string>({
                         onMouseUp={(e) => e.preventBaseUIHandler()}
                       >
                         <span
-                          className="inline-grid size-3.5 flex-none place-items-center rounded-[0.1875rem] border border-line bg-elevated text-2xs text-accent"
+                          className="inline-grid size-3.5 flex-none place-items-center rounded-sm border border-line bg-elevated text-2xs text-accent"
                           aria-hidden="true"
                         >
                           {order !== undefined && "✓"}
@@ -268,7 +268,7 @@ export function OrderedSelect<T extends string>({
                         <span className="flex-1 truncate">{option.label}</span>
                         {order !== undefined && (
                           <span
-                            className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-0.75 text-3xs text-on-accent"
+                            className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-3xs text-on-accent"
                             aria-hidden="true"
                           >
                             {order}

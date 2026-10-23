@@ -27,7 +27,7 @@ function LassoX(props: LucideProps) {
     <span className="relative inline-flex">
       <Lasso {...props} />
       <X
-        className="absolute -right-0.75 -bottom-0.75 rounded-full bg-elevated"
+        className="absolute -right-1 -bottom-1 rounded-full bg-elevated"
         size={9}
         strokeWidth={3}
       />

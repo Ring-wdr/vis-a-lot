@@ -119,7 +119,7 @@ function FilterToggle() {
   return (
     <button
       type="button"
-      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1.25 rounded-md border border-line bg-elevated px-2.5 py-0.75 text-xs text-fg-secondary aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1 rounded-md border border-line bg-elevated px-2.5 py-1 text-xs text-fg-secondary aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
       aria-pressed={open}
       onClick={toggle}
     >

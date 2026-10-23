@@ -203,7 +203,7 @@ function DatastoreBody({
       <div className="flex items-center justify-between gap-3">
         <label
           htmlFor={searchId}
-          className="flex w-[min(17.5rem,100%)] items-center gap-1.5 rounded-md border border-line bg-elevated px-2 py-1.25 text-fg-muted"
+          className="flex w-[min(17.5rem,100%)] items-center gap-1.5 rounded-md border border-line bg-elevated px-2 py-1 text-fg-muted"
         >
           <Search size={14} aria-hidden="true" />
           <input

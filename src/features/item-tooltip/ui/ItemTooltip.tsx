@@ -168,7 +168,7 @@ export function ItemTooltip({
       )}
       {cursor && hit?.marker && (
         <span
-          className="pointer-events-none absolute -mt-1.25 -ml-1.25 size-2.5 rounded-full border-2 border-chart-ink ring-2 ring-chart-paper"
+          className="pointer-events-none absolute size-2.5 -translate-1/2 rounded-full border-2 border-chart-ink ring-2 ring-chart-paper"
           style={{ left: hit.marker.px * sx, top: hit.marker.py * sy }}
         />
       )}
@@ -255,7 +255,7 @@ export function ItemTooltip({
                         </span>
                       ) : (
                         // tooltip 컬럼 값을 서버에서 받는 동안의 자리
-                        <Skeleton className="mt-0.75 w-12" />
+                        <Skeleton className="mt-1 w-12" />
                       )}
                     </dd>
                   </div>

@@ -40,7 +40,7 @@ export function LegendCheckboxes({
         <input
           key={entry.value}
           type="checkbox"
-          className="pointer-events-auto absolute m-0 size-3.25 -translate-1/2 cursor-pointer accent-accent"
+          className="pointer-events-auto absolute m-0 size-3 -translate-1/2 cursor-pointer accent-accent"
           style={{ left: entry.marker.x * sx, top: entry.marker.y * sy }}
           aria-label={`${alt} · ${entry.value} 보이기`}
           checked={entry.visible}

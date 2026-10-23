@@ -23,7 +23,7 @@ import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
 const historyList = "flex flex-col gap-1.5";
 const historyEntry =
   "flex w-full cursor-pointer gap-2.5 rounded-md border border-line bg-elevated p-1.5 text-left enabled:hover:border-accent aria-current:border-accent aria-current:bg-accent-soft";
-const historyThumb = "h-11.25 w-18 flex-none rounded-sm bg-panel object-cover";
+const historyThumb = "h-11 w-18 flex-none rounded-sm bg-panel object-cover";
 const historyText = "flex min-w-0 flex-col gap-0.5";
 const muted = "text-2xs text-fg-muted";
 

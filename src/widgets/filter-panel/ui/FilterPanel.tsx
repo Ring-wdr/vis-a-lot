@@ -41,7 +41,7 @@ export function FilterPanel() {
       <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
         <strong>필터</strong>
         {count > 0 && (
-          <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1.25 text-2xs text-on-accent">
+          <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent">
             {count}
           </span>
         )}
@@ -86,8 +86,8 @@ export function FilterPanel() {
             <div
               // biome-ignore lint/suspicious/noArrayIndexKey: 받기 전 자리 표시용
               key={i}
-              // 컬럼을 받는 동안의 자리: 아코디언 머리와 같은 높이
-              className="flex h-9.25 items-center border-b border-line px-3.5"
+              // 컬럼을 받는 동안의 자리: 아코디언 머리(h-8.5) + 아래 테두리와 같은 높이
+              className="box-content flex h-8.5 items-center border-b border-line px-3.5"
             >
               <Skeleton width={width} />
             </div>
@@ -109,7 +109,7 @@ export function FilterPanel() {
               >
                 <Accordion.Header>
                   {/* 머리는 h3이라 브라우저 기본으로 굵었고, 버튼이 font: inherit로 그 굵기를 물려받았다. */}
-                  <Accordion.Trigger className="group/trigger flex w-full cursor-pointer items-center gap-1.5 px-3.5 py-2.25 text-left text-ui font-bold text-fg hover:bg-panel-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
+                  <Accordion.Trigger className="group/trigger flex h-8.5 w-full cursor-pointer items-center gap-1.5 px-3.5 text-left text-ui font-bold text-fg hover:bg-panel-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
                     <span className="min-w-0 flex-1 truncate">{c.label}</span>
                     <span className="text-2xs text-fg-muted">
                       {COLUMN_TYPE_LABELS[c.type]}
@@ -117,7 +117,7 @@ export function FilterPanel() {
                     {active && (
                       <>
                         <span
-                          className="size-1.75 rounded-full bg-accent"
+                          className="size-2 rounded-full bg-accent"
                           aria-hidden="true"
                         />
                         <span className="sr-only">필터 적용됨</span>

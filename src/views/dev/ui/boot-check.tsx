@@ -58,7 +58,7 @@ export function BootCheck() {
 
   return (
     <main className="flex flex-col gap-6 p-6">
-      <h1 className="text-[2em] font-bold">구조 확인</h1>
+      <h1 className="text-xl font-bold">구조 확인</h1>
 
       <section>
         <h2 className={heading}>DB Worker (PGlite)</h2>

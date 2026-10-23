@@ -16,8 +16,9 @@ const rowHead = cn(
 );
 // 머리의 행 번호 칸은 가로·세로 sticky 칸 위에 온다.
 const headRowHead = cn(rowHead, "z-3");
-// 첫 줄(이름) 높이만큼 내린다. 행 높이가 글자 크기로 정해지므로 같은 값을 쓴다.
-const secondRow = "top-7.25";
+// 첫 줄(이름)은 높이를 정해 두고, 둘째 줄(타입)을 그만큼 내려 붙인다.
+const firstRow = "top-0 h-7.5";
+const secondRow = "top-7.5";
 
 export type GridColumn = {
   name: string;
@@ -59,7 +60,7 @@ export function PreviewGrid({
       <table className="border-separate border-spacing-0 text-xs tabular-nums">
         <thead>
           <tr>
-            <th className={cn(headRowHead, "top-0")}>
+            <th className={cn(headRowHead, firstRow)}>
               <input
                 type="checkbox"
                 aria-label="모든 컬럼 적재"
@@ -73,7 +74,7 @@ export function PreviewGrid({
             {columns.map((c) => (
               <th
                 key={c.name}
-                className={cn(headCell, "top-0")}
+                className={cn(headCell, firstRow)}
                 data-excluded={!c.included || undefined}
               >
                 <label

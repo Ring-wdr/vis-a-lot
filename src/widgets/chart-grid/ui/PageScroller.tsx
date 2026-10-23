@@ -203,7 +203,7 @@ export function PageScroller({
     <div
       // Windows 방식 스크롤바: 위 화살표 · 트랙(+thumb) · 아래 화살표.
       // 폭은 grid-layout.ts의 PAGE_SCROLLER_WIDTH와 같아야 PNG 크기 계산이 맞는다.
-      className="flex w-4 flex-none touch-none flex-col rounded-[0.1875rem] border border-line bg-panel outline-none select-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="flex w-4 flex-none touch-none flex-col rounded-sm border border-line bg-panel outline-none select-none focus-visible:ring-2 focus-visible:ring-accent"
       role="scrollbar"
       aria-controls={controls}
       aria-orientation="vertical"
