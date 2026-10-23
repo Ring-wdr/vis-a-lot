@@ -4,12 +4,14 @@
 import { HTTPException } from "hono/http-exception";
 import { apiError, createServiceApp } from "../common/http";
 import { registerGroups } from "./modules/groups/handlers";
+import { registerImports } from "./modules/imports/handlers";
 import { registerNotifications } from "./modules/notifications/handlers";
 import { registerPosts } from "./modules/posts/handlers";
 import { registerScheduler } from "./modules/scheduler/handlers";
 import { registerSeed } from "./modules/seed/handlers";
 import { registerSystem } from "./modules/system/handlers";
 import { registerUsers } from "./modules/users/handlers";
+import { registerViews } from "./modules/views/handlers";
 import { FEED_SECURITY_SCHEMES } from "./security";
 
 function createFeedApp() {
@@ -29,6 +31,8 @@ function createFeedApp() {
     registerNotifications,
     registerScheduler,
     registerSeed,
+    registerViews,
+    registerImports,
   ])
     register(app);
   return app;

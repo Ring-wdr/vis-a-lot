@@ -608,6 +608,53 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/imports/chart-shares/{shareId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** vis-a-lot 차트 공유를 차트 게시물 입력으로 (/feed/new?share=…). 공유 PNG는 data URL로 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          shareId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 게시물 입력 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ChartShareImport"];
+          };
+        };
+        /** @description 모르는 공유 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/notifications/archive": {
     parameters: {
       query?: never;
@@ -3181,6 +3228,303 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/views/{viewId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 뷰 하나 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          viewId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 뷰 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SavedView"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 뷰 (볼 수 없는 뷰 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    /** 뷰 지우기 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          viewId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 (공유 뷰에 그룹 없음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 내 뷰가 아니거나 그룹 관리자가 아님, 기본 제공 뷰 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 뷰 (볼 수 없는 뷰 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/views": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 볼 수 있는 뷰: 기본 제공 뷰 + 내 뷰 + 볼 수 있는 그룹의 공유 뷰. groupId가 있으면 그 그룹 것(과 그룹 없는 내 뷰)만 */
+    get: {
+      parameters: {
+        query?: {
+          groupId?: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 목록 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ViewListResponse"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    /** 뷰 저장 (id가 없으면 새로). 공유 뷰는 그 그룹 멤버가 만들고, 고치기는 만든 사람·그룹 관리자 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SaveViewRequest"];
+        };
+      };
+      responses: {
+        /** @description 저장한 뷰 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SavedView"];
+          };
+        };
+        /** @description 요청 형식 오류 (공유 뷰에 그룹 없음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 내 뷰가 아니거나 그룹 관리자가 아님, 기본 제공 뷰 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 뷰 (볼 수 없는 뷰 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/views/{viewId}/pin": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** 사이드바 고정 켜기·끄기 (고칠 수 있는 뷰만) */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          viewId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["PinViewRequest"];
+        };
+      };
+      responses: {
+        /** @description 바뀐 뷰 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SavedView"];
+          };
+        };
+        /** @description 요청 형식 오류 (공유 뷰에 그룹 없음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 내 뷰가 아니거나 그룹 관리자가 아님, 기본 제공 뷰 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 뷰 (볼 수 없는 뷰 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 };
 export type webhooks = Record<string, never>;
 export type components = {
@@ -3198,8 +3542,8 @@ export type components = {
       on_hold?: string;
       cancelled?: string;
     };
-    /** @enum {string|null} */
-    GroupRole: "admin" | "member" | null;
+    /** @enum {string} */
+    GroupRole: "admin" | "member";
     GroupMember: {
       userId: string;
       role: components["schemas"]["GroupRole"];
@@ -3221,7 +3565,7 @@ export type components = {
       description: string | null;
       isPrivate: boolean;
       statusNames: components["schemas"]["StatusNames"];
-      myRole: components["schemas"]["GroupRole"];
+      myRole: components["schemas"]["GroupRole"] | null;
       memberCount: number;
     };
     ApiError: {
@@ -3250,6 +3594,26 @@ export type components = {
       isPrivate?: boolean;
       keyPrefix?: string;
       statusNames?: components["schemas"]["StatusNames"];
+    };
+    ChartShareImport: {
+      shareId: string;
+      title: string;
+      thumbnail: string;
+      link: string;
+      payload: {
+        /** @enum {string} */
+        source: "vis-a-lot";
+        shareId: string;
+        link: string;
+        chartType: string;
+        dataset: string;
+        item: {
+          key: string;
+          label: string;
+        };
+      };
+      createdByName: string;
+      createdAt: string;
     };
     UnreadCountResponse: {
       count: number;
@@ -3285,8 +3649,8 @@ export type components = {
       id: string;
       kind: components["schemas"]["NotifyKind"];
       event: components["schemas"]["FeedEvent"];
-      readAt: components["schemas"]["Instant"] & (string | null);
-      archivedAt: components["schemas"]["Instant"] & (string | null);
+      readAt: components["schemas"]["Instant"] | null;
+      archivedAt: components["schemas"]["Instant"] | null;
       createdAt: components["schemas"]["Instant"];
     };
     /** @enum {string} */
@@ -3342,7 +3706,7 @@ export type components = {
       reopenCount: number;
       checklist: components["schemas"]["ChecklistItem"][];
       relations: components["schemas"]["PostRelation"][];
-      parent: components["schemas"]["PostRef"] & (Record<string, never> | null);
+      parent: components["schemas"]["PostRef"] | null;
       children: components["schemas"]["PostRef"][];
       attachments: components["schemas"]["Attachment"][];
       subscribed: boolean;
@@ -3354,7 +3718,7 @@ export type components = {
     StatusCategory: "open" | "paused" | "closed";
     Priority: number;
     /** @example 2026-10-23 */
-    Day: string | null;
+    Day: string;
     ChecklistItem: {
       id: string;
       text: string;
@@ -3402,15 +3766,15 @@ export type components = {
       requesterId: string | null;
       stakeholderIds: string[];
       parentId: string | null;
-      dueDate: components["schemas"]["Day"];
-      holdUntil: components["schemas"]["Day"];
+      dueDate: components["schemas"]["Day"] | null;
+      holdUntil: components["schemas"]["Day"] | null;
       closeReason: string | null;
       tags: string[];
       thumbnail: string | null;
-      pinnedAt: components["schemas"]["Instant"] & (string | null);
+      pinnedAt: components["schemas"]["Instant"] | null;
       createdAt: components["schemas"]["Instant"];
       updatedAt: components["schemas"]["Instant"];
-      resolvedAt: components["schemas"]["Instant"] & (string | null);
+      resolvedAt: components["schemas"]["Instant"] | null;
       commentCount: number;
       childCount: number;
       childResolvedCount: number;
@@ -3436,7 +3800,7 @@ export type components = {
         status?: components["schemas"]["PostStatus"];
         priority?: components["schemas"]["Priority"];
         assigneeId?: string | null;
-        dueDate?: components["schemas"]["Day"];
+        dueDate?: components["schemas"]["Day"] | null;
         postTypeId?: string | null;
         teamId?: string | null;
       };
@@ -3455,7 +3819,7 @@ export type components = {
       requesterId?: string | null;
       /** @default [] */
       stakeholderIds: string[];
-      dueDate?: components["schemas"]["Day"];
+      dueDate?: components["schemas"]["Day"] | null;
       parentId?: string | null;
       /** @default [] */
       checklist: string[];
@@ -3582,7 +3946,7 @@ export type components = {
       assigneeId?: string | null;
       requesterId?: string | null;
       stakeholderIds?: string[];
-      dueDate?: components["schemas"]["Day"];
+      dueDate?: components["schemas"]["Day"] | null;
       progress?: number;
       tags?: string[];
     };
@@ -3639,6 +4003,51 @@ export type components = {
     };
     SetAdminRequest: {
       on: boolean;
+    };
+    SavedView: {
+      id: string;
+      ownerId: string | null;
+      groupId: string | null;
+      name: string;
+      shared: boolean;
+      layout: components["schemas"]["ViewLayout"];
+      filter: components["schemas"]["PostFilter"];
+      sort: components["schemas"]["ViewSort"] | null;
+      groupBy: components["schemas"]["ViewGroupBy"] | null;
+      pinned: boolean;
+      builtin: boolean;
+      editable: boolean;
+    };
+    /** @enum {string} */
+    ViewLayout: "feed" | "list" | "board";
+    ViewSort: {
+      field: components["schemas"]["PostSortField"];
+      /** @enum {string} */
+      dir: "asc" | "desc";
+    };
+    /** @enum {string} */
+    ViewGroupBy: "status" | "assignee" | "priority";
+    ViewListResponse: {
+      views: components["schemas"]["SavedView"][];
+    };
+    PinViewRequest: {
+      on: boolean;
+    };
+    SaveViewRequest: {
+      id?: string;
+      /** @default null */
+      groupId: string | null;
+      name: string;
+      /** @default false */
+      shared: boolean;
+      layout: components["schemas"]["ViewLayout"];
+      filter?: components["schemas"]["PostFilter"];
+      /** @default null */
+      sort: components["schemas"]["ViewSort"] | null;
+      /** @default null */
+      groupBy: components["schemas"]["ViewGroupBy"] | null;
+      /** @default false */
+      pinned: boolean;
     };
   };
   responses: never;

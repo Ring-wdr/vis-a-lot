@@ -39,6 +39,9 @@ async function toGroups(ctx: OpCtx, ids: string[]): Promise<Group[]> {
         .as("member_count"),
     ])
     .where("id", "in", ids)
+    // 공개 그룹 먼저, 그다음 이름순. 화면은 첫 그룹을 기본 그룹(빠른 생성 등)으로 쓴다
+    .orderBy("is_private")
+    .orderBy("name")
     .orderBy("key_prefix")
     .execute();
   return Promise.all(
