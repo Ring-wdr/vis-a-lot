@@ -1,0 +1,2 @@
+# 로컬 병합은 develop에 main을 가져오는 back-merge만 된다 (scripts/check-git-flow.sh).
+sh scripts/check-git-flow.sh commit
