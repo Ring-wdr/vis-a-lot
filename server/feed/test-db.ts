@@ -28,8 +28,13 @@ export class TestFeedError extends Error {
   }
 }
 
+// PGlite는 만드는 데 1초 넘게 걸려, 테스트 파일마다 하나만 만들고 부를 때마다 스키마만 새로 만든다.
+// vitest는 파일마다 모듈을 따로 읽고 한 파일의 테스트는 차례로 돌린다.
+let shared: PGlite | undefined;
+
 export async function createTestFeed(): Promise<TestFeed> {
-  const pglite = new PGlite();
+  shared ??= new PGlite();
+  const pglite = shared;
   await resetFeed(pglite);
   const db = createFeedDb(pglite);
   return {
