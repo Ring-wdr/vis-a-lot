@@ -66,3 +66,13 @@ export type InboxResponse = Feed["InboxResponse"];
 export type NotificationSetting = Feed["NotificationSetting"];
 export type OutboxMessage = Feed["OutboxMessage"];
 export type OutboxChannel = OutboxMessage["channel"];
+
+// views
+export type SavedView = Feed["SavedView"];
+export type SaveViewRequest = Feed["SaveViewRequest"];
+export type ViewLayout = Feed["ViewLayout"];
+export type ViewGroupBy = Feed["ViewGroupBy"];
+export type ViewSort = Feed["ViewSort"];
+
+// imports
+export type ChartShareImport = Feed["ChartShareImport"];
