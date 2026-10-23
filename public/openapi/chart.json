@@ -979,6 +979,60 @@
               }
             },
             "required": ["options"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "settings": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/HexColor"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "legendColors": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/HexColor"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "legendPosition": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/LegendPosition"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "options": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/ChartOptions"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "required": ["settings"]
           }
         ]
       },
