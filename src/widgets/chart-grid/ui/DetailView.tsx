@@ -161,7 +161,7 @@ export function DetailView({
                 <button
                   type="button"
                   // 폭은 섬네일 PNG 폭(THUMBNAIL_WIDTH)에 테두리 2px을 더한 값이다.
-                  className="flex w-32.5 cursor-pointer flex-col overflow-hidden rounded-sm border border-line bg-elevated text-fg-secondary hover:border-accent-line aria-[current=true]:border-accent aria-[current=true]:ring-1 aria-[current=true]:ring-accent"
+                  className="flex w-32.5 cursor-pointer flex-col overflow-hidden rounded-sm border border-line bg-elevated text-fg-secondary hover:border-accent-line aria-current:border-accent aria-current:ring-1 aria-current:ring-accent"
                   aria-current={index === focus}
                   title={thumb.label}
                   onClick={() => go(index)}
@@ -170,12 +170,12 @@ export function DetailView({
                     <ChartImage data={thumb.thumbnail} alt="" />
                   ) : (
                     // 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다.
-                    <span className="flex aspect-[128/80] w-full items-center justify-center gap-1.5 bg-panel text-11 text-fg-muted">
+                    <span className="flex aspect-[128/80] w-full items-center justify-center gap-1.5 bg-panel text-2xs text-fg-muted">
                       {!isTerminal(thumb.status) && <Spinner size="sm" />}
                       {THUMB_STATUS[thumb.status]}
                     </span>
                   )}
-                  <span className="truncate px-1.5 py-0.5 text-left text-11">
+                  <span className="truncate px-1.5 py-0.5 text-left text-2xs">
                     {thumb.label}
                   </span>
                 </button>
@@ -203,7 +203,7 @@ export function DetailView({
         >
           <ChevronsRight size={14} aria-hidden="true" />
         </button>
-        <span className="min-w-[13ch] flex-none text-right text-12 text-fg-secondary tabular-nums">
+        <span className="min-w-[13ch] flex-none text-right text-fg-secondary text-xs tabular-nums">
           {(focus + 1).toLocaleString()} / {totalItems.toLocaleString()}
         </span>
       </nav>

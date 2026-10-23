@@ -29,14 +29,14 @@ const loadUploadDialog = () => import("./UploadDialog");
 // 행 높이(h-8.5)와 같아야 한다.
 const ROW_HEIGHT = 34;
 
-const error = "m-0 whitespace-pre-wrap text-13 text-danger";
+const error = "m-0 whitespace-pre-wrap text-ui text-danger";
 
 const iconButton =
   "inline-flex size-7.5 cursor-pointer items-center justify-center rounded-md border border-line bg-elevated text-fg-secondary disabled:cursor-not-allowed disabled:opacity-40";
 
 // 가상 스크롤 표: 행을 tbody 안에 겹쳐 놓고 translateY로 옮긴다. 머리와 행이 같은 칸 폭을 쓴다.
 const row =
-  "grid h-8.5 grid-cols-[56px_minmax(160px,1fr)_160px_96px_84px_140px] items-center border-line border-b";
+  "grid h-8.5 grid-cols-[3.5rem_minmax(10rem,1fr)_10rem_6rem_5.25rem_8.75rem] items-center border-line border-b";
 const cell = "min-w-0 truncate px-2.5 text-left";
 const head = cn(cell, "font-semibold text-fg-secondary");
 const number = "text-right tabular-nums";
@@ -80,7 +80,7 @@ function StatusCell({
         <span className="text-fg-muted">미등록</span>
         <button
           type="button"
-          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-12 text-on-accent leading-[inherit] disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-on-accent text-xs leading-[inherit] disabled:cursor-not-allowed disabled:opacity-50"
           disabled={generating}
           onClick={(e) => {
             e.stopPropagation();
@@ -102,7 +102,7 @@ function StatusCell({
   if (status.state === "generating") {
     const ratio = status.done / Math.max(1, status.total);
     return (
-      <span className="inline-flex items-center gap-1.5 text-12 text-fg-secondary">
+      <span className="inline-flex items-center gap-1.5 text-fg-secondary text-xs">
         <progress
           className="w-16"
           value={status.phase === "analyze" ? undefined : ratio}
@@ -196,20 +196,20 @@ function DatastoreBody({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <h2 id={titleId} className="font-bold text-16">
+      <h2 id={titleId} className="font-bold text-base">
         데이터 스토어
       </h2>
 
       <div className="flex items-center justify-between gap-3">
         <label
           htmlFor={searchId}
-          className="flex w-[min(280px,100%)] items-center gap-1.5 rounded-md border border-line bg-elevated px-2 py-1.25 text-fg-muted"
+          className="flex w-[min(17.5rem,100%)] items-center gap-1.5 rounded-md border border-line bg-elevated px-2 py-1.25 text-fg-muted"
         >
           <Search size={14} aria-hidden="true" />
           <input
             id={searchId}
             type="search"
-            className="min-w-0 flex-1 bg-transparent text-13 text-fg leading-[inherit] outline-none"
+            className="min-w-0 flex-1 bg-transparent text-fg text-ui leading-[inherit] outline-none"
             placeholder="이름 검색"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -263,10 +263,10 @@ function DatastoreBody({
 
       <div
         ref={scrollRef}
-        className="h-[min(360px,42dvh)] overflow-auto rounded-md border border-line"
+        className="h-[min(22.5rem,42dvh)] overflow-auto rounded-md border border-line"
       >
         <table
-          className="grid w-full min-w-160 border-collapse text-13"
+          className="grid w-full min-w-160 border-collapse text-ui"
           aria-labelledby={titleId}
         >
           <thead className="sticky top-0 z-1 grid bg-panel">
@@ -307,7 +307,7 @@ function DatastoreBody({
                   }}
                 >
                   <td
-                    className={cn(cell, "in-data-sample:text-12 text-fg-muted")}
+                    className={cn(cell, "in-data-sample:text-xs text-fg-muted")}
                   >
                     {index}
                   </td>
@@ -315,7 +315,7 @@ function DatastoreBody({
                     {/* 키보드로 고르는 자리. 행 클릭과 같은 일을 한다. */}
                     <button
                       type="button"
-                      className="max-w-full cursor-pointer truncate text-left text-13 leading-[inherit]"
+                      className="max-w-full cursor-pointer truncate text-left text-ui leading-[inherit]"
                       aria-pressed={picked === status.id}
                       title={info?.fileName ?? status.name}
                       onClick={() => setPicked(status.id)}
@@ -385,7 +385,7 @@ function DatastoreBody({
         </p>
       )}
 
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-12 text-fg-secondary">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-fg-secondary text-xs">
         <span>
           내 저장소 사용량{" "}
           {usage?.usage !== undefined ? formatBytes(usage.usage) : "–"}
@@ -431,7 +431,7 @@ export function openDatastoreDialog(selected?: DatasetId) {
       isOpen={isOpen}
       onClose={close}
       onExited={unmount}
-      className="w-[min(880px,calc(100vw-32px))] max-w-none"
+      className="w-[min(55rem,calc(100vw-2rem))] max-w-none"
     >
       <DatastoreBody initial={selected} onClose={close} />
     </Dialog>

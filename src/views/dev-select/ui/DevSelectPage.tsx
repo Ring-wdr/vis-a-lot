@@ -28,7 +28,7 @@ const COLUMN_OPTIONS: Option<ColumnName>[] = [
 ].map(([value, label]) => ({ value, label }));
 
 /** mock 서버 없이 OrderedSelect만 띄워 드래그/키보드 동작을 확인하는 페이지 */
-const output = "mt-1.5 block break-all font-mono text-11 text-fg-secondary";
+const output = "mt-1.5 block break-all font-mono text-2xs text-fg-secondary";
 
 export function DevSelectPage() {
   const [many, setMany] = useState<string[]>([]);
@@ -37,8 +37,8 @@ export function DevSelectPage() {
 
   return (
     <main className="flex max-w-90 flex-col gap-4 p-6">
-      <h1 className="font-bold text-16">OrderedSelect</h1>
-      <label className="flex gap-1.5 text-13">
+      <h1 className="font-bold text-base">OrderedSelect</h1>
+      <label className="flex gap-1.5 text-ui">
         <input
           type="checkbox"
           checked={fieldsetDisabled}

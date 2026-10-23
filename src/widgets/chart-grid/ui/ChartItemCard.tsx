@@ -72,7 +72,7 @@ function Pending({
         ? STAGE_LABELS[stage]
         : (placeholder ?? "준비 중");
   return (
-    <div className="flex w-[min(140px,90%)] flex-col items-center gap-2 text-center text-12 text-fg-muted">
+    <div className="flex w-[min(8.75rem,90%)] flex-col items-center gap-2 text-center text-fg-muted text-xs">
       <Spinner size="lg" />
       <span>{label}</span>
       {/* 대기 → 렌더링으로 넘어갈 때 줄이 생기며 밀리지 않도록 진행 막대 자리는 늘 둔다. */}
@@ -369,17 +369,17 @@ export function ChartItemCard({
       <div className={itemBody}>
         {/* 그림이 없으면 PNG 제목 대신 이름을 띄운다. */}
         <span
-          className="absolute top-2 left-2.5 max-w-[calc(100%-60px)] truncate font-semibold text-12"
+          className="absolute top-2 left-2.5 max-w-[calc(100%-3.75rem)] truncate font-semibold text-xs"
           title={item?.label}
         >
           {item?.label ?? "…"}
         </span>
         {item?.status === "failed" ? (
-          <p role="alert" className="text-12 text-danger">
+          <p role="alert" className="text-danger text-xs">
             렌더 실패: {item.error}
           </p>
         ) : item?.status === "cancelled" ? (
-          <p className="text-12 text-fg-muted">취소됨</p>
+          <p className="text-fg-muted text-xs">취소됨</p>
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}

@@ -38,17 +38,17 @@ export function FilterPanel() {
       className="flex min-h-0 min-w-0 flex-1 flex-col border-line border-l bg-panel"
       aria-label="필터"
     >
-      <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-13">
+      <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
         <strong>필터</strong>
         {count > 0 && (
-          <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1.25 text-11 text-on-accent">
+          <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1.25 text-2xs text-on-accent">
             {count}
           </span>
         )}
         {count > 0 && !readOnly && (
           <button
             type="button"
-            className="ml-auto cursor-pointer text-12 text-accent"
+            className="ml-auto cursor-pointer text-accent text-xs"
             onClick={() => updateDraft({ filters: [] })}
           >
             모두 지우기
@@ -56,7 +56,7 @@ export function FilterPanel() {
         )}
       </header>
       <p
-        className="px-3.5 pb-2.5 text-12 text-fg-muted data-pending:text-accent"
+        className="px-3.5 pb-2.5 text-fg-muted text-xs data-pending:text-accent"
         data-pending={pending || undefined}
       >
         {readOnly
@@ -109,9 +109,9 @@ export function FilterPanel() {
               >
                 <Accordion.Header>
                   {/* 머리는 h3이라 브라우저 기본으로 굵었고, 버튼이 font: inherit로 그 굵기를 물려받았다. */}
-                  <Accordion.Trigger className="group/trigger flex w-full cursor-pointer items-center gap-1.5 px-3.5 py-2.25 text-left font-bold text-13 text-fg hover:bg-panel-4 focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2">
+                  <Accordion.Trigger className="group/trigger flex w-full cursor-pointer items-center gap-1.5 px-3.5 py-2.25 text-left font-bold text-fg text-ui hover:bg-panel-subtle focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2">
                     <span className="min-w-0 flex-1 truncate">{c.label}</span>
-                    <span className="text-11 text-fg-muted">
+                    <span className="text-2xs text-fg-muted">
                       {COLUMN_TYPE_LABELS[c.type]}
                     </span>
                     {active && (

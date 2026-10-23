@@ -305,7 +305,7 @@ export function DrawLayer({
       </svg>
       {draft?.kind === "text" && (
         <input
-          className="absolute w-40 -translate-y-1/2 rounded-sm border border-accent bg-elevated px-1.5 py-0.75 text-12"
+          className="absolute w-40 -translate-y-1/2 rounded-sm border border-accent bg-elevated px-1.5 py-0.75 text-xs"
           style={{
             left: (draft.at.x * display.width) / image.width,
             top: (draft.at.y * display.height) / image.height,

@@ -84,7 +84,7 @@ export function ItemSettings({
               disabled={disabled}
               onSelect={(color) => onAction({ type: "color", color })}
             />
-            <p className="text-12 text-fg-muted">{colorName(item.color)}</p>
+            <p className="text-fg-muted text-xs">{colorName(item.color)}</p>
           </>
         ) : legend ? (
           <ul className={s.legendList()}>

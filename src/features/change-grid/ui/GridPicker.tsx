@@ -133,7 +133,7 @@ export function GridPicker() {
               })}
             </div>
             <span
-              className="text-center text-12 text-fg-secondary"
+              className="text-center text-fg-secondary text-xs"
               aria-live="polite"
             >
               {preview.rows}행 × {preview.cols}열

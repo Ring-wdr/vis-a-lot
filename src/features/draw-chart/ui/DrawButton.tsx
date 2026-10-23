@@ -102,7 +102,7 @@ export function DrawButton() {
         </button>
       )}
       {(draw.error ?? cancel.error) && (
-        <p role="alert" className="text-12 text-danger">
+        <p role="alert" className="text-danger text-xs">
           {(draw.error ?? cancel.error)?.message}
         </p>
       )}

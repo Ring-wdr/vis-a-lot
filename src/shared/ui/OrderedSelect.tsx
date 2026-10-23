@@ -203,7 +203,7 @@ export function OrderedSelect<T extends string>({
             className="z-50"
           >
             <Combobox.Popup
-              className="w-[max(var(--anchor-width),220px)] max-w-(--available-width) overflow-hidden rounded-lg border border-line bg-elevated text-13 text-fg shadow-lg"
+              className="w-[max(var(--anchor-width),13.75rem)] max-w-(--available-width) overflow-hidden rounded-lg border border-line bg-elevated text-fg text-ui shadow-lg"
               aria-label={label}
             >
               <Combobox.Input
@@ -220,7 +220,7 @@ export function OrderedSelect<T extends string>({
                   toggle(keyboardHighlight.current);
                 }}
               />
-              <Combobox.Empty className="not-empty:p-2.5 not-empty:text-12 not-empty:text-fg-muted">
+              <Combobox.Empty className="not-empty:p-2.5 not-empty:text-fg-muted not-empty:text-xs">
                 일치하는 항목이 없습니다
               </Combobox.Empty>
               <Combobox.List
@@ -260,7 +260,7 @@ export function OrderedSelect<T extends string>({
                         onMouseUp={(e) => e.preventBaseUIHandler()}
                       >
                         <span
-                          className="inline-grid size-3.5 flex-none place-items-center rounded-[3px] border border-line bg-elevated text-11 text-accent"
+                          className="inline-grid size-3.5 flex-none place-items-center rounded-[0.1875rem] border border-line bg-elevated text-2xs text-accent"
                           aria-hidden="true"
                         >
                           {order !== undefined && "✓"}
@@ -268,7 +268,7 @@ export function OrderedSelect<T extends string>({
                         <span className="flex-1 truncate">{option.label}</span>
                         {order !== undefined && (
                           <span
-                            className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-0.75 text-10 text-on-accent"
+                            className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-0.75 text-3xs text-on-accent"
                             aria-hidden="true"
                           >
                             {order}

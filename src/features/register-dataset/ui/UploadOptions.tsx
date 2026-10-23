@@ -10,11 +10,11 @@ import type { CsvEncoding, CsvOptions } from "@/shared/api/types";
 import { Select } from "@/shared/ui/Select";
 import { segmented } from "@/shared/ui/segmented";
 
-const option = "flex min-w-0 flex-col gap-1 text-13";
-const optionLabel = "p-0 font-medium text-12 text-fg-secondary";
+const option = "flex min-w-0 flex-col gap-1 text-ui";
+const optionLabel = "p-0 font-medium text-xs text-fg-secondary";
 const input =
-  "min-w-0 rounded-md border border-line bg-elevated px-2 py-1.25 text-13 leading-[inherit]";
-const hint = "m-0 text-11 text-fg-muted leading-normal";
+  "min-w-0 rounded-md border border-line bg-elevated px-2 py-1.25 text-ui leading-[inherit]";
+const hint = "m-0 text-2xs text-fg-muted leading-normal";
 const seg = segmented();
 
 const CUSTOM = "custom";

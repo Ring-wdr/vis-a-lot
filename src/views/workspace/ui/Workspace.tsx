@@ -76,7 +76,7 @@ const panelBody = "min-h-0 flex-1 overflow-y-auto p-4";
 const panelFooter =
   "flex flex-col gap-2 border-line border-t bg-panel px-4 py-3";
 const panelSection = "flex flex-col gap-2";
-const sectionTitle = "font-semibold text-12 text-fg-secondary";
+const sectionTitle = "font-semibold text-xs text-fg-secondary";
 
 function GallerySidebar() {
   useOpenSharedLink();
@@ -135,7 +135,7 @@ export function Workspace() {
       <TabNotices />
       <DrawLock />
       {/* 상단 바 · 탭 바 · 탭 도구 줄 · 탭 내용 */}
-      <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] grid-rows-[48px_36px_44px_minmax(0,1fr)] bg-surface text-fg">
+      <div className="grid h-screen grid-cols-[16.25rem_minmax(0,1fr)] grid-rows-[3rem_2.25rem_2.75rem_minmax(0,1fr)] bg-surface text-fg">
         <AppHeader />
         <TabBar view={view} />
         <TabToolbar />
@@ -150,7 +150,7 @@ export function Workspace() {
         {filterOpen && (
           // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
           // 모든 item을 새 크기로 다시 그리게 된다.
-          <div className="z-10 col-[-2/-1] row-4 flex min-h-0 w-[min(300px,100%)] justify-self-end shadow-drawer">
+          <div className="z-10 col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
             <FilterPanel />
           </div>
         )}

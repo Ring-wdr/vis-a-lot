@@ -56,7 +56,7 @@ export function PreviewGrid({
 
   return (
     <div className="min-h-0 flex-1 overflow-auto">
-      <table className="border-separate border-spacing-0 text-12 tabular-nums">
+      <table className="border-separate border-spacing-0 text-xs tabular-nums">
         <thead>
           <tr>
             <th className={cn(headRowHead, "top-0")}>
@@ -102,7 +102,7 @@ export function PreviewGrid({
               >
                 <select
                   aria-label={`${c.name} 타입`}
-                  className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-12 leading-[inherit]"
+                  className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-xs leading-[inherit]"
                   value={c.chosen ?? AUTO}
                   disabled={!c.included}
                   onChange={(e) =>
@@ -126,7 +126,7 @@ export function PreviewGrid({
                   ))}
                 </select>
                 {c.included && c.invalid ? (
-                  <span className="mt-0.5 block font-normal text-11 text-danger">
+                  <span className="mt-0.5 block font-normal text-2xs text-danger">
                     변환 불가 {c.invalid.toLocaleString()}개
                   </span>
                 ) : null}

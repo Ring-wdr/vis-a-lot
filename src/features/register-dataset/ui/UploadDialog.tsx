@@ -39,8 +39,8 @@ const baseName = (fileName: string) => fileName.replace(/\.[^.]+$/, "");
 
 const RUNNING: UploadTask["state"][] = ["parse", "queued", "copy", "analyze"];
 
-const error = "m-0 whitespace-pre-wrap text-13 text-danger";
-const hint = "m-0 text-11 text-fg-muted leading-normal";
+const error = "m-0 whitespace-pre-wrap text-ui text-danger";
+const hint = "m-0 text-2xs text-fg-muted leading-normal";
 const pane = "min-h-0 min-w-0 rounded-md border border-line bg-surface";
 // 비활성화(적재 중)만 묶고 모양은 없는 fieldset
 const plainFieldset = "flex min-h-0 min-w-0 flex-1 flex-col";
@@ -59,7 +59,7 @@ function TaskProgress({ task }: { task: UploadTask }) {
     failed: "실패",
   }[task.state];
   return (
-    <output className="flex items-center gap-2.5 text-13 text-fg-secondary">
+    <output className="flex items-center gap-2.5 text-fg-secondary text-ui">
       <progress
         className="w-60"
         value={
@@ -219,7 +219,7 @@ function UploadBody({
       aria-labelledby={titleId}
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id={titleId} className="font-bold text-16">
+        <h2 id={titleId} className="font-bold text-base">
           {dataset ? "데이터 수정" : "파일 열기"}
         </h2>
         <div className="flex gap-2">
@@ -266,12 +266,12 @@ function UploadBody({
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[200px_minmax(0,1fr)_260px] grid-rows-[minmax(140px,38%)_minmax(0,1fr)] gap-2.5 [grid-template-areas:'files_raw_options'_'preview_preview_options'] max-[861px]:grid-cols-[minmax(0,1fr)] max-[861px]:grid-rows-[auto_160px_auto_minmax(240px,1fr)] max-[861px]:overflow-auto max-[861px]:[grid-template-areas:'files'_'raw'_'options'_'preview']">
+      <div className="grid min-h-0 flex-1 grid-cols-[12.5rem_minmax(0,1fr)_16.25rem] grid-rows-[minmax(8.75rem,38%)_minmax(0,1fr)] gap-2.5 [grid-template-areas:'files_raw_options'_'preview_preview_options'] max-[53.75rem]:grid-cols-[minmax(0,1fr)] max-[53.75rem]:grid-rows-[auto_10rem_auto_minmax(15rem,1fr)] max-[53.75rem]:overflow-auto max-[53.75rem]:[grid-template-areas:'files'_'raw'_'options'_'preview']">
         <section
           className={cn(pane, "overflow-auto [grid-area:files]")}
           aria-label="파일"
         >
-          <table className="w-full border-collapse text-12">
+          <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
                 <th
@@ -315,7 +315,7 @@ function UploadBody({
                   >
                     <button
                       type="button"
-                      className="block max-w-32.5 cursor-pointer truncate text-left text-12 leading-[inherit]"
+                      className="block max-w-32.5 cursor-pointer truncate text-left text-xs leading-[inherit]"
                       aria-pressed={i === fileIndex}
                       title={`${f.name} · ${formatBytes(f.size)}`}
                       onClick={() => setFileIndex(i)}
@@ -347,7 +347,7 @@ function UploadBody({
           }}
         >
           {preview.data ? (
-            <pre className="m-0 whitespace-pre px-2.5 py-2 font-[family-name:ui-monospace,SFMono-Regular,Menlo,monospace] text-12 leading-[1.6]">
+            <pre className="m-0 whitespace-pre px-2.5 py-2 font-code text-xs leading-relaxed">
               {preview.data.raw.join("\n")}
             </pre>
           ) : staging || preview.isFetching ? (
@@ -418,7 +418,7 @@ function UploadBody({
               {failure}
             </p>
           ) : checkResult ? (
-            <output className="m-0 block text-13 text-fg-secondary">
+            <output className="m-0 block text-fg-secondary text-ui">
               검사 통과 · {checkResult.rows.toLocaleString()}행
               {checkResult.skipped > 0 &&
                 ` · 건너뛴 행 ${checkResult.skipped.toLocaleString()}개`}
@@ -470,7 +470,7 @@ export function openUploadDialog(dataset?: DatasetId) {
         onExited={unmount}
         // 파일 열기 팝업: 위에 파일 목록·원본·옵션, 아래에 미리보기 표. 미리보기가 바뀌어도 팝업 크기가 흔들리지 않게
         // 팝업 크기를 화면에 맞춰 정해 두고, 각 칸 안에서 스크롤한다.
-        className="h-[min(820px,calc(100dvh-12vh-24px))] w-[min(1180px,calc(100vw-32px))] max-w-none overflow-hidden px-5 py-4"
+        className="h-[min(51.25rem,calc(100dvh-12vh-1.5rem))] w-[min(73.75rem,calc(100vw-2rem))] max-w-none overflow-hidden px-5 py-4"
       >
         <UploadBody
           dataset={dataset}

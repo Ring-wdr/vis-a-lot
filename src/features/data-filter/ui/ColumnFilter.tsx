@@ -23,7 +23,7 @@ export function ColumnFilter({ column }: { column: ColumnName }) {
   if (summary.isPending) {
     return (
       <div
-        className="flex items-center gap-2 text-12 text-fg-muted"
+        className="flex items-center gap-2 text-fg-muted text-xs"
         aria-busy="true"
       >
         <LoadingText>값 범위를 불러오는 중</LoadingText>
@@ -32,7 +32,7 @@ export function ColumnFilter({ column }: { column: ColumnName }) {
   }
   if (summary.error) {
     return (
-      <p role="alert" className="text-12 text-danger">
+      <p role="alert" className="text-danger text-xs">
         {summary.error.message === "dataset is not ready"
           ? "데이터가 준비되면 필터를 쓸 수 있습니다."
           : summary.error.message}

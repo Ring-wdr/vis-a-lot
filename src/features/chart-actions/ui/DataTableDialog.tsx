@@ -133,16 +133,16 @@ function DataTable<P extends TablePage>({
   return (
     <div className="flex flex-col gap-2.5">
       <header className="flex items-baseline gap-2.5">
-        <h2 id={titleId} className="font-bold text-16">
+        <h2 id={titleId} className="font-bold text-base">
           {source.title}
         </h2>
-        <span className="text-13 text-fg-muted">
+        <span className="text-fg-muted text-ui">
           {first ? source.summary(first) + filterNote(first) : "불러오는 중"}
         </span>
       </header>
 
       {failed ? (
-        <p role="alert" className="text-13 text-danger">
+        <p role="alert" className="text-danger text-ui">
           {failed.message}
         </p>
       ) : first && total === 0 ? (
@@ -153,10 +153,10 @@ function DataTable<P extends TablePage>({
         // 가상 스크롤 표: 보이는 행 위아래를 빈 행으로 채워 스크롤 높이를 맞춘다.
         <div
           ref={scrollRef}
-          className="h-[min(480px,60dvh)] overflow-auto rounded-md border border-line"
+          className="h-[min(30rem,60dvh)] overflow-auto rounded-md border border-line"
         >
           <table
-            className="w-max min-w-full table-fixed border-collapse text-13"
+            className="w-max min-w-full table-fixed border-collapse text-ui"
             aria-labelledby={titleId}
           >
             <thead>
@@ -271,7 +271,7 @@ function openTable<P extends TablePage>(source: TableSource<P>) {
       isOpen={isOpen}
       onClose={close}
       onExited={unmount}
-      className="w-[min(960px,calc(100vw-32px))] max-w-none"
+      className="w-[min(60rem,calc(100vw-2rem))] max-w-none"
     >
       <DataTable source={source} onClose={close} />
     </Dialog>

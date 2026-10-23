@@ -70,7 +70,7 @@ export function Dialog({
       className={cn(
         // 세로 가운데 정렬이면 내용 높이가 바뀔 때 팝업 전체가 움직이므로 위쪽을 기준으로 둔다.
         // 위쪽 여백만큼 줄여 화면 안에 두고, 넘치는 내용은 팝업 안에서 스크롤한다.
-        "m-auto mt-[12vh] max-h-[calc(100dvh-12vh-24px)] max-w-90 overflow-y-auto rounded-lg border border-line p-5 text-14 leading-normal backdrop:bg-backdrop",
+        "m-auto mt-[12vh] max-h-[calc(100dvh-12vh-1.5rem)] max-w-90 overflow-y-auto rounded-lg border border-line p-5 text-sm leading-normal backdrop:bg-backdrop",
         className,
       )}
       aria-labelledby={labelledBy}

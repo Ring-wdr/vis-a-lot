@@ -50,7 +50,7 @@ export function ColorSettings() {
             disabled={readOnly || pending}
             onSelect={(color) => change({ ...draft.common, color })}
           />
-          <p className="text-12 text-fg-muted">
+          <p className="text-fg-muted text-xs">
             {colorName(draft.common.color)}
           </p>
         </>
@@ -63,7 +63,7 @@ export function ColorSettings() {
             (dataset.data?.state === "ready" ? (
               <LegendListSkeleton />
             ) : (
-              <p className="text-12 text-fg-muted">
+              <p className="text-fg-muted text-xs">
                 데이터가 준비되면 legend 값이 표시됩니다.
               </p>
             ))}

@@ -66,7 +66,7 @@ export function RangeFilterBody({
     onChange(rangeFilter(summary, next, inv, nulls));
 
   return (
-    <div className="flex flex-col gap-2 text-12">
+    <div className="flex flex-col gap-2 text-xs">
       <div
         className="flex justify-between gap-1.5 text-fg tabular-nums"
         aria-live="polite"
@@ -102,7 +102,7 @@ export function RangeFilterBody({
           </Slider.Track>
         </Slider.Control>
       </Slider.Root>
-      <div className="flex justify-between text-11 text-fg-muted tabular-nums">
+      <div className="flex justify-between text-2xs text-fg-muted tabular-nums">
         <span>{format(summary.type, min)}</span>
         <span>{format(summary.type, max)}</span>
       </div>

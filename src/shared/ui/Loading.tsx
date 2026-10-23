@@ -27,15 +27,15 @@ const emptyState = tv({
   slots: {
     root: "flex h-full min-h-40 flex-col items-center justify-center gap-1.5 p-6 text-center text-fg-muted",
     icon: "mb-1 grid size-11 place-items-center rounded-xl bg-panel text-fg-secondary",
-    title: "font-semibold text-14 text-fg",
-    body: "max-w-80 text-12 leading-normal",
+    title: "font-semibold text-fg text-sm",
+    body: "max-w-80 text-xs leading-normal",
   },
   variants: {
     size: {
       sm: {
         root: "h-auto min-h-0 px-2 py-4",
         icon: "size-8 rounded-lg",
-        title: "text-13",
+        title: "text-ui",
       },
       md: {},
     },
@@ -147,8 +147,8 @@ export function BootScreen({
       className="grid min-h-screen place-items-center bg-surface text-fg"
       aria-busy={!error}
     >
-      <div className="flex w-[min(320px,calc(100vw-32px))] flex-col items-center gap-3.5 text-center">
-        <span className="font-bold text-20">vis-a-lot</span>
+      <div className="flex w-[min(20rem,calc(100vw-2rem))] flex-col items-center gap-3.5 text-center">
+        <span className="font-bold text-xl">vis-a-lot</span>
         <ol className="flex gap-1.5" aria-hidden="true">
           {BOOT_STEPS.map((s, i) => (
             <li
@@ -162,19 +162,19 @@ export function BootScreen({
         </ol>
         {error ? (
           <>
-            <p role="alert" className="text-13 text-danger">
+            <p role="alert" className="text-danger text-ui">
               {BOOT_MESSAGES[step]}에 실패했습니다: {error}
             </p>
             <button
               type="button"
-              className={button({ class: "text-13" })}
+              className={button({ class: "text-ui" })}
               onClick={() => location.reload()}
             >
               새로고침
             </button>
           </>
         ) : (
-          <output className="inline-flex items-center gap-2 text-13 text-fg-secondary">
+          <output className="inline-flex items-center gap-2 text-fg-secondary text-ui">
             <Spinner />
             {BOOT_MESSAGES[step]}
           </output>

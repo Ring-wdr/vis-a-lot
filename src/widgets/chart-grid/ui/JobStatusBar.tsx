@@ -6,7 +6,7 @@ import { isTerminal, type JobStateResponse } from "@/shared/api/types";
 import { cn, tv } from "@/shared/lib/tw";
 
 const bar =
-  "flex min-w-0 flex-1 items-center gap-3.5 overflow-hidden whitespace-nowrap text-12 text-fg-secondary tabular-nums";
+  "flex min-w-0 flex-1 items-center gap-3.5 overflow-hidden whitespace-nowrap text-xs text-fg-secondary tabular-nums";
 
 // 단계 이름 길이가 바뀌어도 오른쪽 칸들이 밀리지 않도록 가장 긴 이름만큼 자리를 둔다.
 const status = tv({

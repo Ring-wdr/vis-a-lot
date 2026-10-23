@@ -48,7 +48,7 @@ export function DatasetPanel({
       />
 
       {status?.state === "generating" && (
-        <div className="flex flex-col gap-1 text-12 text-fg-muted">
+        <div className="flex flex-col gap-1 text-fg-muted text-xs">
           <progress className="w-full" value={status.done} max={status.total} />
           <span>
             {status.phase === "analyze"
@@ -59,7 +59,7 @@ export function DatasetPanel({
       )}
 
       {status?.state === "ready" && status.generateMs !== undefined && (
-        <p className="text-12 text-fg-muted">
+        <p className="text-fg-muted text-xs">
           {status.total.toLocaleString()}행 · 생성{" "}
           {(status.generateMs / 1000).toFixed(1)}초
         </p>
@@ -69,7 +69,7 @@ export function DatasetPanel({
       {generate.error && <p role="alert">{generate.error.message}</p>}
 
       {showColumns && columns.data && (
-        <table className="border-collapse text-12">
+        <table className="border-collapse text-xs">
           <thead>
             <tr>
               <th className={cell}>컬럼</th>

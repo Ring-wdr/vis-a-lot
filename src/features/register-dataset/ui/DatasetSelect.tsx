@@ -43,7 +43,7 @@ export function DatasetSelect({
   }
 
   return (
-    <div className="flex flex-col gap-1 text-13">
+    <div className="flex flex-col gap-1 text-ui">
       <Select
         label="데이터"
         value={list ? dataset : null}

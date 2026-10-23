@@ -10,7 +10,7 @@ type ValuesSummary = Extract<ColumnSummary, { kind: "values" }>;
 const ROW_HEIGHT = 26;
 
 const bulkButton =
-  "cursor-pointer rounded-sm border border-line bg-elevated px-2 py-0.5 text-11 text-fg disabled:cursor-default disabled:opacity-50";
+  "cursor-pointer rounded-sm border border-line bg-elevated px-2 py-0.5 text-2xs text-fg disabled:cursor-default disabled:opacity-50";
 
 /**
  * 범주 컬럼 필터: 검색(부분 일치) + 가상 스크롤 목록. 처음엔 전부 포함이고, 체크를 풀면 그 값을 뺀다.
@@ -87,10 +87,10 @@ export function ValuesFilterBody({
   };
 
   return (
-    <div className="flex flex-col gap-2 text-12">
+    <div className="flex flex-col gap-2 text-xs">
       <input
         type="search"
-        className="rounded-md border border-line bg-elevated px-2 py-1.25 text-12 text-fg"
+        className="rounded-md border border-line bg-elevated px-2 py-1.25 text-fg text-xs"
         placeholder={`${summary.values.length.toLocaleString()}개 값에서 검색`}
         aria-label="값 검색"
         value={keyword}

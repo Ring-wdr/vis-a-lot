@@ -36,7 +36,7 @@ export function LegendSettings() {
         onSelect={(legendPosition) => change({ ...common, legendPosition })}
       />
       {!drawsLegend(draft) && (
-        <p className="text-12 text-fg-muted">
+        <p className="text-fg-muted text-xs">
           legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다.
         </p>
       )}

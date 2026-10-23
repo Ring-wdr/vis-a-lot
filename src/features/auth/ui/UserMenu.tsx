@@ -11,7 +11,7 @@ export function UserMenu() {
   );
   if (!name) return null;
   return (
-    <div className="flex items-center gap-1.5 border-line border-l pl-2 text-13 text-fg-secondary">
+    <div className="flex items-center gap-1.5 border-line border-l pl-2 text-fg-secondary text-ui">
       <span>{name}</span>
       <button
         type="button"

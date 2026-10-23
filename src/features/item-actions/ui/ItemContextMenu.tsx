@@ -10,7 +10,7 @@ import { showPrompt } from "@/shared/ui/AlertDialog";
 // item 우클릭 메뉴 (Base UI ContextMenu)
 const menuPositioner = "z-20 outline-0";
 const menu =
-  "min-w-45 rounded-lg border border-line bg-elevated p-1 text-13 shadow-xl outline-0";
+  "min-w-45 rounded-lg border border-line bg-elevated p-1 text-ui shadow-xl outline-0";
 const menuItem =
   "flex cursor-default select-none items-center justify-between gap-3 rounded-sm px-2 py-1.5 outline-0 data-disabled:opacity-40 data-highlighted:bg-accent-soft data-popup-open:bg-accent-soft data-highlighted:text-accent data-popup-open:text-accent";
 
@@ -108,7 +108,7 @@ export function ItemContextMenu({
         <ContextMenu.Positioner className={menuPositioner}>
           <ContextMenu.Popup className={menu}>
             <ContextMenu.Group>
-              <ContextMenu.GroupLabel className="px-2 py-1 text-12 text-fg-secondary">
+              <ContextMenu.GroupLabel className="px-2 py-1 text-fg-secondary text-xs">
                 {selected
                   ? `선택 ${item.selectedCount?.toLocaleString()}개`
                   : "선택한 영역 없음"}

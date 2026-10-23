@@ -12,7 +12,7 @@ import { tv } from "@/shared/lib/tw";
 
 // 고른 화면 버튼도 hover 중에는 hover 바탕을 보인다.
 const navButton = tv({
-  base: "inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-2.5 text-13 text-fg-secondary enabled:hover:bg-panel disabled:cursor-not-allowed disabled:opacity-45 aria-selected:border-line aria-selected:not-hover:bg-elevated aria-selected:font-semibold aria-selected:text-fg",
+  base: "inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-2.5 text-fg-secondary text-ui enabled:hover:bg-panel disabled:cursor-not-allowed disabled:opacity-45 aria-selected:border-line aria-selected:not-hover:bg-elevated aria-selected:font-semibold aria-selected:text-fg",
 });
 
 const TAB_UI = {

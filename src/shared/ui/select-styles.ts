@@ -3,9 +3,9 @@ import { tv } from "@/shared/lib/tw";
 /** 단일 선택(Select), 다중 선택(OrderedSelect), grid 피커가 같이 쓰는 필드 모양 */
 export const selectStyles = tv({
   slots: {
-    field: "flex min-w-0 flex-col gap-1 text-13",
+    field: "flex min-w-0 flex-col gap-1 text-ui",
     labelRow: "mb-0.5 flex min-w-0 items-baseline justify-between gap-2",
-    label: "text-12 text-fg-secondary",
+    label: "text-fg-secondary text-xs",
     // 높이를 한 줄로 고정한다. 고른 값이 길면 말줄임으로 자른다.
     trigger:
       "flex h-7.5 w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-line bg-elevated pr-1.5 pl-2 text-left text-fg focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1 enabled:hover:border-line-strong disabled:cursor-default disabled:bg-panel data-popup-open:border-accent",
@@ -16,14 +16,15 @@ export const selectStyles = tv({
     icon: "inline-flex flex-none text-fg-secondary",
     // 다중 선택에서 고른 개수
     count:
-      "inline-grid h-4.5 min-w-4.5 flex-none place-items-center rounded-full bg-accent px-1.25 text-11 text-on-accent tabular-nums",
+      "inline-grid h-4.5 min-w-4.5 flex-none place-items-center rounded-full bg-accent px-1.25 text-2xs text-on-accent tabular-nums",
     chevron: "inline-grid flex-none place-items-center text-fg-muted",
     positioner: "z-50 outline-none",
     popup:
-      "max-h-[min(320px,var(--available-height))] w-[max(var(--anchor-width),160px)] max-w-(--available-width) overflow-y-auto overflow-x-hidden rounded-lg border border-line bg-elevated py-1 text-13 text-fg shadow-lg outline-none",
+      "max-h-[min(20rem,var(--available-height))] w-[max(var(--anchor-width),10rem)] max-w-(--available-width) overflow-y-auto overflow-x-hidden rounded-lg border border-line bg-elevated py-1 text-fg text-ui shadow-lg outline-none",
     item: "flex h-7 cursor-default select-none items-center gap-1.5 px-2 outline-none data-highlighted:not-data-selected:bg-panel data-selected:bg-accent-soft data-disabled:text-fg-muted",
-    check: "inline-grid w-3.5 flex-none place-items-center text-11 text-accent",
+    check:
+      "inline-grid w-3.5 flex-none place-items-center text-2xs text-accent",
     itemLabel: "flex-1 truncate",
-    aside: "truncate text-11 text-fg-muted tabular-nums",
+    aside: "truncate text-2xs text-fg-muted tabular-nums",
   },
 });

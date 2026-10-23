@@ -248,7 +248,7 @@ export function ItemTooltip({
                       ) : extra.isError ? (
                         // 받지 못했으면 자리 표시를 계속 두지 않고 사유를 남긴다.
                         <span
-                          className="text-12 text-fg-muted"
+                          className="text-fg-muted text-xs"
                           title={extraFailure}
                         >
                           –
@@ -280,7 +280,7 @@ export function ItemTooltip({
 
 /** body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다. 폭은 TOOLTIP_WIDTH와 같아야 한다. */
 const tooltipBox =
-  "pointer-events-none fixed z-1000 w-50 rounded-md border border-line bg-elevated px-2.5 py-2 text-12 shadow-md";
+  "pointer-events-none fixed z-1000 w-50 rounded-md border border-line bg-elevated px-2.5 py-2 text-xs shadow-md";
 const tooltipRow = "flex justify-between gap-3 text-fg-secondary";
 const tooltipValue = "text-fg tabular-nums";
 

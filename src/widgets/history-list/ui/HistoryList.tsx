@@ -22,10 +22,10 @@ import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
 
 const historyList = "flex flex-col gap-1.5";
 const historyEntry =
-  "flex w-full cursor-pointer gap-2.5 rounded-md border border-line bg-elevated p-1.5 text-left enabled:hover:border-accent aria-[current=true]:border-accent aria-[current=true]:bg-accent-soft";
+  "flex w-full cursor-pointer gap-2.5 rounded-md border border-line bg-elevated p-1.5 text-left enabled:hover:border-accent aria-current:border-accent aria-current:bg-accent-soft";
 const historyThumb = "h-11.25 w-18 flex-none rounded-sm bg-panel object-cover";
 const historyText = "flex min-w-0 flex-col gap-0.5";
-const muted = "text-11 text-fg-muted";
+const muted = "text-2xs text-fg-muted";
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
   zoom: "확대",
@@ -114,7 +114,7 @@ export function HistoryList() {
 
   if (list.error) {
     return (
-      <p role="alert" className="text-12 text-danger">
+      <p role="alert" className="text-danger text-xs">
         {list.error.message}
       </p>
     );
@@ -185,7 +185,7 @@ export function HistoryList() {
               )}
             </span>
             <span className={historyText}>
-              <span className="font-semibold text-12">
+              <span className="font-semibold text-xs">
                 {chartTitle(entry.spec, columnsOf(entry.dataset))}
               </span>
               <span className={muted}>

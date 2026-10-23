@@ -20,7 +20,7 @@ import {
 } from "../model/option-fields";
 
 const row =
-  "grid grid-cols-[minmax(0,1fr)_150px] items-center gap-2 text-fg-secondary";
+  "grid grid-cols-[minmax(0,1fr)_9.375rem] items-center gap-2 text-fg-secondary";
 const check = "flex items-center gap-1.5 text-fg-secondary";
 const control =
   "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg leading-[inherit]";
@@ -61,10 +61,10 @@ export function OptionSectionForm({
     onChange(setPath(patch, path, value));
 
   return (
-    <div className="flex flex-col gap-2.5 text-13">
-      <h3 className="font-semibold text-13">{SECTION_LABELS[section]}</h3>
+    <div className="flex flex-col gap-2.5 text-ui">
+      <h3 className="font-semibold text-ui">{SECTION_LABELS[section]}</h3>
       {children}
-      {showFields && hint && <p className="text-12 text-fg-muted">{hint}</p>}
+      {showFields && hint && <p className="text-fg-muted text-xs">{hint}</p>}
       {showFields && (
         <div className="flex flex-col gap-1.5">
           {SECTION_FIELDS[section].map((field) =>
@@ -72,7 +72,7 @@ export function OptionSectionForm({
               "heading" ? (
               <h4
                 key={`h-${field.label}`}
-                className="mt-1.5 font-semibold text-12 text-fg-secondary"
+                className="mt-1.5 font-semibold text-fg-secondary text-xs"
               >
                 {field.label}
               </h4>
@@ -190,7 +190,7 @@ function FieldInput({
               disabled={disabled}
               onCommit={onCommit}
             />
-            <code className="text-11 text-fg-muted">{color || "없음"}</code>
+            <code className="text-2xs text-fg-muted">{color || "없음"}</code>
             {field.optional && color && (
               <button
                 type="button"

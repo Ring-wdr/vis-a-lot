@@ -27,7 +27,7 @@ export function TooltipSettings() {
         />
         <span>가까운 점 표시</span>
       </label>
-      <p className="text-12 text-fg-muted">
+      <p className="text-fg-muted text-xs">
         커서에서 가장 가까운 점의 x, y와 tooltip 컬럼을 보여줍니다. 점은 픽셀
         하나에 하나씩 줄인 점 중에서 찾습니다. 끄면 커서 위치의 x, y만 보여주고,
         tooltip 컬럼도 가까운 점의 값이라 함께 숨겨집니다.

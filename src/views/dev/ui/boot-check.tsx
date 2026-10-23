@@ -9,7 +9,7 @@ import type { DatasetId, DebugRenderResponse } from "@/shared/api/types";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { button } from "@/shared/ui/button";
 
-const heading = "mb-2 font-bold text-16";
+const heading = "mb-2 font-bold text-base";
 
 const ITEM_COUNT = 8;
 /** 렌더 요청 크기. 아래 frame 칸(w-80 h-50) 크기와 같아야 한다. */
@@ -65,7 +65,7 @@ export function BootCheck() {
         {healthError && <p role="alert">실패: {healthError.message}</p>}
         {!health && !healthError && <p>PGlite 부팅 중…</p>}
         {health && (
-          <ul className="list-disc pl-5 leading-[1.6]">
+          <ul className="list-disc pl-5 leading-relaxed">
             <li>{health.db.version}</li>
             <li>
               부팅 {Math.round(health.db.bootMs)}ms · 누적 부팅{" "}
@@ -110,7 +110,7 @@ export function BootCheck() {
         <div className="flex flex-wrap gap-3">
           {items.map((it) => (
             <figure key={it.key}>
-              <div className="flex h-50 w-80 items-center justify-center border border-line text-13 text-fg-muted">
+              <div className="flex h-50 w-80 items-center justify-center border border-line text-fg-muted text-ui">
                 {it.error ? (
                   <span role="alert">{it.error}</span>
                 ) : it.result ? (
@@ -120,7 +120,7 @@ export function BootCheck() {
                 )}
               </div>
               {it.result && (
-                <figcaption className="mt-1 text-12 text-fg-muted">
+                <figcaption className="mt-1 text-fg-muted text-xs">
                   {it.result.worker} · {Math.round(it.result.renderMs)}ms
                 </figcaption>
               )}

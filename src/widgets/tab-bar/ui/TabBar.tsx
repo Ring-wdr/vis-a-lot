@@ -16,7 +16,7 @@ import { LoadingText } from "@/shared/ui/Loading";
 
 // 탭 닫기·새 탭
 const iconButton = tv({
-  base: "inline-grid flex-none cursor-pointer place-items-center rounded-sm text-fg-muted enabled:hover:bg-panel-10 enabled:hover:text-fg disabled:cursor-not-allowed disabled:opacity-45",
+  base: "inline-grid flex-none cursor-pointer place-items-center rounded-sm text-fg-muted enabled:hover:bg-panel-strong enabled:hover:text-fg disabled:cursor-not-allowed disabled:opacity-45",
 });
 
 /** 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터. history 탭은 다시 그리기 전까지 불러오는 중이다. */
@@ -61,14 +61,14 @@ export function TabBar({ view }: { view: View }) {
           <div
             key={tab.id}
             // 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다.
-            className="group/tab -mb-px flex h-7.5 w-50 flex-none items-center rounded-t-md border border-transparent border-b-0 text-fg-secondary not-data-active:hover:bg-panel-5 data-active:border-line data-active:bg-surface data-active:text-fg"
+            className="group/tab -mb-px flex h-7.5 w-50 flex-none items-center rounded-t-md border border-transparent border-b-0 text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
             data-active={tab.id === active || undefined}
           >
             <button
               type="button"
               role="tab"
               aria-selected={tab.id === active}
-              className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-12 disabled:cursor-not-allowed disabled:opacity-45 group-data-active/tab:font-semibold"
+              className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-xs disabled:cursor-not-allowed disabled:opacity-45 group-data-active/tab:font-semibold"
               disabled={locked && tab.id !== active}
               onClick={() => activate(tab.id)}
             >
@@ -89,7 +89,7 @@ export function TabBar({ view }: { view: View }) {
           </div>
         ))}
         {view === "history" && mine.length === 0 && (
-          <span className="self-center px-1 pb-1.5 text-12 text-fg-muted">
+          <span className="self-center px-1 pb-1.5 text-fg-muted text-xs">
             왼쪽 목록에서 고르면 탭으로 열립니다.
           </span>
         )}
@@ -119,14 +119,14 @@ function FilterToggle() {
   return (
     <button
       type="button"
-      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1.25 rounded-md border border-line bg-elevated px-2.5 py-0.75 text-12 text-fg-secondary aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1.25 rounded-md border border-line bg-elevated px-2.5 py-0.75 text-fg-secondary text-xs aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
       aria-pressed={open}
       onClick={toggle}
     >
       <Filter size={13} aria-hidden="true" />
       필터
       {count > 0 && (
-        <span className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-10 text-on-accent">
+        <span className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-3xs text-on-accent">
           {count}
         </span>
       )}

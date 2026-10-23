@@ -6,9 +6,9 @@ import { login } from "@/shared/api/session";
 import { Spinner } from "@/shared/ui/Loading";
 
 /** mock 계정으로 로그인한다. 토큰은 auth 서비스가 발급하고 세션 store가 들고 있는다. */
-const field = "flex flex-col gap-1 text-12 text-fg-secondary";
+const field = "flex flex-col gap-1 text-xs text-fg-secondary";
 const input =
-  "rounded-md border border-line bg-elevated px-2.5 py-2 text-14 text-fg focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1";
+  "rounded-md border border-line bg-elevated px-2.5 py-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1";
 const code = "font-mono text-fg-secondary";
 
 export function LoginForm({ notice }: { notice?: string }) {
@@ -28,7 +28,7 @@ export function LoginForm({ notice }: { notice?: string }) {
       }}
     >
       {notice && !submit.error && (
-        <p className="rounded-md bg-accent-soft px-2.5 py-2 text-13 text-fg-secondary">
+        <p className="rounded-md bg-accent-soft px-2.5 py-2 text-fg-secondary text-ui">
           {notice}
         </p>
       )}
@@ -57,13 +57,13 @@ export function LoginForm({ notice }: { notice?: string }) {
         />
       </label>
       {submit.error && (
-        <p id={errorId} role="alert" className="text-13 text-danger">
+        <p id={errorId} role="alert" className="text-danger text-ui">
           {submit.error.message}
         </p>
       )}
       <button
         type="submit"
-        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-3 py-2.5 font-semibold text-14 text-on-accent disabled:cursor-progress disabled:opacity-60"
+        className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-3 py-2.5 font-semibold text-on-accent text-sm disabled:cursor-progress disabled:opacity-60"
         disabled={submit.isPending}
       >
         {submit.isPending ? (
@@ -75,7 +75,7 @@ export function LoginForm({ notice }: { notice?: string }) {
           "로그인"
         )}
       </button>
-      <p className="text-center text-12 text-fg-muted">
+      <p className="text-center text-fg-muted text-xs">
         데모 계정: <code className={code}>demo</code> /{" "}
         <code className={code}>demo1234</code>
       </p>
