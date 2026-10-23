@@ -1,6 +1,721 @@
 // 자동 생성 파일. 직접 고치지 말고 `pnpm gen:api`로 다시 만든다.
 
 export type paths = {
+  "/posts/{postId}/attachments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 게시물에 파일·링크 첨부 (게시물을 고칠 수 있는 사람) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          postId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["AddAttachmentRequest"];
+        };
+      };
+      responses: {
+        /** @description 첨부 */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Attachment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/posts/{postId}/comments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 게시물 댓글 스레드 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          postId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 스레드 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["CommentListResponse"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    /** 댓글 쓰기 (게시물을 볼 수 있으면 누구나). 멘션을 읽어 멘션 이력·알림을 남기고, 쓴 사람·멘션된 사람을 구독시킨다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          postId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["CreateCommentRequest"];
+        };
+      };
+      responses: {
+        /** @description 쓴 댓글 */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Comment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/comments/{commentId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** 댓글 지우기 (쓴 사람·그룹 관리자). 소프트 삭제 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          commentId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    /** 댓글 고치기 (쓴 사람만). 새로 멘션된 사람에게만 멘션 알림 */
+    patch: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          commentId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["UpdateCommentRequest"];
+        };
+      };
+      responses: {
+        /** @description 바뀐 댓글 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Comment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    trace?: never;
+  };
+  "/comments/{commentId}/pin": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** 스레드 고정 (스레드 첫 댓글만. 게시물을 고칠 수 있는 사람) */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          commentId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ToggleRequest"];
+        };
+      };
+      responses: {
+        /** @description 바뀐 댓글 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Comment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/comments/{commentId}/reactions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** 반응 켜기·끄기 (지운 댓글은 400) */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          commentId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ReactionRequest"];
+        };
+      };
+      responses: {
+        /** @description 바뀐 댓글 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Comment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/posts/{postId}/attachments/{attachmentId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** 첨부 지우기 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          postId: string;
+          attachmentId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/comments/{commentId}/resolve": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** 스레드 해결·다시 열기 (스레드 첫 댓글만. 게시물을 고칠 수 있는 사람과 댓글 쓴 사람) */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          commentId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ToggleRequest"];
+        };
+      };
+      responses: {
+        /** @description 바뀐 댓글 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Comment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/polls/{pollId}/vote": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** 투표 (한 사람 한 표, 다시 고르면 바뀐다. 마감 뒤 400) */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          pollId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["VoteRequest"];
+        };
+      };
+      responses: {
+        /** @description 투표가 달린 댓글 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Comment"];
+          };
+        };
+        /** @description 요청 형식 오류 (빈 본문, 마감된 투표 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 게시물·댓글 (볼 수 없는 것 포함) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/groups/{groupId}/post-types/{postTypeId}": {
     parameters: {
       query?: never;
@@ -2664,6 +3379,364 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/reports/activity": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 활동 보고: 기간·팀·담당자 → 날짜순 활동 로그, 해결·생성한 게시물, 사람별 수 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ActivityReportRequest"];
+        };
+      };
+      responses: {
+        /** @description 보고 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ActivityReport"];
+          };
+        };
+        /** @description 요청 형식 오류 (from > to, 기간이 1년 넘음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 그룹·템플릿 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/templates/{templateId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** 템플릿 지우기 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          templateId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 (from > to, 기간이 1년 넘음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 그룹·템플릿 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/templates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 그룹의 보고 템플릿 */
+    get: {
+      parameters: {
+        query: {
+          groupId: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 목록 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ReportTemplateListResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 (from > to, 기간이 1년 넘음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 그룹·템플릿 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    /** 템플릿 저장 (id가 없으면 새로. 그룹 멤버가 만들고, 고치기는 만든 사람·그룹 관리자) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SaveReportTemplateRequest"];
+        };
+      };
+      responses: {
+        /** @description 저장한 템플릿 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ReportTemplate"];
+          };
+        };
+        /** @description 요청 형식 오류 (from > to, 기간이 1년 넘음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 그룹·템플릿 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/reports/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 현황 보고: 상태별 수, 기한 초과, 담당자별 부하, 검토 대기 체류, 최근 30일 리드타임, 열린 게시물 목록 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["StatusReportRequest"];
+        };
+      };
+      responses: {
+        /** @description 보고 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["StatusReport"];
+          };
+        };
+        /** @description 요청 형식 오류 (from > to, 기간이 1년 넘음 등) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 권한 없음 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 그룹·템플릿 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/scheduler/run": {
     parameters: {
       query?: never;
@@ -2694,6 +3767,54 @@ export type paths = {
         };
       };
     };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/search": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 게시물 찾기: 이슈 키(FD-12, 접두사·번호 일부) → 제목 → 본문 → 댓글 순으로 맞춘 결과 (볼 수 있는 것만, 기본 20개) */
+    get: {
+      parameters: {
+        query: {
+          q: string;
+          limit?: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 결과 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SearchResponse"];
+          };
+        };
+        /** @description 사용자를 고르지 않음 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -3529,6 +4650,87 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    Attachment: {
+      id: string;
+      /** @enum {string} */
+      kind: "file" | "link";
+      name: string;
+      url: string;
+    };
+    ApiError: {
+      /** @example unknown chart */
+      error: string;
+    };
+    AddAttachmentRequest: {
+      /** @enum {string} */
+      kind: "file" | "link";
+      name: string;
+      url: string;
+    };
+    Comment: {
+      id: string;
+      postId: string;
+      authorId: string;
+      parentId: string | null;
+      body?: unknown;
+      resolved: boolean;
+      pinned: boolean;
+      deleted: boolean;
+      createdAt: components["schemas"]["Instant"];
+      updatedAt: components["schemas"]["Instant"] | null;
+      mentions: string[];
+      reactions: components["schemas"]["Reaction"][];
+      poll: components["schemas"]["Poll"] | null;
+      permissions: {
+        edit: boolean;
+        delete: boolean;
+        resolve: boolean;
+        pin: boolean;
+      };
+    };
+    Instant: string;
+    Reaction: {
+      emoji: string;
+      count: number;
+      mine: boolean;
+    };
+    Poll: {
+      id: string;
+      question: string;
+      options: string[];
+      closesAt: components["schemas"]["Instant"] | null;
+      votes: number[];
+      myVote: number | null;
+      closed: boolean;
+    };
+    CreateCommentRequest: {
+      body?: unknown;
+      parentId?: string;
+      poll?: {
+        question: string;
+        options: string[];
+        closesAt?: components["schemas"]["Instant"];
+      };
+    };
+    CommentListResponse: {
+      threads: components["schemas"]["CommentThread"][];
+    };
+    CommentThread: components["schemas"]["Comment"] & {
+      replies: components["schemas"]["Comment"][];
+    };
+    ToggleRequest: {
+      on: boolean;
+    };
+    ReactionRequest: {
+      emoji: string;
+      on: boolean;
+    };
+    UpdateCommentRequest: {
+      body?: unknown;
+    };
+    VoteRequest: {
+      optionIdx: number;
+    };
     GroupDetail: components["schemas"]["Group"] & {
       members: components["schemas"]["GroupMember"][];
       teams: components["schemas"]["Team"][];
@@ -3567,10 +4769,6 @@ export type components = {
       statusNames: components["schemas"]["StatusNames"];
       myRole: components["schemas"]["GroupRole"] | null;
       memberCount: number;
-    };
-    ApiError: {
-      /** @example unknown chart */
-      error: string;
     };
     GroupListResponse: {
       groups: components["schemas"]["Group"][];
@@ -3678,7 +4876,6 @@ export type components = {
       commentId: string | null;
       createdAt: components["schemas"]["Instant"];
     };
-    Instant: string;
     NotificationSettings: {
       settings: components["schemas"]["NotificationSetting"][];
     };
@@ -3733,13 +4930,6 @@ export type components = {
     };
     /** @enum {string} */
     RelationKind: "blocks" | "duplicate" | "relates" | "derived";
-    Attachment: {
-      id: string;
-      /** @enum {string} */
-      kind: "file" | "link";
-      name: string;
-      url: string;
-    };
     PostPermissions: {
       edit: boolean;
       transitions: components["schemas"]["PostStatus"][];
@@ -3950,10 +5140,118 @@ export type components = {
       progress?: number;
       tags?: string[];
     };
+    ActivityReport: {
+      group: {
+        id: string;
+        name: string;
+        keyPrefix: string;
+      };
+      from: components["schemas"]["Day"];
+      to: components["schemas"]["Day"];
+      days: {
+        date: components["schemas"]["Day"];
+        entries: components["schemas"]["ActivityEntry"][];
+      }[];
+      completed: {
+        post: components["schemas"]["PostRef"];
+        assigneeId: string | null;
+        resolvedAt: components["schemas"]["Instant"];
+      }[];
+      created: components["schemas"]["PostRef"][];
+      byUser: {
+        userId: string;
+        events: number;
+        completed: number;
+      }[];
+    };
+    ActivityEntry: {
+      event: components["schemas"]["FeedEvent"];
+      post: components["schemas"]["PostRef"];
+    };
+    ActivityReportRequest: {
+      groupId: string;
+      from: components["schemas"]["Day"];
+      to: components["schemas"]["Day"];
+      teamId?: string;
+      assigneeId?: string;
+      postTypeIds?: string[];
+    };
+    ReportTemplateListResponse: {
+      templates: components["schemas"]["ReportTemplate"][];
+    };
+    ReportTemplate: {
+      id: string;
+      ownerId: string;
+      groupId: string;
+      name: string;
+      /** @enum {string} */
+      kind: "activity" | "status";
+      params: components["schemas"]["ReportTemplateParams"];
+      editable: boolean;
+    };
+    ReportTemplateParams: {
+      rangeDays?: number;
+      teamId?: string;
+      assigneeId?: string;
+      postTypeIds?: string[];
+    };
+    SaveReportTemplateRequest: {
+      id?: string;
+      groupId: string;
+      name: string;
+      /** @enum {string} */
+      kind: "activity" | "status";
+      params?: components["schemas"]["ReportTemplateParams"];
+    };
+    StatusReport: {
+      group: {
+        id: string;
+        name: string;
+        keyPrefix: string;
+      };
+      byStatus: {
+        unresolved?: number;
+        in_progress?: number;
+        in_review?: number;
+        resolved?: number;
+        on_hold?: number;
+        cancelled?: number;
+      };
+      overdue: number;
+      assigneeLoad: {
+        userId: string | null;
+        open: number;
+        inReview: number;
+        overdue: number;
+      }[];
+      reviewWait: {
+        count: number;
+        avgHours: number;
+        maxHours: number;
+      };
+      leadTime30d: {
+        count: number;
+        avgDays: number;
+        medianDays: number;
+      };
+      posts: components["schemas"]["PostSummary"][];
+    };
+    StatusReportRequest: {
+      groupId: string;
+      teamId?: string;
+    };
     SchedulerRunResponse: {
       dueSoon: number;
       overdue: number;
       resumed: number;
+    };
+    SearchResponse: {
+      hits: components["schemas"]["SearchHit"][];
+    };
+    SearchHit: components["schemas"]["PostRef"] & {
+      /** @enum {string} */
+      matchedIn: "key" | "title" | "body" | "comment";
+      snippet: string | null;
     };
     FeedSnapshot: {
       schemaVersion: number;
