@@ -1,6 +1,9 @@
-// 공유 링크. 샘플 데이터는 시드가 고정이라 설정과 item 상태만 있으면 같은 차트가 다시 만들어진다.
+// 공유 링크 두 가지.
+// - 공유 페이지(/share?id=…): chart 서비스에 고정한 공유(스냅숏)를 보여준다. 지금 '링크 복사'가 만드는 링크다.
+// - hash 링크(#s=…): 설정과 item 상태를 lz-string으로 압축해 URL hash에 담는다 (서버로 보내지 않는다).
+//   예전에 복사한 링크도 계속 열린다.
+// 샘플 데이터는 시드가 고정이라 설정과 item 상태만 있으면 같은 차트가 다시 만들어진다.
 // 업로드한 데이터는 그 브라우저에만 있으므로 같은 브라우저에서만 열린다.
-// 상태는 lz-string으로 압축해 URL hash에 담는다 (서버로 보내지 않는다).
 
 import {
   compressToEncodedURIComponent,
@@ -10,6 +13,17 @@ import type { ChartSpec, HistoryDetail, ItemRestore } from "@/shared/api/types";
 import { legacyDatasetOf } from "@/shared/config/dataset";
 
 const PREFIX = "#s=";
+
+/** 공유 페이지 경로. 정적 호스팅이라 id는 경로가 아니라 query로 받는다. */
+export const SHARE_PAGE = "/share";
+
+export function sharePagePath(shareId: string) {
+  return `${SHARE_PAGE}?id=${encodeURIComponent(shareId)}`;
+}
+
+export function sharePageUrl(shareId: string) {
+  return new URL(sharePagePath(shareId), location.origin).toString();
+}
 const SHARE_VERSION = 1;
 
 export type SharedChart = {
@@ -57,12 +71,6 @@ export function restoreOf(detail: HistoryDetail): Record<string, ItemRestore> {
 export function encodeShareHash(shared: SharedChart) {
   const payload: Payload = { v: SHARE_VERSION, ...shared };
   return `${PREFIX}${compressToEncodedURIComponent(JSON.stringify(payload))}`;
-}
-
-export function shareUrl(shared: SharedChart) {
-  const url = new URL(location.href);
-  url.hash = encodeShareHash(shared);
-  return url.toString();
 }
 
 export function readShareHash(hash: string): SharedChart | undefined {

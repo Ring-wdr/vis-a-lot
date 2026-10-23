@@ -12,6 +12,7 @@ import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
 import { useDrawState } from "@/features/draw-chart/model/draw-state";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
+import { takeQueuedOpen } from "@/features/open-chart/model/pending-open";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
 import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -26,20 +27,30 @@ import { TabToolbar } from "@/widgets/tab-toolbar/ui/TabToolbar";
 // tab을 오가며 gallery가 다시 마운트돼도 공유 링크는 처음 한 번만 연다.
 let sharedLinkHandled = false;
 
-/** 공유 링크(#s=…)로 들어오면 grid 크기를 안 뒤에 한 번 그 차트를 gallery에 그린다. */
+/**
+ * grid 크기를 안 뒤에 열 차트를 연다: 공유 페이지가 이 탭에 맡겨 둔 차트,
+ * 또는 hash 공유 링크(#s=…)로 들어왔을 때 그 차트(처음 한 번).
+ */
 function useOpenSharedLink() {
   const gridArea = useWorkspace((s) => s.gridArea);
+  const store = useWorkspaceStore();
   const open = useOpenChart();
 
   useEffect(() => {
-    if (sharedLinkHandled || !gridArea) return;
+    if (!gridArea) return;
+    const queued = takeQueuedOpen(store);
+    if (queued) {
+      open.mutate(queued);
+      return;
+    }
+    if (sharedLinkHandled) return;
     sharedLinkHandled = true;
     const shared = readShareHash(location.hash);
     if (!shared) return;
     // 새로고침할 때마다 다시 그려 history가 쌓이지 않도록 hash는 지운다.
     history.replaceState(null, "", location.pathname + location.search);
     open.mutate(shared);
-  }, [gridArea, open]);
+  }, [gridArea, store, open]);
 }
 
 /** 보고 있는 탭의 오류를 띄운다. 다른 탭에서 난 오류는 그 탭으로 돌아왔을 때 뜬다. */
