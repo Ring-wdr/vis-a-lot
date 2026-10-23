@@ -25,7 +25,7 @@ export type ListSort = { field: PostSortField; dir: "asc" | "desc" };
 export type ListState = {
   filter: PostFilter;
   sort: ListSort;
-  groupBy: ViewGroupBy;
+  groupBy: ViewGroupBy | null;
   columns: readonly PostColumn[];
 };
 
@@ -126,7 +126,7 @@ export function decodeListState(search: URLSearchParams): ListState {
       : DEFAULT_SORT;
 
   const g = search.get(P.groupBy) ?? "";
-  const groupBy: ViewGroupBy = isGroupBy(g) ? g : null;
+  const groupBy: ViewGroupBy | null = isGroupBy(g) ? g : null;
 
   const cols = search.has(P.columns)
     ? uniq(list(search, P.columns).filter(isColumn))

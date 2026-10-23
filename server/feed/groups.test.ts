@@ -51,9 +51,10 @@ describe("groups", () => {
       (await t.run("groups.list", undefined, { actor })).groups.map(
         (g) => g.keyPrefix,
       );
-    expect(await ids("u3")).toEqual(["DX", "FD"]);
+    // 공개 그룹 먼저
+    expect(await ids("u3")).toEqual(["FD", "DX"]);
     expect(await ids("u4")).toEqual(["FD"]);
-    expect(await ids("u1")).toEqual(["DX", "FD"]);
+    expect(await ids("u1")).toEqual(["FD", "DX"]);
 
     await expect(
       t.run("groups.get", { groupId: "DX" }, { actor: "u4" }),

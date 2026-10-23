@@ -1,6 +1,7 @@
 // 피드 views API 스키마: 저장된 뷰(필터 + 표시 방식 + 정렬·그룹핑).
 
 import { z } from "@hono/zod-openapi";
+import { orNull } from "../common";
 import { PostFilterSchema, PostSortFieldSchema } from "../posts/schemas";
 
 export const ViewLayoutSchema = z
@@ -28,8 +29,8 @@ export const SavedViewSchema = z
     shared: z.boolean(),
     layout: ViewLayoutSchema,
     filter: PostFilterSchema,
-    sort: ViewSortSchema.nullable(),
-    groupBy: ViewGroupBySchema.nullable(),
+    sort: orNull(ViewSortSchema),
+    groupBy: orNull(ViewGroupBySchema),
     /** 사이드바 고정 */
     pinned: z.boolean(),
     /** 기본 제공 뷰 (고치거나 지울 수 없다) */
@@ -59,8 +60,8 @@ export const SaveViewRequestSchema = z
     shared: z.boolean().default(false),
     layout: ViewLayoutSchema,
     filter: PostFilterSchema.default({}),
-    sort: ViewSortSchema.nullable().default(null),
-    groupBy: ViewGroupBySchema.nullable().default(null),
+    sort: orNull(ViewSortSchema).default(null),
+    groupBy: orNull(ViewGroupBySchema).default(null),
     pinned: z.boolean().default(false),
   })
   .openapi("SaveViewRequest");
