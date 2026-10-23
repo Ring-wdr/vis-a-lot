@@ -1,7 +1,7 @@
 // 피드 groups API 스키마: 그룹, 멤버, 팀, 게시물 유형, 상태 이름.
 
 import { z } from "@hono/zod-openapi";
-import { GroupRoleSchema, PostStatusSchema } from "../common";
+import { GroupRoleSchema, orNull, PostStatusSchema } from "../common";
 
 export const TeamSchema = z
   .object({ id: z.string(), name: z.string() })
@@ -31,7 +31,7 @@ export const GroupSchema = z
     /** 그룹별 상태 이름. 없는 상태는 기본 이름 */
     statusNames: StatusNamesSchema,
     /** 지금 사용자의 역할. 멤버가 아니면 null (시스템 관리자는 'admin'으로 본다) */
-    myRole: GroupRoleSchema.nullable(),
+    myRole: orNull(GroupRoleSchema),
     memberCount: z.number().int(),
   })
   .openapi("Group");

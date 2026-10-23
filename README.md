@@ -48,8 +48,8 @@
 | 속성 | 공통 속성(전체 다시 그리기, 개별 속성 덮어쓰기), item 개별 색상 |
 | 화면 크기 | resize 300ms 뒤 현재 페이지만 다시 그림, grid 크기 즉시 반영 |
 | history | draw마다 1건 + 이후 변경 덧붙임, 썸네일, 복원 |
-| 공유 | `링크 복사`가 chart 서비스에 공유(설정 · item 상태 · 대표 PNG 스냅숏)를 만들고 `/share?id=…` 링크를 복사. 공유 페이지에서 스냅숏 보기, gallery에서 열기, 링크 복사, 피드로 보내기, 지우기(만든 사용자). `/share`는 내 공유 목록. 예전 hash 링크(`#s=`, lz-string)도 열린다 |
-| 피드로 보내기 | 공유를 데이터 공유 피드의 차트 게시물 입력 JSON(공유 id · 제목 · PNG 썸네일 · 공유 페이지 링크 · 설정)으로 클립보드에 복사 |
+| 공유 | `링크 복사`가 chart 서비스에 공유(설정 · item 상태 · 대표 PNG 스냅숏)를 만들고 `/share?id=…` 링크를 복사. 공유 페이지에서 스냅숏 보기, gallery에서 열기, 링크 복사, 피드에 올리기, 지우기(만든 사용자). `/share`는 내 공유 목록. 예전 hash 링크(`#s=`, lz-string)도 열린다 |
+| 피드에 올리기 | 공유를 만들고 같은 출처의 피드 전체 폼(`/feed/new?share=…`)을 새 탭으로 열어 차트 게시물을 채운다 |
 | 피드 프로토타입 | `/feed`: 차트·이미지·동영상·코드를 게시물로 올리고 이슈로 다루는 사내 데이터 공유 피드 1차 프로토타입. 피드 서비스 `/api/feed`, 사용자 전환, 시드·시계·발송 로그 장치. 자세한 내용은 [`docs/feed-prototype-spec.md`](docs/feed-prototype-spec.md) |
 | MSA | auth · data · chart 서비스를 gateway 뒤에 분리. chart → data 호출은 서비스 토큰(client credentials) |
 | auth | 로그인, ES256 JWT access token(5분) + refresh token rotation, JWKS로 서비스별 검증, scope 확인 |

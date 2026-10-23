@@ -53,7 +53,7 @@ export type PostGroup = { id: string; label: string; posts: PostSummary[] };
 /** 그룹 안 순서는 들어온 순서(정렬 결과)를 그대로 둔다. 빈 그룹은 만들지 않는다. */
 export function groupPosts(
   posts: readonly PostSummary[],
-  groupBy: Exclude<ViewGroupBy, null>,
+  groupBy: ViewGroupBy,
   names: {
     status: (s: PostStatus) => string;
     user: (id: string) => string;

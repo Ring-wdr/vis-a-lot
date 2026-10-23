@@ -64,6 +64,13 @@ export const PostRefSchema = z
   })
   .openapi("PostRef");
 
+/**
+ * 이름 붙인 스키마(.openapi("…"))의 nullable. `.nullable()`은 OAS에서 allOf로 나와
+ * 생성 타입이 `Day`(null 빠짐)나 `PostRef & (… | null)`이 되므로 anyOf(T, null)로 적는다.
+ */
+export const orNull = <T extends z.ZodType>(schema: T) =>
+  z.union([schema, z.null()]);
+
 export const PathId = (name: string) =>
   z.string().openapi({ param: { name, in: "path" } });
 

@@ -66,7 +66,7 @@ export function SortPick({
   );
 }
 
-const GROUP_OPTIONS: { value: ViewGroupBy; label: string }[] = [
+const GROUP_OPTIONS: { value: ViewGroupBy | null; label: string }[] = [
   { value: null, label: "없음" },
   { value: "status", label: "상태" },
   { value: "assignee", label: "담당자" },
@@ -77,8 +77,8 @@ export function GroupByPick({
   value,
   onChange,
 }: {
-  value: ViewGroupBy;
-  onChange: (v: ViewGroupBy) => void;
+  value: ViewGroupBy | null;
+  onChange: (v: ViewGroupBy | null) => void;
 }) {
   return (
     <fieldset className="inline-flex items-center gap-1.5">

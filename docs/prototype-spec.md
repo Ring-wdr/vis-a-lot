@@ -473,15 +473,10 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - `gallery에서 편집`을 누르면 그 차트를 gallery로 가져가고, 이후 변경은 그 history 건에 이어서 기록한다.
 - gallery와 history는 작업 상태를 따로 들고 있어 tab을 오가도 각자 보던 차트가 남는다.
 - 공유는 chart 서비스의 공유(스냅숏)로 한다. `링크 복사`가 지금 차트의 설정·바뀐 item 상태·대표 PNG(고른 item, 없으면 처음 그려진 item)를 `POST /shares`로 고정하고 `/share?id=<shareId>` 링크를 복사한다. 이후 차트를 고쳐도 공유는 그대로다.
-- 공유 페이지(`/share?id=…`): 로그인 뒤 스냅숏 PNG와 제목·만든 사람·시각·데이터셋·차트 종류를 보여준다. `gallery에서 열기`(새 gallery 탭에 설정과 item 상태로 다시 그린다), `링크 복사`, `피드로 보내기`, `지우기`(만든 사용자만, 지운 링크는 '없는 공유'로 열린다). `/share`(id 없음)는 내 공유 목록이다. 상단 바의 `shares`로 간다.
+- 공유 페이지(`/share?id=…`): 로그인 뒤 스냅숏 PNG와 제목·만든 사람·시각·데이터셋·차트 종류를 보여준다. `gallery에서 열기`(새 gallery 탭에 설정과 item 상태로 다시 그린다), `링크 복사`, `피드에 올리기`, `지우기`(만든 사용자만, 지운 링크는 '없는 공유'로 열린다). `/share`(id 없음)는 내 공유 목록이다. 상단 바의 `shares`로 간다.
 - 정적 호스팅이라 공유 id는 경로가 아니라 query로 받는다. 같은 도메인의 같은 브라우저라면 공유(PGlite)를 읽어 바로 화면으로 넘어간다. 기기 간 공유는 실서버로 옮긴 뒤다.
 - 예전 hash 링크(`#s=…`, lz-string)도 계속 열린다. 샘플은 시드가 고정이라 같은 설정이면 같은 차트가 다시 만들어진다. 업로드한 데이터는 같은 브라우저에서만 열린다.
-- `피드로 보내기`는 지금 차트를 사내 데이터 공유 피드의 차트 게시물 입력으로 클립보드에 복사한다. 두 앱 모두 브라우저 안에서만 돌아 서로 API를 부를 수 없어서 JSON을 붙여넣는 방식이다.
-  - 형식: `{ source: "vis-a-lot", v: 1, kind: "chart", shareId, title, thumbnail, imageUrl, link, portable, payload: { spec, restore, dataset, item } }`. 받는 쪽은 `thumbnail`을 게시물 대표 이미지로, `payload`를 게시물의 차트 데이터로 저장하고 `link`로 차트를 다시 연다.
-  - `thumbnail`은 공유의 대표 PNG data URL이다. `link`는 공유 페이지(`/share?id=…`) 링크라, 같은 도메인에서 누르면 그 차트 화면으로 넘어간다. 공유 페이지에서도 보낼 수 있다.
-  - 업로드 데이터 차트는 `portable: false`이고, 링크가 이 브라우저에서만 열린다고 알린다. 이미지는 그대로 쓸 수 있다.
-  - 묶음은 chart 서비스 공유(`POST /shares`)에서 만든다. `shareId`와 `imageUrl`(`/shares/:shareId/png`)이 같이 들어간다. 프로토타입에서는 vis-a-lot 브라우저 안에서만 열리므로 이미지는 `thumbnail`(data URL)로도 넣는다.
-  - 형식 검사는 `readFeedExport`(`src/entities/chart/lib/feed-export.ts`)에 있다. 실서버로 옮기면 받는 쪽이 `shareId`로 `GET /shares/:shareId`를 부른다.
+- `피드에 올리기`(탭 도구 줄, 공유 페이지)는 공유를 만들고 같은 출처의 피드 전체 폼 `/feed/new?share=<shareId>`를 새 탭으로 연다. 폼은 `GET /api/feed/imports/chart-shares/{shareId}`로 제목·대표 PNG(data URL)·공유 링크를 받아 차트 게시물을 채운다. 게시물의 "vis-a-lot에서 차트 열기"는 공유 페이지로 돌아온다. 피드는 [`docs/feed-prototype-spec.md`](feed-prototype-spec.md).
 
 ---
 

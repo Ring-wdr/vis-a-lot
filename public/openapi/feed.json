@@ -92,8 +92,8 @@
         }
       },
       "GroupRole": {
-        "type": ["string", "null"],
-        "enum": ["admin", "member", null]
+        "type": "string",
+        "enum": ["admin", "member"]
       },
       "GroupMember": {
         "type": "object",
@@ -159,7 +159,14 @@
             "$ref": "#/components/schemas/StatusNames"
           },
           "myRole": {
-            "$ref": "#/components/schemas/GroupRole"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GroupRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "memberCount": {
             "type": "integer"
@@ -440,22 +447,22 @@
             "$ref": "#/components/schemas/FeedEvent"
           },
           "readAt": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Instant"
               },
               {
-                "type": ["string", "null"]
+                "type": "null"
               }
             ]
           },
           "archivedAt": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Instant"
               },
               {
-                "type": ["string", "null"]
+                "type": "null"
               }
             ]
           },
@@ -628,12 +635,12 @@
                 }
               },
               "parent": {
-                "allOf": [
+                "anyOf": [
                   {
                     "$ref": "#/components/schemas/PostRef"
                   },
                   {
-                    "type": ["object", "null"]
+                    "type": "null"
                   }
                 ]
               },
@@ -683,7 +690,7 @@
         "maximum": 4
       },
       "Day": {
-        "type": ["string", "null"],
+        "type": "string",
         "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
         "example": "2026-10-23"
       },
@@ -837,10 +844,24 @@
             "type": ["string", "null"]
           },
           "dueDate": {
-            "$ref": "#/components/schemas/Day"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Day"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "holdUntil": {
-            "$ref": "#/components/schemas/Day"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Day"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "closeReason": {
             "type": ["string", "null"]
@@ -855,12 +876,12 @@
             "type": ["string", "null"]
           },
           "pinnedAt": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Instant"
               },
               {
-                "type": ["string", "null"]
+                "type": "null"
               }
             ]
           },
@@ -871,12 +892,12 @@
             "$ref": "#/components/schemas/Instant"
           },
           "resolvedAt": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/Instant"
               },
               {
-                "type": ["string", "null"]
+                "type": "null"
               }
             ]
           },
@@ -999,7 +1020,14 @@
                 "type": ["string", "null"]
               },
               "dueDate": {
-                "$ref": "#/components/schemas/Day"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Day"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "postTypeId": {
                 "type": ["string", "null"]
@@ -1054,7 +1082,14 @@
             "default": []
           },
           "dueDate": {
-            "$ref": "#/components/schemas/Day"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Day"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "parentId": {
             "type": ["string", "null"]
@@ -1439,7 +1474,14 @@
             }
           },
           "dueDate": {
-            "$ref": "#/components/schemas/Day"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Day"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "progress": {
             "type": "integer",
@@ -1653,10 +1695,24 @@
             "$ref": "#/components/schemas/PostFilter"
           },
           "sort": {
-            "$ref": "#/components/schemas/ViewSort"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewSort"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "groupBy": {
-            "$ref": "#/components/schemas/ViewGroupBy"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewGroupBy"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "pinned": {
             "type": "boolean"
@@ -1688,7 +1744,7 @@
         "enum": ["feed", "list", "board"]
       },
       "ViewSort": {
-        "type": ["object", "null"],
+        "type": "object",
         "properties": {
           "field": {
             "$ref": "#/components/schemas/PostSortField"
@@ -1701,8 +1757,8 @@
         "required": ["field", "dir"]
       },
       "ViewGroupBy": {
-        "type": ["string", "null"],
-        "enum": ["status", "assignee", "priority", null]
+        "type": "string",
+        "enum": ["status", "assignee", "priority"]
       },
       "ViewListResponse": {
         "type": "object",
@@ -1751,10 +1807,26 @@
             "$ref": "#/components/schemas/PostFilter"
           },
           "sort": {
-            "$ref": "#/components/schemas/ViewSort"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewSort"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "groupBy": {
-            "$ref": "#/components/schemas/ViewGroupBy"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewGroupBy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "pinned": {
             "type": "boolean",

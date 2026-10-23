@@ -3542,8 +3542,8 @@ export type components = {
       on_hold?: string;
       cancelled?: string;
     };
-    /** @enum {string|null} */
-    GroupRole: "admin" | "member" | null;
+    /** @enum {string} */
+    GroupRole: "admin" | "member";
     GroupMember: {
       userId: string;
       role: components["schemas"]["GroupRole"];
@@ -3565,7 +3565,7 @@ export type components = {
       description: string | null;
       isPrivate: boolean;
       statusNames: components["schemas"]["StatusNames"];
-      myRole: components["schemas"]["GroupRole"];
+      myRole: components["schemas"]["GroupRole"] | null;
       memberCount: number;
     };
     ApiError: {
@@ -3649,8 +3649,8 @@ export type components = {
       id: string;
       kind: components["schemas"]["NotifyKind"];
       event: components["schemas"]["FeedEvent"];
-      readAt: components["schemas"]["Instant"] & (string | null);
-      archivedAt: components["schemas"]["Instant"] & (string | null);
+      readAt: components["schemas"]["Instant"] | null;
+      archivedAt: components["schemas"]["Instant"] | null;
       createdAt: components["schemas"]["Instant"];
     };
     /** @enum {string} */
@@ -3706,7 +3706,7 @@ export type components = {
       reopenCount: number;
       checklist: components["schemas"]["ChecklistItem"][];
       relations: components["schemas"]["PostRelation"][];
-      parent: components["schemas"]["PostRef"] & (Record<string, never> | null);
+      parent: components["schemas"]["PostRef"] | null;
       children: components["schemas"]["PostRef"][];
       attachments: components["schemas"]["Attachment"][];
       subscribed: boolean;
@@ -3718,7 +3718,7 @@ export type components = {
     StatusCategory: "open" | "paused" | "closed";
     Priority: number;
     /** @example 2026-10-23 */
-    Day: string | null;
+    Day: string;
     ChecklistItem: {
       id: string;
       text: string;
@@ -3766,15 +3766,15 @@ export type components = {
       requesterId: string | null;
       stakeholderIds: string[];
       parentId: string | null;
-      dueDate: components["schemas"]["Day"];
-      holdUntil: components["schemas"]["Day"];
+      dueDate: components["schemas"]["Day"] | null;
+      holdUntil: components["schemas"]["Day"] | null;
       closeReason: string | null;
       tags: string[];
       thumbnail: string | null;
-      pinnedAt: components["schemas"]["Instant"] & (string | null);
+      pinnedAt: components["schemas"]["Instant"] | null;
       createdAt: components["schemas"]["Instant"];
       updatedAt: components["schemas"]["Instant"];
-      resolvedAt: components["schemas"]["Instant"] & (string | null);
+      resolvedAt: components["schemas"]["Instant"] | null;
       commentCount: number;
       childCount: number;
       childResolvedCount: number;
@@ -3800,7 +3800,7 @@ export type components = {
         status?: components["schemas"]["PostStatus"];
         priority?: components["schemas"]["Priority"];
         assigneeId?: string | null;
-        dueDate?: components["schemas"]["Day"];
+        dueDate?: components["schemas"]["Day"] | null;
         postTypeId?: string | null;
         teamId?: string | null;
       };
@@ -3819,7 +3819,7 @@ export type components = {
       requesterId?: string | null;
       /** @default [] */
       stakeholderIds: string[];
-      dueDate?: components["schemas"]["Day"];
+      dueDate?: components["schemas"]["Day"] | null;
       parentId?: string | null;
       /** @default [] */
       checklist: string[];
@@ -3946,7 +3946,7 @@ export type components = {
       assigneeId?: string | null;
       requesterId?: string | null;
       stakeholderIds?: string[];
-      dueDate?: components["schemas"]["Day"];
+      dueDate?: components["schemas"]["Day"] | null;
       progress?: number;
       tags?: string[];
     };
@@ -4012,8 +4012,8 @@ export type components = {
       shared: boolean;
       layout: components["schemas"]["ViewLayout"];
       filter: components["schemas"]["PostFilter"];
-      sort: components["schemas"]["ViewSort"];
-      groupBy: components["schemas"]["ViewGroupBy"];
+      sort: components["schemas"]["ViewSort"] | null;
+      groupBy: components["schemas"]["ViewGroupBy"] | null;
       pinned: boolean;
       builtin: boolean;
       editable: boolean;
@@ -4024,9 +4024,9 @@ export type components = {
       field: components["schemas"]["PostSortField"];
       /** @enum {string} */
       dir: "asc" | "desc";
-    } | null;
-    /** @enum {string|null} */
-    ViewGroupBy: "status" | "assignee" | "priority" | null;
+    };
+    /** @enum {string} */
+    ViewGroupBy: "status" | "assignee" | "priority";
     ViewListResponse: {
       views: components["schemas"]["SavedView"][];
     };
@@ -4042,8 +4042,10 @@ export type components = {
       shared: boolean;
       layout: components["schemas"]["ViewLayout"];
       filter?: components["schemas"]["PostFilter"];
-      sort?: components["schemas"]["ViewSort"];
-      groupBy?: components["schemas"]["ViewGroupBy"];
+      /** @default null */
+      sort: components["schemas"]["ViewSort"] | null;
+      /** @default null */
+      groupBy: components["schemas"]["ViewGroupBy"] | null;
       /** @default false */
       pinned: boolean;
     };

@@ -105,7 +105,7 @@ function ViewBody({ view }: { view: SavedView }) {
   const groups = useGroupMap();
   const save = useSaveView();
   const [layout, setLayout] = useState<ViewLayout>(view.layout);
-  const [groupBy, setGroupBy] = useState<ViewGroupBy>(view.groupBy);
+  const [groupBy, setGroupBy] = useState<ViewGroupBy | null>(view.groupBy);
   const [busy, setBusy] = useState(false);
 
   const query = usePostQuery({
@@ -132,8 +132,8 @@ function ViewBody({ view }: { view: SavedView }) {
         shared: view.shared,
         layout,
         filter: view.filter,
-        sort: view.sort ?? undefined,
-        groupBy: groupBy ?? undefined,
+        sort: view.sort,
+        groupBy,
         pinned: view.pinned,
       });
     } catch (e) {
@@ -154,8 +154,8 @@ function ViewBody({ view }: { view: SavedView }) {
         shared: answer.shared,
         layout,
         filter: view.filter,
-        sort: view.sort ?? undefined,
-        groupBy: groupBy ?? undefined,
+        sort: view.sort,
+        groupBy,
         pinned: false,
       });
       router.push(`${FEED.view}?id=${encodeURIComponent(copy.id)}`);
