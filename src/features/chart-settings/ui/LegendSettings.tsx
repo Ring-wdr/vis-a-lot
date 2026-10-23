@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormContext, useWatch } from "react-hook-form";
 import {
   defaultLegendPosition,
   drawsLegend,
@@ -8,32 +9,34 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
-import { useChangeCommon } from "../model/use-change-common";
-import { settingsDialog } from "./settings-dialog-styles";
+import { settingsStyles } from "@/shared/ui/settings-styles";
+import type { CommonSettingsForm } from "../model/common-settings-form";
 
-const sd = settingsDialog();
+const s = settingsStyles();
 
 /**
  * 전체 설정 · 범례 위치. 모든 item에 적용되고 item에 따로 정한 위치는 덮어쓴다.
- * 바로 다시 그리는 규칙은 useChangeCommon을 따른다.
+ * 팝업의 폼 값만 바꾸고, 확인을 누르면 다음 draw에 쓸 설정이 된다.
  */
-export function LegendSettings() {
+export function LegendSettings({ readOnly }: { readOnly: boolean }) {
   const draft = useWorkspace((s) => s.draft);
-  const readOnly = useWorkspace((s) => s.readOnly);
   const columns = useColumns(draft.dataset);
-  const { common, change, pending } = useChangeCommon();
+  const { control, setValue } = useFormContext<CommonSettingsForm>();
+  const legendPosition = useWatch({ control, name: "legendPosition" });
   const legend = legendColumnOf(draft);
 
   return (
-    <div className={sd.section()}>
-      <h4 className={sd.heading()}>
+    <div className={s.section()}>
+      <h4 className={s.heading()}>
         위치
         {legend !== null && ` · ${columns.label(legend)}`}
       </h4>
       <LegendPositionPicker
-        value={common.legendPosition ?? defaultLegendPosition(draft.chartType)}
-        disabled={readOnly || pending}
-        onSelect={(legendPosition) => change({ ...common, legendPosition })}
+        value={legendPosition ?? defaultLegendPosition(draft.chartType)}
+        disabled={readOnly}
+        onSelect={(next) =>
+          setValue("legendPosition", next, { shouldDirty: true })
+        }
       />
       {!drawsLegend(draft) && (
         <p className="text-xs text-fg-muted">

@@ -14,7 +14,7 @@ export function ColorSwatches({
 }) {
   return (
     // 팔레트는 1fr 칸이라 늘리지 않으면 내용 폭(0)으로 줄어 색이 테두리에 가려진다.
-    <div className="grid grid-cols-8 gap-1.5 self-stretch">
+    <div className="grid max-w-72 grid-cols-8 gap-1.5 self-stretch">
       {PALETTE.map((c) => (
         <button
           key={c.hex}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormContext, useWatch } from "react-hook-form";
 import { legendColumnOf } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -13,19 +14,26 @@ import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { settingsStyles } from "@/shared/ui/settings-styles";
-import { useChangeCommon } from "../model/use-change-common";
-import { settingsDialog } from "./settings-dialog-styles";
+import type { CommonSettingsForm } from "../model/common-settings-form";
 
-const sd = settingsDialog();
 const s = settingsStyles();
 
 /**
  * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
- * 바로 다시 그리는 규칙은 useChangeCommon을 따른다.
+ * 팝업의 폼 값만 바꾸고, 확인을 누르면 다음 draw에 쓸 설정이 된다.
  */
-export function ColorSettings() {
+export function ColorSettings({ readOnly }: { readOnly: boolean }) {
   const draft = useWorkspace((s) => s.draft);
-  const readOnly = useWorkspace((s) => s.readOnly);
+  const { control, setValue } = useFormContext<CommonSettingsForm>();
+  const [color, legendColors] = useWatch({
+    control,
+    name: ["color", "legendColors"],
+  });
+  const common = { color, legendColors };
+  const change = (next: typeof common) => {
+    setValue("color", next.color, { shouldDirty: true });
+    setValue("legendColors", next.legendColors, { shouldDirty: true });
+  };
   const dataset = useDatasetStatus(draft.dataset);
   const columns = useColumns(draft.dataset);
   // legend 컬럼을 쓰지 않는 차트(sankey)는 남아 있는 legend 값을 보이지 않는다.
@@ -35,28 +43,25 @@ export function ColorSettings() {
     legend,
     dataset.data?.state === "ready",
   );
-  const { change, pending } = useChangeCommon();
 
   const legendColorOf = (value: string, index: number) =>
-    draft.common.legendColors?.[value] ?? defaultLegendColor(index);
+    common.legendColors?.[value] ?? defaultLegendColor(index);
 
   return (
-    <div className={sd.section()}>
+    <div className={s.section()}>
       {legend === null ? (
         <>
-          <h4 className={sd.heading()}>기본 색</h4>
+          <h4 className={s.heading()}>기본 색</h4>
           <ColorSwatches
-            value={draft.common.color}
-            disabled={readOnly || pending}
-            onSelect={(color) => change({ ...draft.common, color })}
+            value={common.color}
+            disabled={readOnly}
+            onSelect={(color) => change({ ...common, color })}
           />
-          <p className="text-xs text-fg-muted">
-            {colorName(draft.common.color)}
-          </p>
+          <p className="text-xs text-fg-muted">{colorName(common.color)}</p>
         </>
       ) : (
         <>
-          <h4 className={sd.heading()}>
+          <h4 className={s.heading()}>
             범례 값별 색 · {columns.label(legend)}
           </h4>
           {legendValues.isPending &&
@@ -77,12 +82,12 @@ export function ColorSettings() {
                     style={{ background: color }}
                     color={color}
                     label={`${value} 색 바꾸기`}
-                    disabled={readOnly || pending}
+                    disabled={readOnly}
                     onCommit={(next) =>
                       change({
-                        ...draft.common,
+                        ...common,
                         legendColors: {
-                          ...draft.common.legendColors,
+                          ...common.legendColors,
                           [value]: next,
                         },
                       })
@@ -93,14 +98,11 @@ export function ColorSettings() {
               );
             })}
           </ul>
-          {draft.common.legendColors && !readOnly && (
+          {common.legendColors && !readOnly && (
             <button
               type="button"
               className={linkButton()}
-              disabled={pending}
-              onClick={() =>
-                change({ ...draft.common, legendColors: undefined })
-              }
+              onClick={() => change({ ...common, legendColors: undefined })}
             >
               기본 색으로 되돌리기
             </button>

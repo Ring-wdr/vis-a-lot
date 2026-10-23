@@ -559,7 +559,8 @@ export const ResizeRequestSchema = z
 
 /**
  * 개별 속성. color는 legend가 없을 때의 색, legendColor는 legend 값 하나의 색, legendPosition은 legend 위치,
- * legendVisible은 legend 체크박스로 값 하나를 켜고 끈다.
+ * legendVisible은 legend 체크박스로 값 하나를 켜고 끈다. settings는 item 속성 팝업에서 확인을 누를 때
+ * 바꾼 것들을 한 번에 보내 한 번만 다시 그린다.
  * null이면 공통 속성을 따르도록 되돌린다. color: null은 legend 값별 색까지 모두 되돌린다.
  */
 export const ItemPropsRequestSchema = z
@@ -578,8 +579,19 @@ export const ItemPropsRequestSchema = z
     }),
     /** item 개별 차트 속성 전체를 바꾼다. null이면 지우고 공통 속성을 따른다. */
     z.object({ options: orNull(ChartOptionsSchema) }),
+    /** 여러 속성을 한 번에. 있는 것만 바꾸고, color: null을 먼저 적용한 뒤 legendColors를 적용한다. */
+    z.object({
+      settings: z.object({
+        color: orNull(HexColorSchema).optional(),
+        /** legend 값별 색. 값이 null이면 그 값만 공통 속성을 따른다. */
+        legendColors: z.record(z.string(), orNull(HexColorSchema)).optional(),
+        legendPosition: orNull(LegendPositionSchema).optional(),
+        options: orNull(ChartOptionsSchema).optional(),
+      }),
+    }),
   ])
   .openapi("ItemPropsRequest");
+
 
 // ── 데이터 표 / 다운로드 ─────────────────────────────────────────
 

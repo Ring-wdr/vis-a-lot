@@ -38,7 +38,9 @@ const THUMB_STATUS: Record<ItemState["status"], string> = {
 /** 다른 입력이 키를 쓰는 중이면(입력창, 팝업, 대화상자) 크게 보기 단축키를 쓰지 않는다. */
 function keyTaken(e: KeyboardEvent) {
   const target = e.target as Element | null;
-  if (target?.closest("input, textarea, select, [role='dialog']")) return true;
+  // 네이티브 <dialog>는 role 속성 없이도 대화상자라 태그로도 찾는다.
+  if (target?.closest("input, textarea, select, dialog, [role='dialog']"))
+    return true;
   return document.querySelector(":popover-open") !== null;
 }
 

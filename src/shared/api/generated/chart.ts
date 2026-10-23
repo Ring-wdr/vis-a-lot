@@ -2609,6 +2609,16 @@ export type components = {
         }
       | {
           options: components["schemas"]["ChartOptions"] | null;
+        }
+      | {
+          settings: {
+            color?: components["schemas"]["HexColor"] | null;
+            legendColors?: {
+              [key: string]: components["schemas"]["HexColor"] | null;
+            };
+            legendPosition?: components["schemas"]["LegendPosition"] | null;
+            options?: components["schemas"]["ChartOptions"] | null;
+          };
         };
     ViewRequest:
       | {

@@ -2,11 +2,10 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
 import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { ItemOptionsButton } from "@/features/chart-settings/ui/ItemOptionsDialog";
 import {
   useItemAction,
   useItemActionPending,
@@ -20,7 +19,6 @@ import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
   type ChartImage,
-  type ChartOptionsBody,
   type ColumnName,
   type ItemSize,
   type ItemStage,
@@ -31,6 +29,7 @@ import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import { ItemSettingsDialog } from "./ItemSettingsDialog";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
   query: "데이터 조회",
@@ -48,11 +47,11 @@ const busyOverlay =
 
 /**
  * item 도구는 차트 위 모서리에 띄운다. 자리를 차지하지 않으니 PNG가 카드 전체를 쓴다.
- * 평소에는 숨기고, 커서를 올리거나 포커스가 들어오거나 설정 팝업이 열려 있으면 보인다.
+ * 평소에는 숨기고, 커서를 올리거나 포커스가 들어오면 보인다.
  * 커서가 없는 기기에서는 늘 보인다.
  */
 const itemToolbar = tv({
-  base: "z-item-toolbar absolute top-1 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 group-hover/item:opacity-100 focus-within:opacity-100 has-[:popover-open]:opacity-100 hover-none:opacity-100",
+  base: "z-item-toolbar absolute top-1 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 group-hover/item:opacity-100 focus-within:opacity-100 hover-none:opacity-100",
   variants: { side: { left: "left-1", right: "right-1" } },
   defaultVariants: { side: "right" },
 });
@@ -159,6 +158,8 @@ function DrawnItem({
   const mode = useWorkspace((s) => s.mode);
   const paintTool = useWorkspace((s) => s.paintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
+  // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const commonPosition = useWorkspace(
     (s) =>
       s.current?.spec.common.legendPosition ??
@@ -287,27 +288,21 @@ function DrawnItem({
           <ItemToolbar
             item={item}
             busy={busy}
-            hasLegend={hasLegend}
-            commonPosition={commonPosition}
-            optionsSettings={
-              <ItemOptionsButton
-                itemKey={item.key}
-                label={item.label}
-                options={item.options as ChartOptionsPatch | undefined}
-                disabled={busy}
-                onChange={(options) =>
-                  action.mutate({
-                    type: "options",
-                    options: options as ChartOptionsBody | null,
-                  })
-                }
-              />
-            }
+            onOpenSettings={() => setSettingsOpen(true)}
             onAction={action.mutate}
           />
         )}
         <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
+      {settingsOpen && (
+        <ItemSettingsDialog
+          item={item}
+          hasLegend={hasLegend}
+          commonPosition={commonPosition}
+          onAction={action.mutate}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </article>
   );
 }
