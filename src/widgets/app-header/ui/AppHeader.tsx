@@ -1,6 +1,13 @@
 "use client";
 
-import { Database, History, LayoutGrid, Share2, Upload } from "lucide-react";
+import {
+  Database,
+  History,
+  LayoutGrid,
+  Newspaper,
+  Share2,
+  Upload,
+} from "lucide-react";
 import Link from "next/link";
 import { SHARE_PAGE } from "@/entities/chart/lib/share";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
@@ -73,6 +80,10 @@ export function AppHeader() {
         <Link href={SHARE_PAGE} className={navLink()}>
           <Share2 size={14} aria-hidden="true" />
           shares
+        </Link>
+        <Link href="/feed" className={navLink()}>
+          <Newspaper size={14} aria-hidden="true" />
+          feed
         </Link>
       </nav>
       <div className="ml-auto flex items-center gap-2">
