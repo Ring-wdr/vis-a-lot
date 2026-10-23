@@ -1,90 +1,139 @@
-:root {
-  /* 화면 색은 모두 이 토큰을 쓴다. body 밖에 뜨는 팝업(overlay)에서도 같은 값을 쓰도록 :root에 둔다. */
-  --ws-surface: #fcfcfb;
-  --ws-panel: #f6f6f4;
+@import "tailwindcss";
+
+/* 화면의 색·글자 크기·그림자는 이 토큰만 쓴다. Tailwind 기본 팔레트(red-500 같은)와 기본 글자 크기는 끈다.
+   body 밖에 뜨는 팝업(overlay)에서도 같은 값을 쓰도록 :root에 둔다. */
+@theme static {
+  --color-*: initial;
+  --color-surface: #fcfcfb;
+  --color-panel: #f6f6f4;
   /* 카드, 입력, 팝업처럼 바탕 위에 떠 있는 면 */
-  --ws-elevated: #ffffff;
-  --ws-border: #e7e6e2;
-  --ws-text: #0b0b0b;
-  --ws-text-secondary: #52514e;
-  --ws-text-muted: #8a8984;
-  --ws-accent: #2a78d6;
-  --ws-accent-rgb: 42 120 214;
-  --ws-accent-soft: #eef5fd;
-  --ws-accent-border: #b9d3f2;
+  --color-elevated: #ffffff;
+  --color-line: #e7e6e2;
+  --color-fg: #0b0b0b;
+  --color-fg-secondary: #52514e;
+  --color-fg-muted: #8a8984;
+  --color-accent: #2a78d6;
+  --color-accent-soft: #eef5fd;
+  --color-accent-line: #b9d3f2;
   /* accent 바탕 위 글자 */
-  --ws-on-accent: #ffffff;
-  --ws-danger: #b42318;
-  --ws-shadow-rgb: 11 11 11;
-  --ws-backdrop: rgb(11 11 11 / 30%);
+  --color-on-accent: #ffffff;
+  --color-danger: #b42318;
+  --color-shadow: #0b0b0b;
+  --color-backdrop: rgb(11 11 11 / 30%);
   /* 다시 그리는 동안 item을 덮는 반투명 막 */
-  --ws-overlay: rgb(252 252 251 / 70%);
+  --color-overlay: rgb(252 252 251 / 70%);
 
   /* 서버가 그린 PNG 위에 겹치는 표시(도형 미리보기, hover 표시).
      PNG는 테마와 상관없이 밝은 바탕이라 다크 모드에서도 바꾸지 않는다. */
-  --chart-ink: #0b0b0b;
-  --chart-ink-soft: rgb(11 11 11 / 6%);
-  --chart-paper: #ffffff;
+  --color-chart-ink: #0b0b0b;
+  --color-chart-ink-soft: rgb(11 11 11 / 6%);
+  --color-chart-paper: #ffffff;
 
-  --background: var(--ws-surface);
-  --foreground: var(--ws-text);
+  /* 글자 크기는 px 그대로 이름 짓는다 (text-12 = 12px). 줄 높이는 정하지 않는다. */
+  --text-*: initial;
+  --text-10: 10px;
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-16: 16px;
+  --text-20: 20px;
+
+  --shadow-*: initial;
+  --shadow-xs: 0 1px 3px
+    color-mix(in srgb, var(--color-shadow) 20%, transparent);
+  --shadow-sm: 0 2px 8px
+    color-mix(in srgb, var(--color-shadow) 10%, transparent);
+  --shadow-md: 0 4px 12px
+    color-mix(in srgb, var(--color-shadow) 10%, transparent);
+  --shadow-lg: 0 6px 20px
+    color-mix(in srgb, var(--color-shadow) 12%, transparent);
+  --shadow-xl: 0 8px 24px
+    color-mix(in srgb, var(--color-shadow) 12%, transparent);
+  --shadow-card: 0 8px 24px
+    color-mix(in srgb, var(--color-shadow) 6%, transparent);
+  /* 오른쪽에서 겹쳐 여는 필터 패널 */
+  --shadow-drawer: -8px 0 24px
+    color-mix(in srgb, var(--color-shadow) 12%, transparent);
+
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ws-surface: #141413;
-    --ws-panel: #1b1b1a;
-    --ws-elevated: #232322;
-    --ws-border: #363632;
-    --ws-text: #ecebe8;
-    --ws-text-secondary: #b5b4ae;
-    --ws-text-muted: #8a8984;
-    --ws-accent: #4d8fe6;
-    --ws-accent-rgb: 77 143 230;
-    --ws-accent-soft: #1c2a3c;
-    --ws-accent-border: #2f4c72;
-    --ws-on-accent: #ffffff;
-    --ws-danger: #f07a70;
-    --ws-shadow-rgb: 0 0 0;
-    --ws-backdrop: rgb(0 0 0 / 55%);
-    --ws-overlay: rgb(20 20 19 / 70%);
+    --color-surface: #141413;
+    --color-panel: #1b1b1a;
+    --color-elevated: #232322;
+    --color-line: #363632;
+    --color-fg: #ecebe8;
+    --color-fg-secondary: #b5b4ae;
+    --color-fg-muted: #8a8984;
+    --color-accent: #4d8fe6;
+    --color-accent-soft: #1c2a3c;
+    --color-accent-line: #2f4c72;
+    --color-on-accent: #ffffff;
+    --color-danger: #f07a70;
+    --color-shadow: #000000;
+    --color-backdrop: rgb(0 0 0 / 55%);
+    --color-overlay: rgb(20 20 19 / 70%);
+    color-scheme: dark;
   }
 }
 
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
+/* Tailwind로 옮기는 동안 남은 CSS Modules가 쓰는 이름. 다 옮기면 지운다. */
+:root {
+  --ws-surface: var(--color-surface);
+  --ws-panel: var(--color-panel);
+  --ws-elevated: var(--color-elevated);
+  --ws-border: var(--color-line);
+  --ws-text: var(--color-fg);
+  --ws-text-secondary: var(--color-fg-secondary);
+  --ws-text-muted: var(--color-fg-muted);
+  --ws-accent: var(--color-accent);
+  --ws-accent-rgb: 42 120 214;
+  --ws-accent-soft: var(--color-accent-soft);
+  --ws-accent-border: var(--color-accent-line);
+  --ws-on-accent: var(--color-on-accent);
+  --ws-danger: var(--color-danger);
+  --ws-shadow-rgb: 11 11 11;
+  --ws-backdrop: var(--color-backdrop);
+  --ws-overlay: var(--color-overlay);
+  --chart-ink: var(--color-chart-ink);
+  --chart-ink-soft: var(--color-chart-ink-soft);
+  --chart-paper: var(--color-chart-paper);
 }
 
 @media (prefers-color-scheme: dark) {
+  :root {
+    --ws-accent-rgb: 77 143 230;
+    --ws-shadow-rgb: 0 0 0;
+  }
+}
+
+@layer base {
   html {
-    color-scheme: dark;
+    height: 100%;
+  }
+
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: var(--color-fg);
+    background: var(--color-surface);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    text-decoration: none;
   }
 }

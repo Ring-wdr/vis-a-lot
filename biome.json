@@ -16,6 +16,12 @@
       "!public/mockServiceWorker.js"
     ]
   },
+  "plugins": ["./biome-plugins/tailwind-classes.grit"],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -24,7 +30,16 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "nursery": {
+        "useSortedClasses": {
+          "level": "error",
+          "fix": "safe",
+          "options": {
+            "functions": ["cn", "tv"]
+          }
+        }
+      }
     },
     "domains": {
       "next": "recommended",
