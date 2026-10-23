@@ -269,7 +269,7 @@ function DatastoreBody({
           className="grid w-full min-w-160 border-collapse text-ui"
           aria-labelledby={titleId}
         >
-          <thead className="sticky top-0 z-1 grid bg-panel">
+          <thead className="z-sticky sticky top-0 grid bg-panel">
             <tr className={row}>
               <th className={head}>번호</th>
               <th className={head}>이름</th>

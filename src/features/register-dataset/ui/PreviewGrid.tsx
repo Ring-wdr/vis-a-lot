@@ -9,13 +9,13 @@ const AUTO = "auto";
 
 const cell =
   "min-w-30 max-w-55 truncate border-line border-r border-b px-2 py-1 data-excluded:opacity-40";
-const headCell = cn(cell, "sticky z-1 bg-panel text-left");
+const headCell = cn(cell, "z-sticky sticky bg-panel text-left");
 const rowHead = cn(
   cell,
-  "sticky left-0 z-2 w-11 min-w-11 bg-panel text-center font-normal text-fg-muted",
+  "z-sticky-col sticky left-0 w-11 min-w-11 bg-panel text-center font-normal text-fg-muted",
 );
 // 머리의 행 번호 칸은 가로·세로 sticky 칸 위에 온다.
-const headRowHead = cn(rowHead, "z-3");
+const headRowHead = cn(rowHead, "z-sticky-corner");
 // 첫 줄(이름)은 높이를 정해 두고, 둘째 줄(타입)을 그만큼 내려 붙인다.
 const firstRow = "top-0 h-7.5";
 const secondRow = "top-7.5";

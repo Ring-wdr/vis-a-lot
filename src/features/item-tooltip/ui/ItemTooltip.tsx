@@ -280,7 +280,7 @@ export function ItemTooltip({
 
 /** body에 portal로 띄운 툴팁: item 카드 밖으로 나와도 잘리지 않는다. 폭은 TOOLTIP_WIDTH와 같아야 한다. */
 const tooltipBox =
-  "pointer-events-none fixed z-1000 w-50 rounded-md border border-line bg-elevated px-2.5 py-2 text-xs shadow-md";
+  "pointer-events-none fixed z-tooltip w-50 rounded-md border border-line bg-elevated px-2.5 py-2 text-xs shadow-md";
 const tooltipRow = "flex justify-between gap-3 text-fg-secondary";
 const tooltipValue = "text-fg tabular-nums";
 

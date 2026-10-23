@@ -4,6 +4,7 @@ language js
 // - 0.25 단계(p-1.25, h-9.75): 4px 격자를 벗어난다. 0.5 단계까지만 쓴다
 // - [...] 안의 px(w-[960px]): rem으로 쓴다. 1px 보정(align-[-1px])은 된다
 // - rounded-[…], text-[…]: 토큰(rounded-sm, text-ui)을 쓴다
+// - 숫자 z-index(z-10, z-[5]): 쌓임 토큰(z-popover)을 쓴다
 or {
   JsxAttribute() as $host where { $host <: r"(?s)className=.*" },
   `cn($args)` as $host,
@@ -14,7 +15,7 @@ or {
     JsStringLiteralExpression() as $s,
     JsTemplateChunkElement() as $s
   } where {
-    $s <: r"(?s).*(?:(?:^|[\s\"'`:])-?[a-z][a-z0-9-]*-\d+\.(?:25|75)(?:[\s\"'`]|$)|\[[^\]\s]*\d{2,}px|\[[^\]\s]*[2-9]px|(?:^|[\s\"'`:])rounded(?:-[a-z]+)?-\[|(?:^|[\s\"'`:])text-\[\d).*",
-    register_diagnostic(span=$s, message="Tailwind: 0.25 단계 간격, [...] 안의 px, 임의 radius·글자 크기 대신 테마 축척(rem 토큰)을 쓴다.")
+    $s <: r"(?s).*(?:(?:^|[\s\"'`:])-?[a-z][a-z0-9-]*-\d+\.(?:25|75)(?:[\s\"'`]|$)|\[[^\]\s]*\d{2,}px|\[[^\]\s]*[2-9]px|(?:^|[\s\"'`:])rounded(?:-[a-z]+)?-\[|(?:^|[\s\"'`:])text-\[\d|(?:^|[\s\"'`:])-?z-(?:\d|\[)).*",
+    register_diagnostic(span=$s, message="Tailwind: 0.25 단계 간격, [...] 안의 px, 임의 radius·글자 크기, 숫자 z-index 대신 테마 토큰을 쓴다.")
   }
 }

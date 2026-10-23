@@ -10,6 +10,7 @@
 - 여러 곳이 같이 쓰는 모양은 `tv()` recipe로 모은다(`button`, `toolButton`, `selectStyles`, `segmented` …)
 - 간격·radius를 테마 축척에 맞췄다. 줄 높이가 토큰 값이 되어 필드와 메뉴가 1–3px씩 높아졌다
 - 팝업 하단 primary 버튼이 secondary와 같은 높이가 된다
+- z-index를 쓰임새 이름 토큰(`z-popover`, `z-sticky` …)으로 바꾸고 숫자 z-index를 막는다
 
 ### 개발 환경
 - Biome 2.6: Tailwind 규칙(클래스 정렬, 축약, v3 이름, 팔레트 색, 조합한 클래스 문자열)과 GritQL 플러그인 두 개(자손 변형·토큰 밖 색·`!important`, 축척 밖 값)

@@ -52,7 +52,7 @@ const busyOverlay =
  * 커서가 없는 기기에서는 늘 보인다.
  */
 const itemToolbar = tv({
-  base: "absolute top-1 z-3 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 group-hover/item:opacity-100 focus-within:opacity-100 has-[:popover-open]:opacity-100 hover-none:opacity-100",
+  base: "z-item-toolbar absolute top-1 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 group-hover/item:opacity-100 focus-within:opacity-100 has-[:popover-open]:opacity-100 hover-none:opacity-100",
   variants: { side: { left: "left-1", right: "right-1" } },
   defaultVariants: { side: "right" },
 });

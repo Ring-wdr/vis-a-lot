@@ -27,7 +27,7 @@ const cell =
   "h-7.5 w-35 overflow-hidden text-ellipsis whitespace-nowrap border-line border-b px-2.5 text-left";
 const numeric = "text-right tabular-nums";
 const rowNumber = "w-16 text-fg-muted tabular-nums";
-const head = "sticky top-0 z-1 bg-panel";
+const head = "sticky top-0 z-sticky bg-panel";
 const rowHover = "group-hover/row:bg-surface";
 
 /** 서버에서 한 번에 받는 행 수 */

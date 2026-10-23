@@ -8,7 +8,7 @@ import type { ItemState } from "@/shared/api/types";
 import { showPrompt } from "@/shared/ui/AlertDialog";
 
 // item 우클릭 메뉴 (Base UI ContextMenu)
-const menuPositioner = "z-20 outline-0";
+const menuPositioner = "z-menu outline-0";
 const menu =
   "min-w-45 rounded-lg border border-line bg-elevated p-1 text-ui shadow-xl outline-0";
 const menuItem =

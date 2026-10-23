@@ -20,6 +20,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 | radius | `rounded-xs`(2) `rounded-sm`(4) `rounded-md`(6) `rounded-lg`(8) `rounded-xl`(12) `rounded-full` |
 | 색 | 쓰임새 이름 토큰만 쓴다: `surface` `panel` `elevated` `line` `fg` `fg-secondary` `fg-muted` `accent` `accent-soft` `accent-line` `on-accent` `danger` `overlay` `backdrop` `chart-*`, 섞은 색 `panel-subtle/hover/strong/active` `line-strong` `accent-soft-strong`. 투명도는 `bg-danger/12`처럼 적는다. 기본 팔레트(`bg-red-500`)는 꺼 두었다. |
 | 그림자 | `shadow-xs` ~ `shadow-xl`, `shadow-card`, `shadow-drawer` |
+| 쌓임 순서 | 숫자(`z-10`) 대신 토큰을 쓴다. 한 컴포넌트 안: `z-raised` `z-sticky` `z-sticky-col` `z-sticky-corner` `z-overlay` `z-item-toolbar`. 화면 전체 층: `z-drawer`(10) `z-menu`(20) `z-popover`(50) `z-tooltip`(1000) |
 | px | 1px 테두리·hairline 보정(`border`, `align-[-1px]`)에만 쓴다. |
 | 임의 값 `[...]` | 축척으로 나타낼 수 없는 구조용 값에만 쓴다: grid 템플릿, `min()`/`calc()`, `ch`, `dvh`. 그 안의 길이도 rem으로 적는다(`w-[min(60rem,calc(100vw-2rem))]`). breakpoint도 rem으로 적는다. |
 | 다크 모드 | `prefers-color-scheme`를 따른다. `:root`에서 같은 토큰 변수의 값을 바꾼다. |
@@ -43,7 +44,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 |---|---|
 | Biome `tailwind` 규칙 (`app/globals.css`를 읽는다) | 클래스 순서(`useTailwindSortedClasses`), 축약 가능한 쌍(`w-4 h-4` → `size-4`), v3 이름, 기본 팔레트 색, 조합한 클래스 문자열 |
 | `biome-plugins/tailwind-classes.grit` | `[&_…]`·`*:` 변형, 토큰 밖 색(`bg-[#…]`), `!important` |
-| `biome-plugins/tailwind-scale.grit` | 0.25 단계 간격, `[...]` 안의 px(1px 제외), 임의 radius·글자 크기 |
+| `biome-plugins/tailwind-scale.grit` | 0.25 단계 간격, `[...]` 안의 px(1px 제외), 임의 radius·글자 크기, 숫자 z-index |
 | Biome `noRestrictedImports` | `*.module.css` import |
 | Stylelint (`*.css`) | 결합자·태그·전체·id 선택자, `:global`, `!important`, `globals.css` 밖의 색 값 |
 

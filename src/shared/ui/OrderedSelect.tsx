@@ -200,7 +200,7 @@ export function OrderedSelect<T extends string>({
             // 고를 때마다 칩 줄이 늘어 트리거 높이가 바뀐다. 따라가면 드래그 중 목록이 포인터 밑에서
             // 밀려 엉뚱한 항목이 판정되므로, 열려 있는 동안은 처음 위치에 둔다.
             disableAnchorTracking
-            className="z-50"
+            className="z-popover"
           >
             <Combobox.Popup
               className="w-[max(var(--anchor-width),13.75rem)] max-w-(--available-width) overflow-hidden rounded-lg border border-line bg-elevated text-ui text-fg shadow-lg"

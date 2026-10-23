@@ -35,7 +35,7 @@ export function LegendCheckboxes({
 
   return (
     // legend 체크박스: 색 표시(●) 가운데에 겹친다. 색 버튼보다 위에 둔다.
-    <div className="pointer-events-none absolute inset-0 z-1">
+    <div className="z-raised pointer-events-none absolute inset-0">
       {legend.entries.map((entry) => (
         <input
           key={entry.value}

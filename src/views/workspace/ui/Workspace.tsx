@@ -150,7 +150,7 @@ export function Workspace() {
         {filterOpen && (
           // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
           // 모든 item을 새 크기로 다시 그리게 된다.
-          <div className="z-10 col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
+          <div className="z-drawer col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
             <FilterPanel />
           </div>
         )}

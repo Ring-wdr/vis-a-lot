@@ -18,7 +18,7 @@ export const selectStyles = tv({
     count:
       "inline-grid h-4.5 min-w-4.5 flex-none place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent tabular-nums",
     chevron: "inline-grid flex-none place-items-center text-fg-muted",
-    positioner: "z-50 outline-none",
+    positioner: "z-popover outline-none",
     popup:
       "max-h-[min(20rem,var(--available-height))] w-[max(var(--anchor-width),10rem)] max-w-(--available-width) overflow-x-hidden overflow-y-auto rounded-lg border border-line bg-elevated py-1 text-ui text-fg shadow-lg outline-none",
     item: "flex h-7 cursor-default items-center gap-1.5 px-2 outline-none select-none data-disabled:text-fg-muted data-highlighted:not-data-selected:bg-panel data-selected:bg-accent-soft",

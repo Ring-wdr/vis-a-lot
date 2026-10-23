@@ -253,7 +253,7 @@ export function ChartGrid() {
                 {moving && (
                   // 스크롤 중 보이는 페이지와 조회한 페이지가 다를 때 grid를 덮는 안내
                   <div
-                    className="absolute inset-0 z-2 flex items-center justify-center gap-2 rounded-md bg-overlay text-sm text-fg-secondary tabular-nums"
+                    className="z-overlay absolute inset-0 flex items-center justify-center gap-2 rounded-md bg-overlay text-sm text-fg-secondary tabular-nums"
                     aria-live="polite"
                   >
                     <Spinner />

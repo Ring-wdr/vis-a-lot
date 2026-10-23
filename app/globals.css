@@ -111,6 +111,20 @@
     }
   }
 
+  /* 쌓임 순서. 숫자 z-index(z-10)는 쓰지 않는다.
+     앞의 다섯은 한 컴포넌트 안의 순서, 뒤의 넷은 화면 전체 층이다. */
+  --z-index-*: initial;
+  --z-index-raised: 1; /* 같은 레이어 안에서 한 단계 위 (legend 체크박스) */
+  --z-index-sticky: 1; /* 표의 고정 머리 줄 */
+  --z-index-sticky-col: 2; /* 표의 고정 열(행 번호) */
+  --z-index-sticky-corner: 3; /* 고정 머리 줄과 고정 열이 겹치는 칸 */
+  --z-index-overlay: 2; /* grid를 덮는 안내 (페이지 이동 중) */
+  --z-index-item-toolbar: 3; /* item 위에 띄우는 도구 */
+  --z-index-drawer: 10; /* 차트 영역 위에 겹치는 필터 패널 */
+  --z-index-menu: 20; /* 우클릭 메뉴 */
+  --z-index-popover: 50; /* select 목록 */
+  --z-index-tooltip: 1000; /* body에 띄우는 차트 툴팁 */
+
   --font-sans: Arial, Helvetica, sans-serif;
   /* 원본 미리보기처럼 Geist 없이 시스템 고정폭 글꼴만 쓰는 곳 */
   --font-code: ui-monospace, SFMono-Regular, Menlo, monospace;
