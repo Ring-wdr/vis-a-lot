@@ -464,3 +464,27 @@ export type HistoryDetail = HistorySummary & {
 };
 
 export type HistoryListResponse = { entries: HistorySummary[] };
+
+// ── 공유 ───────────────────────────────────────────────────────────
+
+/** 다른 서비스에 넘길 차트 스냅숏. 만든 시점의 설정·item 상태와 대표 PNG */
+export type Share = {
+  id: string;
+  createdAt: number;
+  /** 만든 사용자(access token의 sub) */
+  createdBy: string;
+  /** 만든 사용자의 표시 이름 */
+  createdByName: string;
+  title: string;
+  dataset: string;
+  spec: ChartSpec;
+  restore: Record<string, ItemRestore>;
+  item: { key: string; label: string };
+  image: ChartImage;
+};
+
+export type CreateShareRequest = {
+  chartId: string;
+  itemKey?: string;
+  title: string;
+};

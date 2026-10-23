@@ -592,7 +592,6 @@ export const ItemPropsRequestSchema = z
   ])
   .openapi("ItemPropsRequest");
 
-
 // ── 데이터 표 / 다운로드 ─────────────────────────────────────────
 
 export const ItemRowsRequestSchema = z
@@ -1158,6 +1157,41 @@ export const HistoryDetailSchema = HistorySummarySchema.extend({
 export const HistoryListResponseSchema = z
   .object({ entries: z.array(HistorySummarySchema) })
   .openapi("HistoryListResponse");
+
+// ── 공유 ───────────────────────────────────────────────────────
+
+export const CreateShareRequestSchema = z
+  .object({
+    chartId: z.string(),
+    /** 대표 이미지로 쓸 item. 없으면 처음 그려진 item */
+    itemKey: z.string().optional(),
+    /** 받는 쪽(피드 게시물 제목 등)에 보일 이름. 컬럼 라벨을 아는 화면이 정한다. */
+    title: z.string().min(1).max(200),
+  })
+  .openapi("CreateShareRequest");
+
+/** 공유 한 건: 만든 시점의 설정·item 상태와 대표 PNG를 고정해 둔 스냅숏 */
+export const ShareSchema = z
+  .object({
+    id: z.string(),
+    createdAt: z.number(),
+    /** 만든 사용자(access token의 sub) */
+    createdBy: z.string(),
+    /** 만든 사용자의 표시 이름 */
+    createdByName: z.string(),
+    title: z.string(),
+    dataset: DatasetIdSchema,
+    spec: ChartSpecSchema,
+    restore: z.record(z.string(), ItemRestoreSchema),
+    item: z.object({ key: z.string(), label: z.string() }),
+    /** 대표 PNG. url은 인증 없이 여는 `/shares/{id}/png` */
+    image: ChartImageSchema,
+  })
+  .openapi("Share");
+
+export const ShareListResponseSchema = z
+  .object({ shares: z.array(ShareSchema) })
+  .openapi("ShareListResponse");
 
 // ── 운영 ───────────────────────────────────────────────────────
 

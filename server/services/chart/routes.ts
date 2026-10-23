@@ -1,4 +1,4 @@
-// chart 서비스 API 정의: 그리기 job, item 조작(확대·도형·색), 툴팁, PNG, history.
+// chart 서비스 API 정의: 그리기 job, item 조작(확대·도형·색), 툴팁, PNG, history, 공유.
 
 import { createRoute, z } from "@hono/zod-openapi";
 import { BEARER, requireAuth } from "../common/auth";
@@ -9,6 +9,7 @@ import {
   CommonPropsRequestSchema,
   CreateChartRequestSchema,
   CreateChartResponseSchema,
+  CreateShareRequestSchema,
   DebugRenderRequestSchema,
   DebugRenderResponseSchema,
   DeletionRequestSchema,
@@ -28,6 +29,8 @@ import {
   ResizeRequestSchema,
   SampleRowsResponseSchema,
   SelectionRequestSchema,
+  ShareListResponseSchema,
+  ShareSchema,
   TooltipRequestSchema,
   TooltipResponseSchema,
   ViewRequestSchema,
@@ -448,6 +451,85 @@ export const historyDetail = createRoute({
     200: jsonResponse(HistoryDetailSchema, "history 한 건"),
     ...authErrors,
     404: errorResponse("모르는 history"),
+  },
+});
+
+// ── 공유 ───────────────────────────────────────────────────────
+// 다른 서비스(데이터 공유 피드 등)에 넘길 차트 스냅숏. 만든 뒤 차트를 고쳐도 공유는 바뀌지 않는다.
+
+const ShareParams = z.object({ shareId: pathParam("shareId") });
+
+export const createShare = createRoute({
+  method: "post",
+  path: "/shares",
+  tags: ["shares"],
+  summary: "차트의 지금 설정·item 상태와 대표 PNG를 공유로 고정",
+  ...write,
+  request: { body: jsonBody(CreateShareRequestSchema) },
+  responses: {
+    201: jsonResponse(ShareSchema, "만든 공유"),
+    ...badRequest,
+    ...authErrors,
+    404: errorResponse("모르는 차트 또는 item"),
+    ...conflict("대표로 쓸 item이 아직 그려지지 않음"),
+  },
+});
+
+export const listShares = createRoute({
+  method: "get",
+  path: "/shares",
+  tags: ["shares"],
+  summary: "내가 만든 공유 목록 (최근 순)",
+  ...read,
+  responses: {
+    200: jsonResponse(ShareListResponseSchema, "목록"),
+    ...authErrors,
+  },
+});
+
+export const getShare = createRoute({
+  method: "get",
+  path: "/shares/{shareId}",
+  tags: ["shares"],
+  summary: "공유 한 건",
+  ...read,
+  request: { params: ShareParams },
+  responses: {
+    200: jsonResponse(ShareSchema, "공유"),
+    ...authErrors,
+    404: errorResponse("모르는 공유"),
+  },
+});
+
+/** item PNG와 같이 `<img src>`로 열도록 인증 없이 둔다. shareId는 추측할 수 없는 UUID다. */
+export const sharePng = createRoute({
+  method: "get",
+  path: "/shares/{shareId}/png",
+  tags: ["shares"],
+  summary: "공유의 대표 PNG",
+  request: { params: ShareParams },
+  responses: {
+    200: {
+      description: "PNG",
+      content: {
+        "image/png": { schema: z.string().openapi({ format: "binary" }) },
+      },
+    },
+    404: { description: "없음" },
+  },
+});
+
+export const deleteShare = createRoute({
+  method: "delete",
+  path: "/shares/{shareId}",
+  tags: ["shares"],
+  summary: "공유 지우기 (만든 사용자만)",
+  ...write,
+  request: { params: ShareParams },
+  responses: {
+    204: { description: "지움" },
+    ...authErrors,
+    404: errorResponse("모르는 공유이거나 만든 사용자가 아님"),
   },
 });
 

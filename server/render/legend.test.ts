@@ -19,16 +19,16 @@ const legend = (position: LegendInput["position"]): LegendInput => ({
 
 describe("framePlot", () => {
   // scatter metadata는 plot 폭으로 픽셀 칸 번호를 매기므로 소수가 섞이면 점을 하나도 못 찾는다.
-  it.each([
-    "left",
-    "right",
-  ] as const)("%s legend가 폭 상한에 걸려도 그림 영역은 정수 픽셀이다", (position) => {
-    for (const width of [227, 255, 301, 333]) {
-      const plot = framePlot(ctx, width, 200, 20, legend(position));
-      expect(Number.isInteger(plot.left)).toBe(true);
-      expect(Number.isInteger(plot.width)).toBe(true);
-    }
-  });
+  it.each(["left", "right"] as const)(
+    "%s legend가 폭 상한에 걸려도 그림 영역은 정수 픽셀이다",
+    (position) => {
+      for (const width of [227, 255, 301, 333]) {
+        const plot = framePlot(ctx, width, 200, 20, legend(position));
+        expect(Number.isInteger(plot.left)).toBe(true);
+        expect(Number.isInteger(plot.width)).toBe(true);
+      }
+    },
+  );
 });
 
 /** 그리기 호출을 받아 넘기는 가짜 canvas */
