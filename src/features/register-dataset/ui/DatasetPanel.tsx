@@ -9,7 +9,8 @@ import {
 } from "@/shared/api/queries";
 import type { DatasetId } from "@/shared/api/types";
 import { Select } from "@/shared/ui/Select";
-import styles from "./DatasetPanel.module.css";
+
+const cell = "border-line border-b px-2 py-1 text-left last:text-right";
 
 /** 샘플 데이터 규모 고르기 (구조 검증 페이지). 고르면 없을 때 바로 생성을 시작한다. */
 export function DatasetPanel({
@@ -35,7 +36,7 @@ export function DatasetPanel({
   }, [status?.state, dataset, mutate]);
 
   return (
-    <section className={styles.panel}>
+    <section className="flex max-w-90 flex-col gap-2">
       <Select
         label="데이터 규모"
         value={dataset}
@@ -47,8 +48,8 @@ export function DatasetPanel({
       />
 
       {status?.state === "generating" && (
-        <div className={styles.progress}>
-          <progress value={status.done} max={status.total} />
+        <div className="flex flex-col gap-1 text-xs text-fg-muted">
+          <progress className="w-full" value={status.done} max={status.total} />
           <span>
             {status.phase === "analyze"
               ? "컬럼 통계 계산 중…"
@@ -58,7 +59,7 @@ export function DatasetPanel({
       )}
 
       {status?.state === "ready" && status.generateMs !== undefined && (
-        <p className={styles.meta}>
+        <p className="text-xs text-fg-muted">
           {status.total.toLocaleString()}행 · 생성{" "}
           {(status.generateMs / 1000).toFixed(1)}초
         </p>
@@ -68,20 +69,22 @@ export function DatasetPanel({
       {generate.error && <p role="alert">{generate.error.message}</p>}
 
       {showColumns && columns.data && (
-        <table className={styles.columns}>
+        <table className="border-collapse text-xs">
           <thead>
             <tr>
-              <th>컬럼</th>
-              <th>타입</th>
-              <th>고유값</th>
+              <th className={cell}>컬럼</th>
+              <th className={cell}>타입</th>
+              <th className={cell}>고유값</th>
             </tr>
           </thead>
           <tbody>
             {columns.data.columns.map((c) => (
               <tr key={c.name}>
-                <td title={c.name}>{c.label}</td>
-                <td>{COLUMN_TYPE_LABELS[c.type]}</td>
-                <td>{c.distinct?.toLocaleString() ?? "–"}</td>
+                <td className={cell} title={c.name}>
+                  {c.label}
+                </td>
+                <td className={cell}>{COLUMN_TYPE_LABELS[c.type]}</td>
+                <td className={cell}>{c.distinct?.toLocaleString() ?? "–"}</td>
               </tr>
             ))}
           </tbody>

@@ -8,8 +8,12 @@ import {
   openDatastoreDialog,
   openUploadThenDatastore,
 } from "@/features/register-dataset/ui/DatastoreDialog";
-import styles from "@/shared/ui/workspace.module.css";
-import headerStyles from "./AppHeader.module.css";
+import { tv } from "@/shared/lib/tw";
+
+// 고른 화면 버튼도 hover 중에는 hover 바탕을 보인다.
+const navButton = tv({
+  base: "inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-2.5 text-ui text-fg-secondary enabled:hover:bg-panel disabled:cursor-not-allowed disabled:opacity-45 aria-selected:border-line aria-selected:font-semibold aria-selected:text-fg aria-selected:not-hover:bg-elevated",
+});
 
 const TAB_UI = {
   gallery: { label: "gallery", Icon: LayoutGrid },
@@ -25,12 +29,12 @@ export function AppHeader() {
   const tabs = useTabsStore();
   const locked = useTabs((s) => s.locked);
   return (
-    <header className={styles.header}>
-      <span className={styles.brand}>vis-a-lot</span>
-      <nav className={headerStyles.nav} aria-label="화면">
+    <header className="col-span-full flex items-center gap-6 border-b border-line px-4">
+      <span className="w-57 text-base font-bold">vis-a-lot</span>
+      <nav className="flex items-center gap-1" aria-label="화면">
         <button
           type="button"
-          className={headerStyles.navButton}
+          className={navButton()}
           aria-haspopup="dialog"
           onClick={openUploadThenDatastore}
         >
@@ -39,7 +43,7 @@ export function AppHeader() {
         </button>
         <button
           type="button"
-          className={headerStyles.navButton}
+          className={navButton()}
           aria-haspopup="dialog"
           onClick={() => openDatastoreDialog()}
         >
@@ -48,7 +52,7 @@ export function AppHeader() {
         </button>
         <div
           role="tablist"
-          className={headerStyles.tabs}
+          className="flex gap-1"
           title={locked ? TABS_LOCKED_HINT : undefined}
         >
           {VIEWS.map((t) => {
@@ -58,7 +62,7 @@ export function AppHeader() {
                 key={t}
                 type="button"
                 role="tab"
-                className={headerStyles.navButton}
+                className={navButton()}
                 aria-selected={view === t}
                 disabled={locked && view !== t}
                 onClick={() => tabs.getState().setView(t)}
@@ -70,7 +74,7 @@ export function AppHeader() {
           })}
         </div>
       </nav>
-      <div className={styles.headerActions}>
+      <div className="ml-auto flex items-center gap-2">
         <UserMenu />
       </div>
     </header>

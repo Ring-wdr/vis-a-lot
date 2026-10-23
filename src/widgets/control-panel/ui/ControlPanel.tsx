@@ -31,7 +31,6 @@ import { AGG_FNS, AGG_LABELS } from "@/shared/config/dataset";
 import { LoadingText } from "@/shared/ui/Loading";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import { Select, type SelectOption } from "@/shared/ui/Select";
-import styles from "@/shared/ui/workspace.module.css";
 
 /** legend 없음. select는 빈 값을 '고르지 않음'으로 보므로 컬럼 이름이 될 수 없는 값을 쓴다. */
 const NO_LEGEND = "\u0000none";
@@ -91,14 +90,18 @@ export function ControlPanel() {
     toOptions(columnsOfTypes(columns ?? [], types));
 
   return (
-    <fieldset className={styles.controls} disabled={readOnly}>
+    // 다시 보기 전용이면 통째로 막는다. 안쪽 링크 버튼은 group/controls로 숨긴다.
+    <fieldset
+      className="group/controls flex min-w-0 flex-col gap-3.5"
+      disabled={readOnly}
+    >
       <DatasetSelect
         dataset={draft.dataset}
         onChange={(dataset) => updateDraft({ dataset })}
       />
 
       {/* 차트 종류가 늘어도 한 줄 높이를 지키도록 버튼 격자 대신 select 둘을 나란히 둔다. */}
-      <div className={styles.chartPicker}>
+      <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-2">
         <Select
           label="차트"
           value={draft.chartType}

@@ -2,11 +2,10 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
 import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { ItemOptionsButton } from "@/features/chart-settings/ui/ItemOptionsDialog";
 import {
   useItemAction,
   useItemActionPending,
@@ -20,16 +19,17 @@ import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
   type ChartImage,
-  type ChartOptionsBody,
   type ColumnName,
   type ItemSize,
   type ItemStage,
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
+import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { itemButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
+import { ItemSettingsDialog } from "./ItemSettingsDialog";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
   query: "데이터 조회",
@@ -37,6 +37,24 @@ const STAGE_LABELS: Record<ItemStage, string> = {
   render: "렌더링",
   encode: "PNG 변환",
 };
+
+// 누른 item(selected)은 다운로드·데이터 표의 대상이다. 크게 보기에서는 남은 자리를 채운다.
+const itemCard =
+  "group/item relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-surface data-selected:border-accent data-selected:ring-1 data-selected:ring-accent";
+const itemBody = "relative flex min-h-0 flex-1 items-center justify-center";
+const busyOverlay =
+  "absolute inset-0 flex cursor-progress items-center justify-center bg-overlay";
+
+/**
+ * item 도구는 차트 위 모서리에 띄운다. 자리를 차지하지 않으니 PNG가 카드 전체를 쓴다.
+ * 평소에는 숨기고, 커서를 올리거나 포커스가 들어오면 보인다.
+ * 커서가 없는 기기에서는 늘 보인다.
+ */
+const itemToolbar = tv({
+  base: "z-item-toolbar absolute top-1 flex items-center gap-0.5 rounded-md border border-line bg-elevated p-0.5 opacity-0 shadow-sm transition-opacity duration-120 group-hover/item:opacity-100 focus-within:opacity-100 hover-none:opacity-100",
+  variants: { side: { left: "left-1", right: "right-1" } },
+  defaultVariants: { side: "right" },
+});
 
 function Pending({
   item,
@@ -53,11 +71,12 @@ function Pending({
         ? STAGE_LABELS[stage]
         : (placeholder ?? "준비 중");
   return (
-    <div className={styles.pending}>
+    <div className="flex w-[min(8.75rem,90%)] flex-col items-center gap-2 text-center text-xs text-fg-muted">
       <Spinner size="lg" />
       <span>{label}</span>
       {/* 대기 → 렌더링으로 넘어갈 때 줄이 생기며 밀리지 않도록 진행 막대 자리는 늘 둔다. */}
       <progress
+        className="w-full"
         value={item?.status === "running" ? item.stageProgress : 0}
         max={1}
         aria-hidden={item?.status !== "running"}
@@ -87,8 +106,14 @@ function ExpandButton({
   if (!onClick) return null;
   const label = expanded ? "grid로 돌아가기" : "크게 보기";
   return (
-    <div className={styles.itemActions}>
-      <button type="button" title={label} aria-label={label} onClick={onClick}>
+    <div className="flex gap-0.5">
+      <button
+        type="button"
+        className={itemButton()}
+        title={label}
+        aria-label={label}
+        onClick={onClick}
+      >
         {expanded ? (
           <Minimize2 size={13} aria-hidden="true" />
         ) : (
@@ -133,6 +158,8 @@ function DrawnItem({
   const mode = useWorkspace((s) => s.mode);
   const paintTool = useWorkspace((s) => s.paintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
+  // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const commonPosition = useWorkspace(
     (s) =>
       s.current?.spec.common.legendPosition ??
@@ -189,7 +216,7 @@ function DrawnItem({
 
   return (
     <article
-      className={styles.item}
+      className={itemCard}
       aria-label={item.label}
       data-selected={selected || undefined}
       onPointerDownCapture={() => setSelectedItem(item.key)}
@@ -200,7 +227,7 @@ function DrawnItem({
       <ItemContextMenu
         item={item}
         disabled={readOnly || busy}
-        className={styles.itemBody}
+        className={itemBody}
         onAction={action.mutate}
       >
         {mode === "normal" ? (
@@ -232,12 +259,12 @@ function DrawnItem({
           />
         )}
         {busy ? (
-          <div className={styles.busyOverlay} aria-busy="true">
+          <div className={busyOverlay} aria-busy="true">
             <Pending item={redrawing} placeholder="다시 그리는 중" />
           </div>
         ) : (
           rendering && (
-            <div className={styles.busyOverlay} aria-busy="true">
+            <div className={busyOverlay} aria-busy="true">
               <Pending item={rendering} />
             </div>
           )
@@ -245,7 +272,7 @@ function DrawnItem({
       </ItemContextMenu>
       {/* 페인트 모드에서만 차트 위 좌측 상단에 그리기 도구를 띄운다. 우측 도구처럼 커서를 올리면 보인다. */}
       {mode === "paint" && !readOnly && (
-        <div className={styles.itemToolbar} data-side="left">
+        <div className={itemToolbar({ side: "left" })}>
           <PaintToolbar
             item={item}
             busy={busy}
@@ -255,33 +282,27 @@ function DrawnItem({
         </div>
       )}
       {/* 차트 위 우측 상단에 떠 있는 도구. 커서를 올리거나 포커스가 들어오면 보인다. */}
-      <div className={styles.itemToolbar}>
+      <div className={itemToolbar()}>
         {/* 다시 보기 전용 화면에서는 확대·도형·색을 바꾸지 않는다. */}
         {!readOnly && (
           <ItemToolbar
             item={item}
             busy={busy}
-            hasLegend={hasLegend}
-            commonPosition={commonPosition}
-            optionsSettings={
-              <ItemOptionsButton
-                itemKey={item.key}
-                label={item.label}
-                options={item.options as ChartOptionsPatch | undefined}
-                disabled={busy}
-                onChange={(options) =>
-                  action.mutate({
-                    type: "options",
-                    options: options as ChartOptionsBody | null,
-                  })
-                }
-              />
-            }
+            onOpenSettings={() => setSettingsOpen(true)}
             onAction={action.mutate}
           />
         )}
         <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
+      {settingsOpen && (
+        <ItemSettingsDialog
+          item={item}
+          hasLegend={hasLegend}
+          commonPosition={commonPosition}
+          onAction={action.mutate}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </article>
   );
 }
@@ -336,26 +357,29 @@ export function ChartItemCard({
   }
   return (
     <article
-      className={styles.item}
+      className={itemCard}
       aria-label={item?.label}
       onDoubleClick={doubleClickHandler(onDoubleClick)}
     >
-      <div className={styles.itemBody}>
+      <div className={itemBody}>
         {/* 그림이 없으면 PNG 제목 대신 이름을 띄운다. */}
-        <span className={styles.itemLabel} title={item?.label}>
+        <span
+          className="absolute top-2 left-2.5 max-w-[calc(100%-3.75rem)] truncate text-xs font-semibold"
+          title={item?.label}
+        >
           {item?.label ?? "…"}
         </span>
         {item?.status === "failed" ? (
-          <p role="alert" className={styles.error}>
+          <p role="alert" className="text-xs text-danger">
             렌더 실패: {item.error}
           </p>
         ) : item?.status === "cancelled" ? (
-          <p className={styles.muted}>취소됨</p>
+          <p className="text-xs text-fg-muted">취소됨</p>
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}
       </div>
-      <div className={styles.itemToolbar}>
+      <div className={itemToolbar()}>
         <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
     </article>

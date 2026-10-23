@@ -1,49 +1,55 @@
 "use client";
 
 import { type ReactNode, useEffect, useId, useState } from "react";
-import type {
-  ChartOptions,
-  ChartOptionsPatch,
-  OptionSection,
-} from "@/entities/chart/model/chart-options";
-import { useCallbackRef } from "@/shared/lib/use-callback-ref";
-import { useDebounced } from "@/shared/lib/use-debounced";
-import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
-import styles from "@/shared/ui/workspace.module.css";
 import {
+  Controller,
+  type FieldPath,
+  useFormContext,
+  useWatch,
+} from "react-hook-form";
+import type { OptionSection } from "@/entities/chart/model/chart-options";
+import { linkButton } from "@/shared/ui/button";
+import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
+import {
+  fieldsOf,
   getPath,
+  hasSection,
   type OptionField,
-  SECTION_FIELDS,
   SECTION_HINTS,
   SECTION_LABELS,
-  setPath,
+  SECTION_PARTS,
+  sectionPaths,
 } from "../model/option-fields";
-import formStyles from "./OptionSectionForm.module.css";
+import {
+  type OptionsBase,
+  type OptionsFormValues,
+  useOptionsPatch,
+} from "../model/options-form";
 
-/** 숫자·글자 입력은 멈춘 뒤 이만큼 지나야(또는 칸을 벗어나야) 반영한다. 바꿀 때마다 다시 그리기 때문이다. */
-const COMMIT_DELAY_MS = 600;
+const row =
+  "grid grid-cols-[minmax(0,1fr)_9.375rem] items-center gap-2 text-fg-secondary";
+const check = "flex items-center gap-1.5 text-fg-secondary";
+const control =
+  "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg";
 
 /**
- * 속성 구역 하나의 편집 폼. 필드 표(SECTION_FIELDS)대로 그리고, 바꾼 값을 부분 값(patch)에 넣어 onChange로 넘긴다.
- * 보이는 값(resolved)은 기본값·공통 속성까지 합친 값이다.
+ * 속성 구역 하나의 편집 폼(react-hook-form). 필드 표(SECTION_FIELDS, 하위 항목이 있으면 그 항목의 필드)대로
+ * options.<경로> 필드를 그린다. 값은 팝업의 폼에만 쓰고, 서버나 draft로 보내는 것은 팝업의 확인 버튼이다.
  */
 export function OptionSectionForm({
   section,
-  resolved,
-  patch,
-  onChange,
-  onReset,
+  part,
+  original,
+  base,
   resetLabel,
   disabled,
   showFields = true,
   children,
-}: {
+}: OptionsBase & {
   section: OptionSection;
-  resolved: ChartOptions;
-  patch: ChartOptionsPatch | undefined;
-  onChange: (next: ChartOptionsPatch) => void;
-  /** 구역을 되돌린다. 없으면 버튼을 두지 않는다. */
-  onReset?: () => void;
+  /** 하위 항목이 있는 구역(축)에서 보일 항목. 없으면 첫 항목 */
+  part?: string;
+  /** 구역 되돌리기 버튼 글자 (기본값으로 되돌리기, 공통 속성 따르기) */
   resetLabel: string;
   disabled: boolean;
   /** false면 필드 표를 그리지 않는다 (차트가 이 구역을 쓰지 않아 children만 보일 때) */
@@ -51,41 +57,74 @@ export function OptionSectionForm({
   /** 구역 제목 아래, 필드 표 위에 붙는 내용 (속성 모델 밖에 저장하는 같은 구역 설정) */
   children?: ReactNode;
 }) {
+  const {
+    control: form,
+    setValue,
+    getValues,
+  } = useFormContext<OptionsFormValues>();
+  const values = useWatch({ control: form, name: "options" });
+  const patch = useOptionsPatch({ original, base });
   const hint = SECTION_HINTS[section];
-  const set = (path: string, value: unknown) =>
-    onChange(setPath(patch, path, value));
+  const parts = SECTION_PARTS[section];
+  const partLabel = (parts?.find((p) => p.id === part) ?? parts?.[0])?.label;
+
+  // 구역을 따르는 값으로 돌리고, 저장할 때 그 구역을 부분 값에서 지우도록 표시한다.
+  // 구역 객체를 한 번에 넣으면 그 아래 필드의 Controller가 다시 그려지지 않아 필드마다 넣는다.
+  const reset = () => {
+    for (const path of sectionPaths(section))
+      setValue(
+        `options.${path}` as FieldPath<OptionsFormValues>,
+        getPath(base, path) as never,
+        { shouldDirty: true },
+      );
+    const resets = getValues("resetSections");
+    if (!resets.includes(section))
+      setValue("resetSections", [...resets, section], { shouldDirty: true });
+  };
 
   return (
-    <div className={formStyles.form}>
-      <h3 className={formStyles.heading}>{SECTION_LABELS[section]}</h3>
+    <div className="flex flex-col gap-2.5 text-ui">
+      <h3 className="text-ui font-semibold">
+        {SECTION_LABELS[section]}
+        {partLabel && ` · ${partLabel}`}
+      </h3>
       {children}
-      {showFields && hint && <p className={styles.muted}>{hint}</p>}
+      {showFields && hint && <p className="text-xs text-fg-muted">{hint}</p>}
       {showFields && (
-        <div className={formStyles.fields}>
-          {SECTION_FIELDS[section].map((field) =>
-            field.when && !field.when(resolved) ? null : field.kind ===
+        <div className="flex flex-col gap-1.5">
+          {fieldsOf(section, part).map((field) =>
+            field.when && !field.when(values) ? null : field.kind ===
               "heading" ? (
-              <h4 key={`h-${field.label}`} className={formStyles.subheading}>
+              <h4
+                key={`h-${field.label}`}
+                className="mt-1.5 text-xs font-semibold text-fg-secondary"
+              >
                 {field.label}
               </h4>
             ) : (
-              <FieldInput
+              <Controller
                 key={field.path}
-                field={field}
-                value={getPath(resolved, field.path)}
-                disabled={disabled}
-                onCommit={(value) => set(field.path, value)}
+                control={form}
+                name={`options.${field.path}` as FieldPath<OptionsFormValues>}
+                render={({ field: input }) => (
+                  <FieldInput
+                    field={field}
+                    value={input.value}
+                    disabled={disabled}
+                    onCommit={input.onChange}
+                  />
+                )}
               />
             ),
           )}
         </div>
       )}
-      {showFields && onReset && (
+      {showFields && hasSection(patch, section) && (
         <button
           type="button"
-          className={styles.linkButton}
+          className={linkButton()}
           disabled={disabled}
-          onClick={onReset}
+          onClick={reset}
         >
           {resetLabel}
         </button>
@@ -109,7 +148,7 @@ function FieldInput({
   switch (field.kind) {
     case "boolean":
       return (
-        <label className={formStyles.check}>
+        <label className={check}>
           <input
             type="checkbox"
             checked={value === true}
@@ -121,11 +160,11 @@ function FieldInput({
       );
     case "select":
       return (
-        <label className={formStyles.row} htmlFor={id}>
+        <label className={row} htmlFor={id}>
           <span>{field.label}</span>
           <select
             id={id}
-            className={formStyles.control}
+            className={control}
             value={String(value)}
             disabled={disabled}
             onChange={(e) => onCommit(e.target.value)}
@@ -141,10 +180,12 @@ function FieldInput({
     case "multi": {
       const selected = Array.isArray(value) ? (value as string[]) : [];
       return (
-        <fieldset className={formStyles.multi}>
-          <legend>{field.label}</legend>
+        <fieldset className="flex flex-wrap gap-x-3 gap-y-1">
+          <legend className="mb-0.5 w-full text-fg-secondary">
+            {field.label}
+          </legend>
           {field.options.map((o) => (
-            <label key={o.value} className={formStyles.check}>
+            <label key={o.value} className={check}>
               <input
                 type="checkbox"
                 checked={selected.includes(o.value)}
@@ -169,22 +210,22 @@ function FieldInput({
     case "color": {
       const color = typeof value === "string" ? value : "";
       return (
-        <div className={formStyles.row}>
+        <div className={row}>
           <span id={id}>{field.label}</span>
-          <span className={formStyles.colorCell}>
+          <span className="flex items-center gap-1.5">
             <ColorPickerButton
-              className={formStyles.swatch}
+              className="size-5.5 flex-none rounded-sm border border-line"
               style={{ background: color || "transparent" }}
               color={color || "#ffffff"}
               label={`${field.label} 바꾸기`}
               disabled={disabled}
               onCommit={onCommit}
             />
-            <code>{color || "없음"}</code>
+            <code className="text-2xs text-fg-muted">{color || "없음"}</code>
             {field.optional && color && (
               <button
                 type="button"
-                className={styles.linkButton}
+                className={linkButton()}
                 disabled={disabled}
                 onClick={() => onCommit("")}
               >
@@ -197,7 +238,7 @@ function FieldInput({
     }
     case "number":
       return (
-        <label className={formStyles.row} htmlFor={id}>
+        <label className={row} htmlFor={id}>
           <span>{field.label}</span>
           <DraftInput
             id={id}
@@ -215,7 +256,7 @@ function FieldInput({
       );
     case "text":
       return (
-        <label className={formStyles.row} htmlFor={id}>
+        <label className={row} htmlFor={id}>
           <span>{field.label}</span>
           <DraftInput
             id={id}
@@ -246,8 +287,8 @@ export function parseNumber(
 }
 
 /**
- * 입력하는 동안은 글자만 바꾸고, 멈추거나 칸을 벗어나면 값을 반영한다.
- * 바깥 값이 바뀌면(되돌리기) 입력 글자도 따라간다.
+ * 입력한 글자는 그대로 두고, 값으로 읽히면 바로 폼에 넣는다. 입력 도중의 글자('1.', '-')를
+ * 정리하지 않도록, 폼 값이 글자와 다르게 바뀌었을 때(되돌리기)만 글자를 따라 바꾼다.
  */
 function DraftInput({
   value,
@@ -263,25 +304,23 @@ function DraftInput({
   "value" | "onChange" | "onBlur"
 >) {
   const [text, setText] = useState(value);
-  const debounced = useDebounced(text, COMMIT_DELAY_MS);
-  const commit = useCallbackRef((next: string) => {
-    if (next === value) return;
-    const parsed = parse(next);
-    if (parsed !== INVALID) onCommit(parsed);
-  });
+  const parsed = parse(text);
+  const shown = parsed === INVALID ? undefined : String(parsed ?? "");
 
-  useEffect(() => setText(value), [value]);
-  useEffect(() => commit(debounced), [debounced, commit]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 글자가 바뀔 때가 아니라 폼 값이 바뀔 때만 맞춘다.
+  useEffect(() => {
+    if (value !== shown) setText(value);
+  }, [value]);
 
   return (
     <input
       {...inputProps}
-      className={formStyles.control}
+      className={control}
       value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={() => commit(text)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commit(text);
+      onChange={(e) => {
+        setText(e.target.value);
+        const next = parse(e.target.value);
+        if (next !== INVALID) onCommit(next);
       }}
     />
   );

@@ -5,8 +5,8 @@ import { restoreOf } from "@/entities/chart/lib/share";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
+import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 import { useOpenChart } from "../model/open-chart";
 
 /**
@@ -36,7 +36,7 @@ export function EditInGalleryButton() {
   return (
     <button
       type="button"
-      className={styles.drawButton}
+      className={button({ variant: "primary", size: "lg" })}
       disabled={!historyId || load.isPending || open.isPending}
       aria-busy={load.isPending || open.isPending}
       onClick={() => historyId && load.mutate(historyId)}

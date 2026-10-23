@@ -13,8 +13,8 @@ import { useDrawState } from "@/features/draw-chart/model/draw-state";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
+import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
-import styles from "@/shared/ui/workspace.module.css";
 import { AppHeader } from "@/widgets/app-header/ui/AppHeader";
 import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
 import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
@@ -71,14 +71,21 @@ function DrawLock() {
   return null;
 }
 
+const panelBody = "min-h-0 flex-1 overflow-y-auto p-4";
+// 공통 속성·draw 같은 동작 버튼은 하단에 고정된다.
+const panelFooter =
+  "flex flex-col gap-2 border-line border-t bg-panel px-4 py-3";
+const panelSection = "flex flex-col gap-2";
+const sectionTitle = "font-semibold text-xs text-fg-secondary";
+
 function GallerySidebar() {
   useOpenSharedLink();
   return (
     <>
-      <div className={styles.panelBody}>
+      <div className={panelBody}>
         <ControlPanel />
       </div>
-      <div className={styles.panelFooter}>
+      <div className={panelFooter}>
         <SettingsButton />
         <DrawButton />
       </div>
@@ -90,19 +97,21 @@ function HistorySidebar() {
   const viewing = useWorkspace((s) => s.current !== undefined);
   return (
     <>
-      <div className={styles.panelBody}>
-        <section className={styles.panelSection}>
-          <h2 className={styles.sectionTitle}>History</h2>
+      <div className={panelBody}>
+        <section className={panelSection}>
+          <h2 className={sectionTitle}>History</h2>
           <HistoryList />
         </section>
         {viewing && (
-          <section className={styles.panelSection}>
-            <h2 className={styles.sectionTitle}>설정 (보기 전용)</h2>
+          <section
+            className={cn(panelSection, "mt-5 border-t border-line pt-4")}
+          >
+            <h2 className={sectionTitle}>설정 (보기 전용)</h2>
             <ControlPanel />
           </section>
         )}
       </div>
-      <div className={styles.panelFooter}>
+      <div className={panelFooter}>
         <EditInGalleryButton />
       </div>
     </>
@@ -125,18 +134,23 @@ export function Workspace() {
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
       <TabNotices />
       <DrawLock />
-      <div className={styles.workspace}>
+      {/* 상단 바 · 탭 바 · 탭 도구 줄 · 탭 내용 */}
+      <div className="grid h-screen grid-cols-[16.25rem_minmax(0,1fr)] grid-rows-[3rem_2.25rem_2.75rem_minmax(0,1fr)] bg-surface text-fg">
         <AppHeader />
         <TabBar view={view} />
         <TabToolbar />
-        <aside className={styles.panel}>
+        {/* 왼쪽 패널: 설정은 스크롤되고 동작 버튼은 하단에 고정된다. */}
+        <aside className="col-1 row-4 flex min-h-0 flex-col border-r border-line bg-panel">
           {view === "gallery" ? <GallerySidebar /> : <HistorySidebar />}
         </aside>
-        <main className={styles.main}>
+        {/* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */}
+        <main className="col-2 row-4 min-h-0 min-w-0 p-4">
           <ChartGrid />
         </main>
         {filterOpen && (
-          <div className={styles.filterDrawer}>
+          // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
+          // 모든 item을 새 크기로 다시 그리게 된다.
+          <div className="z-drawer col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
             <FilterPanel />
           </div>
         )}

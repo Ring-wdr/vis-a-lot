@@ -11,8 +11,13 @@ import {
 } from "@/entities/workspace/model/tabs-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns, useDatasetNames } from "@/shared/api/queries";
+import { tv } from "@/shared/lib/tw";
 import { LoadingText } from "@/shared/ui/Loading";
-import styles from "./TabBar.module.css";
+
+// 탭 닫기·새 탭
+const iconButton = tv({
+  base: "inline-grid flex-none cursor-pointer place-items-center rounded-sm text-fg-muted enabled:hover:bg-panel-strong enabled:hover:text-fg disabled:cursor-not-allowed disabled:opacity-45",
+});
 
 /** 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터. history 탭은 다시 그리기 전까지 불러오는 중이다. */
 function TabLabel({ tab }: { tab: WorkspaceTab }) {
@@ -27,7 +32,7 @@ function TabLabel({ tab }: { tab: WorkspaceTab }) {
       ? "불러오는 중"
       : `새 차트 · ${nameOf(dataset)}`;
   return (
-    <span className={styles.label} title={label}>
+    <span className="truncate" title={label}>
       {loading ? <LoadingText>{label}</LoadingText> : label}
     </span>
   );
@@ -45,24 +50,25 @@ export function TabBar({ view }: { view: View }) {
   const lockedHint = locked ? TABS_LOCKED_HINT : undefined;
 
   return (
-    <div className={styles.bar}>
+    <div className="col-span-full flex min-w-0 items-end gap-1 border-b border-line bg-panel px-3">
       <div
         role="tablist"
         aria-label={`${view} 탭`}
-        className={styles.tabs}
+        className="flex min-w-0 [scrollbar-width:thin] items-end gap-0.5 overflow-x-auto"
         title={lockedHint}
       >
         {mine.map((tab) => (
           <div
             key={tab.id}
-            className={styles.tab}
+            // 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다.
+            className="group/tab -mb-px flex h-7.5 w-50 flex-none items-center rounded-t-md border border-b-0 border-transparent text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
             data-active={tab.id === active || undefined}
           >
             <button
               type="button"
               role="tab"
               aria-selected={tab.id === active}
-              className={styles.select}
+              className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-xs group-data-active/tab:font-semibold disabled:cursor-not-allowed disabled:opacity-45"
               disabled={locked && tab.id !== active}
               onClick={() => activate(tab.id)}
             >
@@ -71,7 +77,7 @@ export function TabBar({ view }: { view: View }) {
             {closable && (
               <button
                 type="button"
-                className={styles.close}
+                className={iconButton({ class: "mr-1.5 size-5" })}
                 aria-label="탭 닫기"
                 title={lockedHint ?? "탭 닫기"}
                 disabled={locked}
@@ -83,7 +89,7 @@ export function TabBar({ view }: { view: View }) {
           </div>
         ))}
         {view === "history" && mine.length === 0 && (
-          <span className={styles.hint}>
+          <span className="self-center px-1 pb-1.5 text-xs text-fg-muted">
             왼쪽 목록에서 고르면 탭으로 열립니다.
           </span>
         )}
@@ -91,7 +97,7 @@ export function TabBar({ view }: { view: View }) {
       {view === "gallery" && (
         <button
           type="button"
-          className={styles.add}
+          className={iconButton({ class: "mb-0.5 size-6.5" })}
           aria-label="새 탭"
           title={lockedHint ?? "새 탭"}
           disabled={locked}
@@ -113,13 +119,17 @@ function FilterToggle() {
   return (
     <button
       type="button"
-      className={styles.filterToggle}
+      className="mb-1 ml-auto inline-flex flex-none cursor-pointer items-center gap-1 rounded-md border border-line bg-elevated px-2.5 py-1 text-xs text-fg-secondary aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
       aria-pressed={open}
       onClick={toggle}
     >
       <Filter size={13} aria-hidden="true" />
       필터
-      {count > 0 && <span className={styles.badge}>{count}</span>}
+      {count > 0 && (
+        <span className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-3xs text-on-accent">
+          {count}
+        </span>
+      )}
     </button>
   );
 }

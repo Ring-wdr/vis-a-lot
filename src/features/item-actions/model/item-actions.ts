@@ -8,8 +8,7 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import type {
-  ChartOptionsBody,
-  LegendPosition,
+  ItemSettingsChanges,
   Region,
   Shape,
   ViewRequest,
@@ -19,15 +18,10 @@ export type ItemAction =
   | { type: "view"; body: ViewRequest }
   | { type: "addShape"; shape: Shape }
   | { type: "undoShape" }
-  | { type: "color"; color: string | null }
   | { type: "legendColor"; value: string; color: string | null }
-  | { type: "legendPosition"; position: LegendPosition | null }
   | { type: "legendVisible"; value: string; visible: boolean }
-  /** item 개별 차트 속성 전체. null이면 지우고 공통 속성을 따른다. */
-  | {
-      type: "options";
-      options: ChartOptionsBody | null;
-    }
+  /** item 속성 팝업에서 확인을 누를 때: 바꾼 속성을 한 번에 보낸다. */
+  | { type: "settings"; settings: ItemSettingsChanges }
   | { type: "clearShapes" }
   | { type: "select"; region: Region | null }
   | { type: "deleteRegion"; region: Region }
@@ -57,8 +51,6 @@ export function useItemAction(chartId: string, itemKey: string) {
           return api.addShape(chartId, itemKey, { shape: action.shape });
         case "undoShape":
           return api.undoShape(chartId, itemKey);
-        case "color":
-          return api.setItemColor(chartId, itemKey, action.color);
         case "legendColor":
           return api.setItemLegendColor(
             chartId,
@@ -68,8 +60,6 @@ export function useItemAction(chartId: string, itemKey: string) {
           );
         case "clearShapes":
           return api.clearShapes(chartId, itemKey);
-        case "legendPosition":
-          return api.setItemLegendPosition(chartId, itemKey, action.position);
         case "deleteRegion":
           return api.addDeletion(chartId, itemKey, action.region);
         case "undoDeletion":
@@ -83,8 +73,8 @@ export function useItemAction(chartId: string, itemKey: string) {
             action.value,
             action.visible,
           );
-        case "options":
-          return api.setItemOptions(chartId, itemKey, action.options);
+        case "settings":
+          return api.setItemSettings(chartId, itemKey, action.settings);
         case "select":
           return api.setSelection(chartId, itemKey, action.region);
         case "addFavorite":

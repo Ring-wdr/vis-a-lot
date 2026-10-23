@@ -4,6 +4,11 @@
 import type { Context } from "hono";
 import { isTerminal } from "../../api/types";
 import { canDelete } from "../../charts/chart-fields";
+import {
+  applyItemChanges,
+  type ItemPropChanges,
+  propsOrNone,
+} from "../../charts/item-props";
 import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
@@ -19,7 +24,6 @@ import {
   getJob,
   type ItemSelection,
   OTHERS_LABEL,
-  propsOrNone,
   startDetailJob,
   startItemJob,
   startJob,
@@ -318,43 +322,24 @@ export const chartApp = createServiceApp()
     if ("error" in target) return reject(c, target);
     const { item } = target;
     const body = c.req.valid("json");
-    const props = { ...item.props };
-    if ("legendColor" in body) {
-      // legend 값 하나의 개별 색. null이면 공통 속성을 따르도록 되돌린다.
-      const { value, color } = body.legendColor;
-      const legendColors = { ...props.legendColors };
-      if (color === null) delete legendColors[value];
-      else legendColors[value] = color;
-      props.legendColors = Object.keys(legendColors).length
-        ? legendColors
-        : undefined;
-    } else if ("legendPosition" in body) {
-      props.legendPosition = body.legendPosition ?? undefined;
-    } else if ("legendVisible" in body) {
-      const { value, visible } = body.legendVisible;
-      const hidden = new Set(props.hiddenLegend);
-      if (visible) hidden.delete(value);
-      else hidden.add(value);
-      props.hiddenLegend = hidden.size ? [...hidden] : undefined;
-    } else if ("options" in body) {
-      props.options = pickSupported(
-        target.chart.spec.chartType,
-        body.options ?? undefined,
-      );
-    } else if (body.color === null) {
-      // 공통 색 따르기: 한 가지 색과 legend 값별 색을 모두 지운다.
-      props.color = undefined;
-      props.legendColors = undefined;
-    } else {
-      props.color = body.color;
-    }
-    item.props = propsOrNone(props);
+    // 한 가지씩 바꾸는 요청도 settings와 같은 모양으로 맞춰 한 곳에서 적용한다.
+    const changes: ItemPropChanges =
+      "settings" in body
+        ? body.settings
+        : "legendColor" in body
+          ? { legendColors: { [body.legendColor.value]: body.legendColor.color } }
+          : body;
+    item.props = applyItemChanges(
+      item.props,
+      changes,
+      target.chart.spec.chartType,
+    );
     recordEvent(
       target.chart,
-      "color" in body || "legendColor" in body
-        ? "color"
-        : "options" in body
-          ? "options"
+      changes.options !== undefined
+        ? "options"
+        : changes.color !== undefined || changes.legendColors
+          ? "color"
           : "legend",
       item.key,
     );

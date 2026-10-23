@@ -1,0 +1,3 @@
+# main·develop에 직접 커밋하지 않는다 (scripts/check-git-flow.sh).
+# 충돌을 풀고 마치는 병합 커밋도 여기로 온다.
+sh scripts/check-git-flow.sh commit

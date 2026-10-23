@@ -1,0 +1,16 @@
+language js
+
+or {
+  JsxAttribute() as $host where { $host <: r"(?s)className=.*" },
+  `cn($args)` as $host,
+  `tv($args)` as $host
+} where {
+  $host <: contains bubble or {
+    JsxString() as $s,
+    JsStringLiteralExpression() as $s,
+    JsTemplateChunkElement() as $s
+  } where {
+    $s <: r"(?s).*(?:\[&|(?:^|[\s\"'`])\*{1,2}:|-\[(?:#|rgba?\(|hsla?\(|oklch\(|color-mix\()|[a-z0-9\]\)]![\s\"'`]|(?:^|[\s\"'`])![a-z]).*",
+    register_diagnostic(span=$s, message="Tailwind: 자손으로 퍼지는 변형([&_…], *:), 토큰 밖 색, !important는 쓰지 않는다.")
+  }
+}

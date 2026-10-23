@@ -8,7 +8,9 @@ import {
   PanelTop,
 } from "lucide-react";
 import type { LegendPosition } from "@/shared/api/types";
-import styles from "./workspace.module.css";
+import { segmented } from "./segmented";
+
+const s = segmented();
 
 const POSITIONS = [
   { value: "top", label: "위", Icon: PanelTop },
@@ -32,11 +34,12 @@ export function LegendPositionPicker({
   disabled?: boolean;
 }) {
   return (
-    <fieldset className={styles.segmented} aria-label="legend 위치">
+    <fieldset className={s.root()} aria-label="legend 위치">
       {POSITIONS.map(({ value: position, label, Icon }) => (
         <button
           key={position}
           type="button"
+          className={s.item()}
           aria-pressed={position === value}
           disabled={disabled}
           onClick={() => position !== value && onSelect(position)}

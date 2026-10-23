@@ -19,14 +19,18 @@ import {
   type Mode,
   modeSupported,
 } from "@/entities/workspace/model/workspace-store";
-import styles from "@/shared/ui/workspace.module.css";
+import { toolButton } from "@/shared/ui/button";
 
 /** 자유형 삭제: lucide에 없어 올가미 오른쪽 아래에 x를 겹친다. */
 function LassoX(props: LucideProps) {
   return (
-    <span className={styles.badgedIcon}>
+    <span className="relative inline-flex">
       <Lasso {...props} />
-      <X className={styles.iconBadge} size={9} strokeWidth={3} />
+      <X
+        className="absolute -right-1 -bottom-1 rounded-full bg-elevated"
+        size={9}
+        strokeWidth={3}
+      />
     </span>
   );
 }
@@ -59,7 +63,7 @@ export function ModeBar() {
   const spec = chartType && { chartType, subType };
 
   return (
-    <div className={styles.modeBar} role="toolbar" aria-label="모드">
+    <div className="flex gap-1" role="toolbar" aria-label="모드">
       {MODES.map((m) => {
         const { label: name, Icon } = MODE_UI[m];
         const supported = modeSupported(m, spec);
@@ -71,6 +75,7 @@ export function ModeBar() {
           <button
             key={m}
             type="button"
+            className={toolButton()}
             title={label}
             aria-label={label}
             aria-pressed={mode === m}

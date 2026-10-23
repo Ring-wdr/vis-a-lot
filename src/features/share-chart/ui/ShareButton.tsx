@@ -5,8 +5,8 @@ import { restoreOf, shareUrl } from "@/entities/chart/lib/share";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 
 /** 현재 차트의 설정과 item 상태를 URL에 담아 복사한다. 공유용 서버는 필요 없다. */
 export function ShareButton() {
@@ -18,7 +18,7 @@ export function ShareButton() {
   return (
     <button
       type="button"
-      className={styles.secondaryButton}
+      className={button({ size: "sm" })}
       disabled={!current || copying}
       aria-busy={copying}
       onClick={async () => {

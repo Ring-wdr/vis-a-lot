@@ -80,10 +80,9 @@ const SHAPES: Choice[] = POINT_SHAPES.map((value) => ({
   }[value],
 }));
 
-function axisFields(axis: "x" | "y", name: string): OptionField[] {
+function axisFields(axis: "x" | "y"): OptionField[] {
   const p = `axes.${axis}`;
   return [
-    { kind: "heading", label: name },
     { kind: "boolean", path: `${p}.visible`, label: "축 보이기" },
     { kind: "boolean", path: `${p}.title.visible`, label: "축 제목 보이기" },
     {
@@ -181,6 +180,23 @@ function axisFields(axis: "x" | "y", name: string): OptionField[] {
   ];
 }
 
+/** 필드가 많아 하위 메뉴로 나눠 보이는 구역. 메뉴에서 구역 아래에 하위 항목으로 붙는다. */
+export type SectionPart = { id: string; label: string; fields: OptionField[] };
+
+export const SECTION_PARTS: Partial<Record<OptionSection, SectionPart[]>> = {
+  axes: [
+    { id: "x", label: "X축", fields: axisFields("x") },
+    { id: "y", label: "Y축", fields: axisFields("y") },
+  ],
+};
+
+/** 구역(과 하위 항목)의 필드. 하위 항목이 있는 구역은 고른 항목의 필드만 보인다. */
+export function fieldsOf(section: OptionSection, part?: string): OptionField[] {
+  const parts = SECTION_PARTS[section];
+  if (!parts) return SECTION_FIELDS[section];
+  return (parts.find((p) => p.id === part) ?? parts[0]).fields;
+}
+
 const isMethod =
   (...methods: ChartOptions["prediction"]["method"][]) =>
   (o: ChartOptions) =>
@@ -213,7 +229,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       options: ALIGNS,
     },
   ],
-  axes: [...axisFields("x", "X축"), ...axisFields("y", "Y축")],
+  axes: [...axisFields("x"), ...axisFields("y")],
   legend: [
     { kind: "boolean", path: "legend.visible", label: "범례 보이기" },
     { kind: "boolean", path: "legend.border", label: "테두리 보이기" },
@@ -763,4 +779,53 @@ export function hasSection(
   section: OptionSection,
 ) {
   return patch?.[section] !== undefined;
+}
+
+/** 구역의 모든 입력 필드 경로 (하위 항목까지) */
+export function sectionPaths(section: OptionSection): string[] {
+  return SECTION_FIELDS[section].flatMap((f) =>
+    f.kind === "heading" ? [] : [f.path],
+  );
+}
+
+const sameValue = (a: unknown, b: unknown) =>
+  JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * 폼 값(화면에 보이는 전체 속성)에서 저장할 부분 값을 만든다.
+ * - 원래 부분 값에 있던 필드는 그대로 정한 것으로 두고 지금 값으로 바꾼다.
+ * - 원래 따르던 필드는 연 때의 값(opened)과 달라졌을 때만 정한다.
+ * - 되돌린 구역(resets)은 원래 부분 값에서 지우고, 되돌린 값(base)과 다른 필드만 정한다.
+ * 남은 게 없으면 undefined (기본값·공통 속성을 따른다).
+ */
+export function buildPatch({
+  original,
+  opened,
+  base,
+  values,
+  resets,
+}: {
+  /** 열 때 저장돼 있던 부분 값 */
+  original: ChartOptionsPatch | undefined;
+  /** 열 때 화면에 보인 전체 값 */
+  opened: ChartOptions;
+  /** 따르기로 되돌렸을 때의 값 (전체 설정은 기본값, item은 공통 속성) */
+  base: ChartOptions;
+  /** 지금 폼 값 */
+  values: ChartOptions;
+  resets: readonly OptionSection[];
+}): ChartOptionsPatch | undefined {
+  let patch = original;
+  for (const section of resets) patch = removeSection(patch, section);
+  for (const section of Object.keys(SECTION_FIELDS) as OptionSection[]) {
+    const reset = resets.includes(section);
+    for (const path of sectionPaths(section)) {
+      const value = getPath(values, path);
+      const kept = !reset && getPath(original, path) !== undefined;
+      const reference = reset ? base : opened;
+      if (kept || !sameValue(value, getPath(reference, path)))
+        patch = setPath(patch, path, value);
+    }
+  }
+  return patch && Object.keys(patch).length ? patch : undefined;
 }

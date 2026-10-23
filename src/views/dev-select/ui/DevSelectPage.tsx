@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { ColumnName } from "@/shared/api/types";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
-import styles from "./DevSelectPage.module.css";
 
 const MANY_OPTIONS: Option<string>[] = Array.from(
   { length: 10_000 },
@@ -29,15 +28,17 @@ const COLUMN_OPTIONS: Option<ColumnName>[] = [
 ].map(([value, label]) => ({ value, label }));
 
 /** mock 서버 없이 OrderedSelect만 띄워 드래그/키보드 동작을 확인하는 페이지 */
+const output = "mt-1.5 block break-all font-mono text-2xs text-fg-secondary";
+
 export function DevSelectPage() {
   const [many, setMany] = useState<string[]>([]);
   const [columns, setColumns] = useState<ColumnName[]>([]);
   const [fieldsetDisabled, setFieldsetDisabled] = useState(false);
 
   return (
-    <main className={styles.main}>
-      <h1>OrderedSelect</h1>
-      <label className={styles.toggle}>
+    <main className="flex max-w-90 flex-col gap-4 p-6">
+      <h1 className="text-base font-bold">OrderedSelect</h1>
+      <label className="flex gap-1.5 text-ui">
         <input
           type="checkbox"
           checked={fieldsetDisabled}
@@ -45,7 +46,10 @@ export function DevSelectPage() {
         />
         fieldset disabled
       </label>
-      <fieldset className={styles.fieldset} disabled={fieldsetDisabled}>
+      <fieldset
+        className="flex min-w-0 flex-col gap-6"
+        disabled={fieldsetDisabled}
+      >
         <section>
           <OrderedSelect
             label="대량"
@@ -53,7 +57,9 @@ export function DevSelectPage() {
             value={many}
             onChange={setMany}
           />
-          <output data-testid="value-대량">{JSON.stringify(many)}</output>
+          <output className={output} data-testid="value-대량">
+            {JSON.stringify(many)}
+          </output>
         </section>
         <section>
           <OrderedSelect
@@ -62,7 +68,9 @@ export function DevSelectPage() {
             value={columns}
             onChange={setColumns}
           />
-          <output data-testid="value-컬럼">{JSON.stringify(columns)}</output>
+          <output className={output} data-testid="value-컬럼">
+            {JSON.stringify(columns)}
+          </output>
         </section>
       </fieldset>
     </main>

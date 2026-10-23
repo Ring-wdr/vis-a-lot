@@ -2,6 +2,7 @@
 // item은 Render Worker pool에 순서대로 넣고, 순서를 당기는 우선순위는 두지 않는다.
 // 상태가 바뀔 때마다 version을 올려 long polling 대기자를 깨운다.
 
+import { propsOrNone } from "../charts/item-props";
 import {
   type ItemMeta,
   type ItemProps,
@@ -510,15 +511,6 @@ function itemView(chart: ChartRecord, item: ChartItem) {
 }
 
 /** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
-export function propsOrNone(props: ItemProps): ItemProps | undefined {
-  return props.color ||
-    props.legendColors ||
-    props.legendPosition ||
-    props.hiddenLegend?.length ||
-    props.options
-    ? props
-    : undefined;
-}
 
 /** legend 위치: item 개별 → 공통 → 위 */
 function legendPosition(chart: ChartRecord, item: ChartItem) {

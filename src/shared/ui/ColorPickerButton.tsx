@@ -2,7 +2,6 @@
 
 import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
-import styles from "./ColorPickerButton.module.css";
 
 /**
  * 네이티브 color picker를 여는 버튼.
@@ -65,7 +64,8 @@ export function ColorPickerButton({
         tabIndex={-1}
         aria-hidden="true"
         defaultValue={color}
-        className={styles.hiddenInput}
+        // 네이티브 color picker를 여는 데만 쓰는 보이지 않는 input
+        className="pointer-events-none absolute size-0 opacity-0"
         // 네이티브 picker가 버튼 근처에 뜨도록 버튼과 같은 자리에 둔다.
         style={style ? { left: style.left, top: style.top } : undefined}
       />
