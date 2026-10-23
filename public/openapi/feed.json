@@ -266,6 +266,79 @@
           }
         }
       },
+      "ChartShareImport": {
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "thumbnail": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["vis-a-lot"]
+              },
+              "shareId": {
+                "type": "string"
+              },
+              "link": {
+                "type": "string"
+              },
+              "chartType": {
+                "type": "string"
+              },
+              "dataset": {
+                "type": "string"
+              },
+              "item": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": ["key", "label"]
+              }
+            },
+            "required": [
+              "source",
+              "shareId",
+              "link",
+              "chartType",
+              "dataset",
+              "item"
+            ]
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "shareId",
+          "title",
+          "thumbnail",
+          "link",
+          "payload",
+          "createdByName",
+          "createdAt"
+        ]
+      },
       "UnreadCountResponse": {
         "type": "object",
         "properties": {
@@ -1554,6 +1627,141 @@
           }
         },
         "required": ["on"]
+      },
+      "SavedView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": ["string", "null"]
+          },
+          "groupId": {
+            "type": ["string", "null"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "shared": {
+            "type": "boolean"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/ViewLayout"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/PostFilter"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/ViewSort"
+          },
+          "groupBy": {
+            "$ref": "#/components/schemas/ViewGroupBy"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "builtin": {
+            "type": "boolean"
+          },
+          "editable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "groupId",
+          "name",
+          "shared",
+          "layout",
+          "filter",
+          "sort",
+          "groupBy",
+          "pinned",
+          "builtin",
+          "editable"
+        ]
+      },
+      "ViewLayout": {
+        "type": "string",
+        "enum": ["feed", "list", "board"]
+      },
+      "ViewSort": {
+        "type": ["object", "null"],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/PostSortField"
+          },
+          "dir": {
+            "type": "string",
+            "enum": ["asc", "desc"]
+          }
+        },
+        "required": ["field", "dir"]
+      },
+      "ViewGroupBy": {
+        "type": ["string", "null"],
+        "enum": ["status", "assignee", "priority", null]
+      },
+      "ViewListResponse": {
+        "type": "object",
+        "properties": {
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedView"
+            }
+          }
+        },
+        "required": ["views"]
+      },
+      "PinViewRequest": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["on"]
+      },
+      "SaveViewRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "groupId": {
+            "type": ["string", "null"],
+            "default": null
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "shared": {
+            "type": "boolean",
+            "default": false
+          },
+          "layout": {
+            "$ref": "#/components/schemas/ViewLayout"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/PostFilter"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/ViewSort"
+          },
+          "groupBy": {
+            "$ref": "#/components/schemas/ViewGroupBy"
+          },
+          "pinned": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": ["name", "layout"]
       }
     },
     "parameters": {}
@@ -2213,6 +2421,44 @@
           },
           "404": {
             "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/chart-shares/{shareId}": {
+      "get": {
+        "tags": ["imports"],
+        "summary": "vis-a-lot 차트 공유를 차트 게시물 입력으로 (/feed/new?share=…). 공유 PNG는 data URL로",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "shareId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "게시물 입력",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartShareImport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 공유",
             "content": {
               "application/json": {
                 "schema": {
@@ -4681,6 +4927,320 @@
           },
           "404": {
             "description": "모르는 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{viewId}": {
+      "delete": {
+        "tags": ["views"],
+        "summary": "뷰 지우기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "viewId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "지움"
+          },
+          "400": {
+            "description": "요청 형식 오류 (공유 뷰에 그룹 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "내 뷰가 아니거나 그룹 관리자가 아님, 기본 제공 뷰",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 뷰 (볼 수 없는 뷰 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["views"],
+        "summary": "뷰 하나",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "viewId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "뷰",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedView"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 뷰 (볼 수 없는 뷰 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views": {
+      "get": {
+        "tags": ["views"],
+        "summary": "볼 수 있는 뷰: 기본 제공 뷰 + 내 뷰 + 볼 수 있는 그룹의 공유 뷰. groupId가 있으면 그 그룹 것(과 그룹 없는 내 뷰)만",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "groupId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["views"],
+        "summary": "뷰 저장 (id가 없으면 새로). 공유 뷰는 그 그룹 멤버가 만들고, 고치기는 만든 사람·그룹 관리자",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveViewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "저장한 뷰",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (공유 뷰에 그룹 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "내 뷰가 아니거나 그룹 관리자가 아님, 기본 제공 뷰",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 뷰 (볼 수 없는 뷰 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{viewId}/pin": {
+      "put": {
+        "tags": ["views"],
+        "summary": "사이드바 고정 켜기·끄기 (고칠 수 있는 뷰만)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "viewId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinViewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 뷰",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (공유 뷰에 그룹 없음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "내 뷰가 아니거나 그룹 관리자가 아님, 기본 제공 뷰",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 뷰 (볼 수 없는 뷰 포함)",
             "content": {
               "application/json": {
                 "schema": {
