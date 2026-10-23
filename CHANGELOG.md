@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+### 공유
+- `피드로 보내기`: 탭 도구 줄의 `링크 복사` 옆에서 지금 차트를 데이터 공유 피드에 차트 게시물로 붙여넣을 JSON(제목 · PNG 썸네일 · 공유 링크 · 설정 · 데이터셋)으로 클립보드에 복사한다. 대표 이미지는 고른 item, 없으면 처음 그려진 item이다. 업로드 데이터 차트는 링크가 이 브라우저에서만 열린다고 알린다
+- `피드로 보내기` 묶음에 chart 서비스 공유 id(`shareId`)와 대표 PNG 주소(`imageUrl`)를 넣는다. 설정·item 상태·PNG는 공유 스냅숏에서 가져온다
+
+### 공유 페이지
+- `링크 복사`가 hash 링크 대신 chart 서비스 공유를 만들고 공유 페이지 링크(`/share?id=…`)를 복사한다. 예전 hash 링크(`#s=…`)도 열린다
+- 공유 페이지: 스냅숏 PNG와 제목·만든 사람·시각·데이터셋·차트 종류, `gallery에서 열기`(새 gallery 탭에 다시 그림)·`링크 복사`·`피드로 보내기`·`지우기`(만든 사용자만). 지운 공유는 '없는 공유'로 열린다
+- `/share`는 내 공유 목록(카드). 상단 바에 `shares` 링크
+- 상단 바 화면 버튼·링크 모양을 `navButton`·`navLink` recipe(`src/shared/ui/nav.ts`)로 묶어 작업 화면과 공유 페이지가 같이 쓴다
+- `피드로 보내기`의 `link`가 공유 페이지 링크다
+
+### API
+- `GET /shares`: 내가 만든 공유 목록(최근 순). `Share.createdByName`(만든 사용자의 표시 이름)
+- chart 서비스 공유: `POST /shares`(`{ chartId, itemKey?, title }` → 201 `Share`), `GET /shares/{shareId}`, `GET /shares/{shareId}/png`(인증 없음), `DELETE /shares/{shareId}`(만든 사용자만). 만든 시점의 설정·바뀐 item 상태·대표 PNG를 PGlite `shares` 테이블에 고정한다
+- 공유의 item 상태는 history와 같은 필드(legend 숨김 `hiddenLegend`, 개별 차트 속성 `options` 포함)를 담는다. history 기록과 공유가 `server/charts/item-restore.ts`를 같이 쓴다
+
 ## [0.13.0] - 2026-10-23
 
 화면 스타일을 CSS Modules에서 Tailwind CSS v4로 옮겼다. 여러 기능이 함께 import하던 공용 모듈과 자손 선택자 때문에 스타일이 다른 컴포넌트로 새던 문제를 구조적으로 막는다. 규칙은 `docs/styling.md`에 있다. 설정 팝업은 확인·취소로 바꿔 확인을 눌러야 반영되고, 공통 속성은 draw를 누를 때 적용된다. git flow는 git 훅과 GitHub branch protection이 강제한다.

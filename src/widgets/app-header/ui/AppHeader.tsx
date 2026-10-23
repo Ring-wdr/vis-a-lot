@@ -1,6 +1,8 @@
 "use client";
 
-import { Database, History, LayoutGrid, Upload } from "lucide-react";
+import { Database, History, LayoutGrid, Share2, Upload } from "lucide-react";
+import Link from "next/link";
+import { SHARE_PAGE } from "@/entities/chart/lib/share";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import { TABS_LOCKED_HINT, VIEWS } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
@@ -8,12 +10,7 @@ import {
   openDatastoreDialog,
   openUploadThenDatastore,
 } from "@/features/register-dataset/ui/DatastoreDialog";
-import { tv } from "@/shared/lib/tw";
-
-// 고른 화면 버튼도 hover 중에는 hover 바탕을 보인다.
-const navButton = tv({
-  base: "inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-2.5 text-ui text-fg-secondary enabled:hover:bg-panel disabled:cursor-not-allowed disabled:opacity-45 aria-selected:border-line aria-selected:font-semibold aria-selected:text-fg aria-selected:not-hover:bg-elevated",
-});
+import { navButton, navLink } from "@/shared/ui/nav";
 
 const TAB_UI = {
   gallery: { label: "gallery", Icon: LayoutGrid },
@@ -21,7 +18,7 @@ const TAB_UI = {
 } as const;
 
 /**
- * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 사용자.
+ * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 내 공유 페이지, 사용자.
  * 각 view의 탭은 TabBar가, 탭 안의 모드·공유는 TabToolbar가 그린다.
  */
 export function AppHeader() {
@@ -73,6 +70,10 @@ export function AppHeader() {
             );
           })}
         </div>
+        <Link href={SHARE_PAGE} className={navLink()}>
+          <Share2 size={14} aria-hidden="true" />
+          shares
+        </Link>
       </nav>
       <div className="ml-auto flex items-center gap-2">
         <UserMenu />

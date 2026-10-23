@@ -27,6 +27,14 @@ import {
 } from "../history/history-store";
 import type { DbMethods, Rejectable } from "../protocol";
 import { serveRpc, transfer } from "../rpc";
+import {
+  deleteShare,
+  getShare,
+  getSharePng,
+  listShares,
+  openShares,
+  saveShare,
+} from "../shares/share-store";
 
 const started = performance.now();
 
@@ -56,6 +64,7 @@ const ready = PGlite.create("idb://vis-a-lot", {
   await db.insertInto("boot_log").defaultValues().execute();
   const datasets = await DatasetManager.open(db);
   await openHistory(db);
+  await openShares(db);
   return { db, datasets, bootMs: performance.now() - started };
 });
 
@@ -219,6 +228,35 @@ serveRpc<DbMethods>({
   async historyGet({ id }) {
     const { db } = await ready;
     return getHistory(db, id);
+  },
+
+  async shareSave(share) {
+    const { db } = await ready;
+    return saveShare(db, share);
+  },
+
+  async shareGet({ id }) {
+    const { db } = await ready;
+    return getShare(db, id);
+  },
+
+  async shareList({ createdBy }) {
+    const { db } = await ready;
+    return listShares(db, createdBy);
+  },
+
+  async sharePng({ id }) {
+    const { db } = await ready;
+    const png = await getSharePng(db, id);
+    if (!png) return null;
+    // PGlite가 준 배열이 더 큰 버퍼의 일부일 수 있어 복사본을 넘긴다.
+    const copy = png.slice();
+    return transfer(copy, [copy.buffer]);
+  },
+
+  async shareDelete({ id, createdBy }) {
+    const { db } = await ready;
+    return deleteShare(db, id, createdBy);
   },
 
   async categoryData({ dataset, ...params }) {

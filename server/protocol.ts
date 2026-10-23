@@ -5,6 +5,7 @@ import type {
   DatasetStatus,
   HistoryDetail,
   HistorySummary,
+  Share,
   StagedUpload,
   UploadTask,
 } from "./api/types";
@@ -34,6 +35,7 @@ import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 import type { TreemapInput, TreemapMeta } from "./render/treemap";
 import type { WaterfallInput, WaterfallMeta } from "./render/waterfall";
+import type { StoredShare } from "./shares/share-store";
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
 export type Rejectable<T> =
@@ -161,6 +163,14 @@ export type DbMethods = {
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
+  /** 공유 저장. PNG 바이트는 transfer로 넘긴다. */
+  shareSave: { params: StoredShare; result: Share };
+  shareGet: { params: { id: string }; result: Share | null };
+  /** 만든 사용자의 공유 목록 (최근 순) */
+  shareList: { params: { createdBy: string }; result: Share[] };
+  sharePng: { params: { id: string }; result: Uint8Array | null };
+  /** 만든 사용자의 공유만 지운다. 지웠으면 true */
+  shareDelete: { params: { id: string; createdBy: string }; result: boolean };
   legendValues: {
     params: { dataset: string; column: string };
     result: string[];

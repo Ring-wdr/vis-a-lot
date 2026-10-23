@@ -92,6 +92,9 @@ export type HistoryEventType = Chart["HistoryEventType"];
 export type HistorySummary = Chart["HistorySummary"];
 export type HistoryDetail = Chart["HistoryDetail"];
 export type HistoryListResponse = Chart["HistoryListResponse"];
+export type CreateShareRequest = Chart["CreateShareRequest"];
+export type Share = Chart["Share"];
+export type ShareListResponse = Chart["ShareListResponse"];
 export type DebugRenderRequest = Chart["DebugRenderRequest"];
 export type DebugRenderResponse = Chart["DebugRenderResponse"];
 

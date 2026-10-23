@@ -7,6 +7,7 @@ import type {
   ChartSpec,
   ColumnName,
   CreateChartRequest,
+  CreateShareRequest,
   CsvOptions,
   CsvPreview,
   DatasetId,
@@ -19,6 +20,7 @@ import type {
   JobStateResponse,
   Region,
   Shape,
+  Share,
   TooltipRequest,
   ViewRequest,
 } from "./types";
@@ -277,6 +279,30 @@ export const api = {
   historyDetail: (id: string) =>
     as<HistoryDetail>()(
       unwrap(chartClient.GET("/history/{id}", { params: { path: { id } } })),
+    ),
+
+  // ── chart 서비스: 공유 ──────────────────────────────────────
+  /** 지금 차트의 설정·item 상태와 대표 PNG를 공유로 고정한다. */
+  createShare: (body: CreateShareRequest) =>
+    as<Share>()(unwrap(chartClient.POST("/shares", { body }))),
+
+  /** 내가 만든 공유 (최근 순) */
+  shares: () => unwrap(chartClient.GET("/shares")),
+
+  share: (shareId: string) =>
+    as<Share>()(
+      unwrap(
+        chartClient.GET("/shares/{shareId}", {
+          params: { path: { shareId } },
+        }),
+      ),
+    ),
+
+  deleteShare: (shareId: string) =>
+    unwrap(
+      chartClient.DELETE("/shares/{shareId}", {
+        params: { path: { shareId } },
+      }),
     ),
 
   // ── chart 서비스: 툴팁 ──────────────────────────────────────

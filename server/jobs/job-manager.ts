@@ -2,7 +2,6 @@
 // item은 Render Worker pool에 순서대로 넣고, 순서를 당기는 우선순위는 두지 않는다.
 // 상태가 바뀔 때마다 version을 올려 long polling 대기자를 깨운다.
 
-import { propsOrNone } from "../charts/item-props";
 import {
   type ItemMeta,
   type ItemProps,
@@ -38,6 +37,7 @@ import {
   thumbnailUrl,
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
+import { propsOrNone } from "../charts/item-props";
 import { specError } from "../charts/validate-spec";
 import { OTHERS_SLICE, type PieData } from "../data/polar-data";
 import { MAX_SPLIT_ITEMS } from "../data/schema";

@@ -48,6 +48,8 @@ export const queryKeys = {
   jobProgress: (jobId: string) => ["jobs", jobId, "progress"] as const,
   jobItem: (jobId: string, key: string) =>
     ["jobs", jobId, "item", key] as const,
+  shares: ["shares"] as const,
+  share: (id: string) => ["shares", id] as const,
 };
 
 const datasetsQuery = queryOptions({
@@ -431,5 +433,35 @@ export function useColumnSummary(id: DatasetId, column: ColumnName) {
     queryKey: queryKeys.columnSummary(id, column),
     queryFn: () => api.columnSummary(id, column),
     staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+// ── 공유 ───────────────────────────────────────────────────────
+
+/** 내가 만든 공유 목록 */
+export function useShares() {
+  return useQuery({ queryKey: queryKeys.shares, queryFn: api.shares });
+}
+
+/** 공유 한 건. 스냅숏이라 바뀌지 않으므로 다시 받지 않는다. 없으면(404) 다시 시도하지 않는다. */
+export function useShare(id: string) {
+  return useQuery({
+    queryKey: queryKeys.share(id),
+    queryFn: () => api.share(id),
+    enabled: id !== "",
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: (count, err) =>
+      !(err instanceof ApiRequestError && err.status === 404) && count < 2,
+  });
+}
+
+export function useDeleteShare() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteShare,
+    onSuccess: (_, id) => {
+      client.removeQueries({ queryKey: queryKeys.share(id) });
+      return client.invalidateQueries({ queryKey: queryKeys.shares });
+    },
   });
 }
