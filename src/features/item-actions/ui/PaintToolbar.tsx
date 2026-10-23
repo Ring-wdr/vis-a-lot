@@ -16,7 +16,7 @@ import {
 } from "@/entities/workspace/model/workspace-store";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState } from "@/shared/api/types";
-import styles from "@/shared/ui/workspace.module.css";
+import { itemButton } from "@/shared/ui/button";
 
 const TOOL_UI: Record<PaintTool, { label: string; Icon: LucideIcon }> = {
   rect: { label: "사각형", Icon: Square },
@@ -46,7 +46,7 @@ export function PaintToolbar({
 
   return (
     <div
-      className={styles.itemActions}
+      className="flex gap-0.5"
       role="toolbar"
       aria-label={`${item.label} 그리기 도구`}
     >
@@ -56,6 +56,7 @@ export function PaintToolbar({
           <button
             key={t}
             type="button"
+            className={itemButton()}
             title={label}
             aria-label={label}
             aria-pressed={tool === t}
@@ -65,9 +66,10 @@ export function PaintToolbar({
           </button>
         );
       })}
-      <span className={styles.itemActionsDivider} aria-hidden="true" />
+      <span className="m-0.5 w-px self-stretch bg-line" aria-hidden="true" />
       <button
         type="button"
+        className={itemButton()}
         title="도형 되돌리기"
         aria-label="도형 되돌리기"
         disabled={busy || undoCount === 0 || item.shapeCount === 0}
@@ -77,6 +79,7 @@ export function PaintToolbar({
       </button>
       <button
         type="button"
+        className={itemButton()}
         title="도형 전체 삭제"
         aria-label="도형 전체 삭제"
         disabled={busy || item.shapeCount === 0}

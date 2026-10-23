@@ -6,13 +6,21 @@ export type ChartImageData = { url: string; width: number; height: number };
 export function ChartImage({
   data,
   alt,
+  className,
 }: {
   data: ChartImageData | undefined;
   alt: string;
+  className?: string;
 }) {
   return (
     data?.url && (
-      <img src={data.url} width={data.width} height={data.height} alt={alt} />
+      <img
+        src={data.url}
+        width={data.width}
+        height={data.height}
+        alt={alt}
+        className={className}
+      />
     )
   );
 }

@@ -16,9 +16,16 @@ import { api } from "@/shared/api/api";
 import { useColumnsByDataset, useDatasetNames } from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
 import type { ColumnLookup } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
+
+const historyList = "flex flex-col gap-1.5";
+const historyEntry =
+  "flex w-full cursor-pointer gap-2.5 rounded-md border border-line bg-elevated p-1.5 text-left enabled:hover:border-accent aria-[current=true]:border-accent aria-[current=true]:bg-accent-soft";
+const historyThumb = "h-11.25 w-18 flex-none rounded-sm bg-panel object-cover";
+const historyText = "flex min-w-0 flex-col gap-0.5";
+const muted = "text-11 text-fg-muted";
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
   zoom: "확대",
@@ -107,7 +114,7 @@ export function HistoryList() {
 
   if (list.error) {
     return (
-      <p role="alert" className={styles.error}>
+      <p role="alert" className="text-12 text-danger">
         {list.error.message}
       </p>
     );
@@ -115,12 +122,13 @@ export function HistoryList() {
   if (list.isPending) {
     // 목록 항목과 같은 모양으로 자리를 잡아 둔다.
     return (
-      <ul className={styles.historyList} aria-busy="true">
+      <ul className={historyList} aria-busy="true">
         {([90, 70, 90] as const).map((width, i) => (
+          // 목록을 받는 동안의 자리. 버튼이 아니라 누를 수 없다.
           // biome-ignore lint/suspicious/noArrayIndexKey: 받기 전 자리 표시용
-          <li key={i} className={styles.historyEntry} data-skeleton="">
-            <span className={styles.historyThumbEmpty} />
-            <span className={styles.historyText}>
+          <li key={i} className={cn(historyEntry, "cursor-default")}>
+            <span className={historyThumb} />
+            <span className={cn(historyText, "flex-1 justify-center gap-1.5")}>
               <Skeleton width={width} />
               <Skeleton width={70} />
               <Skeleton width={30} />
@@ -139,12 +147,12 @@ export function HistoryList() {
   }
 
   return (
-    <ul className={styles.historyList}>
+    <ul className={historyList}>
       {list.data.entries.map((entry) => (
         <li key={entry.id}>
           <button
             type="button"
-            className={styles.historyEntry}
+            className={historyEntry}
             aria-current={viewing === entry.id || undefined}
             disabled={load.isPending}
             onClick={() => {
@@ -154,24 +162,33 @@ export function HistoryList() {
                 load.mutate({ id: entry.id, tab: opened.tab });
             }}
           >
-            <span className={styles.historyThumb}>
+            <span className="relative flex flex-none">
               {entry.thumbnail ? (
-                <img src={entry.thumbnail} alt="" width={72} height={45} />
+                <img
+                  src={entry.thumbnail}
+                  alt=""
+                  width={72}
+                  height={45}
+                  className={historyThumb}
+                />
               ) : (
-                <span className={styles.historyThumbEmpty} />
+                <span className={historyThumb} />
               )}
               {/* 고른 건을 불러와 탭에 그리는 동안 */}
               {load.isPending && load.variables?.id === entry.id && (
-                <span className={styles.historyThumbBusy} aria-busy="true">
+                <span
+                  className="absolute inset-0 grid place-items-center rounded-sm bg-overlay"
+                  aria-busy="true"
+                >
                   <Spinner size="sm" />
                 </span>
               )}
             </span>
-            <span className={styles.historyText}>
-              <span className={styles.historyTitle}>
+            <span className={historyText}>
+              <span className="font-semibold text-12">
                 {chartTitle(entry.spec, columnsOf(entry.dataset))}
               </span>
-              <span className={styles.muted}>
+              <span className={muted}>
                 {detailOf(
                   entry,
                   columnsOf(entry.dataset),
@@ -179,9 +196,9 @@ export function HistoryList() {
                 )}
               </span>
               {eventsOf(entry) && (
-                <span className={styles.muted}>+ {eventsOf(entry)}</span>
+                <span className={muted}>+ {eventsOf(entry)}</span>
               )}
-              <span className={styles.muted}>{timeAgo(entry.updatedAt)}</span>
+              <span className={muted}>{timeAgo(entry.updatedAt)}</span>
             </span>
           </button>
         </li>

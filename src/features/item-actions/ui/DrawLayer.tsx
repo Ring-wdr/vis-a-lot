@@ -16,7 +16,24 @@ import type {
   ChartImage as ChartImageData,
   ItemMeta,
 } from "@/shared/api/types";
-import styles from "@/shared/ui/workspace.module.css";
+import { tv } from "@/shared/lib/tw";
+
+const drawLayer = tv({
+  base: "relative cursor-crosshair touch-none select-none",
+  variants: {
+    tool: {
+      text: "cursor-text",
+      pan: "cursor-grab active:cursor-grabbing",
+    },
+  },
+});
+
+// 선택·삭제·확대 영역의 점선 사각형(또는 올가미)
+const selectRegion =
+  "fill-accent/8 stroke-[1.5] stroke-accent [stroke-dasharray:4_3]";
+const deleteRegion =
+  "fill-danger/10 stroke-[1.5] stroke-danger [stroke-dasharray:4_3]";
+const zoomRect = "fill-accent/12 stroke-1 stroke-accent";
 
 /** 이동, 확대 영역 선택, 영역 선택 또는 페인트 도구 */
 export type DrawTool =
@@ -223,8 +240,9 @@ export function DrawLayer({
   return (
     <div
       ref={ref}
-      className={styles.drawLayer}
-      data-tool={tool}
+      className={drawLayer({
+        tool: tool === "text" || tool === "pan" ? tool : undefined,
+      })}
       style={{ width: display.width, height: display.height }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -233,16 +251,22 @@ export function DrawLayer({
       aria-label={`${alt} 위에 ${TOOL_LABELS[tool]}`}
     >
       {/* 이동하는 동안 그림은 그대로 두고 커서(grab)만 바꾼다. 놓으면 서버가 옮긴 범위로 다시 그린다. */}
-      <ChartImage data={image} alt={alt} />
+      {/* resize 대기 중에는 기존 PNG를 칸 크기에 맞게 늘리거나 줄여 보여준다. */}
+      <ChartImage
+        data={image}
+        alt={alt}
+        className="pointer-events-none size-full"
+      />
       {overlay}
       <svg
-        className={styles.drawPreview}
+        className="pointer-events-none absolute inset-0 size-full fill-chart-ink-soft stroke-2 stroke-chart-ink [stroke-linecap:round] [stroke-linejoin:round]"
         viewBox={`0 0 ${image.width} ${image.height}`}
         preserveAspectRatio="none"
         aria-hidden="true"
       >
         {draft?.kind === "drag" && tool === "line" && (
           <line
+            className="fill-none"
             x1={draft.from.x}
             y1={draft.from.y}
             x2={draft.to.x}
@@ -253,11 +277,11 @@ export function DrawLayer({
           <rect
             className={
               tool === "zoom"
-                ? styles.zoomRect
+                ? zoomRect
                 : tool === "rectSelect"
-                  ? styles.selectRegion
+                  ? selectRegion
                   : tool === "rectDelete"
-                    ? styles.deleteRegion
+                    ? deleteRegion
                     : undefined
             }
             x={Math.min(draft.from.x, draft.to.x)}
@@ -269,22 +293,19 @@ export function DrawLayer({
         {draft?.kind === "freehand" &&
           (tool === "lassoSelect" || tool === "lassoDelete" ? (
             <polygon
-              className={
-                tool === "lassoSelect"
-                  ? styles.selectRegion
-                  : styles.deleteRegion
-              }
+              className={tool === "lassoSelect" ? selectRegion : deleteRegion}
               points={draft.points.map((p) => `${p.x},${p.y}`).join(" ")}
             />
           ) : (
             <polyline
+              className="fill-none"
               points={draft.points.map((p) => `${p.x},${p.y}`).join(" ")}
             />
           ))}
       </svg>
       {draft?.kind === "text" && (
         <input
-          className={styles.textInput}
+          className="absolute w-40 -translate-y-1/2 rounded-sm border border-accent bg-elevated px-1.5 py-0.75 text-12"
           style={{
             left: (draft.at.x * display.width) / image.width,
             top: (draft.at.y * display.height) / image.height,

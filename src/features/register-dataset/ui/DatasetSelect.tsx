@@ -4,8 +4,7 @@ import { DELETED_DATASET_NAME, useDatasets } from "@/shared/api/queries";
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { LoadingText } from "@/shared/ui/Loading";
 import { Select } from "@/shared/ui/Select";
-import selectStyles from "@/shared/ui/Select.module.css";
-import styles from "@/shared/ui/workspace.module.css";
+import { selectStyles } from "@/shared/ui/select-styles";
 
 const STATE_SUFFIX: Record<DatasetStatus["state"], string> = {
   ready: "",
@@ -44,7 +43,7 @@ export function DatasetSelect({
   }
 
   return (
-    <div className={styles.field}>
+    <div className="flex flex-col gap-1 text-13">
       <Select
         label="데이터"
         value={list ? dataset : null}
@@ -52,7 +51,7 @@ export function DatasetSelect({
         options={options}
         onChange={onChange}
         aside={
-          <span className={selectStyles.aside}>
+          <span className={selectStyles().aside()}>
             {datasets.isPending ? (
               <LoadingText>확인 중</LoadingText>
             ) : status?.state === "generating" ? (

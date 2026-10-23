@@ -14,8 +14,8 @@ import {
   useDatasetStatus,
   useSchemaState,
 } from "@/shared/api/queries";
+import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 import { useDrawState } from "../model/draw-state";
 
 /**
@@ -70,7 +70,7 @@ export function DrawButton() {
       {state === "cancel" ? (
         <button
           type="button"
-          className={styles.cancelButton}
+          className={button({ variant: "danger", size: "lg" })}
           disabled={cancel.isPending}
           onClick={() => current && cancel.mutate(current.jobId)}
         >
@@ -79,7 +79,7 @@ export function DrawButton() {
       ) : (
         <button
           type="button"
-          className={styles.drawButton}
+          className={button({ variant: "primary", size: "lg" })}
           disabled={state === "pending" || !gridArea || !ready || deleted}
           title={
             deleted
@@ -102,7 +102,7 @@ export function DrawButton() {
         </button>
       )}
       {(draw.error ?? cancel.error) && (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className="text-12 text-danger">
           {(draw.error ?? cancel.error)?.message}
         </p>
       )}

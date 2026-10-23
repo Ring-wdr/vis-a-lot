@@ -17,8 +17,8 @@ import type {
   SampleRowsResponse,
 } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
-import { Dialog } from "@/shared/ui/Dialog";
-import dialogStyles from "@/shared/ui/Dialog.module.css";
+import { button } from "@/shared/ui/button";
+import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
 import styles from "./DataTableDialog.module.css";
 
@@ -223,10 +223,10 @@ function DataTable<P extends TablePage>({
         </div>
       )}
 
-      <div className={dialogStyles.actions}>
+      <div className={dialogActions}>
         <button
           type="button"
-          className={dialogStyles.primary}
+          className={button({ variant: "primary" })}
           onClick={onClose}
         >
           닫기

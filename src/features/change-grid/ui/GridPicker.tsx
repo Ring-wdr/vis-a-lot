@@ -14,8 +14,9 @@ import { useJobProgress } from "@/shared/api/queries";
 import { type ChartSpec, isTerminal } from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
-import selectStyles from "@/shared/ui/Select.module.css";
-import styles from "./GridPicker.module.css";
+import { selectStyles } from "@/shared/ui/select-styles";
+
+const s = selectStyles();
 
 const MAX = 10;
 const CELLS = Array.from({ length: MAX * MAX }, (_, i) => ({
@@ -86,23 +87,24 @@ export function GridPicker() {
   };
 
   return (
-    <div className={selectStyles.field}>
-      <span className={selectStyles.label}>Grid</span>
+    <div className={s.field()}>
+      <span className={s.label()}>Grid</span>
       <Popover
-        triggerClassName={selectStyles.trigger}
+        triggerClassName={s.trigger()}
         disabled={readOnly || changing}
         width={MAX * 20 + 24}
         trigger={
           <>
             <Grid3x3 size={14} aria-hidden="true" />
-            <span className={selectStyles.value}>{gridLabel(selected)}</span>
+            <span className={s.value()}>{gridLabel(selected)}</span>
           </>
         }
       >
         {(close) => (
-          <div className={styles.picker}>
+          <div className="flex flex-col gap-2">
             <div
-              className={styles.cells}
+              // 10 x 10 칸 (MAX)
+              className="grid grid-cols-10 gap-0.5"
               onPointerLeave={() => setHover(undefined)}
             >
               {CELLS.map(({ row, col }) => {
@@ -111,7 +113,7 @@ export function GridPicker() {
                   <button
                     key={`${row}-${col}`}
                     type="button"
-                    className={styles.cell}
+                    className="aspect-square cursor-pointer rounded-xs border border-line bg-elevated focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1 data-active:border-accent data-selected:not-data-active:border-accent-line data-active:bg-accent-soft"
                     aria-label={`${cell.rows}행 ${cell.cols}열`}
                     data-active={
                       (row < preview.rows && col < preview.cols) || undefined
@@ -130,7 +132,10 @@ export function GridPicker() {
                 );
               })}
             </div>
-            <span className={styles.caption} aria-live="polite">
+            <span
+              className="text-center text-12 text-fg-secondary"
+              aria-live="polite"
+            >
               {preview.rows}행 × {preview.cols}열
               {!sameGrid(preview, selected) && ` (현재 ${gridLabel(selected)})`}
             </span>

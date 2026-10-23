@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useId, useRef, useState } from "react";
-import styles from "./workspace.module.css";
+import { cn } from "@/shared/lib/tw";
 
 /**
  * 네이티브 popover API(popovertarget)로 여닫는 팝오버. 바깥 클릭과 Esc 닫기는 브라우저가 처리하고,
@@ -54,7 +54,10 @@ export function Popover({
         ref={ref}
         id={id}
         popover="auto"
-        className={`${styles.popover} ${panelClassName ?? ""}`}
+        className={cn(
+          "fixed inset-auto m-0 w-60 rounded-lg border border-line bg-elevated p-3 shadow-xl",
+          panelClassName,
+        )}
         style={{ top: position.top, left: position.left, width }}
       >
         {children(() => ref.current?.hidePopover())}

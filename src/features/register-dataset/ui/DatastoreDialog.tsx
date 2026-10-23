@@ -18,8 +18,8 @@ import {
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
-import { Dialog } from "@/shared/ui/Dialog";
-import dialogStyles from "@/shared/ui/Dialog.module.css";
+import { button } from "@/shared/ui/button";
+import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
 import styles from "./DatastoreDialog.module.css";
 
@@ -359,17 +359,13 @@ function DatastoreBody({
         <span className={styles.muted}>데이터 {rows.length}개</span>
       </div>
 
-      <div className={dialogStyles.actions}>
-        <button
-          type="button"
-          className={dialogStyles.secondary}
-          onClick={onClose}
-        >
+      <div className={dialogActions}>
+        <button type="button" className={button()} onClick={onClose}>
           닫기
         </button>
         <button
           type="button"
-          className={dialogStyles.primary}
+          className={button({ variant: "primary" })}
           disabled={!pickedReady || locked}
           title={
             locked

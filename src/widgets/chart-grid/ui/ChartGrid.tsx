@@ -8,13 +8,53 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
+import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 import { ChartItemCard } from "./ChartItemCard";
 import { DetailView } from "./DetailView";
 import { JobStatusBar } from "./JobStatusBar";
 import { PageScroller, type PageScrollerHandle } from "./PageScroller";
+
+// 행·열 수(1..10)마다 클래스를 고른다. Tailwind가 찾을 수 있게 이름을 그대로 적는다.
+const GRID_COLS = [
+  "",
+  "grid-cols-1",
+  "grid-cols-2",
+  "grid-cols-3",
+  "grid-cols-4",
+  "grid-cols-5",
+  "grid-cols-6",
+  "grid-cols-7",
+  "grid-cols-8",
+  "grid-cols-9",
+  "grid-cols-10",
+];
+const GRID_ROWS = [
+  "",
+  "grid-rows-1",
+  "grid-rows-2",
+  "grid-rows-3",
+  "grid-rows-4",
+  "grid-rows-5",
+  "grid-rows-6",
+  "grid-rows-7",
+  "grid-rows-8",
+  "grid-rows-9",
+  "grid-rows-10",
+];
+
+/** gap은 grid-layout.ts의 GRID_GAP과 같아야 PNG 크기 계산이 맞는다. */
+function gridClass({ rows, cols }: { rows: number; cols: number }) {
+  return cn(
+    "relative grid min-w-0 flex-1 gap-3",
+    GRID_ROWS[rows],
+    GRID_COLS[cols],
+  );
+}
+
+const pagerButton =
+  "h-6.5 w-7 cursor-pointer rounded-md border border-line bg-elevated disabled:cursor-not-allowed disabled:text-fg-muted disabled:opacity-40";
 
 function Pager({
   page,
@@ -27,20 +67,23 @@ function Pager({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className={styles.pager} aria-label="페이지">
+    <nav className="ml-auto flex items-center gap-1.5" aria-label="페이지">
       <button
         type="button"
+        className={pagerButton}
         aria-label="이전 페이지"
         disabled={page === 0}
         onClick={() => onPage(page - 1)}
       >
         ‹
       </button>
-      <span className={styles.pagerText}>
+      {/* 페이지 수가 30,000까지 가도 번호가 바뀔 때 버튼이 움직이지 않게 자리를 잡아 둔다. */}
+      <span className="min-w-[13ch] text-center tabular-nums">
         {page + 1} / {totalPages}
       </span>
       <button
         type="button"
+        className={pagerButton}
         aria-label="다음 페이지"
         disabled={page >= totalPages - 1}
         onClick={() => onPage(page + 1)}
@@ -123,16 +166,13 @@ export function ChartGrid() {
   }, [setGridArea]);
 
   return (
-    <div ref={areaRef} className={styles.gridArea}>
+    // grid와 하단 바를 세로로 쌓는다. 하단 바 높이(32px + 위 여백 12px)는
+    // grid-layout.ts의 GRID_FOOTER_HEIGHT와 같아야 PNG 크기 계산이 맞는다.
+    <div ref={areaRef} className="relative flex h-full w-full flex-col">
       {!current &&
         (opening ? (
           // history·공유 링크의 차트를 여는 중: 그 grid 모양대로 자리를 잡아 둔다.
-          <div
-            className={styles.grid}
-            data-rows={draftGrid.rows}
-            data-cols={draftGrid.cols}
-            aria-busy="true"
-          >
+          <div className={gridClass(draftGrid)} aria-busy="true">
             {Array.from({ length: draftGrid.rows * draftGrid.cols }, (_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: 여는 동안의 자리 표시용
               <ChartItemCard key={i} placeholder="차트 여는 중" />
@@ -162,15 +202,12 @@ export function ChartGrid() {
               onClose={closeDetail}
             />
           ) : (
-            <div className={styles.gridRow}>
+            <div className="flex min-h-0 flex-1 gap-2">
               <div
                 id={gridId}
-                className={styles.grid}
+                className={gridClass(grid)}
                 // 페이지 이동은 오른쪽 스크롤바가 맡는다. grid 위의 휠도 그쪽으로 넘긴다.
                 onWheel={(e) => scroller.current?.wheel(e.deltaY)}
-                // 행·열 수는 CSS가 data 속성으로 고른다 (1..10).
-                data-rows={grid.rows}
-                data-cols={grid.cols}
               >
                 {job.data?.items.map((item, i) => (
                   <ChartItemCard
@@ -204,7 +241,7 @@ export function ChartGrid() {
                 {/* item 목록이 정해지기 전에 실패하면(지운 데이터, 스키마 오류 등) 빈 grid 대신 사유를 보여준다. */}
                 {job.data?.status === "failed" &&
                   job.data.totalItems === null && (
-                    <div className={styles.gridMessage}>
+                    <div className="col-span-full row-span-full self-center">
                       <EmptyState
                         icon={<TriangleAlert size={20} />}
                         title="그리지 못했습니다"
@@ -214,7 +251,11 @@ export function ChartGrid() {
                     </div>
                   )}
                 {moving && (
-                  <div className={styles.pageMoving} aria-live="polite">
+                  // 스크롤 중 보이는 페이지와 조회한 페이지가 다를 때 grid를 덮는 안내
+                  <div
+                    className="absolute inset-0 z-2 flex items-center justify-center gap-2 rounded-md bg-overlay text-14 text-fg-secondary tabular-nums"
+                    aria-live="polite"
+                  >
                     <Spinner />
                     {(viewPage + 1).toLocaleString()} /{" "}
                     {totalPages.toLocaleString()} 페이지로 이동 중…
@@ -231,9 +272,9 @@ export function ChartGrid() {
               />
             </div>
           )}
-          <div className={styles.footer}>
+          <div className="mt-3 flex h-8 items-center gap-3 text-12 text-fg-secondary">
             {job.error ? (
-              <span role="alert" className={styles.error}>
+              <span role="alert" className="text-12 text-danger">
                 {job.error.message}
               </span>
             ) : (

@@ -5,11 +5,14 @@ import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
 import { colorName } from "@/shared/lib/palette";
+import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
-import styles from "@/shared/ui/workspace.module.css";
+import { settingsStyles } from "@/shared/ui/settings-styles";
+
+const s = settingsStyles();
 
 const POSITION_LABELS: Record<LegendPosition, string> = {
   top: "위",
@@ -46,11 +49,11 @@ export function ItemSettings({
   const legend = meta.data?.legend;
 
   return (
-    <div className={styles.popoverBody}>
+    <div className={s.popoverBody()}>
       <strong>{item.label} 설정</strong>
       {hasLegend && (
-        <section className={styles.settingsGroup}>
-          <h4>legend 위치</h4>
+        <section className={s.group()}>
+          <h4 className={s.groupTitle()}>legend 위치</h4>
           <LegendPositionPicker
             value={item.legendPosition ?? commonPosition}
             disabled={disabled}
@@ -61,7 +64,7 @@ export function ItemSettings({
           {item.legendPosition && (
             <button
               type="button"
-              className={styles.linkButton}
+              className={linkButton()}
               disabled={disabled}
               onClick={() =>
                 onAction({ type: "legendPosition", position: null })
@@ -72,8 +75,8 @@ export function ItemSettings({
           )}
         </section>
       )}
-      <section className={styles.settingsGroup}>
-        <h4>색상</h4>
+      <section className={s.group()}>
+        <h4 className={s.groupTitle()}>색상</h4>
         {!hasLegend ? (
           <>
             <ColorSwatches
@@ -81,14 +84,14 @@ export function ItemSettings({
               disabled={disabled}
               onSelect={(color) => onAction({ type: "color", color })}
             />
-            <p className={styles.muted}>{colorName(item.color)}</p>
+            <p className="text-12 text-fg-muted">{colorName(item.color)}</p>
           </>
         ) : legend ? (
-          <ul className={styles.legendList}>
+          <ul className={s.legendList()}>
             {legend.values.map((value, i) => (
-              <li key={value}>
+              <li key={value} className={s.legendItem()}>
                 <ColorPickerButton
-                  className={styles.legendSwatch}
+                  className={s.legendSwatch()}
                   style={{ background: legend.colors[i] }}
                   color={legend.colors[i]}
                   label={`${value} 색 바꾸기`}
@@ -107,7 +110,7 @@ export function ItemSettings({
         {item.customColor && (
           <button
             type="button"
-            className={styles.linkButton}
+            className={linkButton()}
             disabled={disabled}
             onClick={() => onAction({ type: "color", color: null })}
           >

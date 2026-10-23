@@ -5,10 +5,12 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toggleValue } from "@/shared/lib/drag-select";
+import { cn } from "@/shared/lib/tw";
 import { useDragSelect } from "@/shared/lib/use-drag-select";
 import { useDialogContainer } from "./Dialog";
-import styles from "./OrderedSelect.module.css";
-import selectStyles from "./Select.module.css";
+import { selectStyles } from "./select-styles";
+
+const s = selectStyles();
 
 export type Option<T extends string> = { value: T; label: string };
 
@@ -119,8 +121,8 @@ export function OrderedSelect<T extends string>({
   };
 
   return (
-    <div className={selectStyles.field}>
-      <span className={selectStyles.label}>{label}</span>
+    <div className={s.field()}>
+      <span className={s.label()}>{label}</span>
       <Combobox.Root
         items={items}
         filteredItems={filtered}
@@ -169,21 +171,21 @@ export function OrderedSelect<T extends string>({
               빼기는 목록에서 다시 누르거나 끌어서 한다. */}
           <Combobox.Trigger
             ref={triggerRef}
-            className={selectStyles.trigger}
+            className={s.trigger()}
             aria-label={`${label}: ${summary || "없음"}`}
             title={summary || undefined}
           >
             <span
-              className={`${selectStyles.value} ${shown.length === 0 ? selectStyles.placeholder : ""}`}
+              className={cn(s.value(), shown.length === 0 && s.placeholder())}
             >
               {summary || placeholder}
             </span>
             {shown.length > 0 && (
-              <span className={selectStyles.count} aria-hidden="true">
+              <span className={s.count()} aria-hidden="true">
                 {shown.length}
               </span>
             )}
-            <span className={selectStyles.chevron}>
+            <span className={s.chevron()}>
               <ChevronDown size={14} aria-hidden="true" />
             </span>
           </Combobox.Trigger>
@@ -198,11 +200,14 @@ export function OrderedSelect<T extends string>({
             // 고를 때마다 칩 줄이 늘어 트리거 높이가 바뀐다. 따라가면 드래그 중 목록이 포인터 밑에서
             // 밀려 엉뚱한 항목이 판정되므로, 열려 있는 동안은 처음 위치에 둔다.
             disableAnchorTracking
-            className={styles.positioner}
+            className="z-50"
           >
-            <Combobox.Popup className={styles.popup} aria-label={label}>
+            <Combobox.Popup
+              className="w-[max(var(--anchor-width),220px)] max-w-(--available-width) overflow-hidden rounded-lg border border-line bg-elevated text-13 text-fg shadow-lg"
+              aria-label={label}
+            >
               <Combobox.Input
-                className={styles.search}
+                className="w-full border-line border-b px-2.5 py-1.75 leading-[inherit] outline-none"
                 placeholder="검색"
                 aria-label="옵션 검색"
                 onKeyDown={(e) => {
@@ -215,13 +220,13 @@ export function OrderedSelect<T extends string>({
                   toggle(keyboardHighlight.current);
                 }}
               />
-              <Combobox.Empty className={styles.empty}>
+              <Combobox.Empty className="not-empty:p-2.5 not-empty:text-12 not-empty:text-fg-muted">
                 일치하는 항목이 없습니다
               </Combobox.Empty>
               <Combobox.List
                 ref={setListElement}
                 aria-label={`${label} 옵션`}
-                className={styles.list}
+                className="max-h-70 touch-pan-y select-none overflow-y-auto overscroll-contain outline-none data-dragging:cursor-ns-resize"
                 data-dragging={preview ? "" : undefined}
                 hidden={filtered.length === 0}
                 {...drag.listProps}
@@ -229,7 +234,7 @@ export function OrderedSelect<T extends string>({
                 {/* 전체 높이와 줄 위치는 가상 스크롤이 계산한 값이라 CSS로 정할 수 없다. */}
                 <div
                   role="presentation"
-                  className={styles.sizer}
+                  className="relative w-full"
                   style={{ height: totalSize }}
                 >
                   {virtualizer.getVirtualItems().map((row) => {
@@ -242,7 +247,8 @@ export function OrderedSelect<T extends string>({
                         index={row.index}
                         value={option.value}
                         data-index={row.index}
-                        className={styles.option}
+                        // 높이는 ROW_HEIGHT와 같아야 포인터 위치로 줄을 계산할 수 있다.
+                        className="absolute top-0 left-0 flex h-7 w-full cursor-default items-center gap-1.5 px-2 aria-selected:not-data-highlighted:bg-accent-soft data-highlighted:not-aria-selected:bg-panel aria-selected:data-highlighted:bg-accent-soft-strong"
                         aria-setsize={filtered.length}
                         aria-posinset={row.index + 1}
                         style={{ transform: `translateY(${row.start}px)` }}
@@ -253,14 +259,18 @@ export function OrderedSelect<T extends string>({
                         }}
                         onMouseUp={(e) => e.preventBaseUIHandler()}
                       >
-                        <span className={styles.check} aria-hidden="true">
+                        <span
+                          className="inline-grid size-3.5 flex-none place-items-center rounded-[3px] border border-line bg-elevated text-11 text-accent"
+                          aria-hidden="true"
+                        >
                           {order !== undefined && "✓"}
                         </span>
-                        <span className={styles.optionLabel}>
-                          {option.label}
-                        </span>
+                        <span className="flex-1 truncate">{option.label}</span>
                         {order !== undefined && (
-                          <span className={styles.badge} aria-hidden="true">
+                          <span
+                            className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-0.75 text-10 text-on-accent"
+                            aria-hidden="true"
+                          >
                             {order}
                           </span>
                         )}

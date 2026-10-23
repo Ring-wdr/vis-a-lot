@@ -18,9 +18,9 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
-import { Dialog } from "@/shared/ui/Dialog";
-import dialogStyles from "@/shared/ui/Dialog.module.css";
-import styles from "@/shared/ui/workspace.module.css";
+import { button, linkButton } from "@/shared/ui/button";
+import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+import { settingsStyles } from "@/shared/ui/settings-styles";
 import {
   hasSection,
   removeSection,
@@ -28,7 +28,10 @@ import {
 } from "../model/option-fields";
 import { OptionSectionForm } from "./OptionSectionForm";
 import { SECTION_ICONS } from "./OptionSettings";
-import settingsStyles from "./SettingsDialog.module.css";
+import { settingsDialog } from "./settings-dialog-styles";
+
+const sd = settingsDialog();
+const s = settingsStyles();
 
 type ItemOptionsProps = {
   itemKey: string;
@@ -49,11 +52,11 @@ export function ItemOptionsButton({
 }: ItemOptionsProps & { disabled: boolean }) {
   const store = useWorkspaceStore();
   return (
-    <section className={styles.settingsGroup}>
-      <h4>차트 속성</h4>
+    <section className={s.group()}>
+      <h4 className={s.groupTitle()}>차트 속성</h4>
       <button
         type="button"
-        className={styles.linkButton}
+        className={linkButton()}
         disabled={disabled}
         onClick={() => openItemOptionsDialog(store, props)}
       >
@@ -70,7 +73,7 @@ function openItemOptionsDialog(store: WorkspaceStore, props: ItemOptionsProps) {
       isOpen={isOpen}
       onClose={close}
       onExited={unmount}
-      className={settingsStyles.dialog}
+      className={sd.dialog()}
     >
       <WorkspaceScope store={store}>
         <ItemOptionsBody {...props} onClose={close} />
@@ -110,18 +113,19 @@ function ItemOptionsBody({
   );
 
   return (
-    <div className={settingsStyles.body}>
-      <h2 id={titleId} className={settingsStyles.title}>
+    <div className={sd.body()}>
+      <h2 id={titleId} className={sd.title()}>
         {label} 속성
       </h2>
-      <div className={settingsStyles.layout}>
-        <nav className={settingsStyles.menu} aria-label="속성 메뉴">
+      <div className={sd.layout()}>
+        <nav className={sd.menu()} aria-label="속성 메뉴">
           {sections.map((id) => {
             const Icon = SECTION_ICONS[id];
             return (
               <button
                 key={id}
                 type="button"
+                className={sd.menuItem()}
                 aria-current={active === id || undefined}
                 onClick={() => setMenu(id)}
               >
@@ -132,7 +136,7 @@ function ItemOptionsBody({
             );
           })}
         </nav>
-        <div className={settingsStyles.content}>
+        <div className={sd.content()}>
           {active && (
             <OptionSectionForm
               key={active}
@@ -149,28 +153,24 @@ function ItemOptionsBody({
               resetLabel="이 구역은 공통 속성 따르기"
             />
           )}
-          <p className={styles.muted}>
+          <p className="text-12 text-fg-muted">
             바꾸면 이 item만 다시 그립니다. 전체 설정에서 공통 속성을 바꾸면
             item별 속성은 모두 공통 속성으로 바뀝니다.
           </p>
         </div>
       </div>
-      <div className={dialogStyles.actions}>
+      <div className={dialogActions}>
         {patch && !readOnly && (
           <button
             type="button"
-            className={styles.linkButton}
+            className={linkButton()}
             disabled={busy}
             onClick={() => save(undefined)}
           >
             모두 공통 속성 따르기
           </button>
         )}
-        <button
-          type="button"
-          className={settingsStyles.close}
-          onClick={onClose}
-        >
+        <button type="button" className={button()} onClick={onClose}>
           닫기
         </button>
       </div>

@@ -29,6 +29,25 @@
   --color-chart-ink-soft: rgb(11 11 11 / 6%);
   --color-chart-paper: #ffffff;
 
+  /* 두 토큰을 섞은 색. 다크 모드에서도 바뀐 토큰으로 다시 섞인다. */
+  /* panel 바탕에 글자색을 n% 섞은 hover·눌림 바탕 */
+  --color-panel-4: color-mix(in srgb, var(--color-panel), var(--color-fg) 4%);
+  --color-panel-5: color-mix(in srgb, var(--color-panel), var(--color-fg) 5%);
+  --color-panel-10: color-mix(in srgb, var(--color-panel), var(--color-fg) 10%);
+  --color-panel-20: color-mix(in srgb, var(--color-panel), var(--color-fg) 20%);
+  /* 입력 테두리 hover */
+  --color-line-strong: color-mix(
+    in srgb,
+    var(--color-line),
+    var(--color-fg) 20%
+  );
+  /* 고른 항목 위의 hover */
+  --color-accent-soft-strong: color-mix(
+    in srgb,
+    var(--color-accent-soft),
+    var(--color-accent) 10%
+  );
+
   /* 글자 크기는 px 그대로 이름 짓는다 (text-12 = 12px). 줄 높이는 정하지 않는다. */
   --text-*: initial;
   --text-10: 10px;
@@ -56,6 +75,16 @@
   --shadow-drawer: -8px 0 24px
     color-mix(in srgb, var(--color-shadow) 12%, transparent);
 
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono:
     var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -81,6 +110,9 @@
     color-scheme: dark;
   }
 }
+
+/* 커서가 없는 기기(터치) */
+@custom-variant hover-none (@media (hover: none));
 
 /* Tailwind로 옮기는 동안 남은 CSS Modules가 쓰는 이름. 다 옮기면 지운다. */
 :root {
@@ -113,8 +145,10 @@
 }
 
 @layer base {
+  /* preflight는 줄 높이를 1.5로 올린다. 화면은 브라우저 기본(normal)에 맞춰 짰다. */
   html {
     height: 100%;
+    line-height: normal;
   }
 
   html,
@@ -135,5 +169,20 @@
 
   a {
     text-decoration: none;
+  }
+
+  /* 버튼·입력은 따로 정하지 않으면 13px, 줄 높이 normal (브라우저 기본과 같다).
+     preflight는 둘 다 부모에게서 물려받게 한다. */
+  button,
+  input,
+  select,
+  textarea {
+    font-size: var(--text-13);
+    line-height: normal;
+  }
+
+  /* preflight의 border가 native 진행 막대 모양을 끈다. 브라우저 기본으로 되돌린다. */
+  progress {
+    border: revert;
   }
 }

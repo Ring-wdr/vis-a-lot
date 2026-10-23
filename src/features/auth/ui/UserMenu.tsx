@@ -2,7 +2,7 @@
 
 import { LogOut } from "lucide-react";
 import { logout, useSession } from "@/shared/api/session";
-import styles from "@/shared/ui/workspace.module.css";
+import { button } from "@/shared/ui/button";
 
 /** 상단 바 오른쪽: 로그인한 사용자와 로그아웃 */
 export function UserMenu() {
@@ -11,11 +11,14 @@ export function UserMenu() {
   );
   if (!name) return null;
   return (
-    <div className={styles.userMenu}>
+    <div className="flex items-center gap-1.5 border-line border-l pl-2 text-13 text-fg-secondary">
       <span>{name}</span>
       <button
         type="button"
-        className={styles.secondaryButton}
+        className={button({
+          size: "sm",
+          class: "inline-grid h-7 place-items-center",
+        })}
         title="로그아웃"
         aria-label="로그아웃"
         onClick={() => logout()}

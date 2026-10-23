@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import styles from "./Dialog.module.css";
+import { cn } from "@/shared/lib/tw";
 
 /**
  * 열린 modal <dialog>는 top layer에 올라가고 나머지 문서를 inert로 만든다. body에 portal한 팝업(select 목록 등)은
@@ -20,6 +20,9 @@ const DialogContainerContext = createContext<HTMLElement | null>(null);
 export function useDialogContainer() {
   return useContext(DialogContainerContext);
 }
+
+/** 팝업 하단의 버튼 줄 */
+export const dialogActions = "mt-4 flex justify-end gap-2";
 
 /**
  * overlay-kit이 주는 isOpen에 맞춰 여닫는 네이티브 <dialog>. 포커스 가두기와 Esc 닫기는 브라우저가 처리한다.
@@ -64,7 +67,12 @@ export function Dialog({
         ref.current = el;
         setContainer(el);
       }}
-      className={`${styles.dialog} ${className ?? ""}`}
+      className={cn(
+        // 세로 가운데 정렬이면 내용 높이가 바뀔 때 팝업 전체가 움직이므로 위쪽을 기준으로 둔다.
+        // 위쪽 여백만큼 줄여 화면 안에 두고, 넘치는 내용은 팝업 안에서 스크롤한다.
+        "m-auto mt-[12vh] max-h-[calc(100dvh-12vh-24px)] max-w-90 overflow-y-auto rounded-lg border border-line p-5 text-14 leading-normal backdrop:bg-backdrop",
+        className,
+      )}
       aria-labelledby={labelledBy}
       onClose={onClose}
     >

@@ -25,8 +25,8 @@ import type {
 import { formatBytes } from "@/shared/lib/format";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
-import { Dialog } from "@/shared/ui/Dialog";
-import dialogStyles from "@/shared/ui/Dialog.module.css";
+import { button } from "@/shared/ui/button";
+import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, LoadingText, Spinner } from "@/shared/ui/Loading";
 import { type GridColumn, PreviewGrid } from "./PreviewGrid";
 import styles from "./UploadDialog.module.css";
@@ -224,7 +224,7 @@ function UploadBody({
           />
           <button
             type="button"
-            className={dialogStyles.primary}
+            className={button({ variant: "primary" })}
             disabled={Boolean(dataset) || staging || running}
             title={
               dataset ? "수정에서는 원본 파일을 바꿀 수 없습니다" : undefined
@@ -240,7 +240,7 @@ function UploadBody({
           </button>
           <button
             type="button"
-            className={dialogStyles.secondary}
+            className={button()}
             disabled={!stageId || check.isPending || running}
             title="적재하지 않고 파일 전체를 검사합니다"
             onClick={() => check.mutate(options)}
@@ -377,17 +377,13 @@ function UploadBody({
             </p>
           ) : null}
         </div>
-        <div className={dialogStyles.actions}>
-          <button
-            type="button"
-            className={dialogStyles.secondary}
-            onClick={onCancel}
-          >
+        <div className={dialogActions}>
+          <button type="button" className={button()} onClick={onCancel}>
             취소
           </button>
           <button
             type="button"
-            className={dialogStyles.primary}
+            className={button({ variant: "primary" })}
             disabled={
               !stageId ||
               running ||

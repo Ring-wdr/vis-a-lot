@@ -1,7 +1,46 @@
 // 로딩 표시 모음. 빈 화면에 글자만 띄우지 않고, 무엇이 어디에 올지 자리를 잡아 보여준다.
 
 import type { ReactNode } from "react";
-import styles from "./Loading.module.css";
+import { cn, tv } from "@/shared/lib/tw";
+import { button } from "./button";
+
+// 움직임을 줄이도록 설정한 사용자에게는 회전을 늦추고 반짝임을 멈춘다.
+const spinner = tv({
+  base: "inline-block size-4 flex-none animate-spin rounded-full border-2 border-line border-t-accent [animation-duration:0.8s] motion-reduce:[animation-duration:2.4s]",
+  variants: {
+    size: { sm: "size-3", md: "", lg: "size-6 border-3" },
+    // 버튼 안(배경이 accent)에서는 글자색을 따른다.
+    tone: { inherit: "border-current border-t-transparent opacity-80" },
+  },
+});
+
+const loadingText = "inline-flex min-w-0 items-center gap-1.5 text-fg-muted";
+
+const SKELETON_WIDTH = {
+  30: "w-[30%]",
+  50: "w-1/2",
+  70: "w-[70%]",
+  90: "w-[90%]",
+} as const;
+
+const emptyState = tv({
+  slots: {
+    root: "flex h-full min-h-40 flex-col items-center justify-center gap-1.5 p-6 text-center text-fg-muted",
+    icon: "mb-1 grid size-11 place-items-center rounded-xl bg-panel text-fg-secondary",
+    title: "font-semibold text-14 text-fg",
+    body: "max-w-80 text-12 leading-normal",
+  },
+  variants: {
+    size: {
+      sm: {
+        root: "h-auto min-h-0 px-2 py-4",
+        icon: "size-8 rounded-lg",
+        title: "text-13",
+      },
+      md: {},
+    },
+  },
+});
 
 /** 도는 원. 버튼처럼 배경색이 있는 곳에서는 tone="inherit"로 글자색을 따른다. */
 export function Spinner({
@@ -11,14 +50,7 @@ export function Spinner({
   size?: "sm" | "md" | "lg";
   tone?: "inherit";
 }) {
-  return (
-    <span
-      className={styles.spinner}
-      data-size={size}
-      data-tone={tone}
-      aria-hidden="true"
-    />
-  );
+  return <span className={spinner({ size, tone })} aria-hidden="true" />;
 }
 
 /**
@@ -41,9 +73,9 @@ export function LoadingText({
     </>
   );
   return announce ? (
-    <output className={styles.loadingText}>{content}</output>
+    <output className={loadingText}>{content}</output>
   ) : (
-    <span className={styles.loadingText}>{content}</span>
+    <span className={loadingText}>{content}</span>
   );
 }
 
@@ -57,8 +89,11 @@ export function Skeleton({
 }) {
   return (
     <span
-      className={`${styles.skeleton} ${className ?? ""}`}
-      data-width={width}
+      className={cn(
+        "block h-2.5 animate-shimmer rounded-sm bg-linear-to-r bg-size-[200%_100%] from-line via-panel to-line motion-reduce:animate-none",
+        width && SKELETON_WIDTH[width],
+        className,
+      )}
       aria-hidden="true"
     />
   );
@@ -76,13 +111,14 @@ export function EmptyState({
   children?: ReactNode;
   size?: "sm" | "md";
 }) {
+  const e = emptyState({ size });
   return (
-    <div className={styles.empty} data-size={size}>
-      <span className={styles.emptyIcon} aria-hidden="true">
+    <div className={e.root()}>
+      <span className={e.icon()} aria-hidden="true">
         {icon}
       </span>
-      <p className={styles.emptyTitle}>{title}</p>
-      {children && <div className={styles.emptyBody}>{children}</div>}
+      <p className={e.title()}>{title}</p>
+      {children && <div className={e.body()}>{children}</div>}
     </div>
   );
 }
@@ -107,13 +143,17 @@ export function BootScreen({
 }) {
   const current = BOOT_STEPS.indexOf(step);
   return (
-    <main className={styles.boot} aria-busy={!error}>
-      <div className={styles.bootCard}>
-        <span className={styles.bootBrand}>vis-a-lot</span>
-        <ol className={styles.bootSteps} aria-hidden="true">
+    <main
+      className="grid min-h-screen place-items-center bg-surface text-fg"
+      aria-busy={!error}
+    >
+      <div className="flex w-[min(320px,calc(100vw-32px))] flex-col items-center gap-3.5 text-center">
+        <span className="font-bold text-20">vis-a-lot</span>
+        <ol className="flex gap-1.5" aria-hidden="true">
           {BOOT_STEPS.map((s, i) => (
             <li
               key={s}
+              className="h-1 w-6 rounded-xs bg-line data-[state=current]:bg-accent-line data-[state=done]:bg-accent"
               data-state={
                 i < current ? "done" : i === current ? "current" : "todo"
               }
@@ -122,19 +162,19 @@ export function BootScreen({
         </ol>
         {error ? (
           <>
-            <p role="alert" className={styles.bootError}>
+            <p role="alert" className="text-13 text-danger">
               {BOOT_MESSAGES[step]}에 실패했습니다: {error}
             </p>
             <button
               type="button"
-              className={styles.bootRetry}
+              className={button({ class: "text-13" })}
               onClick={() => location.reload()}
             >
               새로고침
             </button>
           </>
         ) : (
-          <output className={styles.bootMessage}>
+          <output className="inline-flex items-center gap-2 text-13 text-fg-secondary">
             <Spinner />
             {BOOT_MESSAGES[step]}
           </output>

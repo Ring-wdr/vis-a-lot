@@ -22,7 +22,6 @@ import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { useElementSize } from "@/shared/lib/use-element-size";
 import { Spinner } from "@/shared/ui/Loading";
-import styles from "@/shared/ui/workspace.module.css";
 import { windowStart } from "../lib/thumbnail-window";
 import { ChartItemCard } from "./ChartItemCard";
 
@@ -48,6 +47,10 @@ function keyTaken(e: KeyboardEvent) {
  * 아래에는 고정 크기 섬네일을 폭에 들어가는 만큼 늘어놓는다.
  * 브라우저 크기가 바뀌면 보이는 item 한 장만 그 크기로 다시 받는다 (서버가 크기별로 캐시한다).
  */
+
+const navButton =
+  "inline-grid w-7 flex-none cursor-pointer place-items-center self-stretch rounded-md border border-line bg-elevated text-fg-secondary disabled:cursor-not-allowed disabled:opacity-40";
+
 export function DetailView({
   current,
   focus,
@@ -103,8 +106,10 @@ export function DetailView({
   }, [onKey]);
 
   return (
-    <div className={styles.detail}>
-      <div ref={mainRef} className={styles.detailMain}>
+    // 크게 보기: 위에 item 하나, 아래에 섬네일 목록
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      {/* 이 영역 크기가 곧 크게 보기 PNG 크기다 (grid-layout.ts의 detailSizeFor). */}
+      <div ref={mainRef} className="flex min-h-0 flex-1">
         {item ? (
           <ChartItemCard
             key={item.key}
@@ -123,9 +128,13 @@ export function DetailView({
           <ChartItemCard placeholder="불러오는 중" />
         )}
       </div>
-      <nav className={styles.thumbNav} aria-label="item 이동">
+      <nav
+        className="flex flex-none items-center gap-1.5"
+        aria-label="item 이동"
+      >
         <button
           type="button"
+          className={navButton}
           title="처음 item"
           aria-label="처음 item"
           disabled={focus === 0}
@@ -135,6 +144,7 @@ export function DetailView({
         </button>
         <button
           type="button"
+          className={navButton}
           title="이전 item"
           aria-label="이전 item"
           disabled={focus === 0}
@@ -142,14 +152,16 @@ export function DetailView({
         >
           <ChevronLeft size={14} aria-hidden="true" />
         </button>
-        <ol ref={listRef} className={styles.thumbList}>
+        {/* gap은 grid-layout.ts의 THUMBNAIL_GAP과 같아야 섬네일 개수 계산이 맞는다. */}
+        <ol ref={listRef} className="flex min-w-0 flex-1 gap-2 overflow-hidden">
           {thumbs.map((thumb, i) => {
             const index = offset + i;
             return (
               <li key={thumb.key}>
                 <button
                   type="button"
-                  className={styles.thumb}
+                  // 폭은 섬네일 PNG 폭(THUMBNAIL_WIDTH)에 테두리 2px을 더한 값이다.
+                  className="flex w-32.5 cursor-pointer flex-col overflow-hidden rounded-sm border border-line bg-elevated text-fg-secondary hover:border-accent-line aria-[current=true]:border-accent aria-[current=true]:ring-1 aria-[current=true]:ring-accent"
                   aria-current={index === focus}
                   title={thumb.label}
                   onClick={() => go(index)}
@@ -157,12 +169,15 @@ export function DetailView({
                   {thumb.thumbnail ? (
                     <ChartImage data={thumb.thumbnail} alt="" />
                   ) : (
-                    <span className={styles.thumbEmpty}>
+                    // 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다.
+                    <span className="flex aspect-[128/80] w-full items-center justify-center gap-1.5 bg-panel text-11 text-fg-muted">
                       {!isTerminal(thumb.status) && <Spinner size="sm" />}
                       {THUMB_STATUS[thumb.status]}
                     </span>
                   )}
-                  <span className={styles.thumbLabel}>{thumb.label}</span>
+                  <span className="truncate px-1.5 py-0.5 text-left text-11">
+                    {thumb.label}
+                  </span>
                 </button>
               </li>
             );
@@ -170,6 +185,7 @@ export function DetailView({
         </ol>
         <button
           type="button"
+          className={navButton}
           title="다음 item"
           aria-label="다음 item"
           disabled={focus >= last}
@@ -179,6 +195,7 @@ export function DetailView({
         </button>
         <button
           type="button"
+          className={navButton}
           title="마지막 item"
           aria-label="마지막 item"
           disabled={focus >= last}
@@ -186,7 +203,7 @@ export function DetailView({
         >
           <ChevronsRight size={14} aria-hidden="true" />
         </button>
-        <span className={styles.thumbCount}>
+        <span className="min-w-[13ch] flex-none text-right text-12 text-fg-secondary tabular-nums">
           {(focus + 1).toLocaleString()} / {totalItems.toLocaleString()}
         </span>
       </nav>
