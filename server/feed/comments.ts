@@ -151,10 +151,16 @@ export const commentsOps = defineOps({
           closes_at: args.poll.closesAt ?? null,
         })
         .execute();
-    // 댓글 알림을 먼저 보내고 멘션된 사람을 구독시킨다 (멘션된 사람이 같은 댓글로 두 번 받지 않게)
-    await recordEvent(ctx, { postId: post.id, kind: "comment", commentId: id });
+    // 멘션된 사람은 멘션 알림만 받는다 (이미 구독 중이어도 댓글 알림은 보내지 않는다)
+    const mentioned = mentionIds(body);
+    await recordEvent(ctx, {
+      postId: post.id,
+      kind: "comment",
+      commentId: id,
+      excludedRecipients: mentioned,
+    });
     await autoSubscribe(ctx, post.id, [actor.id]);
-    await recordMentions(ctx, post, mentionIds(body), id);
+    await recordMentions(ctx, post, mentioned, id);
     return one(ctx, post, actor, id);
   },
 

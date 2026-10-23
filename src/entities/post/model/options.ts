@@ -17,17 +17,38 @@ export const PRIORITY_OPTIONS = (
   Object.entries(PRIORITY_LABELS) as [string, string][]
 ).map(([value, label]) => ({ value: Number(value) as PriorityLevel, label }));
 
-/** 그룹 상세와 고르기 목록. 사람은 활성 그룹 멤버만 */
-export function useGroupOptions(groupId: string | undefined) {
+/**
+ * 그룹 상세와 고르기 목록. 사람은 활성 그룹 멤버만 고를 수 있고,
+ * keep에 넣은 사람(지금 담당자 등)은 비활성이거나 멤버가 아니어도 이름이 보이게 남긴다.
+ */
+export function useGroupOptions(
+  groupId: string | undefined,
+  keep: readonly (string | null | undefined)[] = [],
+) {
   const group = useGroup(groupId);
   const users = useUserMap();
+  const kept = keep.filter((id): id is string => !!id).join(",");
   return useMemo(() => {
     const g = group.data;
-    const people = (g?.members ?? [])
+    const members = new Set((g?.members ?? []).map((m) => m.userId));
+    const choosable = (g?.members ?? [])
       .map((m) => users.get(m.userId))
       .filter((u) => u?.active)
-      .map((u) => ({ value: u?.id ?? "", label: u?.name ?? "" }))
-      .sort((a, b) => a.label.localeCompare(b.label, "ko"));
+      .map((u) => ({ value: u?.id ?? "", label: u?.name ?? "" }));
+    const extra = (kept ? kept.split(",") : [])
+      .filter((id) => !choosable.some((p) => p.value === id))
+      .map((id) => {
+        const u = users.get(id);
+        const note = !u?.active
+          ? "비활성"
+          : !members.has(id)
+            ? "멤버 아님"
+            : "";
+        return { value: id, label: `${u?.name ?? id}${note && ` (${note})`}` };
+      });
+    const people = [...choosable, ...extra].sort((a, b) =>
+      a.label.localeCompare(b.label, "ko"),
+    );
     return {
       group: g,
       isPending: group.isPending,
@@ -42,5 +63,5 @@ export function useGroupOptions(groupId: string | undefined) {
         ...(g?.teams ?? []).map((t) => ({ value: t.id, label: t.name })),
       ],
     };
-  }, [group.data, group.isPending, users]);
+  }, [group.data, group.isPending, users, kept]);
 }

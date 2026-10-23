@@ -210,6 +210,16 @@ describe("comments.create", () => {
     expect(await subscription("a", "DX-1")).toBeUndefined();
   });
 
+  it("구독 중인 사람이 멘션되면 멘션 알림 하나만 받는다", async () => {
+    // b는 FD-1의 담당자라 이미 구독 중
+    await comment("a", { body: doc(mention("b")) });
+    expect(await notificationsOf("b", "mention")).toHaveLength(1);
+    expect(await notificationsOf("b", "comment")).toHaveLength(0);
+    // 멘션되지 않은 다른 구독자(작성자가 아닌 ga 등)는 그대로 댓글 알림을 받는다
+    await comment("b");
+    expect(await notificationsOf("a", "comment")).toHaveLength(1);
+  });
+
   it("끈 구독은 다시 켜지 않는다", async () => {
     await t.run(
       "posts.subscribe",

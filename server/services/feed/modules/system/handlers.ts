@@ -20,11 +20,13 @@ export function registerSystem(app: FeedApp) {
       const status = await feedCall(c, "system.status", undefined);
       if (status.users > 0) return c.json(status, 200);
       await feedCall(c, "seed.load", { scenario: "default" });
+      await getRuntime().db.call("feedFlush", undefined);
       return c.json(await feedCall(c, "system.status", undefined), 200);
     })
     .openapi(routes.resetSystem, async (c) => {
       await getRuntime().db.call("feedReset", undefined);
       await feedCall(c, "seed.load", { scenario: "default" });
+      await getRuntime().db.call("feedFlush", undefined);
       return c.json(await feedCall(c, "system.status", undefined), 200);
     })
     .openapi(routes.getSystemClock, (c) => c.json(clock(), 200))
