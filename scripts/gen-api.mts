@@ -26,6 +26,7 @@ const CONSUMERS: Record<ServiceName, string[]> = {
     "server/services/chart/generated/data.ts",
   ],
   chart: ["src/shared/api/generated/chart.ts"],
+  feed: ["src/shared/api/generated/feed.ts"],
 };
 
 const HEADER =
@@ -38,6 +39,9 @@ for (const [name, service] of Object.entries(SERVICES) as [
   (typeof SERVICES)[ServiceName],
 ][]) {
   const app = createServiceApp();
+  if ("securitySchemes" in service)
+    for (const [scheme, value] of Object.entries(service.securitySchemes))
+      app.openAPIRegistry.registerComponent("securitySchemes", scheme, value);
   for (const route of Object.values(service.routes)) {
     app.openAPIRegistry.registerPath(route);
   }
