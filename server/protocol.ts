@@ -23,6 +23,7 @@ import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
 import type { PieData, RadarData } from "./data/polar-data";
 import type { SampleRowsPage } from "./data/sample-rows";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
+import type { FeedReply, FeedRequest } from "./feed/runner";
 import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { FunnelInput, FunnelMeta } from "./render/funnel";
@@ -169,6 +170,10 @@ export type DbMethods = {
   /** 만든 사용자의 공유 목록 (최근 순) */
   shareList: { params: { createdBy: string }; result: Share[] };
   sharePng: { params: { id: string }; result: Uint8Array | null };
+  /** 피드 op 하나 (op 이름과 인자는 server/feed/ops.ts). 도메인 오류는 결과로 돌려준다. */
+  feed: { params: FeedRequest; result: FeedReply };
+  /** 피드 스키마를 지우고 빈 스키마로 다시 만든다 (/feed/dev/seed 리셋) */
+  feedReset: { params: undefined; result: undefined };
   /** 만든 사용자의 공유만 지운다. 지웠으면 true */
   shareDelete: { params: { id: string; createdBy: string }; result: boolean };
   legendValues: {

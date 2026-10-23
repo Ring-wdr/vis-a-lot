@@ -19,6 +19,9 @@ import { attachSunburst, toPieData, toRadarData } from "../data/polar-data";
 import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
 import { createDb } from "../db/database";
+import { createFeedDb } from "../feed/db";
+import { migrateFeed, resetFeed } from "../feed/migrate";
+import { runFeedOp } from "../feed/runner";
 import {
   getHistory,
   listHistory,
@@ -65,7 +68,15 @@ const ready = PGlite.create("idb://vis-a-lot", {
   const datasets = await DatasetManager.open(db);
   await openHistory(db);
   await openShares(db);
-  return { db, datasets, bootMs: performance.now() - started };
+  await migrateFeed(pglite);
+  const feedDb = createFeedDb(pglite);
+  return {
+    db,
+    pglite,
+    feedDb,
+    datasets,
+    bootMs: performance.now() - started,
+  };
 });
 
 /** 데이터셋 id → 테이블과 스키마. 등록하지 않은 데이터셋이면 던진다. */
@@ -228,6 +239,17 @@ serveRpc<DbMethods>({
   async historyGet({ id }) {
     const { db } = await ready;
     return getHistory(db, id);
+  },
+
+  async feed(request) {
+    const { feedDb } = await ready;
+    return runFeedOp(feedDb, request);
+  },
+
+  async feedReset() {
+    const { pglite } = await ready;
+    await resetFeed(pglite);
+    return undefined;
   },
 
   async shareSave(share) {

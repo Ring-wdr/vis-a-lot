@@ -7,12 +7,14 @@ import { authApp } from "./services/auth/app";
 import { chartApp } from "./services/chart/app";
 import type { ApiError } from "./services/common/http";
 import { dataApp } from "./services/data/app";
+import { feedApp } from "./services/feed/app";
 import { SERVICES } from "./services/registry";
 
 const gateway = new Hono()
   .route(SERVICES.auth.basePath, authApp)
   .route(SERVICES.data.basePath, dataApp)
-  .route(SERVICES.chart.basePath, chartApp);
+  .route(SERVICES.chart.basePath, chartApp)
+  .route(SERVICES.feed.basePath, feedApp);
 
 gateway.notFound((c) => c.json<ApiError>({ error: "not found" }, 404));
 gateway.onError((err, c) => {
