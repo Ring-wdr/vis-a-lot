@@ -246,6 +246,16 @@ serveRpc<DbMethods>({
     return runFeedOp(feedDb, request);
   },
 
+  async feedFlush() {
+    const { pglite } = await ready;
+    // relaxedDurability에서는 공개 syncToFs()가 저장을 기다리지 않고 돌아온다.
+    // 데이터가 통째로 바뀐 직후(시드·리셋·가져오기)만 IndexedDB 파일시스템의 저장을 직접 기다린다.
+    const fs = (pglite as unknown as { fs?: { syncToFs(): Promise<void> } })
+      .fs;
+    await fs?.syncToFs();
+    return undefined;
+  },
+
   async feedReset() {
     const { pglite } = await ready;
     await resetFeed(pglite);

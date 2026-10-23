@@ -37,6 +37,8 @@ export type EventInput = {
   commentId?: string;
   /** 알림을 받을 사람을 더한다 (멘션된 사람 등). 구독자는 dispatch가 알아서 찾는다. */
   extraRecipients?: string[];
+  /** 이 이벤트로는 알리지 않을 사람. 같은 댓글로 멘션 알림을 받는 구독자가 댓글 알림까지 받지 않게 한다 */
+  excludedRecipients?: string[];
   /** 기본은 ctx.actor. scheduler처럼 사람이 없는 이벤트는 작성자 등을 넣는다. */
   actorId?: string;
 };
@@ -83,6 +85,11 @@ export async function recordEvent(
       created_at: event.createdAt,
     })
     .execute();
-  await dispatchEvent(ctx, event, input.extraRecipients ?? []);
+  await dispatchEvent(
+    ctx,
+    event,
+    input.extraRecipients ?? [],
+    input.excludedRecipients ?? [],
+  );
   return event;
 }

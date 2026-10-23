@@ -174,6 +174,11 @@ export type DbMethods = {
   feed: { params: FeedRequest; result: FeedReply };
   /** 피드 스키마를 지우고 빈 스키마로 다시 만든다 (/feed/dev/seed 리셋) */
   feedReset: { params: undefined; result: undefined };
+  /**
+   * 미뤄 둔 IndexedDB 쓰기를 기다린다 (relaxedDurability). 시드처럼 데이터가 통째로 바뀐 직후
+   * 새로고침해도 사라지지 않게, 시드 적재·리셋·가져오기 뒤에 부른다.
+   */
+  feedFlush: { params: undefined; result: undefined };
   /** 만든 사용자의 공유만 지운다. 지웠으면 true */
   shareDelete: { params: { id: string; createdBy: string }; result: boolean };
   legendValues: {

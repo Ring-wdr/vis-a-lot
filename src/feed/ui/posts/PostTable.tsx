@@ -314,7 +314,8 @@ export function PostTable({
   );
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-elevated">
+    // relative: 칸 안의 sr-only 글자(absolute)가 스크롤 상자 밖으로 나가 페이지를 넓히지 않게 한다
+    <div className="relative overflow-x-auto rounded-lg border border-line bg-elevated">
       <table className="w-full border-separate border-spacing-0 text-ui">
         <thead>
           {table.getHeaderGroups().map((hg) => (

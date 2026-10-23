@@ -25,6 +25,318 @@
       }
     },
     "schemas": {
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["file", "link"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "kind", "name", "url"]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "unknown chart"
+          }
+        },
+        "required": ["error"]
+      },
+      "AddAttachmentRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["file", "link"]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["kind", "name", "url"]
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "postId": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": ["string", "null"]
+          },
+          "body": {},
+          "resolved": {
+            "type": "boolean"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Instant"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Instant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reaction"
+            }
+          },
+          "poll": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Poll"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "type": "object",
+            "properties": {
+              "edit": {
+                "type": "boolean"
+              },
+              "delete": {
+                "type": "boolean"
+              },
+              "resolve": {
+                "type": "boolean"
+              },
+              "pin": {
+                "type": "boolean"
+              }
+            },
+            "required": ["edit", "delete", "resolve", "pin"]
+          }
+        },
+        "required": [
+          "id",
+          "postId",
+          "authorId",
+          "parentId",
+          "resolved",
+          "pinned",
+          "deleted",
+          "createdAt",
+          "updatedAt",
+          "mentions",
+          "reactions",
+          "poll",
+          "permissions"
+        ]
+      },
+      "Instant": {
+        "type": "string"
+      },
+      "Reaction": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "mine": {
+            "type": "boolean"
+          }
+        },
+        "required": ["emoji", "count", "mine"]
+      },
+      "Poll": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "closesAt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Instant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "votes": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "myVote": {
+            "type": ["integer", "null"]
+          },
+          "closed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "question",
+          "options",
+          "closesAt",
+          "votes",
+          "myVote",
+          "closed"
+        ]
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "properties": {
+          "body": {},
+          "parentId": {
+            "type": "string"
+          },
+          "poll": {
+            "type": "object",
+            "properties": {
+              "question": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "minItems": 2,
+                "maxItems": 6
+              },
+              "closesAt": {
+                "$ref": "#/components/schemas/Instant"
+              }
+            },
+            "required": ["question", "options"]
+          }
+        }
+      },
+      "CommentListResponse": {
+        "type": "object",
+        "properties": {
+          "threads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentThread"
+            }
+          }
+        },
+        "required": ["threads"]
+      },
+      "CommentThread": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Comment"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "replies": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            },
+            "required": ["replies"]
+          }
+        ]
+      },
+      "ToggleRequest": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["on"]
+      },
+      "ReactionRequest": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["emoji", "on"]
+      },
+      "UpdateCommentRequest": {
+        "type": "object",
+        "properties": {
+          "body": {}
+        }
+      },
+      "VoteRequest": {
+        "type": "object",
+        "properties": {
+          "optionIdx": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["optionIdx"]
+      },
       "GroupDetail": {
         "allOf": [
           {
@@ -182,16 +494,6 @@
           "myRole",
           "memberCount"
         ]
-      },
-      "ApiError": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "unknown chart"
-          }
-        },
-        "required": ["error"]
       },
       "GroupListResponse": {
         "type": "object",
@@ -532,9 +834,6 @@
           "createdAt"
         ]
       },
-      "Instant": {
-        "type": "string"
-      },
       "NotificationSettings": {
         "type": "object",
         "properties": {
@@ -731,25 +1030,6 @@
       "RelationKind": {
         "type": "string",
         "enum": ["blocks", "duplicate", "relates", "derived"]
-      },
-      "Attachment": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string",
-            "enum": ["file", "link"]
-          },
-          "name": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "kind", "name", "url"]
       },
       "PostPermissions": {
         "type": "object",
@@ -1497,6 +1777,358 @@
           }
         }
       },
+      "ActivityReport": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "keyPrefix": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "name", "keyPrefix"]
+          },
+          "from": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "to": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "$ref": "#/components/schemas/Day"
+                },
+                "entries": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityEntry"
+                  }
+                }
+              },
+              "required": ["date", "entries"]
+            }
+          },
+          "completed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "post": {
+                  "$ref": "#/components/schemas/PostRef"
+                },
+                "assigneeId": {
+                  "type": ["string", "null"]
+                },
+                "resolvedAt": {
+                  "$ref": "#/components/schemas/Instant"
+                }
+              },
+              "required": ["post", "assigneeId", "resolvedAt"]
+            }
+          },
+          "created": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostRef"
+            }
+          },
+          "byUser": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": "string"
+                },
+                "events": {
+                  "type": "integer"
+                },
+                "completed": {
+                  "type": "integer"
+                }
+              },
+              "required": ["userId", "events", "completed"]
+            }
+          }
+        },
+        "required": [
+          "group",
+          "from",
+          "to",
+          "days",
+          "completed",
+          "created",
+          "byUser"
+        ]
+      },
+      "ActivityEntry": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/FeedEvent"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostRef"
+          }
+        },
+        "required": ["event", "post"]
+      },
+      "ActivityReportRequest": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "to": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "assigneeId": {
+            "type": "string"
+          },
+          "postTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["groupId", "from", "to"]
+      },
+      "ReportTemplateListResponse": {
+        "type": "object",
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportTemplate"
+            }
+          }
+        },
+        "required": ["templates"]
+      },
+      "ReportTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["activity", "status"]
+          },
+          "params": {
+            "$ref": "#/components/schemas/ReportTemplateParams"
+          },
+          "editable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "groupId",
+          "name",
+          "kind",
+          "params",
+          "editable"
+        ]
+      },
+      "ReportTemplateParams": {
+        "type": "object",
+        "properties": {
+          "rangeDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 366
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "assigneeId": {
+            "type": "string"
+          },
+          "postTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SaveReportTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["activity", "status"]
+          },
+          "params": {
+            "$ref": "#/components/schemas/ReportTemplateParams"
+          }
+        },
+        "required": ["groupId", "name", "kind"]
+      },
+      "StatusReport": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "keyPrefix": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "name", "keyPrefix"]
+          },
+          "byStatus": {
+            "type": "object",
+            "properties": {
+              "unresolved": {
+                "type": "integer"
+              },
+              "in_progress": {
+                "type": "integer"
+              },
+              "in_review": {
+                "type": "integer"
+              },
+              "resolved": {
+                "type": "integer"
+              },
+              "on_hold": {
+                "type": "integer"
+              },
+              "cancelled": {
+                "type": "integer"
+              }
+            }
+          },
+          "overdue": {
+            "type": "integer"
+          },
+          "assigneeLoad": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": ["string", "null"]
+                },
+                "open": {
+                  "type": "integer"
+                },
+                "inReview": {
+                  "type": "integer"
+                },
+                "overdue": {
+                  "type": "integer"
+                }
+              },
+              "required": ["userId", "open", "inReview", "overdue"]
+            }
+          },
+          "reviewWait": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "avgHours": {
+                "type": "number"
+              },
+              "maxHours": {
+                "type": "number"
+              }
+            },
+            "required": ["count", "avgHours", "maxHours"]
+          },
+          "leadTime30d": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "avgDays": {
+                "type": "number"
+              },
+              "medianDays": {
+                "type": "number"
+              }
+            },
+            "required": ["count", "avgDays", "medianDays"]
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostSummary"
+            }
+          }
+        },
+        "required": [
+          "group",
+          "byStatus",
+          "overdue",
+          "assigneeLoad",
+          "reviewWait",
+          "leadTime30d",
+          "posts"
+        ]
+      },
+      "StatusReportRequest": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          }
+        },
+        "required": ["groupId"]
+      },
       "SchedulerRunResponse": {
         "type": "object",
         "properties": {
@@ -1511,6 +2143,38 @@
           }
         },
         "required": ["dueSoon", "overdue", "resumed"]
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            }
+          }
+        },
+        "required": ["hits"]
+      },
+      "SearchHit": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PostRef"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "matchedIn": {
+                "type": "string",
+                "enum": ["key", "title", "body", "comment"]
+              },
+              "snippet": {
+                "type": ["string", "null"]
+              }
+            },
+            "required": ["matchedIn", "snippet"]
+          }
+        ]
       },
       "FeedSnapshot": {
         "type": "object",
@@ -1839,6 +2503,776 @@
     "parameters": {}
   },
   "paths": {
+    "/posts/{postId}/attachments": {
+      "post": {
+        "tags": ["comments"],
+        "summary": "게시물에 파일·링크 첨부 (게시물을 고칠 수 있는 사람)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAttachmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "첨부",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Attachment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/comments": {
+      "post": {
+        "tags": ["comments"],
+        "summary": "댓글 쓰기 (게시물을 볼 수 있으면 누구나). 멘션을 읽어 멘션 이력·알림을 남기고, 쓴 사람·멘션된 사람을 구독시킨다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "쓴 댓글",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["comments"],
+        "summary": "게시물 댓글 스레드",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "스레드",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{commentId}": {
+      "delete": {
+        "tags": ["comments"],
+        "summary": "댓글 지우기 (쓴 사람·그룹 관리자). 소프트 삭제",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "지움"
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["comments"],
+        "summary": "댓글 고치기 (쓴 사람만). 새로 멘션된 사람에게만 멘션 알림",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 댓글",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{commentId}/pin": {
+      "put": {
+        "tags": ["comments"],
+        "summary": "스레드 고정 (스레드 첫 댓글만. 게시물을 고칠 수 있는 사람)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 댓글",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{commentId}/reactions": {
+      "put": {
+        "tags": ["comments"],
+        "summary": "반응 켜기·끄기 (지운 댓글은 400)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 댓글",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/attachments/{attachmentId}": {
+      "delete": {
+        "tags": ["comments"],
+        "summary": "첨부 지우기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "attachmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "지움"
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{commentId}/resolve": {
+      "put": {
+        "tags": ["comments"],
+        "summary": "스레드 해결·다시 열기 (스레드 첫 댓글만. 게시물을 고칠 수 있는 사람과 댓글 쓴 사람)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "commentId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 댓글",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/polls/{pollId}/vote": {
+      "put": {
+        "tags": ["comments"],
+        "summary": "투표 (한 사람 한 표, 다시 고르면 바뀐다. 마감 뒤 400)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "pollId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "투표가 달린 댓글",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (빈 본문, 마감된 투표 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물·댓글 (볼 수 없는 것 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/groups/{groupId}/post-types/{postTypeId}": {
       "delete": {
         "tags": ["groups"],
@@ -4588,6 +6022,362 @@
         }
       }
     },
+    "/reports/activity": {
+      "post": {
+        "tags": ["reports"],
+        "summary": "활동 보고: 기간·팀·담당자 → 날짜순 활동 로그, 해결·생성한 게시물, 사람별 수",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "보고",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (from > to, 기간이 1년 넘음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹·템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/templates/{templateId}": {
+      "delete": {
+        "tags": ["reports"],
+        "summary": "템플릿 지우기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "templateId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "지움"
+          },
+          "400": {
+            "description": "요청 형식 오류 (from > to, 기간이 1년 넘음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹·템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/templates": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "그룹의 보고 템플릿",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportTemplateListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (from > to, 기간이 1년 넘음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹·템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["reports"],
+        "summary": "템플릿 저장 (id가 없으면 새로. 그룹 멤버가 만들고, 고치기는 만든 사람·그룹 관리자)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "저장한 템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportTemplate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (from > to, 기간이 1년 넘음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹·템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/status": {
+      "post": {
+        "tags": ["reports"],
+        "summary": "현황 보고: 상태별 수, 기한 초과, 담당자별 부하, 검토 대기 체류, 최근 30일 리드타임, 열린 게시물 목록",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "보고",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류 (from > to, 기간이 1년 넘음 등)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹·템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/scheduler/run": {
       "post": {
         "tags": ["scheduler"],
@@ -4599,6 +6389,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SchedulerRunResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["search"],
+        "summary": "게시물 찾기: 이슈 키(FD-12, 접두사·번호 일부) → 제목 → 본문 → 댓글 순으로 맞춘 결과 (볼 수 있는 것만, 기본 20개)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
