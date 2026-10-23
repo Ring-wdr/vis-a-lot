@@ -1,8 +1,8 @@
 "use client";
 
-// 첨부 목록, 댓글 자리, 활동 로그 타임라인(변경 이력을 문장으로).
+// 활동 로그 타임라인(변경 이력을 문장으로).
 
-import { Clock, FileText, Link2, MessageSquare } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useUserMap } from "@/feed/api/lookups";
 import { usePostEvents } from "@/feed/api/post-queries";
 import { useClock } from "@/feed/api/queries";
@@ -15,55 +15,6 @@ import { detail } from "./styles";
 import { dateTime, relativeTime } from "./time";
 
 const d = detail();
-
-export function PostAttachments({ post }: { post: PostDetail }) {
-  if (post.attachments.length === 0) return null;
-  return (
-    <section className={d.section()} aria-labelledby="post-attachments-title">
-      <h2 id="post-attachments-title" className={d.sectionTitle()}>
-        첨부{" "}
-        <span className="font-normal text-fg-muted">
-          {post.attachments.length}
-        </span>
-      </h2>
-      <ul className={d.list()}>
-        {post.attachments.map((a) => {
-          const Icon = a.kind === "link" ? Link2 : FileText;
-          return (
-            <li key={a.id}>
-              <a
-                href={a.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-h-7.5 min-w-0 items-center gap-2 rounded-md px-1.5 text-accent hover:bg-panel"
-              >
-                <Icon size={14} className="flex-none" aria-hidden="true" />
-                <span className="min-w-0 truncate">{a.name}</span>
-                <span className="ml-auto min-w-0 truncate text-2xs text-fg-muted">
-                  {a.url}
-                </span>
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-export function PostComments() {
-  return (
-    <section className={d.section()} aria-labelledby="post-comments-title">
-      <h2 id="post-comments-title" className={d.sectionTitle()}>
-        댓글
-      </h2>
-      <p className="flex items-center gap-2 rounded-lg border border-dashed border-line p-3 text-xs text-fg-muted">
-        <MessageSquare size={14} aria-hidden="true" />
-        댓글(대댓글·반응·멘션)은 다음 단계에서 붙입니다.
-      </p>
-    </section>
-  );
-}
 
 export function PostActivity({
   post,
