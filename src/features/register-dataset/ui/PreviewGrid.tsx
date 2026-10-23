@@ -3,9 +3,21 @@
 import { useMemo } from "react";
 import { COLUMN_TYPE_LABELS } from "@/entities/dataset/lib/labels";
 import type { ColumnType, CsvPreview } from "@/shared/api/types";
-import styles from "./UploadDialog.module.css";
+import { cn } from "@/shared/lib/tw";
 
 const AUTO = "auto";
+
+const cell =
+  "min-w-30 max-w-55 truncate border-line border-r border-b px-2 py-1 data-excluded:opacity-40";
+const headCell = cn(cell, "sticky z-1 bg-panel text-left");
+const rowHead = cn(
+  cell,
+  "sticky left-0 z-2 w-11 min-w-11 bg-panel text-center font-normal text-fg-muted",
+);
+// 머리의 행 번호 칸은 가로·세로 sticky 칸 위에 온다.
+const headRowHead = cn(rowHead, "z-3");
+// 첫 줄(이름) 높이만큼 내린다. 행 높이가 글자 크기로 정해지므로 같은 값을 쓴다.
+const secondRow = "top-7.25";
 
 export type GridColumn = {
   name: string;
@@ -43,11 +55,11 @@ export function PreviewGrid({
   const noneIncluded = columns.every((c) => !c.included);
 
   return (
-    <div className={styles.gridScroll}>
-      <table className={styles.grid}>
+    <div className="min-h-0 flex-1 overflow-auto">
+      <table className="border-separate border-spacing-0 text-12 tabular-nums">
         <thead>
           <tr>
-            <th className={styles.rowHead}>
+            <th className={cn(headRowHead, "top-0")}>
               <input
                 type="checkbox"
                 aria-label="모든 컬럼 적재"
@@ -59,25 +71,38 @@ export function PreviewGrid({
               />
             </th>
             {columns.map((c) => (
-              <th key={c.name} data-excluded={!c.included || undefined}>
-                <label className={styles.columnName} title={c.name}>
+              <th
+                key={c.name}
+                className={cn(headCell, "top-0")}
+                data-excluded={!c.included || undefined}
+              >
+                <label
+                  className="flex min-w-0 cursor-pointer items-center gap-1.5 font-semibold"
+                  title={c.name}
+                >
                   <input
                     type="checkbox"
                     checked={c.included}
                     onChange={(e) => onInclude(c.name, e.target.checked)}
                   />
-                  <span>{c.name}</span>
+                  <span className="overflow-hidden text-ellipsis">
+                    {c.name}
+                  </span>
                 </label>
               </th>
             ))}
           </tr>
           <tr>
-            <th className={styles.rowHead} aria-label="행 번호" />
+            <th className={cn(headRowHead, secondRow)} aria-label="행 번호" />
             {columns.map((c) => (
-              <th key={c.name} data-excluded={!c.included || undefined}>
+              <th
+                key={c.name}
+                className={cn(headCell, secondRow)}
+                data-excluded={!c.included || undefined}
+              >
                 <select
                   aria-label={`${c.name} 타입`}
-                  className={styles.typeSelect}
+                  className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-12 leading-[inherit]"
                   value={c.chosen ?? AUTO}
                   disabled={!c.included}
                   onChange={(e) =>
@@ -101,7 +126,7 @@ export function PreviewGrid({
                   ))}
                 </select>
                 {c.included && c.invalid ? (
-                  <span className={styles.invalidCount}>
+                  <span className="mt-0.5 block font-normal text-11 text-danger">
                     변환 불가 {c.invalid.toLocaleString()}개
                   </span>
                 ) : null}
@@ -114,7 +139,7 @@ export function PreviewGrid({
             // 미리보기 행은 순서만 있고 바뀌지 않는다.
             // biome-ignore lint/suspicious/noArrayIndexKey: 행 번호가 곧 식별자다.
             <tr key={r}>
-              <th className={styles.rowHead}>{r}</th>
+              <th className={rowHead}>{r}</th>
               {row.map((value, c) => {
                 const column = columns[c];
                 const bad = invalid.has(`${r}:${c}`);
@@ -122,6 +147,10 @@ export function PreviewGrid({
                   <td
                     // biome-ignore lint/suspicious/noArrayIndexKey: 열 순서가 곧 식별자다.
                     key={c}
+                    className={cn(
+                      cell,
+                      "text-right data-invalid:bg-danger/10 data-invalid:text-danger data-null:not-data-invalid:text-fg-muted data-null:italic",
+                    )}
                     data-excluded={!column?.included || undefined}
                     data-invalid={bad || undefined}
                     data-null={value === null || undefined}

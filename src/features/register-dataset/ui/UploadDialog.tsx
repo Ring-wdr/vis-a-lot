@@ -23,13 +23,13 @@ import type {
   UploadTask,
 } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, LoadingText, Spinner } from "@/shared/ui/Loading";
 import { type GridColumn, PreviewGrid } from "./PreviewGrid";
-import styles from "./UploadDialog.module.css";
 import { DEFAULT_CSV_OPTIONS, UploadOptions } from "./UploadOptions";
 
 const ACCEPT = ".csv,.tsv,.txt,.zip";
@@ -38,6 +38,13 @@ const PREVIEW_DEBOUNCE_MS = 300;
 const baseName = (fileName: string) => fileName.replace(/\.[^.]+$/, "");
 
 const RUNNING: UploadTask["state"][] = ["parse", "queued", "copy", "analyze"];
+
+const error = "m-0 whitespace-pre-wrap text-13 text-danger";
+const hint = "m-0 text-11 text-fg-muted leading-normal";
+const pane = "min-h-0 min-w-0 rounded-md border border-line bg-surface";
+// 비활성화(적재 중)만 묶고 모양은 없는 fieldset
+const plainFieldset = "flex min-h-0 min-w-0 flex-1 flex-col";
+const fileCell = "border-line border-b px-2 py-1.25 text-left";
 
 /** 적재 진행 한 줄 */
 function TaskProgress({ task }: { task: UploadTask }) {
@@ -52,8 +59,9 @@ function TaskProgress({ task }: { task: UploadTask }) {
     failed: "실패",
   }[task.state];
   return (
-    <output className={styles.progress}>
+    <output className="flex items-center gap-2.5 text-13 text-fg-secondary">
       <progress
+        className="w-60"
         value={
           task.state === "analyze" || task.state === "queued"
             ? undefined
@@ -206,12 +214,15 @@ function UploadBody({
   const staging = stage.isPending || restage.isPending;
 
   return (
-    <section className={styles.body} aria-labelledby={titleId}>
-      <header className={styles.head}>
-        <h2 id={titleId} className={styles.title}>
+    <section
+      className="flex h-full min-h-0 flex-col gap-3"
+      aria-labelledby={titleId}
+    >
+      <header className="flex items-center justify-between gap-3">
+        <h2 id={titleId} className="font-bold text-16">
           {dataset ? "데이터 수정" : "파일 열기"}
         </h2>
-        <div className={styles.headActions}>
+        <div className="flex gap-2">
           <input
             ref={fileInput}
             type="file"
@@ -255,23 +266,56 @@ function UploadBody({
         </div>
       </header>
 
-      <div className={styles.layout}>
-        <section className={styles.files} aria-label="파일">
-          <table className={styles.fileTable}>
+      <div className="grid min-h-0 flex-1 grid-cols-[200px_minmax(0,1fr)_260px] grid-rows-[minmax(140px,38%)_minmax(0,1fr)] gap-2.5 [grid-template-areas:'files_raw_options'_'preview_preview_options'] max-[861px]:grid-cols-[minmax(0,1fr)] max-[861px]:grid-rows-[auto_160px_auto_minmax(240px,1fr)] max-[861px]:overflow-auto max-[861px]:[grid-template-areas:'files'_'raw'_'options'_'preview']">
+        <section
+          className={cn(pane, "overflow-auto [grid-area:files]")}
+          aria-label="파일"
+        >
+          <table className="w-full border-collapse text-12">
             <thead>
               <tr>
-                <th>번호</th>
-                <th>이름</th>
+                <th
+                  className={cn(
+                    fileCell,
+                    "sticky top-0 w-10 bg-panel font-semibold text-fg-muted",
+                  )}
+                >
+                  번호
+                </th>
+                <th
+                  className={cn(
+                    fileCell,
+                    "sticky top-0 bg-panel font-semibold text-fg-secondary",
+                  )}
+                >
+                  이름
+                </th>
               </tr>
             </thead>
             <tbody>
               {staged?.files.map((f, i) => (
-                <tr key={f.name} aria-selected={i === fileIndex}>
-                  <td>{i}</td>
-                  <td>
+                <tr
+                  key={f.name}
+                  className="group"
+                  aria-selected={i === fileIndex}
+                >
+                  <td
+                    className={cn(
+                      fileCell,
+                      "w-10 text-fg-muted group-aria-selected:bg-accent-soft",
+                    )}
+                  >
+                    {i}
+                  </td>
+                  <td
+                    className={cn(
+                      fileCell,
+                      "group-aria-selected:bg-accent-soft",
+                    )}
+                  >
                     <button
                       type="button"
-                      className={styles.fileButton}
+                      className="block max-w-32.5 cursor-pointer truncate text-left text-12 leading-[inherit]"
                       aria-pressed={i === fileIndex}
                       title={`${f.name} · ${formatBytes(f.size)}`}
                       onClick={() => setFileIndex(i)}
@@ -284,7 +328,7 @@ function UploadBody({
             </tbody>
           </table>
           {staged && (
-            <p className={styles.hint}>
+            <p className={cn(hint, "px-2 py-1.5")}>
               {staged.fileName} · {formatBytes(staged.size)}
               {staged.files.length > 1 &&
                 ` · CSV ${staged.files.length}개를 하나로 합칩니다`}
@@ -294,7 +338,7 @@ function UploadBody({
 
         {/* 원본 앞부분. 파일을 끌어다 놓아도 올린다. */}
         <section
-          className={styles.raw}
+          className={cn(pane, "overflow-auto [grid-area:raw]")}
           aria-label="원본"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
@@ -303,7 +347,9 @@ function UploadBody({
           }}
         >
           {preview.data ? (
-            <pre>{preview.data.raw.join("\n")}</pre>
+            <pre className="m-0 whitespace-pre px-2.5 py-2 font-[family-name:ui-monospace,SFMono-Regular,Menlo,monospace] text-12 leading-[1.6]">
+              {preview.data.raw.join("\n")}
+            </pre>
           ) : staging || preview.isFetching ? (
             <LoadingText>불러오는 중</LoadingText>
           ) : (
@@ -317,8 +363,11 @@ function UploadBody({
           )}
         </section>
 
-        <aside className={styles.optionsPane} aria-label="전처리 옵션">
-          <fieldset disabled={running} className={styles.plainFieldset}>
+        <aside
+          className={cn(pane, "overflow-auto p-3 [grid-area:options]")}
+          aria-label="전처리 옵션"
+        >
+          <fieldset disabled={running} className={plainFieldset}>
             <UploadOptions
               name={name}
               onNameChange={setName}
@@ -328,13 +377,19 @@ function UploadBody({
           </fieldset>
         </aside>
 
-        <section className={styles.previewPane} aria-label="미리보기">
+        <section
+          className={cn(
+            pane,
+            "flex flex-col overflow-hidden [grid-area:preview]",
+          )}
+          aria-label="미리보기"
+        >
           {preview.data?.error ? (
-            <p role="alert" className={styles.error}>
+            <p role="alert" className={cn(error, "p-3")}>
               {preview.data.error}
             </p>
           ) : preview.data ? (
-            <fieldset disabled={running} className={styles.plainFieldset}>
+            <fieldset disabled={running} className={plainFieldset}>
               <PreviewGrid
                 columns={columns}
                 preview={preview.data}
@@ -354,16 +409,16 @@ function UploadBody({
         </section>
       </div>
 
-      <footer className={styles.foot}>
-        <div className={styles.status}>
+      <footer className="flex items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
           {task && RUNNING.includes(task.state) ? (
             <TaskProgress task={task} />
           ) : failure ? (
-            <p role="alert" className={styles.error}>
+            <p role="alert" className={error}>
               {failure}
             </p>
           ) : checkResult ? (
-            <output className={styles.checkOk}>
+            <output className="m-0 block text-13 text-fg-secondary">
               검사 통과 · {checkResult.rows.toLocaleString()}행
               {checkResult.skipped > 0 &&
                 ` · 건너뛴 행 ${checkResult.skipped.toLocaleString()}개`}
@@ -371,13 +426,13 @@ function UploadBody({
                 " · 변환 불가 값은 null로 넣습니다"}
             </output>
           ) : preview.data && !preview.data.error ? (
-            <p className={styles.hint}>
+            <p className={hint}>
               앞 {preview.data.rows.length}행 미리보기입니다. 검사를 누르면 파일
               전체를 확인합니다.
             </p>
           ) : null}
         </div>
-        <div className={dialogActions}>
+        <div className={cn(dialogActions, "mt-0")}>
           <button type="button" className={button()} onClick={onCancel}>
             취소
           </button>
@@ -413,7 +468,9 @@ export function openUploadDialog(dataset?: DatasetId) {
         isOpen={isOpen}
         onClose={() => close(undefined)}
         onExited={unmount}
-        className={styles.dialog}
+        // 파일 열기 팝업: 위에 파일 목록·원본·옵션, 아래에 미리보기 표. 미리보기가 바뀌어도 팝업 크기가 흔들리지 않게
+        // 팝업 크기를 화면에 맞춰 정해 두고, 각 칸 안에서 스크롤한다.
+        className="h-[min(820px,calc(100dvh-12vh-24px))] w-[min(1180px,calc(100vw-32px))] max-w-none overflow-hidden px-5 py-4"
       >
         <UploadBody
           dataset={dataset}

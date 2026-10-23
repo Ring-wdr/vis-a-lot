@@ -17,16 +17,29 @@ import {
 } from "@/shared/api/queries";
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/tw";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
-import styles from "./DatastoreDialog.module.css";
 
 /** 업로드·수정 팝업은 처음 열 때 불러온다. */
 const loadUploadDialog = () => import("./UploadDialog");
 
+// 행 높이(h-8.5)와 같아야 한다.
 const ROW_HEIGHT = 34;
+
+const error = "m-0 whitespace-pre-wrap text-13 text-danger";
+
+const iconButton =
+  "inline-flex size-7.5 cursor-pointer items-center justify-center rounded-md border border-line bg-elevated text-fg-secondary disabled:cursor-not-allowed disabled:opacity-40";
+
+// 가상 스크롤 표: 행을 tbody 안에 겹쳐 놓고 translateY로 옮긴다. 머리와 행이 같은 칸 폭을 쓴다.
+const row =
+  "grid h-8.5 grid-cols-[56px_minmax(160px,1fr)_160px_96px_84px_140px] items-center border-line border-b";
+const cell = "min-w-0 truncate px-2.5 text-left";
+const head = cn(cell, "font-semibold text-fg-secondary");
+const number = "text-right tabular-nums";
 
 /** 등록 시간: 2026-10-21 13:18:05 */
 function registeredAt(ms: number) {
@@ -64,10 +77,10 @@ function StatusCell({
   if (status.state === "missing") {
     return (
       <>
-        <span className={styles.muted}>미등록</span>
+        <span className="text-fg-muted">미등록</span>
         <button
           type="button"
-          className={styles.inlineButton}
+          className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-12 text-on-accent leading-[inherit] disabled:cursor-not-allowed disabled:opacity-50"
           disabled={generating}
           onClick={(e) => {
             e.stopPropagation();
@@ -81,7 +94,7 @@ function StatusCell({
   }
   if (status.state === "failed") {
     return (
-      <span className={styles.failed} title={status.error}>
+      <span className="text-danger" title={status.error}>
         실패
       </span>
     );
@@ -89,8 +102,11 @@ function StatusCell({
   if (status.state === "generating") {
     const ratio = status.done / Math.max(1, status.total);
     return (
-      <span className={styles.progress}>
-        <progress value={status.phase === "analyze" ? undefined : ratio} />
+      <span className="inline-flex items-center gap-1.5 text-12 text-fg-secondary">
+        <progress
+          className="w-16"
+          value={status.phase === "analyze" ? undefined : ratio}
+        />
         {status.phase === "analyze" ? "통계" : `${Math.round(ratio * 100)}%`}
       </span>
     );
@@ -179,26 +195,30 @@ function DatastoreBody({
   const usage = storage.data;
 
   return (
-    <div className={styles.body}>
-      <h2 id={titleId} className={styles.title}>
+    <div className="flex flex-col gap-2.5">
+      <h2 id={titleId} className="font-bold text-16">
         데이터 스토어
       </h2>
 
-      <div className={styles.toolbar}>
-        <label htmlFor={searchId} className={styles.search}>
+      <div className="flex items-center justify-between gap-3">
+        <label
+          htmlFor={searchId}
+          className="flex w-[min(280px,100%)] items-center gap-1.5 rounded-md border border-line bg-elevated px-2 py-1.25 text-fg-muted"
+        >
           <Search size={14} aria-hidden="true" />
           <input
             id={searchId}
             type="search"
+            className="min-w-0 flex-1 bg-transparent text-13 text-fg leading-[inherit] outline-none"
             placeholder="이름 검색"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <div className={styles.tools}>
+        <div className="flex gap-1">
           <button
             type="button"
-            className={styles.iconButton}
+            className={iconButton}
             aria-label="수정"
             title={
               pickedStatus?.kind === "sample"
@@ -212,7 +232,7 @@ function DatastoreBody({
           </button>
           <button
             type="button"
-            className={styles.iconButton}
+            className={iconButton}
             aria-label="삭제"
             title={
               pickedStatus?.kind === "sample"
@@ -226,7 +246,7 @@ function DatastoreBody({
           </button>
           <button
             type="button"
-            className={styles.iconButton}
+            className={iconButton}
             aria-label="새로고침"
             title="새로고침"
             disabled={datasets.isFetching}
@@ -235,30 +255,44 @@ function DatastoreBody({
             <RefreshCw
               size={15}
               data-spinning={datasets.isFetching || undefined}
+              className="data-spinning:animate-spin data-spinning:[animation-duration:0.8s]"
             />
           </button>
         </div>
       </div>
 
-      <div ref={scrollRef} className={styles.scroll}>
-        <table className={styles.table} aria-labelledby={titleId}>
-          <thead>
-            <tr>
-              <th>번호</th>
-              <th>이름</th>
-              <th>등록 시간</th>
-              <th className={styles.number}>행 수</th>
-              <th className={styles.number}>크기</th>
-              <th>상태</th>
+      <div
+        ref={scrollRef}
+        className="h-[min(360px,42dvh)] overflow-auto rounded-md border border-line"
+      >
+        <table
+          className="grid w-full min-w-160 border-collapse text-13"
+          aria-labelledby={titleId}
+        >
+          <thead className="sticky top-0 z-1 grid bg-panel">
+            <tr className={row}>
+              <th className={head}>번호</th>
+              <th className={head}>이름</th>
+              <th className={head}>등록 시간</th>
+              <th className={cn(head, number)}>행 수</th>
+              <th className={cn(head, number)}>크기</th>
+              <th className={head}>상태</th>
             </tr>
           </thead>
-          <tbody style={{ height: virtualizer.getTotalSize() }}>
+          <tbody
+            className="relative grid"
+            style={{ height: virtualizer.getTotalSize() }}
+          >
             {virtualizer.getVirtualItems().map((v) => {
               const { status, index } = rows[v.index];
               const info = status.upload;
               return (
                 <tr
                   key={status.id}
+                  className={cn(
+                    row,
+                    "absolute top-0 left-0 w-full cursor-default not-aria-selected:hover:bg-surface aria-selected:bg-accent-soft",
+                  )}
                   aria-selected={picked === status.id}
                   data-sample={status.kind === "sample" || undefined}
                   style={{ transform: `translateY(${v.start}px)` }}
@@ -272,12 +306,16 @@ function DatastoreBody({
                     }
                   }}
                 >
-                  <td className={styles.muted}>{index}</td>
-                  <td>
+                  <td
+                    className={cn(cell, "in-data-sample:text-12 text-fg-muted")}
+                  >
+                    {index}
+                  </td>
+                  <td className={cell}>
                     {/* 키보드로 고르는 자리. 행 클릭과 같은 일을 한다. */}
                     <button
                       type="button"
-                      className={styles.nameButton}
+                      className="max-w-full cursor-pointer truncate text-left text-13 leading-[inherit]"
                       aria-pressed={picked === status.id}
                       title={info?.fileName ?? status.name}
                       onClick={() => setPicked(status.id)}
@@ -285,21 +323,23 @@ function DatastoreBody({
                       {status.name}
                     </button>
                   </td>
-                  <td>{info ? registeredAt(info.createdAt) : "–"}</td>
-                  <td className={styles.number}>
+                  <td className={cell}>
+                    {info ? registeredAt(info.createdAt) : "–"}
+                  </td>
+                  <td className={cn(cell, number)}>
                     {/* 샘플은 등록 전에도 만들 행 수를 안다. */}
                     {status.state === "ready" || status.kind === "sample"
                       ? status.total.toLocaleString()
                       : "–"}
                   </td>
                   <td
-                    className={styles.number}
+                    className={cn(cell, number)}
                     title={info ? `${info.size} B` : undefined}
                   >
                     {info ? formatBytes(info.size) : "–"}
                   </td>
-                  <td>
-                    <span className={styles.state}>
+                  <td className={cell}>
+                    <span className="flex items-center gap-2">
                       <StatusCell
                         status={status}
                         generating={generate.isPending}
@@ -316,7 +356,7 @@ function DatastoreBody({
           </tbody>
         </table>
         {datasets.isPending ? (
-          <div className={styles.skeletons}>
+          <div className="flex flex-col gap-2 p-2.5">
             <Skeleton width={90} />
             <Skeleton width={70} />
           </div>
@@ -330,33 +370,34 @@ function DatastoreBody({
       </div>
 
       {pickedStatus?.state === "failed" && pickedStatus.error && (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className={error}>
           {pickedStatus.error}
         </p>
       )}
       {datasets.error && (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className={error}>
           {datasets.error.message}
         </p>
       )}
       {generate.error && (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className={error}>
           {generate.error.message}
         </p>
       )}
 
-      <div className={styles.usage}>
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-12 text-fg-secondary">
         <span>
           내 저장소 사용량{" "}
           {usage?.usage !== undefined ? formatBytes(usage.usage) : "–"}
           {usage?.quota ? ` / ${formatBytes(usage.quota)}` : ""}
         </span>
         <progress
+          className="w-full"
           value={usage?.usage ?? 0}
           max={usage?.quota || 1}
           aria-label="저장소 사용량"
         />
-        <span className={styles.muted}>데이터 {rows.length}개</span>
+        <span className="text-fg-muted">데이터 {rows.length}개</span>
       </div>
 
       <div className={dialogActions}>
@@ -390,7 +431,7 @@ export function openDatastoreDialog(selected?: DatasetId) {
       isOpen={isOpen}
       onClose={close}
       onExited={unmount}
-      className={styles.dialog}
+      className="w-[min(880px,calc(100vw-32px))] max-w-none"
     >
       <DatastoreBody initial={selected} onClose={close} />
     </Dialog>

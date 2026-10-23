@@ -17,10 +17,18 @@ import type {
   SampleRowsResponse,
 } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
-import styles from "./DataTableDialog.module.css";
+
+// 열 폭을 고정해 스크롤하며 행이 바뀌어도 칸이 흔들리지 않게 한다.
+const cell =
+  "h-7.5 w-35 overflow-hidden text-ellipsis whitespace-nowrap border-line border-b px-2.5 text-left";
+const numeric = "text-right tabular-nums";
+const rowNumber = "w-16 text-fg-muted tabular-nums";
+const head = "sticky top-0 z-1 bg-panel";
+const rowHover = "group-hover/row:bg-surface";
 
 /** 서버에서 한 번에 받는 행 수 */
 const PAGE_SIZE = 200;
@@ -123,18 +131,18 @@ function DataTable<P extends TablePage>({
   };
 
   return (
-    <div className={styles.body}>
-      <header className={styles.header}>
-        <h2 id={titleId} className={styles.title}>
+    <div className="flex flex-col gap-2.5">
+      <header className="flex items-baseline gap-2.5">
+        <h2 id={titleId} className="font-bold text-16">
           {source.title}
         </h2>
-        <span className={styles.muted}>
+        <span className="text-13 text-fg-muted">
           {first ? source.summary(first) + filterNote(first) : "불러오는 중"}
         </span>
       </header>
 
       {failed ? (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className="text-13 text-danger">
           {failed.message}
         </p>
       ) : first && total === 0 ? (
@@ -142,11 +150,18 @@ function DataTable<P extends TablePage>({
           {source.empty(first)}
         </EmptyState>
       ) : (
-        <div ref={scrollRef} className={styles.scroll}>
-          <table className={styles.table} aria-labelledby={titleId}>
+        // 가상 스크롤 표: 보이는 행 위아래를 빈 행으로 채워 스크롤 높이를 맞춘다.
+        <div
+          ref={scrollRef}
+          className="h-[min(480px,60dvh)] overflow-auto rounded-md border border-line"
+        >
+          <table
+            className="w-max min-w-full table-fixed border-collapse text-13"
+            aria-labelledby={titleId}
+          >
             <thead>
               <tr>
-                <th className={styles.rowNumber}>#</th>
+                <th className={cn(cell, head, rowNumber)}>#</th>
                 {columns.map((c) => {
                   const active = sort?.column === c.name;
                   const SortIcon = !active
@@ -164,19 +179,31 @@ function DataTable<P extends TablePage>({
                             : "ascending"
                           : "none"
                       }
-                      data-numeric={c.type !== "categorical" || undefined}
+                      className={cn(
+                        cell,
+                        head,
+                        c.type !== "categorical" && numeric,
+                      )}
                     >
                       <button
                         type="button"
-                        className={styles.sortButton}
+                        className={cn(
+                          "inline-flex max-w-full cursor-pointer items-center gap-1 font-semibold text-fg-secondary leading-[inherit]",
+                          c.type !== "categorical" && "flex-row-reverse",
+                        )}
                         title={`${c.label} (${c.name}) 정렬`}
                         onClick={() => changeSort(c.name)}
                       >
-                        <span>{c.label}</span>
+                        <span className="overflow-hidden text-ellipsis">
+                          {c.label}
+                        </span>
                         <SortIcon
                           size={12}
                           aria-hidden="true"
-                          data-active={active || undefined}
+                          className={cn(
+                            "flex-none",
+                            active ? "text-accent" : "opacity-40",
+                          )}
                         />
                       </button>
                     </th>
@@ -186,36 +213,38 @@ function DataTable<P extends TablePage>({
             </thead>
             <tbody>
               {padTop > 0 && (
+                // biome-ignore lint/a11y/noInteractiveElementToNoninteractiveRole: 가상 스크롤 높이만 채우는 빈 행이라 표의 행으로 읽히지 않게 한다
                 <tr role="presentation">
-                  <td style={{ height: padTop }} />
+                  <td className={cell} style={{ height: padTop }} />
                 </tr>
               )}
               {first &&
                 items.map((v) => {
                   const row = rowAt(v.index);
                   return (
-                    <tr key={v.index}>
-                      <td className={styles.rowNumber}>
+                    <tr key={v.index} className="group/row">
+                      <td className={cn(cell, rowNumber, rowHover)}>
                         {(v.index + 1).toLocaleString()}
                       </td>
                       {columns.map((c, i) => (
                         <td
                           key={c.name}
-                          data-numeric={c.type !== "categorical" || undefined}
-                        >
-                          {row ? (
-                            formatValue(row[i], c.type)
-                          ) : (
-                            <Skeleton className={styles.cellSkeleton} />
+                          className={cn(
+                            cell,
+                            c.type !== "categorical" && numeric,
+                            rowHover,
                           )}
+                        >
+                          {row ? formatValue(row[i], c.type) : <Skeleton />}
                         </td>
                       ))}
                     </tr>
                   );
                 })}
               {padBottom > 0 && (
+                // biome-ignore lint/a11y/noInteractiveElementToNoninteractiveRole: 가상 스크롤 높이만 채우는 빈 행이라 표의 행으로 읽히지 않게 한다
                 <tr role="presentation">
-                  <td style={{ height: padBottom }} />
+                  <td className={cell} style={{ height: padBottom }} />
                 </tr>
               )}
             </tbody>
@@ -242,7 +271,7 @@ function openTable<P extends TablePage>(source: TableSource<P>) {
       isOpen={isOpen}
       onClose={close}
       onExited={unmount}
-      className={styles.dialog}
+      className="w-[min(960px,calc(100vw-32px))] max-w-none"
     >
       <DataTable source={source} onClose={close} />
     </Dialog>

@@ -7,10 +7,12 @@ import { api } from "@/shared/api/api";
 import { useHealth } from "@/shared/api/queries";
 import type { DatasetId, DebugRenderResponse } from "@/shared/api/types";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
-import styles from "./page.module.css";
+import { button } from "@/shared/ui/button";
+
+const heading = "mb-2 font-bold text-16";
 
 const ITEM_COUNT = 8;
-/** 렌더 요청 크기. page.module.css의 .frame 크기와 같아야 한다. */
+/** 렌더 요청 크기. 아래 frame 칸(w-80 h-50) 크기와 같아야 한다. */
 const WIDTH = 320;
 const HEIGHT = 200;
 
@@ -55,15 +57,15 @@ export function BootCheck() {
   }
 
   return (
-    <main className={styles.main}>
-      <h1>구조 확인</h1>
+    <main className="flex flex-col gap-6 p-6">
+      <h1 className="font-bold text-[2em]">구조 확인</h1>
 
       <section>
-        <h2>DB Worker (PGlite)</h2>
+        <h2 className={heading}>DB Worker (PGlite)</h2>
         {healthError && <p role="alert">실패: {healthError.message}</p>}
         {!health && !healthError && <p>PGlite 부팅 중…</p>}
         {health && (
-          <ul>
+          <ul className="list-disc pl-5 leading-[1.6]">
             <li>{health.db.version}</li>
             <li>
               부팅 {Math.round(health.db.bootMs)}ms · 누적 부팅{" "}
@@ -75,33 +77,40 @@ export function BootCheck() {
       </section>
 
       <section>
-        <h2>데이터셋 (절차적 생성 → COPY 적재)</h2>
+        <h2 className={heading}>데이터셋 (절차적 생성 → COPY 적재)</h2>
         <DatasetPanel dataset={dataset} onChange={setDataset} showColumns />
       </section>
 
       <section>
-        <h2>Render Worker → Cache API → MSW → &lt;img&gt;</h2>
-        <div className={styles.controls}>
+        <h2 className={heading}>
+          Render Worker → Cache API → MSW → &lt;img&gt;
+        </h2>
+        <div className="mb-3 flex items-center gap-3">
           <label>
             item당 점 개수{" "}
             <input
               type="number"
+              className="w-24 rounded-sm border border-line bg-elevated px-1"
               min={0}
               step={10_000}
               value={points}
               onChange={(e) => setPoints(Number(e.target.value))}
             />
           </label>
-          <button type="button" onClick={renderAll}>
+          <button
+            type="button"
+            className={button({ size: "sm" })}
+            onClick={renderAll}
+          >
             {ITEM_COUNT}개 동시 렌더
           </button>
           {totalMs !== undefined && <span>전체 {Math.round(totalMs)}ms</span>}
         </div>
 
-        <div className={styles.grid}>
+        <div className="flex flex-wrap gap-3">
           {items.map((it) => (
-            <figure key={it.key} className={styles.item}>
-              <div className={styles.frame}>
+            <figure key={it.key}>
+              <div className="flex h-50 w-80 items-center justify-center border border-line text-13 text-fg-muted">
                 {it.error ? (
                   <span role="alert">{it.error}</span>
                 ) : it.result ? (
@@ -111,7 +120,7 @@ export function BootCheck() {
                 )}
               </div>
               {it.result && (
-                <figcaption>
+                <figcaption className="mt-1 text-12 text-fg-muted">
                   {it.result.worker} · {Math.round(it.result.renderMs)}ms
                 </figcaption>
               )}

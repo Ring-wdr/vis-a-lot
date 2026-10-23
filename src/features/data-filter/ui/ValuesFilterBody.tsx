@@ -4,11 +4,13 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { ColumnSummary, ExcludeFilter } from "@/shared/api/types";
 import { useDragSelect } from "@/shared/lib/use-drag-select";
-import styles from "./DataFilter.module.css";
 
 type ValuesSummary = Extract<ColumnSummary, { kind: "values" }>;
 
 const ROW_HEIGHT = 26;
+
+const bulkButton =
+  "cursor-pointer rounded-sm border border-line bg-elevated px-2 py-0.5 text-11 text-fg disabled:cursor-default disabled:opacity-50";
 
 /**
  * 범주 컬럼 필터: 검색(부분 일치) + 가상 스크롤 목록. 처음엔 전부 포함이고, 체크를 풀면 그 값을 뺀다.
@@ -85,18 +87,19 @@ export function ValuesFilterBody({
   };
 
   return (
-    <div className={styles.body}>
+    <div className="flex flex-col gap-2 text-12">
       <input
         type="search"
-        className={styles.search}
+        className="rounded-md border border-line bg-elevated px-2 py-1.25 text-12 text-fg"
         placeholder={`${summary.values.length.toLocaleString()}개 값에서 검색`}
         aria-label="값 검색"
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
-      <div className={styles.bulk}>
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
+          className={bulkButton}
           disabled={disabled}
           onClick={() => setShown(true)}
         >
@@ -104,29 +107,31 @@ export function ValuesFilterBody({
         </button>
         <button
           type="button"
+          className={bulkButton}
           disabled={disabled}
           onClick={() => setShown(false)}
         >
           {keyword ? "보이는 값 해제" : "전체 해제"}
         </button>
-        <span className={styles.muted}>
+        <span className="ml-auto text-fg-muted">
           {excluded.size > 0
             ? `${excluded.size.toLocaleString()}개 제외`
             : "전부 포함"}
         </span>
       </div>
       {shown.length === 0 ? (
-        <p className={styles.muted}>일치하는 값이 없습니다.</p>
+        <p className="text-fg-muted">일치하는 값이 없습니다.</p>
       ) : (
         <div
           ref={listRef}
-          className={styles.valueList}
+          // 드래그 선택 중 글자가 선택되거나, touch에서 세로 스크롤 외 동작이 끼어들지 않게 한다.
+          className="max-h-60 touch-pan-y select-none overflow-y-auto overscroll-contain rounded-md border border-line bg-elevated data-dragging:cursor-ns-resize"
           data-dragging={preview ? "" : undefined}
           {...drag.listProps}
         >
           {/* 전체 높이와 줄 위치는 가상 스크롤이 계산한 값이라 CSS로 정할 수 없다. */}
           <div
-            className={styles.valueSizer}
+            className="relative"
             style={{ height: virtualizer.getTotalSize() }}
           >
             {virtualizer.getVirtualItems().map((row) => {
@@ -135,7 +140,8 @@ export function ValuesFilterBody({
                 // biome-ignore lint/a11y/useKeyWithClickEvents: onClick은 포인터 클릭의 기본 토글만 막는다. 키보드는 안의 체크박스가 그대로 처리한다.
                 <label
                   key={value}
-                  className={styles.valueRow}
+                  // 높이는 ROW_HEIGHT와 같아야 한다.
+                  className="absolute top-0 left-0 flex h-6.5 w-full cursor-pointer items-center gap-1.5 px-2 hover:bg-panel"
                   data-index={row.index}
                   style={{ transform: `translateY(${row.start}px)` }}
                   // 포인터 선택은 목록에서 직접 판정하므로 label 클릭의 체크 토글은 막는다.
@@ -146,14 +152,20 @@ export function ValuesFilterBody({
                 >
                   <input
                     type="checkbox"
+                    className="accent-accent"
                     checked={!excluded.has(value)}
                     disabled={disabled}
                     onChange={(e) => toggle(value, e.target.checked)}
                   />
-                  <span className={styles.valueLabel} title={value}>
+                  <span
+                    className="min-w-0 flex-1 truncate text-fg"
+                    title={value}
+                  >
                     {value}
                   </span>
-                  <span className={styles.muted}>{count.toLocaleString()}</span>
+                  <span className="text-fg-muted">
+                    {count.toLocaleString()}
+                  </span>
                 </label>
               );
             })}

@@ -8,7 +8,14 @@ import {
 } from "@/entities/dataset/lib/labels";
 import type { CsvEncoding, CsvOptions } from "@/shared/api/types";
 import { Select } from "@/shared/ui/Select";
-import styles from "./UploadDialog.module.css";
+import { segmented } from "@/shared/ui/segmented";
+
+const option = "flex min-w-0 flex-col gap-1 text-13";
+const optionLabel = "p-0 font-medium text-12 text-fg-secondary";
+const input =
+  "min-w-0 rounded-md border border-line bg-elevated px-2 py-1.25 text-13 leading-[inherit]";
+const hint = "m-0 text-11 text-fg-muted leading-normal";
+const seg = segmented();
 
 const CUSTOM = "custom";
 const ISO = "iso";
@@ -34,11 +41,12 @@ function YesNo({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <fieldset className={styles.option}>
-      <legend>{label}</legend>
-      <div className={styles.segmented}>
+    <fieldset className={option}>
+      <legend className={optionLabel}>{label}</legend>
+      <div className={seg.root()}>
         <button
           type="button"
+          className={seg.item()}
           aria-pressed={value}
           onClick={() => onChange(true)}
         >
@@ -46,6 +54,7 @@ function YesNo({
         </button>
         <button
           type="button"
+          className={seg.item()}
           aria-pressed={!value}
           onClick={() => onChange(false)}
         >
@@ -79,12 +88,14 @@ export function UploadOptions({
   const set = (patch: Partial<CsvOptions>) => onChange({ ...value, ...patch });
 
   return (
-    <div className={styles.optionList}>
-      <div className={styles.option}>
-        <label htmlFor={`${id}-name`}>이름</label>
+    <div className="flex flex-col gap-3">
+      <div className={option}>
+        <label className={optionLabel} htmlFor={`${id}-name`}>
+          이름
+        </label>
         <input
           id={`${id}-name`}
-          className={styles.input}
+          className={input}
           value={name}
           maxLength={100}
           placeholder="파일 이름"
@@ -92,7 +103,7 @@ export function UploadOptions({
         />
       </div>
 
-      <div className={styles.option}>
+      <div className={option}>
         <Select
           label="구분 기호"
           value={knownDelimiter ? value.delimiter : CUSTOM}
@@ -108,7 +119,7 @@ export function UploadOptions({
         {!knownDelimiter && (
           <input
             aria-label="구분 기호 직접 입력"
-            className={styles.input}
+            className={input}
             value={value.delimiter}
             maxLength={1}
             placeholder="한 글자"
@@ -123,23 +134,27 @@ export function UploadOptions({
         onChange={(header) => set({ header })}
       />
 
-      <div className={styles.optionPair}>
-        <div className={styles.option}>
-          <label htmlFor={`${id}-null`}>Null 값</label>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+        <div className={option}>
+          <label className={optionLabel} htmlFor={`${id}-null`}>
+            Null 값
+          </label>
           <input
             id={`${id}-null`}
-            className={styles.input}
+            className={input}
             value={value.nullValue}
             maxLength={20}
             placeholder="(빈 값)"
             onChange={(e) => set({ nullValue: e.target.value })}
           />
         </div>
-        <div className={styles.option}>
-          <label htmlFor={`${id}-quote`}>따옴표</label>
+        <div className={option}>
+          <label className={optionLabel} htmlFor={`${id}-quote`}>
+            따옴표
+          </label>
           <input
             id={`${id}-quote`}
-            className={styles.input}
+            className={input}
             value={value.quote}
             maxLength={1}
             placeholder="한 글자"
@@ -148,7 +163,7 @@ export function UploadOptions({
         </div>
       </div>
 
-      <div className={styles.option}>
+      <div className={option}>
         <Select
           label="날짜 시간 형식"
           value={format === null ? ISO : knownFormat ? format : CUSTOM}
@@ -167,14 +182,14 @@ export function UploadOptions({
         {!knownFormat && (
           <input
             aria-label="날짜 시간 형식 직접 입력"
-            className={styles.input}
+            className={input}
             value={format ?? ""}
             maxLength={40}
             placeholder="yyyy-MM-dd HH:mm:ss"
             onChange={(e) => set({ datetimeFormat: e.target.value || null })}
           />
         )}
-        <p className={styles.hint}>
+        <p className={hint}>
           yyyy·MM·dd·HH·mm·ss·SSS. 이 형식으로 읽히는 컬럼을 시계열로 봅니다.
         </p>
       </div>
@@ -184,12 +199,12 @@ export function UploadOptions({
         value={value.ignoreErrors}
         onChange={(ignoreErrors) => set({ ignoreErrors })}
       />
-      <p className={styles.hint}>
+      <p className={hint}>
         켜면 타입으로 바꿀 수 없는 값은 null로, 필드 수가 맞지 않는 행은
         건너뜁니다.
       </p>
 
-      <div className={styles.option}>
+      <div className={option}>
         <Select
           label="인코딩"
           value={value.encoding}

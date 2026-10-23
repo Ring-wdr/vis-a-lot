@@ -55,15 +55,5 @@ export default {
   ignoreFiles: [
     "out/**",
     ".next/**",
-    "src/features/auth/ui/LoginForm.module.css",
-    "src/features/chart-actions/ui/DataTableDialog.module.css",
-    "src/features/data-filter/ui/DataFilter.module.css",
-    "src/features/register-dataset/ui/DatasetPanel.module.css",
-    "src/features/register-dataset/ui/DatastoreDialog.module.css",
-    "src/features/register-dataset/ui/UploadDialog.module.css",
-    "src/views/dev-select/ui/DevSelectPage.module.css",
-    "src/views/dev/ui/page.module.css",
-    "src/views/login/ui/LoginView.module.css",
-    "src/widgets/filter-panel/ui/FilterPanel.module.css",
   ],
 };
