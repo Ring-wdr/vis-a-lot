@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [0.13.0] - 2026-10-23
 
-화면 스타일을 CSS Modules에서 Tailwind CSS v4로 옮겼다. 여러 기능이 함께 import하던 공용 모듈과 자손 선택자 때문에 스타일이 다른 컴포넌트로 새던 문제를 구조적으로 막는다. 규칙은 `docs/styling.md`에 있다.
+화면 스타일을 CSS Modules에서 Tailwind CSS v4로 옮겼다. 여러 기능이 함께 import하던 공용 모듈과 자손 선택자 때문에 스타일이 다른 컴포넌트로 새던 문제를 구조적으로 막는다. 규칙은 `docs/styling.md`에 있다. 설정 팝업은 확인·취소로 바꿔 확인을 눌러야 반영되고, 공통 속성은 draw를 누를 때 적용된다. git flow는 git 훅과 GitHub branch protection이 강제한다.
 
 ### 설정 팝업
 - 전체 설정·item 속성 팝업은 확인·취소로 닫는다. 팝업 안에서 바꾼 값은 확인을 눌러야 반영되고, 취소·Esc는 버린다. 폼은 react-hook-form으로 다시 짰다
@@ -29,6 +29,8 @@
 - Stylelint: 스타일이 새는 선택자와 토큰 밖 색을 막는다. `pnpm lint`가 Biome 다음에 돌린다
 - `*.module.css` import를 막는다
 - 데이터 테이블의 빈 채움 행 a11y lint 오류를 이유를 적어 끈다
+- git flow를 git 훅으로 강제한다(`scripts/check-git-flow.sh`, husky `pre-commit`·`pre-merge-commit`·`pre-push`). main·develop에서는 로컬 커밋·병합과 직접 push를 막는다. 규칙은 `docs/git-flow.md`에 있다
+- 저장소를 public으로 바꾸고 main·develop에 GitHub branch protection(PR 필수, 관리자 포함, force push·삭제 금지)을 켰다. 릴리스 뒤 back-merge도 main → develop PR로 한다
 
 ## [0.12.0] - 2026-10-23
 
