@@ -114,36 +114,6 @@
 /* 커서가 없는 기기(터치) */
 @custom-variant hover-none (@media (hover: none));
 
-/* Tailwind로 옮기는 동안 남은 CSS Modules가 쓰는 이름. 다 옮기면 지운다. */
-:root {
-  --ws-surface: var(--color-surface);
-  --ws-panel: var(--color-panel);
-  --ws-elevated: var(--color-elevated);
-  --ws-border: var(--color-line);
-  --ws-text: var(--color-fg);
-  --ws-text-secondary: var(--color-fg-secondary);
-  --ws-text-muted: var(--color-fg-muted);
-  --ws-accent: var(--color-accent);
-  --ws-accent-rgb: 42 120 214;
-  --ws-accent-soft: var(--color-accent-soft);
-  --ws-accent-border: var(--color-accent-line);
-  --ws-on-accent: var(--color-on-accent);
-  --ws-danger: var(--color-danger);
-  --ws-shadow-rgb: 11 11 11;
-  --ws-backdrop: var(--color-backdrop);
-  --ws-overlay: var(--color-overlay);
-  --chart-ink: var(--color-chart-ink);
-  --chart-ink-soft: var(--color-chart-ink-soft);
-  --chart-paper: var(--color-chart-paper);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ws-accent-rgb: 77 143 230;
-    --ws-shadow-rgb: 0 0 0;
-  }
-}
-
 @layer base {
   /* preflight는 줄 높이를 1.5로 올린다. 화면은 브라우저 기본(normal)에 맞춰 짰다. */
   html {

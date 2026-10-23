@@ -51,9 +51,5 @@ export default {
       },
     },
   ],
-  // Tailwind로 옮기는 중인 파일. 옮기면 목록에서 지운다.
-  ignoreFiles: [
-    "out/**",
-    ".next/**",
-  ],
+  ignoreFiles: ["out/**", ".next/**"],
 };
