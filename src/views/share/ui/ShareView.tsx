@@ -11,7 +11,7 @@ import { useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import { TABS_LOCKED_HINT } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
 import { queueOpen } from "@/features/open-chart/model/pending-open";
-import { FeedExportButton } from "@/features/share-chart/ui/FeedExportButton";
+import { FeedPostButton } from "@/features/share-chart/ui/FeedPostButton";
 import { ApiRequestError } from "@/shared/api/api";
 import {
   useDatasetNames,
@@ -157,7 +157,7 @@ function ShareDetail({ id }: { id: string }) {
             gallery에서 열기
           </button>
           <CopyLinkButton share={data} />
-          <FeedExportButton share={async () => data} />
+          <FeedPostButton share={async () => data} />
           <DeleteButton share={data} />
         </div>
       </header>
@@ -186,7 +186,7 @@ function ShareList() {
     <section>
       <h1 className={title()}>내 공유</h1>
       <p className={meta()}>
-        탭 도구 줄의 '링크 복사'나 '피드로 보내기'를 누르면 공유가 생깁니다.
+        탭 도구 줄의 '링크 복사'나 '피드에 올리기'를 누르면 공유가 생깁니다.
       </p>
       {shares.isPending && (
         <p className={state()}>
