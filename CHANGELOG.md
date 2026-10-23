@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.12.0] - 2026-10-23
 
 원본 제품의 하위 차트(서브 차트)를 기본 차트에 더했다. 차트를 고르면 그 차트의 서브 차트를 고를 수 있고, 첫 값이 기본이다.
 
@@ -18,6 +18,10 @@
 ### API
 - `ChartSpec.subType`(선택, 없거나 그 차트에 없는 값이면 기본). 예전 history·공유 링크는 그대로 열린다
 - `CategoryMeta.stack`·`segments`, `PieMeta.variant`·`radiusY`·`innerRadius`·`ring`·`children`
+
+### 개발 환경
+- 브랜치 이름 규칙: `feat|feature|fix|chore|refactor|docs|test|release/<kebab-case>`와 `main`·`develop`·`release`만 쓰고, 클라우드 세션이 자동으로 붙이는 이름(`feat/<단어>-<단어>-<6자리>`, `ccr-…`)은 막는다. 규칙은 `scripts/check-branch-name.sh`에 있다
+- Claude PreToolUse 훅(`.claude/hooks/check-branch.mjs`)이 브랜치를 만들거나 push하는 명령을, husky `pre-push`가 사람의 push를 같은 규칙으로 검사한다. 이름 짓는 법은 `git-branch` 스킬에 둔다
 
 ## [0.11.0] - 2026-10-23
 
