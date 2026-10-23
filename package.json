@@ -6,12 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check",
+    "lint": "biome check && stylelint \"**/*.css\"",
     "format": "biome format --write",
     "test": "vitest run",
     "gen:api": "tsx scripts/gen-api.mts",
     "gen:api:check": "tsx scripts/gen-api.mts --check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint:css": "stylelint \"**/*.css\""
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
@@ -55,6 +56,7 @@
     "@types/react-dom": "^19",
     "husky": "9.1.7",
     "openapi-typescript": "7.13.0",
+    "stylelint": "17.16.0",
     "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "5.0.5"
