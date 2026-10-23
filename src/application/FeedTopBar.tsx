@@ -2,28 +2,26 @@
 
 import { Menu as MenuIcon, Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UserSwitcher } from "@/features/switch-user/ui/UserSwitcher";
 import { FEED } from "@/shared/config/feed-routes";
 import { AiBadge } from "@/shared/ui/AiBadge";
 import { button } from "@/shared/ui/button";
 import { navButton } from "@/shared/ui/nav";
+import { CommandPalette } from "@/widgets/command-palette/ui/CommandPalette";
 
-/** 커맨드 팔레트를 연다. 팔레트는 다음 PR에서 붙인다. */
-function openPalette() {}
-
-/** Cmd/Ctrl+K: 커맨드 팔레트 (지금은 브라우저 기본 동작만 막는다) */
-function usePaletteShortcut() {
+/** Cmd/Ctrl+K: 커맨드 팔레트를 열고 닫는다 */
+function usePaletteShortcut(toggle: () => void) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        openPalette();
+        toggle();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [toggle]);
 }
 
 /** 상단 바: 메뉴(좁은 화면), 검색·명령, 새 게시물, AI 배지, 사용자 전환 */
@@ -36,7 +34,9 @@ export function FeedTopBar({
   menuOpen: boolean;
   onToggleMenu: () => void;
 }) {
-  usePaletteShortcut();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const openPalette = () => setPaletteOpen(true);
+  usePaletteShortcut(useCallback(() => setPaletteOpen((open) => !open), []));
   return (
     <header className="flex h-12 flex-none items-center gap-2 border-b border-line bg-surface px-3">
       {showMenu && (
@@ -55,6 +55,7 @@ export function FeedTopBar({
         type="button"
         className="inline-flex h-7.5 w-full max-w-80 min-w-0 cursor-pointer items-center gap-2 rounded-md border border-line bg-panel px-2.5 text-ui text-fg-muted hover:bg-panel-hover"
         aria-keyshortcuts="Control+K Meta+K"
+        aria-haspopup="dialog"
         onClick={openPalette}
       >
         <Search size={14} aria-hidden="true" />
@@ -81,6 +82,7 @@ export function FeedTopBar({
         <AiBadge />
         <UserSwitcher />
       </div>
+      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </header>
   );
 }
