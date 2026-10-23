@@ -1,0 +1,4697 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "vis-a-lot feed service",
+    "description": "사내 데이터 공유 피드 프로토타입: 게시물(이슈)·그룹·사용자·댓글·알림·뷰·보고서",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/feed"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "feedUser": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-feed-user",
+        "description": "프로토타입 사용자 전환. 화면에서 고른 사용자 id"
+      }
+    },
+    "schemas": {
+      "GroupDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Group"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GroupMember"
+                }
+              },
+              "teams": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Team"
+                }
+              },
+              "postTypes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PostType"
+                }
+              }
+            },
+            "required": ["members", "teams", "postTypes"]
+          }
+        ]
+      },
+      "StatusNames": {
+        "type": "object",
+        "properties": {
+          "unresolved": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "in_progress": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "in_review": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "resolved": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "on_hold": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "cancelled": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          }
+        }
+      },
+      "GroupRole": {
+        "type": ["string", "null"],
+        "enum": ["admin", "member", null]
+      },
+      "GroupMember": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/GroupRole"
+          }
+        },
+        "required": ["userId", "role"]
+      },
+      "Team": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "PostType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": ["string", "null"]
+          },
+          "sort": {
+            "type": "integer"
+          }
+        },
+        "required": ["id", "name", "color", "sort"]
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "keyPrefix": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "statusNames": {
+            "$ref": "#/components/schemas/StatusNames"
+          },
+          "myRole": {
+            "$ref": "#/components/schemas/GroupRole"
+          },
+          "memberCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "keyPrefix",
+          "description",
+          "isPrivate",
+          "statusNames",
+          "myRole",
+          "memberCount"
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "unknown chart"
+          }
+        },
+        "required": ["error"]
+      },
+      "GroupListResponse": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          }
+        },
+        "required": ["groups"]
+      },
+      "SavePostTypeRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "color": {
+            "type": ["string", "null"],
+            "pattern": "^#[0-9a-f]{6}$/i"
+          },
+          "sort": {
+            "type": "integer"
+          }
+        },
+        "required": ["name", "color"]
+      },
+      "SaveTeamRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": ["name"]
+      },
+      "SetMemberRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/GroupRole"
+          }
+        },
+        "required": ["role"]
+      },
+      "UpdateGroupRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "description": {
+            "type": ["string", "null"],
+            "maxLength": 500
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "keyPrefix": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9]{1,5}$"
+          },
+          "statusNames": {
+            "$ref": "#/components/schemas/StatusNames"
+          }
+        }
+      },
+      "UnreadCountResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": ["count"]
+      },
+      "NotificationIdsRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": ["ids"]
+      },
+      "InboxResponse": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxGroup"
+            }
+          },
+          "unreadTotal": {
+            "type": "integer"
+          }
+        },
+        "required": ["groups", "unreadTotal"]
+      },
+      "InboxGroup": {
+        "type": "object",
+        "properties": {
+          "post": {
+            "$ref": "#/components/schemas/PostRef"
+          },
+          "notifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            }
+          },
+          "unread": {
+            "type": "integer"
+          }
+        },
+        "required": ["post", "notifications", "unread"]
+      },
+      "PostRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostStatus"
+          },
+          "groupId": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "key", "title", "status", "groupId"]
+      },
+      "PostStatus": {
+        "type": "string",
+        "enum": [
+          "unresolved",
+          "in_progress",
+          "in_review",
+          "resolved",
+          "on_hold",
+          "cancelled"
+        ]
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/NotifyKind"
+          },
+          "event": {
+            "$ref": "#/components/schemas/FeedEvent"
+          },
+          "readAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Instant"
+              },
+              {
+                "type": ["string", "null"]
+              }
+            ]
+          },
+          "archivedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Instant"
+              },
+              {
+                "type": ["string", "null"]
+              }
+            ]
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Instant"
+          }
+        },
+        "required": ["id", "kind", "event", "readAt", "archivedAt", "createdAt"]
+      },
+      "NotifyKind": {
+        "type": "string",
+        "enum": [
+          "assigned",
+          "mention",
+          "comment",
+          "status",
+          "review_requested",
+          "approved",
+          "rejected",
+          "due_soon",
+          "overdue",
+          "hold_resumed",
+          "unblocked",
+          "children_resolved"
+        ]
+      },
+      "FeedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "postId": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "field": {
+            "type": ["string", "null"]
+          },
+          "oldValue": {
+            "type": ["string", "null"]
+          },
+          "newValue": {
+            "type": ["string", "null"]
+          },
+          "commentId": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Instant"
+          }
+        },
+        "required": [
+          "id",
+          "postId",
+          "actorId",
+          "kind",
+          "field",
+          "oldValue",
+          "newValue",
+          "commentId",
+          "createdAt"
+        ]
+      },
+      "Instant": {
+        "type": "string"
+      },
+      "NotificationSettings": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationSetting"
+            }
+          }
+        },
+        "required": ["settings"]
+      },
+      "NotificationSetting": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/NotifyKind"
+          },
+          "inapp": {
+            "type": "boolean"
+          },
+          "slack": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "boolean"
+          }
+        },
+        "required": ["kind", "inapp", "slack", "email"]
+      },
+      "OutboxResponse": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutboxMessage"
+            }
+          }
+        },
+        "required": ["messages"]
+      },
+      "OutboxMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["slack", "email"]
+          },
+          "recipient": {
+            "type": "string"
+          },
+          "subject": {
+            "type": ["string", "null"]
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Instant"
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "recipient",
+          "subject",
+          "body",
+          "createdAt"
+        ]
+      },
+      "PostDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PostSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "body": {},
+              "payload": {},
+              "reopenCount": {
+                "type": "integer"
+              },
+              "checklist": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ChecklistItem"
+                }
+              },
+              "relations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PostRelation"
+                }
+              },
+              "parent": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PostRef"
+                  },
+                  {
+                    "type": ["object", "null"]
+                  }
+                ]
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PostRef"
+                }
+              },
+              "attachments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Attachment"
+                }
+              },
+              "subscribed": {
+                "type": "boolean"
+              },
+              "permissions": {
+                "$ref": "#/components/schemas/PostPermissions"
+              }
+            },
+            "required": [
+              "reopenCount",
+              "checklist",
+              "relations",
+              "parent",
+              "children",
+              "attachments",
+              "subscribed",
+              "permissions"
+            ]
+          }
+        ]
+      },
+      "PostFormat": {
+        "type": "string",
+        "enum": ["chart", "image", "video", "code"]
+      },
+      "StatusCategory": {
+        "type": "string",
+        "enum": ["open", "paused", "closed"]
+      },
+      "Priority": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 4
+      },
+      "Day": {
+        "type": ["string", "null"],
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "example": "2026-10-23"
+      },
+      "ChecklistItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "integer"
+          }
+        },
+        "required": ["id", "text", "done", "sort"]
+      },
+      "PostRelation": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/RelationKind"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["outgoing", "incoming"]
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostRef"
+          }
+        },
+        "required": ["kind", "direction", "post"]
+      },
+      "RelationKind": {
+        "type": "string",
+        "enum": ["blocks", "duplicate", "relates", "derived"]
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["file", "link"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "kind", "name", "url"]
+      },
+      "PostPermissions": {
+        "type": "object",
+        "properties": {
+          "edit": {
+            "type": "boolean"
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostStatus"
+            }
+          },
+          "requestReview": {
+            "type": "boolean"
+          },
+          "approve": {
+            "type": "boolean"
+          },
+          "reject": {
+            "type": "boolean"
+          },
+          "reopen": {
+            "type": "boolean"
+          },
+          "delete": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "edit",
+          "transitions",
+          "requestReview",
+          "approve",
+          "reject",
+          "reopen",
+          "delete"
+        ]
+      },
+      "PostSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": ["string", "null"]
+          },
+          "postTypeId": {
+            "type": ["string", "null"]
+          },
+          "format": {
+            "$ref": "#/components/schemas/PostFormat"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostStatus"
+          },
+          "category": {
+            "$ref": "#/components/schemas/StatusCategory"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
+          "progress": {
+            "type": "integer"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "assigneeId": {
+            "type": ["string", "null"]
+          },
+          "requesterId": {
+            "type": ["string", "null"]
+          },
+          "stakeholderIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parentId": {
+            "type": ["string", "null"]
+          },
+          "dueDate": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "holdUntil": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "closeReason": {
+            "type": ["string", "null"]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "thumbnail": {
+            "type": ["string", "null"]
+          },
+          "pinnedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Instant"
+              },
+              {
+                "type": ["string", "null"]
+              }
+            ]
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Instant"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/Instant"
+          },
+          "resolvedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Instant"
+              },
+              {
+                "type": ["string", "null"]
+              }
+            ]
+          },
+          "commentCount": {
+            "type": "integer"
+          },
+          "childCount": {
+            "type": "integer"
+          },
+          "childResolvedCount": {
+            "type": "integer"
+          },
+          "blocked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "groupId",
+          "teamId",
+          "postTypeId",
+          "format",
+          "title",
+          "status",
+          "category",
+          "priority",
+          "progress",
+          "authorId",
+          "assigneeId",
+          "requesterId",
+          "stakeholderIds",
+          "parentId",
+          "dueDate",
+          "holdUntil",
+          "closeReason",
+          "tags",
+          "thumbnail",
+          "pinnedAt",
+          "createdAt",
+          "updatedAt",
+          "resolvedAt",
+          "commentCount",
+          "childCount",
+          "childResolvedCount",
+          "blocked"
+        ]
+      },
+      "AddChecklistItemRequest": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": ["text"]
+      },
+      "RelationRequest": {
+        "type": "object",
+        "properties": {
+          "toId": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RelationKind"
+          }
+        },
+        "required": ["toId", "kind"]
+      },
+      "BulkUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "error"]
+            }
+          }
+        },
+        "required": ["updated", "failed"]
+      },
+      "BulkUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 200
+          },
+          "patch": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/PostStatus"
+              },
+              "priority": {
+                "$ref": "#/components/schemas/Priority"
+              },
+              "assigneeId": {
+                "type": ["string", "null"]
+              },
+              "dueDate": {
+                "$ref": "#/components/schemas/Day"
+              },
+              "postTypeId": {
+                "type": ["string", "null"]
+              },
+              "teamId": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        },
+        "required": ["ids", "patch"]
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "format": {
+            "$ref": "#/components/schemas/PostFormat"
+          },
+          "postTypeId": {
+            "type": ["string", "null"]
+          },
+          "teamId": {
+            "type": ["string", "null"]
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
+          "body": {},
+          "payload": {},
+          "thumbnail": {
+            "type": ["string", "null"]
+          },
+          "assigneeId": {
+            "type": ["string", "null"]
+          },
+          "requesterId": {
+            "type": ["string", "null"]
+          },
+          "stakeholderIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "dueDate": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "parentId": {
+            "type": ["string", "null"]
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": ["file", "link"]
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["kind", "name", "url"]
+            },
+            "default": []
+          }
+        },
+        "required": ["groupId", "title"]
+      },
+      "MyWorkSummary": {
+        "type": "object",
+        "properties": {
+          "assigned": {
+            "type": "integer"
+          },
+          "awaitingReview": {
+            "type": "integer"
+          },
+          "dueSoon": {
+            "type": "integer"
+          }
+        },
+        "required": ["assigned", "awaitingReview", "dueSoon"]
+      },
+      "PostEventsResponse": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedEvent"
+            }
+          }
+        },
+        "required": ["events"]
+      },
+      "PinRequest": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["on"]
+      },
+      "PostQueryResponse": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostSummary"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": ["posts", "total"]
+      },
+      "PostQueryRequest": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "$ref": "#/components/schemas/PostFilter"
+          },
+          "sort": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "$ref": "#/components/schemas/PostSortField"
+              },
+              "dir": {
+                "type": "string",
+                "enum": ["asc", "desc"]
+              }
+            },
+            "default": {
+              "field": "updatedAt",
+              "dir": "desc"
+            },
+            "required": ["field", "dir"]
+          },
+          "pinnedFirst": {
+            "type": "boolean",
+            "default": false
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 100
+          }
+        }
+      },
+      "PostFilter": {
+        "type": "object",
+        "properties": {
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "teamIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostStatus"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCategory"
+            }
+          },
+          "priorities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Priority"
+            }
+          },
+          "assigneeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requesterIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stakeholderIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authorIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "postTypeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "formats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostFormat"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dueFrom": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "dueTo": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "q": {
+            "type": "string"
+          },
+          "mine": {
+            "type": "string",
+            "enum": ["assigned", "requested", "review", "stakeholder"]
+          },
+          "followedAuthors": {
+            "type": "boolean"
+          },
+          "parentId": {
+            "type": "string"
+          }
+        },
+        "default": {}
+      },
+      "PostSortField": {
+        "type": "string",
+        "enum": [
+          "updatedAt",
+          "createdAt",
+          "dueDate",
+          "priority",
+          "key",
+          "title",
+          "status"
+        ]
+      },
+      "RejectRequest": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": ["comment"]
+      },
+      "ReorderChecklistRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
+      },
+      "SetParentRequest": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": ["parentId"]
+      },
+      "SubscribeResponse": {
+        "type": "object",
+        "properties": {
+          "subscribed": {
+            "type": "boolean"
+          }
+        },
+        "required": ["subscribed"]
+      },
+      "SubscribeRequest": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["on"]
+      },
+      "TransitionRequest": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "$ref": "#/components/schemas/PostStatus"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HoldReason"
+              },
+              {
+                "$ref": "#/components/schemas/CancelReason"
+              }
+            ]
+          },
+          "holdUntil": {
+            "$ref": "#/components/schemas/Day"
+          }
+        },
+        "required": ["to"]
+      },
+      "HoldReason": {
+        "type": "string",
+        "enum": ["dependency", "decision", "resource"]
+      },
+      "CancelReason": {
+        "type": "string",
+        "enum": [
+          "duplicate",
+          "cannot_reproduce",
+          "out_of_scope",
+          "low_priority"
+        ]
+      },
+      "UpdateChecklistItemRequest": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "done": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdatePostRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "body": {},
+          "payload": {},
+          "thumbnail": {
+            "type": ["string", "null"]
+          },
+          "format": {
+            "$ref": "#/components/schemas/PostFormat"
+          },
+          "postTypeId": {
+            "type": ["string", "null"]
+          },
+          "teamId": {
+            "type": ["string", "null"]
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
+          },
+          "assigneeId": {
+            "type": ["string", "null"]
+          },
+          "requesterId": {
+            "type": ["string", "null"]
+          },
+          "stakeholderIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dueDate": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "SchedulerRunResponse": {
+        "type": "object",
+        "properties": {
+          "dueSoon": {
+            "type": "integer"
+          },
+          "overdue": {
+            "type": "integer"
+          },
+          "resumed": {
+            "type": "integer"
+          }
+        },
+        "required": ["dueSoon", "overdue", "resumed"]
+      },
+      "FeedSnapshot": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "integer"
+          },
+          "exportedAt": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "required": ["schemaVersion", "exportedAt", "tables"]
+      },
+      "SeedImportResponse": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "integer"
+          }
+        },
+        "required": ["rows"]
+      },
+      "FeedStatus": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "number"
+          },
+          "posts": {
+            "type": "number"
+          }
+        },
+        "required": ["users", "posts"]
+      },
+      "FeedClock": {
+        "type": "object",
+        "properties": {
+          "offsetMs": {
+            "type": "number"
+          },
+          "now": {
+            "type": "string"
+          }
+        },
+        "required": ["offsetMs", "now"]
+      },
+      "FeedClockRequest": {
+        "type": "object",
+        "properties": {
+          "offsetMs": {
+            "type": "integer"
+          }
+        },
+        "required": ["offsetMs"]
+      },
+      "DeactivateResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/FeedUser"
+          },
+          "openPosts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostRef"
+            }
+          }
+        },
+        "required": ["user", "openPosts"]
+      },
+      "FeedUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": ["string", "null"]
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": ["id", "name", "email", "isAdmin", "active"]
+      },
+      "FollowResponse": {
+        "type": "object",
+        "properties": {
+          "following": {
+            "type": "boolean"
+          }
+        },
+        "required": ["following"]
+      },
+      "FollowRequest": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["on"]
+      },
+      "Me": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FeedUser"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "following": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["following"]
+          }
+        ]
+      },
+      "UserListResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedUser"
+            }
+          }
+        },
+        "required": ["users"]
+      },
+      "SetAdminRequest": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": ["on"]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/groups/{groupId}/post-types/{postTypeId}": {
+      "delete": {
+        "tags": ["groups"],
+        "summary": "게시물 유형 지우기. 그 유형 게시물은 유형 없음이 된다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postTypeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/teams/{teamId}": {
+      "delete": {
+        "tags": ["groups"],
+        "summary": "팀 지우기. 그 팀 게시물은 팀 없음이 된다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "teamId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}": {
+      "get": {
+        "tags": ["groups"],
+        "summary": "그룹 하나: 멤버, 팀, 게시물 유형",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["groups"],
+        "summary": "그룹 설정 (이름·설명·비공개·키 접두사·상태 이름)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups": {
+      "get": {
+        "tags": ["groups"],
+        "summary": "볼 수 있는 그룹 목록 (비공개 그룹은 멤버와 시스템 관리자만)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/members/{userId}": {
+      "delete": {
+        "tags": ["groups"],
+        "summary": "멤버 빼기. 마지막 그룹 관리자는 뺄 수 없다(400)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["groups"],
+        "summary": "멤버 추가 또는 역할 바꾸기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMemberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/post-types": {
+      "post": {
+        "tags": ["groups"],
+        "summary": "게시물 유형 만들기(id 없음) 또는 바꾸기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePostTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/teams": {
+      "post": {
+        "tags": ["groups"],
+        "summary": "팀 만들기(id 없음) 또는 이름 바꾸기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTeamRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 키 접두사 중복 등",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "그룹 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹(비공개 그룹은 멤버가 아니면 404)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/archive": {
+      "post": {
+        "tags": ["notifications"],
+        "summary": "보관 (읽음도 함께 표시)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationIdsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바꾼 뒤 안읽음 수",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": ["notifications"],
+        "summary": "알림함 (게시물별 묶음)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "unreadOnly",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            },
+            "required": false,
+            "name": "archived",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "알림함",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/settings": {
+      "get": {
+        "tags": ["notifications"],
+        "summary": "이벤트 × 채널 설정. 저장하지 않은 이벤트는 기본값",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "설정",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["notifications"],
+        "summary": "설정 저장 (보낸 이벤트만 덮어쓴다)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "저장 뒤 전체 설정",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "tags": ["notifications"],
+        "summary": "보관하지 않은 안읽음 수 (상단 배지)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "수",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/outbox": {
+      "get": {
+        "tags": ["notifications"],
+        "summary": "슬랙·이메일로 나갔을 메시지 (최근 순, 프로토타입 전용)",
+        "responses": {
+          "200": {
+            "description": "발송 로그",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboxResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/read": {
+      "post": {
+        "tags": ["notifications"],
+        "summary": "읽음 표시 (내 알림만)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationIdsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바꾼 뒤 안읽음 수",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/unread": {
+      "post": {
+        "tags": ["notifications"],
+        "summary": "안읽음으로 되돌리기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationIdsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바꾼 뒤 안읽음 수",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/checklist": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "체크리스트 항목 추가. 진행률을 다시 계산한다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddChecklistItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/relations": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "관계 추가 (이 게시물이 from)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/approve": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "승인: 검토 중 → 해결됨 (요청자·그룹 관리자)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/bulk": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "일괄 변경. 게시물마다 update/transition과 같은 규칙으로 바꾸고, 못 바꾼 것은 이유와 함께 돌려준다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "게시물 만들기. next_seq로 키를 발급하고 created 이력을 남기며 작성자·담당자·요청자·이해관계자를 구독시킨다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "만든 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 그룹",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}": {
+      "delete": {
+        "tags": ["posts"],
+        "summary": "소프트 삭제 (작성자·그룹 관리자)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "지움"
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["posts"],
+        "summary": "게시물 하나: 관계·체크리스트·이해관계자·구독 여부·첨부·권한",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["posts"],
+        "summary": "게시물 고치기. 바뀐 필드마다 변경 이력 한 줄",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePostRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/my-summary": {
+      "get": {
+        "tags": ["posts"],
+        "summary": "홈 상단 내 작업 요약 (담당·승인 대기·기한 임박 수)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요약",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyWorkSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/events": {
+      "get": {
+        "tags": ["posts"],
+        "summary": "변경 이력 (오래된 순). 활동 로그 타임라인",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "이력",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEventsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/pin": {
+      "put": {
+        "tags": ["posts"],
+        "summary": "홈 피드에서 끌어올리기 켜기·끄기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/query": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "게시물 목록 (필터·정렬·페이지). 지운 것과 볼 수 없는 비공개 그룹은 뺀다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostQueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/reject": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "반려: 검토 중 → 진행 중, 반려 사유를 댓글로 남긴다 (요청자·그룹 관리자)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/checklist/{itemId}": {
+      "delete": {
+        "tags": ["posts"],
+        "summary": "체크리스트 항목 지우기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["posts"],
+        "summary": "체크리스트 항목 고치기·체크",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChecklistItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/relations/remove": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "관계 지우기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/reopen": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "다시 열기: 해결됨·취소 → 미해결, reopen_count 증가 (요청자·작성자·그룹 관리자)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/checklist/order": {
+      "put": {
+        "tags": ["posts"],
+        "summary": "체크리스트 순서 (ids 순서대로)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderChecklistRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/request-review": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "완료 요청: 진행 중 → 검토 중 (담당자)",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/parent": {
+      "put": {
+        "tags": ["posts"],
+        "summary": "상위 이슈 정하기(null이면 떼기). 같은 그룹만, 순환 금지. 상위 진행률을 다시 계산한다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetParentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/subscribe": {
+      "put": {
+        "tags": ["posts"],
+        "summary": "알림 구독 켜기·끄기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "지금 상태",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscribeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/transition": {
+      "post": {
+        "tags": ["posts"],
+        "summary": "상태 전이 (규칙·권한 검사). 보류는 사유+재개일, 취소는 사유가 필수",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "postId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 게시물",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 필드 사이 규칙 위반",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "권한 없음 (전이 규칙, 그룹 역할)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 게시물 (볼 수 없는 비공개 그룹 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "지금 상태에서 할 수 없는 전이",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scheduler/run": {
+      "post": {
+        "tags": ["scheduler"],
+        "summary": "기한 알림(D-1·당일·초과, 게시물마다 하루 1회)과 보류 자동 복귀. 같은 날 여러 번 불러도 한 번만 만든다",
+        "responses": {
+          "200": {
+            "description": "이번에 한 일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulerRunResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/export": {
+      "get": {
+        "tags": ["seed"],
+        "summary": "피드 데이터 전체를 JSON으로",
+        "responses": {
+          "200": {
+            "description": "스냅숏",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedSnapshot"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seed/import": {
+      "post": {
+        "tags": ["seed"],
+        "summary": "피드 데이터를 지우고 스냅숏으로 채운다",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedSnapshot"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "넣은 행 수",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "스키마 버전이 다르거나 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/bootstrap": {
+      "post": {
+        "tags": ["system"],
+        "summary": "비어 있으면 기본 시나리오를 적재한다. 화면이 처음 뜰 때 부른다",
+        "responses": {
+          "200": {
+            "description": "적재 뒤 상태",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/clock": {
+      "get": {
+        "tags": ["system"],
+        "summary": "시계 오프셋과 피드의 지금",
+        "responses": {
+          "200": {
+            "description": "시계",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedClock"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["system"],
+        "summary": "시계 오프셋 바꾸기 (/feed/dev/clock). 0이면 실제 시각",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedClockRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바꾼 시계",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedClock"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/status": {
+      "get": {
+        "tags": ["system"],
+        "summary": "피드 DB의 사용자·게시물 수",
+        "responses": {
+          "200": {
+            "description": "상태",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/reset": {
+      "post": {
+        "tags": ["system"],
+        "summary": "피드 스키마를 지우고 기본 시나리오를 다시 적재한다 (/feed/dev/seed)",
+        "responses": {
+          "200": {
+            "description": "적재 뒤 상태",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/deactivate": {
+      "post": {
+        "tags": ["users"],
+        "summary": "사용자 비활성화. 담당·요청 중인 열린 게시물을 돌려줘 재배정을 안내한다",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "비활성화한 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeactivateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "시스템 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/follow": {
+      "put": {
+        "tags": ["users"],
+        "summary": "관심(팔로우) 켜기·끄기",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FollowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "지금 상태",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": ["users"],
+        "summary": "지금 사용자",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "지금 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["users"],
+        "summary": "사용자 목록 (사용자 전환, 담당자 고르기). 비활성 사용자 포함",
+        "responses": {
+          "200": {
+            "description": "목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/admin": {
+      "put": {
+        "tags": ["users"],
+        "summary": "시스템 관리자 지정·해제",
+        "security": [
+          {
+            "feedUser": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAdminRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "바뀐 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "사용자를 고르지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "시스템 관리자만",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 사용자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}
