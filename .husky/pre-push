@@ -1,5 +1,5 @@
 # push되는 원격 브랜치 이름(scripts/check-branch-name.sh)과
-# main·develop에 PR 없이 올라가는 커밋(scripts/check-git-flow.sh)을 검사한다.
+# main·develop으로 직접 하는 push(scripts/check-git-flow.sh)를 검사한다.
 
 zero='0000000000000000000000000000000000000000'
 
@@ -13,7 +13,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   [ "$local_sha" = "$zero" ] && continue
 
   sh scripts/check-branch-name.sh "${remote_ref#refs/heads/}" || status=1
-  sh scripts/check-git-flow.sh push "$remote_ref" "$local_sha" "$remote_sha" || status=1
+  sh scripts/check-git-flow.sh push "$remote_ref" "$local_sha" || status=1
 done
 
 exit $status
