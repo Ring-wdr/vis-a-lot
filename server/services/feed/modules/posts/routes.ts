@@ -38,11 +38,12 @@ const errors = {
   409: errorResponse("지금 상태에서 할 수 없는 전이"),
 };
 const detail = jsonResponse(PostDetailSchema, "바뀐 게시물");
-const post = (
+/** 게시물 하나를 바꾸고 바뀐 게시물을 돌려주는 route. body 타입이 handler까지 이어지도록 request를 generic으로 받는다 */
+const post = <B extends { body?: ReturnType<typeof jsonBody> }>(
   method: "post" | "put" | "patch" | "delete",
   path: string,
   summary: string,
-  request: Record<string, unknown>,
+  request: B,
 ) =>
   createRoute({
     method,

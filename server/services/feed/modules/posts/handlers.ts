@@ -1,24 +1,8 @@
 // 피드 posts API handler. /posts/my-summary·/posts/query·/posts/bulk를 /posts/{postId}보다 먼저 붙인다.
 
-import type { z } from "@hono/zod-openapi";
 import type { FeedApp } from "../../app-type";
 import { feedCall } from "../../call";
 import * as routes from "./routes";
-import type {
-  RelationRequestSchema,
-  TransitionRequest,
-  UpdatePostRequest,
-} from "./schemas";
-
-type Relation = z.infer<typeof RelationRequestSchema>;
-
-/**
- * routes의 post() 도우미는 request를 Record<string, unknown>으로 받아 body 타입이 빠진다.
- * 검증(zod)은 그대로 돌므로 검증된 body를 꺼내 넘긴다.
- */
-const json = <T>(c: { req: { valid(target: never): unknown } }) =>
-  c.req.valid("json" as never) as T;
-
 export function registerPosts(app: FeedApp) {
   return app
     .openapi(routes.getMyWorkSummary, async (c) =>
@@ -39,7 +23,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.updatePost, async (c) =>
       c.json(
         await feedCall(c, "posts.update", {
-          ...json<UpdatePostRequest>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -52,7 +36,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.transitionPost, async (c) =>
       c.json(
         await feedCall(c, "posts.transition", {
-          ...json<TransitionRequest>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -70,7 +54,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.rejectPost, async (c) =>
       c.json(
         await feedCall(c, "posts.reject", {
-          ...json<{ comment: string }>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -82,7 +66,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.pinPost, async (c) =>
       c.json(
         await feedCall(c, "posts.pin", {
-          ...json<{ on: boolean }>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -91,7 +75,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.setPostParent, async (c) =>
       c.json(
         await feedCall(c, "posts.setParent", {
-          ...json<{ parentId: string | null }>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -100,7 +84,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.addPostRelation, async (c) =>
       c.json(
         await feedCall(c, "posts.addRelation", {
-          ...json<Relation>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -109,7 +93,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.removePostRelation, async (c) =>
       c.json(
         await feedCall(c, "posts.removeRelation", {
-          ...json<Relation>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -118,7 +102,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.addChecklistItem, async (c) =>
       c.json(
         await feedCall(c, "posts.checklistAdd", {
-          ...json<{ text: string }>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
@@ -127,7 +111,7 @@ export function registerPosts(app: FeedApp) {
     .openapi(routes.reorderChecklist, async (c) =>
       c.json(
         await feedCall(c, "posts.checklistReorder", {
-          ...json<{ ids: string[] }>(c),
+          ...c.req.valid("json"),
           ...c.req.valid("param"),
         }),
         200,
