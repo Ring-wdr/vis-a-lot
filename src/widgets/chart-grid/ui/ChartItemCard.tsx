@@ -6,17 +6,12 @@ import { useEffect, useState } from "react";
 import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
 import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { ItemOptionsDialog } from "@/features/chart-settings/ui/ItemOptionsDialog";
 import {
   useItemAction,
   useItemActionPending,
 } from "@/features/item-actions/model/item-actions";
 import { DrawLayer } from "@/features/item-actions/ui/DrawLayer";
 import { ItemContextMenu } from "@/features/item-actions/ui/ItemContextMenu";
-import {
-  ItemColorSettings,
-  ItemLegendPositionSettings,
-} from "@/features/item-actions/ui/ItemSettings";
 import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { LegendCheckboxes } from "@/features/item-actions/ui/LegendCheckboxes";
 import { PaintToolbar } from "@/features/item-actions/ui/PaintToolbar";
@@ -24,7 +19,6 @@ import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
 import { useJobItem } from "@/shared/api/queries";
 import {
   type ChartImage,
-  type ChartOptionsBody,
   type ColumnName,
   type ItemSize,
   type ItemStage,
@@ -35,6 +29,7 @@ import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import { ItemSettingsDialog } from "./ItemSettingsDialog";
 
 const STAGE_LABELS: Record<ItemStage, string> = {
   query: "데이터 조회",
@@ -163,6 +158,7 @@ function DrawnItem({
   const mode = useWorkspace((s) => s.mode);
   const paintTool = useWorkspace((s) => s.paintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
+  // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
   const [settingsOpen, setSettingsOpen] = useState(false);
   const commonPosition = useWorkspace(
     (s) =>
@@ -299,35 +295,11 @@ function DrawnItem({
         <ExpandButton expanded={expanded} onClick={onDoubleClick} />
       </div>
       {settingsOpen && (
-        <ItemOptionsDialog
-          itemKey={item.key}
-          label={item.label}
-          options={item.options as ChartOptionsPatch | undefined}
-          onChange={(options) =>
-            action.mutate({
-              type: "options",
-              options: options as ChartOptionsBody | null,
-            })
-          }
-          extras={{
-            // legend가 없는 item은 위치를 고를 것이 없다.
-            legend: hasLegend ? (
-              <ItemLegendPositionSettings
-                item={item}
-                commonPosition={commonPosition}
-                disabled={readOnly || busy}
-                onAction={action.mutate}
-              />
-            ) : undefined,
-            palette: (
-              <ItemColorSettings
-                item={item}
-                hasLegend={hasLegend}
-                disabled={readOnly || busy}
-                onAction={action.mutate}
-              />
-            ),
-          }}
+        <ItemSettingsDialog
+          item={item}
+          hasLegend={hasLegend}
+          commonPosition={commonPosition}
+          onAction={action.mutate}
           onClose={() => setSettingsOpen(false)}
         />
       )}

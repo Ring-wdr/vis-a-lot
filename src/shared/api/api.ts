@@ -4,10 +4,8 @@
 import { chartClient, dataClient } from "./clients";
 import type {
   ChartFilter,
-  ChartOptionsBody,
   ChartSpec,
   ColumnName,
-  CommonProps,
   CreateChartRequest,
   CsvOptions,
   CsvPreview,
@@ -16,9 +14,9 @@ import type {
   HistoryDetail,
   ItemMeta,
   ItemRowsRequest,
+  ItemSettingsChanges,
   ItemSize,
   JobStateResponse,
-  LegendPosition,
   Region,
   Shape,
   TooltipRequest,
@@ -431,14 +429,6 @@ export const api = {
       ),
     ),
 
-  setItemColor: (chartId: string, itemKey: string, color: string | null) =>
-    unwrap(
-      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
-        params: { path: item(chartId, itemKey) },
-        body: { color },
-      }),
-    ),
-
   setItemLegendColor: (
     chartId: string,
     itemKey: string,
@@ -475,38 +465,20 @@ export const api = {
       }),
     ),
 
-  /** item 개별 차트 속성 전체를 바꾼다. null이면 지우고 공통 속성을 따른다. */
-  setItemOptions: (
+  /** item 속성 팝업에서 확인을 누를 때: 바꾼 속성을 한 번에 보내 한 번만 다시 그린다. */
+  setItemSettings: (
     chartId: string,
     itemKey: string,
-    options: ChartOptionsBody | null,
+    settings: ItemSettingsChanges,
   ) =>
     unwrap(
       chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
         params: { path: item(chartId, itemKey) },
-        body: { options },
-      }),
-    ),
-  setItemLegendPosition: (
-    chartId: string,
-    itemKey: string,
-    legendPosition: LegendPosition | null,
-  ) =>
-    unwrap(
-      chartClient.PATCH("/charts/{chartId}/items/{itemKey}/props", {
-        params: { path: item(chartId, itemKey) },
-        body: { legendPosition },
+        body: { settings },
       }),
     ),
 
   // ── chart 서비스: 차트 전체 ─────────────────────────────────
-  updateCommon: (chartId: string, common: CommonProps) =>
-    unwrap(
-      chartClient.PATCH("/charts/{chartId}/common", {
-        params: { path: { chartId } },
-        body: { common },
-      }),
-    ),
 
   changeGrid: (chartId: string, grid: ChartSpec["grid"], itemSize: ItemSize) =>
     unwrap(

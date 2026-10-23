@@ -46,6 +46,11 @@ export type CommonProps = Chart["CommonProps"];
 /** 차트 속성 부분 값 (공통·item 개별). 화면 쪽 모양·기본값은 entities/chart/model/chart-options */
 export type ChartOptionsBody = Chart["ChartOptions"];
 export type LegendPosition = Chart["LegendPosition"];
+/** item 속성 팝업에서 확인을 눌러 한 번에 바꾸는 속성. 있는 것만 바꾸고 null은 공통 속성을 따른다. */
+export type ItemSettingsChanges = Extract<
+  Chart["ItemPropsRequest"],
+  { settings: unknown }
+>["settings"];
 export type ItemSize = Chart["ItemSize"];
 export type ItemView = Chart["ItemView"];
 export type ItemRestore = Chart["ItemRestore"];
