@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import { CHART_LABELS } from "@/entities/chart/lib/title";
+import { chartKindLabel } from "@/entities/chart/lib/title";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   MODES,
@@ -55,16 +55,18 @@ export function ModeBar() {
   const setMode = useWorkspace((s) => s.setMode);
   const editable = useWorkspace((s) => !s.readOnly && s.current !== undefined);
   const chartType = useWorkspace((s) => s.current?.spec.chartType);
+  const subType = useWorkspace((s) => s.current?.spec.subType);
+  const spec = chartType && { chartType, subType };
 
   return (
     <div className={styles.modeBar} role="toolbar" aria-label="모드">
       {MODES.map((m) => {
         const { label: name, Icon } = MODE_UI[m];
-        const supported = modeSupported(m, chartType);
+        const supported = modeSupported(m, spec);
         const label =
-          supported || !chartType
+          supported || !spec
             ? name
-            : `${name} (${CHART_LABELS[chartType]}에서는 쓸 수 없음)`;
+            : `${name} (${chartKindLabel(spec)}에서는 쓸 수 없음)`;
         return (
           <button
             key={m}

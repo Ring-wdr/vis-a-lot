@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CategoryData } from "./category-data";
-import { OTHERS_SLICE, toPieData, toRadarData } from "./polar-data";
+import {
+  attachSunburst,
+  OTHERS_SLICE,
+  toPieData,
+  toRadarData,
+} from "./polar-data";
 
 /** split 조합마다 [범주, 값] 목록. legend 없는 bar 집계 모양으로 만든다. */
 const bars = (groups: [string, number | null][][]): CategoryData => ({
@@ -99,5 +104,44 @@ describe("toRadarData", () => {
       [3, 2],
     ]);
     expect(data.legendValues).toEqual(["p", "q"]);
+  });
+});
+
+describe("attachSunburst", () => {
+  it("조각마다 legend 값별 집계를 바깥 고리로 붙이고, '기타'와 0 이하 값은 나누지 않는다", () => {
+    const pie = toPieData(
+      bars([
+        [
+          ["a", 10],
+          ["b", 4],
+        ],
+      ]),
+      1,
+    );
+    const detail: CategoryData = {
+      legendValues: ["x", "y"],
+      groups: [
+        {
+          values: ["g0"],
+          categories: ["a", "b"],
+          bars: [
+            [6, 4],
+            [0, 4],
+          ],
+        },
+      ],
+    };
+    const out = attachSunburst(pie, detail);
+    expect(out.groups[0].slices).toEqual([
+      {
+        category: "a",
+        value: 10,
+        children: [
+          { category: "x", value: 6 },
+          { category: "y", value: 4 },
+        ],
+      },
+      { category: OTHERS_SLICE, value: 4 },
+    ]);
   });
 });

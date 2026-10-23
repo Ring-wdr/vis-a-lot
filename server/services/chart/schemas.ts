@@ -45,6 +45,23 @@ export const ChartTypeSchema = z
   ])
   .openapi("ChartType");
 
+/** 하위 차트. 차트마다 고를 수 있는 값은 server/charts/chart-fields.ts(SUB_TYPES)가 정한다. */
+export const ChartSubTypeSchema = z
+  .enum([
+    "none",
+    "ecdf",
+    "ncdf",
+    "probability",
+    "side",
+    "stack",
+    "stack100",
+    "dot",
+    "doughnut",
+    "pie3d",
+    "sunburst",
+  ])
+  .openapi("ChartSubType");
+
 // ── 차트 속성(옵션) ──────────────────────────────────────────────
 // 모양은 server/render/options.ts의 ChartOptions를 따른다. 저장하는 값은 모든 필드가 선택인 부분 값이다.
 
@@ -239,6 +256,8 @@ export const ChartSpecSchema = z
     /** 데이터셋 id (샘플 iot-100k …, 업로드 up-…) */
     dataset: DatasetIdSchema,
     chartType: ChartTypeSchema,
+    /** 하위 차트. 없거나 그 차트에 없는 값이면 기본(첫 값). 예전 history에는 없다. */
+    subType: orNull(ChartSubTypeSchema).optional(),
     x: ColumnNameSchema,
     y: ColumnNameSchema,
     /** 세 번째 값 컬럼. 쓰는 차트만 고른다. 예전 history에는 없다. */
@@ -728,6 +747,10 @@ export const CategoryMetaSchema = z
     bars: z.array(z.array(z.number().nullable())).optional(),
     /** 툴팁용 통계. 이상치 값 목록은 빼고 개수만 둔다. */
     boxes: z.array(z.array(orNull(BoxSummarySchema))).optional(),
+    /** bar 누적 방식. 없으면 나란히 */
+    stack: z.enum(["stack", "stack100"]).optional(),
+    /** 누적 막대의 [범주][legend 값] 구간 [시작, 끝] (y축 값, stack100은 %). 그리지 않은 막대는 null */
+    segments: z.array(z.array(orNull(z.tuple([finite, finite])))).optional(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
   })
@@ -891,6 +914,8 @@ const PointSchema = z.object({ x: z.number(), y: z.number() });
 export const PieMetaSchema = z
   .object({
     chartType: z.literal("pie"),
+    /** 하위 차트. 없으면 보통 pie */
+    variant: z.enum(["doughnut", "pie3d", "sunburst"]).optional(),
     plot: PlotSchema,
     /** 고정 좌표 공간: 그림 영역 픽셀과 1:1 (x는 왼쪽, y는 아래쪽에서의 거리) */
     x: AxisMetaSchema,
@@ -898,6 +923,27 @@ export const PieMetaSchema = z
     /** 원의 중심(PNG 좌표)과 반지름(px) */
     center: PointSchema,
     radius: z.number(),
+    /** pie3d: 윗면 타원의 세로 반지름. 없으면 원(= radius) */
+    radiusY: z.number().optional(),
+    /** doughnut·sunburst: 가운데 빈 곳의 반지름 */
+    innerRadius: z.number().optional(),
+    /** sunburst: 안쪽 고리(조각)의 바깥 반지름. 그 밖이 바깥 고리(children)다. */
+    ring: z.number().optional(),
+    /** sunburst 바깥 고리 조각: 조각을 legend 컬럼 값으로 나눈 몫 */
+    children: z
+      .array(
+        z.object({
+          parent: z.string(),
+          category: z.string(),
+          value: z.number(),
+          /** 부모 조각 안에서의 비율 */
+          ratio: z.number(),
+          start: z.number(),
+          end: z.number(),
+          color: z.string(),
+        }),
+      )
+      .optional(),
     /** 보이는 조각만, 그린 순서대로 */
     slices: z.array(
       z.object({

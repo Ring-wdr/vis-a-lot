@@ -1,6 +1,6 @@
 {
   "name": "vis-a-lot",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,8 @@
     "format": "biome format --write",
     "test": "vitest run",
     "gen:api": "tsx scripts/gen-api.mts",
-    "gen:api:check": "tsx scripts/gen-api.mts --check"
+    "gen:api:check": "tsx scripts/gen-api.mts --check",
+    "prepare": "husky"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
@@ -52,6 +53,7 @@
     "@types/papaparse": "5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "husky": "9.1.7",
     "openapi-typescript": "7.13.0",
     "tsx": "4.23.15",
     "typescript": "^5",

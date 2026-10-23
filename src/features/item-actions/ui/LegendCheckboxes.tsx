@@ -26,8 +26,7 @@ export function LegendCheckboxes({
 }) {
   // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
   const shown = useWorkspace(
-    (s) =>
-      s.showLegendCheckboxes && supports(s.current?.spec.chartType, "checkbox"),
+    (s) => s.showLegendCheckboxes && supports(s.current?.spec, "checkbox"),
   );
   const meta = useItemMeta(image.url, shown);
   const legend = meta.data?.legend;

@@ -1,0 +1,17 @@
+# push되는 원격 브랜치 이름을 scripts/check-branch-name.sh로 검사한다.
+
+zero='0000000000000000000000000000000000000000'
+
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+  # 브랜치 삭제는 검사하지 않는다.
+  [ "$local_sha" = "$zero" ] && continue
+
+  sh scripts/check-branch-name.sh "${remote_ref#refs/heads/}" || status=1
+done
+
+exit $status

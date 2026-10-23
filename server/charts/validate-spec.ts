@@ -3,7 +3,7 @@
 
 import type { ChartSpec } from "../api/types";
 import type { LogicalType } from "../data/dataset-schema";
-import { CHART_FIELDS } from "./chart-fields";
+import { CHART_FIELDS, legendColumnOf } from "./chart-fields";
 
 export type SpecColumn = {
   name: string;
@@ -44,16 +44,17 @@ export function specError(
     return "x와 y에 서로 다른 컬럼을 골라 주세요.";
   }
 
-  if (fields.legend !== false && spec.legend !== null) {
-    const error = need(spec.legend, "legend", "categorical");
+  const legend = legendColumnOf(spec);
+  if (legend !== null) {
+    const error = need(legend, "legend", "categorical");
     if (error) return error;
-    const distinct = byName.get(spec.legend)?.distinct;
+    const distinct = byName.get(legend)?.distinct;
     if (
       distinct !== null &&
       distinct !== undefined &&
       distinct > LEGEND_MAX_VALUES
     ) {
-      return `legend 컬럼은 값이 ${LEGEND_MAX_VALUES}개 이하여야 합니다 ('${spec.legend}'은 ${distinct}개).`;
+      return `legend 컬럼은 값이 ${LEGEND_MAX_VALUES}개 이하여야 합니다 ('${legend}'은 ${distinct}개).`;
     }
   }
   if (new Set(spec.splitBy).size !== spec.splitBy.length) {

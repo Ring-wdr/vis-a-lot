@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.12.0] - 2026-10-23
+
+원본 제품의 하위 차트(서브 차트)를 기본 차트에 더했다. 차트를 고르면 그 차트의 서브 차트를 고를 수 있고, 첫 값이 기본이다.
+
+### 서브 차트
+- Line: None · ECDF(누적 비율) · NCDF(같은 평균·표준편차의 정규 누적확률) · Probability(정규 분위수 z). 분포 서브 차트는 y 컬럼 값의 분포를 legend 계열마다 그리고 x 컬럼은 쓰지 않는다. 점 좌표가 컬럼 값이 아니라 지우기와 선택 필드(선택 영역으로 데이터 거르기)는 쓰지 않는다
+- Bar: Side(나란히, 기존) · Stack · Stack 100(범주 합계 대비 %, 축 0~100). 쌓인 막대도 툴팁·선택·체크박스로 끄기가 동작한다
+- Boxplot: None · Dot(상자마다 원값 표본 최대 300개를 겹쳐 찍는다. 표본은 행 위치 해시 순이라 다시 그려도 같다)
+- Pie: None · Doughnut(합계·개수면 가운데에 합계) · Pie 3D · Sunburst(legend 컬럼으로 조각을 나눠 바깥 고리에 그린다)
+- 제외: Wafer(웨이퍼 데이터·차트가 없다)
+
+### 화면
+- 차트 종류 버튼 격자(14개)를 '차트'·'서브 차트' select 두 개로 바꿨다. 차트가 늘어도 왼쪽 패널 높이가 그대로라 x·y·legend를 스크롤 없이 고른다
+- 탭·history 이름에 기본이 아닌 서브 차트를 붙인다 (예: 'Bar Stack 100 · 공장 × 평균(측정값)')
+
+### API
+- `ChartSpec.subType`(선택, 없거나 그 차트에 없는 값이면 기본). 예전 history·공유 링크는 그대로 열린다
+- `CategoryMeta.stack`·`segments`, `PieMeta.variant`·`radiusY`·`innerRadius`·`ring`·`children`
+
+### 개발 환경
+- 브랜치 이름 규칙: `feat|feature|fix|chore|refactor|docs|test|release/<kebab-case>`와 `main`·`develop`·`release`만 쓰고, 클라우드 세션이 자동으로 붙이는 이름(`feat/<단어>-<단어>-<6자리>`, `ccr-…`)은 막는다. 규칙은 `scripts/check-branch-name.sh`에 있다
+- Claude PreToolUse 훅(`.claude/hooks/check-branch.mjs`)이 브랜치를 만들거나 push하는 명령을, husky `pre-push`가 사람의 push를 같은 규칙으로 검사한다. 이름 짓는 법은 `git-branch` 스킬에 둔다
+
 ## [0.11.0] - 2026-10-23
 
 원본 제품의 차트 속성(Title, Axes, Legend, Panel, Palette, Shape, Size, Point Label, Score, Prediction, Value, Focus, ToolTip, Expression)을 공통 속성과 item 개별 속성에 더했다. 차트별로 쓸 수 있는 구역은 원본의 'Availability of Chart-Specific Options' 표를 14종 차트에 옮겨 정한다.

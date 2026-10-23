@@ -1107,6 +1107,16 @@
           "chartType": {
             "$ref": "#/components/schemas/ChartType"
           },
+          "subType": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChartSubType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "x": {
             "$ref": "#/components/schemas/ColumnName"
           },
@@ -1202,6 +1212,22 @@
           "histogram",
           "waterfall",
           "funnel"
+        ]
+      },
+      "ChartSubType": {
+        "type": "string",
+        "enum": [
+          "none",
+          "ecdf",
+          "ncdf",
+          "probability",
+          "side",
+          "stack",
+          "stack100",
+          "dot",
+          "doughnut",
+          "pie3d",
+          "sunburst"
         ]
       },
       "ColumnName": {
@@ -2015,6 +2041,34 @@
               }
             }
           },
+          "stack": {
+            "type": "string",
+            "enum": ["stack", "stack100"]
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
           "selected": {
             "type": "number"
           },
@@ -2612,6 +2666,10 @@
             "type": "string",
             "enum": ["pie"]
           },
+          "variant": {
+            "type": "string",
+            "enum": ["doughnut", "pie3d", "sunburst"]
+          },
           "plot": {
             "type": "object",
             "properties": {
@@ -2650,6 +2708,53 @@
           },
           "radius": {
             "type": "number"
+          },
+          "radiusY": {
+            "type": "number"
+          },
+          "innerRadius": {
+            "type": "number"
+          },
+          "ring": {
+            "type": "number"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "parent": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "ratio": {
+                  "type": "number"
+                },
+                "start": {
+                  "type": "number"
+                },
+                "end": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "parent",
+                "category",
+                "value",
+                "ratio",
+                "start",
+                "end",
+                "color"
+              ]
+            }
           },
           "slices": {
             "type": "array",

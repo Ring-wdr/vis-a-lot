@@ -191,6 +191,63 @@ describe("legend가 있는 bar", () => {
   });
 });
 
+describe("barStrategy 누적", () => {
+  const meta = {
+    chartType: "bar" as const,
+    plot: { left: 0, top: 0, width: 300, height: 100 },
+    x: { kind: "number" as const, domain: [-0.5, 2.5] as [number, number] },
+    y: { kind: "number" as const, domain: [0, 100] as [number, number] },
+    categories: ["A", "B", "C"],
+    markWidth: 70,
+    groupCount: 2,
+    groupGap: 2,
+    agg: "sum" as const,
+    bars: [
+      [10, 30],
+      [5, 5],
+      [1, 3],
+    ],
+    stack: "stack100" as const,
+    segments: [
+      [
+        [0, 25],
+        [25, 100],
+      ],
+      [
+        [0, 50],
+        [50, 100],
+      ],
+      [
+        [0, 25],
+        [25, 100],
+      ],
+    ] as [number, number][][],
+    legend: {
+      title: "근무조",
+      values: ["야간", "주간"],
+      colors: ["#2a78d6", "#eb6834"],
+      box: { x: 0, y: 0, width: 0, height: 0 },
+      entries: [],
+      hidden: 0,
+    },
+  };
+
+  it("커서 높이로 쌓인 막대를 찾고 100% 누적은 비율을 보여준다", () => {
+    // 범주 A(가운데 50), y 90px = 10% → 아래(야간) 막대
+    const low = barStrategy.hitTest(meta, undefined, 50, 90);
+    expect(low?.rows).toEqual([
+      { label: "범주", value: "A" },
+      { label: "근무조", value: "야간" },
+      { label: "합계", value: "10", emphasis: false },
+      { label: "비율", value: "25.0%", emphasis: true },
+    ]);
+    // y 30px = 70% → 위(주간) 막대. 막대 너비 전체를 감싼다.
+    const high = barStrategy.hitTest(meta, undefined, 50, 30);
+    expect(high?.rows[1]).toEqual({ label: "근무조", value: "주간" });
+    expect(high?.highlight).toMatchObject({ x: 12, width: 76 });
+  });
+});
+
 describe("candle 툴팁", () => {
   const meta: CandleMeta = {
     chartType: "candle",
@@ -346,6 +403,58 @@ describe("pie", () => {
 
   it("한 바퀴 전체 조각의 윤곽은 반원 두 개", () => {
     expect(wedgePath(0, 0, 10, 0, Math.PI * 2).match(/A /g)).toHaveLength(2);
+  });
+
+  it("doughnut은 가운데 빈 곳에서 조각을 찾지 않는다", () => {
+    const doughnut = { ...pie, variant: "doughnut" as const, innerRadius: 40 };
+    expect(hitSlice(doughnut, 110, 100)).toBeUndefined();
+    expect(hitSlice(doughnut, 160, 100)?.category).toBe("a");
+    // 고리 조각 윤곽은 바깥 호와 안쪽 호 둘
+    const hit = pieStrategy.hitTest(doughnut, undefined, 160, 100);
+    expect(hit?.outline?.match(/A /g)).toHaveLength(2);
+  });
+
+  it("pie3d는 눕힌 타원을 펴서 판정한다", () => {
+    const tilted = { ...pie, variant: "pie3d" as const, radiusY: 40 };
+    // 원이라면 반지름(80) 안이지만, 세로 반지름 40인 타원 밖
+    expect(hitSlice(tilted, 100, 150)).toBeUndefined();
+    expect(hitSlice(tilted, 100, 130)?.category).toBe("a");
+  });
+
+  it("sunburst 바깥 고리는 나눈 몫과 조각 안 비율을 보여준다", () => {
+    const sunburst: PieMeta = {
+      ...pie,
+      variant: "sunburst",
+      innerRadius: 10,
+      ring: 50,
+      children: [
+        {
+          parent: "a",
+          category: "x",
+          value: 1,
+          ratio: 1 / 3,
+          start: -Math.PI / 2,
+          end: 0,
+          color: "#000000",
+        },
+        {
+          parent: "a",
+          category: "y",
+          value: 2,
+          ratio: 2 / 3,
+          start: 0,
+          end: Math.PI,
+          color: "#111111",
+        },
+      ],
+    };
+    // 3시, 반지름 70 → 바깥 고리의 y
+    const outer = pieStrategy.hitTest(sunburst, undefined, 170, 101);
+    expect(outer?.rows.map((r) => r.value)).toEqual(["a", "y", "2", "66.7%"]);
+    // 3시, 반지름 30 → 안쪽 고리의 조각 a
+    const inner = pieStrategy.hitTest(sunburst, undefined, 130, 101);
+    expect(inner?.rows[0].value).toBe("a");
+    expect(inner?.rows).toHaveLength(3);
   });
 });
 

@@ -2649,6 +2649,7 @@ export type components = {
     ChartSpec: {
       dataset: components["schemas"]["DatasetId"];
       chartType: components["schemas"]["ChartType"];
+      subType?: components["schemas"]["ChartSubType"] | null;
       x: components["schemas"]["ColumnName"];
       y: components["schemas"]["ColumnName"];
       z?: components["schemas"]["ColumnName"] | null;
@@ -2679,6 +2680,19 @@ export type components = {
       | "histogram"
       | "waterfall"
       | "funnel";
+    /** @enum {string} */
+    ChartSubType:
+      | "none"
+      | "ecdf"
+      | "ncdf"
+      | "probability"
+      | "side"
+      | "stack"
+      | "stack100"
+      | "dot"
+      | "doughnut"
+      | "pie3d"
+      | "sunburst";
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
@@ -2918,6 +2932,9 @@ export type components = {
       agg?: components["schemas"]["AggFn"];
       bars?: (number | null)[][];
       boxes?: (components["schemas"]["BoxSummary"] | null)[][];
+      /** @enum {string} */
+      stack?: "stack" | "stack100";
+      segments?: ([number, number] | null)[][];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };
@@ -3077,6 +3094,8 @@ export type components = {
     PieMeta: {
       /** @enum {string} */
       chartType: "pie";
+      /** @enum {string} */
+      variant?: "doughnut" | "pie3d" | "sunburst";
       plot: {
         left: number;
         top: number;
@@ -3090,6 +3109,18 @@ export type components = {
         y: number;
       };
       radius: number;
+      radiusY?: number;
+      innerRadius?: number;
+      ring?: number;
+      children?: {
+        parent: string;
+        category: string;
+        value: number;
+        ratio: number;
+        start: number;
+        end: number;
+        color: string;
+      }[];
       slices: {
         category: string;
         value: number;

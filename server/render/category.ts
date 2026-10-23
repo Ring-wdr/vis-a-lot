@@ -1,6 +1,7 @@
 // bar / boxplot 렌더러. x축은 범주 인덱스(0, 1, 2 …)를 연속 좌표로 쓴다.
 // 그래서 확대(인덱스 범위)와 데이터 좌표 도형이 scatter와 같은 방식으로 동작한다.
 // legend가 있으면 범주 하나 안에 legend 값별 막대/상자를 나란히 놓는다.
+// bar 하위 차트 stack·stack100은 legend 값별 막대를 범주 하나에 쌓는다 (stack100은 범주 합계 대비 %).
 
 import { scaleLinear } from "d3-scale";
 import type { BoxStats } from "../data/category-data";
@@ -64,10 +65,17 @@ export type CategoryMeta = {
   bars?: (number | null)[][];
   /** 툴팁용 통계. 이상치 값 목록은 빼고 개수만 둔다. */
   boxes?: (Omit<BoxStats, "outliers"> | null)[][];
+  /** bar 누적 방식. 없으면 나란히 */
+  stack?: BarStack;
+  /** 누적 막대의 [범주][legend 값] 구간 [시작, 끝] (y축 값, stack100은 %). 그리지 않은 막대는 null */
+  segments?: ([number, number] | null)[][];
   /** 선택 영역 안에 든 막대/상자 수. 선택이 없으면 없다. */
   selected?: number;
   legend?: LegendMeta;
 };
+
+/** bar 누적 방식: stack은 값 그대로, stack100은 범주 합계 대비 % */
+export type BarStack = "stack" | "stack100";
 
 export type CategoryInput = {
   /** 차트 속성. 없으면 기본값 (optionsOf) */
@@ -80,6 +88,8 @@ export type CategoryInput = {
   bars?: (number | null)[][];
   boxes?: (BoxStats | null)[][];
   agg?: AggFn;
+  /** bar 누적 방식. 없으면 legend 값별 막대를 나란히 놓는다. */
+  stack?: BarStack;
   color: string;
   legend?: LegendInput;
   view?: ItemView;
@@ -180,10 +190,26 @@ export function categoryValueAxis(
   });
 }
 
-function valueExtent(input: CategoryInput): [number, number] {
+function valueExtent(
+  input: CategoryInput,
+  segments: ([number, number] | null)[][] | undefined,
+): [number, number] {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
-  if (input.chartType === "bar") {
+  if (segments) {
+    min = 0;
+    max = 0;
+    for (const row of segments) {
+      for (const seg of row) {
+        if (!seg) continue;
+        min = Math.min(min, seg[0], seg[1]);
+        max = Math.max(max, seg[0], seg[1]);
+      }
+    }
+    // 100% 누적은 축을 0~100으로 고정해 범주끼리 비율을 바로 견준다.
+    if (input.stack === "stack100")
+      return [Math.min(min, 0), Math.max(max, 100)];
+  } else if (input.chartType === "bar") {
     // 막대는 0에서 시작해야 길이가 값을 정직하게 나타낸다.
     min = 0;
     max = 0;
@@ -200,6 +226,10 @@ function valueExtent(input: CategoryInput): [number, number] {
         if (!b) continue;
         min = Math.min(min, b.lo, ...b.outliers);
         max = Math.max(max, b.hi, ...b.outliers);
+        for (const v of b.dots ?? []) {
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
       }
     }
   }
@@ -219,6 +249,55 @@ export function markPoint(
   value: number,
 ): [number, number] {
   return [i - MARK_RATIO / 2 + (MARK_RATIO / groupCount) * (g + 0.5), value];
+}
+
+/**
+ * 누적 막대 구간. 범주마다 legend 순서대로 양수는 0에서 위로, 음수는 아래로 쌓는다.
+ * percent면 범주 안 절댓값 합계 대비 %로 바꾼다. 끈 legend 값(off)과 빈 칸은 null이고 쌓지 않는다.
+ */
+export function stackSegments(
+  bars: readonly (readonly (number | null)[])[],
+  off: readonly boolean[],
+  percent: boolean,
+): ([number, number] | null)[][] {
+  return bars.map((row) => {
+    const total = row.reduce<number>(
+      (sum, v, g) => (v === null || off[g] ? sum : sum + Math.abs(v)),
+      0,
+    );
+    const scale = percent ? (total > 0 ? 100 / total : 0) : 1;
+    let up = 0;
+    let down = 0;
+    return row.map((v, g) => {
+      if (v === null || off[g] || !Number.isFinite(v)) return null;
+      const h = v * scale;
+      if (h >= 0) {
+        const seg: [number, number] = [up, up + h];
+        up += h;
+        return seg;
+      }
+      const seg: [number, number] = [down, down + h];
+      down += h;
+      return seg;
+    });
+  });
+}
+
+/** 누적 막대 한 범주에서 맨 위(양수 끝)와 맨 아래(음수 끝) 막대의 legend 순번 */
+function stackEnds(row: readonly ([number, number] | null)[]) {
+  let top: number | undefined;
+  let bottom: number | undefined;
+  row.forEach((seg, g) => {
+    if (!seg) return;
+    if (seg[1] >= seg[0]) top = g;
+    else bottom = g;
+  });
+  return { top, bottom };
+}
+
+/** 누적 막대의 대표 좌표: 범주 가운데, 구간 가운데 높이 */
+export function stackPoint(i: number, seg: readonly [number, number]) {
+  return [i, (seg[0] + seg[1]) / 2] as [number, number];
 }
 
 /** 범주 i 안에서 g번째 막대/상자의 가운데 x와 너비 */
@@ -295,6 +374,15 @@ export function renderCategory(
     1,
     (input.legend?.values.length ?? 1) - groups.length,
   );
+  // 체크박스로 끈 legend 값의 막대/상자는 그리지 않는다.
+  const off = hiddenIndexes(input.legend);
+  // 누적 막대는 범주 하나에 한 줄로 쌓는다. 끈 값은 빼고 쌓아 남은 막대끼리 이어 붙는다.
+  const stack = input.chartType === "bar" ? input.stack : undefined;
+  const segments = stack
+    ? stackSegments(input.bars ?? [], off, stack === "stack100")
+    : undefined;
+  /** 막대/상자를 놓는 칸 수. 누적이면 하나 */
+  const slots = segments ? 1 : groupCount;
   const inSelection = input.selection && regionTester(input.selection);
   let selectedCount = 0;
 
@@ -314,8 +402,6 @@ export function renderCategory(
     }
     return input.legend?.colors[index] ?? input.color;
   };
-  // 체크박스로 끈 legend 값의 막대/상자는 그리지 않는다.
-  const off = hiddenIndexes(input.legend);
   /** 선택이 있으면 바깥 막대/상자는 흐리게 */
   const selectionAlpha = (point: readonly [number, number]) =>
     !inSelection || inSelection(point[0], point[1]) ? 1 : 0.2;
@@ -324,12 +410,18 @@ export function renderCategory(
     input.chartType === "bar"
       ? (input.bars?.[i]?.[g] ?? null)
       : (input.boxes?.[i]?.[g]?.median ?? null);
+  /** 막대/상자의 대표 좌표. 누적이면 구간 가운데 */
+  const pointOf = (i: number, g: number, v: number) => {
+    const seg = segments?.[i]?.[g];
+    return seg ? stackPoint(i, seg) : markPoint(i, g, groupCount, v);
+  };
   if (inSelection) {
     for (let i = 0; i < n; i++) {
       for (let g = 0; g < groupCount; g++) {
         const v = markValue(i, g);
         if (v === null) continue;
-        const point = markPoint(i, g, groupCount, v);
+        if (segments && !segments[i]?.[g]) continue;
+        const point = pointOf(i, g, v);
         if (!off[legendIndexOf(g, point)] && inSelection(...point))
           selectedCount++;
       }
@@ -339,7 +431,7 @@ export function renderCategory(
   drawPanel(ctx, width, height, o);
 
   // ── 축 (aggregate) ────────────────────────────────────────────
-  const extent = valueExtent(input);
+  const extent = valueExtent(input, segments);
   const { ticks: yTicks, format: yFormat } = categoryValueAxis(extent, view, o);
   const yLabelWidth = labelWidth(
     ctx,
@@ -393,6 +485,7 @@ export function renderCategory(
       input.title,
       [
         input.chartType === "bar" && input.agg ? AGG_LABELS[input.agg] : "",
+        stack === "stack" ? "누적" : stack === "stack100" ? "100% 누적" : "",
         `${n}개 범주`,
         inSelection ? `${selectedCount}개 선택` : "",
       ],
@@ -417,25 +510,46 @@ export function renderCategory(
     const zero = y(baseValue);
     const fill = alphaOf(shape.transparency, 1);
     (input.bars ?? []).forEach((row, i) => {
+      // 누적이면 범주의 맨 위·맨 아래 막대만 바깥 끝을 둥글게 한다.
+      const ends = segments && stackEnds(segments[i] ?? []);
       row.forEach((v, g) => {
         if (v === null) return;
+        const seg = segments?.[i]?.[g];
+        if (segments && !seg) return;
+        const [from, to] = seg ?? [baseValue, v];
         // 로그 축에서 0 이하 값은 그릴 자리가 없다.
-        if (yLog && v <= 0) return;
-        const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
-        const top = Math.min(y(v), zero);
-        const h = Math.abs(y(v) - zero);
-        const r = Math.min(RADIUS, w / 2, h);
+        if (yLog && (to <= 0 || (seg && from <= 0))) return;
+        const { cx, width: w } = groupSlot(x(i), markWidth, slots, seg ? 0 : g);
+        const y0 = seg ? y(from) : zero;
+        const top = Math.min(y(to), y0);
+        const h = Math.abs(y(to) - y0);
+        const r =
+          seg && ends?.top !== g && ends?.bottom !== g
+            ? 0
+            : Math.min(RADIUS, w / 2, h);
         // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
-        const radii = v >= 0 ? [r, r, 0, 0] : [0, 0, r, r];
-        const point = markPoint(i, g, groupCount, v);
+        const radii = to >= from ? [r, r, 0, 0] : [0, 0, r, r];
+        const point = pointOf(i, g, v);
         const index = legendIndexOf(g, point);
         if (off[index]) return;
         ctx.globalAlpha = selectionAlpha(point) * fill;
         ctx.beginPath();
         ctx.roundRect(cx - w / 2, top, w, Math.max(h, 1), radii);
         paintMark(ctx, shape, colorOf(index, point, i));
+        // 쌓은 막대 사이는 배경색 선으로 가른다.
+        if (seg && shape.style !== "border") {
+          ctx.globalAlpha = fill;
+          ctx.strokeStyle = surfaceOf(o);
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx - w / 2, y(to));
+          ctx.lineTo(cx + w / 2, y(to));
+          ctx.stroke();
+        }
         ctx.globalAlpha = 1;
-        labels.push([cx, y(v), v]);
+        // 누적은 막대 안 가운데에 그 막대 값(100% 누적은 %)을 단다.
+        if (seg) labels.push([cx, y(point[1]), to - from]);
+        else labels.push([cx, y(v), v]);
       });
       if (i % 200 === 0) progress("render", i / n);
     });
@@ -478,6 +592,21 @@ export function renderCategory(
         if (shape.style !== "brush") {
           ctx.lineWidth = shape.borderWidth > 0 ? shape.borderWidth : line;
           ctx.strokeRect(cx - half, top, w, h);
+        }
+        // dot: 원값 표본을 상자 너비 안에 흩어 찍는다. 흩는 위치는 순번으로 정해 다시 그려도 같다.
+        if (b.dots && b.dots.length > 0) {
+          ctx.globalAlpha = alphaOf(shape.transparency, 0.45) * alpha;
+          ctx.fillStyle = color;
+          const dotRadius = pointSizeOf(o, 1.6);
+          const spread = Math.max(0, half - dotRadius);
+          b.dots.forEach((v, k) => {
+            // 황금비 수열: 0~1에 고르게 퍼지는 결정적 값
+            const jitter = ((k * 0.618033988749895) % 1) * 2 - 1;
+            ctx.beginPath();
+            ctx.arc(cx + jitter * spread, y(v), dotRadius, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.globalAlpha = alpha;
         }
         // 중앙값
         ctx.strokeStyle = THEME.textPrimary;
@@ -544,10 +673,11 @@ export function renderCategory(
     groupGap: GROUP_GAP,
     agg: input.agg,
     bars: input.bars,
+    ...(segments ? { stack, segments } : {}),
     boxes: input.boxes?.map((row) =>
       row.map((b) => {
         if (!b) return null;
-        const { outliers: _outliers, ...rest } = b;
+        const { outliers: _outliers, dots: _dots, ...rest } = b;
         return rest;
       }),
     ),
