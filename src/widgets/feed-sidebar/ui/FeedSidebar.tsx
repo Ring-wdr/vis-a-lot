@@ -2,13 +2,16 @@
 
 import {
   Bell,
-  BookmarkCheck,
+  ChevronRight,
   ClipboardList,
   Clock,
   Columns3,
+  Compass,
   Database,
   FileBarChart,
+  Heart,
   Home,
+  LayoutGrid,
   List,
   Mail,
   PieChart,
@@ -17,9 +20,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
+import { useViews } from "@/shared/api/feed/post-queries";
 import { useGroups, useMe, useUnreadCount } from "@/shared/api/feed/queries";
-import type { Group } from "@/shared/api/feed/types";
+import type { Group, SavedView } from "@/shared/api/feed/types";
 import { FEED, groupHref, isCurrent } from "@/shared/config/feed-routes";
 import { countBadge, sideHeading, sideLink } from "@/shared/ui/feed-styles";
 
@@ -106,6 +110,107 @@ function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
   );
 }
 
+const VIEW_ICON: Record<string, ReactNode> = {
+  "builtin-explore": <Compass size={ICON} />,
+  "builtin-following": <Heart size={ICON} />,
+  feed: <LayoutGrid size={ICON} />,
+  list: <List size={ICON} />,
+  board: <Columns3 size={ICON} />,
+};
+
+/** 저장된 뷰 링크. /feed/view?id=…가 지금 화면이면 aria-current */
+function ViewLink({
+  view,
+  groupKey,
+}: {
+  view: SavedView;
+  /** 그룹 뷰면 이름 옆에 접두사(FD)를 붙여 같은 이름을 가른다 */
+  groupKey?: string;
+}) {
+  const pathname = usePathname();
+  const search = useSearchParams();
+  const current =
+    pathname.replace(/\/+$/, "") === FEED.view && search.get("id") === view.id;
+  return (
+    <Link
+      href={`${FEED.view}?id=${encodeURIComponent(view.id)}`}
+      className={sideLink()}
+      aria-current={current ? "page" : undefined}
+      title={
+        view.shared ? `${view.name} (${groupKey ?? "그룹"} 공유)` : view.name
+      }
+    >
+      <span className="flex-none text-fg-muted" aria-hidden="true">
+        {VIEW_ICON[view.id] ?? VIEW_ICON[view.layout]}
+      </span>
+      <span className="truncate">{view.name}</span>
+      {groupKey && (
+        <span className="ml-auto flex-none font-mono text-2xs text-fg-muted">
+          {groupKey}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+/** 사이드바 "저장된 뷰": 고정한 뷰(탐색·관심 포함) + 나머지는 "모든 뷰"에 접어 둔다 */
+function SavedViewLinks() {
+  const views = useViews();
+  const groups = useGroups();
+  const [open, setOpen] = useState(false);
+  const keyOf = (v: SavedView) =>
+    groups.data?.find((g) => g.id === v.groupId)?.keyPrefix;
+  const pinned = views.data?.filter((v) => v.pinned) ?? [];
+  const rest = views.data?.filter((v) => !v.pinned) ?? [];
+  return (
+    <>
+      <p className={sideHeading()}>저장된 뷰</p>
+      {views.isPending && (
+        <p className="px-2 py-1 text-xs text-fg-muted">뷰를 불러오는 중</p>
+      )}
+      {views.isError && (
+        <p className="px-2 py-1 text-xs text-fg-muted">
+          뷰를 불러오지 못했습니다
+        </p>
+      )}
+      <ul className="flex flex-col gap-0.5">
+        {pinned.map((v) => (
+          <li key={v.id}>
+            <ViewLink view={v} groupKey={keyOf(v)} />
+          </li>
+        ))}
+      </ul>
+      {rest.length > 0 && (
+        <>
+          <button
+            type="button"
+            className="group/more flex h-7 cursor-pointer items-center gap-1 rounded-md px-2 text-xs text-fg-muted hover:bg-panel-hover"
+            aria-expanded={open}
+            aria-controls="feed-all-views"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <ChevronRight
+              size={12}
+              className="transition-transform group-aria-expanded/more:rotate-90"
+              aria-hidden="true"
+            />
+            모든 뷰 ({rest.length})
+          </button>
+          {open && (
+            <ul id="feed-all-views" className="flex flex-col gap-0.5">
+              {rest.map((v) => (
+                <li key={v.id}>
+                  <ViewLink view={v} groupKey={keyOf(v)} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
 /** 왼쪽 사이드바: 개인 화면, 그룹별 화면, 저장된 뷰, 관리·개발 장치 */
 export function FeedSidebar() {
   const groups = useGroups();
@@ -158,11 +263,7 @@ export function FeedSidebar() {
         </p>
       )}
 
-      <p className={sideHeading()}>저장된 뷰</p>
-      <p className="flex items-center gap-2 px-2 py-1 text-xs text-fg-muted">
-        <BookmarkCheck size={ICON} aria-hidden="true" />
-        고정한 뷰가 여기에 나옵니다
-      </p>
+      <SavedViewLinks />
 
       <div className="mt-auto flex flex-col gap-0.5 border-t border-line pt-2">
         {systemAdmin && (
