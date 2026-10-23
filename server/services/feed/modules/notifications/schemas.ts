@@ -1,7 +1,7 @@
 // 피드 notifications API 스키마: 알림함, 알림 설정(이벤트 × 채널), 발송 로그.
 
 import { z } from "@hono/zod-openapi";
-import { InstantSchema, PostRefSchema } from "../common";
+import { InstantSchema, orNull, PostRefSchema } from "../common";
 import { FeedEventSchema } from "../posts/schemas";
 
 /** 사용자가 채널을 고르는 알림 이벤트 (docs/feed-prototype-spec.md 알림 표) */
@@ -27,8 +27,8 @@ export const NotificationSchema = z
     id: z.string(),
     kind: NotifyKindSchema,
     event: FeedEventSchema,
-    readAt: InstantSchema.nullable(),
-    archivedAt: InstantSchema.nullable(),
+    readAt: orNull(InstantSchema),
+    archivedAt: orNull(InstantSchema),
     createdAt: InstantSchema,
   })
   .openapi("Notification");

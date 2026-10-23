@@ -7,6 +7,7 @@ import { schedulerOps } from "./scheduler";
 import { seedOps } from "./seed";
 import { systemOps } from "./system";
 import { usersOps } from "./users";
+import { viewsOps } from "./views";
 
 export const FEED_OPS = {
   ...systemOps,
@@ -16,6 +17,7 @@ export const FEED_OPS = {
   ...notificationsOps,
   ...schedulerOps,
   ...seedOps,
+  ...viewsOps,
 };
 
 export type FeedOps = typeof FEED_OPS;
