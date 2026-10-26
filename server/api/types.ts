@@ -233,7 +233,8 @@ export type ChartSpec = {
   filters?: ChartFilter[];
 };
 
-export type ItemSize = { width: number; height: number };
+/** PNG 크기(CSS 픽셀). pixelRatio는 화면의 devicePixelRatio로, 그만큼 촘촘하게 그린다. 없으면 1 */
+export type ItemSize = { width: number; height: number; pixelRatio?: number };
 
 /** 이름 붙여 남긴 선택 영역 */
 export type Favorite = { name: string; region: Region };
@@ -272,7 +273,13 @@ export type CreateChartResponse = {
   historyId: string;
 };
 
-export type ChartImage = { url: string; width: number; height: number };
+/** width·height는 CSS 픽셀이다. PNG 자체는 pixelRatio배로 그려져 있다. */
+export type ChartImage = {
+  url: string;
+  width: number;
+  height: number;
+  pixelRatio?: number;
+};
 
 export type {
   AxisMeta,

@@ -130,6 +130,15 @@ export async function listHistory(db: Db): Promise<HistorySummary[]> {
   return rows.map(summarize);
 }
 
+/** history 한 건을 지운다. 없던 건이면 false */
+export async function deleteHistory(db: Db, id: string) {
+  const result = await db
+    .deleteFrom("history")
+    .where("id", "=", id)
+    .executeTakeFirst();
+  return Number(result.numDeletedRows) > 0;
+}
+
 export async function getHistory(
   db: Db,
   id: string,

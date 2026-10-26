@@ -5,6 +5,7 @@ import { BEARER, requireAuth } from "../common/auth";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
   AddShapeRequestSchema,
+  ChartDefaultsSchema,
   ChartHealthSchema,
   CommonPropsRequestSchema,
   CreateChartRequestSchema,
@@ -309,9 +310,9 @@ export const itemDetail = createRoute({
 /** 크게 보기 PNG의 크기 ("WxH"). 없으면 grid PNG의 metadata다. */
 const SizeQuerySchema = z
   .string()
-  .regex(/^\d+x\d+$/)
+  .regex(/^\d+x\d+(@\d+(\.\d+)?)?$/)
   .optional()
-  .openapi({ description: "크게 보기 PNG의 크기 (WxH)" });
+  .openapi({ description: "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)" });
 
 export const itemMeta = createRoute({
   method: "get",
@@ -454,6 +455,20 @@ export const historyDetail = createRoute({
   },
 });
 
+export const deleteHistory = createRoute({
+  method: "delete",
+  path: "/history/{id}",
+  tags: ["history"],
+  summary: "history 한 건 지우기. 그 건에 기록 중인 차트는 더 기록하지 않는다",
+  ...write,
+  request: { params: z.object({ id: pathParam("id") }) },
+  responses: {
+    204: { description: "지움" },
+    ...authErrors,
+    404: errorResponse("모르는 history"),
+  },
+});
+
 // ── 공유 ───────────────────────────────────────────────────────
 // 다른 서비스(데이터 공유 피드 등)에 넘길 차트 스냅숏. 만든 뒤 차트를 고쳐도 공유는 바뀌지 않는다.
 
@@ -534,6 +549,15 @@ export const deleteShare = createRoute({
 });
 
 // ── 운영 ───────────────────────────────────────────────────────
+
+export const defaults = createRoute({
+  method: "get",
+  path: "/defaults",
+  tags: ["charts"],
+  summary: "차트 기본값 (전체 설정·draw가 함께 쓰는 속성 기본값)",
+  ...read,
+  responses: { 200: jsonResponse(ChartDefaultsSchema, "기본값") },
+});
 
 export const health = createRoute({
   method: "get",

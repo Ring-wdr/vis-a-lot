@@ -32,21 +32,22 @@ import {
   DEFAULT_OPTIONS,
   optionsOf,
 } from "./options";
-import { drawSelection, type Region, regionTester } from "./region";
+import { dimOutside, drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
 import {
   alphaOf,
+  borderOf,
   createLabelGuard,
   drawPanel,
   drawPoint,
   drawPointLabel,
   fontPx,
-  lineWidthOf,
+  mixColor,
   pathPoint,
   pointSizeOf,
   surfaceOf,
 } from "./style";
-import { OTHERS_COLOR, THEME } from "./theme";
+import { THEME } from "./theme";
 
 const KST_OFFSET_MS = 9 * 3_600_000;
 const DAY_MS = 86_400_000;
@@ -128,6 +129,13 @@ export type ProgressFn = (stage: RenderStage, ratio: number) => void;
 type Ctx = OffscreenCanvasRenderingContext2D;
 
 const CHUNK = 50_000;
+/** 점 크기 자동일 때 scatter 점 반지름 (CSS 픽셀) */
+const POINT_RADIUS = 3;
+/** 크기 자동일 때 점이 영역을 이보다 여러 겹 덮으면 점을 줄인다 (작은 칸에 점이 아주 많을 때). */
+const MAX_COVERAGE = 30;
+/** 같은 색 점을 한 픽셀 칸에 겹쳐 그리는 최대 수. 밀도는 남기고 행이 많을 때 그리는 양을 묶는다. */
+const MAX_PER_CELL = 3;
+const MIN_POINT_RADIUS = 1.5;
 
 /** 값이 하나뿐일 때 양쪽으로 벌리는 폭. 시계열은 1ms가 아니라 앞뒤 1분을 보여준다. */
 const SINGLE_VALUE_PAD = { number: 1, time: 60_000 } as const;
@@ -600,14 +608,11 @@ export function renderScatter(
   const sy = new Float32Array(n);
   const { selection } = input;
   const inSelection = selection && regionTester(selection);
-  const selected = selection ? new Uint8Array(n) : undefined;
+  // 선택 영역 안의 점 수 (제목 요약과 metadata). 흐리게 하는 건 다 그린 뒤 dimOutside가 한다.
   let selectedCount = 0;
   let focusedCount = 0;
   for (let i = 0; i < n; i++) {
-    if (inSelection && selected && inSelection(xs[i], ys[i])) {
-      selected[i] = 1;
-      selectedCount++;
-    }
+    if (inSelection?.(xs[i], ys[i])) selectedCount++;
     const cx = x(xs[i]);
     const cy = y(ys[i]);
     sx[i] = cx;
@@ -701,99 +706,101 @@ export function renderScatter(
       sy,
       series: seriesOrder(xs, groupIndex, count, off),
       colors: single
-        ? new Array(count).fill(OTHERS_COLOR)
+        ? new Array(count).fill(o.palette.othersColor)
         : input.legend
           ? input.legend.colors
           : [input.color],
-      selected,
       plot,
       compact: input.compact,
-      lineWidth: lineWidthOf(o, input.compact ? 1 : 1.5),
-      alpha: alphaOf(shape.transparency, 1),
+      // 섬네일은 정한 굵기의 2/3 (기본 1.5 → 1)
+      lineWidth: input.compact ? (o.size.lineWidth * 2) / 3 : o.size.lineWidth,
+      alpha: alphaOf(shape.transparency),
       dot: {
         shape: shape.type,
         radius: pointSizeOf(o, 2.5),
         style: shape.style,
         borderWidth: shape.borderWidth,
-        stroke: surface,
+        stroke: borderOf(shape, surface),
       },
     });
   } else {
-    // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (fillStyle 전환을 줄인다).
+    // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (뒤 legend 값이 위에 온다).
     const { legend } = input;
     const passes = legend ? legend.colors : [input.color];
-    // 선택이 있으면 바깥 점(0)을 먼저 흐리게, 안쪽 점(1)을 그 위에 그린다.
-    const layers = selected ? [0, 1] : [1];
-    // 섬네일은 점이 적어도 테두리 원 대신 작은 점으로 그린다.
-    const small = !input.compact && n <= 400;
-    const size = pointSizeOf(o, input.compact || n > 50_000 ? 1.5 : 2.5);
-    const half = size / 2;
-    const radius = pointSizeOf(o, 4);
-    const baseAlpha = alphaOf(
-      shape.transparency,
-      small ? 1 : n > 100_000 ? 0.25 : n > 10_000 ? 0.4 : 0.6,
-    );
-    // 기본 모양(원·채우기·테두리 없음)은 지금까지처럼: 적으면 배경색 테두리 원, 많으면 작은 사각 점.
+    const area = Math.max(1, plot.width * plot.height);
+    // 실제로 그릴 점 수 (칸마다 상한까지). 겹침 정도를 이 수로 잰다.
+    const drawable = Math.min(n, px.length * MAX_PER_CELL);
+    /** 반지름 r 점이 그림 영역을 몇 겹 덮는지 (픽셀로 줄인 점 수 × 점 넓이 / 영역 넓이) */
+    const coverageAt = (r: number) => (drawable * Math.PI * r * r) / area;
+    // 크기 자동: 기본 반지름 3, 영역을 너무 여러 겹 덮으면 그만큼 줄인다(최소 1.5).
+    const autoRadius = input.compact
+      ? 1.5
+      : Math.max(
+          MIN_POINT_RADIUS,
+          POINT_RADIUS *
+            Math.min(1, Math.sqrt(MAX_COVERAGE / coverageAt(POINT_RADIUS))),
+        );
+    const radius = pointSizeOf(o, autoRadius);
+    // 기본 모양(원·채우기+테두리·테두리 0)은 불투명 채우기에 같은 색을 진하게 한 1px 테두리를 둘러
+    // 겹쳐도 원 하나하나가 보이게 한다. 섬네일은 점이 작아 테두리 없이 그린다.
     const plain =
       shape.type === "circle" &&
-      shape.style !== "border" &&
+      shape.style === "both" &&
       shape.borderWidth === 0;
-    const fast = plain && size <= 3;
-    const steps = layers.length * passes.length;
-    layers.forEach((layer, l) => {
-      passes.forEach((passColor, g) => {
-        if (off[g]) return;
-        const color = single ? OTHERS_COLOR : passColor;
+    const borderWidth = plain ? (input.compact ? 0 : 1) : shape.borderWidth;
+    // 투명도 0(기본값)은 불투명이다.
+    const alpha = alphaOf(shape.transparency);
+    // 같은 색 안에서 픽셀 칸마다 그린 점 수. 상한을 넘으면 더 칠해도 거의 같아 보여 건너뛴다.
+    const drawn = new Uint8Array(plot.width * plot.height);
+    // 그림 영역 밖이어도 점 반지름만큼은 영역 안으로 걸쳐 보인다.
+    const reach = radius + borderWidth;
+    // 선택 영역 밖은 다 그린 뒤 배경색으로 덮어 흐리게 한다 (dimOutside).
+    passes.forEach((passColor, g) => {
+      if (off[g]) return;
+      const color = single ? o.palette.othersColor : passColor;
+      ctx.globalAlpha = alpha;
+      if (plain) {
         ctx.fillStyle = color;
-        ctx.strokeStyle = color;
-        // 점이 적으면 8px 점 + 2px 배경색 테두리로 겹쳐도 구분되게 하고,
-        // 많으면 작은 반투명 점으로 밀도를 보여준다. 선택 바깥 점은 더 옅게 그린다.
-        ctx.globalAlpha = layer === 0 ? baseAlpha * 0.2 : baseAlpha;
-        if (small && plain) {
-          ctx.strokeStyle = surface;
-          ctx.lineWidth = 2;
+        ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.25));
+        ctx.lineWidth = borderWidth;
+      }
+      drawn.fill(0);
+      for (let i = 0; i < n; i++) {
+        if (groupIndex && groupIndex[i] !== g) continue;
+        const ix = Math.round(sx[i] - plot.left);
+        const iy = Math.round(sy[i] - plot.top);
+        if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
+          const idx = iy * plot.width + ix;
+          if (drawn[idx] === MAX_PER_CELL) continue;
+          drawn[idx]++;
+        } else if (
+          ix < -reach ||
+          iy < -reach ||
+          ix >= plot.width + reach ||
+          iy >= plot.height + reach
+        ) {
+          continue;
         }
-        let batched = 0;
-        if (!small && !fast) ctx.beginPath();
-        for (let i = 0; i < n; i++) {
-          if (groupIndex && groupIndex[i] !== g) continue;
-          if (selected && selected[i] !== layer) continue;
-          if (small) {
-            if (plain) {
-              ctx.beginPath();
-              ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
-              ctx.stroke();
-              ctx.fill();
-            } else {
-              drawPoint(
-                ctx,
-                shape.type,
-                sx[i],
-                sy[i],
-                radius,
-                shape.style,
-                shape.borderWidth,
-                color,
-                surface,
-              );
-            }
-          } else if (fast) {
-            ctx.fillRect(sx[i] - half, sy[i] - half, size, size);
-          } else {
-            // 같은 색 점을 한 path로 모아 그린다. path가 너무 커지지 않게 일정 수마다 비운다.
-            pathPoint(ctx, shape.type, sx[i], sy[i], half);
-            if (++batched === 10_000) {
-              finishBatch(ctx, shape, color, surface);
-              ctx.beginPath();
-              batched = 0;
-            }
-          }
-          if (i % CHUNK === 0)
-            progress("render", (l * passes.length + g + i / n) / steps);
+        if (plain) {
+          ctx.beginPath();
+          ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
+          ctx.fill();
+          if (borderWidth) ctx.stroke();
+        } else {
+          drawPoint(
+            ctx,
+            shape.type,
+            sx[i],
+            sy[i],
+            radius,
+            shape.style,
+            borderWidth,
+            color,
+            borderOf(shape, surface),
+          );
         }
-        if (!small && !fast && batched > 0)
-          finishBatch(ctx, shape, color, surface);
-      });
+        if (i % CHUNK === 0) progress("render", (g + i / n) / passes.length);
+      }
     });
   }
   ctx.globalAlpha = 1;
@@ -809,7 +816,6 @@ export function renderScatter(
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
       if (!focused[i]) continue;
-      if (selected && !selected[i]) continue;
       pathPoint(ctx, f.shape, sx[i], sy[i], r);
       if (++batched === 10_000) {
         finishBatch(ctx, { ...shape, type: f.shape }, f.color, surface);
@@ -823,7 +829,7 @@ export function renderScatter(
 
   // ── 예측 선과 구간 ────────────────────────────────────────────
   if (predicted.length > 0) {
-    drawForecasts(ctx, predicted, x, y, lineWidthOf(o, 1.5));
+    drawForecasts(ctx, predicted, x, y, o.size.lineWidth);
   }
 
   // ── 점 글자 (픽셀로 줄인 점이 적을 때만) ─────────────────────────
@@ -836,6 +842,16 @@ export function renderScatter(
   }
 
   if (selection) {
+    // 선택 영역 밖(점·선·점 글자·예측 선)을 배경색으로 한 번 덮어 흐리게 한다.
+    dimOutside(
+      ctx,
+      selection,
+      (v) => x(v),
+      (v) => y(v),
+      plot,
+      surface,
+      1 - o.shape.dimOpacity,
+    );
     drawSelection(
       ctx,
       selection,

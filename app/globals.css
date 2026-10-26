@@ -126,6 +126,8 @@
   --z-index-tooltip: 1000; /* body에 띄우는 차트 툴팁 */
 
   --font-sans: Arial, Helvetica, sans-serif;
+  /* 서버가 PNG에 쓰는 글꼴 (server/render/theme.ts). PNG 위에 겹쳐 그리는 DOM legend가 같은 폭을 갖게 한다. */
+  --font-chart: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   /* 원본 미리보기처럼 Geist 없이 시스템 고정폭 글꼴만 쓰는 곳 */
   --font-code: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-mono:

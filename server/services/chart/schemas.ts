@@ -76,7 +76,11 @@ const PointShapeSchema = z
 
 const AxisOptionsSchema = opt({
   visible: z.boolean(),
-  title: opt({ visible: z.boolean(), text: text() }),
+  title: opt({
+    visible: z.boolean(),
+    text: text(),
+    color: z.union([HexColorSchema, z.literal("")]),
+  }),
   min: orNull(finite),
   max: orNull(finite),
   log: z.boolean(),
@@ -107,6 +111,8 @@ export const ChartOptionsSchema = opt({
     bold: z.boolean(),
     color: HexColorSchema,
     align: z.enum(["left", "center", "right"]),
+    subtitleColor: HexColorSchema,
+    summary: opt({ visible: z.boolean(), color: HexColorSchema }),
   }),
   axes: opt({ x: AxisOptionsSchema, y: AxisOptionsSchema }),
   legend: opt({
@@ -116,6 +122,7 @@ export const ChartOptionsSchema = opt({
     reverse: z.boolean(),
     fontSize: num(6, 40),
     fontColor: HexColorSchema,
+    titleColor: HexColorSchema,
   }),
   panel: opt({
     backColor: HexColorSchema,
@@ -136,12 +143,17 @@ export const ChartOptionsSchema = opt({
     end: HexColorSchema,
     steps: num(0, 64),
     reverse: z.boolean(),
+    othersColor: HexColorSchema,
   }),
   shape: opt({
     type: PointShapeSchema,
     style: z.enum(["both", "border", "brush"]),
     transparency: num(0, 1),
     borderWidth: num(0, 10),
+    borderColor: z.union([HexColorSchema, z.literal("")]),
+    dimOpacity: num(0, 1),
+    cornerRadius: num(0, 20),
+    medianColor: HexColorSchema,
   }),
   size: opt({
     pointAuto: z.boolean(),
@@ -281,6 +293,8 @@ export const ItemSizeSchema = z
   .object({
     width: z.number().min(50).max(2000),
     height: z.number().min(50).max(2000),
+    /** 화면의 devicePixelRatio. PNG를 이만큼 촘촘하게 그려 고해상도 화면에서도 선명하다. 없으면 1 */
+    pixelRatio: z.number().min(1).max(4).optional(),
   })
   .openapi("ItemSize");
 
@@ -414,7 +428,13 @@ export const ItemStageSchema = z
   .openapi("ItemStage");
 
 export const ChartImageSchema = z
-  .object({ url: z.string(), width: z.number(), height: z.number() })
+  .object({
+    url: z.string(),
+    /** CSS 픽셀 크기. PNG 자체는 pixelRatio배로 그려져 있다. */
+    width: z.number(),
+    height: z.number(),
+    pixelRatio: z.number().optional(),
+  })
   .openapi("ChartImage");
 
 export const ItemStateSchema = z
@@ -698,6 +718,24 @@ export const LegendMetaSchema = z
       }),
     ),
     hidden: z.number(),
+    /** 그린 모양과 글자 자리 (왼쪽 가운데). 화면이 같은 legend를 DOM으로 겹쳐 그린다. 그리지 않았으면 없다. */
+    layout: z
+      .object({
+        orientation: z.enum(["horizontal", "vertical"]),
+        fontSize: z.number(),
+        /** 색 표시(●) 반지름 */
+        marker: z.number(),
+        textColor: z.string(),
+        titleColor: z.string(),
+        mutedColor: z.string(),
+        surface: z.string(),
+        /** 테두리를 그리지 않으면 null */
+        borderColor: z.string().nullable(),
+        title: z.object({ x: z.number(), y: z.number(), maxWidth: z.number() }),
+        /** 다 넣지 못한 항목 수("+N") 자리 */
+        more: z.object({ x: z.number(), y: z.number() }).optional(),
+      })
+      .optional(),
   })
   .openapi("LegendMeta");
 
@@ -1194,6 +1232,28 @@ export const ShareListResponseSchema = z
   .openapi("ShareListResponse");
 
 // ── 운영 ───────────────────────────────────────────────────────
+
+export const ChartTypeDefaultsSchema = z
+  .object({
+    legendPosition: LegendPositionSchema.optional(),
+    options: ChartOptionsSchema.optional(),
+  })
+  .openapi("ChartTypeDefaults");
+
+export const ChartDefaultsSchema = z
+  .object({
+    /** 차트 속성 전체 값 (모든 필드가 있다). 공통·item 개별 속성은 이 위에 덮어쓴다. */
+    options: ChartOptionsSchema,
+    /** 새 차트의 공통 속성 */
+    common: z.object({ color: HexColorSchema }),
+    /** split 조합 이름을 잇는 문자 */
+    splitSeparator: z.string(),
+    /** 공통·개별 속성에 legend 위치가 없을 때의 위치 */
+    legendPosition: LegendPositionSchema,
+    /** 차트 종류별로 전체 값과 다른 것만. options는 전체 options 위, 공통 속성 아래에 덮어쓴다. */
+    charts: z.partialRecord(ChartTypeSchema, ChartTypeDefaultsSchema),
+  })
+  .openapi("ChartDefaults");
 
 export const ChartHealthSchema = z
   .object({ service: z.literal("chart"), renderWorkers: z.number() })

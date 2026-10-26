@@ -1,6 +1,7 @@
 "use client";
 
 import { overlay } from "overlay-kit";
+import type { ReactNode } from "react";
 import { button } from "./button";
 import { Dialog, dialogActions } from "./Dialog";
 
@@ -20,21 +21,37 @@ export function showAlert(message: string) {
   ));
 }
 
-/** 확인·취소 팝업. 확인을 누르면 true, 취소·Esc면 false로 끝난다. */
+/**
+ * 확인·취소 팝업. 확인을 누르면 true, 취소·Esc면 false로 끝난다.
+ * title을 주면 제목 줄을, children을 주면 문구 아래에 미리보기(썸네일 등)를 붙인다.
+ * danger면 확인 버튼을 위험 동작 모양으로 그린다. 처음 포커스는 앞에 있는 취소 버튼이다.
+ */
 export function showConfirm(
   message: string,
-  { confirmLabel = "확인" }: { confirmLabel?: string } = {},
+  {
+    confirmLabel = "확인",
+    title,
+    danger = false,
+    children,
+  }: {
+    confirmLabel?: string;
+    title?: string;
+    danger?: boolean;
+    children?: ReactNode;
+  } = {},
 ) {
   return overlay.openAsync<boolean>(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={() => close(false)} onExited={unmount}>
+      {title && <h2 className="mb-2 text-base font-semibold">{title}</h2>}
       <p>{message}</p>
+      {children}
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={() => close(false)}>
           취소
         </button>
         <button
           type="button"
-          className={button({ variant: "primary" })}
+          className={button({ variant: danger ? "danger" : "primary" })}
           onClick={() => close(true)}
         >
           {confirmLabel}

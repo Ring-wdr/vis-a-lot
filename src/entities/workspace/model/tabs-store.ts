@@ -6,10 +6,10 @@
 
 import { createStore } from "zustand/vanilla";
 import { api } from "@/shared/api/api";
-import type { ChartSpec } from "@/shared/api/types";
+import type { ChartDefaults, ChartSpec } from "@/shared/api/types";
 import {
   createWorkspaceStore,
-  DEFAULT_SPEC,
+  defaultSpec,
   type WorkspaceStore,
 } from "./workspace-store";
 
@@ -29,7 +29,8 @@ export const TABS_LOCKED_HINT =
   "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.";
 
 export type TabsState = {
-  view: View;
+  /** 고른 화면. 처음 들어오면 아무 화면도 고르지 않은 시작 화면(null)이다. */
+  view: View | null;
   tabs: WorkspaceTab[];
   /** view별로 마지막에 보던 탭 */
   active: Record<View, string | undefined>;
@@ -53,26 +54,29 @@ export type TabsState = {
     historyId: string,
   ) => { tab: WorkspaceTab; created: boolean } | undefined;
   close: (id: string) => void;
+  /** 지운 history를 보던 탭을 닫는다. */
+  closeHistory: (historyId: string) => void;
   /** 오른쪽 필터 패널. 탭을 바꿔도 열고 닫은 상태는 그대로 둔다. */
   filterPanelOpen: boolean;
   toggleFilterPanel: () => void;
 };
 
-function galleryTab(draft?: Partial<ChartSpec>): WorkspaceTab {
-  return {
+/** 서버 기본값(GET /defaults)으로 새 탭의 draft를 만든다. */
+export function createTabsStore(defaults: ChartDefaults) {
+  const base = defaultSpec(defaults);
+  const galleryTab = (draft?: Partial<ChartSpec>): WorkspaceTab => ({
     id: crypto.randomUUID(),
     view: "gallery",
-    store: createWorkspaceStore({ draft: { ...DEFAULT_SPEC, ...draft } }),
-  };
-}
-
-export function createTabsStore() {
+    store: createWorkspaceStore({ draft: { ...base, ...draft } }),
+  });
+  const readOnlyStore = () =>
+    createWorkspaceStore({ readOnly: true, draft: base });
   const first = galleryTab();
   return createStore<TabsState>((set, get) => ({
-    view: "gallery",
+    view: null,
     tabs: [first],
     active: { gallery: first.id, history: undefined },
-    emptyHistory: createWorkspaceStore({ readOnly: true }),
+    emptyHistory: readOnlyStore(),
     locked: false,
     setLocked: (locked) => set({ locked }),
     setView: (view) => {
@@ -110,7 +114,7 @@ export function createTabsStore() {
       const tab: WorkspaceTab = {
         id: crypto.randomUUID(),
         view: "history",
-        store: createWorkspaceStore({ readOnly: true }),
+        store: readOnlyStore(),
         historyId,
       };
       set((s) => ({
@@ -141,6 +145,24 @@ export function createTabsStore() {
       // 아무도 보지 않을 차트를 계속 그리지 않도록 남은 item을 취소한다. 끝난 job이면 서버가 무시한다.
       const jobId = tab.store.getState().current?.jobId;
       if (jobId) api.cancelJob(jobId).catch(() => {});
+    },
+    closeHistory: (historyId) => {
+      // 잠금과 상관없이 닫는다. 지운 history는 다시 볼 수 없다.
+      set((s) => {
+        const tabs = s.tabs.filter((t) => t.historyId !== historyId);
+        if (tabs.length === s.tabs.length) return s;
+        const active = s.active.history;
+        const keep = tabs.some((t) => t.id === active);
+        return {
+          tabs,
+          active: {
+            ...s.active,
+            history: keep
+              ? active
+              : tabs.filter((t) => t.view === "history").at(-1)?.id,
+          },
+        };
+      });
     },
   }));
 }

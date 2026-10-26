@@ -101,4 +101,41 @@ describe("legend 모양", () => {
       height: 133,
     });
   });
+
+  it("화면이 DOM으로 다시 그릴 모양과 글자 자리를 metadata에 담는다", () => {
+    const plot = framePlot(drawCtx, 300, 200, 20, input);
+    const meta = drawLegendAround(drawCtx, input, plot, 20);
+    expect(meta.layout).toMatchObject({
+      orientation: "horizontal",
+      fontSize: 11,
+      marker: 5,
+      title: { y: meta.box.y + meta.box.height / 2 },
+    });
+    expect(meta.layout?.more).toBeUndefined();
+    const hidden = drawLegendAround(
+      drawCtx,
+      input,
+      plot,
+      20,
+      mergeOptions(DEFAULT_OPTIONS, { legend: { visible: false } }),
+    );
+    expect(hidden.layout).toBeUndefined();
+  });
+
+  it("고해상도 캔버스(scale)에서도 오른쪽 legend 폭은 CSS 픽셀로 잰다", () => {
+    const right = { ...input, position: "right" as const };
+    const plot = framePlot(drawCtx, 300, 200, 20, right);
+    const base = drawLegendAround(drawCtx, right, plot, 20);
+    const scaled = new Proxy(drawCtx, {
+      get: (target, key: string) =>
+        key === "canvas"
+          ? { width: 600, height: 400 }
+          : key === "getTransform"
+            ? () => ({ a: 2 })
+            : Reflect.get(target, key),
+    });
+    const meta = drawLegendAround(scaled, right, plot, 20);
+    expect(meta.box).toEqual(base.box);
+    expect(meta.layout?.orientation).toBe("vertical");
+  });
 });

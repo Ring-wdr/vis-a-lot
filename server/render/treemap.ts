@@ -29,6 +29,7 @@ import {
 import { drawShapes, type Shape } from "./shapes";
 import {
   alphaOf,
+  borderOf,
   createLabelGuard,
   drawPanel,
   drawPointLabel,
@@ -309,7 +310,7 @@ export function renderTreemap(
   }
   // 칸 모양: 채우기·테두리(style), 투명도, 테두리 굵기
   const { style, borderWidth, transparency } = o.shape;
-  const alpha = alphaOf(transparency, 1);
+  const alpha = alphaOf(transparency);
   const stroke = surfaceOf(o);
   // 점 글자(값)를 켜면 칸 안 값 줄 대신 점 글자로 적는다.
   const pointLabels = o.pointLabel.visible && !input.compact;
@@ -319,7 +320,7 @@ export function renderTreemap(
     if (r.left > plot.left + plot.width || r.left + r.w < plot.left) return;
     if (r.top > plot.top + plot.height || r.top + r.h < plot.top) return;
     const color = colorOf(l.g);
-    ctx.globalAlpha = selected[k] ? alpha : alpha * 0.2;
+    ctx.globalAlpha = selected[k] ? alpha : alpha * o.shape.dimOpacity;
     const w = Math.max(1, r.w);
     const h = Math.max(1, r.h);
     if (style !== "border") {
@@ -328,7 +329,7 @@ export function renderTreemap(
     }
     if (style === "border" || borderWidth > 0) {
       const bw = style === "border" ? Math.max(1, borderWidth) : borderWidth;
-      ctx.strokeStyle = style === "border" ? color : stroke;
+      ctx.strokeStyle = style === "border" ? color : borderOf(o.shape, stroke);
       ctx.lineWidth = bw;
       ctx.strokeRect(
         r.left + bw / 2,

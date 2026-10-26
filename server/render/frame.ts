@@ -73,7 +73,7 @@ export function drawTitle(
   ctx.fillStyle = THEME.textMuted;
   ctx.font = `${fontPx(options, 11)}px ${THEME.font}`;
   ctx.textAlign = "right";
-  const summary = info.filter(Boolean).join(" · ");
+  const summary = o.summary.visible ? info.filter(Boolean).join(" · ") : "";
   const summaryWidth = summary ? ctx.measureText(summary).width + 8 : 0;
 
   const text = titleText(options, title);
@@ -90,7 +90,7 @@ export function drawTitle(
     o.align === "center" ? plot.width - summaryWidth * 2 : plot.width;
   ctx.fillText(text, x, baseline, Math.max(10, maxWidth));
   if (o.subtitle.trim()) {
-    ctx.fillStyle = THEME.textSecondary;
+    ctx.fillStyle = o.subtitleColor;
     ctx.font = `${subtitleFont(options)}px ${THEME.font}`;
     ctx.fillText(
       o.subtitle,
@@ -99,7 +99,7 @@ export function drawTitle(
       Math.max(10, maxWidth),
     );
   }
-  ctx.fillStyle = THEME.textMuted;
+  ctx.fillStyle = o.summary.color;
   ctx.font = `${fontPx(options, 11)}px ${THEME.font}`;
   ctx.textAlign = "right";
   ctx.fillText(summary, right, baseline);

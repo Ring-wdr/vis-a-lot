@@ -49,7 +49,46 @@ export type LegendMeta = {
     visible: boolean;
   }[];
   hidden: number;
+  /** 그린 모양. 화면이 PNG legend 자리에 같은 legend를 DOM으로 다시 그린다. 그리지 않았으면 없다. */
+  layout?: LegendLayout;
 };
+
+/** legend를 그린 모양과 글자 자리. 좌표는 PNG(CSS 픽셀) 좌표이고 글자 자리는 왼쪽 가운데다. */
+export type LegendLayout = {
+  orientation: "horizontal" | "vertical";
+  fontSize: number;
+  /** 색 표시(●) 반지름 */
+  marker: number;
+  textColor: string;
+  titleColor: string;
+  mutedColor: string;
+  surface: string;
+  /** 테두리를 그리지 않으면 null */
+  borderColor: string | null;
+  title: { x: number; y: number; maxWidth: number };
+  /** 다 넣지 못한 항목 수("+N") 자리. 다 넣었으면 없다. */
+  more?: { x: number; y: number };
+};
+
+function layoutOf(
+  look: Look,
+  orientation: LegendLayout["orientation"],
+  title: LegendLayout["title"],
+  more: LegendLayout["more"],
+): LegendLayout {
+  return {
+    orientation,
+    fontSize: look.font,
+    marker: look.marker,
+    textColor: look.textColor,
+    titleColor: look.titleColor,
+    mutedColor: THEME.textMuted,
+    surface: look.surface,
+    borderColor: look.border ? look.borderColor : null,
+    title,
+    ...(more ? { more } : {}),
+  };
+}
 
 /** 가로 legend 상자가 차지하는 세로 공간 (상자 + 여백). 기본 글자 크기일 때의 값이다. */
 export const LEGEND_SPACE = 26;
@@ -62,6 +101,15 @@ const SIDE_MIN_WIDTH = 60;
 
 type Ctx = OffscreenCanvasRenderingContext2D;
 
+/** 캔버스의 CSS 픽셀 크기. 고해상도 PNG는 배율만큼 큰 캔버스에 scale을 걸어 그린다. */
+function canvasSize(ctx: Ctx) {
+  const scale = ctx.getTransform?.()?.a || 1;
+  return {
+    width: ctx.canvas.width / scale,
+    height: ctx.canvas.height / scale,
+  };
+}
+
 type Plot = { left: number; top: number; width: number; height: number };
 
 /** legend 하나를 그릴 때의 치수와 색. 기본 글자 11px이면 상자 20, 줄 18, 표시 반지름 5다. */
@@ -71,6 +119,7 @@ type Look = {
   row: number;
   marker: number;
   textColor: string;
+  titleColor: string;
   border: boolean;
   borderColor: string;
   surface: string;
@@ -90,6 +139,7 @@ function lookOf(legend: LegendInput, o: ChartOptions): Look {
     row: font + 7,
     marker: Math.max(3, Math.round(font * 0.45)),
     textColor: style.fontColor,
+    titleColor: style.titleColor,
     border: style.border,
     borderColor: style.borderColor,
     surface: surfaceOf(o),
@@ -221,7 +271,7 @@ export function drawLegendAround(
         legend,
         look,
         plot.left,
-        ctx.canvas.height - m.bottom - legendSpace(legend, o),
+        canvasSize(ctx).height - m.bottom - legendSpace(legend, o),
         plot.width,
       );
     case "left": {
@@ -239,7 +289,7 @@ export function drawLegendAround(
     }
     case "right": {
       const x = plot.left + plot.width + GAP;
-      const width = ctx.canvas.width - x - 4 - m.right;
+      const width = canvasSize(ctx).width - x - 4 - m.right;
       return drawVerticalLegend(
         ctx,
         legend,
@@ -331,7 +381,7 @@ function drawVerticalLegend(
 
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  ctx.fillStyle = THEME.textMuted;
+  ctx.fillStyle = look.titleColor;
   ctx.fillText(
     truncate(ctx, legend.title, textWidth),
     x + PAD,
@@ -360,9 +410,12 @@ function drawVerticalLegend(
       visible,
     });
   });
-  if (hidden) {
+  const more = hidden
+    ? { x: x + PAD, y: y + PAD + ROW * (shown + 1) + ROW / 2 }
+    : undefined;
+  if (more) {
     ctx.fillStyle = THEME.textMuted;
-    ctx.fillText(`+${hidden}`, x + PAD, y + PAD + ROW * (shown + 1) + ROW / 2);
+    ctx.fillText(`+${hidden}`, more.x, more.y);
   }
   ctx.restore();
   return {
@@ -372,6 +425,12 @@ function drawVerticalLegend(
     box,
     entries,
     hidden,
+    layout: layoutOf(
+      look,
+      "vertical",
+      { x: x + PAD, y: y + PAD + ROW / 2, maxWidth: textWidth },
+      more,
+    ),
   };
 }
 
@@ -424,7 +483,7 @@ function drawLegend(
   const midY = y + H / 2;
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  ctx.fillStyle = THEME.textMuted;
+  ctx.fillStyle = look.titleColor;
   ctx.fillText(titleText, x + PAD, midY);
   for (const entry of entries) {
     const cx = entry.marker.x;
@@ -444,5 +503,11 @@ function drawLegend(
     box,
     entries,
     hidden,
+    layout: layoutOf(
+      look,
+      "horizontal",
+      { x: x + PAD, y: midY, maxWidth: titleWidth },
+      hidden ? { x: cursor, y: midY } : undefined,
+    ),
   };
 }

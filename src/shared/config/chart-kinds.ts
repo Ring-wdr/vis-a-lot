@@ -6,7 +6,6 @@ import type {
   ChartSubType,
   ChartType,
   ColumnType,
-  LegendPosition,
 } from "@/shared/api/types";
 
 export type ChartFields = {
@@ -21,8 +20,6 @@ export type ChartFields = {
   agg: boolean;
   /** false면 legend 컬럼을 고르지 않는다. 차트가 정한 값(예: sankey 출발 노드)으로 legend를 그린다. */
   legend?: false;
-  /** 공통·개별 속성에 legend 위치가 없을 때의 위치. 없으면 위. 서버 표와 같아야 한다. */
-  legendPosition?: LegendPosition;
 };
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
@@ -69,7 +66,6 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
     y: ["numeric"],
     agg: true,
     legend: false,
-    legendPosition: "right",
   },
 };
 
@@ -156,13 +152,6 @@ export function isDistributionLine(spec: SubTypeSpec) {
 export function usesLegendColumn(spec: SubTypeSpec) {
   if (spec.chartType === "pie" && subTypeOf(spec) === "sunburst") return true;
   return CHART_FIELDS[spec.chartType].legend !== false;
-}
-
-/** 공통 속성에 legend 위치가 없을 때 그 차트가 legend를 놓는 위치 */
-export function defaultLegendPosition(
-  type: ChartType | undefined,
-): LegendPosition {
-  return (type && CHART_FIELDS[type].legendPosition) ?? "top";
 }
 
 /** 그릴 때 쓰는 legend 컬럼. legend 컬럼을 쓰지 않는 차트면 고른 값이 남아 있어도 null */

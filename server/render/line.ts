@@ -114,8 +114,6 @@ export type LineDrawInput = {
   /** 계열별 x 순 인덱스 (seriesOrder) */
   series: Int32Array[];
   colors: readonly string[];
-  /** 선택 영역 안(1)/밖(0). 있으면 밖을 흐리게, 안을 진하게 그린다. */
-  selected?: Uint8Array;
   plot: { left: number; width: number };
   compact?: boolean;
   /** 선 굵기 (size.lineWidth). 없으면 1.5, 섬네일 1 */
@@ -135,7 +133,7 @@ export type LineDrawInput = {
 
 /** 계열마다 선을 긋는다. 점이 적으면 작은 점도 함께 찍는다. */
 export function drawLines(ctx: Ctx, input: LineDrawInput) {
-  const { sx, sy, series, colors, selected, plot } = input;
+  const { sx, sy, series, colors, plot } = input;
   const range: [number, number] = [plot.left, plot.left + plot.width];
   const total = series.reduce((sum, s) => sum + s.length, 0);
   const dots = !input.compact && total <= 400;
@@ -149,58 +147,55 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
   const dotRadius = dot?.radius ?? 2.5;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
-  // 선택이 있으면 바깥(0)은 계열 전체를 흐리게 깔고, 그 위에 안쪽(1) 구간만 진하게 그린다.
-  const layers = selected ? [0, 1] : [1];
-  for (const layer of layers) {
-    ctx.globalAlpha = (layer === 0 ? 0.2 : 1) * alpha;
-    series.forEach((order, g) => {
-      if (order.length === 0) return;
-      ctx.strokeStyle = colors[g];
-      ctx.fillStyle = colors[g];
-      const runs = runsOf(order, layer === 0 ? undefined : selected);
-      ctx.beginPath();
-      for (const [from, to] of runs) {
-        const picks = m4(order, from, to, sx, sy, range);
-        picks.forEach((i, k) => {
-          if (k === 0) ctx.moveTo(sx[i], sy[i]);
-          else ctx.lineTo(sx[i], sy[i]);
-        });
-        // 점 하나뿐인 구간은 선이 안 보이므로 점으로 남긴다.
-        if (picks.length === 1) {
-          const i = picks[0];
-          ctx.fillRect(sx[i] - 1, sy[i] - 1, 2, 2);
-        }
+  // 선택 영역 밖은 다 그린 뒤 배경색으로 덮어 흐리게 한다 (region.dimOutside).
+  ctx.globalAlpha = alpha;
+  series.forEach((order, g) => {
+    if (order.length === 0) return;
+    ctx.strokeStyle = colors[g];
+    ctx.fillStyle = colors[g];
+    const runs = runsOf(order, undefined);
+    ctx.beginPath();
+    for (const [from, to] of runs) {
+      const picks = m4(order, from, to, sx, sy, range);
+      picks.forEach((i, k) => {
+        if (k === 0) ctx.moveTo(sx[i], sy[i]);
+        else ctx.lineTo(sx[i], sy[i]);
+      });
+      // 점 하나뿐인 구간은 선이 안 보이므로 점으로 남긴다.
+      if (picks.length === 1) {
+        const i = picks[0];
+        ctx.fillRect(sx[i] - 1, sy[i] - 1, 2, 2);
       }
-      ctx.stroke();
-      if (dots) {
-        for (const [from, to] of runs) {
-          for (let k = from; k < to; k++) {
-            const i = order[k];
-            if (plainDot || !dot) {
-              ctx.beginPath();
-              ctx.arc(sx[i], sy[i], dotRadius, 0, Math.PI * 2);
-              ctx.fill();
-            } else {
-              const lineWidth = ctx.lineWidth;
-              drawPoint(
-                ctx,
-                dot.shape,
-                sx[i],
-                sy[i],
-                dotRadius,
-                dot.style,
-                dot.borderWidth,
-                colors[g],
-                dot.stroke,
-              );
-              ctx.lineWidth = lineWidth;
-              ctx.strokeStyle = colors[g];
-              ctx.fillStyle = colors[g];
-            }
+    }
+    ctx.stroke();
+    if (dots) {
+      for (const [from, to] of runs) {
+        for (let k = from; k < to; k++) {
+          const i = order[k];
+          if (plainDot || !dot) {
+            ctx.beginPath();
+            ctx.arc(sx[i], sy[i], dotRadius, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            const lineWidth = ctx.lineWidth;
+            drawPoint(
+              ctx,
+              dot.shape,
+              sx[i],
+              sy[i],
+              dotRadius,
+              dot.style,
+              dot.borderWidth,
+              colors[g],
+              dot.stroke,
+            );
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = colors[g];
+            ctx.fillStyle = colors[g];
           }
         }
       }
-    });
-  }
+    }
+  });
   ctx.globalAlpha = 1;
 }

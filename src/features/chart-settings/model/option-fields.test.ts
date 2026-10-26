@@ -1,7 +1,7 @@
+import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { describe, expect, it } from "vitest";
 import {
   type ChartOptions,
-  DEFAULT_OPTIONS,
   mergeOptions,
   OPTION_SECTIONS,
 } from "@/entities/chart/model/chart-options";
@@ -16,6 +16,9 @@ import {
   SECTION_PARTS,
   setPath,
 } from "./option-fields";
+
+// 화면은 서버 기본값을 받아 쓰므로 테스트도 서버 값을 그대로 쓴다.
+const DEFAULT_OPTIONS: ChartOptions = CHART_DEFAULTS.options;
 
 describe("option fields", () => {
   it("모든 필드 경로가 ChartOptions에 있다", () => {
@@ -157,5 +160,28 @@ describe("option fields", () => {
         }),
       ).toEqual({ title: { fontSize: 30 } });
     });
+  });
+});
+
+describe("설정 창 필드", () => {
+  /** 기본값의 끝 칸 경로 ("title.summary.color" 등). 배열은 통째로 한 칸이다. */
+  function leafPaths(value: unknown, prefix = ""): string[] {
+    if (value && typeof value === "object" && !Array.isArray(value))
+      return Object.entries(value).flatMap(([key, v]) =>
+        leafPaths(v, prefix ? `${prefix}.${key}` : key),
+      );
+    return [prefix];
+  }
+
+  it("서버 기본값의 모든 칸을 설정 창에서 바꿀 수 있다", () => {
+    const paths = new Set<string>();
+    for (const section of OPTION_SECTIONS) {
+      const parts = SECTION_PARTS[section];
+      const fields = parts
+        ? parts.flatMap((p) => p.fields)
+        : SECTION_FIELDS[section];
+      for (const f of fields) if ("path" in f) paths.add(f.path);
+    }
+    expect(leafPaths(DEFAULT_OPTIONS).filter((p) => !paths.has(p))).toEqual([]);
   });
 });

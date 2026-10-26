@@ -8,6 +8,7 @@ import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
+import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
@@ -54,7 +55,7 @@ function gridClass({ rows, cols }: { rows: number; cols: number }) {
 }
 
 const pagerButton =
-  "h-6.5 w-7 cursor-pointer rounded-md border border-line bg-elevated disabled:cursor-not-allowed disabled:text-fg-muted disabled:opacity-40";
+  "h-6 w-6.5 cursor-pointer rounded-md border border-line bg-elevated disabled:cursor-not-allowed disabled:text-fg-muted disabled:opacity-40";
 
 function Pager({
   page,
@@ -67,7 +68,10 @@ function Pager({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className="ml-auto flex items-center gap-1.5" aria-label="페이지">
+    <nav
+      className="ml-auto flex h-full flex-none items-center gap-1.5 border-l border-line px-2"
+      aria-label="페이지"
+    >
       <button
         type="button"
         className={pagerButton}
@@ -124,7 +128,11 @@ export function ChartGrid() {
   const jobError = progress.data?.error;
   const gridArea = useWorkspace((s) => s.gridArea);
   // PNG를 띄울 크기. resize 중에는 이 크기로 기존 PNG를 늘리거나 줄여 보여준다.
-  const displaySize = gridArea ? itemSizeFor(gridArea, grid) : undefined;
+  // 화면 배율이 바뀌면(다른 모니터로 옮김) 그 배율로 다시 그린다.
+  const pixelRatio = usePixelRatio();
+  const displaySize = gridArea
+    ? itemSizeFor(gridArea, grid, pixelRatio)
+    : undefined;
   const detailOpen = focus !== null && totalItems !== null;
   // 크게 보는 동안에는 grid가 보이지 않으니 grid item을 새 크기로 다시 그리지 않는다. 돌아오면 맞춘다.
   useAutoResize(
@@ -272,14 +280,18 @@ export function ChartGrid() {
               />
             </div>
           )}
-          <div className="mt-3 flex h-8 items-center gap-3 text-xs text-fg-secondary">
-            {job.error ? (
-              <span role="alert" className="text-xs text-danger">
-                {job.error.message}
-              </span>
-            ) : (
-              progress.data && <JobStatusBar job={progress.data} />
-            )}
+          {/* 하단 바: 테두리 상자 하나에 job 상태 구획들과 페이지 이동을 나란히 둔다. */}
+          <div className="mt-3 flex h-8 items-center overflow-hidden rounded-md border border-line bg-elevated text-xs whitespace-nowrap text-fg-secondary tabular-nums shadow-sm">
+            {/* job 구획은 폭에 따라 덜 중요한 것부터 숨기고(JobStatusBar의 @container 변형), 페이지 이동은 늘 보인다. */}
+            <div className="@container flex h-full min-w-0 flex-1 items-center overflow-hidden">
+              {job.error ? (
+                <span role="alert" className="px-3 text-xs text-danger">
+                  {job.error.message}
+                </span>
+              ) : (
+                progress.data && <JobStatusBar job={progress.data} />
+              )}
+            </div>
             {!detailOpen && (
               <Pager
                 page={viewPage}

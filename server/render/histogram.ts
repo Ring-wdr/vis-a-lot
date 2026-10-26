@@ -229,7 +229,7 @@ export function renderHistogram(
   ctx.rect(plot.left, plot.top, plot.width, plot.height);
   ctx.clip();
   const zero = y(baseValue);
-  const fill = alphaOf(o.shape.transparency, 1);
+  const fill = alphaOf(o.shape.transparency);
   /** 점 글자 자리: [x, y, 개수]. clip을 푼 뒤 그린다. */
   const labels: [number, number, number][] = [];
   counts.forEach((row, i) => {
@@ -246,7 +246,7 @@ export function renderHistogram(
       const barWidth = Math.max(1, slot - (groupCount > 1 ? 1 : 0));
       const barLeft = left + gap / 2 + slot * g;
       ctx.globalAlpha =
-        (!inSelection || inSelection(...point) ? 1 : 0.2) * fill;
+        (!inSelection || inSelection(...point) ? 1 : o.shape.dimOpacity) * fill;
       ctx.beginPath();
       ctx.rect(barLeft, top, barWidth, Math.max(1, zero - top));
       paintMark(ctx, o.shape, colorOf(index));

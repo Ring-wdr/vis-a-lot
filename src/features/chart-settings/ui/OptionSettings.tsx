@@ -20,9 +20,10 @@ import {
 import type { ReactNode } from "react";
 import {
   type ChartOptionsPatch,
-  DEFAULT_OPTIONS,
   type OptionSection,
+  useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import { OptionSectionForm } from "./OptionSectionForm";
 
@@ -67,13 +68,15 @@ export function CommonOptionSettings({
   readOnly: boolean;
   children?: ReactNode;
 }) {
+  const chartType = useWorkspace((w) => w.draft.chartType);
+  const defaults = useDefaultOptions(chartType);
   return (
     <div className={s.popoverBody()}>
       <OptionSectionForm
         section={section}
         part={part}
         original={original}
-        base={DEFAULT_OPTIONS}
+        base={defaults}
         disabled={readOnly}
         resetLabel="기본값으로 되돌리기"
         showFields={supported}

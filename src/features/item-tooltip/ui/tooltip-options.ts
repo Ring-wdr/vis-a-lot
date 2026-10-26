@@ -4,7 +4,6 @@ import type { CSSProperties } from "react";
 import {
   type ChartOptions,
   type ChartOptionsPatch,
-  DEFAULT_OPTIONS,
   mergeOptions,
   supportsOption,
   type TooltipOptions,
@@ -16,6 +15,8 @@ import type { ChartType } from "@/shared/api/types";
  * 공통·개별 어디에도 정하지 않았으면 undefined: 지금 모양(테마 색, 다크 모드 포함)을 그대로 둔다.
  */
 export function resolveTooltipOptions(
+  /** 서버 기본값 (useDefaultOptions) */
+  defaults: ChartOptions,
   chartType: ChartType | undefined,
   common: ChartOptionsPatch | undefined,
   item: ChartOptionsPatch | undefined,
@@ -23,7 +24,7 @@ export function resolveTooltipOptions(
   if (!supportsOption(chartType, "tooltip")) return undefined;
   if (!common?.tooltip && !item?.tooltip) return undefined;
   return mergeOptions<ChartOptions>(
-    mergeOptions<ChartOptions>(DEFAULT_OPTIONS, common),
+    mergeOptions<ChartOptions>(defaults, common),
     item,
   ).tooltip;
 }

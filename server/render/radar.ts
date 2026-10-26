@@ -18,10 +18,10 @@ import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import {
   alphaOf,
+  borderOf,
   drawPanel,
   drawPoint,
   fontPx,
-  lineWidthOf,
   pointSizeOf,
   surfaceOf,
 } from "./style";
@@ -84,8 +84,6 @@ const START = -Math.PI / 2;
 const LABEL_GAP = 8;
 const LABEL_MAX_WIDTH = 72;
 const DOT_R = 3;
-const LINE_WIDTH = 2;
-const FILL_ALPHA = 0.12;
 /** 꼭짓점 테두리(배경색) 굵기 */
 const DOT_BORDER = 1.5;
 
@@ -238,13 +236,13 @@ export function renderRadar(
   if (enough) {
     // shape: brush는 다각형 채우기만, border는 선만, both는 둘 다. 투명도는 채우기 진하기다.
     const { shape } = o;
-    const fillAlpha = alphaOf(shape.transparency, FILL_ALPHA);
-    const lineWidth = lineWidthOf(o, LINE_WIDTH);
+    const fillAlpha = alphaOf(shape.transparency);
+    const lineWidth = o.size.lineWidth;
     const dot = pointSizeOf(o, DOT_R);
     const surface = surfaceOf(o);
     for (const [k, s] of series.entries()) {
       const any = !inSelection || inside[k].some(Boolean);
-      const alpha = any ? 1 : 0.2;
+      const alpha = any ? 1 : o.shape.dimOpacity;
       const shown = s.points.filter((p): p is [number, number] => p !== null);
       if (shown.length === 0) continue;
       ctx.beginPath();
@@ -268,7 +266,8 @@ export function renderRadar(
       if (!input.compact) {
         s.points.forEach((p, i) => {
           if (!p) return;
-          ctx.globalAlpha = !inSelection || inside[k][i] ? 1 : 0.2;
+          ctx.globalAlpha =
+            !inSelection || inside[k][i] ? 1 : o.shape.dimOpacity;
           // 꼭짓점: 모양·크기, 테두리는 배경색 (borderWidth를 정하면 그 굵기)
           drawPoint(
             ctx,
@@ -279,7 +278,7 @@ export function renderRadar(
             shape.style,
             shape.borderWidth || DOT_BORDER,
             s.color,
-            surface,
+            borderOf(shape, surface),
           );
         });
       }

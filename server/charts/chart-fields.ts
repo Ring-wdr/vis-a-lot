@@ -3,7 +3,6 @@
 
 import type { ChartSpec, ChartSubType, ChartType } from "../api/types";
 import type { LogicalType } from "../data/dataset-schema";
-import type { LegendPosition } from "../render/legend";
 
 export type ChartFields = {
   x: readonly LogicalType[];
@@ -17,8 +16,6 @@ export type ChartFields = {
   legend?: false;
   /** x와 y가 서로 다른 컬럼이어야 하는지 (예: sankey 출발 ≠ 도착) */
   distinctXY?: true;
-  /** 공통·개별 속성에 legend 위치가 없을 때의 위치. 없으면 위 (funnel은 단계 이름이 길어 오른쪽 세로 목록) */
-  legendPosition?: LegendPosition;
 };
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
@@ -60,7 +57,6 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
     y: ["numeric"],
     agg: true,
     legend: false,
-    legendPosition: "right",
   },
 };
 

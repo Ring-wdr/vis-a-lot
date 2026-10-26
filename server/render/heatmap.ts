@@ -445,7 +445,8 @@ export function renderHeatmap(
       const v = cells[i]?.[j];
       if (v === null || v === undefined) continue;
       ctx.fillStyle = fillOf(i, j, v);
-      ctx.globalAlpha = !inSelection || inSelection(i, j) ? 1 : 0.2;
+      ctx.globalAlpha =
+        !inSelection || inSelection(i, j) ? 1 : o.shape.dimOpacity;
       ctx.fillRect(left, y(j + 0.5), w, Math.max(1, bandY - gapY));
     }
     if (i % 50 === 0) progress("render", (i - iFrom) / (iTo - iFrom + 1));
