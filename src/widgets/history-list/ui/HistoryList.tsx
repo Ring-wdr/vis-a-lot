@@ -28,11 +28,12 @@ const historyList = "flex flex-col gap-1.5";
 const historyEntry =
   "flex w-full cursor-pointer gap-2.5 rounded-md border border-line bg-elevated p-1.5 text-left enabled:hover:border-accent aria-current:border-accent aria-current:bg-accent-soft";
 const historyThumb = "h-11 w-18 flex-none rounded-sm bg-panel object-cover";
-const historyText = "flex min-w-0 flex-col gap-0.5";
+// 오른쪽 위 지우기 버튼 자리만큼 글자를 비운다.
+const historyText = "flex min-w-0 flex-col gap-0.5 pr-4";
 const muted = "text-2xs text-fg-muted";
-// 썸네일 오른쪽 위에 겹치는 지우기 버튼. 커서를 올리거나 포커스가 들어오면 보이고, 커서 없는 기기에서는 늘 보인다.
+// 카드 오른쪽 위에 겹치는 지우기 버튼. 커서를 올리거나 포커스가 들어오면 보이고, 커서 없는 기기에서는 늘 보인다.
 const deleteButton =
-  "absolute top-0.5 left-16 grid size-4.5 cursor-pointer place-items-center rounded-full border border-line bg-elevated text-fg-secondary opacity-0 shadow-sm transition-opacity duration-120 group-hover/entry:opacity-100 focus-visible:opacity-100 hover:border-danger hover:text-danger disabled:cursor-default hover-none:opacity-100";
+  "absolute top-1 right-1 grid size-4.5 cursor-pointer place-items-center rounded-full border border-line bg-elevated text-fg-secondary opacity-0 shadow-sm transition-opacity duration-120 group-hover/entry:opacity-100 focus-visible:opacity-100 hover:border-danger hover:text-danger disabled:cursor-default hover-none:opacity-100";
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
   zoom: "확대",
@@ -240,7 +241,7 @@ export function HistoryList() {
                 <span className={muted}>{timeAgo(entry.updatedAt)}</span>
               </span>
             </button>
-            {/* 항목 버튼 안에 버튼을 둘 수 없어 형제로 두고 썸네일 오른쪽 위에 겹친다. */}
+            {/* 항목 버튼 안에 버튼을 둘 수 없어 형제로 두고 카드 오른쪽 위에 겹친다. */}
             <button
               type="button"
               className={deleteButton}
