@@ -93,7 +93,7 @@ NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm build
 
 ```
 app/                  Next.js 라우트만 둔다 (page, layout). 화면은 src/에서 불러온다
-src/                  FSD를 참고한 클라이언트 코드 (@/* = src/*)
+src/                  FSD 레이어로 나눈 클라이언트 코드 (@/* = src/*). 규칙은 docs/architecture.md, 검사는 scripts/check-fsd.mjs
   application/        provider, mock 서버 부팅, ssr: false 진입점 (FSD의 app 레이어)
   views/              화면 단위 조립 (FSD의 pages 레이어. Next의 app/pages와 이름이 겹치지 않게)
   widgets/            설정 패널, item grid, history 목록 같은 큰 블록
@@ -110,6 +110,7 @@ server/               브라우저 안의 "서버" (@server/*). 화면은 import
   history/            history 기록과 PGlite 저장소
   workers/            DB Worker, Render Worker
 scripts/gen-api.mts   OAS·타입 생성기
+scripts/check-fsd.mjs FSD 레이어 위치·import 방향 검사 (pnpm lint, pre-commit)
 public/openapi/       서비스별 OpenAPI 3.1 문서 (생성물)
 docs/                 기획서
 ```
