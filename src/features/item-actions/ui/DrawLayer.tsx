@@ -28,9 +28,11 @@ const drawLayer = tv({
   },
 });
 
-// 선택·삭제·확대 영역의 점선 사각형(또는 올가미)
+// 선택·삭제·확대 영역의 점선 사각형(또는 올가미). 선택 중인 영역은 반투명 바탕으로 칠해 고르는 곳을 보인다.
 const selectRegion =
-  "fill-accent/8 stroke-[1.5] stroke-accent [stroke-dasharray:4_3]";
+  "fill-accent/15 stroke-[1.5] stroke-accent [stroke-dasharray:4_3]";
+// 선택하는 동안 그림 영역에서 고르는 곳 밖을 밝게 덮는다(PNG는 테마와 상관없이 밝아 chart-paper). 다 그린 PNG의 선택 밖 모습(dimOutside)을 미리 보여준다.
+const selectOutside = "fill-chart-paper/70 stroke-none";
 const deleteRegion =
   "fill-danger/10 stroke-[1.5] stroke-danger [stroke-dasharray:4_3]";
 const zoomRect = "fill-accent/12 stroke-1 stroke-accent";
@@ -86,6 +88,18 @@ function isClick(points: Point[]) {
   );
 }
 
+/** 두 꼭짓점으로 정한 사각형의 SVG path */
+function rectPath(a: Point, b: Point) {
+  const x = Math.min(a.x, b.x);
+  const y = Math.min(a.y, b.y);
+  return `M${x} ${y}h${Math.abs(b.x - a.x)}v${Math.abs(b.y - a.y)}h${-Math.abs(b.x - a.x)}Z`;
+}
+
+/** 자유형 점들을 이어 닫은 SVG path */
+function polygonPath(points: readonly Point[]) {
+  return `M${points.map((p) => `${p.x} ${p.y}`).join("L")}Z`;
+}
+
 /**
  * 확대와 도형 그리기 레이어. 그리는 동안에는 화면에서 임시 미리보기만 보여주고,
  * 손을 떼면 데이터 좌표로 바꿔 서버에 보낸다. 서버가 PNG에 다시 그려 준다.
@@ -121,6 +135,20 @@ export function DrawLayer({
     meta.data
       ? Promise.resolve(meta.data)
       : client.fetchQuery(itemMetaQuery(image.url));
+
+  // 선택하는 동안 고르는 영역(PNG 좌표 path). 그림 영역에서 이 밖을 덮는다.
+  const selecting =
+    draft?.kind === "drag" && tool === "rectSelect"
+      ? rectPath(draft.from, draft.to)
+      : draft?.kind === "freehand" && tool === "lassoSelect"
+        ? polygonPath(draft.points)
+        : undefined;
+  const plot = meta.data?.plot ?? {
+    left: 0,
+    top: 0,
+    width: image.width,
+    height: image.height,
+  };
 
   const toPoint = (e: React.PointerEvent) => {
     const p = eventToPng(e, e.currentTarget, image);
@@ -264,6 +292,16 @@ export function DrawLayer({
         preserveAspectRatio="none"
         aria-hidden="true"
       >
+        {selecting && (
+          <path
+            className={selectOutside}
+            fillRule="evenodd"
+            d={`${rectPath(
+              { x: plot.left, y: plot.top },
+              { x: plot.left + plot.width, y: plot.top + plot.height },
+            )} ${selecting}`}
+          />
+        )}
         {draft?.kind === "drag" && tool === "line" && (
           <line
             className="fill-none"

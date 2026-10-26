@@ -59,6 +59,11 @@ export function regionTester(
 /** 영역 테두리를 PNG 좌표로 그린다. 스타일은 호출하는 쪽에서 정한다. */
 export function traceRegion(ctx: Ctx, region: Region, x: Project, y: Project) {
   ctx.beginPath();
+  addRegion(ctx, region, x, y);
+}
+
+/** 지금 path에 영역을 더한다 (beginPath는 부르는 쪽이). */
+function addRegion(ctx: Ctx, region: Region, x: Project, y: Project) {
   if (region.type === "rect") {
     const left = Math.min(x(region.x0), x(region.x1));
     const top = Math.min(y(region.y0), y(region.y1));
@@ -75,6 +80,31 @@ export function traceRegion(ctx: Ctx, region: Region, x: Project, y: Project) {
     else ctx.lineTo(x(px), y(py));
   });
   ctx.closePath();
+}
+
+/**
+ * 선택 영역 밖을 배경색으로 덮어 흐리게 한다. 점마다 투명도를 바꿔 두 번 훑는 대신 다 그린 뒤 한 번 칠한다.
+ * 그림 영역 사각형에 영역을 구멍으로 더해 even-odd로 칠하므로, 자유형 판정(ray casting)과 같은 안쪽이 남는다.
+ * strength는 덮는 진하기(0..1)다. 선택 밖 진하기가 d면 1 - d로 덮어 예전 모습과 비슷하게 한다.
+ */
+export function dimOutside(
+  ctx: Ctx,
+  region: Region,
+  x: Project,
+  y: Project,
+  plot: { left: number; top: number; width: number; height: number },
+  color: string,
+  strength: number,
+) {
+  if (strength <= 0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(plot.left, plot.top, plot.width, plot.height);
+  addRegion(ctx, region, x, y);
+  ctx.globalAlpha = Math.min(1, strength);
+  ctx.fillStyle = color;
+  ctx.fill("evenodd");
+  ctx.restore();
 }
 
 /** 선택 영역: 점선 테두리와 옅은 바탕 */

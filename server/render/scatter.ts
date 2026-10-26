@@ -32,7 +32,7 @@ import {
   DEFAULT_OPTIONS,
   optionsOf,
 } from "./options";
-import { drawSelection, type Region, regionTester } from "./region";
+import { dimOutside, drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
 import {
   alphaOf,
@@ -608,14 +608,11 @@ export function renderScatter(
   const sy = new Float32Array(n);
   const { selection } = input;
   const inSelection = selection && regionTester(selection);
-  const selected = selection ? new Uint8Array(n) : undefined;
+  // 선택 영역 안의 점 수 (제목 요약과 metadata). 흐리게 하는 건 다 그린 뒤 dimOutside가 한다.
   let selectedCount = 0;
   let focusedCount = 0;
   for (let i = 0; i < n; i++) {
-    if (inSelection && selected && inSelection(xs[i], ys[i])) {
-      selected[i] = 1;
-      selectedCount++;
-    }
+    if (inSelection?.(xs[i], ys[i])) selectedCount++;
     const cx = x(xs[i]);
     const cy = y(ys[i]);
     sx[i] = cx;
@@ -713,13 +710,11 @@ export function renderScatter(
         : input.legend
           ? input.legend.colors
           : [input.color],
-      selected,
       plot,
       compact: input.compact,
       // 섬네일은 정한 굵기의 2/3 (기본 1.5 → 1)
       lineWidth: input.compact ? (o.size.lineWidth * 2) / 3 : o.size.lineWidth,
       alpha: alphaOf(shape.transparency),
-      dim: shape.dimOpacity,
       dot: {
         shape: shape.type,
         radius: pointSizeOf(o, 2.5),
@@ -732,8 +727,6 @@ export function renderScatter(
     // legend 값마다 한 번씩 훑으며 그 색의 점만 그린다 (뒤 legend 값이 위에 온다).
     const { legend } = input;
     const passes = legend ? legend.colors : [input.color];
-    // 선택이 있으면 바깥 점(0)을 먼저 흐리게, 안쪽 점(1)을 그 위에 그린다.
-    const layers = selected ? [0, 1] : [1];
     const area = Math.max(1, plot.width * plot.height);
     // 실제로 그릴 점 수 (칸마다 상한까지). 겹침 정도를 이 수로 잰다.
     const drawable = Math.min(n, px.length * MAX_PER_CELL);
@@ -761,57 +754,53 @@ export function renderScatter(
     const drawn = new Uint8Array(plot.width * plot.height);
     // 그림 영역 밖이어도 점 반지름만큼은 영역 안으로 걸쳐 보인다.
     const reach = radius + borderWidth;
-    const steps = layers.length * passes.length;
-    layers.forEach((layer, l) => {
-      passes.forEach((passColor, g) => {
-        if (off[g]) return;
-        const color = single ? o.palette.othersColor : passColor;
-        ctx.globalAlpha = layer === 0 ? alpha * o.shape.dimOpacity : alpha;
+    // 선택 영역 밖은 다 그린 뒤 배경색으로 덮어 흐리게 한다 (dimOutside).
+    passes.forEach((passColor, g) => {
+      if (off[g]) return;
+      const color = single ? o.palette.othersColor : passColor;
+      ctx.globalAlpha = alpha;
+      if (plain) {
+        ctx.fillStyle = color;
+        ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.25));
+        ctx.lineWidth = borderWidth;
+      }
+      drawn.fill(0);
+      for (let i = 0; i < n; i++) {
+        if (groupIndex && groupIndex[i] !== g) continue;
+        const ix = Math.round(sx[i] - plot.left);
+        const iy = Math.round(sy[i] - plot.top);
+        if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
+          const idx = iy * plot.width + ix;
+          if (drawn[idx] === MAX_PER_CELL) continue;
+          drawn[idx]++;
+        } else if (
+          ix < -reach ||
+          iy < -reach ||
+          ix >= plot.width + reach ||
+          iy >= plot.height + reach
+        ) {
+          continue;
+        }
         if (plain) {
-          ctx.fillStyle = color;
-          ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.25));
-          ctx.lineWidth = borderWidth;
+          ctx.beginPath();
+          ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
+          ctx.fill();
+          if (borderWidth) ctx.stroke();
+        } else {
+          drawPoint(
+            ctx,
+            shape.type,
+            sx[i],
+            sy[i],
+            radius,
+            shape.style,
+            borderWidth,
+            color,
+            borderOf(shape, surface),
+          );
         }
-        drawn.fill(0);
-        for (let i = 0; i < n; i++) {
-          if (groupIndex && groupIndex[i] !== g) continue;
-          if (selected && selected[i] !== layer) continue;
-          const ix = Math.round(sx[i] - plot.left);
-          const iy = Math.round(sy[i] - plot.top);
-          if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
-            const idx = iy * plot.width + ix;
-            if (drawn[idx] === MAX_PER_CELL) continue;
-            drawn[idx]++;
-          } else if (
-            ix < -reach ||
-            iy < -reach ||
-            ix >= plot.width + reach ||
-            iy >= plot.height + reach
-          ) {
-            continue;
-          }
-          if (plain) {
-            ctx.beginPath();
-            ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
-            ctx.fill();
-            if (borderWidth) ctx.stroke();
-          } else {
-            drawPoint(
-              ctx,
-              shape.type,
-              sx[i],
-              sy[i],
-              radius,
-              shape.style,
-              borderWidth,
-              color,
-              borderOf(shape, surface),
-            );
-          }
-          if (i % CHUNK === 0)
-            progress("render", (l * passes.length + g + i / n) / steps);
-        }
-      });
+        if (i % CHUNK === 0) progress("render", (g + i / n) / passes.length);
+      }
     });
   }
   ctx.globalAlpha = 1;
@@ -827,7 +816,6 @@ export function renderScatter(
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
       if (!focused[i]) continue;
-      if (selected && !selected[i]) continue;
       pathPoint(ctx, f.shape, sx[i], sy[i], r);
       if (++batched === 10_000) {
         finishBatch(ctx, { ...shape, type: f.shape }, f.color, surface);
@@ -854,6 +842,16 @@ export function renderScatter(
   }
 
   if (selection) {
+    // 선택 영역 밖(점·선·점 글자·예측 선)을 배경색으로 한 번 덮어 흐리게 한다.
+    dimOutside(
+      ctx,
+      selection,
+      (v) => x(v),
+      (v) => y(v),
+      plot,
+      surface,
+      1 - o.shape.dimOpacity,
+    );
     drawSelection(
       ctx,
       selection,
