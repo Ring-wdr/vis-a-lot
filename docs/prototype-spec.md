@@ -225,7 +225,8 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - 어떤 컬럼이든 고유값을 그대로 category로 쓴다.
 - item 수는 고른 컬럼 고유값의 조합 수이고, 최대 30,000개다. 넘으면 draw 전에 경고하고 그리지 않는다 (`split-count` API로 미리 확인, 필터 적용).
 - grid는 1×1부터 10×10까지 행·열을 따로 고를 수 있고, pagination으로 보여준다. 예: 3×3 grid에 item이 20개면 3페이지가 된다. 오른쪽 페이지 스크롤바로 넘긴다.
-- 고해상도(레티나) 화면 대응은 하지 않는다.
+- 고해상도(레티나) 화면: 화면이 PNG 크기와 함께 `devicePixelRatio`(`ItemSize.pixelRatio`, 1~3, 0.25 단위)를 보내고, Render Worker는 그 배율만큼 큰 캔버스에 `scale`을 걸어 그린다. PNG 크기·metadata 좌표는 CSS 픽셀 그대로라 `<img width height>`와 오버레이 계산은 바뀌지 않는다. 한 변은 기기 픽셀 4096까지(넘으면 배율을 낮춤). 배율이 바뀌면(다른 모니터, 브라우저 확대) resize와 같은 규칙으로 다시 그린다. 크게 보기 캐시 키는 `WxH@배율`.
+- legend DOM: 누른 item(selected)에서는 PNG legend 자리에 metadata(`LegendMeta.layout`: 방향·글자 크기·색·글자 자리)대로 같은 legend를 DOM으로 겹쳐 그린다. 선택하지 않은 item은 PNG legend만 보인다.
 
 ### 4.3.1 크게 보기
 - item을 더블 클릭하거나 item toolbar의 크게 보기 버튼을 누르면 grid 자리에 그 item 하나를 크게 보여준다. 다시 더블 클릭하거나 Esc, 버튼으로 grid로 돌아가면 그 item이 있는 페이지가 보인다.
@@ -485,7 +486,6 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - 도형 수정, redo
 - 실패한 item 다시 시도
 - 기기 간 history 동기화, 팀 공유
-- 고해상도(레티나) 대응
 - 업로드 데이터의 기기 간 공유, xlsx 등 CSV 외 형식
 
 ---
