@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Filter, Plus, X } from "lucide-react";
+import type { MouseEvent, PointerEvent } from "react";
 import { useStore } from "zustand";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
@@ -12,8 +13,9 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns, useDatasetNames } from "@/shared/api/queries";
 import { tv } from "@/shared/lib/tw";
+import { usePressRepeat } from "@/shared/lib/use-press-repeat";
 import { LoadingText } from "@/shared/ui/Loading";
-import { useTabScroll } from "../model/use-tab-scroll";
+import { NUDGE_INTERVAL_MS, useTabScroll } from "../model/use-tab-scroll";
 
 // 탭 닫기·새 탭
 const iconButton = tv({
@@ -51,6 +53,22 @@ export function TabBar({ view }: { view: View }) {
   const lockedHint = locked ? TABS_LOCKED_HINT : undefined;
   const scroll = useTabScroll(mine.length, active);
   const overflowing = scroll.canLeft || scroll.canRight;
+  // ‹ ›: 한 번 누르면 탭 몇 개씩, 누르고 있으면 끝까지 흐르듯 넘긴다.
+  const press = usePressRepeat({ interval: NUDGE_INTERVAL_MS });
+  const arrowHandlers = (dir: -1 | 1) => ({
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) =>
+      press.hold(
+        e,
+        () => scroll.page(dir),
+        () => scroll.nudge(dir),
+      ),
+    onPointerUp: press.stop,
+    onPointerCancel: press.stop,
+    // 키보드(Enter·Space)로 누르면 한 번만 넘긴다. 포인터 클릭은 pointerdown에서 이미 넘겼다.
+    onClick: (e: MouseEvent<HTMLButtonElement>) => {
+      if (e.detail === 0) scroll.page(dir);
+    },
+  });
 
   return (
     <div className="col-span-full flex min-w-0 items-end gap-1 border-b border-line bg-panel px-3">
@@ -61,7 +79,7 @@ export function TabBar({ view }: { view: View }) {
           aria-label="앞 탭 보기"
           title="앞 탭 보기"
           disabled={!scroll.canLeft}
-          onClick={() => scroll.scrollBy(-1)}
+          {...arrowHandlers(-1)}
         >
           <ChevronLeft size={14} aria-hidden="true" />
         </button>
@@ -121,7 +139,7 @@ export function TabBar({ view }: { view: View }) {
           aria-label="뒤 탭 보기"
           title="뒤 탭 보기"
           disabled={!scroll.canRight}
-          onClick={() => scroll.scrollBy(1)}
+          {...arrowHandlers(1)}
         >
           <ChevronRight size={14} aria-hidden="true" />
         </button>
