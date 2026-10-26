@@ -706,6 +706,23 @@ export const LegendMetaSchema = z
       }),
     ),
     hidden: z.number(),
+    /** 그린 모양과 글자 자리 (왼쪽 가운데). 화면이 같은 legend를 DOM으로 겹쳐 그린다. 그리지 않았으면 없다. */
+    layout: z
+      .object({
+        orientation: z.enum(["horizontal", "vertical"]),
+        fontSize: z.number(),
+        /** 색 표시(●) 반지름 */
+        marker: z.number(),
+        textColor: z.string(),
+        mutedColor: z.string(),
+        surface: z.string(),
+        /** 테두리를 그리지 않으면 null */
+        borderColor: z.string().nullable(),
+        title: z.object({ x: z.number(), y: z.number(), maxWidth: z.number() }),
+        /** 다 넣지 못한 항목 수("+N") 자리 */
+        more: z.object({ x: z.number(), y: z.number() }).optional(),
+      })
+      .optional(),
   })
   .openapi("LegendMeta");
 

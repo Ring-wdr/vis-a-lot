@@ -3227,6 +3227,25 @@ export type components = {
         visible: boolean;
       }[];
       hidden: number;
+      layout?: {
+        /** @enum {string} */
+        orientation: "horizontal" | "vertical";
+        fontSize: number;
+        marker: number;
+        textColor: string;
+        mutedColor: string;
+        surface: string;
+        borderColor: string | null;
+        title: {
+          x: number;
+          y: number;
+          maxWidth: number;
+        };
+        more?: {
+          x: number;
+          y: number;
+        };
+      };
     };
     CategoryMeta: {
       /** @enum {string} */

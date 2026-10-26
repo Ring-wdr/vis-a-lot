@@ -2101,6 +2101,70 @@
           },
           "hidden": {
             "type": "number"
+          },
+          "layout": {
+            "type": "object",
+            "properties": {
+              "orientation": {
+                "type": "string",
+                "enum": ["horizontal", "vertical"]
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "marker": {
+                "type": "number"
+              },
+              "textColor": {
+                "type": "string"
+              },
+              "mutedColor": {
+                "type": "string"
+              },
+              "surface": {
+                "type": "string"
+              },
+              "borderColor": {
+                "type": ["string", "null"]
+              },
+              "title": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "maxWidth": {
+                    "type": "number"
+                  }
+                },
+                "required": ["x", "y", "maxWidth"]
+              },
+              "more": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": ["x", "y"]
+              }
+            },
+            "required": [
+              "orientation",
+              "fontSize",
+              "marker",
+              "textColor",
+              "mutedColor",
+              "surface",
+              "borderColor",
+              "title"
+            ]
           }
         },
         "required": ["title", "values", "colors", "box", "entries", "hidden"]

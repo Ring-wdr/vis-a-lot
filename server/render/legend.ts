@@ -49,7 +49,44 @@ export type LegendMeta = {
     visible: boolean;
   }[];
   hidden: number;
+  /** 그린 모양. 화면이 PNG legend 자리에 같은 legend를 DOM으로 다시 그린다. 그리지 않았으면 없다. */
+  layout?: LegendLayout;
 };
+
+/** legend를 그린 모양과 글자 자리. 좌표는 PNG(CSS 픽셀) 좌표이고 글자 자리는 왼쪽 가운데다. */
+export type LegendLayout = {
+  orientation: "horizontal" | "vertical";
+  fontSize: number;
+  /** 색 표시(●) 반지름 */
+  marker: number;
+  textColor: string;
+  mutedColor: string;
+  surface: string;
+  /** 테두리를 그리지 않으면 null */
+  borderColor: string | null;
+  title: { x: number; y: number; maxWidth: number };
+  /** 다 넣지 못한 항목 수("+N") 자리. 다 넣었으면 없다. */
+  more?: { x: number; y: number };
+};
+
+function layoutOf(
+  look: Look,
+  orientation: LegendLayout["orientation"],
+  title: LegendLayout["title"],
+  more: LegendLayout["more"],
+): LegendLayout {
+  return {
+    orientation,
+    fontSize: look.font,
+    marker: look.marker,
+    textColor: look.textColor,
+    mutedColor: THEME.textMuted,
+    surface: look.surface,
+    borderColor: look.border ? look.borderColor : null,
+    title,
+    ...(more ? { more } : {}),
+  };
+}
 
 /** 가로 legend 상자가 차지하는 세로 공간 (상자 + 여백). 기본 글자 크기일 때의 값이다. */
 export const LEGEND_SPACE = 26;
@@ -369,9 +406,12 @@ function drawVerticalLegend(
       visible,
     });
   });
-  if (hidden) {
+  const more = hidden
+    ? { x: x + PAD, y: y + PAD + ROW * (shown + 1) + ROW / 2 }
+    : undefined;
+  if (more) {
     ctx.fillStyle = THEME.textMuted;
-    ctx.fillText(`+${hidden}`, x + PAD, y + PAD + ROW * (shown + 1) + ROW / 2);
+    ctx.fillText(`+${hidden}`, more.x, more.y);
   }
   ctx.restore();
   return {
@@ -381,6 +421,12 @@ function drawVerticalLegend(
     box,
     entries,
     hidden,
+    layout: layoutOf(
+      look,
+      "vertical",
+      { x: x + PAD, y: y + PAD + ROW / 2, maxWidth: textWidth },
+      more,
+    ),
   };
 }
 
@@ -453,5 +499,11 @@ function drawLegend(
     box,
     entries,
     hidden,
+    layout: layoutOf(
+      look,
+      "horizontal",
+      { x: x + PAD, y: midY, maxWidth: titleWidth },
+      hidden ? { x: cursor, y: midY } : undefined,
+    ),
   };
 }

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
+import { ChartLegend } from "@/entities/chart/ui/ChartLegend";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useItemAction,
@@ -15,7 +16,7 @@ import { ItemToolbar } from "@/features/item-actions/ui/ItemToolbar";
 import { LegendCheckboxes } from "@/features/item-actions/ui/LegendCheckboxes";
 import { PaintToolbar } from "@/features/item-actions/ui/PaintToolbar";
 import { ItemTooltip } from "@/features/item-tooltip/ui/ItemTooltip";
-import { useJobItem } from "@/shared/api/queries";
+import { useItemMeta, useJobItem } from "@/shared/api/queries";
 import {
   type ChartImage,
   type ColumnName,
@@ -83,6 +84,25 @@ function Pending({
       />
     </div>
   );
+}
+
+/**
+ * 누른 item(selected)에서만 PNG legend 자리에 같은 legend를 DOM으로 겹쳐 그린다.
+ * 위치·모양은 서버 metadata에서 읽고, 받기 전이나 legend가 없으면 PNG legend만 보인다.
+ */
+function SelectedLegend({
+  image,
+  display,
+  selected,
+}: {
+  image: ChartImage;
+  display: { width: number; height: number };
+  selected: boolean;
+}) {
+  const meta = useItemMeta(image.url, selected);
+  const legend = meta.data?.legend;
+  if (!selected || !legend) return null;
+  return <ChartLegend legend={legend} image={image} display={display} />;
 }
 
 /** 더블 클릭으로 크게 보기를 열고 닫는다. 버튼·입력·그리기 레이어 위에서는 그쪽 조작을 따른다. */
@@ -204,14 +224,18 @@ function DrawnItem({
     setItemJob,
   ]);
 
-  const checkboxes = (
-    <LegendCheckboxes
-      image={image}
-      display={displaySize}
-      alt={item.label}
-      disabled={readOnly || busy}
-      onAction={action.mutate}
-    />
+  // PNG 위에 겹치는 층: DOM legend 위에 legend 체크박스를 둔다.
+  const overlay = (
+    <>
+      <SelectedLegend image={image} display={displaySize} selected={selected} />
+      <LegendCheckboxes
+        image={image}
+        display={displaySize}
+        alt={item.label}
+        disabled={readOnly || busy}
+        onAction={action.mutate}
+      />
+    </>
   );
 
   return (
@@ -239,7 +263,7 @@ function DrawnItem({
             columns={tooltipColumns}
             itemOptions={item.options as ChartOptionsPatch | undefined}
             display={displaySize}
-            overlay={checkboxes}
+            overlay={overlay}
             onLegendColor={
               readOnly
                 ? undefined
@@ -254,7 +278,7 @@ function DrawnItem({
             display={displaySize}
             alt={item.label}
             hasSelection={item.selectedCount !== undefined}
-            overlay={checkboxes}
+            overlay={overlay}
             onAction={action.mutate}
           />
         )}
