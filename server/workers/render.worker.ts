@@ -17,15 +17,29 @@ const workerName = (globalThis as unknown as WorkerScope).name;
 
 const noop = () => {};
 
-/** 캔버스에 그리고 PNG로 바꾼다. 그리는 함수가 돌려준 metadata를 함께 넘긴다. */
+/** PNG 한 변의 상한 (기기 픽셀). 크고 촘촘한 화면이면 배율을 낮춰 이 안에 맞춘다. */
+const MAX_CANVAS_SIDE = 4096;
+
+/**
+ * 캔버스에 그리고 PNG로 바꾼다. 그리는 함수가 돌려준 metadata를 함께 넘긴다.
+ * pixelRatio배 캔버스에 같은 배율을 걸어 두므로 렌더러와 metadata는 CSS 픽셀 좌표 그대로다.
+ */
 async function drawPng<M>(
-  size: { width: number; height: number },
+  size: { width: number; height: number; pixelRatio?: number },
   draw: (ctx: OffscreenCanvasRenderingContext2D) => M,
   onEncode: () => void = noop,
 ) {
-  const canvas = new OffscreenCanvas(size.width, size.height);
+  const ratio = Math.min(
+    size.pixelRatio ?? 1,
+    MAX_CANVAS_SIDE / Math.max(size.width, size.height),
+  );
+  const canvas = new OffscreenCanvas(
+    Math.round(size.width * ratio),
+    Math.round(size.height * ratio),
+  );
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("2d context unavailable");
+  ctx.scale(ratio, ratio);
   const meta = draw(ctx);
   onEncode();
   const png = await (
@@ -40,7 +54,10 @@ type Size = { width: number; height: number };
  * 렌더러 하나로 PNG와 (요청하면) 같은 입력의 섬네일을 그린다. 아래 차트별 메서드와 같은 순서를 묶어 둔 것이다.
  * 진행률은 렌더러 단계(aggregate → render) 다음에 encode를 알린다.
  */
-async function renderPair<I extends Size & { compact?: boolean }, M>(
+async function renderPair<
+  I extends Size & { compact?: boolean; pixelRatio?: number },
+  M,
+>(
   render: (
     ctx: OffscreenCanvasRenderingContext2D,
     input: I,

@@ -1,8 +1,14 @@
-// 차트 속성(옵션)의 화면 쪽 사본. 화면은 @server를 import하지 않으므로 server/render/options.ts(모양·기본값)와
+// 차트 속성(옵션)의 화면 쪽 모양. 화면은 @server를 import하지 않으므로 server/render/options.ts(모양)와
 // server/charts/chart-options.ts(차트 종류별로 쓸 수 있는 구역)를 그대로 옮겨 둔다. 둘 중 하나를 고치면 여기도 고친다
-// (chart-options.test.ts가 서버 값과 같은지 확인한다).
+// (chart-options.test.ts가 서버 값과 같은지 확인한다). 기본값은 사본을 두지 않고 서버에서 받는다(useDefaultOptions).
 
-import type { ChartType } from "@/shared/api/types";
+import { useMemo } from "react";
+import { useChartDefaults } from "@/shared/api/queries";
+import type {
+  ChartDefaults,
+  ChartType,
+  LegendPosition,
+} from "@/shared/api/types";
 
 export const OPTION_SECTIONS = [
   "title",
@@ -34,11 +40,20 @@ export type TitleOptions = {
   bold: boolean;
   color: string;
   align: TextAlign;
+  subtitleColor: string;
+  /** 오른쪽 요약(점 수·범주 수 등) */
+  summary: { visible: boolean; color: string };
 };
 
 export type AxisOptions = {
   visible: boolean;
-  title: { visible: boolean /** 비우면 컬럼 라벨 */; text: string };
+  title: {
+    visible: boolean;
+    /** 비우면 컬럼 라벨 */
+    text: string;
+    /** 비우면 눈금 글자 색 */
+    color: string;
+  };
   /** 값 축 범위. null이면 자동 */
   min: number | null;
   max: number | null;
@@ -68,6 +83,7 @@ export type LegendStyle = {
   reverse: boolean;
   fontSize: number;
   fontColor: string;
+  titleColor: string;
 };
 
 export type PanelOptions = {
@@ -90,6 +106,8 @@ export type PaletteOptions = {
   /** 단계 수. 0이면 legend 값 수 */
   steps: number;
   reverse: boolean;
+  /** 팔레트에 들지 못한 나머지('기타' 조각)와 강조 시 나머지 색 */
+  othersColor: string;
 };
 
 export const POINT_SHAPES = [
@@ -105,10 +123,18 @@ export type ShapeOptions = {
   type: PointShape;
   /** both: 채우기 + 테두리, border: 테두리만, brush: 채우기만 */
   style: "both" | "border" | "brush";
-  /** 0(불투명)..1(투명). 0이 아니면 차트의 자동 투명도 대신 쓴다. */
+  /** 0(불투명)..1(투명). 기본 0이라 모든 차트가 불투명하게 그린다. */
   transparency: number;
   /** 도형(막대·조각·점) 테두리 굵기 */
   borderWidth: number;
+  /** 도형 테두리 색. 비우면 자동(도형 색을 진하게, 굵기를 정했으면 배경색) */
+  borderColor: string;
+  /** 선택 영역 밖 도형의 진하기 (0..1) */
+  dimOpacity: number;
+  /** 막대 끝 모서리 둥글기(px) */
+  cornerRadius: number;
+  /** boxplot 중앙값 선 색 */
+  medianColor: string;
 };
 
 export type SizeOptions = {
@@ -255,138 +281,47 @@ type DeepPartial<T> = T extends readonly unknown[]
 /** 공통·개별 속성에 저장하는 부분 값. 적지 않은 필드는 아래 단계 값을 따른다. */
 export type ChartOptionsPatch = DeepPartial<ChartOptions>;
 
-const axis = (): AxisOptions => ({
-  visible: true,
-  title: { visible: false, text: "" },
-  min: null,
-  max: null,
-  log: false,
-  line: { visible: true, width: 1, color: "#c9c8c2" },
-  grid: { visible: true, width: 1, color: "#e7e6e2" },
-  tick: { visible: true, count: 5, length: 0, color: "#c9c8c2" },
-  label: { visible: true, angle: 0, fontSize: 11, color: "#52514e" },
-  decimals: null,
-  dateFormat: "",
-});
+/**
+ * 차트 종류 하나에 쓰는 기본값: 전체 값 위에 charts[type]을 덮는다. 서버 defaultsFor와 같은 규칙이다.
+ * 종류를 모르면 전체 값이다.
+ */
+export function chartTypeDefaults(
+  defaults: ChartDefaults,
+  type: ChartType | undefined,
+): { legendPosition: LegendPosition; options: ChartOptions } {
+  const own = type ? defaults.charts[type] : undefined;
+  return {
+    legendPosition: own?.legendPosition ?? defaults.legendPosition,
+    // 응답 스키마는 저장용 부분 값 모양이지만, 전체 options는 모든 필드가 채워져 있다.
+    options: mergeOptions<ChartOptions>(
+      defaults.options as ChartOptions,
+      own?.options as ChartOptionsPatch | undefined,
+    ),
+  };
+}
 
-/** 지금까지 그리던 모습과 같은 기본값. 옵션을 하나도 정하지 않으면 PNG가 바뀌지 않아야 한다. */
-export const DEFAULT_OPTIONS: ChartOptions = {
-  title: {
-    visible: true,
-    text: "",
-    subtitle: "",
-    fontSize: 12,
-    bold: true,
-    color: "#0b0b0b",
-    align: "left",
-  },
-  // 지금까지 x축은 세로 그리드 없이 아래 축 선만, y축은 가로 그리드만 그렸다.
-  axes: {
-    x: { ...axis(), grid: { ...axis().grid, visible: false } },
-    y: { ...axis(), line: { ...axis().line, visible: false } },
-  },
-  legend: {
-    visible: true,
-    border: true,
-    borderColor: "#e7e6e2",
-    reverse: false,
-    fontSize: 11,
-    fontColor: "#52514e",
-  },
-  panel: {
-    backColor: "#fcfcfb",
-    gradient: false,
-    border: false,
-    borderColor: "#c9c8c2",
-    margin: { top: 0, right: 0, bottom: 0, left: 0 },
-  },
-  palette: {
-    gradient: false,
-    start: "#cfe3fa",
-    middle: "",
-    end: "#0d3d78",
-    steps: 0,
-    reverse: false,
-  },
-  shape: { type: "circle", style: "both", transparency: 0, borderWidth: 0 },
-  size: {
-    pointAuto: true,
-    pointFixed: 4,
-    pointMin: 1,
-    pointMax: 12,
-    fontAuto: true,
-    fontMin: 9,
-    fontMax: 16,
-    lineWidth: 1.5,
-  },
-  pointLabel: {
-    visible: false,
-    position: "top",
-    angle: 0,
-    fontSize: 10,
-    color: "#52514e",
-    prefix: "",
-    suffix: "",
-    decimals: null,
-    box: { visible: false, background: "#ffffff", border: "#c9c8c2" },
-  },
-  score: {
-    visible: false,
-    kinds: ["rscore"],
-    ucl: null,
-    lcl: null,
-    fontSize: 11,
-    fontColor: "#0b0b0b",
-    backColor: "#ffffff",
-    borderColor: "#c9c8c2",
-    borderWidth: 1,
-  },
-  prediction: {
-    enabled: false,
-    method: "sma",
-    period: 10,
-    showInterval: false,
-    description: true,
-    window: 5,
-    alpha: null,
-    beta: null,
-    gamma: null,
-    seasonLength: 12,
-    trend: "additive",
-    seasonal: "additive",
-    damped: false,
-  },
-  value: {
-    nullNumeric: null,
-    outlier: false,
-    outlierMethod: "iqr",
-    outlierK: 1.5,
-  },
-  focus: {
-    enabled: false,
-    target: "y",
-    operator: ">",
-    value: 0,
-    color: "#e34948",
-    shape: "circle",
-    size: 6,
-    legendSingleColor: false,
-  },
-  tooltip: {
-    title: "",
-    fontSize: 12,
-    fontColor: "#0b0b0b",
-    background: "#ffffff",
-    transparency: 0,
-    round: true,
-    border: true,
-    borderColor: "#c9c8c2",
-    prefix: "",
-    suffix: "",
-    decimals: null,
-  },
-  expression: { x: "", y: "" },
-};
+/**
+ * 서버가 정한 그 차트 종류의 기본값(GET /defaults의 options 위에 charts[type].options). 서버 draw도
+ * 같은 값 위에 공통·개별 속성을 덮어쓰므로 전체 설정·item 속성 팝업의 '기본값'과 그려지는 모습이 늘 같다.
+ * SessionScope가 받아 둔 뒤에 쓴다.
+ */
+export function useDefaultOptions(type: ChartType | undefined): ChartOptions {
+  const defaults = useChartDefaults();
+  return useMemo(
+    () => chartTypeDefaults(defaults, type).options,
+    [defaults, type],
+  );
+}
+
+/**
+ * 공통 속성에 legend 위치가 없을 때 그 차트가 legend를 놓는 위치. 서버 기본값(GET /defaults)의
+ * 전체 위치 위에 차트 종류별 위치를 덮은 값이고, 서버 draw도 같은 값을 쓴다.
+ */
+export function useDefaultLegendPosition(
+  type: ChartType | undefined,
+): LegendPosition {
+  return chartTypeDefaults(useChartDefaults(), type).legendPosition;
+}
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);

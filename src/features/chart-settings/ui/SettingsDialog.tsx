@@ -6,11 +6,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import {
   type ChartOptions,
   type ChartOptionsPatch,
-  DEFAULT_OPTIONS,
   mergeOptions,
   OPTION_SECTIONS,
   type OptionSection,
   supportsOption,
+  useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
 import {
   useWorkspace,
@@ -62,11 +62,13 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const setShowNearest = useWorkspace((s) => s.setShowNearest);
+  // 서버 draw와 같은 기본값. 폼의 '기본값'과 되돌리기 기준이 된다.
+  const defaults = useDefaultOptions(chartType);
   // 열 때의 값. 폼은 이 값에서 시작하고, 확인을 누르면 바뀐 것만 draft로 옮긴다.
   const [opened] = useState(() => {
     const { draft, showNearest } = store.getState();
     const options = mergeOptions<ChartOptions>(
-      DEFAULT_OPTIONS,
+      defaults,
       draft.common.options as ChartOptionsPatch | undefined,
     );
     return {
@@ -90,7 +92,7 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
       common: commonFromForm(values, {
         opened: opened.options,
         original: opened.common,
-        base: DEFAULT_OPTIONS,
+        base: defaults,
       }),
       ...(dirtyFields.splitSeparator && {
         splitSeparator: values.splitSeparator,

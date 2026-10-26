@@ -1,13 +1,10 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
+import { useDefaultLegendPosition } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
-import {
-  defaultLegendPosition,
-  drawsLegend,
-  legendColumnOf,
-} from "@/shared/config/chart-kinds";
+import { drawsLegend, legendColumnOf } from "@/shared/config/chart-kinds";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import type { CommonSettingsForm } from "../model/common-settings-form";
@@ -24,6 +21,7 @@ export function LegendSettings({ readOnly }: { readOnly: boolean }) {
   const { control, setValue } = useFormContext<CommonSettingsForm>();
   const legendPosition = useWatch({ control, name: "legendPosition" });
   const legend = legendColumnOf(draft);
+  const fallback = useDefaultLegendPosition(draft.chartType);
 
   return (
     <div className={s.section()}>
@@ -32,7 +30,7 @@ export function LegendSettings({ readOnly }: { readOnly: boolean }) {
         {legend !== null && ` · ${columns.label(legend)}`}
       </h4>
       <LegendPositionPicker
-        value={legendPosition ?? defaultLegendPosition(draft.chartType)}
+        value={legendPosition ?? fallback}
         disabled={readOnly}
         onSelect={(next) =>
           setValue("legendPosition", next, { shouldDirty: true })

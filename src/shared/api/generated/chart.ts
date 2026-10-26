@@ -1159,6 +1159,154 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/defaults": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 차트 기본값 (전체 설정·draw가 함께 쓰는 속성 기본값) */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 기본값 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ChartDefaults"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/history/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 설정과 item별 상태 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description history 한 건 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["HistoryDetail"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 history */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    /** history 한 건 지우기. 그 건에 기록 중인 차트는 더 기록하지 않는다 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 history */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/shares/{shareId}": {
     parameters: {
       query?: never;
@@ -1390,71 +1538,6 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  "/history/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** 설정과 item별 상태 */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description history 한 건 */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["HistoryDetail"];
-          };
-        };
-        /** @description 토큰 없음, 만료, 위조 */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description scope 부족 */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-        /** @description 모르는 history */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            "application/json": components["schemas"]["ApiError"];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/history": {
     parameters: {
       query?: never;
@@ -1608,7 +1691,7 @@ export type paths = {
     get: {
       parameters: {
         query?: {
-          /** @description 크게 보기 PNG의 크기 (WxH) */
+          /** @description 크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율) */
           size?: string;
         };
         header?: never;
@@ -2688,6 +2771,11 @@ export type components = {
         color?: components["schemas"]["HexColor"];
         /** @enum {string} */
         align?: "left" | "center" | "right";
+        subtitleColor?: components["schemas"]["HexColor"];
+        summary?: {
+          visible?: boolean;
+          color?: components["schemas"]["HexColor"];
+        };
       };
       axes?: {
         x?: components["schemas"]["AxisOptions"];
@@ -2700,6 +2788,7 @@ export type components = {
         reverse?: boolean;
         fontSize?: number;
         fontColor?: components["schemas"]["HexColor"];
+        titleColor?: components["schemas"]["HexColor"];
       };
       panel?: {
         backColor?: components["schemas"]["HexColor"];
@@ -2720,6 +2809,7 @@ export type components = {
         end?: components["schemas"]["HexColor"];
         steps?: number;
         reverse?: boolean;
+        othersColor?: components["schemas"]["HexColor"];
       };
       shape?: {
         type?: components["schemas"]["PointShape"];
@@ -2727,6 +2817,10 @@ export type components = {
         style?: "both" | "border" | "brush";
         transparency?: number;
         borderWidth?: number;
+        borderColor?: components["schemas"]["HexColor"] | "";
+        dimOpacity?: number;
+        cornerRadius?: number;
+        medianColor?: components["schemas"]["HexColor"];
       };
       size?: {
         pointAuto?: boolean;
@@ -2825,6 +2919,7 @@ export type components = {
       title?: {
         visible?: boolean;
         text?: string;
+        color?: components["schemas"]["HexColor"] | "";
       };
       min?: number | null;
       max?: number | null;
@@ -2867,6 +2962,7 @@ export type components = {
     ItemSize: {
       width: number;
       height: number;
+      pixelRatio?: number;
     };
     ItemPropsRequest:
       | {
@@ -3054,6 +3150,7 @@ export type components = {
       url: string;
       width: number;
       height: number;
+      pixelRatio?: number;
     };
     CreateShareRequest: {
       chartId: string;
@@ -3073,6 +3170,34 @@ export type components = {
       width: number;
       height: number;
       points: number;
+    };
+    ChartDefaults: {
+      options: components["schemas"]["ChartOptions"];
+      common: {
+        color: components["schemas"]["HexColor"];
+      };
+      splitSeparator: string;
+      legendPosition: components["schemas"]["LegendPosition"];
+      charts: {
+        scatter?: components["schemas"]["ChartTypeDefaults"];
+        bar?: components["schemas"]["ChartTypeDefaults"];
+        boxplot?: components["schemas"]["ChartTypeDefaults"];
+        line?: components["schemas"]["ChartTypeDefaults"];
+        sankey?: components["schemas"]["ChartTypeDefaults"];
+        heatmap?: components["schemas"]["ChartTypeDefaults"];
+        treemap?: components["schemas"]["ChartTypeDefaults"];
+        candle?: components["schemas"]["ChartTypeDefaults"];
+        gantt?: components["schemas"]["ChartTypeDefaults"];
+        pie?: components["schemas"]["ChartTypeDefaults"];
+        radar?: components["schemas"]["ChartTypeDefaults"];
+        histogram?: components["schemas"]["ChartTypeDefaults"];
+        waterfall?: components["schemas"]["ChartTypeDefaults"];
+        funnel?: components["schemas"]["ChartTypeDefaults"];
+      };
+    };
+    ChartTypeDefaults: {
+      legendPosition?: components["schemas"]["LegendPosition"];
+      options?: components["schemas"]["ChartOptions"];
     };
     ChartHealth: {
       /** @enum {string} */
@@ -3225,6 +3350,26 @@ export type components = {
         visible: boolean;
       }[];
       hidden: number;
+      layout?: {
+        /** @enum {string} */
+        orientation: "horizontal" | "vertical";
+        fontSize: number;
+        marker: number;
+        textColor: string;
+        titleColor: string;
+        mutedColor: string;
+        surface: string;
+        borderColor: string | null;
+        title: {
+          x: number;
+          y: number;
+          maxWidth: number;
+        };
+        more?: {
+          x: number;
+          y: number;
+        };
+      };
     };
     CategoryMeta: {
       /** @enum {string} */

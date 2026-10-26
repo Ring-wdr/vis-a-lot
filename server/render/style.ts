@@ -10,12 +10,12 @@
 //         titleText(o, label)                     비우면 item label
 // size    fontPx(o, base, manual?)                자동이면 base를 [fontMin,fontMax]로, 수동이면 manual(구역의 fontSize)
 //         pointSizeOf(o, auto)                    자동이면 auto를 [pointMin,pointMax]로, 수동이면 pointFixed
-//         lineWidthOf(o, base)                    lineWidth를 바꾸지 않았으면 차트 기본 굵기(base)
+//         o.size.lineWidth                        선 굵기. 차트 종류별 기본 굵기는 CHART_DEFAULTS.charts가 정한다
 // legend  legendStyleOf(o)                        LegendInput.style에 넣는 값 (글자 크기 자동 반영). job-manager가 넣어 준다
 // palette gradientColors(palette, n)              start→(middle)→end 그라데이션 n색. job-manager가 legend 기본 색으로 쓴다
 // shape   pathPoint(ctx, shape, x, y, r)          현재 path에 도형 하나를 더한다 (같은 색 점을 한 path로 모아 fill 한 번)
 //         drawPoint(ctx, shape, x, y, r, style, borderWidth, fill, stroke)  점 하나를 바로 그린다
-//         alphaOf(transparency, autoAlpha)        투명도 0이면 차트가 정한 자동 투명도
+//         alphaOf(transparency)                   투명도 → globalAlpha (0이면 불투명)
 // label   formatValue(v, decimals)                소수 자리 (null이면 자동, 천 단위 쉼표)
 //         createLabelGuard()                      겹치는 점 글자를 건너뛰는 검사기
 //         drawPointLabel(ctx, x, y, value, o.pointLabel, fontPx, guard?)  점 글자. 겹치면 그리지 않고 null
@@ -134,13 +134,6 @@ export function pointSizeOf(o: ChartOptions = DEFAULT_OPTIONS, auto: number) {
     : size.pointFixed;
 }
 
-/** 선 굵기. 기본값에서 바꾸지 않았으면 차트가 원래 쓰던 굵기(base) */
-export function lineWidthOf(o: ChartOptions = DEFAULT_OPTIONS, base: number) {
-  return o.size.lineWidth === DEFAULT_OPTIONS.size.lineWidth
-    ? base
-    : o.size.lineWidth;
-}
-
 // ── title ───────────────────────────────────────────────────────
 
 export function titleText(o: ChartOptions = DEFAULT_OPTIONS, label: string) {
@@ -204,9 +197,14 @@ export function gradientColors(palette: PaletteOptions, n: number): string[] {
 
 // ── shape ───────────────────────────────────────────────────────
 
-/** 투명도(0..1)를 globalAlpha로. 0이면 차트가 정한 자동 투명도를 그대로 쓴다. */
-export function alphaOf(transparency: number, autoAlpha: number) {
-  return transparency > 0 ? clamp(1 - transparency, 0, 1) : autoAlpha;
+/** 도형 테두리 색. 설정에서 정했으면 그 색, 비웠으면 차트가 정한 자동 색(auto) */
+export function borderOf(shape: ShapeOptions, auto: string) {
+  return shape.borderColor || auto;
+}
+
+/** 투명도(0..1)를 globalAlpha로. 0(기본값)이면 모든 차트에서 불투명이다. */
+export function alphaOf(transparency: number) {
+  return clamp(1 - transparency, 0, 1);
 }
 
 /**

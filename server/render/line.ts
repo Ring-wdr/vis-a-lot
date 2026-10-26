@@ -122,6 +122,8 @@ export type LineDrawInput = {
   lineWidth?: number;
   /** 선과 점의 투명도(globalAlpha, shape.transparency). 없으면 1 */
   alpha?: number;
+  /** 선택 영역 밖 선의 진하기 (shape.dimOpacity). 없으면 0.2 */
+  dim?: number;
   /** 점이 적을 때 찍는 점의 모양 (shape·size). 없으면 반지름 2.5 원 */
   dot?: {
     shape: PointShape;
@@ -152,7 +154,7 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
   // 선택이 있으면 바깥(0)은 계열 전체를 흐리게 깔고, 그 위에 안쪽(1) 구간만 진하게 그린다.
   const layers = selected ? [0, 1] : [1];
   for (const layer of layers) {
-    ctx.globalAlpha = (layer === 0 ? 0.2 : 1) * alpha;
+    ctx.globalAlpha = (layer === 0 ? (input.dim ?? 0.2) : 1) * alpha;
     series.forEach((order, g) => {
       if (order.length === 0) return;
       ctx.strokeStyle = colors[g];

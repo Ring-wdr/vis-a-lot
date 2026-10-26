@@ -118,6 +118,13 @@ export function createChart(
   return chart;
 }
 
+/** 이 history에 기록 중인 차트에서 history를 뗀다. 지운 history를 다시 저장해 되살리지 않게 한다. */
+export function detachHistory(historyId: string) {
+  for (const chart of charts.values()) {
+    if (chart.history?.id === historyId) chart.history = undefined;
+  }
+}
+
 export function getChart(id: string) {
   return charts.get(id);
 }
@@ -162,7 +169,9 @@ export function thumbnailUrl(chartId: string, item: ChartItem) {
   return `${itemPath(chartId, item)}?r=${item.revision}&size=thumb`;
 }
 
-export const sizeKeyOf = (size: ItemSize) => `${size.width}x${size.height}`;
+/** 크기별 캐시 키. 배율이 1이 아니면 붙인다 (WxH@2). */
+export const sizeKeyOf = (size: ItemSize) =>
+  `${size.width}x${size.height}${(size.pixelRatio ?? 1) > 1 ? `@${size.pixelRatio}` : ""}`;
 
 export function detailUrl(chartId: string, item: ChartItem, size: ItemSize) {
   return `${itemPath(chartId, item)}?r=${item.revision}&size=${sizeKeyOf(size)}`;

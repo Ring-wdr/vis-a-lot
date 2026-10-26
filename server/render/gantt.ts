@@ -26,13 +26,14 @@ import {
 import { drawShapes, type Shape } from "./shapes";
 import {
   alphaOf,
+  borderOf,
   createLabelGuard,
   drawPanel,
   drawPointLabel,
   fontPx,
   surfaceOf,
 } from "./style";
-import { OTHERS_COLOR, THEME } from "./theme";
+import { THEME } from "./theme";
 
 export type GanttMeta = {
   chartType: "gantt";
@@ -221,7 +222,7 @@ export function renderGantt(
     focus?.[j]
       ? o.focus.color
       : focus && o.focus.legendSingleColor
-        ? OTHERS_COLOR
+        ? o.palette.othersColor
         : (input.legend?.colors[index[j]] ?? input.color);
 
   drawPanel(ctx, width, height, o);
@@ -391,12 +392,12 @@ export function renderGantt(
   }
   // 막대 모양: 채우기·테두리(style), 투명도, 테두리 굵기
   const { style, borderWidth, transparency } = o.shape;
-  const alpha = alphaOf(transparency, 1);
+  const alpha = alphaOf(transparency);
   const stroke = surfaceOf(o);
   for (let j = 0; j < n; j++) {
     if (owner[j] !== j) continue;
     const cy = y(rowY(rowCount, bars.r[j]));
-    ctx.globalAlpha = inside[j] ? alpha : alpha * 0.2;
+    ctx.globalAlpha = inside[j] ? alpha : alpha * o.shape.dimOpacity;
     const color = colorOf(j);
     // 이웃 막대가 같은 경계를 쓰도록 정수 픽셀에 맞춘다 (반투명 틈이 생기지 않게).
     const left = Math.round(plot.left + px0[j]);
@@ -407,7 +408,7 @@ export function renderGantt(
     }
     if (style === "border" || borderWidth > 0) {
       const bw = style === "border" ? Math.max(1, borderWidth) : borderWidth;
-      ctx.strokeStyle = style === "border" ? color : stroke;
+      ctx.strokeStyle = style === "border" ? color : borderOf(o.shape, stroke);
       ctx.lineWidth = bw;
       ctx.strokeRect(
         left + bw / 2,

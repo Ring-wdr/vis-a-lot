@@ -27,9 +27,6 @@ export const PALETTE = [
   { name: "빨강", hex: "#e34948" },
 ] as const;
 
-/** 팔레트에 들지 못한 나머지를 묶은 항목(pie의 '기타' 조각)의 기본 색 */
-export const OTHERS_COLOR = "#a9a8a2";
-
 /** categorical 1번 슬롯. 공통 속성의 기본 색. */
 export const DEFAULT_SERIES_COLOR = PALETTE[0].hex;
 

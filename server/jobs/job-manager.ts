@@ -12,8 +12,8 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
+import { defaultsFor } from "../charts/chart-defaults";
 import {
-  CHART_FIELDS,
   isDistributionLine,
   legendColumnOf,
   POINT_CHARTS,
@@ -49,7 +49,7 @@ import {
 } from "../render/analytics/distribution";
 import { CANDLE_LEGEND } from "../render/candle";
 import { gradientColors, legendStyleOf } from "../render/style";
-import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
+import { defaultLegendColor } from "../render/theme";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -511,13 +511,12 @@ function itemView(chart: ChartRecord, item: ChartItem) {
 
 /** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
 
-/** legend 위치: item 개별 → 공통 → 위 */
+/** legend 위치: item 개별 → 공통 → 차트 종류별 기본값 (화면이 GET /defaults로 받는 값) */
 function legendPosition(chart: ChartRecord, item: ChartItem) {
   return (
     item.props?.legendPosition ??
     chart.spec.common.legendPosition ??
-    CHART_FIELDS[chart.spec.chartType].legendPosition ??
-    "top"
+    defaultsFor(chart.spec.chartType).legendPosition
   );
 }
 
@@ -526,7 +525,7 @@ export function itemColor(chart: ChartRecord, item: ChartItem) {
   return item.props?.color ?? chart.spec.common.color;
 }
 
-/** item에 적용할 차트 속성 (기본값 → 공통 → 개별) */
+/** item에 적용할 차트 속성 (기본값 → 차트 종류별 기본값 → 공통 → 개별) */
 function optionsFor(chart: ChartRecord, item: ChartItem) {
   return resolveOptions(
     chart.spec.chartType,
@@ -606,6 +605,12 @@ function pieColors(
   data: PieData,
   values: string[],
 ) {
+  // '기타' 조각 색은 차트 속성(palette.othersColor)을 따른다.
+  const othersColor = resolveOptions(
+    chart.spec.chartType,
+    chart.spec.common.options,
+    item.props?.options,
+  ).palette.othersColor;
   const order = data.colorOrder ?? values.filter((v) => v !== OTHERS_SLICE);
   const named = legendColors(chart, item, order);
   return values.map((v) => {
@@ -614,7 +619,7 @@ function pieColors(
     return (
       item.props?.legendColors?.[v] ??
       chart.spec.common.legendColors?.[v] ??
-      OTHERS_COLOR
+      othersColor
     );
   });
 }
@@ -862,6 +867,7 @@ function renderItem(
     options,
     width: size.width,
     height: size.height,
+    pixelRatio: size.pixelRatio,
     thumbnail: thumbnail ? THUMBNAIL_SIZE : undefined,
     title: item.label,
     color: itemColor(chart, item),
@@ -1257,15 +1263,22 @@ async function storeResult(
   item.version++;
   const url = pngUrl(chart.id, item);
   await putPng(new URL(url, location.origin).href, png);
+  // width·height는 CSS 픽셀이다. PNG는 pixelRatio배로 그려져 있어 <img>가 그만큼 촘촘하게 보인다.
+  const { pixelRatio } = chart.itemSize;
   item.image = {
     url,
     width: chart.itemSize.width,
     height: chart.itemSize.height,
+    ...(pixelRatio ? { pixelRatio } : {}),
   };
   if (thumb) {
     const thumbUrl = thumbnailUrl(chart.id, item);
     await putPng(new URL(thumbUrl, location.origin).href, thumb);
-    item.thumbnail = { url: thumbUrl, ...THUMBNAIL_SIZE };
+    item.thumbnail = {
+      url: thumbUrl,
+      ...THUMBNAIL_SIZE,
+      ...(pixelRatio ? { pixelRatio } : {}),
+    };
   }
 }
 

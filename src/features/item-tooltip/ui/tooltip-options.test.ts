@@ -1,20 +1,23 @@
+import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_OPTIONS } from "@/entities/chart/model/chart-options";
 import {
   formatTooltipText,
   resolveTooltipOptions,
   withTransparency,
 } from "./tooltip-options";
 
+// 화면은 서버 기본값을 받아 쓰므로 테스트도 서버 값을 그대로 쓴다.
+const DEFAULT_OPTIONS = CHART_DEFAULTS.options;
 const base = DEFAULT_OPTIONS.tooltip;
 
 describe("tooltip options", () => {
   it("정하지 않았거나 쓰지 않는 차트면 지금 모양을 둔다", () => {
-    expect(resolveTooltipOptions("scatter", undefined, undefined)).toBe(
-      undefined,
-    );
+    expect(
+      resolveTooltipOptions(DEFAULT_OPTIONS, "scatter", undefined, undefined),
+    ).toBe(undefined);
     expect(
       resolveTooltipOptions(
+        DEFAULT_OPTIONS,
         "boxplot",
         { tooltip: { fontSize: 20 } },
         undefined,
@@ -24,6 +27,7 @@ describe("tooltip options", () => {
 
   it("개별 속성이 공통 속성 위에 덮인다", () => {
     const o = resolveTooltipOptions(
+      DEFAULT_OPTIONS,
       "bar",
       { tooltip: { fontSize: 20, prefix: "$" } },
       { tooltip: { fontSize: 14 } },

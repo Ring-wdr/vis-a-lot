@@ -67,7 +67,11 @@
   },
   "overrides": [
     {
-      "includes": ["src/**", "!src/application/MockServerProvider.tsx"],
+      "includes": [
+        "src/**",
+        "!src/application/MockServerProvider.tsx",
+        "!src/**/*.test.ts"
+      ],
       "linter": {
         "rules": {
           "style": {

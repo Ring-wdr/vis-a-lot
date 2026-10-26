@@ -7,6 +7,7 @@ import {
   useQueries,
   useQuery,
   useQueryClient,
+  useSuspenseQuery,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
@@ -50,7 +51,21 @@ export const queryKeys = {
     ["jobs", jobId, "item", key] as const,
   shares: ["shares"] as const,
   share: (id: string) => ["shares", id] as const,
+  chartDefaults: ["chart-defaults"] as const,
 };
+
+/** 서버가 정한 차트 기본값. 세션 동안 바뀌지 않아 한 번만 받는다. */
+export const chartDefaultsQuery = queryOptions({
+  queryKey: queryKeys.chartDefaults,
+  queryFn: api.chartDefaults,
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: Number.POSITIVE_INFINITY,
+});
+
+/** 차트 기본값. SessionScope가 받아 둔 뒤에 화면을 그리므로 기다리지 않고 바로 온다. */
+export function useChartDefaults() {
+  return useSuspenseQuery(chartDefaultsQuery).data;
+}
 
 const datasetsQuery = queryOptions({
   queryKey: queryKeys.datasets,
@@ -74,6 +89,11 @@ export function useHealth() {
       return { db: data.db, renderWorkers: chart.renderWorkers };
     },
   });
+}
+
+/** 그린 차트 기록 목록 (최근 순). 지우거나 draw하면 ["history"]를 무효화한다. */
+export function useHistoryList() {
+  return useQuery({ queryKey: ["history"], queryFn: api.history });
 }
 
 export function useDatasets() {

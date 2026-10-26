@@ -1,8 +1,8 @@
 /* biome-ignore-all lint/performance/noImgElement: 썸네일은 history에 저장된 data URL이다. */
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { History } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { History, X } from "lucide-react";
 import { restoreOf } from "@/entities/chart/lib/share";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
@@ -13,19 +13,27 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import { openChartIn } from "@/features/open-chart/model/open-chart";
 import { api } from "@/shared/api/api";
-import { useColumnsByDataset, useDatasetNames } from "@/shared/api/queries";
+import {
+  useColumnsByDataset,
+  useDatasetNames,
+  useHistoryList,
+} from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
 import type { ColumnLookup } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/tw";
-import { showAlert } from "@/shared/ui/AlertDialog";
+import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
 
 const historyList = "flex flex-col gap-1.5";
 const historyEntry =
   "flex w-full cursor-pointer gap-2.5 rounded-md border border-line bg-elevated p-1.5 text-left enabled:hover:border-accent aria-current:border-accent aria-current:bg-accent-soft";
 const historyThumb = "h-11 w-18 flex-none rounded-sm bg-panel object-cover";
-const historyText = "flex min-w-0 flex-col gap-0.5";
+// 오른쪽 위 지우기 버튼 자리만큼 글자를 비운다.
+const historyText = "flex min-w-0 flex-col gap-0.5 pr-4";
 const muted = "text-2xs text-fg-muted";
+// 카드 오른쪽 위에 겹치는 지우기 버튼. 커서를 올리거나 포커스가 들어오면 보이고, 커서 없는 기기에서는 늘 보인다.
+const deleteButton =
+  "absolute top-1 right-1 grid size-4.5 cursor-pointer place-items-center rounded-full border border-line bg-elevated text-fg-secondary opacity-0 shadow-sm transition-opacity duration-120 group-hover/entry:opacity-100 focus-visible:opacity-100 hover:border-danger hover:text-danger disabled:cursor-default hover-none:opacity-100";
 
 const EVENT_LABELS: Record<HistoryEventType, string> = {
   zoom: "확대",
@@ -86,7 +94,7 @@ function eventsOf(entry: HistorySummary) {
  * 다시 보기는 history에 기록하지 않으므로 목록 순서와 썸네일이 바뀌지 않는다.
  */
 export function HistoryList() {
-  const list = useQuery({ queryKey: ["history"], queryFn: api.history });
+  const list = useHistoryList();
   const openHistory = useTabs((s) => s.openHistory);
   const close = useTabs((s) => s.close);
   const scoped = useWorkspaceStore();
@@ -111,6 +119,37 @@ export function HistoryList() {
     list.data?.entries.map((e) => e.dataset) ?? [],
   );
   const nameOf = useDatasetNames();
+  const client = useQueryClient();
+  const closeHistory = useTabs((s) => s.closeHistory);
+  const remove = useMutation({
+    mutationFn: api.deleteHistory,
+    onSuccess: (_, id) => {
+      // 지운 건을 보던 탭도 닫는다. 다시 그릴 설정이 없다.
+      closeHistory(id);
+      client.invalidateQueries({ queryKey: ["history"] });
+    },
+    onError: (err) => showAlert(err.message),
+  });
+  const confirmDelete = async (entry: HistorySummary, title: string) => {
+    const ok = await showConfirm(
+      `'${title}' 기록을 지울까요? 지우면 이 기록으로 다시 볼 수 없고, 열려 있는 탭도 닫힙니다.`,
+      {
+        title: "history 삭제",
+        confirmLabel: "삭제",
+        danger: true,
+        children: entry.thumbnail && (
+          <img
+            src={entry.thumbnail}
+            alt=""
+            width={240}
+            height={150}
+            className="mt-3 w-full rounded-sm border border-line bg-panel object-contain"
+          />
+        ),
+      },
+    );
+    if (ok) remove.mutate(entry.id);
+  };
 
   if (list.error) {
     return (
@@ -148,61 +187,78 @@ export function HistoryList() {
 
   return (
     <ul className={historyList}>
-      {list.data.entries.map((entry) => (
-        <li key={entry.id}>
-          <button
-            type="button"
-            className={historyEntry}
-            aria-current={viewing === entry.id || undefined}
-            disabled={load.isPending}
-            onClick={() => {
-              // 이미 열린 건이면 그 탭으로 가고, 처음 여는 건이면 새 탭에 다시 그린다.
-              const opened = openHistory(entry.id);
-              if (opened?.created)
-                load.mutate({ id: entry.id, tab: opened.tab });
-            }}
-          >
-            <span className="relative flex flex-none">
-              {entry.thumbnail ? (
-                <img
-                  src={entry.thumbnail}
-                  alt=""
-                  width={72}
-                  height={45}
-                  className={historyThumb}
-                />
-              ) : (
-                <span className={historyThumb} />
-              )}
-              {/* 고른 건을 불러와 탭에 그리는 동안 */}
-              {load.isPending && load.variables?.id === entry.id && (
-                <span
-                  className="absolute inset-0 grid place-items-center rounded-sm bg-overlay"
-                  aria-busy="true"
-                >
-                  <Spinner size="sm" />
-                </span>
-              )}
-            </span>
-            <span className={historyText}>
-              <span className="text-xs font-semibold">
-                {chartTitle(entry.spec, columnsOf(entry.dataset))}
-              </span>
-              <span className={muted}>
-                {detailOf(
-                  entry,
-                  columnsOf(entry.dataset),
-                  nameOf(entry.dataset),
+      {list.data.entries.map((entry) => {
+        const title = chartTitle(entry.spec, columnsOf(entry.dataset));
+        const removing = remove.isPending && remove.variables === entry.id;
+        return (
+          <li key={entry.id} className="group/entry relative">
+            <button
+              type="button"
+              className={historyEntry}
+              aria-current={viewing === entry.id || undefined}
+              disabled={load.isPending || removing}
+              onClick={() => {
+                // 이미 열린 건이면 그 탭으로 가고, 처음 여는 건이면 새 탭에 다시 그린다.
+                const opened = openHistory(entry.id);
+                if (opened?.created)
+                  load.mutate({ id: entry.id, tab: opened.tab });
+              }}
+            >
+              <span className="relative flex flex-none">
+                {entry.thumbnail ? (
+                  <img
+                    src={entry.thumbnail}
+                    alt=""
+                    width={72}
+                    height={45}
+                    className={historyThumb}
+                  />
+                ) : (
+                  <span className={historyThumb} />
+                )}
+                {/* 고른 건을 불러와 탭에 그리는 동안 */}
+                {load.isPending && load.variables?.id === entry.id && (
+                  <span
+                    className="absolute inset-0 grid place-items-center rounded-sm bg-overlay"
+                    aria-busy="true"
+                  >
+                    <Spinner size="sm" />
+                  </span>
                 )}
               </span>
-              {eventsOf(entry) && (
-                <span className={muted}>+ {eventsOf(entry)}</span>
+              <span className={historyText}>
+                <span className="text-xs font-semibold">{title}</span>
+                <span className={muted}>
+                  {detailOf(
+                    entry,
+                    columnsOf(entry.dataset),
+                    nameOf(entry.dataset),
+                  )}
+                </span>
+                {eventsOf(entry) && (
+                  <span className={muted}>+ {eventsOf(entry)}</span>
+                )}
+                <span className={muted}>{timeAgo(entry.updatedAt)}</span>
+              </span>
+            </button>
+            {/* 항목 버튼 안에 버튼을 둘 수 없어 형제로 두고 카드 오른쪽 위에 겹친다. */}
+            <button
+              type="button"
+              className={deleteButton}
+              aria-label={`${title} 기록 삭제`}
+              title="기록 삭제"
+              disabled={removing}
+              onClick={() => confirmDelete(entry, title)}
+            >
+              {removing ? (
+                <Spinner size="sm" />
+              ) : (
+                <X size={11} aria-hidden="true" />
               )}
-              <span className={muted}>{timeAgo(entry.updatedAt)}</span>
-            </span>
-          </button>
-        </li>
-      ))}
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 }

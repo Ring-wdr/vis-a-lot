@@ -2,11 +2,13 @@
 // 요청 형식은 routes의 zod 스키마가 검증하고, 여기서는 필드 사이의 규칙과 상태만 확인한다.
 
 import type { Context } from "hono";
-import { isTerminal } from "../../api/types";
+import { type ItemSize, isTerminal } from "../../api/types";
+import { CHART_DEFAULTS } from "../../charts/chart-defaults";
 import { canDelete } from "../../charts/chart-fields";
 import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
+  detachHistory,
   getChart,
   getDetail,
   getItem,
@@ -41,11 +43,22 @@ const LONG_POLL_TIMEOUT_MS = 25_000;
 const MAX_FAVORITES = 20;
 const MAX_LEGEND_GROUPS = 8;
 const MAX_DELETIONS = 50;
+/** 이보다 촘촘한 화면도 이 배율로 그린다. PNG 픽셀 수가 배율의 제곱으로 늘기 때문이다. */
+const MAX_PIXEL_RATIO = 3;
 
 let pngVersion = 0;
 
-function roundSize(size: { width: number; height: number }) {
-  return { width: Math.round(size.width), height: Math.round(size.height) };
+/** 크기는 정수 픽셀로, 배율은 1~3에서 0.25 단위로 맞춘다 (배율이 조금씩 다른 요청이 캐시를 나누지 않게). */
+function roundSize(size: ItemSize): ItemSize {
+  const ratio = Math.min(
+    MAX_PIXEL_RATIO,
+    Math.max(1, Math.round((size.pixelRatio ?? 1) * 4) / 4),
+  );
+  return {
+    width: Math.round(size.width),
+    height: Math.round(size.height),
+    ...(ratio > 1 ? { pixelRatio: ratio } : {}),
+  };
 }
 
 type Rejected = { status: 404 | 409; error: string };
@@ -516,6 +529,13 @@ export const chartApp = createServiceApp()
     if (!entry) return apiError(c, 404, "unknown history");
     return c.json(entry, 200);
   })
+  .openapi(routes.deleteHistory, async (c) => {
+    const { id } = c.req.valid("param");
+    const deleted = await getRuntime().db.call("historyDelete", { id });
+    if (!deleted) return apiError(c, 404, "unknown history");
+    detachHistory(id);
+    return c.body(null, 204);
+  })
   // 공유: 지금 차트의 설정·item 상태와 대표 PNG를 고정한다. 이후 차트를 고쳐도 공유는 그대로다.
   .openapi(routes.createShare, async (c) => {
     const body = c.req.valid("json");
@@ -582,6 +602,7 @@ export const chartApp = createServiceApp()
     if (!deleted) return apiError(c, 404, "unknown share");
     return c.body(null, 204);
   })
+  .openapi(routes.defaults, (c) => c.json(CHART_DEFAULTS, 200))
   .openapi(routes.health, (c) =>
     c.json(
       { service: "chart" as const, renderWorkers: getRuntime().render.size },

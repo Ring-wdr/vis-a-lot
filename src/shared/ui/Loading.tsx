@@ -124,13 +124,14 @@ export function EmptyState({
 }
 
 /** 앱이 뜨기까지의 단계. 단계가 바뀌어도 같은 화면이라 깜빡이지 않는다. */
-export const BOOT_STEPS = ["app", "server", "session"] as const;
+export const BOOT_STEPS = ["app", "server", "session", "defaults"] as const;
 export type BootStep = (typeof BOOT_STEPS)[number];
 
 const BOOT_MESSAGES: Record<BootStep, string> = {
   app: "화면을 불러오는 중",
   server: "브라우저 안의 서버를 띄우는 중",
   session: "로그인 확인 중",
+  defaults: "차트 기본값을 받는 중",
 };
 
 export function BootScreen({

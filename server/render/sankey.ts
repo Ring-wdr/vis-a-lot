@@ -23,7 +23,7 @@ import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import { alphaOf, drawPanel, fontPx, lineWidthOf, mixColor } from "./style";
+import { alphaOf, borderOf, drawPanel, fontPx, mixColor } from "./style";
 import { THEME } from "./theme";
 
 type Plot = { left: number; top: number; width: number; height: number };
@@ -98,8 +98,6 @@ const NODE_PADDING = 10;
 const LABEL_GAP = 6;
 /** 노드 라벨 자리의 폭 상한 (PNG 폭 대비) */
 const LABEL_MAX_RATIO = 0.22;
-const LINK_ALPHA = 0.4;
-const DIM = 0.2;
 /** 도착 노드 색 */
 const TARGET_COLOR = "#8a8984";
 
@@ -271,15 +269,15 @@ export function renderSankey(
       : TARGET_COLOR;
 
   // shape 투명도는 흐름·노드 모두에, 선 굵기(size.lineWidth)는 가장 가는 흐름의 굵기에 쓴다.
-  const opacity = alphaOf(shape.transparency, 1);
-  const minLink = lineWidthOf(o, 1);
+  const opacity = alphaOf(shape.transparency);
+  const minLink = o.size.lineWidth;
 
   // ── 흐름 (render) ─────────────────────────────────────────────
   ctx.save();
   layout.links.forEach((link, i) => {
     const { xs, xt } = linkEnds(layout, link);
     ctx.strokeStyle = colorOf(layout.nodes[link.source]);
-    ctx.globalAlpha = LINK_ALPHA * opacity * (linkIn[i] ? 1 : DIM);
+    ctx.globalAlpha = opacity * (linkIn[i] ? 1 : o.shape.dimOpacity);
     ctx.lineWidth = Math.max(minLink, link.width);
     traceLink(ctx, xs, xt, link);
     ctx.stroke();
@@ -291,7 +289,7 @@ export function renderSankey(
   // shape: brush는 채우기만, border는 노드 색 테두리만, both는 채우기 + 진한 색 테두리(borderWidth)
   layout.nodes.forEach((node, i) => {
     const color = colorOf(node);
-    ctx.globalAlpha = opacity * (nodeIn[i] ? 1 : DIM);
+    ctx.globalAlpha = opacity * (nodeIn[i] ? 1 : o.shape.dimOpacity);
     const w = node.x1 - node.x0;
     const h = Math.max(1, node.y1 - node.y0);
     if (shape.style !== "border") {
@@ -300,7 +298,9 @@ export function renderSankey(
     }
     if (shape.style === "border" || shape.borderWidth > 0) {
       ctx.strokeStyle =
-        shape.style === "border" ? color : mixColor(color, "#000000", 0.3);
+        shape.style === "border"
+          ? color
+          : borderOf(shape, mixColor(color, "#000000", 0.3));
       ctx.lineWidth = Math.max(1, shape.borderWidth);
       ctx.strokeRect(node.x0, node.y0, w, h);
     }
