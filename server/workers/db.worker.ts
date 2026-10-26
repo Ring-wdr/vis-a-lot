@@ -23,6 +23,7 @@ import { createFeedDb } from "../feed/db";
 import { migrateFeed, resetFeed } from "../feed/migrate";
 import { runFeedOp } from "../feed/runner";
 import {
+  deleteHistory,
   getHistory,
   listHistory,
   openHistory,
@@ -239,6 +240,11 @@ serveRpc<DbMethods>({
   async historyGet({ id }) {
     const { db } = await ready;
     return getHistory(db, id);
+  },
+
+  async historyDelete({ id }) {
+    const { db } = await ready;
+    return deleteHistory(db, id);
   },
 
   async feed(request) {

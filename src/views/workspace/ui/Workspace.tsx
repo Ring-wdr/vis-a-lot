@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { readShareHash } from "@/entities/chart/lib/share";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
+import type { View } from "@/entities/workspace/model/tabs-store";
 import {
   useWorkspace,
   useWorkspaceStore,
@@ -21,6 +22,7 @@ import { ChartGrid } from "@/widgets/chart-grid/ui/ChartGrid";
 import { ControlPanel } from "@/widgets/control-panel/ui/ControlPanel";
 import { FilterPanel } from "@/widgets/filter-panel/ui/FilterPanel";
 import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
+import { HomeLanding } from "@/widgets/home-landing/ui/HomeLanding";
 import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
 import { TabToolbar } from "@/widgets/tab-toolbar/ui/TabToolbar";
 
@@ -135,11 +137,29 @@ function HistorySidebar() {
  */
 export function Workspace() {
   const view = useTabs((s) => s.view);
-  const tab = useTabs((s) => s.tabs.find((t) => t.id === s.active[s.view]));
+  const setView = useTabs((s) => s.setView);
+  const tab = useTabs((s) =>
+    s.view ? s.tabs.find((t) => t.id === s.active[s.view as View]) : undefined,
+  );
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
   const emptyHistory = useTabs((s) => s.emptyHistory);
   const store = tab?.store ?? emptyHistory;
   const filterOpen = useTabs((s) => s.filterPanelOpen);
+
+  // 공유 링크(#s=…)로 들어오면 시작 화면을 건너뛰고 gallery에서 그 차트를 연다.
+  useEffect(() => {
+    if (!sharedLinkHandled && readShareHash(location.hash)) setView("gallery");
+  }, [setView]);
+
+  // 처음 들어오면 연 차트가 없으므로 작업 화면 대신 시작 화면을 보여준다.
+  if (view === null) {
+    return (
+      <div className="grid h-screen grid-rows-[3rem_minmax(0,1fr)] bg-surface text-fg">
+        <AppHeader />
+        <HomeLanding />
+      </div>
+    );
+  }
 
   return (
     <WorkspaceScope key={tab?.id ?? "empty"} store={store}>

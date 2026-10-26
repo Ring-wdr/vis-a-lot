@@ -91,6 +91,11 @@ export function useHealth() {
   });
 }
 
+/** 그린 차트 기록 목록 (최근 순). 지우거나 draw하면 ["history"]를 무효화한다. */
+export function useHistoryList() {
+  return useQuery({ queryKey: ["history"], queryFn: api.history });
+}
+
 export function useDatasets() {
   return useQuery(datasetsQuery);
 }

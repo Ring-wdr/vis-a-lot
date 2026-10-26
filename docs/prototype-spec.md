@@ -152,6 +152,8 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 ```
 
 - **상단 바:** `upload`(파일 열기 팝업), `datastore`(데이터 목록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 사용자. 앱 전체에 걸린 것만 둔다
+- **시작 화면:** 처음 들어오면 연 차트가 없으므로 gallery·history 어느 쪽도 고르지 않은 시작 화면을 띄운다. 새 차트 그리기(gallery)·기록 다시 보기(history, 최근 건수)·데이터 올리기·데이터 관리(쓸 수 있는 데이터 수) 카드를 두고, 상단 바나 카드로 gallery·history를 고르면 작업 화면으로 바뀐다. 공유 링크(`#s=…`)로 들어오면 시작 화면을 건너뛰고 gallery에서 연다.
+- **history 삭제:** history 목록 썸네일 오른쪽 위 X 버튼(커서를 올리거나 포커스가 들어오면 보임) → 확인 팝업(썸네일 미리보기, 삭제 버튼은 위험 동작 모양, 처음 포커스는 취소). 지우면 그 건을 보던 history 탭도 닫는다.
 - **탭 도구 줄:** 탭 바 아래, 탭 내용과 같은 배경. 모드 바와 링크 복사처럼 그 탭의 차트에 걸린 도구를 둔다
 - **탭:** gallery와 history 모두 탭이 있다. 탭마다 작업 상태(데이터·설정·차트·진행)를 따로 가져 오가도 그대로 남는다.
   - gallery 탭은 작업 공간이다. `+`로 새 탭, datastore 팝업에서 준비된 데이터를 선택하고 `gallery에서 열기`를 누르면 그 데이터로 새 탭이 열린다. 마지막 하나는 닫을 수 없다.
@@ -466,6 +468,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
 | chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
+| chart | history 삭제 | `DELETE /history/:id` | 204, 모르는 건이면 404. 그 건에 기록 중인 차트는 더 기록하지 않는다(지운 건을 되살리지 않음) |
 | chart | 공유 | `POST /shares`, `GET /shares`(내 공유), `GET /shares/:shareId`, `DELETE /shares/:shareId` | `{ chartId, itemKey?, title }`로 지금 설정·바뀐 item 상태·대표 PNG를 스냅숏으로 고정(PGlite). 이후 차트를 고쳐도 그대로다. 지우기는 만든 사용자만 |
 | chart | 공유 PNG | `GET /shares/:shareId/png` | 인증 없음(item PNG와 같은 이유, shareId는 UUID) |
 | data / chart | 상태 | `GET /health` | 인증 없음 |

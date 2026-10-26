@@ -455,6 +455,20 @@ export const historyDetail = createRoute({
   },
 });
 
+export const deleteHistory = createRoute({
+  method: "delete",
+  path: "/history/{id}",
+  tags: ["history"],
+  summary: "history 한 건 지우기. 그 건에 기록 중인 차트는 더 기록하지 않는다",
+  ...write,
+  request: { params: z.object({ id: pathParam("id") }) },
+  responses: {
+    204: { description: "지움" },
+    ...authErrors,
+    404: errorResponse("모르는 history"),
+  },
+});
+
 // ── 공유 ───────────────────────────────────────────────────────
 // 다른 서비스(데이터 공유 피드 등)에 넘길 차트 스냅숏. 만든 뒤 차트를 고쳐도 공유는 바뀌지 않는다.
 

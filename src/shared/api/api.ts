@@ -276,6 +276,9 @@ export const api = {
   // ── chart 서비스: history ───────────────────────────────────
   history: () => unwrap(chartClient.GET("/history")),
 
+  deleteHistory: (id: string) =>
+    unwrap(chartClient.DELETE("/history/{id}", { params: { path: { id } } })),
+
   historyDetail: (id: string) =>
     as<HistoryDetail>()(
       unwrap(chartClient.GET("/history/{id}", { params: { path: { id } } })),

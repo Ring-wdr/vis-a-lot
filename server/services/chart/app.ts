@@ -8,6 +8,7 @@ import { canDelete } from "../../charts/chart-fields";
 import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
+  detachHistory,
   getChart,
   getDetail,
   getItem,
@@ -527,6 +528,13 @@ export const chartApp = createServiceApp()
     });
     if (!entry) return apiError(c, 404, "unknown history");
     return c.json(entry, 200);
+  })
+  .openapi(routes.deleteHistory, async (c) => {
+    const { id } = c.req.valid("param");
+    const deleted = await getRuntime().db.call("historyDelete", { id });
+    if (!deleted) return apiError(c, 404, "unknown history");
+    detachHistory(id);
+    return c.body(null, 204);
   })
   // 공유: 지금 차트의 설정·item 상태와 대표 PNG를 고정한다. 이후 차트를 고쳐도 공유는 그대로다.
   .openapi(routes.createShare, async (c) => {

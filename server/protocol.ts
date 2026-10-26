@@ -164,6 +164,8 @@ export type DbMethods = {
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
+  /** 없던 건이면 false */
+  historyDelete: { params: { id: string }; result: boolean };
   /** 공유 저장. PNG 바이트는 transfer로 넘긴다. */
   shareSave: { params: StoredShare; result: Share };
   shareGet: { params: { id: string }; result: Share | null };

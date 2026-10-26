@@ -118,6 +118,13 @@ export function createChart(
   return chart;
 }
 
+/** 이 history에 기록 중인 차트에서 history를 뗀다. 지운 history를 다시 저장해 되살리지 않게 한다. */
+export function detachHistory(historyId: string) {
+  for (const chart of charts.values()) {
+    if (chart.history?.id === historyId) chart.history = undefined;
+  }
+}
+
 export function getChart(id: string) {
   return charts.get(id);
 }
