@@ -41,7 +41,6 @@ import {
   drawPointLabel,
   fontPx,
   type LabelGuard,
-  lineWidthOf,
   mixColor,
   pointSizeOf,
   surfaceOf,
@@ -564,7 +563,7 @@ export function renderCategory(
         if (off[index]) return;
         const color = colorOf(index, point, i);
         const alpha = selectionAlpha(point);
-        const line = lineWidthOf(o, 1.5);
+        const line = o.size.lineWidth;
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = color;
         ctx.lineWidth = line;

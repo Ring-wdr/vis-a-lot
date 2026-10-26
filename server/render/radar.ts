@@ -22,7 +22,6 @@ import {
   drawPanel,
   drawPoint,
   fontPx,
-  lineWidthOf,
   pointSizeOf,
   surfaceOf,
 } from "./style";
@@ -85,7 +84,6 @@ const START = -Math.PI / 2;
 const LABEL_GAP = 8;
 const LABEL_MAX_WIDTH = 72;
 const DOT_R = 3;
-const LINE_WIDTH = 2;
 /** 꼭짓점 테두리(배경색) 굵기 */
 const DOT_BORDER = 1.5;
 
@@ -239,7 +237,7 @@ export function renderRadar(
     // shape: brush는 다각형 채우기만, border는 선만, both는 둘 다. 투명도는 채우기 진하기다.
     const { shape } = o;
     const fillAlpha = alphaOf(shape.transparency);
-    const lineWidth = lineWidthOf(o, LINE_WIDTH);
+    const lineWidth = o.size.lineWidth;
     const dot = pointSizeOf(o, DOT_R);
     const surface = surfaceOf(o);
     for (const [k, s] of series.entries()) {

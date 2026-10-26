@@ -7,7 +7,6 @@ import {
   formatValue,
   gradientColors,
   headerHeight,
-  lineWidthOf,
   pointSizeOf,
 } from "./style";
 
@@ -49,7 +48,6 @@ describe("size", () => {
     expect(fontPx(DEFAULT_OPTIONS, 11)).toBe(11);
     expect(fontPx(DEFAULT_OPTIONS, 12, 30)).toBe(12);
     expect(pointSizeOf(DEFAULT_OPTIONS, 2.5)).toBe(2.5);
-    expect(lineWidthOf(DEFAULT_OPTIONS, 1)).toBe(1);
   });
 
   it("자동을 끄면 구역의 크기, 자동이면 범위 안으로", () => {
@@ -58,7 +56,6 @@ describe("size", () => {
     });
     expect(fontPx(o, 12, 20)).toBe(20);
     expect(pointSizeOf(o, 2.5)).toBe(7);
-    expect(lineWidthOf(o, 1)).toBe(3);
     const clamped = mergeOptions(DEFAULT_OPTIONS, { size: { fontMin: 14 } });
     expect(fontPx(clamped, 11)).toBe(14);
   });

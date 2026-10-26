@@ -23,14 +23,7 @@ import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import {
-  alphaOf,
-  borderOf,
-  drawPanel,
-  fontPx,
-  lineWidthOf,
-  mixColor,
-} from "./style";
+import { alphaOf, borderOf, drawPanel, fontPx, mixColor } from "./style";
 import { THEME } from "./theme";
 
 type Plot = { left: number; top: number; width: number; height: number };
@@ -277,7 +270,7 @@ export function renderSankey(
 
   // shape 투명도는 흐름·노드 모두에, 선 굵기(size.lineWidth)는 가장 가는 흐름의 굵기에 쓴다.
   const opacity = alphaOf(shape.transparency);
-  const minLink = lineWidthOf(o, 1);
+  const minLink = o.size.lineWidth;
 
   // ── 흐름 (render) ─────────────────────────────────────────────
   ctx.save();

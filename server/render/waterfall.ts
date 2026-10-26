@@ -28,7 +28,7 @@ import {
   type ProgressFn,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import { drawPanel, fontPx, lineWidthOf } from "./style";
+import { drawPanel, fontPx } from "./style";
 import { PALETTE, THEME } from "./theme";
 
 /** 막대 종류. 순서가 곧 legend 순서다. */
@@ -216,7 +216,7 @@ export function renderWaterfall(
   ctx.clip();
   // 이전 막대 끝에서 다음 막대 시작까지 누적 높이를 점선으로 잇는다.
   ctx.strokeStyle = THEME.axis;
-  ctx.lineWidth = lineWidthOf(o, 1);
+  ctx.lineWidth = o.size.lineWidth;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
   for (let i = 0; i < n - 1; i++) {

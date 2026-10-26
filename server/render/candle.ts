@@ -28,13 +28,7 @@ import {
   type ProgressFn,
 } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import {
-  createLabelGuard,
-  drawPanel,
-  drawPointLabel,
-  fontPx,
-  lineWidthOf,
-} from "./style";
+import { createLabelGuard, drawPanel, drawPointLabel, fontPx } from "./style";
 import { PALETTE, THEME } from "./theme";
 
 /** candle의 고정 legend. 색은 국내 시세 관례(상승 빨강, 하락 파랑)를 따른다. */
@@ -297,7 +291,7 @@ export function renderCandle(
     );
   }
   const [x0, x1] = xDomain;
-  const wick = lineWidthOf(o, 1);
+  const wick = o.size.lineWidth;
   // focus: 조건에 맞는 캔들은 focus 색, legendSingleColor면 나머지는 회색 한 가지
   const colorOf = (i: number) =>
     focus?.[i]

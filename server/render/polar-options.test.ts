@@ -1,6 +1,9 @@
 // pie · radar · funnel · sankey가 차트 속성(options)을 그리는지. 그리기 호출을 기록하는 가짜 canvas로 확인한다.
 
 import { describe, expect, it } from "vitest";
+import { chartTypeDefaults } from "@/entities/chart/model/chart-options";
+import { CHART_DEFAULTS } from "../charts/chart-defaults";
+import { resolveOptions } from "../charts/chart-options";
 import { renderFunnel } from "./funnel";
 import {
   type ChartOptions,
@@ -223,6 +226,29 @@ describe("radar", () => {
     );
     expect(calls.some((c) => c[0] === "rect")).toBe(true);
     expect(calls.some((c) => c[0] === "=lineWidth" && c[1] === 4)).toBe(true);
+  });
+
+  it("radar 선 굵기 기본값(2)은 draw와 설정 창 기준이 같은 값이다", () => {
+    const widthsOf = (options: ChartOptions) => {
+      const { ctx, calls } = recorder();
+      renderRadar(ctx, { ...radarInput, options }, noop);
+      return calls.filter((c) => c[0] === "=lineWidth").map((c) => c[1]);
+    };
+    const drawn = resolveOptions("radar", undefined, undefined);
+    expect(drawn.size.lineWidth).toBe(2);
+    // 계열 다각형 선만 굵기가 바뀐다. 차트 종류별 값이 없으면 전체 기본값(1.5)으로 그린다.
+    const count = (widths: unknown[], w: number) =>
+      widths.filter((x) => x === w).length;
+    const radar = widthsOf(drawn);
+    const global = widthsOf(DEFAULT_OPTIONS);
+    expect(count(radar, 2)).toBeGreaterThan(count(global, 2));
+    // 설정 창은 같은 기본값을 기준으로 보여 주고 되돌린다.
+    expect(chartTypeDefaults(CHART_DEFAULTS, "radar").options).toEqual(drawn);
+    // 공통 속성으로 바꾸면 그 굵기
+    expect(
+      resolveOptions("radar", { size: { lineWidth: 1.5 } }, undefined).size
+        .lineWidth,
+    ).toBe(1.5);
   });
 });
 

@@ -42,7 +42,6 @@ import {
   drawPoint,
   drawPointLabel,
   fontPx,
-  lineWidthOf,
   mixColor,
   pathPoint,
   pointSizeOf,
@@ -717,7 +716,8 @@ export function renderScatter(
       selected,
       plot,
       compact: input.compact,
-      lineWidth: lineWidthOf(o, input.compact ? 1 : 1.5),
+      // 섬네일은 정한 굵기의 2/3 (기본 1.5 → 1)
+      lineWidth: input.compact ? (o.size.lineWidth * 2) / 3 : o.size.lineWidth,
       alpha: alphaOf(shape.transparency),
       dim: shape.dimOpacity,
       dot: {
@@ -841,7 +841,7 @@ export function renderScatter(
 
   // ── 예측 선과 구간 ────────────────────────────────────────────
   if (predicted.length > 0) {
-    drawForecasts(ctx, predicted, x, y, lineWidthOf(o, 1.5));
+    drawForecasts(ctx, predicted, x, y, o.size.lineWidth);
   }
 
   // ── 점 글자 (픽셀로 줄인 점이 적을 때만) ─────────────────────────

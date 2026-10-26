@@ -73,6 +73,29 @@ describe("chart options", () => {
     });
   });
 
+  it("draw는 차트 종류별 기본값 위에 공통·개별 속성을 덮는다", () => {
+    // radar는 선 굵기 기본값이 2다.
+    expect(resolveOptions("radar", undefined, undefined).size).toEqual({
+      ...DEFAULT_OPTIONS.size,
+      lineWidth: 2,
+    });
+    expect(
+      resolveOptions("radar", { size: { lineWidth: 3 } }, undefined).size
+        .lineWidth,
+    ).toBe(3);
+    expect(
+      resolveOptions(
+        "radar",
+        { size: { lineWidth: 3, pointFixed: 5 } },
+        { size: { lineWidth: 4 } },
+      ).size,
+    ).toMatchObject({ lineWidth: 4, pointFixed: 5 });
+    // 종류별 값이 없는 차트는 전체 값
+    expect(resolveOptions("line", undefined, undefined).size.lineWidth).toBe(
+      DEFAULT_OPTIONS.size.lineWidth,
+    );
+  });
+
   it("원본 표에서 X인 칸은 쓰지 않는다", () => {
     expect(supportsOption("bar", "score")).toBe(false);
     expect(supportsOption("heatmap", "legend")).toBe(false);

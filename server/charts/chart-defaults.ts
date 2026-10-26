@@ -41,6 +41,12 @@ export const CHART_DEFAULTS: ChartDefaults = {
   charts: {
     // 단계 이름이 길어 오른쪽 세로 목록으로 둔다.
     funnel: { legendPosition: "right" },
+    // 선 굵기(size.lineWidth): 렌더러가 따로 쓰던 굵기를 옮겨 설정 창에도 그린 값이 보이게 한다.
+    // radar는 다각형 테두리가 면 사이에서 보이게 굵게, 나머지는 심지·잇는 점선·가장 가는 흐름이라 가늘게
+    radar: { options: { size: { lineWidth: 2 } } },
+    candle: { options: { size: { lineWidth: 1 } } },
+    waterfall: { options: { size: { lineWidth: 1 } } },
+    sankey: { options: { size: { lineWidth: 1 } } },
   },
 };
 
