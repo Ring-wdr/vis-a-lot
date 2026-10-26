@@ -15,7 +15,7 @@
 // palette gradientColors(palette, n)              start→(middle)→end 그라데이션 n색. job-manager가 legend 기본 색으로 쓴다
 // shape   pathPoint(ctx, shape, x, y, r)          현재 path에 도형 하나를 더한다 (같은 색 점을 한 path로 모아 fill 한 번)
 //         drawPoint(ctx, shape, x, y, r, style, borderWidth, fill, stroke)  점 하나를 바로 그린다
-//         alphaOf(transparency, autoAlpha)        투명도 0이면 차트가 정한 자동 투명도
+//         alphaOf(transparency)                   투명도 → globalAlpha (0이면 불투명)
 // label   formatValue(v, decimals)                소수 자리 (null이면 자동, 천 단위 쉼표)
 //         createLabelGuard()                      겹치는 점 글자를 건너뛰는 검사기
 //         drawPointLabel(ctx, x, y, value, o.pointLabel, fontPx, guard?)  점 글자. 겹치면 그리지 않고 null
@@ -204,9 +204,9 @@ export function gradientColors(palette: PaletteOptions, n: number): string[] {
 
 // ── shape ───────────────────────────────────────────────────────
 
-/** 투명도(0..1)를 globalAlpha로. 0이면 차트가 정한 자동 투명도를 그대로 쓴다. */
-export function alphaOf(transparency: number, autoAlpha: number) {
-  return transparency > 0 ? clamp(1 - transparency, 0, 1) : autoAlpha;
+/** 투명도(0..1)를 globalAlpha로. 0(기본값)이면 모든 차트에서 불투명이다. */
+export function alphaOf(transparency: number) {
+  return clamp(1 - transparency, 0, 1);
 }
 
 /**

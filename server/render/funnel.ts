@@ -206,7 +206,7 @@ export function renderFunnel(
   });
   ctx.font = `${font}px ${THEME.font}`;
   ctx.textBaseline = "middle";
-  const opacity = alphaOf(shape.transparency, 1);
+  const opacity = alphaOf(shape.transparency);
   const surface = surfaceOf(o);
   const rowPitch = plot.height / Math.max(1, stages.length);
   stages.forEach((s, i) => {

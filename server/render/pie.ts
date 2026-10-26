@@ -311,7 +311,7 @@ export function renderPie(
 
   // ── 조각 (render) ─────────────────────────────────────────────
   // shape: brush는 채우기만, border는 조각 색 테두리만, both는 채우기 + borderWidth만큼 배경색 테두리
-  const opacity = alphaOf(shape.transparency, 1);
+  const opacity = alphaOf(shape.transparency);
   const paint = (color: string) => {
     if (shape.style !== "border") {
       ctx.fillStyle = color;

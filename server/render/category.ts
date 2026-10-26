@@ -508,7 +508,7 @@ export function renderCategory(
   const { shape } = o;
   if (input.chartType === "bar") {
     const zero = y(baseValue);
-    const fill = alphaOf(shape.transparency, 1);
+    const fill = alphaOf(shape.transparency);
     (input.bars ?? []).forEach((row, i) => {
       // 누적이면 범주의 맨 위·맨 아래 막대만 바깥 끝을 둥글게 한다.
       const ends = segments && stackEnds(segments[i] ?? []);
@@ -584,7 +584,7 @@ export function renderCategory(
         const top = y(b.q3);
         const h = Math.max(1, y(b.q1) - top);
         if (shape.style !== "border") {
-          ctx.globalAlpha = alphaOf(shape.transparency, 0.22) * alpha;
+          ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
           ctx.fillStyle = color;
           ctx.fillRect(cx - half, top, w, h);
         }
@@ -595,8 +595,10 @@ export function renderCategory(
         }
         // dot: 원값 표본을 상자 너비 안에 흩어 찍는다. 흩는 위치는 순번으로 정해 다시 그려도 같다.
         if (b.dots && b.dots.length > 0) {
-          ctx.globalAlpha = alphaOf(shape.transparency, 0.45) * alpha;
-          ctx.fillStyle = color;
+          ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
+          // 상자와 같은 색이면 채운 상자 위에서 보이지 않아 진하게 칠한다.
+          ctx.fillStyle =
+            shape.style === "border" ? color : mixColor(color, "#000000", 0.35);
           const dotRadius = pointSizeOf(o, 1.6);
           const spread = Math.max(0, half - dotRadius);
           b.dots.forEach((v, k) => {
@@ -615,8 +617,8 @@ export function renderCategory(
         ctx.moveTo(cx - half, y(b.median));
         ctx.lineTo(cx + half, y(b.median));
         ctx.stroke();
-        // 이상치: shape 모양·크기를 따른다. 기본은 반지름 2 원, 투명도 0.6
-        ctx.globalAlpha = alphaOf(shape.transparency, 0.6) * alpha;
+        // 이상치: shape 모양·크기를 따른다. 기본은 반지름 2 원
+        ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
         const radius = pointSizeOf(o, 2);
         for (const v of b.outliers) {
           drawPoint(

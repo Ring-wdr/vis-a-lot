@@ -391,7 +391,7 @@ export function renderGantt(
   }
   // 막대 모양: 채우기·테두리(style), 투명도, 테두리 굵기
   const { style, borderWidth, transparency } = o.shape;
-  const alpha = alphaOf(transparency, 1);
+  const alpha = alphaOf(transparency);
   const stroke = surfaceOf(o);
   for (let j = 0; j < n; j++) {
     if (owner[j] !== j) continue;

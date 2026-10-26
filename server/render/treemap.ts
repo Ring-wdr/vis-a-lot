@@ -309,7 +309,7 @@ export function renderTreemap(
   }
   // 칸 모양: 채우기·테두리(style), 투명도, 테두리 굵기
   const { style, borderWidth, transparency } = o.shape;
-  const alpha = alphaOf(transparency, 1);
+  const alpha = alphaOf(transparency);
   const stroke = surfaceOf(o);
   // 점 글자(값)를 켜면 칸 안 값 줄 대신 점 글자로 적는다.
   const pointLabels = o.pointLabel.visible && !input.compact;

@@ -309,7 +309,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
     {
       kind: "number",
       path: "shape.transparency",
-      label: "투명도 (0 = 자동)",
+      label: "투명도 (0 = 불투명)",
       min: 0,
       max: 1,
       step: 0.05,

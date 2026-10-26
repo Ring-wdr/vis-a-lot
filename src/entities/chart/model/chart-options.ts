@@ -106,7 +106,7 @@ export type ShapeOptions = {
   type: PointShape;
   /** both: 채우기 + 테두리, border: 테두리만, brush: 채우기만 */
   style: "both" | "border" | "brush";
-  /** 0(불투명)..1(투명). 0이 아니면 차트의 자동 투명도 대신 쓴다. */
+  /** 0(불투명)..1(투명). 기본 0이라 모든 차트가 불투명하게 그린다. */
   transparency: number;
   /** 도형(막대·조각·점) 테두리 굵기 */
   borderWidth: number;

@@ -717,7 +717,7 @@ export function renderScatter(
       plot,
       compact: input.compact,
       lineWidth: lineWidthOf(o, input.compact ? 1 : 1.5),
-      alpha: alphaOf(shape.transparency, 1),
+      alpha: alphaOf(shape.transparency),
       dot: {
         shape: shape.type,
         radius: pointSizeOf(o, 2.5),
@@ -753,8 +753,8 @@ export function renderScatter(
       shape.style === "both" &&
       shape.borderWidth === 0;
     const borderWidth = plain ? (input.compact ? 0 : 1) : shape.borderWidth;
-    // 투명도 0(자동)은 불투명이다. 전체 설정의 값을 그대로 따른다.
-    const alpha = alphaOf(shape.transparency, 1);
+    // 투명도 0(기본값)은 불투명이다.
+    const alpha = alphaOf(shape.transparency);
     // 같은 색 안에서 픽셀 칸마다 그린 점 수. 상한을 넘으면 더 칠해도 거의 같아 보여 건너뛴다.
     const drawn = new Uint8Array(plot.width * plot.height);
     // 그림 영역 밖이어도 점 반지름만큼은 영역 안으로 걸쳐 보인다.

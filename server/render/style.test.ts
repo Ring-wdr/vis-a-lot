@@ -88,8 +88,9 @@ describe("point label", () => {
     expect(guard.take({ x: 40, y: 0, width: 20, height: 10 })).toBe(true);
   });
 
-  it("투명도 0이면 자동 투명도", () => {
-    expect(alphaOf(0, 0.4)).toBe(0.4);
-    expect(alphaOf(0.25, 0.4)).toBe(0.75);
+  it("투명도 0이면 불투명", () => {
+    expect(alphaOf(0)).toBe(1);
+    expect(alphaOf(0.25)).toBe(0.75);
+    expect(alphaOf(1.5)).toBe(0);
   });
 });

@@ -98,7 +98,6 @@ const NODE_PADDING = 10;
 const LABEL_GAP = 6;
 /** 노드 라벨 자리의 폭 상한 (PNG 폭 대비) */
 const LABEL_MAX_RATIO = 0.22;
-const LINK_ALPHA = 0.4;
 const DIM = 0.2;
 /** 도착 노드 색 */
 const TARGET_COLOR = "#8a8984";
@@ -271,7 +270,7 @@ export function renderSankey(
       : TARGET_COLOR;
 
   // shape 투명도는 흐름·노드 모두에, 선 굵기(size.lineWidth)는 가장 가는 흐름의 굵기에 쓴다.
-  const opacity = alphaOf(shape.transparency, 1);
+  const opacity = alphaOf(shape.transparency);
   const minLink = lineWidthOf(o, 1);
 
   // ── 흐름 (render) ─────────────────────────────────────────────
@@ -279,7 +278,7 @@ export function renderSankey(
   layout.links.forEach((link, i) => {
     const { xs, xt } = linkEnds(layout, link);
     ctx.strokeStyle = colorOf(layout.nodes[link.source]);
-    ctx.globalAlpha = LINK_ALPHA * opacity * (linkIn[i] ? 1 : DIM);
+    ctx.globalAlpha = opacity * (linkIn[i] ? 1 : DIM);
     ctx.lineWidth = Math.max(minLink, link.width);
     traceLink(ctx, xs, xt, link);
     ctx.stroke();

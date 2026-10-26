@@ -229,7 +229,7 @@ export function renderHistogram(
   ctx.rect(plot.left, plot.top, plot.width, plot.height);
   ctx.clip();
   const zero = y(baseValue);
-  const fill = alphaOf(o.shape.transparency, 1);
+  const fill = alphaOf(o.shape.transparency);
   /** 점 글자 자리: [x, y, 개수]. clip을 푼 뒤 그린다. */
   const labels: [number, number, number][] = [];
   counts.forEach((row, i) => {
