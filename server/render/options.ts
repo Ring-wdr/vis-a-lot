@@ -33,11 +33,20 @@ export type TitleOptions = {
   bold: boolean;
   color: string;
   align: TextAlign;
+  subtitleColor: string;
+  /** 오른쪽 요약(점 수·범주 수 등) */
+  summary: { visible: boolean; color: string };
 };
 
 export type AxisOptions = {
   visible: boolean;
-  title: { visible: boolean /** 비우면 컬럼 라벨 */; text: string };
+  title: {
+    visible: boolean;
+    /** 비우면 컬럼 라벨 */
+    text: string;
+    /** 비우면 눈금 글자 색 */
+    color: string;
+  };
   /** 값 축 범위. null이면 자동 */
   min: number | null;
   max: number | null;
@@ -67,6 +76,7 @@ export type LegendStyle = {
   reverse: boolean;
   fontSize: number;
   fontColor: string;
+  titleColor: string;
 };
 
 export type PanelOptions = {
@@ -89,6 +99,8 @@ export type PaletteOptions = {
   /** 단계 수. 0이면 legend 값 수 */
   steps: number;
   reverse: boolean;
+  /** 팔레트에 들지 못한 나머지('기타' 조각)와 강조 시 나머지 색 */
+  othersColor: string;
 };
 
 export const POINT_SHAPES = [
@@ -108,6 +120,14 @@ export type ShapeOptions = {
   transparency: number;
   /** 도형(막대·조각·점) 테두리 굵기 */
   borderWidth: number;
+  /** 도형 테두리 색. 비우면 자동(도형 색을 진하게, 굵기를 정했으면 배경색) */
+  borderColor: string;
+  /** 선택 영역 밖 도형의 진하기 (0..1) */
+  dimOpacity: number;
+  /** 막대 끝 모서리 둥글기(px) */
+  cornerRadius: number;
+  /** boxplot 중앙값 선 색 */
+  medianColor: string;
 };
 
 export type SizeOptions = {
@@ -256,7 +276,7 @@ export type ChartOptionsPatch = DeepPartial<ChartOptions>;
 
 const axis = (): AxisOptions => ({
   visible: true,
-  title: { visible: false, text: "" },
+  title: { visible: false, text: "", color: "" },
   min: null,
   max: null,
   log: false,
@@ -278,6 +298,8 @@ export const DEFAULT_OPTIONS: ChartOptions = {
     bold: true,
     color: "#0b0b0b",
     align: "left",
+    subtitleColor: "#52514e",
+    summary: { visible: true, color: "#8a8984" },
   },
   // 지금까지 x축은 세로 그리드 없이 아래 축 선만, y축은 가로 그리드만 그렸다.
   axes: {
@@ -291,6 +313,7 @@ export const DEFAULT_OPTIONS: ChartOptions = {
     reverse: false,
     fontSize: 11,
     fontColor: "#52514e",
+    titleColor: "#8a8984",
   },
   panel: {
     backColor: "#fcfcfb",
@@ -306,8 +329,18 @@ export const DEFAULT_OPTIONS: ChartOptions = {
     end: "#0d3d78",
     steps: 0,
     reverse: false,
+    othersColor: "#a9a8a2",
   },
-  shape: { type: "circle", style: "both", transparency: 0, borderWidth: 0 },
+  shape: {
+    type: "circle",
+    style: "both",
+    transparency: 0,
+    borderWidth: 0,
+    borderColor: "",
+    dimOpacity: 0.2,
+    cornerRadius: 4,
+    medianColor: "#0b0b0b",
+  },
   size: {
     pointAuto: true,
     pointFixed: 4,

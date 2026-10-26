@@ -280,6 +280,20 @@
               "align": {
                 "type": "string",
                 "enum": ["left", "center", "right"]
+              },
+              "subtitleColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "visible": {
+                    "type": "boolean"
+                  },
+                  "color": {
+                    "$ref": "#/components/schemas/HexColor"
+                  }
+                }
               }
             }
           },
@@ -313,6 +327,9 @@
                 "type": "number"
               },
               "fontColor": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "titleColor": {
                 "$ref": "#/components/schemas/HexColor"
               }
             }
@@ -379,6 +396,9 @@
               },
               "reverse": {
                 "type": "boolean"
+              },
+              "othersColor": {
+                "$ref": "#/components/schemas/HexColor"
               }
             }
           },
@@ -397,6 +417,26 @@
               },
               "borderWidth": {
                 "type": "number"
+              },
+              "borderColor": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/HexColor"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [""]
+                  }
+                ]
+              },
+              "dimOpacity": {
+                "type": "number"
+              },
+              "cornerRadius": {
+                "type": "number"
+              },
+              "medianColor": {
+                "$ref": "#/components/schemas/HexColor"
               }
             }
           },
@@ -735,6 +775,17 @@
               "text": {
                 "type": "string",
                 "maxLength": 80
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/HexColor"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [""]
+                  }
+                ]
               }
             }
           },
@@ -2139,6 +2190,9 @@
               "textColor": {
                 "type": "string"
               },
+              "titleColor": {
+                "type": "string"
+              },
               "mutedColor": {
                 "type": "string"
               },
@@ -2181,6 +2235,7 @@
               "fontSize",
               "marker",
               "textColor",
+              "titleColor",
               "mutedColor",
               "surface",
               "borderColor",

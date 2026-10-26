@@ -34,6 +34,7 @@ import {
 import { drawShapes, type Shape } from "./shapes";
 import {
   alphaOf,
+  borderOf,
   createLabelGuard,
   drawPanel,
   drawPoint,
@@ -45,7 +46,7 @@ import {
   pointSizeOf,
   surfaceOf,
 } from "./style";
-import { OTHERS_COLOR, THEME } from "./theme";
+import { THEME } from "./theme";
 
 export type CategoryMeta = {
   chartType: "bar" | "boxplot";
@@ -106,7 +107,6 @@ export type CategoryInput = {
 
 type Ctx = OffscreenCanvasRenderingContext2D;
 
-const RADIUS = 4;
 const MARK_RATIO = 0.7;
 /** 나란히 놓은 막대 사이 배경색 간격 */
 const GROUP_GAP = 2;
@@ -144,7 +144,7 @@ export function paintMark(ctx: Ctx, shape: ShapeOptions, color: string) {
     ctx.lineWidth = Math.max(1, shape.borderWidth);
     ctx.stroke();
   } else if (shape.style === "both" && shape.borderWidth > 0) {
-    ctx.strokeStyle = mixColor(color, "#000000", 0.3);
+    ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.3));
     ctx.lineWidth = shape.borderWidth;
     ctx.stroke();
   }
@@ -398,13 +398,13 @@ export function renderCategory(
   const colorOf = (index: number, point?: readonly [number, number], i = 0) => {
     if (focus && point) {
       if (focus(i, point[1])) return o.focus.color;
-      if (o.focus.legendSingleColor) return OTHERS_COLOR;
+      if (o.focus.legendSingleColor) return o.palette.othersColor;
     }
     return input.legend?.colors[index] ?? input.color;
   };
   /** 선택이 있으면 바깥 막대/상자는 흐리게 */
   const selectionAlpha = (point: readonly [number, number]) =>
-    !inSelection || inSelection(point[0], point[1]) ? 1 : 0.2;
+    !inSelection || inSelection(point[0], point[1]) ? 1 : o.shape.dimOpacity;
   /** 막대는 끝 값, 상자는 중앙값이 대표 값이다. */
   const markValue = (i: number, g: number) =>
     input.chartType === "bar"
@@ -526,7 +526,7 @@ export function renderCategory(
         const r =
           seg && ends?.top !== g && ends?.bottom !== g
             ? 0
-            : Math.min(RADIUS, w / 2, h);
+            : Math.min(shape.cornerRadius, w / 2, h);
         // 데이터 끝(바깥쪽)만 둥글게, 기준선 쪽은 각지게 둔다.
         const radii = to >= from ? [r, r, 0, 0] : [0, 0, r, r];
         const point = pointOf(i, g, v);
@@ -590,6 +590,8 @@ export function renderCategory(
         }
         ctx.globalAlpha = alpha;
         if (shape.style !== "brush") {
+          ctx.strokeStyle =
+            shape.style === "border" ? color : borderOf(shape, color);
           ctx.lineWidth = shape.borderWidth > 0 ? shape.borderWidth : line;
           ctx.strokeRect(cx - half, top, w, h);
         }
@@ -611,7 +613,7 @@ export function renderCategory(
           ctx.globalAlpha = alpha;
         }
         // 중앙값
-        ctx.strokeStyle = THEME.textPrimary;
+        ctx.strokeStyle = shape.medianColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(cx - half, y(b.median));

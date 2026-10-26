@@ -246,7 +246,7 @@ export function renderHistogram(
       const barWidth = Math.max(1, slot - (groupCount > 1 ? 1 : 0));
       const barLeft = left + gap / 2 + slot * g;
       ctx.globalAlpha =
-        (!inSelection || inSelection(...point) ? 1 : 0.2) * fill;
+        (!inSelection || inSelection(...point) ? 1 : o.shape.dimOpacity) * fill;
       ctx.beginPath();
       ctx.rect(barLeft, top, barWidth, Math.max(1, zero - top));
       paintMark(ctx, o.shape, colorOf(index));

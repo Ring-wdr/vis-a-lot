@@ -16,7 +16,14 @@ import { type ChartOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import { drawShapes, type Shape } from "./shapes";
-import { alphaOf, drawPanel, fontPx, mixColor, surfaceOf } from "./style";
+import {
+  alphaOf,
+  borderOf,
+  drawPanel,
+  fontPx,
+  mixColor,
+  surfaceOf,
+} from "./style";
 import { THEME } from "./theme";
 
 type Rect = { x: number; y: number; width: number; height: number };
@@ -211,7 +218,7 @@ export function renderFunnel(
   const rowPitch = plot.height / Math.max(1, stages.length);
   stages.forEach((s, i) => {
     const { rect } = s;
-    const alpha = isSelected(s) ? 1 : 0.2;
+    const alpha = isSelected(s) ? 1 : o.shape.dimOpacity;
     const color = colorOf(s.index);
     // shape: brush는 채우기만, border는 막대 색 테두리만, both는 채우기 + 진한 색 테두리(borderWidth)
     ctx.globalAlpha = alpha * opacity;
@@ -223,7 +230,9 @@ export function renderFunnel(
     }
     if (shape.style === "border" || shape.borderWidth > 0) {
       ctx.strokeStyle =
-        shape.style === "border" ? color : mixColor(color, "#000000", 0.3);
+        shape.style === "border"
+          ? color
+          : borderOf(shape, mixColor(color, "#000000", 0.3));
       ctx.lineWidth = Math.max(1, shape.borderWidth);
       ctx.stroke();
     }

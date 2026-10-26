@@ -77,7 +77,7 @@ export function ChartLegend({
           left: layout.title.x,
           top: layout.title.y,
           maxWidth: layout.title.maxWidth + 1,
-          color: layout.mutedColor,
+          color: layout.titleColor,
         }}
       >
         {legend.title}

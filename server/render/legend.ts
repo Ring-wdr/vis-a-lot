@@ -60,6 +60,7 @@ export type LegendLayout = {
   /** 색 표시(●) 반지름 */
   marker: number;
   textColor: string;
+  titleColor: string;
   mutedColor: string;
   surface: string;
   /** 테두리를 그리지 않으면 null */
@@ -80,6 +81,7 @@ function layoutOf(
     fontSize: look.font,
     marker: look.marker,
     textColor: look.textColor,
+    titleColor: look.titleColor,
     mutedColor: THEME.textMuted,
     surface: look.surface,
     borderColor: look.border ? look.borderColor : null,
@@ -117,6 +119,7 @@ type Look = {
   row: number;
   marker: number;
   textColor: string;
+  titleColor: string;
   border: boolean;
   borderColor: string;
   surface: string;
@@ -136,6 +139,7 @@ function lookOf(legend: LegendInput, o: ChartOptions): Look {
     row: font + 7,
     marker: Math.max(3, Math.round(font * 0.45)),
     textColor: style.fontColor,
+    titleColor: style.titleColor,
     border: style.border,
     borderColor: style.borderColor,
     surface: surfaceOf(o),
@@ -377,7 +381,7 @@ function drawVerticalLegend(
 
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  ctx.fillStyle = THEME.textMuted;
+  ctx.fillStyle = look.titleColor;
   ctx.fillText(
     truncate(ctx, legend.title, textWidth),
     x + PAD,
@@ -479,7 +483,7 @@ function drawLegend(
   const midY = y + H / 2;
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  ctx.fillStyle = THEME.textMuted;
+  ctx.fillStyle = look.titleColor;
   ctx.fillText(titleText, x + PAD, midY);
   for (const entry of entries) {
     const cx = entry.marker.x;

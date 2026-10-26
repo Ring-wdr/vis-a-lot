@@ -234,7 +234,8 @@ export function renderWaterfall(
     const top = Math.min(py(s.start), py(s.end));
     const h = Math.abs(py(s.end) - py(s.start));
     ctx.fillStyle = colorOf(index);
-    ctx.globalAlpha = !inSelection || inSelection(...stepPoint(i, s)) ? 1 : 0.2;
+    ctx.globalAlpha =
+      !inSelection || inSelection(...stepPoint(i, s)) ? 1 : o.shape.dimOpacity;
     ctx.beginPath();
     ctx.roundRect(x(i) - markWidth / 2, top, markWidth, Math.max(h, 1), 2);
     ctx.fill();

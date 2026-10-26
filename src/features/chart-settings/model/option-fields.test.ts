@@ -162,3 +162,26 @@ describe("option fields", () => {
     });
   });
 });
+
+describe("설정 창 필드", () => {
+  /** 기본값의 끝 칸 경로 ("title.summary.color" 등). 배열은 통째로 한 칸이다. */
+  function leafPaths(value: unknown, prefix = ""): string[] {
+    if (value && typeof value === "object" && !Array.isArray(value))
+      return Object.entries(value).flatMap(([key, v]) =>
+        leafPaths(v, prefix ? `${prefix}.${key}` : key),
+      );
+    return [prefix];
+  }
+
+  it("서버 기본값의 모든 칸을 설정 창에서 바꿀 수 있다", () => {
+    const paths = new Set<string>();
+    for (const section of OPTION_SECTIONS) {
+      const parts = SECTION_PARTS[section];
+      const fields = parts
+        ? parts.flatMap((p) => p.fields)
+        : SECTION_FIELDS[section];
+      for (const f of fields) if ("path" in f) paths.add(f.path);
+    }
+    expect(leafPaths(DEFAULT_OPTIONS).filter((p) => !paths.has(p))).toEqual([]);
+  });
+});

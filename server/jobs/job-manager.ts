@@ -49,7 +49,7 @@ import {
 } from "../render/analytics/distribution";
 import { CANDLE_LEGEND } from "../render/candle";
 import { gradientColors, legendStyleOf } from "../render/style";
-import { defaultLegendColor, OTHERS_COLOR } from "../render/theme";
+import { defaultLegendColor } from "../render/theme";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -606,6 +606,12 @@ function pieColors(
   data: PieData,
   values: string[],
 ) {
+  // '기타' 조각 색은 차트 속성(palette.othersColor)을 따른다.
+  const othersColor = resolveOptions(
+    chart.spec.chartType,
+    chart.spec.common.options,
+    item.props?.options,
+  ).palette.othersColor;
   const order = data.colorOrder ?? values.filter((v) => v !== OTHERS_SLICE);
   const named = legendColors(chart, item, order);
   return values.map((v) => {
@@ -614,7 +620,7 @@ function pieColors(
     return (
       item.props?.legendColors?.[v] ??
       chart.spec.common.legendColors?.[v] ??
-      OTHERS_COLOR
+      othersColor
     );
   });
 }

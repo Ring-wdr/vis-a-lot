@@ -2724,6 +2724,11 @@ export type components = {
         color?: components["schemas"]["HexColor"];
         /** @enum {string} */
         align?: "left" | "center" | "right";
+        subtitleColor?: components["schemas"]["HexColor"];
+        summary?: {
+          visible?: boolean;
+          color?: components["schemas"]["HexColor"];
+        };
       };
       axes?: {
         x?: components["schemas"]["AxisOptions"];
@@ -2736,6 +2741,7 @@ export type components = {
         reverse?: boolean;
         fontSize?: number;
         fontColor?: components["schemas"]["HexColor"];
+        titleColor?: components["schemas"]["HexColor"];
       };
       panel?: {
         backColor?: components["schemas"]["HexColor"];
@@ -2756,6 +2762,7 @@ export type components = {
         end?: components["schemas"]["HexColor"];
         steps?: number;
         reverse?: boolean;
+        othersColor?: components["schemas"]["HexColor"];
       };
       shape?: {
         type?: components["schemas"]["PointShape"];
@@ -2763,6 +2770,10 @@ export type components = {
         style?: "both" | "border" | "brush";
         transparency?: number;
         borderWidth?: number;
+        borderColor?: components["schemas"]["HexColor"] | "";
+        dimOpacity?: number;
+        cornerRadius?: number;
+        medianColor?: components["schemas"]["HexColor"];
       };
       size?: {
         pointAuto?: boolean;
@@ -2861,6 +2872,7 @@ export type components = {
       title?: {
         visible?: boolean;
         text?: string;
+        color?: components["schemas"]["HexColor"] | "";
       };
       min?: number | null;
       max?: number | null;
@@ -3276,6 +3288,7 @@ export type components = {
         fontSize: number;
         marker: number;
         textColor: string;
+        titleColor: string;
         mutedColor: string;
         surface: string;
         borderColor: string | null;

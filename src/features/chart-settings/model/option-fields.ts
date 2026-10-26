@@ -93,6 +93,12 @@ function axisFields(axis: "x" | "y"): OptionField[] {
       placeholder: "비우면 컬럼 이름",
     },
     {
+      kind: "color",
+      path: `${p}.title.color`,
+      label: "축 제목 색 (비우면 눈금 글자 색)",
+      optional: true,
+    },
+    {
       kind: "number",
       path: `${p}.min`,
       label: "최솟값",
@@ -213,6 +219,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       placeholder: "비우면 split 조합 이름",
     },
     { kind: "text", path: "title.subtitle", label: "부제목", maxLength: 80 },
+    { kind: "color", path: "title.subtitleColor", label: "부제목 색" },
     {
       kind: "number",
       path: "title.fontSize",
@@ -228,6 +235,9 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       label: "정렬",
       options: ALIGNS,
     },
+    { kind: "heading", label: "요약 (오른쪽 점 수·범주 수)" },
+    { kind: "boolean", path: "title.summary.visible", label: "요약 보이기" },
+    { kind: "color", path: "title.summary.color", label: "요약 글자 색" },
   ],
   axes: [...axisFields("x"), ...axisFields("y")],
   legend: [
@@ -243,6 +253,7 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       max: 40,
     },
     { kind: "color", path: "legend.fontColor", label: "글자 색" },
+    { kind: "color", path: "legend.titleColor", label: "제목 색" },
   ],
   panel: [
     { kind: "color", path: "panel.backColor", label: "배경 색" },
@@ -288,6 +299,11 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       path: "palette.reverse",
       label: "색 순서 뒤집기",
     },
+    {
+      kind: "color",
+      path: "palette.othersColor",
+      label: "기타 색 ('기타' 조각, 강조 시 나머지)",
+    },
   ],
   shape: [
     {
@@ -321,6 +337,32 @@ export const SECTION_FIELDS: Record<OptionSection, OptionField[]> = {
       min: 0,
       max: 10,
       step: 0.5,
+    },
+    {
+      kind: "color",
+      path: "shape.borderColor",
+      label: "테두리 색 (비우면 자동)",
+      optional: true,
+    },
+    {
+      kind: "number",
+      path: "shape.dimOpacity",
+      label: "선택 밖 진하기",
+      min: 0,
+      max: 1,
+      step: 0.05,
+    },
+    {
+      kind: "number",
+      path: "shape.cornerRadius",
+      label: "막대 모서리 둥글기",
+      min: 0,
+      max: 20,
+    },
+    {
+      kind: "color",
+      path: "shape.medianColor",
+      label: "중앙값 선 색 (boxplot)",
     },
   ],
   size: [

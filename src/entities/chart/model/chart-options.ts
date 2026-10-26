@@ -35,11 +35,20 @@ export type TitleOptions = {
   bold: boolean;
   color: string;
   align: TextAlign;
+  subtitleColor: string;
+  /** 오른쪽 요약(점 수·범주 수 등) */
+  summary: { visible: boolean; color: string };
 };
 
 export type AxisOptions = {
   visible: boolean;
-  title: { visible: boolean /** 비우면 컬럼 라벨 */; text: string };
+  title: {
+    visible: boolean;
+    /** 비우면 컬럼 라벨 */
+    text: string;
+    /** 비우면 눈금 글자 색 */
+    color: string;
+  };
   /** 값 축 범위. null이면 자동 */
   min: number | null;
   max: number | null;
@@ -69,6 +78,7 @@ export type LegendStyle = {
   reverse: boolean;
   fontSize: number;
   fontColor: string;
+  titleColor: string;
 };
 
 export type PanelOptions = {
@@ -91,6 +101,8 @@ export type PaletteOptions = {
   /** 단계 수. 0이면 legend 값 수 */
   steps: number;
   reverse: boolean;
+  /** 팔레트에 들지 못한 나머지('기타' 조각)와 강조 시 나머지 색 */
+  othersColor: string;
 };
 
 export const POINT_SHAPES = [
@@ -110,6 +122,14 @@ export type ShapeOptions = {
   transparency: number;
   /** 도형(막대·조각·점) 테두리 굵기 */
   borderWidth: number;
+  /** 도형 테두리 색. 비우면 자동(도형 색을 진하게, 굵기를 정했으면 배경색) */
+  borderColor: string;
+  /** 선택 영역 밖 도형의 진하기 (0..1) */
+  dimOpacity: number;
+  /** 막대 끝 모서리 둥글기(px) */
+  cornerRadius: number;
+  /** boxplot 중앙값 선 색 */
+  medianColor: string;
 };
 
 export type SizeOptions = {

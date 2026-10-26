@@ -18,6 +18,7 @@ import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import {
   alphaOf,
+  borderOf,
   drawPanel,
   drawPoint,
   fontPx,
@@ -243,7 +244,7 @@ export function renderRadar(
     const surface = surfaceOf(o);
     for (const [k, s] of series.entries()) {
       const any = !inSelection || inside[k].some(Boolean);
-      const alpha = any ? 1 : 0.2;
+      const alpha = any ? 1 : o.shape.dimOpacity;
       const shown = s.points.filter((p): p is [number, number] => p !== null);
       if (shown.length === 0) continue;
       ctx.beginPath();
@@ -267,7 +268,8 @@ export function renderRadar(
       if (!input.compact) {
         s.points.forEach((p, i) => {
           if (!p) return;
-          ctx.globalAlpha = !inSelection || inside[k][i] ? 1 : 0.2;
+          ctx.globalAlpha =
+            !inSelection || inside[k][i] ? 1 : o.shape.dimOpacity;
           // 꼭짓점: 모양·크기, 테두리는 배경색 (borderWidth를 정하면 그 굵기)
           drawPoint(
             ctx,
@@ -278,7 +280,7 @@ export function renderRadar(
             shape.style,
             shape.borderWidth || DOT_BORDER,
             s.color,
-            surface,
+            borderOf(shape, surface),
           );
         });
       }

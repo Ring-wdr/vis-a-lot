@@ -19,6 +19,7 @@ import { drawSelection, type Region, regionTester } from "./region";
 import { type AxisMeta, compactPlot, type ProgressFn } from "./scatter";
 import {
   alphaOf,
+  borderOf,
   createLabelGuard,
   drawPanel,
   drawPointLabel,
@@ -318,7 +319,8 @@ export function renderPie(
       ctx.fill();
     }
     if (shape.style === "border" || shape.borderWidth > 0) {
-      ctx.strokeStyle = shape.style === "border" ? color : surface;
+      ctx.strokeStyle =
+        shape.style === "border" ? color : borderOf(shape, surface);
       ctx.lineWidth = Math.max(1, shape.borderWidth);
       ctx.lineJoin = "round";
       ctx.stroke();
@@ -330,7 +332,7 @@ export function renderPie(
       const a = Math.max(s.start, 0);
       const b = Math.min(s.end, Math.PI);
       if (a >= b) continue;
-      ctx.globalAlpha = opacity * (inside[i] ? 1 : 0.2);
+      ctx.globalAlpha = opacity * (inside[i] ? 1 : o.shape.dimOpacity);
       ctx.beginPath();
       ctx.ellipse(center.x, center.y, radius, radius * k, 0, a, b);
       ctx.lineTo(...onRing({ x: center.x, y: center.y + depth }, radius, b, k));
@@ -349,7 +351,7 @@ export function renderPie(
     }
   }
   for (const [i, s] of slices.entries()) {
-    ctx.globalAlpha = opacity * (inside[i] ? 1 : 0.2);
+    ctx.globalAlpha = opacity * (inside[i] ? 1 : o.shape.dimOpacity);
     wedge(ctx, center, sliceOuter, inner, s.start, s.end, k);
     paint(s.color);
   }
@@ -357,7 +359,8 @@ export function renderPie(
     // 바깥 고리: 부모 조각이 선택 밖이면 함께 흐리게
     const parentInside = new Map(slices.map((s, i) => [s.category, inside[i]]));
     for (const c of children) {
-      ctx.globalAlpha = opacity * (parentInside.get(c.parent) ? 1 : 0.2);
+      ctx.globalAlpha =
+        opacity * (parentInside.get(c.parent) ? 1 : o.shape.dimOpacity);
       wedge(ctx, center, radius, sliceOuter + SEPARATOR, c.start, c.end);
       paint(c.color);
     }

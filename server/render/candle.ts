@@ -35,7 +35,7 @@ import {
   fontPx,
   lineWidthOf,
 } from "./style";
-import { OTHERS_COLOR, PALETTE, THEME } from "./theme";
+import { PALETTE, THEME } from "./theme";
 
 /** candle의 고정 legend. 색은 국내 시세 관례(상승 빨강, 하락 파랑)를 따른다. */
 export const CANDLE_LEGEND = {
@@ -303,7 +303,7 @@ export function renderCandle(
     focus?.[i]
       ? o.focus.color
       : focus && o.focus.legendSingleColor
-        ? OTHERS_COLOR
+        ? o.palette.othersColor
         : (input.legend.colors[index[i]] ?? THEME.textMuted);
   for (let i = 0; i < n; i++) {
     if (off[index[i]]) continue;
@@ -311,7 +311,7 @@ export function renderCandle(
     if (candles.t[i] + interval < x0 || candles.t[i] > x1) continue;
     const color = colorOf(i);
     const cx = x(candles.t[i] + interval / 2);
-    ctx.globalAlpha = inside[i] ? 1 : 0.2;
+    ctx.globalAlpha = inside[i] ? 1 : o.shape.dimOpacity;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.lineWidth = wick;

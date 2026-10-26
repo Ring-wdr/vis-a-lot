@@ -318,7 +318,7 @@ export function drawAxisTitles(
     const cx = plot.left - yAxisSpace(o, yLabelWidth) + (fs + 6) / 2;
     ctx.save();
     ctx.font = `600 ${fs}px ${THEME.font}`;
-    ctx.fillStyle = y.label.color;
+    ctx.fillStyle = y.title.color || y.label.color;
     ctx.translate(cx, plot.top + plot.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(text, 0, 0, plot.height);
@@ -330,7 +330,7 @@ export function drawAxisTitles(
     const cy =
       plot.top + plot.height + xAxisSpace(o, xLabelWidth) - (fs + 6) / 2;
     ctx.font = `600 ${fs}px ${THEME.font}`;
-    ctx.fillStyle = x.label.color;
+    ctx.fillStyle = x.title.color || x.label.color;
     ctx.fillText(text, plot.left + plot.width / 2, cy, plot.width);
   }
   ctx.restore();

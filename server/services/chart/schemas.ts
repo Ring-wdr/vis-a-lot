@@ -76,7 +76,11 @@ const PointShapeSchema = z
 
 const AxisOptionsSchema = opt({
   visible: z.boolean(),
-  title: opt({ visible: z.boolean(), text: text() }),
+  title: opt({
+    visible: z.boolean(),
+    text: text(),
+    color: z.union([HexColorSchema, z.literal("")]),
+  }),
   min: orNull(finite),
   max: orNull(finite),
   log: z.boolean(),
@@ -107,6 +111,8 @@ export const ChartOptionsSchema = opt({
     bold: z.boolean(),
     color: HexColorSchema,
     align: z.enum(["left", "center", "right"]),
+    subtitleColor: HexColorSchema,
+    summary: opt({ visible: z.boolean(), color: HexColorSchema }),
   }),
   axes: opt({ x: AxisOptionsSchema, y: AxisOptionsSchema }),
   legend: opt({
@@ -116,6 +122,7 @@ export const ChartOptionsSchema = opt({
     reverse: z.boolean(),
     fontSize: num(6, 40),
     fontColor: HexColorSchema,
+    titleColor: HexColorSchema,
   }),
   panel: opt({
     backColor: HexColorSchema,
@@ -136,12 +143,17 @@ export const ChartOptionsSchema = opt({
     end: HexColorSchema,
     steps: num(0, 64),
     reverse: z.boolean(),
+    othersColor: HexColorSchema,
   }),
   shape: opt({
     type: PointShapeSchema,
     style: z.enum(["both", "border", "brush"]),
     transparency: num(0, 1),
     borderWidth: num(0, 10),
+    borderColor: z.union([HexColorSchema, z.literal("")]),
+    dimOpacity: num(0, 1),
+    cornerRadius: num(0, 20),
+    medianColor: HexColorSchema,
   }),
   size: opt({
     pointAuto: z.boolean(),
@@ -714,6 +726,7 @@ export const LegendMetaSchema = z
         /** 색 표시(●) 반지름 */
         marker: z.number(),
         textColor: z.string(),
+        titleColor: z.string(),
         mutedColor: z.string(),
         surface: z.string(),
         /** 테두리를 그리지 않으면 null */

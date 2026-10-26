@@ -204,6 +204,11 @@ export function gradientColors(palette: PaletteOptions, n: number): string[] {
 
 // ── shape ───────────────────────────────────────────────────────
 
+/** 도형 테두리 색. 설정에서 정했으면 그 색, 비웠으면 차트가 정한 자동 색(auto) */
+export function borderOf(shape: ShapeOptions, auto: string) {
+  return shape.borderColor || auto;
+}
+
 /** 투명도(0..1)를 globalAlpha로. 0(기본값)이면 모든 차트에서 불투명이다. */
 export function alphaOf(transparency: number) {
   return clamp(1 - transparency, 0, 1);

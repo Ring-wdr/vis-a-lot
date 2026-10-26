@@ -36,6 +36,7 @@ import { drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
 import {
   alphaOf,
+  borderOf,
   createLabelGuard,
   drawPanel,
   drawPoint,
@@ -47,7 +48,7 @@ import {
   pointSizeOf,
   surfaceOf,
 } from "./style";
-import { OTHERS_COLOR, THEME } from "./theme";
+import { THEME } from "./theme";
 
 const KST_OFFSET_MS = 9 * 3_600_000;
 const DAY_MS = 86_400_000;
@@ -709,7 +710,7 @@ export function renderScatter(
       sy,
       series: seriesOrder(xs, groupIndex, count, off),
       colors: single
-        ? new Array(count).fill(OTHERS_COLOR)
+        ? new Array(count).fill(o.palette.othersColor)
         : input.legend
           ? input.legend.colors
           : [input.color],
@@ -718,12 +719,13 @@ export function renderScatter(
       compact: input.compact,
       lineWidth: lineWidthOf(o, input.compact ? 1 : 1.5),
       alpha: alphaOf(shape.transparency),
+      dim: shape.dimOpacity,
       dot: {
         shape: shape.type,
         radius: pointSizeOf(o, 2.5),
         style: shape.style,
         borderWidth: shape.borderWidth,
-        stroke: surface,
+        stroke: borderOf(shape, surface),
       },
     });
   } else {
@@ -763,11 +765,11 @@ export function renderScatter(
     layers.forEach((layer, l) => {
       passes.forEach((passColor, g) => {
         if (off[g]) return;
-        const color = single ? OTHERS_COLOR : passColor;
-        ctx.globalAlpha = layer === 0 ? alpha * 0.2 : alpha;
+        const color = single ? o.palette.othersColor : passColor;
+        ctx.globalAlpha = layer === 0 ? alpha * o.shape.dimOpacity : alpha;
         if (plain) {
           ctx.fillStyle = color;
-          ctx.strokeStyle = mixColor(color, "#000000", 0.25);
+          ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.25));
           ctx.lineWidth = borderWidth;
         }
         drawn.fill(0);
@@ -803,7 +805,7 @@ export function renderScatter(
               shape.style,
               borderWidth,
               color,
-              surface,
+              borderOf(shape, surface),
             );
           }
           if (i % CHUNK === 0)
