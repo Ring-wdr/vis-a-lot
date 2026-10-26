@@ -3,6 +3,7 @@
 import { Menu as MenuIcon, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { ThemeToggle } from "@/features/switch-theme/ui/ThemeToggle";
 import { UserSwitcher } from "@/features/switch-user/ui/UserSwitcher";
 import { FEED } from "@/shared/config/feed-routes";
 import { AiBadge } from "@/shared/ui/AiBadge";
@@ -24,7 +25,7 @@ function usePaletteShortcut(toggle: () => void) {
   }, [toggle]);
 }
 
-/** 상단 바: 메뉴(좁은 화면), 검색·명령, 새 게시물, AI 배지, 사용자 전환 */
+/** 상단 바: 메뉴(좁은 화면), 검색·명령, 새 게시물, AI 배지, 테마, 사용자 전환 */
 export function FeedTopBar({
   showMenu,
   menuOpen,
@@ -80,6 +81,7 @@ export function FeedTopBar({
           </span>
         </Link>
         <AiBadge />
+        <ThemeToggle />
         <UserSwitcher />
       </div>
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}

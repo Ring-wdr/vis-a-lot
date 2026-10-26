@@ -12,6 +12,7 @@ import { TABS_LOCKED_HINT } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
 import { queueOpen } from "@/features/open-chart/model/pending-open";
 import { FeedPostButton } from "@/features/share-chart/ui/FeedPostButton";
+import { ThemeToggle } from "@/features/switch-theme/ui/ThemeToggle";
 import { ApiRequestError } from "@/shared/api/api";
 import {
   useDatasetNames,
@@ -252,6 +253,7 @@ export function ShareView() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           <UserMenu />
         </div>
       </header>

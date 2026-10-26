@@ -31,7 +31,7 @@ const drawLayer = tv({
 // 선택·삭제·확대 영역의 점선 사각형(또는 올가미). 선택 중인 영역은 반투명 바탕으로 칠해 고르는 곳을 보인다.
 const selectRegion =
   "fill-accent/15 stroke-[1.5] stroke-accent [stroke-dasharray:4_3]";
-// 선택하는 동안 그림 영역에서 고르는 곳 밖을 밝게 덮는다(PNG는 테마와 상관없이 밝아 chart-paper). 다 그린 PNG의 선택 밖 모습(dimOutside)을 미리 보여준다.
+// 선택하는 동안 그림 영역에서 고르는 곳 밖을 PNG 바탕색(chart-paper, 테마를 따른다)으로 덮는다. 다 그린 PNG의 선택 밖 모습(dimOutside)을 미리 보여준다.
 const selectOutside = "fill-chart-paper/70 stroke-none";
 const deleteRegion =
   "fill-danger/10 stroke-[1.5] stroke-danger [stroke-dasharray:4_3]";
