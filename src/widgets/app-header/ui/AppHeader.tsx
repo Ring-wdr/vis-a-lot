@@ -28,6 +28,14 @@ const TAB_UI = {
 } as const;
 
 /**
+ * 좁은 창에서는 화면 버튼·링크의 글자를 숨기고 아이콘만 남긴다. 글자는 읽어 주도록 sr-only로 둔다.
+ * 로고와 사용자 메뉴가 줄어들지 않도록, 버튼이 다 들어가지 않는 폭부터 숨긴다.
+ */
+function NavLabel({ children }: { children: string }) {
+  return <span className="max-[72rem]:sr-only">{children}</span>;
+}
+
+/**
  * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 내 공유 페이지, 피드, 도움말, 테마, 사용자.
  * 각 view의 탭은 TabBar가, 탭 안의 모드·공유는 TabToolbar가 그린다.
  */
@@ -37,25 +45,29 @@ export function AppHeader() {
   const locked = useTabs((s) => s.locked);
   return (
     <header className="col-span-full flex items-center gap-6 border-b border-line px-4">
-      <span className="w-57 text-base font-bold">vis-a-lot</span>
-      <nav className="flex items-center gap-1" aria-label="화면">
+      <span className="w-57 flex-none text-base font-bold whitespace-nowrap">
+        vis-a-lot
+      </span>
+      <nav className="flex min-w-0 items-center gap-1" aria-label="화면">
         <button
           type="button"
           className={navButton()}
           aria-haspopup="dialog"
+          title="upload"
           onClick={openUploadThenDatastore}
         >
           <Upload size={14} aria-hidden="true" />
-          upload
+          <NavLabel>upload</NavLabel>
         </button>
         <button
           type="button"
           className={navButton()}
           aria-haspopup="dialog"
+          title="datastore"
           onClick={() => openDatastoreDialog()}
         >
           <Database size={14} aria-hidden="true" />
-          datastore
+          <NavLabel>datastore</NavLabel>
         </button>
         <div
           role="tablist"
@@ -71,29 +83,30 @@ export function AppHeader() {
                 role="tab"
                 className={navButton()}
                 aria-selected={view === t}
+                title={locked ? TABS_LOCKED_HINT : label}
                 disabled={locked && view !== t}
                 onClick={() => tabs.getState().setView(t)}
               >
                 <Icon size={14} aria-hidden="true" />
-                {label}
+                <NavLabel>{label}</NavLabel>
               </button>
             );
           })}
         </div>
-        <Link href={SHARE_PAGE} className={navLink()}>
+        <Link href={SHARE_PAGE} className={navLink()} title="shares">
           <Share2 size={14} aria-hidden="true" />
-          shares
+          <NavLabel>shares</NavLabel>
         </Link>
-        <Link href="/feed" className={navLink()}>
+        <Link href="/feed" className={navLink()} title="feed">
           <Newspaper size={14} aria-hidden="true" />
-          feed
+          <NavLabel>feed</NavLabel>
         </Link>
-        <Link href={helpServicePath("vis")} className={navLink()}>
+        <Link href={helpServicePath("vis")} className={navLink()} title="help">
           <CircleHelp size={14} aria-hidden="true" />
-          help
+          <NavLabel>help</NavLabel>
         </Link>
       </nav>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-none items-center gap-2">
         <ThemeToggle />
         <UserMenu />
       </div>
