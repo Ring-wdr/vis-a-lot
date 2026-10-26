@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { readShareHash } from "@/entities/chart/lib/share";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import type { View } from "@/entities/workspace/model/tabs-store";
@@ -162,29 +162,33 @@ export function Workspace() {
   }
 
   return (
-    <WorkspaceScope key={tab?.id ?? "empty"} store={store}>
-      <TabNotices />
-      <DrawLock />
+    <WorkspaceScope store={store}>
       {/* 상단 바 · 탭 바 · 탭 도구 줄 · 탭 내용 */}
       <div className="grid h-screen grid-cols-[16.25rem_minmax(0,1fr)] grid-rows-[3rem_2.25rem_2.75rem_minmax(0,1fr)] bg-surface text-fg">
         <AppHeader />
-        <TabBar view={view} />
-        <TabToolbar />
-        {/* 왼쪽 패널: 설정은 스크롤되고 동작 버튼은 하단에 고정된다. */}
-        <aside className="col-1 row-4 flex min-h-0 flex-col border-r border-line bg-panel">
-          {view === "gallery" ? <GallerySidebar /> : <HistorySidebar />}
-        </aside>
-        {/* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */}
-        <main className="col-2 row-4 min-h-0 min-w-0 p-4">
-          <ChartGrid />
-        </main>
-        {filterOpen && (
-          // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
-          // 모든 item을 새 크기로 다시 그리게 된다.
-          <div className="z-drawer col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
-            <FilterPanel />
-          </div>
-        )}
+        {/* 탭을 바꿔도 탭 바는 그대로 두어 가로 스크롤 위치를 지킨다. gallery·history는 탭 목록이 달라 따로 둔다. */}
+        <TabBar key={view} view={view} />
+        {/* 탭 내용은 탭마다 처음부터 마운트한다 (mutation·입력 상태가 다른 탭으로 새지 않게). */}
+        <Fragment key={tab?.id ?? "empty"}>
+          <TabNotices />
+          <DrawLock />
+          <TabToolbar />
+          {/* 왼쪽 패널: 설정은 스크롤되고 동작 버튼은 하단에 고정된다. */}
+          <aside className="col-1 row-4 flex min-h-0 flex-col border-r border-line bg-panel">
+            {view === "gallery" ? <GallerySidebar /> : <HistorySidebar />}
+          </aside>
+          {/* 필터 drawer가 같은 칸에 겹치므로 자동 배치에 맡기지 않는다. */}
+          <main className="col-2 row-4 min-h-0 min-w-0 p-4">
+            <ChartGrid />
+          </main>
+          {filterOpen && (
+            // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
+            // 모든 item을 새 크기로 다시 그리게 된다.
+            <div className="z-drawer col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
+              <FilterPanel />
+            </div>
+          )}
+        </Fragment>
       </div>
     </WorkspaceScope>
   );
