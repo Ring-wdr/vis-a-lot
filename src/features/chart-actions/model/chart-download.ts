@@ -9,12 +9,6 @@ export const MAX_EXCEL_ITEMS = 300;
 /** job 상태를 한 번에 받는 item 수 (서버 pageSize 상한) */
 const RANGE_SIZE = 100;
 
-async function fetchPng(url: string) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`PNG를 받지 못했습니다 (HTTP ${res.status}).`);
-  return res.arrayBuffer();
-}
-
 /** item 하나의 지금 상태. since=-1이라 long polling을 기다리지 않고 바로 받는다. */
 export async function drawnItemState(jobId: string, key: string) {
   const state = await api.jobItems(jobId, [key], -1);
@@ -35,10 +29,14 @@ export async function downloadItemData(
   saveBlob(csv, `${safeFileName(item.label)}${suffix}.csv`);
 }
 
-/** 고른 item의 PNG를 '이름.png'로 내려받는다. */
-export async function downloadChartPng(jobId: string, key: string) {
+/** 고른 item의 PNG를 '이름.png'로 내려받는다. 화면이 다크여도 파일은 light 테마다. */
+export async function downloadChartPng(
+  chartId: string,
+  jobId: string,
+  key: string,
+) {
   const item = await drawnItemState(jobId, key);
-  const png = await fetchPng(item.image.url);
+  const png = await api.exportItemPng(chartId, key);
   saveBlob(
     new Blob([png], { type: "image/png" }),
     `${safeFileName(item.label)}.png`,
@@ -67,9 +65,11 @@ const GAP_PX = 16;
 /**
  * 모든 item의 PNG를 엑셀 한 시트에 차트 grid와 같은 열 수로 놓는다. 이름은 이미지 위 칸에 적고,
  * 두 번째 시트에 item 목록(순번·이름·상태)을 둔다. 그리지 못한 item은 목록에만 남는다.
+ * PNG는 light 테마다. 화면이 다크면 item마다 light로 한 장씩 더 그리므로 그만큼 오래 걸린다.
  * onProgress는 넣은 item 수를 알린다.
  */
 export async function downloadAllChartsExcel(
+  chartId: string,
   jobId: string,
   spec: ChartSpec,
   onProgress?: (done: number, total: number) => void,
@@ -101,7 +101,7 @@ export async function downloadAllChartsExcel(
       sheet.getCell(Math.floor(top) + 1, Math.floor(left) + 1).value =
         item.label;
       const imageId = book.addImage({
-        buffer: await fetchPng(image.url),
+        buffer: await api.exportItemPng(chartId, item.key),
         extension: "png",
       });
       sheet.addImage(imageId, {

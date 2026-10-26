@@ -353,6 +353,15 @@ export const api = {
       }),
     ),
 
+  /** 내려받기·엑셀용 PNG. 화면 테마와 상관없이 light로 그린 것이다. */
+  exportItemPng: (chartId: string, itemKey: string) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/png/export", {
+        params: { path: item(chartId, itemKey) },
+        parseAs: "arrayBuffer",
+      }),
+    ) as Promise<ArrayBuffer>,
+
   /** item이 그린 행 전체 CSV */
   exportItemRows: (chartId: string, itemKey: string) =>
     unwrap(
