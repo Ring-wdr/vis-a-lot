@@ -3,7 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
+import {
+  type ChartOptionsPatch,
+  useDefaultLegendPosition,
+} from "@/entities/chart/model/chart-options";
 import { ChartLegend } from "@/entities/chart/ui/ChartLegend";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -25,7 +28,6 @@ import {
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
-import { defaultLegendPosition } from "@/shared/config/chart-kinds";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";
@@ -180,11 +182,12 @@ function DrawnItem({
   const readOnly = useWorkspace((s) => s.readOnly);
   // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const commonPosition = useWorkspace(
-    (s) =>
-      s.current?.spec.common.legendPosition ??
-      defaultLegendPosition(s.current?.spec.chartType),
+  const defaultPosition = useDefaultLegendPosition(
+    useWorkspace((s) => s.current?.spec.chartType),
   );
+  const commonPosition =
+    useWorkspace((s) => s.current?.spec.common.legendPosition) ??
+    defaultPosition;
   const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
   const selected = useWorkspace((s) => s.selectedItem === item.key);
   const setSelectedItem = useWorkspace((s) => s.setSelectedItem);

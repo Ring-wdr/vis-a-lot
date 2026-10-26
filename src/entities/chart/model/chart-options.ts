@@ -3,7 +3,7 @@
 // (chart-options.test.ts가 서버 값과 같은지 확인한다). 기본값은 사본을 두지 않고 서버에서 받는다(useDefaultOptions).
 
 import { useChartDefaults } from "@/shared/api/queries";
-import type { ChartType } from "@/shared/api/types";
+import type { ChartType, LegendPosition } from "@/shared/api/types";
 
 export const OPTION_SECTIONS = [
   "title",
@@ -283,6 +283,17 @@ export type ChartOptionsPatch = DeepPartial<ChartOptions>;
 export function useDefaultOptions(): ChartOptions {
   // 응답 스키마는 저장용 부분 값 모양이지만, 기본값은 모든 필드가 채워져 있다.
   return useChartDefaults().options as ChartOptions;
+}
+
+/**
+ * 공통 속성에 legend 위치가 없을 때 그 차트가 legend를 놓는 위치. 서버 기본값(GET /defaults)의
+ * 차트 종류별 위치이고, 서버 draw도 같은 값을 쓴다.
+ */
+export function useDefaultLegendPosition(
+  type: ChartType | undefined,
+): LegendPosition {
+  const { legendPosition } = useChartDefaults();
+  return (type && legendPosition[type]) ?? "top";
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {

@@ -12,8 +12,8 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
+import { CHART_DEFAULTS } from "../charts/chart-defaults";
 import {
-  CHART_FIELDS,
   isDistributionLine,
   legendColumnOf,
   POINT_CHARTS,
@@ -511,13 +511,12 @@ function itemView(chart: ChartRecord, item: ChartItem) {
 
 /** 지정한 개별 속성이 하나도 없으면 undefined (공통 속성을 따른다) */
 
-/** legend 위치: item 개별 → 공통 → 위 */
+/** legend 위치: item 개별 → 공통 → 차트 종류별 기본값 (화면이 GET /defaults로 받는 값) */
 function legendPosition(chart: ChartRecord, item: ChartItem) {
   return (
     item.props?.legendPosition ??
     chart.spec.common.legendPosition ??
-    CHART_FIELDS[chart.spec.chartType].legendPosition ??
-    "top"
+    CHART_DEFAULTS.legendPosition[chart.spec.chartType]
   );
 }
 

@@ -1241,6 +1241,8 @@ export const ChartDefaultsSchema = z
     common: z.object({ color: HexColorSchema }),
     /** split 조합 이름을 잇는 문자 */
     splitSeparator: z.string(),
+    /** 공통·개별 속성에 legend 위치가 없을 때 차트 종류별 위치 */
+    legendPosition: z.record(ChartTypeSchema, LegendPositionSchema),
   })
   .openapi("ChartDefaults");
 

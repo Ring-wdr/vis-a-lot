@@ -15,6 +15,9 @@ describe("chart options", () => {
 
   it("draw는 화면이 GET /defaults로 받는 기본값 객체를 그대로 쓴다", () => {
     expect(CHART_DEFAULTS.options).toBe(DEFAULT_OPTIONS);
+    // legend 위치 기본값도 같은 곳에 있다. funnel만 단계 이름이 길어 오른쪽이다.
+    expect(CHART_DEFAULTS.legendPosition.funnel).toBe("right");
+    expect(CHART_DEFAULTS.legendPosition.scatter).toBe("top");
     expect(resolveOptions("scatter", undefined, undefined)).toBe(
       CHART_DEFAULTS.options,
     );

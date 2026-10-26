@@ -468,6 +468,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
 | chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
+| chart | 차트 기본값 | `GET /defaults` | 차트 속성 전체 값, 새 차트 공통 색, split 구분 문자, 차트 종류별 legend 위치. 서버 draw와 전체 설정·item 속성 팝업·새 탭 draft가 같은 값(`server/charts/chart-defaults.ts`)을 쓴다. 어드민 기본값이 생기면 이 모듈을 바꾼다 |
 | chart | history 삭제 | `DELETE /history/:id` | 204, 모르는 건이면 404. 그 건에 기록 중인 차트는 더 기록하지 않는다(지운 건을 되살리지 않음) |
 | chart | 공유 | `POST /shares`, `GET /shares`(내 공유), `GET /shares/:shareId`, `DELETE /shares/:shareId` | `{ chartId, itemKey?, title }`로 지금 설정·바뀐 item 상태·대표 PNG를 스냅숏으로 고정(PGlite). 이후 차트를 고쳐도 그대로다. 지우기는 만든 사용자만 |
 | chart | 공유 PNG | `GET /shares/:shareId/png` | 인증 없음(item PNG와 같은 이유, shareId는 UUID) |

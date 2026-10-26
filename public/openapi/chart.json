@@ -1682,9 +1682,56 @@
           },
           "splitSeparator": {
             "type": "string"
+          },
+          "legendPosition": {
+            "type": "object",
+            "properties": {
+              "scatter": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "bar": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "boxplot": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "line": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "sankey": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "heatmap": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "treemap": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "candle": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "gantt": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "pie": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "radar": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "histogram": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "waterfall": {
+                "$ref": "#/components/schemas/LegendPosition"
+              },
+              "funnel": {
+                "$ref": "#/components/schemas/LegendPosition"
+              }
+            }
           }
         },
-        "required": ["options", "common", "splitSeparator"]
+        "required": ["options", "common", "splitSeparator", "legendPosition"]
       },
       "ChartHealth": {
         "type": "object",
