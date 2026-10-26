@@ -192,7 +192,7 @@ candle은 구간 간격을 split 조합과 상관없이 전체 기간으로 한 
 
 gantt는 legend(예: 상태)가 있으면 행마다 시간순으로 같은 legend 값이 이어지는 구간(gaps-and-islands, SQL window 함수)을 막대 하나로 그리고, 막대 끝은 다음 구간 시작에 붙인다. legend가 없으면 행마다 처음~마지막 시각 막대 하나. y는 행 인덱스 공간이라 행이 많으면 확대·이동으로 일부 행을 본다. 행마다 같은 픽셀 칸 안에서 시작하고 끝나는 짧은 구간은 앞 막대에 합쳐 그리고(툴팁에 합친 수), metadata 막대는 30,000개까지 담는다. 선택·페인트는 막대 가운데(가운데 시각, 행)로 판정한다. 툴팁은 행·legend 값·시작·끝·길이·개수.
 
-컬럼 역할(x·y·z에 쓸 수 있는 타입, 통계 함수 사용)은 차트 종류별 표 하나로 정한다: 서버 `server/charts/chart-fields.ts`, 화면 `src/entities/chart/model/chart-kinds.ts`. z는 세 번째 값 컬럼으로, 쓰는 차트에서만 고른다.
+컬럼 역할(x·y·z에 쓸 수 있는 타입, 통계 함수 사용)은 차트 종류별 표 하나로 정한다: 서버 `server/charts/chart-fields.ts`, 화면 `src/shared/config/chart-kinds.ts`. z는 세 번째 값 컬럼으로, 쓰는 차트에서만 고른다.
 
 #### 차트별 상단 도구 줄
 

@@ -11,13 +11,13 @@ import {
   detailSizeFor,
   thumbnailCountFor,
 } from "@/entities/chart/lib/grid-layout";
-import { drawsLegend } from "@/entities/chart/model/chart-kinds";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
 import { useItemDetail } from "@/features/item-detail/model/use-item-detail";
 import { useJobRange } from "@/shared/api/queries";
 import { type ItemState, isTerminal } from "@/shared/api/types";
+import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { useElementSize } from "@/shared/lib/use-element-size";

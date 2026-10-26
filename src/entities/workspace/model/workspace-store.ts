@@ -1,11 +1,8 @@
 "use client";
 
 import { createStore } from "zustand";
-import {
-  type ChartFeature,
-  supports,
-} from "@/entities/chart/model/chart-kinds";
 import type { ChartSpec, CreateChartResponse } from "@/shared/api/types";
+import { type ChartFeature, supports } from "@/shared/config/chart-kinds";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { DEFAULT_SERIES_COLOR } from "@/shared/lib/palette";
 

@@ -1,13 +1,13 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import { useColumns } from "@/shared/api/queries";
 import {
   defaultLegendPosition,
   drawsLegend,
   legendColumnOf,
-} from "@/entities/chart/model/chart-kinds";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { useColumns } from "@/shared/api/queries";
+} from "@/shared/config/chart-kinds";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import type { CommonSettingsForm } from "../model/common-settings-form";

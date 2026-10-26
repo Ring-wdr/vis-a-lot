@@ -1,8 +1,8 @@
 // 차트 종류별 툴팁 전략. 각 전략은 metadata만으로 커서 위치를 해석하고(hitTest),
 // 툴팁에 보여줄 줄(rows)을 만든다. 서버 호출이 필요한 추가 컬럼은 rowId로 넘긴다.
 
+import { invertAxis } from "@/entities/chart/lib/coords";
 import type {
-  AxisMeta,
   CandleMeta,
   CategoryMeta,
   FunnelMeta,
@@ -54,23 +54,6 @@ export type TooltipStrategy<M extends ItemMeta> = {
     options?: TooltipOptions,
   ) => TooltipHit | null;
 };
-
-/** 픽셀 → 데이터 값. 화면 y는 아래로 갈수록 커지므로 y축은 뒤집는다. */
-export function invertAxis(
-  axis: AxisMeta,
-  start: number,
-  length: number,
-  pixel: number,
-  flipped: boolean,
-) {
-  const t = (pixel - start) / length;
-  const ratio = flipped ? 1 - t : t;
-  const [lo, hi] = axis.domain;
-  // 로그 축은 log10 공간에서 고르게 나뉜다.
-  if (axis.log && lo > 0 && hi > 0)
-    return 10 ** (Math.log10(lo) + ratio * (Math.log10(hi) - Math.log10(lo)));
-  return lo + ratio * (hi - lo);
-}
 
 const NEAREST_MAX_PX = 24;
 

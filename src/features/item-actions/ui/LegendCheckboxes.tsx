@@ -1,10 +1,10 @@
 "use client";
 
-import { supports } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ChartImage } from "@/shared/api/types";
+import { supports } from "@/shared/config/chart-kinds";
 
 /**
  * PNG legend 항목의 색 표시(●) 자리에 체크박스를 겹친다. 위치는 metadata에서 읽는다.
