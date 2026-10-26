@@ -9,6 +9,7 @@ import type {
   JobStatus,
 } from "../api/types";
 import type { ChartRecord } from "../charts/chart-store";
+import { itemRestore } from "../charts/item-restore";
 import { GENERATOR_VERSION } from "../data/schema";
 import { matchPng } from "../png-store";
 import { getRuntime } from "../runtime";
@@ -53,17 +54,7 @@ export async function saveHistory(
     items[item.key] = {
       label: item.label,
       status: itemStatuses.get(item.key) ?? "queued",
-      view: item.view,
-      shapes: item.shapes,
-      color: item.props?.color,
-      legendColors: item.props?.legendColors,
-      legendPosition: item.props?.legendPosition,
-      hiddenLegend: item.props?.hiddenLegend,
-      options: item.props?.options,
-      selection: item.selection,
-      favorites: item.favorites,
-      legendGroups: item.legendGroups,
-      deletions: item.deletions,
+      ...itemRestore(item),
     };
   }
   const entry: HistoryDetail = {

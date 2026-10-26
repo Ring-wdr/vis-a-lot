@@ -19,6 +19,9 @@ import { attachSunburst, toPieData, toRadarData } from "../data/polar-data";
 import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
 import { createDb } from "../db/database";
+import { createFeedDb } from "../feed/db";
+import { migrateFeed, resetFeed } from "../feed/migrate";
+import { runFeedOp } from "../feed/runner";
 import {
   getHistory,
   listHistory,
@@ -27,6 +30,14 @@ import {
 } from "../history/history-store";
 import type { DbMethods, Rejectable } from "../protocol";
 import { serveRpc, transfer } from "../rpc";
+import {
+  deleteShare,
+  getShare,
+  getSharePng,
+  listShares,
+  openShares,
+  saveShare,
+} from "../shares/share-store";
 
 const started = performance.now();
 
@@ -56,7 +67,16 @@ const ready = PGlite.create("idb://vis-a-lot", {
   await db.insertInto("boot_log").defaultValues().execute();
   const datasets = await DatasetManager.open(db);
   await openHistory(db);
-  return { db, datasets, bootMs: performance.now() - started };
+  await openShares(db);
+  await migrateFeed(pglite);
+  const feedDb = createFeedDb(pglite);
+  return {
+    db,
+    pglite,
+    feedDb,
+    datasets,
+    bootMs: performance.now() - started,
+  };
 });
 
 /** 데이터셋 id → 테이블과 스키마. 등록하지 않은 데이터셋이면 던진다. */
@@ -219,6 +239,56 @@ serveRpc<DbMethods>({
   async historyGet({ id }) {
     const { db } = await ready;
     return getHistory(db, id);
+  },
+
+  async feed(request) {
+    const { feedDb } = await ready;
+    return runFeedOp(feedDb, request);
+  },
+
+  async feedFlush() {
+    const { pglite } = await ready;
+    // relaxedDurability에서는 공개 syncToFs()가 저장을 기다리지 않고 돌아온다.
+    // 데이터가 통째로 바뀐 직후(시드·리셋·가져오기)만 IndexedDB 파일시스템의 저장을 직접 기다린다.
+    const fs = (pglite as unknown as { fs?: { syncToFs(): Promise<void> } })
+      .fs;
+    await fs?.syncToFs();
+    return undefined;
+  },
+
+  async feedReset() {
+    const { pglite } = await ready;
+    await resetFeed(pglite);
+    return undefined;
+  },
+
+  async shareSave(share) {
+    const { db } = await ready;
+    return saveShare(db, share);
+  },
+
+  async shareGet({ id }) {
+    const { db } = await ready;
+    return getShare(db, id);
+  },
+
+  async shareList({ createdBy }) {
+    const { db } = await ready;
+    return listShares(db, createdBy);
+  },
+
+  async sharePng({ id }) {
+    const { db } = await ready;
+    const png = await getSharePng(db, id);
+    if (!png) return null;
+    // PGlite가 준 배열이 더 큰 버퍼의 일부일 수 있어 복사본을 넘긴다.
+    const copy = png.slice();
+    return transfer(copy, [copy.buffer]);
+  },
+
+  async shareDelete({ id, createdBy }) {
+    const { db } = await ready;
+    return deleteShare(db, id, createdBy);
   },
 
   async categoryData({ dataset, ...params }) {

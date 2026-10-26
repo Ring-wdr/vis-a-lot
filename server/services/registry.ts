@@ -3,6 +3,8 @@
 import * as authRoutes from "./auth/routes";
 import * as chartRoutes from "./chart/routes";
 import * as dataRoutes from "./data/routes";
+import * as feedRoutes from "./feed/routes";
+import { FEED_SECURITY_SCHEMES } from "./feed/security";
 
 export const SERVICES = {
   auth: {
@@ -22,6 +24,14 @@ export const SERVICES = {
     title: "vis-a-lot chart service",
     description: "서버사이드 차트 렌더링 job, item 조작, 툴팁, PNG, history",
     routes: chartRoutes,
+  },
+  feed: {
+    basePath: "/api/feed",
+    title: "vis-a-lot feed service",
+    description:
+      "사내 데이터 공유 피드 프로토타입: 게시물(이슈)·그룹·사용자·댓글·알림·뷰·보고서",
+    routes: feedRoutes,
+    securitySchemes: FEED_SECURITY_SCHEMES,
   },
 } as const;
 

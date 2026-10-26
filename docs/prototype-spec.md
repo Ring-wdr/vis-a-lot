@@ -459,6 +459,8 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
 | chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
+| chart | 공유 | `POST /shares`, `GET /shares`(내 공유), `GET /shares/:shareId`, `DELETE /shares/:shareId` | `{ chartId, itemKey?, title }`로 지금 설정·바뀐 item 상태·대표 PNG를 스냅숏으로 고정(PGlite). 이후 차트를 고쳐도 그대로다. 지우기는 만든 사용자만 |
+| chart | 공유 PNG | `GET /shares/:shareId/png` | 인증 없음(item PNG와 같은 이유, shareId는 UUID) |
 | data / chart | 상태 | `GET /health` | 인증 없음 |
 
 ---
@@ -470,7 +472,11 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - `history` 화면: 왼쪽 목록에서 고르면 그 차트를 다시 그려 보여준다. 설정은 보기 전용(select disabled)이고 모드는 일반(툴팁)만, item 툴바는 숨긴다. 다시 보기는 history에 기록하지 않는다.
 - `gallery에서 편집`을 누르면 그 차트를 gallery로 가져가고, 이후 변경은 그 history 건에 이어서 기록한다.
 - gallery와 history는 작업 상태를 따로 들고 있어 tab을 오가도 각자 보던 차트가 남는다.
-- 공유는 URL에 설정을 담아서 한다. 샘플은 시드가 고정이라 같은 URL이면 같은 차트가 다시 만들어진다. 업로드한 데이터는 같은 브라우저에서만 열린다.
+- 공유는 chart 서비스의 공유(스냅숏)로 한다. `링크 복사`가 지금 차트의 설정·바뀐 item 상태·대표 PNG(고른 item, 없으면 처음 그려진 item)를 `POST /shares`로 고정하고 `/share?id=<shareId>` 링크를 복사한다. 이후 차트를 고쳐도 공유는 그대로다.
+- 공유 페이지(`/share?id=…`): 로그인 뒤 스냅숏 PNG와 제목·만든 사람·시각·데이터셋·차트 종류를 보여준다. `gallery에서 열기`(새 gallery 탭에 설정과 item 상태로 다시 그린다), `링크 복사`, `피드에 올리기`, `지우기`(만든 사용자만, 지운 링크는 '없는 공유'로 열린다). `/share`(id 없음)는 내 공유 목록이다. 상단 바의 `shares`로 간다.
+- 정적 호스팅이라 공유 id는 경로가 아니라 query로 받는다. 같은 도메인의 같은 브라우저라면 공유(PGlite)를 읽어 바로 화면으로 넘어간다. 기기 간 공유는 실서버로 옮긴 뒤다.
+- 예전 hash 링크(`#s=…`, lz-string)도 계속 열린다. 샘플은 시드가 고정이라 같은 설정이면 같은 차트가 다시 만들어진다. 업로드한 데이터는 같은 브라우저에서만 열린다.
+- `피드에 올리기`(탭 도구 줄, 공유 페이지)는 공유를 만들고 같은 출처의 피드 전체 폼 `/feed/new?share=<shareId>`를 새 탭으로 연다. 폼은 `GET /api/feed/imports/chart-shares/{shareId}`로 제목·대표 PNG(data URL)·공유 링크를 받아 차트 게시물을 채운다. 게시물의 "vis-a-lot에서 차트 열기"는 공유 페이지로 돌아온다. 피드는 [`docs/feed-prototype-spec.md`](feed-prototype-spec.md).
 
 ---
 
