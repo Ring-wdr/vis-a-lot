@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import * as client from "@/entities/chart/model/chart-options";
+import type { ChartType } from "../api/types";
 import { DEFAULT_OPTIONS, mergeOptions } from "../render/options";
-import { CHART_DEFAULTS } from "./chart-defaults";
+import { CHART_DEFAULTS, defaultsFor } from "./chart-defaults";
 import {
   OPTION_SUPPORT,
   resolveOptions,
@@ -15,12 +16,61 @@ describe("chart options", () => {
 
   it("draw는 화면이 GET /defaults로 받는 기본값 객체를 그대로 쓴다", () => {
     expect(CHART_DEFAULTS.options).toBe(DEFAULT_OPTIONS);
-    // legend 위치 기본값도 같은 곳에 있다. funnel만 단계 이름이 길어 오른쪽이다.
-    expect(CHART_DEFAULTS.legendPosition.funnel).toBe("right");
-    expect(CHART_DEFAULTS.legendPosition.scatter).toBe("top");
     expect(resolveOptions("scatter", undefined, undefined)).toBe(
       CHART_DEFAULTS.options,
     );
+  });
+
+  it("legend 위치는 전체 값 위에 차트 종류별 값을 덮는다", () => {
+    expect(CHART_DEFAULTS.legendPosition).toBe("top");
+    // funnel만 단계 이름이 길어 오른쪽이다.
+    expect(defaultsFor("funnel").legendPosition).toBe("right");
+    expect(defaultsFor("scatter").legendPosition).toBe("top");
+  });
+
+  it("화면도 서버와 같은 규칙으로 차트 종류별 기본값을 합친다", () => {
+    for (const type of Object.keys(OPTION_SUPPORT) as ChartType[]) {
+      expect(client.chartTypeDefaults(CHART_DEFAULTS, type)).toEqual(
+        defaultsFor(type),
+      );
+    }
+    expect(client.chartTypeDefaults(CHART_DEFAULTS, undefined)).toEqual({
+      legendPosition: CHART_DEFAULTS.legendPosition,
+      options: CHART_DEFAULTS.options,
+    });
+  });
+
+  it("전체 기본값 → 차트 종류별 → 공통 → 개별 순으로 덮는다", () => {
+    const defaults = {
+      ...CHART_DEFAULTS,
+      charts: {
+        bar: {
+          options: {
+            title: { align: "center", bold: false, color: "#111111" },
+          },
+        },
+      },
+    } as const;
+    const own = defaultsFor("bar", defaults as never).options;
+    expect(own.title).toEqual({
+      ...DEFAULT_OPTIONS.title,
+      align: "center",
+      bold: false,
+      color: "#111111",
+    });
+    // 다른 종류는 전체 값 그대로
+    expect(defaultsFor("line", defaults as never).options).toBe(
+      DEFAULT_OPTIONS,
+    );
+    const resolved = mergeOptions(
+      mergeOptions(own, { title: { align: "right", bold: true } }),
+      { title: { align: "left" } },
+    );
+    expect(resolved.title).toMatchObject({
+      align: "left",
+      bold: true,
+      color: "#111111",
+    });
   });
 
   it("원본 표에서 X인 칸은 쓰지 않는다", () => {

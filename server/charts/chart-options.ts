@@ -10,7 +10,7 @@ import {
   OPTION_SECTIONS,
   type OptionSection,
 } from "../render/options";
-import { CHART_DEFAULTS } from "./chart-defaults";
+import { defaultsFor } from "./chart-defaults";
 
 const ALL = OPTION_SECTIONS;
 const without = (...omit: OptionSection[]) =>
@@ -100,8 +100,8 @@ export function pickSupported(
 }
 
 /**
- * 기본값 → 공통 → item 개별 순으로 합친 전체 옵션. 차트가 쓰지 않는 구역은 기본값이다.
- * 기본값은 화면이 GET /defaults로 받는 것과 같은 CHART_DEFAULTS.options다.
+ * 전체 기본값 → 차트 종류별 기본값 → 공통 → item 개별 순으로 합친 전체 옵션. 차트가 쓰지 않는 구역은 기본값이다.
+ * 기본값은 화면이 GET /defaults로 받는 것과 같은 CHART_DEFAULTS를 defaultsFor로 합친 값이다.
  */
 export function resolveOptions(
   type: ChartType,
@@ -110,7 +110,7 @@ export function resolveOptions(
 ): ChartOptions {
   return mergeOptions<ChartOptions>(
     mergeOptions<ChartOptions>(
-      CHART_DEFAULTS.options,
+      defaultsFor(type).options,
       pickSupported(type, common),
     ),
     pickSupported(type, item),

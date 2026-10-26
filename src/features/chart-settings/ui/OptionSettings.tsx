@@ -23,6 +23,7 @@ import {
   type OptionSection,
   useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
+import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import { OptionSectionForm } from "./OptionSectionForm";
 
@@ -67,7 +68,8 @@ export function CommonOptionSettings({
   readOnly: boolean;
   children?: ReactNode;
 }) {
-  const defaults = useDefaultOptions();
+  const chartType = useWorkspace((w) => w.draft.chartType);
+  const defaults = useDefaultOptions(chartType);
   return (
     <div className={s.popoverBody()}>
       <OptionSectionForm

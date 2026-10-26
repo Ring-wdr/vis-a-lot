@@ -63,7 +63,7 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const setShowNearest = useWorkspace((s) => s.setShowNearest);
   // 서버 draw와 같은 기본값. 폼의 '기본값'과 되돌리기 기준이 된다.
-  const defaults = useDefaultOptions();
+  const defaults = useDefaultOptions(chartType);
   // 열 때의 값. 폼은 이 값에서 시작하고, 확인을 누르면 바뀐 것만 draft로 옮긴다.
   const [opened] = useState(() => {
     const { draft, showNearest } = store.getState();

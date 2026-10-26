@@ -51,7 +51,8 @@ export function ItemSettingsDialog({
 }) {
   const readOnly = useWorkspace((s) => s.readOnly);
   const common = useWorkspace((s) => s.current?.spec.common);
-  const defaults = useDefaultOptions();
+  const chartType = useWorkspace((s) => s.current?.spec.chartType);
+  const defaults = useDefaultOptions(chartType);
   const chartDefaults = useChartDefaults();
   // 따르기 기준(공통 속성)과 열 때의 값. 팝업이 열린 동안에는 고정한다.
   const [opened] = useState(() => {

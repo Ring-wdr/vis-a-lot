@@ -12,7 +12,7 @@ import {
   type JobStateResponse,
   type JobStatus,
 } from "../api/types";
-import { CHART_DEFAULTS } from "../charts/chart-defaults";
+import { defaultsFor } from "../charts/chart-defaults";
 import {
   isDistributionLine,
   legendColumnOf,
@@ -516,7 +516,7 @@ function legendPosition(chart: ChartRecord, item: ChartItem) {
   return (
     item.props?.legendPosition ??
     chart.spec.common.legendPosition ??
-    CHART_DEFAULTS.legendPosition[chart.spec.chartType]
+    defaultsFor(chart.spec.chartType).legendPosition
   );
 }
 
@@ -525,7 +525,7 @@ export function itemColor(chart: ChartRecord, item: ChartItem) {
   return item.props?.color ?? chart.spec.common.color;
 }
 
-/** item에 적용할 차트 속성 (기본값 → 공통 → 개별) */
+/** item에 적용할 차트 속성 (기본값 → 차트 종류별 기본값 → 공통 → 개별) */
 function optionsFor(chart: ChartRecord, item: ChartItem) {
   return resolveOptions(
     chart.spec.chartType,

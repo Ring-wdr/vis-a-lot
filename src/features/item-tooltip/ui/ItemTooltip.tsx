@@ -77,7 +77,7 @@ export function ItemTooltip({
   const columnInfo = useColumns(dataset);
   const showNearest = useWorkspace((s) => s.showNearest);
   const spec = useWorkspace((s) => s.current?.spec);
-  const defaultOptions = useDefaultOptions();
+  const defaultOptions = useDefaultOptions(spec?.chartType);
   const look = resolveTooltipOptions(
     defaultOptions,
     spec?.chartType,

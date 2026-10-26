@@ -3177,22 +3177,27 @@ export type components = {
         color: components["schemas"]["HexColor"];
       };
       splitSeparator: string;
-      legendPosition: {
-        scatter?: components["schemas"]["LegendPosition"];
-        bar?: components["schemas"]["LegendPosition"];
-        boxplot?: components["schemas"]["LegendPosition"];
-        line?: components["schemas"]["LegendPosition"];
-        sankey?: components["schemas"]["LegendPosition"];
-        heatmap?: components["schemas"]["LegendPosition"];
-        treemap?: components["schemas"]["LegendPosition"];
-        candle?: components["schemas"]["LegendPosition"];
-        gantt?: components["schemas"]["LegendPosition"];
-        pie?: components["schemas"]["LegendPosition"];
-        radar?: components["schemas"]["LegendPosition"];
-        histogram?: components["schemas"]["LegendPosition"];
-        waterfall?: components["schemas"]["LegendPosition"];
-        funnel?: components["schemas"]["LegendPosition"];
+      legendPosition: components["schemas"]["LegendPosition"];
+      charts: {
+        scatter?: components["schemas"]["ChartTypeDefaults"];
+        bar?: components["schemas"]["ChartTypeDefaults"];
+        boxplot?: components["schemas"]["ChartTypeDefaults"];
+        line?: components["schemas"]["ChartTypeDefaults"];
+        sankey?: components["schemas"]["ChartTypeDefaults"];
+        heatmap?: components["schemas"]["ChartTypeDefaults"];
+        treemap?: components["schemas"]["ChartTypeDefaults"];
+        candle?: components["schemas"]["ChartTypeDefaults"];
+        gantt?: components["schemas"]["ChartTypeDefaults"];
+        pie?: components["schemas"]["ChartTypeDefaults"];
+        radar?: components["schemas"]["ChartTypeDefaults"];
+        histogram?: components["schemas"]["ChartTypeDefaults"];
+        waterfall?: components["schemas"]["ChartTypeDefaults"];
+        funnel?: components["schemas"]["ChartTypeDefaults"];
       };
+    };
+    ChartTypeDefaults: {
+      legendPosition?: components["schemas"]["LegendPosition"];
+      options?: components["schemas"]["ChartOptions"];
     };
     ChartHealth: {
       /** @enum {string} */

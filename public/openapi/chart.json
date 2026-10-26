@@ -1684,54 +1684,74 @@
             "type": "string"
           },
           "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
+          },
+          "charts": {
             "type": "object",
             "properties": {
               "scatter": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "bar": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "boxplot": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "line": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "sankey": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "heatmap": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "treemap": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "candle": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "gantt": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "pie": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "radar": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "histogram": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "waterfall": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               },
               "funnel": {
-                "$ref": "#/components/schemas/LegendPosition"
+                "$ref": "#/components/schemas/ChartTypeDefaults"
               }
             }
           }
         },
-        "required": ["options", "common", "splitSeparator", "legendPosition"]
+        "required": [
+          "options",
+          "common",
+          "splitSeparator",
+          "legendPosition",
+          "charts"
+        ]
+      },
+      "ChartTypeDefaults": {
+        "type": "object",
+        "properties": {
+          "legendPosition": {
+            "$ref": "#/components/schemas/LegendPosition"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ChartOptions"
+          }
+        }
       },
       "ChartHealth": {
         "type": "object",

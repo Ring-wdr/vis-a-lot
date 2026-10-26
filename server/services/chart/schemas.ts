@@ -1233,6 +1233,13 @@ export const ShareListResponseSchema = z
 
 // ── 운영 ───────────────────────────────────────────────────────
 
+export const ChartTypeDefaultsSchema = z
+  .object({
+    legendPosition: LegendPositionSchema.optional(),
+    options: ChartOptionsSchema.optional(),
+  })
+  .openapi("ChartTypeDefaults");
+
 export const ChartDefaultsSchema = z
   .object({
     /** 차트 속성 전체 값 (모든 필드가 있다). 공통·item 개별 속성은 이 위에 덮어쓴다. */
@@ -1241,8 +1248,10 @@ export const ChartDefaultsSchema = z
     common: z.object({ color: HexColorSchema }),
     /** split 조합 이름을 잇는 문자 */
     splitSeparator: z.string(),
-    /** 공통·개별 속성에 legend 위치가 없을 때 차트 종류별 위치 */
-    legendPosition: z.record(ChartTypeSchema, LegendPositionSchema),
+    /** 공통·개별 속성에 legend 위치가 없을 때의 위치 */
+    legendPosition: LegendPositionSchema,
+    /** 차트 종류별로 전체 값과 다른 것만. options는 전체 options 위, 공통 속성 아래에 덮어쓴다. */
+    charts: z.partialRecord(ChartTypeSchema, ChartTypeDefaultsSchema),
   })
   .openapi("ChartDefaults");
 
