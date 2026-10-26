@@ -55,7 +55,7 @@ function gridClass({ rows, cols }: { rows: number; cols: number }) {
 }
 
 const pagerButton =
-  "h-6.5 w-7 cursor-pointer rounded-md border border-line bg-elevated disabled:cursor-not-allowed disabled:text-fg-muted disabled:opacity-40";
+  "h-6 w-6.5 cursor-pointer rounded-md border border-line bg-elevated disabled:cursor-not-allowed disabled:text-fg-muted disabled:opacity-40";
 
 function Pager({
   page,
@@ -68,7 +68,10 @@ function Pager({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className="ml-auto flex items-center gap-1.5" aria-label="페이지">
+    <nav
+      className="ml-auto flex h-full flex-none items-center gap-1.5 border-l border-line px-2"
+      aria-label="페이지"
+    >
       <button
         type="button"
         className={pagerButton}
@@ -277,14 +280,18 @@ export function ChartGrid() {
               />
             </div>
           )}
-          <div className="mt-3 flex h-8 items-center gap-3 text-xs text-fg-secondary">
-            {job.error ? (
-              <span role="alert" className="text-xs text-danger">
-                {job.error.message}
-              </span>
-            ) : (
-              progress.data && <JobStatusBar job={progress.data} />
-            )}
+          {/* 하단 바: 테두리 상자 하나에 job 상태 구획들과 페이지 이동을 나란히 둔다. */}
+          <div className="mt-3 flex h-8 items-center overflow-hidden rounded-md border border-line bg-elevated text-xs whitespace-nowrap text-fg-secondary tabular-nums shadow-sm">
+            {/* job 구획은 폭에 따라 덜 중요한 것부터 숨기고(JobStatusBar의 @container 변형), 페이지 이동은 늘 보인다. */}
+            <div className="@container flex h-full min-w-0 flex-1 items-center overflow-hidden">
+              {job.error ? (
+                <span role="alert" className="px-3 text-xs text-danger">
+                  {job.error.message}
+                </span>
+              ) : (
+                progress.data && <JobStatusBar job={progress.data} />
+              )}
+            </div>
             {!detailOpen && (
               <Pager
                 page={viewPage}
