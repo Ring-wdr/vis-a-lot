@@ -183,6 +183,28 @@ describe("scatter 속성", () => {
     expect(on.arc).toBe(8);
   });
 
+  it("기본 점은 테두리 있는 원으로 하나씩 그린다", () => {
+    const { calls } = render(input());
+    expect(calls.arc).toBe(40);
+    expect(calls.stroke).toBeGreaterThanOrEqual(40);
+  });
+
+  it("같은 픽셀 칸에 겹친 점은 상한까지만 그린다", () => {
+    const same = Float64Array.from({ length: 100 }, () => 5);
+    const { calls } = render(
+      input(
+        {},
+        {
+          xs: Float64Array.from({ length: 100 }, (_, i) => (i < 50 ? 1 : 9)),
+          ys: same,
+          ids: Float64Array.from({ length: 100 }, (_, i) => i),
+        },
+      ),
+    );
+    // 두 자리에 50개씩 → 자리마다 3개
+    expect(calls.arc).toBe(6);
+  });
+
   it("점 글자는 적은 점에만 단다", () => {
     const { texts } = render(
       input({ pointLabel: { visible: true, suffix: "u" } }),

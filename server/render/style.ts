@@ -63,6 +63,12 @@ export function mixColor(a: string, b: string, t: number) {
   return hex(ca.map((c, i) => c + (cb[i] - c) * t));
 }
 
+/** #rrggbb 색에 투명도(0..1)를 입힌 rgba() 문자열 */
+export function withAlpha(color: string, alpha: number) {
+  const [r, g, b] = rgb(color);
+  return `rgba(${r}, ${g}, ${b}, ${clamp(alpha, 0, 1)})`;
+}
+
 // ── panel ───────────────────────────────────────────────────────
 
 export function marginOf(o: ChartOptions = DEFAULT_OPTIONS) {
