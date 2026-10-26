@@ -46,7 +46,6 @@ import {
   pathPoint,
   pointSizeOf,
   surfaceOf,
-  withAlpha,
 } from "./style";
 import { OTHERS_COLOR, THEME } from "./theme";
 
@@ -132,11 +131,6 @@ type Ctx = OffscreenCanvasRenderingContext2D;
 const CHUNK = 50_000;
 /** 점 크기 자동일 때 scatter 점 반지름 (CSS 픽셀) */
 const POINT_RADIUS = 3;
-/** 기본 점의 채우기·테두리 불투명도. 테두리를 진하게 둬 겹쳐도 점 경계가 보인다. */
-const POINT_FILL_ALPHA = 0.45;
-const POINT_BORDER_ALPHA = 0.9;
-/** 아주 촘촘해도 이 비율 아래로는 옅게 하지 않는다. */
-const MIN_DENSITY_ALPHA = 0.05;
 /** 크기 자동일 때 점이 영역을 이보다 여러 겹 덮으면 점을 줄인다 (작은 칸에 점이 아주 많을 때). */
 const MAX_COVERAGE = 30;
 /** 같은 색 점을 한 픽셀 칸에 겹쳐 그리는 최대 수. 밀도는 남기고 행이 많을 때 그리는 양을 묶는다. */
@@ -752,23 +746,15 @@ export function renderScatter(
             Math.min(1, Math.sqrt(MAX_COVERAGE / coverageAt(POINT_RADIUS))),
         );
     const radius = pointSizeOf(o, autoRadius);
-    // 기본 모양(원·채우기+테두리·테두리 0)은 반투명 채우기에 같은 색을 진하게 한 1px 테두리를 둘러,
-    // 듬성한 곳은 원 하나하나가, 촘촘한 곳은 색 농도로 밀도가 보이게 한다. 섬네일은 점이 작아 테두리 없이 그린다.
+    // 기본 모양(원·채우기+테두리·테두리 0)은 불투명 채우기에 같은 색을 진하게 한 1px 테두리를 둘러
+    // 겹쳐도 원 하나하나가 보이게 한다. 섬네일은 점이 작아 테두리 없이 그린다.
     const plain =
       shape.type === "circle" &&
       shape.style === "both" &&
       shape.borderWidth === 0;
     const borderWidth = plain ? (input.compact ? 0 : 1) : shape.borderWidth;
+    // 투명도 0(자동)은 불투명이다. 전체 설정의 값을 그대로 따른다.
     const alpha = alphaOf(shape.transparency, 1);
-    // 여러 겹 덮으면 그만큼 옅게 그려 촘촘한 곳이 한 색 덩어리가 되지 않고 농도로 밀도가 보이게 한다.
-    // 투명도를 정했으면 따르지 않는다.
-    const density =
-      shape.transparency > 0
-        ? 1
-        : Math.max(
-            MIN_DENSITY_ALPHA,
-            Math.min(1, 1 / Math.sqrt(coverageAt(radius + borderWidth / 2))),
-          );
     // 같은 색 안에서 픽셀 칸마다 그린 점 수. 상한을 넘으면 더 칠해도 거의 같아 보여 건너뛴다.
     const drawn = new Uint8Array(plot.width * plot.height);
     // 그림 영역 밖이어도 점 반지름만큼은 영역 안으로 걸쳐 보인다.
@@ -780,11 +766,8 @@ export function renderScatter(
         const color = single ? OTHERS_COLOR : passColor;
         ctx.globalAlpha = layer === 0 ? alpha * 0.2 : alpha;
         if (plain) {
-          ctx.fillStyle = withAlpha(color, POINT_FILL_ALPHA * density);
-          ctx.strokeStyle = withAlpha(
-            mixColor(color, "#000000", 0.25),
-            POINT_BORDER_ALPHA * density,
-          );
+          ctx.fillStyle = color;
+          ctx.strokeStyle = mixColor(color, "#000000", 0.25);
           ctx.lineWidth = borderWidth;
         }
         drawn.fill(0);
