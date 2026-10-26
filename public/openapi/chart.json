@@ -939,9 +939,16 @@
             "type": "number",
             "minimum": 1,
             "maximum": 4
+          },
+          "theme": {
+            "$ref": "#/components/schemas/ChartTheme"
           }
         },
         "required": ["width", "height"]
+      },
+      "ChartTheme": {
+        "type": "string",
+        "enum": ["light", "dark"]
       },
       "ItemPropsRequest": {
         "anyOf": [
@@ -1596,6 +1603,9 @@
           },
           "pixelRatio": {
             "type": "number"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/ChartTheme"
           }
         },
         "required": ["url", "width", "height"]
@@ -1671,6 +1681,15 @@
           "options": {
             "$ref": "#/components/schemas/ChartOptions"
           },
+          "themes": {
+            "type": "object",
+            "properties": {
+              "dark": {
+                "$ref": "#/components/schemas/ChartOptions"
+              }
+            },
+            "required": ["dark"]
+          },
           "common": {
             "type": "object",
             "properties": {
@@ -1736,6 +1755,7 @@
         },
         "required": [
           "options",
+          "themes",
           "common",
           "splitSeparator",
           "legendPosition",
@@ -5648,6 +5668,88 @@
         }
       }
     },
+    "/charts/{chartId}/items/{itemKey}/png/export": {
+      "post": {
+        "tags": ["items"],
+        "summary": "내려받기·엑셀용 PNG (항상 light 테마). 화면이 다른 테마로 그렸으면 같은 크기로 한 장 더 그린다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": ["ops"],
@@ -5838,11 +5940,11 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^\\d+x\\d+(@\\d+(\\.\\d+)?)?$",
-              "description": "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)"
+              "pattern": "^\\d+x\\d+(@\\d+(\\.\\d+)?)?(~dark)?$",
+              "description": "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율, 다크 테마면 뒤에 ~dark)"
             },
             "required": false,
-            "description": "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)",
+            "description": "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율, 다크 테마면 뒤에 ~dark)",
             "name": "size",
             "in": "query"
           }

@@ -36,7 +36,7 @@ import {
   fontPx,
   surfaceOf,
 } from "./style";
-import { THEME } from "./theme";
+import { INK_ON_DARK, INK_ON_LIGHT, THEME } from "./theme";
 
 /** 데이터 좌표의 사각형. y0이 아래, y1이 위다. */
 export type TreemapRect = { x0: number; y0: number; x1: number; y1: number };
@@ -171,7 +171,7 @@ function inkOn(hex: string) {
       0.7152 * ((n >> 8) & 255) +
       0.0722 * (n & 255)) /
     255;
-  return lum > 0.6 ? THEME.textPrimary : "#ffffff";
+  return lum > 0.6 ? INK_ON_LIGHT : INK_ON_DARK;
 }
 
 function truncate(ctx: Ctx, text: string, maxWidth: number) {

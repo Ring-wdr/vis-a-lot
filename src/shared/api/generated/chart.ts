@@ -1503,6 +1503,81 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/charts/{chartId}/items/{itemKey}/png/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 내려받기·엑셀용 PNG (항상 light 테마). 화면이 다른 테마로 그렸으면 같은 크기로 한 장 더 그린다 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description PNG */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "image/png": string;
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/health": {
     parameters: {
       query?: never;
@@ -1691,7 +1766,7 @@ export type paths = {
     get: {
       parameters: {
         query?: {
-          /** @description 크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율) */
+          /** @description 크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율, 다크 테마면 뒤에 ~dark) */
           size?: string;
         };
         header?: never;
@@ -2963,7 +3038,10 @@ export type components = {
       width: number;
       height: number;
       pixelRatio?: number;
+      theme?: components["schemas"]["ChartTheme"];
     };
+    /** @enum {string} */
+    ChartTheme: "light" | "dark";
     ItemPropsRequest:
       | {
           color: components["schemas"]["HexColor"] | null;
@@ -3151,6 +3229,7 @@ export type components = {
       width: number;
       height: number;
       pixelRatio?: number;
+      theme?: components["schemas"]["ChartTheme"];
     };
     CreateShareRequest: {
       chartId: string;
@@ -3173,6 +3252,9 @@ export type components = {
     };
     ChartDefaults: {
       options: components["schemas"]["ChartOptions"];
+      themes: {
+        dark: components["schemas"]["ChartOptions"];
+      };
       common: {
         color: components["schemas"]["HexColor"];
       };

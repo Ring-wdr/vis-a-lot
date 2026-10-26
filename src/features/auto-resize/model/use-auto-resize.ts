@@ -13,8 +13,19 @@ import { useDebounced } from "@/shared/lib/use-debounced";
 const RESIZE_DEBOUNCE_MS = 300;
 const RETRY_MS = 1000;
 
+/** 크기·배율·테마를 한 문자열로 묶는다. debounce한 값이 바뀔 때만 다시 확인한다. */
+function lookKey(size: ItemSize) {
+  return [
+    size.width,
+    size.height,
+    size.pixelRatio ?? 1,
+    size.theme ?? "light",
+  ].join("|");
+}
+
 /**
  * 화면 크기가 바뀌면 크기 변경이 멈추고 300ms 뒤에, 현재 페이지에서 PNG 크기가 칸과 다른 item만 다시 그린다.
+ * 화면 배율·테마가 바뀐 것도 같은 규칙으로 다시 그린다 (PNG가 그 배율·테마로 그려져 있지 않으면 다른 크기로 본다).
  * - draw job이 진행 중이면 끝날 때까지 기다렸다가 크기가 다른 item만 다시 그린다.
  * - 다른 페이지는 이동해서 그 페이지가 보일 때 같은 규칙으로 다시 그린다.
  */
@@ -29,9 +40,7 @@ export function useAutoResize(
   const itemJobs = useWorkspace((s) => s.itemJobs);
   const setItemJob = useWorkspace((s) => s.setItemJob);
   const sizeKey = useDebounced(
-    desired
-      ? `${desired.width}x${desired.height}x${desired.pixelRatio ?? 1}`
-      : "",
+    desired ? lookKey(desired) : "",
     RESIZE_DEBOUNCE_MS,
   );
   const inFlight = useRef(false);
@@ -43,16 +52,15 @@ export function useAutoResize(
     if (!chartId || !job || !sizeKey || !jobStatus || !isTerminal(jobStatus))
       return;
     if (inFlight.current) return;
-    const [width, height, pixelRatio] = sizeKey.split("x").map(Number);
+    const [w, h, ratio, theme] = sizeKey.split("|");
+    const [width, height, pixelRatio] = [w, h, ratio].map(Number);
     // 다시 그리는 중인 item은 빼고, 끝나면(itemJobs가 바뀌면) 다시 확인한다.
     const stale = job.items.filter(
       (i) =>
         i.status === "success" &&
         i.image &&
         !itemJobs[i.key] &&
-        (i.image.width !== width ||
-          i.image.height !== height ||
-          (i.image.pixelRatio ?? 1) !== pixelRatio),
+        lookKey(i.image) !== sizeKey,
     );
     if (stale.length === 0) return;
     const keys = stale.map((i) => i.key);
@@ -60,7 +68,12 @@ export function useAutoResize(
     api
       .resizeItems(
         chartId,
-        pixelRatio > 1 ? { width, height, pixelRatio } : { width, height },
+        {
+          width,
+          height,
+          ...(pixelRatio > 1 ? { pixelRatio } : {}),
+          ...(theme === "dark" ? { theme } : {}),
+        },
         keys,
       )
       .then(({ jobId }) => {

@@ -56,6 +56,8 @@ export type ItemSettingsChanges = Extract<
   { settings: unknown }
 >["settings"];
 export type ItemSize = Chart["ItemSize"];
+/** 차트 PNG의 색 테마 (화면 테마를 따른다) */
+export type ChartTheme = Chart["ChartTheme"];
 export type ItemView = Chart["ItemView"];
 export type ItemRestore = Chart["ItemRestore"];
 export type Shape = Chart["Shape"];

@@ -8,6 +8,7 @@ import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
+import { useColorScheme } from "@/shared/lib/color-scheme";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -128,10 +129,11 @@ export function ChartGrid() {
   const jobError = progress.data?.error;
   const gridArea = useWorkspace((s) => s.gridArea);
   // PNG를 띄울 크기. resize 중에는 이 크기로 기존 PNG를 늘리거나 줄여 보여준다.
-  // 화면 배율이 바뀌면(다른 모니터로 옮김) 그 배율로 다시 그린다.
+  // 화면 배율이 바뀌거나(다른 모니터로 옮김) 테마가 바뀌면 그 배율·테마로 다시 그린다.
   const pixelRatio = usePixelRatio();
+  const theme = useColorScheme();
   const displaySize = gridArea
-    ? itemSizeFor(gridArea, grid, pixelRatio)
+    ? itemSizeFor(gridArea, grid, { pixelRatio, theme })
     : undefined;
   const detailOpen = focus !== null && totalItems !== null;
   // 크게 보는 동안에는 grid가 보이지 않으니 grid item을 새 크기로 다시 그리지 않는다. 돌아오면 맞춘다.

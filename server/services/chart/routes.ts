@@ -310,9 +310,12 @@ export const itemDetail = createRoute({
 /** 크게 보기 PNG의 크기 ("WxH"). 없으면 grid PNG의 metadata다. */
 const SizeQuerySchema = z
   .string()
-  .regex(/^\d+x\d+(@\d+(\.\d+)?)?$/)
+  .regex(/^\d+x\d+(@\d+(\.\d+)?)?(~dark)?$/)
   .optional()
-  .openapi({ description: "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)" });
+  .openapi({
+    description:
+      "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율, 다크 테마면 뒤에 ~dark)",
+  });
 
 export const itemMeta = createRoute({
   method: "get",
@@ -424,6 +427,28 @@ export const png = createRoute({
       },
     },
     404: { description: "없음" },
+  },
+});
+
+/** 화면 밖으로 내보내는 PNG. 화면 테마와 상관없이 light로 그린다. */
+export const exportPng = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/png/export",
+  tags: ["items"],
+  summary:
+    "내려받기·엑셀용 PNG (항상 light 테마). 화면이 다른 테마로 그렸으면 같은 크기로 한 장 더 그린다",
+  ...read,
+  request: { params: ItemParams },
+  responses: {
+    200: {
+      description: "PNG",
+      content: {
+        "image/png": { schema: z.string().openapi({ format: "binary" }) },
+      },
+    },
+    ...authErrors,
+    404: errorResponse("모르는 item"),
+    ...conflict("아직 그려지지 않음"),
   },
 });
 

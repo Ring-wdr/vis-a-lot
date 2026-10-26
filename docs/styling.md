@@ -23,7 +23,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 | 쌓임 순서 | 숫자(`z-10`) 대신 토큰을 쓴다. 한 컴포넌트 안: `z-raised` `z-sticky` `z-sticky-col` `z-sticky-corner` `z-overlay` `z-item-toolbar`. 화면 전체 층: `z-drawer`(10) `z-menu`(20) `z-popover`(50) `z-tooltip`(1000) |
 | px | 1px 테두리·hairline 보정(`border`, `align-[-1px]`)에만 쓴다. |
 | 임의 값 `[...]` | 축척으로 나타낼 수 없는 구조용 값에만 쓴다: grid 템플릿, `min()`/`calc()`, `ch`, `dvh`. 그 안의 길이도 rem으로 적는다(`w-[min(60rem,calc(100vw-2rem))]`). breakpoint도 rem으로 적는다. |
-| 다크 모드 | `prefers-color-scheme`를 따른다. `:root`에서 같은 토큰 변수의 값을 바꾼다. |
+| 다크 모드 | `<html data-theme>`을 따른다(시스템 설정 + 상단 바 토글, `src/shared/lib/color-scheme.ts`). `:root[data-theme="dark"]`에서 같은 토큰 변수의 값을 바꾸고, `dark:` 변형도 이 속성을 본다. 서버가 그리는 PNG도 같은 테마로 그린다(`server/render/theme.ts`, 바탕·글자 색은 토큰과 같은 값). |
 
 ## 구조
 

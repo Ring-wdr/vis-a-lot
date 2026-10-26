@@ -84,14 +84,25 @@ export function ChartActionBar() {
   const columns = useColumns(current?.spec.dataset ?? "");
 
   const chartPng = useMutation({
-    mutationFn: ({ jobId, key }: { jobId: string; key: string }) =>
-      downloadChartPng(jobId, key),
+    mutationFn: ({
+      chartId,
+      jobId,
+      key,
+    }: {
+      chartId: string;
+      jobId: string;
+      key: string;
+    }) => downloadChartPng(chartId, jobId, key),
     onError: (err) => notify(err.message),
   });
   const excel = useMutation({
     mutationFn: () => {
       if (!current) throw new Error("그린 차트가 없습니다.");
-      return downloadAllChartsExcel(current.jobId, current.spec);
+      return downloadAllChartsExcel(
+        current.chartId,
+        current.jobId,
+        current.spec,
+      );
     },
     onSuccess: ({ written, total }) => {
       if (written < total)

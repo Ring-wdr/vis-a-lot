@@ -18,6 +18,7 @@ import { useItemDetail } from "@/features/item-detail/model/use-item-detail";
 import { useJobRange } from "@/shared/api/queries";
 import { type ItemState, isTerminal } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
+import { useColorScheme } from "@/shared/lib/color-scheme";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
@@ -80,9 +81,11 @@ export function DetailView({
   const item = thumbs[focus - offset];
 
   const pixelRatio = usePixelRatio();
+  const theme = useColorScheme();
   const displaySize = useMemo(
-    () => (mainArea ? detailSizeFor(mainArea, pixelRatio) : undefined),
-    [mainArea, pixelRatio],
+    () =>
+      mainArea ? detailSizeFor(mainArea, { pixelRatio, theme }) : undefined,
+    [mainArea, pixelRatio, theme],
   );
   // 크기를 바꾸는 동안에는 지금 PNG를 늘려 보여주고, 멈추면 그 크기로 한 장만 받는다.
   const requestSize =

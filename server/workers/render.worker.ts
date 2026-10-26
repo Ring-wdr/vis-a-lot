@@ -1,3 +1,4 @@
+import type { ChartTheme } from "../api/types";
 import type { RenderMethods } from "../protocol";
 import { renderCandle } from "../render/candle";
 import { renderCategory } from "../render/category";
@@ -9,6 +10,7 @@ import { renderPie } from "../render/pie";
 import { renderRadar } from "../render/radar";
 import { renderSankey } from "../render/sankey";
 import { type ProgressFn, renderScatter } from "../render/scatter";
+import { applyTheme } from "../render/theme";
 import { renderTreemap } from "../render/treemap";
 import { renderWaterfall } from "../render/waterfall";
 import { serveRpc, transfer, type WorkerScope } from "../rpc";
@@ -23,9 +25,15 @@ const MAX_CANVAS_SIDE = 4096;
 /**
  * 캔버스에 그리고 PNG로 바꾼다. 그리는 함수가 돌려준 metadata를 함께 넘긴다.
  * pixelRatio배 캔버스에 같은 배율을 걸어 두므로 렌더러와 metadata는 CSS 픽셀 좌표 그대로다.
+ * 렌더러가 읽는 테마 색(THEME)은 그리기 직전에 바꾼다. draw는 동기라 그동안 다른 렌더가 끼어들지 않는다.
  */
 async function drawPng<M>(
-  size: { width: number; height: number; pixelRatio?: number },
+  size: {
+    width: number;
+    height: number;
+    pixelRatio?: number;
+    theme?: ChartTheme;
+  },
   draw: (ctx: OffscreenCanvasRenderingContext2D) => M,
   onEncode: () => void = noop,
 ) {
@@ -40,6 +48,7 @@ async function drawPng<M>(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("2d context unavailable");
   ctx.scale(ratio, ratio);
+  applyTheme(size.theme);
   const meta = draw(ctx);
   onEncode();
   const png = await (
@@ -55,7 +64,11 @@ type Size = { width: number; height: number };
  * 진행률은 렌더러 단계(aggregate → render) 다음에 encode를 알린다.
  */
 async function renderPair<
-  I extends Size & { compact?: boolean; pixelRatio?: number },
+  I extends Size & {
+    compact?: boolean;
+    pixelRatio?: number;
+    theme?: ChartTheme;
+  },
   M,
 >(
   render: (

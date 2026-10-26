@@ -51,7 +51,7 @@ describe("chart options", () => {
         },
       },
     } as const;
-    const own = defaultsFor("bar", defaults as never).options;
+    const own = defaultsFor("bar", "light", defaults as never).options;
     expect(own.title).toEqual({
       ...DEFAULT_OPTIONS.title,
       align: "center",
@@ -59,7 +59,7 @@ describe("chart options", () => {
       color: "#111111",
     });
     // 다른 종류는 전체 값 그대로
-    expect(defaultsFor("line", defaults as never).options).toBe(
+    expect(defaultsFor("line", "light", defaults as never).options).toBe(
       DEFAULT_OPTIONS,
     );
     const resolved = mergeOptions(

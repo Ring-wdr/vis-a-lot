@@ -27,7 +27,7 @@ import {
   mixColor,
   surfaceOf,
 } from "./style";
-import { THEME } from "./theme";
+import { INK_ON_DARK, INK_ON_LIGHT, THEME } from "./theme";
 
 export type PieSlice = PieSliceValue & {
   /** 보이는 조각 합계 대비 비율 */
@@ -211,7 +211,7 @@ export function pointLabelAnchor(
 function labelColor(hex: string) {
   const n = Number.parseInt(hex.slice(1), 16);
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? THEME.textPrimary : "#fff";
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? INK_ON_LIGHT : INK_ON_DARK;
 }
 
 /** 원 위 각도 angle, 반지름 r 자리 (pie3d면 세로를 눕힌 비율 k만큼 줄인다) */
