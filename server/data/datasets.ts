@@ -257,7 +257,7 @@ export class DatasetManager {
   /** 업로드한 데이터셋을 다시 적재(수정)하려고 보관해 둔 원본을 올려 둔다. 모르는 데이터셋이면 null */
   async stageExisting(id: string): Promise<StagedUpload | null> {
     const meta = await this.#metaOf(id);
-    if (!meta || meta.kind !== "upload" || !meta.upload) return null;
+    if (meta?.kind !== "upload" || !meta.upload) return null;
     const stored = await get<{ name: string; blob: Blob }[]>(rawKey(id));
     if (!stored) {
       throw new CsvRejectError("원본 파일이 없어 다시 적재할 수 없습니다.");
@@ -497,7 +497,7 @@ export class DatasetManager {
   /** 업로드한 데이터셋의 이름을 바꾼다. 모르는 데이터셋이면 null */
   async rename(id: string, name: string): Promise<DatasetStatus | null> {
     const meta = await this.#metaOf(id);
-    if (!meta || meta.kind !== "upload") return null;
+    if (meta?.kind !== "upload") return null;
     await this.#db
       .updateTable("dataset_meta")
       .set({ name, updated_at: sql<Date>`now()` })
@@ -509,7 +509,7 @@ export class DatasetManager {
   /** 업로드한 데이터셋을 지운다. 적재 중이면 지우지 않는다. */
   async remove(id: string): Promise<"removed" | "busy" | "missing"> {
     const meta = await this.#metaOf(id);
-    if (!meta || meta.kind !== "upload") return "missing";
+    if (meta?.kind !== "upload") return "missing";
     if (this.#progress.has(id)) return "busy";
     await this.#db.schema.dropTable(meta.tbl).ifExists().execute();
     await this.#db.deleteFrom("dataset_meta").where("id", "=", id).execute();

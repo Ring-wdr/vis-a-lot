@@ -14,7 +14,11 @@
       "!dist",
       "!build",
       "!public/mockServiceWorker.js",
-      "!.claude/worktrees"
+      "!public/*.svg",
+      "!pnpm-lock.yaml",
+      "!**/*.md",
+      "!.claude/worktrees",
+      "!.agents"
     ]
   },
   "plugins": [

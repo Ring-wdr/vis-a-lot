@@ -4,7 +4,6 @@
 
 import {
   type ItemMeta,
-  type ItemProps,
   type ItemSize,
   type ItemStage,
   type ItemState,
