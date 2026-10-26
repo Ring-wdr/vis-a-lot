@@ -34,6 +34,7 @@ export function useItemDetail(
       item?.revision,
       size?.width,
       size?.height,
+      size?.pixelRatio,
     ],
     queryFn: () =>
       api.itemDetail(chartId, (item as ItemState).key, size as ItemSize),

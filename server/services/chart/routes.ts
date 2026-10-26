@@ -309,9 +309,9 @@ export const itemDetail = createRoute({
 /** 크게 보기 PNG의 크기 ("WxH"). 없으면 grid PNG의 metadata다. */
 const SizeQuerySchema = z
   .string()
-  .regex(/^\d+x\d+$/)
+  .regex(/^\d+x\d+(@\d+(\.\d+)?)?$/)
   .optional()
-  .openapi({ description: "크게 보기 PNG의 크기 (WxH)" });
+  .openapi({ description: "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)" });
 
 export const itemMeta = createRoute({
   method: "get",

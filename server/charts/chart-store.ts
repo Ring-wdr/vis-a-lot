@@ -162,7 +162,9 @@ export function thumbnailUrl(chartId: string, item: ChartItem) {
   return `${itemPath(chartId, item)}?r=${item.revision}&size=thumb`;
 }
 
-export const sizeKeyOf = (size: ItemSize) => `${size.width}x${size.height}`;
+/** 크기별 캐시 키. 배율이 1이 아니면 붙인다 (WxH@2). */
+export const sizeKeyOf = (size: ItemSize) =>
+  `${size.width}x${size.height}${(size.pixelRatio ?? 1) > 1 ? `@${size.pixelRatio}` : ""}`;
 
 export function detailUrl(chartId: string, item: ChartItem, size: ItemSize) {
   return `${itemPath(chartId, item)}?r=${item.revision}&size=${sizeKeyOf(size)}`;

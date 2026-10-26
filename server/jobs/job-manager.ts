@@ -862,6 +862,7 @@ function renderItem(
     options,
     width: size.width,
     height: size.height,
+    pixelRatio: size.pixelRatio,
     thumbnail: thumbnail ? THUMBNAIL_SIZE : undefined,
     title: item.label,
     color: itemColor(chart, item),
@@ -1257,15 +1258,22 @@ async function storeResult(
   item.version++;
   const url = pngUrl(chart.id, item);
   await putPng(new URL(url, location.origin).href, png);
+  // width·height는 CSS 픽셀이다. PNG는 pixelRatio배로 그려져 있어 <img>가 그만큼 촘촘하게 보인다.
+  const { pixelRatio } = chart.itemSize;
   item.image = {
     url,
     width: chart.itemSize.width,
     height: chart.itemSize.height,
+    ...(pixelRatio ? { pixelRatio } : {}),
   };
   if (thumb) {
     const thumbUrl = thumbnailUrl(chart.id, item);
     await putPng(new URL(thumbUrl, location.origin).href, thumb);
-    item.thumbnail = { url: thumbUrl, ...THUMBNAIL_SIZE };
+    item.thumbnail = {
+      url: thumbUrl,
+      ...THUMBNAIL_SIZE,
+      ...(pixelRatio ? { pixelRatio } : {}),
+    };
   }
 }
 

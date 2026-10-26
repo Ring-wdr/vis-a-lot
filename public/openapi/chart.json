@@ -883,6 +883,11 @@
             "type": "number",
             "minimum": 50,
             "maximum": 2000
+          },
+          "pixelRatio": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 4
           }
         },
         "required": ["width", "height"]
@@ -1536,6 +1541,9 @@
             "type": "number"
           },
           "height": {
+            "type": "number"
+          },
+          "pixelRatio": {
             "type": "number"
           }
         },
@@ -5546,11 +5554,11 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^\\d+x\\d+$",
-              "description": "크게 보기 PNG의 크기 (WxH)"
+              "pattern": "^\\d+x\\d+(@\\d+(\\.\\d+)?)?$",
+              "description": "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)"
             },
             "required": false,
-            "description": "크게 보기 PNG의 크기 (WxH)",
+            "description": "크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율)",
             "name": "size",
             "in": "query"
           }

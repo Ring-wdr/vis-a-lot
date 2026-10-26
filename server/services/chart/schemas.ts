@@ -281,6 +281,8 @@ export const ItemSizeSchema = z
   .object({
     width: z.number().min(50).max(2000),
     height: z.number().min(50).max(2000),
+    /** 화면의 devicePixelRatio. PNG를 이만큼 촘촘하게 그려 고해상도 화면에서도 선명하다. 없으면 1 */
+    pixelRatio: z.number().min(1).max(4).optional(),
   })
   .openapi("ItemSize");
 
@@ -414,7 +416,13 @@ export const ItemStageSchema = z
   .openapi("ItemStage");
 
 export const ChartImageSchema = z
-  .object({ url: z.string(), width: z.number(), height: z.number() })
+  .object({
+    url: z.string(),
+    /** CSS 픽셀 크기. PNG 자체는 pixelRatio배로 그려져 있다. */
+    width: z.number(),
+    height: z.number(),
+    pixelRatio: z.number().optional(),
+  })
   .openapi("ChartImage");
 
 export const ItemStateSchema = z

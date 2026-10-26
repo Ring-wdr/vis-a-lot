@@ -62,6 +62,15 @@ const SIDE_MIN_WIDTH = 60;
 
 type Ctx = OffscreenCanvasRenderingContext2D;
 
+/** 캔버스의 CSS 픽셀 크기. 고해상도 PNG는 배율만큼 큰 캔버스에 scale을 걸어 그린다. */
+function canvasSize(ctx: Ctx) {
+  const scale = ctx.getTransform?.()?.a || 1;
+  return {
+    width: ctx.canvas.width / scale,
+    height: ctx.canvas.height / scale,
+  };
+}
+
 type Plot = { left: number; top: number; width: number; height: number };
 
 /** legend 하나를 그릴 때의 치수와 색. 기본 글자 11px이면 상자 20, 줄 18, 표시 반지름 5다. */
@@ -221,7 +230,7 @@ export function drawLegendAround(
         legend,
         look,
         plot.left,
-        ctx.canvas.height - m.bottom - legendSpace(legend, o),
+        canvasSize(ctx).height - m.bottom - legendSpace(legend, o),
         plot.width,
       );
     case "left": {
@@ -239,7 +248,7 @@ export function drawLegendAround(
     }
     case "right": {
       const x = plot.left + plot.width + GAP;
-      const width = ctx.canvas.width - x - 4 - m.right;
+      const width = canvasSize(ctx).width - x - 4 - m.right;
       return drawVerticalLegend(
         ctx,
         legend,

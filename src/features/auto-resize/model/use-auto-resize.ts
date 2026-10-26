@@ -29,7 +29,9 @@ export function useAutoResize(
   const itemJobs = useWorkspace((s) => s.itemJobs);
   const setItemJob = useWorkspace((s) => s.setItemJob);
   const sizeKey = useDebounced(
-    desired ? `${desired.width}x${desired.height}` : "",
+    desired
+      ? `${desired.width}x${desired.height}x${desired.pixelRatio ?? 1}`
+      : "",
     RESIZE_DEBOUNCE_MS,
   );
   const inFlight = useRef(false);
@@ -41,20 +43,26 @@ export function useAutoResize(
     if (!chartId || !job || !sizeKey || !jobStatus || !isTerminal(jobStatus))
       return;
     if (inFlight.current) return;
-    const [width, height] = sizeKey.split("x").map(Number);
+    const [width, height, pixelRatio] = sizeKey.split("x").map(Number);
     // 다시 그리는 중인 item은 빼고, 끝나면(itemJobs가 바뀌면) 다시 확인한다.
     const stale = job.items.filter(
       (i) =>
         i.status === "success" &&
         i.image &&
         !itemJobs[i.key] &&
-        (i.image.width !== width || i.image.height !== height),
+        (i.image.width !== width ||
+          i.image.height !== height ||
+          (i.image.pixelRatio ?? 1) !== pixelRatio),
     );
     if (stale.length === 0) return;
     const keys = stale.map((i) => i.key);
     inFlight.current = true;
     api
-      .resizeItems(chartId, { width, height }, keys)
+      .resizeItems(
+        chartId,
+        pixelRatio > 1 ? { width, height, pixelRatio } : { width, height },
+        keys,
+      )
       .then(({ jobId }) => {
         for (const key of keys) setItemJob(key, jobId);
       })

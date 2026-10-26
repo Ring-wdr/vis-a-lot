@@ -1608,7 +1608,7 @@ export type paths = {
     get: {
       parameters: {
         query?: {
-          /** @description 크게 보기 PNG의 크기 (WxH) */
+          /** @description 크게 보기 PNG의 크기 (WxH, 고해상도면 WxH@배율) */
           size?: string;
         };
         header?: never;
@@ -2867,6 +2867,7 @@ export type components = {
     ItemSize: {
       width: number;
       height: number;
+      pixelRatio?: number;
     };
     ItemPropsRequest:
       | {
@@ -3054,6 +3055,7 @@ export type components = {
       url: string;
       width: number;
       height: number;
+      pixelRatio?: number;
     };
     CreateShareRequest: {
       chartId: string;

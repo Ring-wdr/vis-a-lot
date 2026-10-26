@@ -229,6 +229,8 @@ export type DbMethods = {
 };
 
 type Size = { width: number; height: number };
+/** 모든 차트 렌더에 덧붙이는 입력. pixelRatio배 캔버스에 그리고, thumbnail 크기를 주면 섬네일도 함께 그린다. */
+type RenderExtras = { thumbnail?: Size; pixelRatio?: number };
 
 export type RenderMethods = {
   /** 1단계 검증용: 임의의 점을 그려 PNG를 만든다. */
@@ -238,7 +240,7 @@ export type RenderMethods = {
   };
   /** thumbnail 크기를 주면 같은 입력으로 축 없는 섬네일도 함께 그린다. */
   renderScatter: {
-    params: ScatterInput & { thumbnail?: Size };
+    params: ScatterInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -249,7 +251,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderCategory: {
-    params: CategoryInput & { thumbnail?: Size };
+    params: CategoryInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -260,7 +262,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderSankey: {
-    params: SankeyInput & { thumbnail?: Size };
+    params: SankeyInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -271,7 +273,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderHeatmap: {
-    params: HeatmapInput & { thumbnail?: Size };
+    params: HeatmapInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -282,7 +284,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderTreemap: {
-    params: TreemapInput & { thumbnail?: Size };
+    params: TreemapInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -293,7 +295,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderCandle: {
-    params: CandleInput & { thumbnail?: Size };
+    params: CandleInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -304,7 +306,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderGantt: {
-    params: GanttInput & { thumbnail?: Size };
+    params: GanttInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -315,7 +317,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderPie: {
-    params: PieInput & { thumbnail?: Size };
+    params: PieInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -326,7 +328,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderRadar: {
-    params: RadarInput & { thumbnail?: Size };
+    params: RadarInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -337,7 +339,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderHistogram: {
-    params: HistogramInput & { thumbnail?: Size };
+    params: HistogramInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -348,7 +350,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderWaterfall: {
-    params: WaterfallInput & { thumbnail?: Size };
+    params: WaterfallInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
@@ -359,7 +361,7 @@ export type RenderMethods = {
     progress: { stage: RenderStage | "encode"; ratio: number };
   };
   renderFunnel: {
-    params: FunnelInput & { thumbnail?: Size };
+    params: FunnelInput & RenderExtras;
     result: {
       png: ArrayBuffer;
       thumb?: ArrayBuffer;
