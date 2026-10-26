@@ -3,11 +3,11 @@
 import { History, LayoutGrid, TriangleAlert } from "lucide-react";
 import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
-import { drawsLegend } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
+import { drawsLegend } from "@/shared/config/chart-kinds";
 import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";

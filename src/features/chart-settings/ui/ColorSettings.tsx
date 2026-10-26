@@ -1,13 +1,13 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import { legendColumnOf } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useColumns,
   useDatasetStatus,
   useLegendValues,
 } from "@/shared/api/queries";
+import { legendColumnOf } from "@/shared/config/chart-kinds";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";

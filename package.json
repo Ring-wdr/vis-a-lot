@@ -1,12 +1,13 @@
 {
   "name": "vis-a-lot",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check && stylelint \"**/*.css\"",
+    "lint": "node scripts/check-fsd.mjs && biome check && stylelint \"**/*.css\"",
+    "lint:fsd": "node scripts/check-fsd.mjs",
     "format": "biome format --write",
     "test": "vitest run",
     "gen:api": "tsx scripts/gen-api.mts",

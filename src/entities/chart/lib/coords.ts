@@ -1,9 +1,25 @@
 // PNG 좌표 ↔ 데이터 좌표. metadata의 그림 영역과 축 범위만으로 계산한다.
 
-import { invertAxis } from "@/features/item-tooltip/lib/strategies";
-import type { ItemMeta } from "@/shared/api/types";
+import type { AxisMeta, ItemMeta } from "@/shared/api/types";
 
 export type Point = { x: number; y: number };
+
+/** 픽셀 → 데이터 값. 화면 y는 아래로 갈수록 커지므로 y축은 뒤집는다. */
+export function invertAxis(
+  axis: AxisMeta,
+  start: number,
+  length: number,
+  pixel: number,
+  flipped: boolean,
+) {
+  const t = (pixel - start) / length;
+  const ratio = flipped ? 1 - t : t;
+  const [lo, hi] = axis.domain;
+  // 로그 축은 log10 공간에서 고르게 나뉜다.
+  if (axis.log && lo > 0 && hi > 0)
+    return 10 ** (Math.log10(lo) + ratio * (Math.log10(hi) - Math.log10(lo)));
+  return lo + ratio * (hi - lo);
+}
 
 /** 그림 영역 안으로 좌표를 붙잡는다. 도형과 확대 영역이 그림 밖으로 나가지 않게 한다. */
 export function clampToPlot(meta: ItemMeta, p: Point): Point {

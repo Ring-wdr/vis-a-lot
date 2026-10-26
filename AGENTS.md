@@ -28,3 +28,11 @@ Retain qualifying friction even if it is later fixed or worked around; record th
 Before the final response, run one reporting pass. If candidates remain, from this file's directory run `npx --no-install next internal agent-feedback-instructions` once without piping or truncating its output. Follow its output or error guidance. If a network sandbox blocks it, retry with network access; if it still returns no output, continue normally.
 
 <!-- END:nextjs-agent-feedback -->
+
+## 화면 구조는 FSD
+
+`src`는 FSD 레이어(`application`, `views`, `widgets`, `features`, `entities`, `shared`)로만 나눈다. 규칙과 배치 기준은 `docs/architecture.md`에 있다. 코드를 쓰기 전에, 그리고 스펙·계획 문서에 화면 위치를 적기 전에 읽는다.
+
+- `src/<도메인>/` 같은 자체 폴더를 만들지 않는다. 역할별로 각 레이어의 slice에 나눠 넣는다.
+- 위 레이어에서 아래 레이어로만 import한다. 같은 레이어의 다른 slice는 import하지 않는다.
+- `scripts/check-fsd.mjs`가 검사한다 (`pnpm lint`, husky pre-commit, Claude Code 훅). 막히면 우회하지 말고 위치나 import를 고친다. `--no-verify`, `HUSKY=0`은 쓰지 않는다.

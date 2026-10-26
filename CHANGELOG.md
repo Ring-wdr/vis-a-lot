@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.14.1] - 2026-10-26
+
+기능 변경 없이 화면 코드 구조를 정리했다. 남아 있던 FSD 레이어 위반을 고치고, FSD 규칙을 `pnpm lint`·pre-commit·Claude Code 훅이 강제한다. 규칙은 `docs/architecture.md`에 있다. 원래부터 실패하던 `pnpm lint`가 이제 통과한다.
+
+### 구조
+- 레이어 방향을 거스르던 import 7곳을 고쳤다
+  - `invertAxis`를 `features/item-tooltip`에서 `entities/chart/lib/coords`로 내렸다
+  - 차트 종류별 필드·기능 표 `chart-kinds`를 `shared/config`로 내렸다. chart·dataset·workspace entity가 서로 import하던 곳
+  - `/dev` 진입(`dev-root`, `dev-client-app`)을 `views/dev`에서 `application`으로 옮겼다
+
+### 개발 환경
+- `scripts/check-fsd.mjs`: `src` 바로 아래에는 레이어만, slice는 `<레이어>/<slice>/<segment>/`, 위 레이어·같은 레이어 다른 slice import 금지, `app/`은 `application`·`views`·`shared`만 import. `pnpm lint`의 첫 단계(`pnpm lint:fsd`)와 husky pre-commit에서 돈다
+- Claude Code 훅: Write·Edit한 파일을 FSD 규칙으로 검사하고, `--no-verify`·`HUSKY=0`·`core.hooksPath` 같은 git 훅 우회를 막는다
+- `docs/architecture.md`: 레이어별 규칙과 배치 기준. AGENTS.md와 README에서 가리킨다
+- biome 검사에서 Markdown, `pnpm-lock.yaml`, `public/*.svg`, `.agents`를 뺐다. server lint 경고 4곳과 서식 1곳을 고쳤다
+
 ## [0.14.0] - 2026-10-26
 
 차트를 스냅숏으로 고정하는 공유(공유 페이지·`/shares` API)를 더하고, 그 위에 사내 데이터 공유 피드 1차 프로토타입을 `/feed` 아래에 만들었다. 피드는 차트·이미지·동영상·코드를 게시물로 올리고 게시물을 이슈로 다루며, "업무 기록 → 내 작업 → 주간 보고" 흐름이 브라우저 안에서 끝까지 돈다. vis-a-lot에서 그린 차트는 `피드에 올리기`로 같은 출처의 피드 폼에 바로 넘어간다. 범위·결정·규칙은 `docs/feed-prototype-spec.md`에 있다.

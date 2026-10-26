@@ -1,7 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SPEC } from "@/entities/workspace/model/workspace-store";
-import type { HistoryDetail } from "@/shared/api/types";
+import type { ChartSpec, HistoryDetail } from "@/shared/api/types";
 import { encodeShareHash, readShareHash, restoreOf } from "./share";
+
+const SPEC: ChartSpec = {
+  dataset: "sample",
+  chartType: "scatter",
+  x: "time",
+  y: "value",
+  agg: "avg",
+  legend: null,
+  splitBy: [],
+  splitSeparator: "-",
+  tooltip: [],
+  grid: { rows: 3, cols: 3 },
+  common: { color: "#3b82f6" },
+};
 
 describe("공유 링크", () => {
   const restore = {
@@ -13,9 +26,9 @@ describe("공유 링크", () => {
   };
 
   it("설정과 item 상태를 hash로 왕복한다", () => {
-    const hash = encodeShareHash({ spec: DEFAULT_SPEC, restore });
+    const hash = encodeShareHash({ spec: SPEC, restore });
     expect(hash.startsWith("#s=")).toBe(true);
-    expect(readShareHash(hash)).toEqual({ spec: DEFAULT_SPEC, restore });
+    expect(readShareHash(hash)).toEqual({ spec: SPEC, restore });
   });
 
   it("다른 hash나 깨진 값은 무시한다", () => {

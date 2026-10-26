@@ -11,7 +11,6 @@ import {
   TableProperties,
 } from "lucide-react";
 import { chartKindLabel, chartTitle } from "@/entities/chart/lib/title";
-import { supports } from "@/entities/chart/model/chart-kinds";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   downloadAllChartsExcel,
@@ -20,6 +19,7 @@ import {
   drawnItemState,
 } from "@/features/chart-actions/model/chart-download";
 import { useColumns } from "@/shared/api/queries";
+import { supports } from "@/shared/config/chart-kinds";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { toolButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
