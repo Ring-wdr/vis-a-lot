@@ -3,7 +3,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { defaultLegendPosition } from "@/entities/chart/model/chart-kinds";
 import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -25,6 +24,7 @@ import {
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
+import { defaultLegendPosition } from "@/shared/config/chart-kinds";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";

@@ -1,11 +1,11 @@
+import type { ChartSpec, ChartType } from "@/shared/api/types";
 import {
   CHART_FIELDS,
   isDistributionLine,
   SUB_TYPE_LABELS,
   SUB_TYPES,
   subTypeOf,
-} from "@/entities/chart/model/chart-kinds";
-import type { ChartSpec, ChartType } from "@/shared/api/types";
+} from "@/shared/config/chart-kinds";
 import { AGG_LABELS } from "@/shared/config/dataset";
 import type { ColumnLookup } from "@/shared/lib/format";
 

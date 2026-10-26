@@ -2,14 +2,6 @@
 
 import { useEffect } from "react";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
-import {
-  CHART_FIELDS,
-  isDistributionLine,
-  SUB_TYPE_LABELS,
-  SUB_TYPES,
-  subTypeOf,
-  usesLegendColumn,
-} from "@/entities/chart/model/chart-kinds";
 import { ChartIcon } from "@/entities/chart/ui/ChartIcon";
 import {
   columnsOfTypes,
@@ -27,6 +19,14 @@ import {
   type ColumnInfo,
   type ColumnName,
 } from "@/shared/api/types";
+import {
+  CHART_FIELDS,
+  isDistributionLine,
+  SUB_TYPE_LABELS,
+  SUB_TYPES,
+  subTypeOf,
+  usesLegendColumn,
+} from "@/shared/config/chart-kinds";
 import { AGG_FNS, AGG_LABELS } from "@/shared/config/dataset";
 import { LoadingText } from "@/shared/ui/Loading";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";

@@ -1,6 +1,5 @@
 // 데이터셋 스키마로 컬럼의 쓰임을 정한다. 컬럼 이름은 데이터마다 다르므로 타입만 보고 고른다.
 
-import { CHART_FIELDS } from "@/entities/chart/model/chart-kinds";
 import type {
   ChartFilter,
   ChartSpec,
@@ -8,6 +7,7 @@ import type {
   ColumnInfo,
   ColumnType,
 } from "@/shared/api/types";
+import { CHART_FIELDS } from "@/shared/config/chart-kinds";
 
 /** legend 팔레트는 8색이라 값이 그보다 많은 범주 컬럼은 legend로 쓰지 않는다. */
 export const LEGEND_MAX_VALUES = 8;

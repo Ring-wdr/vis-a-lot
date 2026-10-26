@@ -1,5 +1,5 @@
 // 차트 종류별로 x·y·z에 쓸 수 있는 컬럼 타입과 기능. 새 차트는 여기에 한 줄을 더한다.
-// 화면은 @server를 import하지 않으므로 같은 표를 src/entities/chart/model/chart-kinds.ts에 따로 둔다.
+// 화면은 @server를 import하지 않으므로 같은 표를 src/shared/config/chart-kinds.ts에 따로 둔다.
 
 import type { ChartSpec, ChartSubType, ChartType } from "../api/types";
 import type { LogicalType } from "../data/dataset-schema";

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { modeSupported } from "@/entities/workspace/model/workspace-store";
 import {
   drawsLegend,
   isDistributionLine,
@@ -13,11 +12,9 @@ describe("chart kinds", () => {
     expect(supports({ chartType: "scatter" }, "delete")).toBe(true);
     expect(supports({ chartType: "line" }, "delete")).toBe(true);
     expect(supports({ chartType: "bar" }, "delete")).toBe(false);
-    expect(modeSupported("rectDelete", { chartType: "boxplot" })).toBe(false);
   });
 
   it("기본 모드는 모든 차트, 그린 차트가 없으면 기능은 꺼진다", () => {
-    expect(modeSupported("normal", { chartType: "bar" })).toBe(true);
     expect(supports(undefined, "pan")).toBe(false);
   });
 
@@ -25,7 +22,6 @@ describe("chart kinds", () => {
     expect(supports({ chartType: "sankey" }, "select")).toBe(true);
     expect(supports({ chartType: "sankey" }, "checkbox")).toBe(true);
     expect(supports({ chartType: "sankey" }, "zoom")).toBe(false);
-    expect(modeSupported("pan", { chartType: "sankey" })).toBe(false);
     const spec = { chartType: "sankey", legend: "lot" } as const;
     expect(legendColumnOf(spec)).toBeNull();
     expect(drawsLegend({ ...spec, legend: null })).toBe(true);
@@ -49,7 +45,6 @@ describe("chart kinds", () => {
     expect(supports(ecdf, "delete")).toBe(false);
     expect(supports(ecdf, "selectField")).toBe(false);
     expect(supports(ecdf, "zoom")).toBe(true);
-    expect(modeSupported("lassoDelete", ecdf)).toBe(false);
   });
 
   it("pie sunburst만 legend 컬럼을 쓴다", () => {

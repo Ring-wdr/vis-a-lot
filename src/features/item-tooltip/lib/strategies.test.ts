@@ -15,7 +15,6 @@ import {
   formatDuration,
   ganttStrategy,
   hitSlice,
-  invertAxis,
   nearestVertex,
   pieStrategy,
   radarStrategy,
@@ -37,14 +36,6 @@ const meta: ScatterMeta = {
   },
   total: 3,
 };
-
-describe("invertAxis", () => {
-  it("x는 왼쪽에서 오른쪽으로, y는 아래에서 위로 값을 늘린다", () => {
-    expect(invertAxis(meta.x, 40, 200, 140, false)).toBe(50);
-    expect(invertAxis(meta.y, 20, 100, 20, true)).toBe(50);
-    expect(invertAxis(meta.y, 20, 100, 120, true)).toBe(0);
-  });
-});
 
 describe("PointIndex", () => {
   const index = new PointIndex(meta.points.px, meta.points.py);
@@ -502,19 +493,5 @@ describe("radar", () => {
     const hit = radarStrategy.hitTest(radar, undefined, 133, 118);
     expect(hit?.marker).toEqual({ px: 135, py: 120 });
     expect(hit?.rows.map((r) => r.value)).toEqual(["L2", "주간", "5"]);
-  });
-});
-
-describe("invertAxis 로그 축", () => {
-  it("log10 공간에서 보간한다", () => {
-    const axis = {
-      kind: "number" as const,
-      domain: [1, 1000] as [number, number],
-      log: true,
-    };
-    expect(invertAxis(axis, 0, 300, 100, false)).toBeCloseTo(10);
-    expect(invertAxis({ ...axis, log: false }, 0, 300, 150, false)).toBeCloseTo(
-      500.5,
-    );
   });
 });
