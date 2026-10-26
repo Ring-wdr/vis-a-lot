@@ -13,6 +13,7 @@ import {
 import { throttle } from "@/shared/lib/throttle";
 import { tv } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
+import { usePressRepeat } from "@/shared/lib/use-press-repeat";
 import {
   clampPage,
   createWheelAccumulator,
@@ -34,10 +35,6 @@ const arrow = tv({
 
 /** 서버에서 페이지를 받아오는 간격. 빠르게 넘겨도 이 간격으로만 조회한다. */
 const FETCH_THROTTLE_MS = 200;
-/** 화살표·트랙을 누르고 있으면 이만큼 기다린 뒤 */
-const REPEAT_DELAY_MS = 350;
-/** 이 간격으로 계속 넘긴다 (Windows 스크롤바와 같은 감각) */
-const REPEAT_INTERVAL_MS = 60;
 
 export type PageScrollerHandle = {
   /** grid 위에서 굴린 휠을 이 스크롤바로 넘긴다. */
@@ -87,7 +84,8 @@ export function PageScroller({
   useEffect(() => setShownPage(viewPage), [viewPage]);
   const onPageRef = useCallbackRef(onPage);
   const onViewPageRef = useCallbackRef(onViewPage);
-  const repeatTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // 화살표·트랙을 누르고 있으면 계속 넘긴다.
+  const { hold, stop: stopRepeat } = usePressRepeat();
   const wheelPages = useMemo(() => createWheelAccumulator(), []);
 
   const fetchPage = useMemo(
@@ -99,19 +97,7 @@ export function PageScroller({
     [onPageRef],
   );
 
-  const stopRepeat = () => {
-    clearTimeout(repeatTimer.current);
-    clearInterval(repeatTimer.current);
-    repeatTimer.current = undefined;
-  };
-  useEffect(
-    () => () => {
-      fetchPage.cancel();
-      clearTimeout(repeatTimer.current);
-      clearInterval(repeatTimer.current);
-    },
-    [fetchPage],
-  );
+  useEffect(() => () => fetchPage.cancel(), [fetchPage]);
 
   /** 페이지로 옮긴다. 이미 그 페이지면 false (계속 넘기기를 멈추는 신호) */
   const go = (next: number) => {
@@ -122,17 +108,6 @@ export function PageScroller({
     startTransition(() => onViewPageRef(page));
     fetchPage(page);
     return true;
-  };
-
-  /** 한 번 넘기고, 누르고 있으면 잠시 뒤부터 step이 false를 돌려줄 때까지 계속 넘긴다. */
-  const startRepeat = (step: () => boolean) => {
-    stopRepeat();
-    if (!step()) return;
-    repeatTimer.current = setTimeout(() => {
-      repeatTimer.current = setInterval(() => {
-        if (!step()) stopRepeat();
-      }, REPEAT_INTERVAL_MS);
-    }, REPEAT_DELAY_MS);
   };
 
   useImperativeHandle(ref, () => ({
@@ -155,14 +130,6 @@ export function PageScroller({
   const disabled = totalPages <= 1;
   const thumb = thumbSize(track, totalPages);
   const top = dragTop ?? thumbTop(track, thumb, shownPage, totalPages);
-
-  /** 누르는 동안 pointer를 잡아 버튼 밖에서 떼도 멈추게 한다. */
-  const hold = (e: ReactPointerEvent<HTMLElement>, step: () => boolean) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    startRepeat(step);
-  };
 
   const onTrackDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget || disabled) return;

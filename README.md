@@ -54,6 +54,7 @@
 | MSA | auth · data · chart 서비스를 gateway 뒤에 분리. chart → data 호출은 서비스 토큰(client credentials) |
 | auth | 로그인, ES256 JWT access token(5분) + refresh token rotation, JWKS로 서비스별 검증, scope 확인 |
 | OAS | 서비스 코드(zod)가 OpenAPI 3.1 문서를 만들고(`public/openapi/*.json`), 화면과 서비스 간 client가 생성 타입으로 호출 |
+| 도움말 | `/help`: 서비스별 사용 방법. 본문은 `content/help/<서비스>/*.mdx`(`@next/mdx`), 로그인 없이 열린다. 지금은 시각화 도움말만 있고 피드는 준비 중 |
 
 ## 기술 스택
 
@@ -109,6 +110,8 @@ server/               브라우저 안의 "서버" (@server/*). 화면은 import
   render/             scatter, bar/boxplot, 도형 렌더러 (Canvas 2D만 의존)
   history/            history 기록과 PGlite 저장소
   workers/            DB Worker, Render Worker
+content/help/         도움말 본문(MDX). 서비스마다 폴더, 쓰는 법은 content/help/README.md
+mdx-components.tsx    @next/mdx 필수 파일. 요소 모양은 src/shared/ui/mdx
 scripts/gen-api.mts   OAS·타입 생성기
 scripts/check-fsd.mjs FSD 레이어 위치·import 방향 검사 (pnpm lint, pre-commit)
 public/openapi/       서비스별 OpenAPI 3.1 문서 (생성물)
