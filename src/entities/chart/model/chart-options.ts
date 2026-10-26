@@ -6,9 +6,11 @@ import { useMemo } from "react";
 import { useChartDefaults } from "@/shared/api/queries";
 import type {
   ChartDefaults,
+  ChartTheme,
   ChartType,
   LegendPosition,
 } from "@/shared/api/types";
+import { useColorScheme } from "@/shared/lib/color-scheme";
 
 export const OPTION_SECTIONS = [
   "title",
@@ -282,19 +284,28 @@ type DeepPartial<T> = T extends readonly unknown[]
 export type ChartOptionsPatch = DeepPartial<ChartOptions>;
 
 /**
- * 차트 종류 하나에 쓰는 기본값: 전체 값 위에 charts[type]을 덮는다. 서버 defaultsFor와 같은 규칙이다.
- * 종류를 모르면 전체 값이다.
+ * 차트 종류 하나에 쓰는 기본값: 전체 값 위에 테마별 값, 그 위에 charts[type]을 덮는다. 서버 defaultsFor와 같은 규칙이다.
+ * 종류를 모르면 전체 값(과 테마별 값)이다.
  */
 export function chartTypeDefaults(
   defaults: ChartDefaults,
   type: ChartType | undefined,
+  theme: ChartTheme = "light",
 ): { legendPosition: LegendPosition; options: ChartOptions } {
   const own = type ? defaults.charts[type] : undefined;
+  // 응답 스키마는 저장용 부분 값 모양이지만, 전체 options는 모든 필드가 채워져 있다.
+  const all = defaults.options as ChartOptions;
+  const base =
+    theme === "light"
+      ? all
+      : mergeOptions<ChartOptions>(
+          all,
+          defaults.themes[theme] as ChartOptionsPatch,
+        );
   return {
     legendPosition: own?.legendPosition ?? defaults.legendPosition,
-    // 응답 스키마는 저장용 부분 값 모양이지만, 전체 options는 모든 필드가 채워져 있다.
     options: mergeOptions<ChartOptions>(
-      defaults.options as ChartOptions,
+      base,
       own?.options as ChartOptionsPatch | undefined,
     ),
   };
@@ -303,13 +314,14 @@ export function chartTypeDefaults(
 /**
  * 서버가 정한 그 차트 종류의 기본값(GET /defaults의 options 위에 charts[type].options). 서버 draw도
  * 같은 값 위에 공통·개별 속성을 덮어쓰므로 전체 설정·item 속성 팝업의 '기본값'과 그려지는 모습이 늘 같다.
- * SessionScope가 받아 둔 뒤에 쓴다.
+ * 지금 화면 테마의 값이다 (다크면 글자·바탕 계열 색이 다크 값). SessionScope가 받아 둔 뒤에 쓴다.
  */
 export function useDefaultOptions(type: ChartType | undefined): ChartOptions {
   const defaults = useChartDefaults();
+  const theme = useColorScheme();
   return useMemo(
-    () => chartTypeDefaults(defaults, type).options,
-    [defaults, type],
+    () => chartTypeDefaults(defaults, type, theme).options,
+    [defaults, type, theme],
   );
 }
 

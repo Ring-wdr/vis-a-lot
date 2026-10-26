@@ -24,7 +24,7 @@
   --color-overlay: rgb(252 252 251 / 70%);
 
   /* 서버가 그린 PNG 위에 겹치는 표시(도형 미리보기, hover 표시).
-     PNG는 테마와 상관없이 밝은 바탕이라 다크 모드에서도 바꾸지 않는다. */
+     PNG도 화면 테마로 그리므로 다크 모드에서 함께 바뀐다 (server/render/theme.ts의 ink·surface). */
   --color-chart-ink: #0b0b0b;
   --color-chart-ink-soft: rgb(11 11 11 / 6%);
   --color-chart-paper: #ffffff;
@@ -134,26 +134,32 @@
     var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-surface: #141413;
-    --color-panel: #1b1b1a;
-    --color-elevated: #232322;
-    --color-line: #363632;
-    --color-fg: #ecebe8;
-    --color-fg-secondary: #b5b4ae;
-    --color-fg-muted: #8a8984;
-    --color-accent: #4d8fe6;
-    --color-accent-soft: #1c2a3c;
-    --color-accent-line: #2f4c72;
-    --color-on-accent: #ffffff;
-    --color-danger: #f07a70;
-    --color-shadow: #000000;
-    --color-backdrop: rgb(0 0 0 / 55%);
-    --color-overlay: rgb(20 20 19 / 70%);
-    color-scheme: dark;
-  }
+/* 다크 모드. <html data-theme>은 시스템 설정과 사용자가 고른 값으로 정한다
+   (src/shared/lib/color-scheme.ts, 첫 페인트 전에는 app/layout.tsx의 스크립트). */
+:root[data-theme="dark"] {
+  --color-surface: #141413;
+  --color-panel: #1b1b1a;
+  --color-elevated: #232322;
+  --color-line: #363632;
+  --color-fg: #ecebe8;
+  --color-fg-secondary: #b5b4ae;
+  --color-fg-muted: #8a8984;
+  --color-accent: #4d8fe6;
+  --color-accent-soft: #1c2a3c;
+  --color-accent-line: #2f4c72;
+  --color-on-accent: #ffffff;
+  --color-danger: #f07a70;
+  --color-shadow: #000000;
+  --color-backdrop: rgb(0 0 0 / 55%);
+  --color-overlay: rgb(20 20 19 / 70%);
+  --color-chart-ink: #ecebe8;
+  --color-chart-ink-soft: rgb(236 235 232 / 8%);
+  --color-chart-paper: #141413;
+  color-scheme: dark;
 }
+
+/* dark: 변형도 시스템 설정이 아니라 <html data-theme>을 따른다 */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* 현재 항목 (aria-current="true") */
 @custom-variant aria-current (&[aria-current="true"]);

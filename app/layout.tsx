@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { THEME_INIT_SCRIPT } from "@/shared/config/theme";
 import { cn } from "@/shared/lib/tw";
 import "./globals.css";
 
@@ -20,7 +21,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={cn(geistSans.variable, geistMono.variable)}>
+    // data-theme은 아래 스크립트가 첫 페인트 전에 고른 테마로 바꾼다 (React가 모르는 값이라 경고를 끈다).
+    <html
+      lang="ko"
+      data-theme="light"
+      className={cn(geistSans.variable, geistMono.variable)}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: 첫 페인트 전에 테마를 정하는 고정 문자열이다.
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

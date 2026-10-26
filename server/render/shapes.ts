@@ -14,9 +14,6 @@ export type Shape =
 type Project = (v: number) => number;
 type Ctx = OffscreenCanvasRenderingContext2D;
 
-const STROKE = THEME.textPrimary;
-const RECT_FILL = "rgba(11, 11, 11, 0.06)";
-
 /** 데이터 좌표 → PNG 좌표로 투영해 그린다. 그림 영역 clip은 호출하는 쪽에서 건다. */
 export function drawShapes(
   ctx: Ctx,
@@ -25,7 +22,8 @@ export function drawShapes(
   y: Project,
 ) {
   ctx.save();
-  ctx.strokeStyle = STROKE;
+  // 테마마다 바뀌므로 그릴 때 읽는다 (applyTheme).
+  ctx.strokeStyle = THEME.ink;
   ctx.lineWidth = 2;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
@@ -36,7 +34,7 @@ export function drawShapes(
         const top = Math.min(y(shape.y0), y(shape.y1));
         const w = Math.abs(x(shape.x1) - x(shape.x0));
         const h = Math.abs(y(shape.y1) - y(shape.y0));
-        ctx.fillStyle = RECT_FILL;
+        ctx.fillStyle = THEME.inkSoft;
         ctx.fillRect(left, top, w, h);
         ctx.strokeRect(left, top, w, h);
         break;
@@ -64,10 +62,10 @@ export function drawShapes(
         ctx.lineWidth = 4;
         ctx.strokeStyle = THEME.surface;
         ctx.strokeText(shape.text, x(shape.x), y(shape.y));
-        ctx.fillStyle = THEME.textPrimary;
+        ctx.fillStyle = THEME.ink;
         ctx.fillText(shape.text, x(shape.x), y(shape.y));
         ctx.lineWidth = 2;
-        ctx.strokeStyle = STROKE;
+        ctx.strokeStyle = THEME.ink;
         break;
       }
     }

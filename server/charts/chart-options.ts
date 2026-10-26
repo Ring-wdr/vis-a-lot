@@ -2,7 +2,7 @@
 // 이 프로토타입에 있는 14종만 옮기고, 렌더러에 그 개념이 없는 칸은 X로 둔다 (주석에 이유).
 // 화면은 @server를 import하지 않으므로 같은 표를 src/entities/chart/model/chart-options.ts에 따로 둔다.
 
-import type { ChartType } from "../api/types";
+import type { ChartTheme, ChartType } from "../api/types";
 import {
   type ChartOptions,
   type ChartOptionsPatch,
@@ -100,17 +100,18 @@ export function pickSupported(
 }
 
 /**
- * 전체 기본값 → 차트 종류별 기본값 → 공통 → item 개별 순으로 합친 전체 옵션. 차트가 쓰지 않는 구역은 기본값이다.
+ * 전체 기본값 → 테마별 기본값 → 차트 종류별 기본값 → 공통 → item 개별 순으로 합친 전체 옵션. 차트가 쓰지 않는 구역은 기본값이다.
  * 기본값은 화면이 GET /defaults로 받는 것과 같은 CHART_DEFAULTS를 defaultsFor로 합친 값이다.
  */
 export function resolveOptions(
   type: ChartType,
   common: ChartOptionsPatch | undefined,
   item: ChartOptionsPatch | undefined,
+  theme: ChartTheme = "light",
 ): ChartOptions {
   return mergeOptions<ChartOptions>(
     mergeOptions<ChartOptions>(
-      defaultsFor(type).options,
+      defaultsFor(type, theme).options,
       pickSupported(type, common),
     ),
     pickSupported(type, item),

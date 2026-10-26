@@ -17,6 +17,7 @@ import {
   openDatastoreDialog,
   openUploadThenDatastore,
 } from "@/features/register-dataset/ui/DatastoreDialog";
+import { ThemeToggle } from "@/features/switch-theme/ui/ThemeToggle";
 import { navButton, navLink } from "@/shared/ui/nav";
 
 const TAB_UI = {
@@ -25,7 +26,7 @@ const TAB_UI = {
 } as const;
 
 /**
- * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 내 공유 페이지, 사용자.
+ * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 내 공유 페이지, 테마, 사용자.
  * 각 view의 탭은 TabBar가, 탭 안의 모드·공유는 TabToolbar가 그린다.
  */
 export function AppHeader() {
@@ -87,6 +88,7 @@ export function AppHeader() {
         </Link>
       </nav>
       <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

@@ -289,12 +289,16 @@ export const ChartSpecSchema = z
   })
   .openapi("ChartSpec");
 
+export const ChartThemeSchema = z.enum(["light", "dark"]).openapi("ChartTheme");
+
 export const ItemSizeSchema = z
   .object({
     width: z.number().min(50).max(2000),
     height: z.number().min(50).max(2000),
     /** 화면의 devicePixelRatio. PNG를 이만큼 촘촘하게 그려 고해상도 화면에서도 선명하다. 없으면 1 */
     pixelRatio: z.number().min(1).max(4).optional(),
+    /** PNG를 그릴 색 테마. 화면 테마를 따른다. 없으면 light */
+    theme: ChartThemeSchema.optional(),
   })
   .openapi("ItemSize");
 
@@ -434,6 +438,8 @@ export const ChartImageSchema = z
     width: z.number(),
     height: z.number(),
     pixelRatio: z.number().optional(),
+    /** PNG의 색 테마. 없으면 light */
+    theme: ChartThemeSchema.optional(),
   })
   .openapi("ChartImage");
 
@@ -1242,8 +1248,10 @@ export const ChartTypeDefaultsSchema = z
 
 export const ChartDefaultsSchema = z
   .object({
-    /** 차트 속성 전체 값 (모든 필드가 있다). 공통·item 개별 속성은 이 위에 덮어쓴다. */
+    /** 차트 속성 전체 값(light 테마, 모든 필드가 있다). 테마별 값·공통·item 개별 속성은 이 위에 덮어쓴다. */
     options: ChartOptionsSchema,
+    /** light가 아닌 테마에서 전체 값 위에 덮는 값. 글자·바탕 계열 색만 있다. */
+    themes: z.object({ dark: ChartOptionsSchema }),
     /** 새 차트의 공통 속성 */
     common: z.object({ color: HexColorSchema }),
     /** split 조합 이름을 잇는 문자 */

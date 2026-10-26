@@ -233,8 +233,19 @@ export type ChartSpec = {
   filters?: ChartFilter[];
 };
 
-/** PNG 크기(CSS 픽셀). pixelRatio는 화면의 devicePixelRatio로, 그만큼 촘촘하게 그린다. 없으면 1 */
-export type ItemSize = { width: number; height: number; pixelRatio?: number };
+/** 차트 PNG의 색 테마. 화면 테마를 따른다. */
+export type ChartTheme = "light" | "dark";
+
+/**
+ * PNG 크기(CSS 픽셀)와 보는 화면의 조건. pixelRatio는 화면의 devicePixelRatio로, 그만큼 촘촘하게 그린다. 없으면 1.
+ * theme은 PNG를 그릴 색 테마로, 없으면 light다.
+ */
+export type ItemSize = {
+  width: number;
+  height: number;
+  pixelRatio?: number;
+  theme?: ChartTheme;
+};
 
 /** 이름 붙여 남긴 선택 영역 */
 export type Favorite = { name: string; region: Region };
@@ -273,12 +284,13 @@ export type CreateChartResponse = {
   historyId: string;
 };
 
-/** width·height는 CSS 픽셀이다. PNG 자체는 pixelRatio배로 그려져 있다. */
+/** width·height는 CSS 픽셀이다. PNG 자체는 pixelRatio배로, theme(없으면 light) 색으로 그려져 있다. */
 export type ChartImage = {
   url: string;
   width: number;
   height: number;
   pixelRatio?: number;
+  theme?: ChartTheme;
 };
 
 export type {
