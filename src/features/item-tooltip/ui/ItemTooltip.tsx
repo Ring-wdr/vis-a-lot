@@ -2,7 +2,10 @@
 
 import { type ReactNode, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { ChartOptionsPatch } from "@/entities/chart/model/chart-options";
+import {
+  type ChartOptionsPatch,
+  useDefaultOptions,
+} from "@/entities/chart/model/chart-options";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
@@ -74,7 +77,9 @@ export function ItemTooltip({
   const columnInfo = useColumns(dataset);
   const showNearest = useWorkspace((s) => s.showNearest);
   const spec = useWorkspace((s) => s.current?.spec);
+  const defaultOptions = useDefaultOptions();
   const look = resolveTooltipOptions(
+    defaultOptions,
     spec?.chartType,
     spec?.common.options as ChartOptionsPatch | undefined,
     itemOptions,

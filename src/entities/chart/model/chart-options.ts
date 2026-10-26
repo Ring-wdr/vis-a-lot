@@ -1,7 +1,8 @@
-// 차트 속성(옵션)의 화면 쪽 사본. 화면은 @server를 import하지 않으므로 server/render/options.ts(모양·기본값)와
+// 차트 속성(옵션)의 화면 쪽 모양. 화면은 @server를 import하지 않으므로 server/render/options.ts(모양)와
 // server/charts/chart-options.ts(차트 종류별로 쓸 수 있는 구역)를 그대로 옮겨 둔다. 둘 중 하나를 고치면 여기도 고친다
-// (chart-options.test.ts가 서버 값과 같은지 확인한다).
+// (chart-options.test.ts가 서버 값과 같은지 확인한다). 기본값은 사본을 두지 않고 서버에서 받는다(useDefaultOptions).
 
+import { useChartDefaults } from "@/shared/api/queries";
 import type { ChartType } from "@/shared/api/types";
 
 export const OPTION_SECTIONS = [
@@ -255,138 +256,14 @@ type DeepPartial<T> = T extends readonly unknown[]
 /** 공통·개별 속성에 저장하는 부분 값. 적지 않은 필드는 아래 단계 값을 따른다. */
 export type ChartOptionsPatch = DeepPartial<ChartOptions>;
 
-const axis = (): AxisOptions => ({
-  visible: true,
-  title: { visible: false, text: "" },
-  min: null,
-  max: null,
-  log: false,
-  line: { visible: true, width: 1, color: "#c9c8c2" },
-  grid: { visible: true, width: 1, color: "#e7e6e2" },
-  tick: { visible: true, count: 5, length: 0, color: "#c9c8c2" },
-  label: { visible: true, angle: 0, fontSize: 11, color: "#52514e" },
-  decimals: null,
-  dateFormat: "",
-});
-
-/** 지금까지 그리던 모습과 같은 기본값. 옵션을 하나도 정하지 않으면 PNG가 바뀌지 않아야 한다. */
-export const DEFAULT_OPTIONS: ChartOptions = {
-  title: {
-    visible: true,
-    text: "",
-    subtitle: "",
-    fontSize: 12,
-    bold: true,
-    color: "#0b0b0b",
-    align: "left",
-  },
-  // 지금까지 x축은 세로 그리드 없이 아래 축 선만, y축은 가로 그리드만 그렸다.
-  axes: {
-    x: { ...axis(), grid: { ...axis().grid, visible: false } },
-    y: { ...axis(), line: { ...axis().line, visible: false } },
-  },
-  legend: {
-    visible: true,
-    border: true,
-    borderColor: "#e7e6e2",
-    reverse: false,
-    fontSize: 11,
-    fontColor: "#52514e",
-  },
-  panel: {
-    backColor: "#fcfcfb",
-    gradient: false,
-    border: false,
-    borderColor: "#c9c8c2",
-    margin: { top: 0, right: 0, bottom: 0, left: 0 },
-  },
-  palette: {
-    gradient: false,
-    start: "#cfe3fa",
-    middle: "",
-    end: "#0d3d78",
-    steps: 0,
-    reverse: false,
-  },
-  shape: { type: "circle", style: "both", transparency: 0, borderWidth: 0 },
-  size: {
-    pointAuto: true,
-    pointFixed: 4,
-    pointMin: 1,
-    pointMax: 12,
-    fontAuto: true,
-    fontMin: 9,
-    fontMax: 16,
-    lineWidth: 1.5,
-  },
-  pointLabel: {
-    visible: false,
-    position: "top",
-    angle: 0,
-    fontSize: 10,
-    color: "#52514e",
-    prefix: "",
-    suffix: "",
-    decimals: null,
-    box: { visible: false, background: "#ffffff", border: "#c9c8c2" },
-  },
-  score: {
-    visible: false,
-    kinds: ["rscore"],
-    ucl: null,
-    lcl: null,
-    fontSize: 11,
-    fontColor: "#0b0b0b",
-    backColor: "#ffffff",
-    borderColor: "#c9c8c2",
-    borderWidth: 1,
-  },
-  prediction: {
-    enabled: false,
-    method: "sma",
-    period: 10,
-    showInterval: false,
-    description: true,
-    window: 5,
-    alpha: null,
-    beta: null,
-    gamma: null,
-    seasonLength: 12,
-    trend: "additive",
-    seasonal: "additive",
-    damped: false,
-  },
-  value: {
-    nullNumeric: null,
-    outlier: false,
-    outlierMethod: "iqr",
-    outlierK: 1.5,
-  },
-  focus: {
-    enabled: false,
-    target: "y",
-    operator: ">",
-    value: 0,
-    color: "#e34948",
-    shape: "circle",
-    size: 6,
-    legendSingleColor: false,
-  },
-  tooltip: {
-    title: "",
-    fontSize: 12,
-    fontColor: "#0b0b0b",
-    background: "#ffffff",
-    transparency: 0,
-    round: true,
-    border: true,
-    borderColor: "#c9c8c2",
-    prefix: "",
-    suffix: "",
-    decimals: null,
-  },
-  expression: { x: "", y: "" },
-};
+/**
+ * 서버가 정한 기본값(GET /defaults의 options). 서버 draw도 같은 값 위에 공통·개별 속성을 덮어쓰므로
+ * 전체 설정·item 속성 팝업의 '기본값'과 그려지는 모습이 늘 같다. SessionScope가 받아 둔 뒤에 쓴다.
+ */
+export function useDefaultOptions(): ChartOptions {
+  // 응답 스키마는 저장용 부분 값 모양이지만, 기본값은 모든 필드가 채워져 있다.
+  return useChartDefaults().options as ChartOptions;
+}
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);

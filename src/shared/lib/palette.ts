@@ -12,9 +12,6 @@ export const PALETTE = [
   { name: "빨강", hex: "#e34948" },
 ] as const;
 
-/** 공통 속성의 기본 색 */
-export const DEFAULT_SERIES_COLOR = PALETTE[0].hex;
-
 /** legend 값의 기본 색: 전체 legend 값 목록에서의 순서대로 팔레트 슬롯을 준다. */
 export function defaultLegendColor(index: number) {
   return PALETTE[index % PALETTE.length].hex;

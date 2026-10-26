@@ -5,8 +5,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import {
   type ChartOptions,
   type ChartOptionsPatch,
-  DEFAULT_OPTIONS,
   mergeOptions,
+  useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { buildPatch } from "@/features/chart-settings/model/option-fields";
@@ -22,12 +22,12 @@ import {
   ItemColorSettings,
   ItemLegendPositionSettings,
 } from "@/features/item-actions/ui/ItemSettings";
+import { useChartDefaults } from "@/shared/api/queries";
 import type {
   ChartOptionsBody,
   ItemState,
   LegendPosition,
 } from "@/shared/api/types";
-import { PALETTE } from "@/shared/lib/palette";
 
 type ItemSettingsFormValues = OptionsFormValues & ItemPropsForm;
 
@@ -51,11 +51,13 @@ export function ItemSettingsDialog({
 }) {
   const readOnly = useWorkspace((s) => s.readOnly);
   const common = useWorkspace((s) => s.current?.spec.common);
+  const defaults = useDefaultOptions();
+  const chartDefaults = useChartDefaults();
   // 따르기 기준(공통 속성)과 열 때의 값. 팝업이 열린 동안에는 고정한다.
   const [opened] = useState(() => {
     const original = item.options as ChartOptionsPatch | undefined;
     const base = mergeOptions<ChartOptions>(
-      DEFAULT_OPTIONS,
+      defaults,
       common?.options as ChartOptionsPatch | undefined,
     );
     return {
@@ -113,7 +115,7 @@ export function ItemSettingsDialog({
               disabled={readOnly}
               hasLegend={hasLegend}
               common={{
-                color: common?.color ?? PALETTE[0].hex,
+                color: common?.color ?? chartDefaults.common.color,
                 legendColors: common?.legendColors,
               }}
             />

@@ -1159,6 +1159,42 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/defaults": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 차트 기본값 (전체 설정·draw가 함께 쓰는 속성 기본값) */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 기본값 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ChartDefaults"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/shares/{shareId}": {
     parameters: {
       query?: never;
@@ -3075,6 +3111,13 @@ export type components = {
       width: number;
       height: number;
       points: number;
+    };
+    ChartDefaults: {
+      options: components["schemas"]["ChartOptions"];
+      common: {
+        color: components["schemas"]["HexColor"];
+      };
+      splitSeparator: string;
     };
     ChartHealth: {
       /** @enum {string} */

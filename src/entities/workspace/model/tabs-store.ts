@@ -6,10 +6,10 @@
 
 import { createStore } from "zustand/vanilla";
 import { api } from "@/shared/api/api";
-import type { ChartSpec } from "@/shared/api/types";
+import type { ChartDefaults, ChartSpec } from "@/shared/api/types";
 import {
   createWorkspaceStore,
-  DEFAULT_SPEC,
+  defaultSpec,
   type WorkspaceStore,
 } from "./workspace-store";
 
@@ -58,21 +58,22 @@ export type TabsState = {
   toggleFilterPanel: () => void;
 };
 
-function galleryTab(draft?: Partial<ChartSpec>): WorkspaceTab {
-  return {
+/** 서버 기본값(GET /defaults)으로 새 탭의 draft를 만든다. */
+export function createTabsStore(defaults: ChartDefaults) {
+  const base = defaultSpec(defaults);
+  const galleryTab = (draft?: Partial<ChartSpec>): WorkspaceTab => ({
     id: crypto.randomUUID(),
     view: "gallery",
-    store: createWorkspaceStore({ draft: { ...DEFAULT_SPEC, ...draft } }),
-  };
-}
-
-export function createTabsStore() {
+    store: createWorkspaceStore({ draft: { ...base, ...draft } }),
+  });
+  const readOnlyStore = () =>
+    createWorkspaceStore({ readOnly: true, draft: base });
   const first = galleryTab();
   return createStore<TabsState>((set, get) => ({
     view: "gallery",
     tabs: [first],
     active: { gallery: first.id, history: undefined },
-    emptyHistory: createWorkspaceStore({ readOnly: true }),
+    emptyHistory: readOnlyStore(),
     locked: false,
     setLocked: (locked) => set({ locked }),
     setView: (view) => {
@@ -110,7 +111,7 @@ export function createTabsStore() {
       const tab: WorkspaceTab = {
         id: crypto.randomUUID(),
         view: "history",
-        store: createWorkspaceStore({ readOnly: true }),
+        store: readOnlyStore(),
         historyId,
       };
       set((s) => ({

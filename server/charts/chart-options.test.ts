@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as client from "@/entities/chart/model/chart-options";
 import { DEFAULT_OPTIONS, mergeOptions } from "../render/options";
+import { CHART_DEFAULTS } from "./chart-defaults";
 import {
   OPTION_SUPPORT,
   resolveOptions,
@@ -8,9 +9,15 @@ import {
 } from "./chart-options";
 
 describe("chart options", () => {
-  it("화면 사본이 서버 표·기본값과 같다", () => {
+  it("화면 사본이 서버 표와 같다", () => {
     expect(client.OPTION_SUPPORT).toEqual(OPTION_SUPPORT);
-    expect(client.DEFAULT_OPTIONS).toEqual(DEFAULT_OPTIONS);
+  });
+
+  it("draw는 화면이 GET /defaults로 받는 기본값 객체를 그대로 쓴다", () => {
+    expect(CHART_DEFAULTS.options).toBe(DEFAULT_OPTIONS);
+    expect(resolveOptions("scatter", undefined, undefined)).toBe(
+      CHART_DEFAULTS.options,
+    );
   });
 
   it("원본 표에서 X인 칸은 쓰지 않는다", () => {

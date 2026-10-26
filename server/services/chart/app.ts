@@ -3,6 +3,7 @@
 
 import type { Context } from "hono";
 import { type ItemSize, isTerminal } from "../../api/types";
+import { CHART_DEFAULTS } from "../../charts/chart-defaults";
 import { canDelete } from "../../charts/chart-fields";
 import { pickSupported } from "../../charts/chart-options";
 import {
@@ -593,6 +594,7 @@ export const chartApp = createServiceApp()
     if (!deleted) return apiError(c, 404, "unknown share");
     return c.body(null, 204);
   })
+  .openapi(routes.defaults, (c) => c.json(CHART_DEFAULTS, 200))
   .openapi(routes.health, (c) =>
     c.json(
       { service: "chart" as const, renderWorkers: getRuntime().render.size },

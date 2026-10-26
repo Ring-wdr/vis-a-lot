@@ -5,6 +5,7 @@ import { BEARER, requireAuth } from "../common/auth";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
   AddShapeRequestSchema,
+  ChartDefaultsSchema,
   ChartHealthSchema,
   CommonPropsRequestSchema,
   CreateChartRequestSchema,
@@ -534,6 +535,15 @@ export const deleteShare = createRoute({
 });
 
 // ── 운영 ───────────────────────────────────────────────────────
+
+export const defaults = createRoute({
+  method: "get",
+  path: "/defaults",
+  tags: ["charts"],
+  summary: "차트 기본값 (전체 설정·draw가 함께 쓰는 속성 기본값)",
+  ...read,
+  responses: { 200: jsonResponse(ChartDefaultsSchema, "기본값") },
+});
 
 export const health = createRoute({
   method: "get",

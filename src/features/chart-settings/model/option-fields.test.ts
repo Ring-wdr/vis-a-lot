@@ -1,7 +1,7 @@
+import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { describe, expect, it } from "vitest";
 import {
   type ChartOptions,
-  DEFAULT_OPTIONS,
   mergeOptions,
   OPTION_SECTIONS,
 } from "@/entities/chart/model/chart-options";
@@ -16,6 +16,9 @@ import {
   SECTION_PARTS,
   setPath,
 } from "./option-fields";
+
+// 화면은 서버 기본값을 받아 쓰므로 테스트도 서버 값을 그대로 쓴다.
+const DEFAULT_OPTIONS: ChartOptions = CHART_DEFAULTS.options;
 
 describe("option fields", () => {
   it("모든 필드 경로가 ChartOptions에 있다", () => {

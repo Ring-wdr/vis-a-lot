@@ -526,4 +526,7 @@ export const api = {
     unwrap(chartClient.POST("/debug/render", { body })),
 
   chartHealth: () => unwrap(chartClient.GET("/health")),
+
+  /** 차트 기본값. 전체 설정·item 속성 팝업·새 탭 draft가 쓰고, 서버 draw도 같은 값을 쓴다. */
+  chartDefaults: () => unwrap(chartClient.GET("/defaults")),
 };

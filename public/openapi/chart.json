@@ -1614,6 +1614,27 @@
         },
         "required": ["chartId", "itemKey", "width", "height", "points"]
       },
+      "ChartDefaults": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "$ref": "#/components/schemas/ChartOptions"
+          },
+          "common": {
+            "type": "object",
+            "properties": {
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              }
+            },
+            "required": ["color"]
+          },
+          "splitSeparator": {
+            "type": "string"
+          }
+        },
+        "required": ["options", "common", "splitSeparator"]
+      },
       "ChartHealth": {
         "type": "object",
         "properties": {
@@ -5150,6 +5171,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/defaults": {
+      "get": {
+        "tags": ["charts"],
+        "summary": "차트 기본값 (전체 설정·draw가 함께 쓰는 속성 기본값)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "기본값",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartDefaults"
                 }
               }
             }

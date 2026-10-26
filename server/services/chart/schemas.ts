@@ -1220,6 +1220,17 @@ export const ShareListResponseSchema = z
 
 // ── 운영 ───────────────────────────────────────────────────────
 
+export const ChartDefaultsSchema = z
+  .object({
+    /** 차트 속성 전체 값 (모든 필드가 있다). 공통·item 개별 속성은 이 위에 덮어쓴다. */
+    options: ChartOptionsSchema,
+    /** 새 차트의 공통 속성 */
+    common: z.object({ color: HexColorSchema }),
+    /** split 조합 이름을 잇는 문자 */
+    splitSeparator: z.string(),
+  })
+  .openapi("ChartDefaults");
+
 export const ChartHealthSchema = z
   .object({ service: z.literal("chart"), renderWorkers: z.number() })
   .openapi("ChartHealth");
