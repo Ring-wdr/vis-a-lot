@@ -1,14 +1,9 @@
-// chart 서비스: 그리기 job, item 조작, 툴팁, PNG, history.
+// chart 서비스: 그리기 job, item 조작, 툴팁, PNG, history, 공유.
 // 요청 형식은 routes의 zod 스키마가 검증하고, 여기서는 필드 사이의 규칙과 상태만 확인한다.
 
 import type { Context } from "hono";
 import { isTerminal } from "../../api/types";
 import { canDelete } from "../../charts/chart-fields";
-import {
-  applyItemChanges,
-  type ItemPropChanges,
-  propsOrNone,
-} from "../../charts/item-props";
 import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
@@ -16,6 +11,12 @@ import {
   getDetail,
   getItem,
 } from "../../charts/chart-store";
+import {
+  applyItemChanges,
+  type ItemPropChanges,
+  propsOrNone,
+} from "../../charts/item-props";
+import { chartRestore } from "../../charts/item-restore";
 import { itemRowsScope, scopeSelected } from "../../charts/item-scope";
 import { pan, zoomIn, zoomOut } from "../../charts/item-view";
 import { attachHistory, recordEvent } from "../../history/recorder";
@@ -327,7 +328,11 @@ export const chartApp = createServiceApp()
       "settings" in body
         ? body.settings
         : "legendColor" in body
-          ? { legendColors: { [body.legendColor.value]: body.legendColor.color } }
+          ? {
+              legendColors: {
+                [body.legendColor.value]: body.legendColor.color,
+              },
+            }
           : body;
     item.props = applyItemChanges(
       item.props,
@@ -510,6 +515,72 @@ export const chartApp = createServiceApp()
     });
     if (!entry) return apiError(c, 404, "unknown history");
     return c.json(entry, 200);
+  })
+  // 공유: 지금 차트의 설정·item 상태와 대표 PNG를 고정한다. 이후 차트를 고쳐도 공유는 그대로다.
+  .openapi(routes.createShare, async (c) => {
+    const body = c.req.valid("json");
+    const chart = getChart(body.chartId);
+    if (!chart?.items) return apiError(c, 404, "unknown chart");
+    const item = body.itemKey
+      ? getItem(chart, body.itemKey)
+      : chart.items.find((i) => i.image);
+    if (body.itemKey && !item) return apiError(c, 404, "unknown item");
+    if (!item?.image) return apiError(c, 409, "item is not drawn yet");
+    const cached = await matchPng(
+      new URL(item.image.url, location.origin).href,
+    );
+    if (!cached) return apiError(c, 409, "item is not drawn yet");
+    const png = new Uint8Array(await cached.arrayBuffer());
+    const share = await getRuntime().db.call(
+      "shareSave",
+      {
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        createdBy: c.get("principal").sub,
+        createdByName: c.get("principal").name,
+        title: body.title,
+        dataset: chart.spec.dataset,
+        spec: chart.spec,
+        restore: chartRestore(chart),
+        item: { key: item.key, label: item.label },
+        image: { width: item.image.width, height: item.image.height },
+        png,
+      },
+      { transfer: [png.buffer] },
+    );
+    return c.json(share, 201);
+  })
+  .openapi(routes.listShares, async (c) => {
+    const shares = await getRuntime().db.call("shareList", {
+      createdBy: c.get("principal").sub,
+    });
+    return c.json({ shares }, 200);
+  })
+  .openapi(routes.getShare, async (c) => {
+    const share = await getRuntime().db.call("shareGet", {
+      id: c.req.valid("param").shareId,
+    });
+    if (!share) return apiError(c, 404, "unknown share");
+    return c.json(share, 200);
+  })
+  .openapi(routes.sharePng, async (c) => {
+    const png = await getRuntime().db.call("sharePng", {
+      id: c.req.valid("param").shareId,
+    });
+    if (!png) return c.body(null, 404);
+    return c.body(png.buffer as ArrayBuffer, 200, {
+      "content-type": "image/png",
+      // 스냅숏이라 내용이 바뀌지 않는다.
+      "cache-control": "private, max-age=31536000, immutable",
+    });
+  })
+  .openapi(routes.deleteShare, async (c) => {
+    const deleted = await getRuntime().db.call("shareDelete", {
+      id: c.req.valid("param").shareId,
+      createdBy: c.get("principal").sub,
+    });
+    if (!deleted) return apiError(c, 404, "unknown share");
+    return c.body(null, 204);
   })
   .openapi(routes.health, (c) =>
     c.json(

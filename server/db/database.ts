@@ -10,7 +10,7 @@ import {
   PGliteDialect,
   type RawBuilder,
 } from "kysely";
-import type { HistoryDetail, HistorySummary } from "../api/types";
+import type { HistoryDetail, HistorySummary, Share } from "../api/types";
 import type { ColumnStat, StoredUpload } from "../data/datasets";
 import { bindNative } from "./pglite-native";
 
@@ -52,6 +52,21 @@ export interface HistoryTable {
   thumbnail: string | null;
 }
 
+export interface SharesTable {
+  id: string;
+  created_at: number;
+  created_by: string;
+  created_by_name: string;
+  title: string;
+  dataset: string;
+  spec: Json<Share["spec"]>;
+  restore: Json<Share["restore"]>;
+  item: Json<Share["item"]>;
+  width: number;
+  height: number;
+  png: Uint8Array;
+}
+
 /** 행 수로 데이터셋을 구분하던 예전 메타. 남아 있으면 dataset_meta로 옮기고 지운다. */
 export interface LegacyDatasetsTable {
   rows: number;
@@ -66,6 +81,7 @@ export interface Database {
   boot_log: BootLogTable;
   dataset_meta: DatasetMetaTable;
   history: HistoryTable;
+  shares: SharesTable;
   datasets: LegacyDatasetsTable;
 }
 

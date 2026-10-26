@@ -969,6 +969,129 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/shares": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 내가 만든 공유 목록 (최근 순) */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 목록 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ShareListResponse"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    /** 차트의 지금 설정·item 상태와 대표 PNG를 공유로 고정 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["CreateShareRequest"];
+        };
+      };
+      responses: {
+        /** @description 만든 공유 */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Share"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 차트 또는 item */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 대표로 쓸 item이 아직 그려지지 않음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/debug/render": {
     parameters: {
       query?: never;
@@ -1031,6 +1154,118 @@ export type paths = {
       };
     };
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/shares/{shareId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 공유 한 건 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          shareId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 공유 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Share"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 공유 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    /** 공유 지우기 (만든 사용자만) */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          shareId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 공유이거나 만든 사용자가 아님 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
     options?: never;
     head?: never;
     patch?: never;
@@ -2073,6 +2308,51 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/shares/{shareId}/png": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 공유의 대표 PNG */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          shareId: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description PNG */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "image/png": string;
+          };
+        };
+        /** @description 없음 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts/{chartId}/items/{itemKey}/tooltip": {
     parameters: {
       query?: never;
@@ -2753,6 +3033,33 @@ export type components = {
       color: components["schemas"]["HexColor"];
       region: components["schemas"]["Region"];
     };
+    Share: {
+      id: string;
+      createdAt: number;
+      createdBy: string;
+      createdByName: string;
+      title: string;
+      dataset: components["schemas"]["DatasetId"];
+      spec: components["schemas"]["ChartSpec"];
+      restore: {
+        [key: string]: components["schemas"]["ItemRestore"];
+      };
+      item: {
+        key: string;
+        label: string;
+      };
+      image: components["schemas"]["ChartImage"];
+    };
+    ChartImage: {
+      url: string;
+      width: number;
+      height: number;
+    };
+    CreateShareRequest: {
+      chartId: string;
+      itemKey?: string;
+      title: string;
+    };
     DebugRenderResponse: {
       url: string;
       width: number;
@@ -2846,11 +3153,6 @@ export type components = {
       | {
           jobId: string;
         };
-    ChartImage: {
-      url: string;
-      width: number;
-      height: number;
-    };
     DetailRequest: {
       itemSize: components["schemas"]["ItemSize"];
     };
@@ -3326,6 +3628,9 @@ export type components = {
     };
     /** @enum {string} */
     ItemStage: "query" | "aggregate" | "render" | "encode";
+    ShareListResponse: {
+      shares: components["schemas"]["Share"][];
+    };
     ResizeRequest: {
       itemSize: components["schemas"]["ItemSize"];
       keys: string[];

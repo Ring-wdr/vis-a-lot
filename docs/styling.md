@@ -32,7 +32,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 - 상태는 `data-*`·`aria-*` 변형(`data-selected:`, `aria-pressed:`, `aria-current:`)으로 표시한다.
 - 같은 속성을 두 상태가 함께 바꾸면 Tailwind의 변형 순서에 기대지 않는다. `data-highlighted:not-data-selected:`처럼 서로 겹치지 않게 적는다.
 - 두 군데 이상에서 쓰는 모양은 `tv()` recipe로 묶고, 기능 간에 공유하면 `src/shared/ui`에 둔다.
-  - 공유 recipe: `button`(primary·secondary·danger × sm·md·lg), `toolButton`, `itemButton`, `linkButton`, `selectStyles`, `segmented`, `settingsStyles`
+  - 공유 recipe: `button`(primary·secondary·danger × sm·md·lg), `toolButton`, `itemButton`, `linkButton`, `navButton`·`navLink`(상단 바 화면 버튼·링크), `selectStyles`, `segmented`, `settingsStyles`
 - 클래스를 합칠 때는 `cn()`을 쓴다(`@/shared/lib/tw`). tailwind-merge가 `text-ui`를 색이 아니라 글자 크기로 읽도록 설정되어 있다.
 - 클래스 이름은 완성된 문자열로 적는다. `` `grid-cols-${n}` ``처럼 조합하면 Tailwind가 찾지 못한다. 값이 몇 가지로 정해지면 표(`GRID_COLS`)나 `tv` variant로 고른다.
 - 인라인 `style`은 런타임 값(가상 스크롤 위치, 좌표, 사용자가 고른 색)에만 쓴다.

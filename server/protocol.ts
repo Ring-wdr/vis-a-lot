@@ -5,6 +5,7 @@ import type {
   DatasetStatus,
   HistoryDetail,
   HistorySummary,
+  Share,
   StagedUpload,
   UploadTask,
 } from "./api/types";
@@ -22,6 +23,7 @@ import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
 import type { PieData, RadarData } from "./data/polar-data";
 import type { SampleRowsPage } from "./data/sample-rows";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
+import type { FeedReply, FeedRequest } from "./feed/runner";
 import type { CandleInput, CandleMeta } from "./render/candle";
 import type { CategoryInput, CategoryMeta } from "./render/category";
 import type { FunnelInput, FunnelMeta } from "./render/funnel";
@@ -34,6 +36,7 @@ import type { SankeyInput, SankeyMeta } from "./render/sankey";
 import type { RenderStage, ScatterInput, ScatterMeta } from "./render/scatter";
 import type { TreemapInput, TreemapMeta } from "./render/treemap";
 import type { WaterfallInput, WaterfallMeta } from "./render/waterfall";
+import type { StoredShare } from "./shares/share-store";
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
 export type Rejectable<T> =
@@ -161,6 +164,23 @@ export type DbMethods = {
   historySave: { params: HistoryDetail; result: undefined };
   historyList: { params: undefined; result: HistorySummary[] };
   historyGet: { params: { id: string }; result: HistoryDetail | null };
+  /** 공유 저장. PNG 바이트는 transfer로 넘긴다. */
+  shareSave: { params: StoredShare; result: Share };
+  shareGet: { params: { id: string }; result: Share | null };
+  /** 만든 사용자의 공유 목록 (최근 순) */
+  shareList: { params: { createdBy: string }; result: Share[] };
+  sharePng: { params: { id: string }; result: Uint8Array | null };
+  /** 피드 op 하나 (op 이름과 인자는 server/feed/ops.ts). 도메인 오류는 결과로 돌려준다. */
+  feed: { params: FeedRequest; result: FeedReply };
+  /** 피드 스키마를 지우고 빈 스키마로 다시 만든다 (/feed/dev/seed 리셋) */
+  feedReset: { params: undefined; result: undefined };
+  /**
+   * 미뤄 둔 IndexedDB 쓰기를 기다린다 (relaxedDurability). 시드처럼 데이터가 통째로 바뀐 직후
+   * 새로고침해도 사라지지 않게, 시드 적재·리셋·가져오기 뒤에 부른다.
+   */
+  feedFlush: { params: undefined; result: undefined };
+  /** 만든 사용자의 공유만 지운다. 지웠으면 true */
+  shareDelete: { params: { id: string; createdBy: string }; result: boolean };
   legendValues: {
     params: { dataset: string; column: string };
     result: string[];
