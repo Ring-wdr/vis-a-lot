@@ -3,6 +3,7 @@
 import type {
   ChartImage,
   ChartSpec,
+  ChartTheme,
   Favorite,
   HistoryEvent,
   ItemMeta,
@@ -165,13 +166,21 @@ export function pngUrl(chartId: string, item: ChartItem) {
   return `${itemPath(chartId, item)}?v=${item.version}`;
 }
 
-export function thumbnailUrl(chartId: string, item: ChartItem) {
-  return `${itemPath(chartId, item)}?r=${item.revision}&size=thumb`;
+/** light가 아닌 테마는 캐시 키 뒤에 붙인다 (~dark). 같은 내용·크기라도 테마가 다르면 다른 PNG다. */
+const themeSuffix = (theme: ChartTheme | undefined) =>
+  theme && theme !== "light" ? `~${theme}` : "";
+
+export function thumbnailUrl(
+  chartId: string,
+  item: ChartItem,
+  theme?: ChartTheme,
+) {
+  return `${itemPath(chartId, item)}?r=${item.revision}&size=thumb${themeSuffix(theme)}`;
 }
 
-/** 크기별 캐시 키. 배율이 1이 아니면 붙인다 (WxH@2). */
+/** 크기별 캐시 키. 배율이 1이 아니면 붙이고 (WxH@2), light가 아닌 테마도 붙인다 (WxH@2~dark). */
 export const sizeKeyOf = (size: ItemSize) =>
-  `${size.width}x${size.height}${(size.pixelRatio ?? 1) > 1 ? `@${size.pixelRatio}` : ""}`;
+  `${size.width}x${size.height}${(size.pixelRatio ?? 1) > 1 ? `@${size.pixelRatio}` : ""}${themeSuffix(size.theme)}`;
 
 export function detailUrl(chartId: string, item: ChartItem, size: ItemSize) {
   return `${itemPath(chartId, item)}?r=${item.revision}&size=${sizeKeyOf(size)}`;

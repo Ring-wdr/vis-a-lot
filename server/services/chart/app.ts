@@ -26,6 +26,7 @@ import {
   cancelJob as cancel,
   getJob,
   type ItemSelection,
+  lightPng,
   OTHERS_LABEL,
   startDetailJob,
   startItemJob,
@@ -48,7 +49,10 @@ const MAX_PIXEL_RATIO = 3;
 
 let pngVersion = 0;
 
-/** 크기는 정수 픽셀로, 배율은 1~3에서 0.25 단위로 맞춘다 (배율이 조금씩 다른 요청이 캐시를 나누지 않게). */
+/**
+ * 크기는 정수 픽셀로, 배율은 1~3에서 0.25 단위로 맞춘다 (배율이 조금씩 다른 요청이 캐시를 나누지 않게).
+ * 테마는 기본값(light)이면 빼서 예전 요청과 같은 키가 되게 한다.
+ */
 function roundSize(size: ItemSize): ItemSize {
   const ratio = Math.min(
     MAX_PIXEL_RATIO,
@@ -58,6 +62,7 @@ function roundSize(size: ItemSize): ItemSize {
     width: Math.round(size.width),
     height: Math.round(size.height),
     ...(ratio > 1 ? { pixelRatio: ratio } : {}),
+    ...(size.theme === "dark" ? { theme: size.theme } : {}),
   };
 }
 
@@ -518,6 +523,15 @@ export const chartApp = createServiceApp()
       "content-type": "image/png",
     });
   })
+  .openapi(routes.exportPng, async (c) => {
+    const { chartId, itemKey } = c.req.valid("param");
+    const chart = getChart(chartId);
+    const item = chart && getItem(chart, itemKey);
+    if (!chart || !item) return apiError(c, 404, "unknown item");
+    const png = await lightPng(chart, item);
+    if (!png) return apiError(c, 409, "item is not drawn yet");
+    return c.body(png, 200, { "content-type": "image/png" });
+  })
   .openapi(routes.historyList, async (c) => {
     const entries = await getRuntime().db.call("historyList", undefined);
     return c.json({ entries }, 200);
@@ -546,11 +560,10 @@ export const chartApp = createServiceApp()
       : chart.items.find((i) => i.image);
     if (body.itemKey && !item) return apiError(c, 404, "unknown item");
     if (!item?.image) return apiError(c, 409, "item is not drawn yet");
-    const cached = await matchPng(
-      new URL(item.image.url, location.origin).href,
-    );
-    if (!cached) return apiError(c, 409, "item is not drawn yet");
-    const png = new Uint8Array(await cached.arrayBuffer());
+    // 받는 사람의 테마를 모르므로 공유 PNG는 light로 고정한다.
+    const light = await lightPng(chart, item);
+    if (!light) return apiError(c, 409, "item is not drawn yet");
+    const png = new Uint8Array(light);
     const share = await getRuntime().db.call(
       "shareSave",
       {

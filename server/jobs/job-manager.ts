@@ -3,6 +3,7 @@
 // 상태가 바뀔 때마다 version을 올려 long polling 대기자를 깨운다.
 
 import {
+  type ChartTheme,
   type ItemMeta,
   type ItemSize,
   type ItemStage,
@@ -41,7 +42,7 @@ import { specError } from "../charts/validate-spec";
 import { OTHERS_SLICE, type PieData } from "../data/polar-data";
 import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
-import { deletePngs, putPng } from "../png-store";
+import { deletePngs, matchPng, putPng } from "../png-store";
 import {
   DISTRIBUTION_Y_TITLES,
   type DistributionKind,
@@ -525,12 +526,13 @@ export function itemColor(chart: ChartRecord, item: ChartItem) {
   return item.props?.color ?? chart.spec.common.color;
 }
 
-/** item에 적용할 차트 속성 (기본값 → 차트 종류별 기본값 → 공통 → 개별) */
-function optionsFor(chart: ChartRecord, item: ChartItem) {
+/** item에 적용할 차트 속성 (기본값 → 테마별 기본값 → 차트 종류별 기본값 → 공통 → 개별) */
+function optionsFor(chart: ChartRecord, item: ChartItem, theme?: ChartTheme) {
   return resolveOptions(
     chart.spec.chartType,
     chart.spec.common.options,
     item.props?.options,
+    theme,
   );
 }
 
@@ -574,6 +576,8 @@ export function groupColor(
 function legendInput(
   chart: ChartRecord,
   item: ChartItem,
+  /** legend 글자·테두리 색의 기본값이 테마마다 다르다. */
+  theme: ChartTheme | undefined,
   title: string,
   values: string[] | undefined,
   defaults?: readonly string[],
@@ -591,7 +595,7 @@ function legendInput(
     ],
     position: legendPosition(chart, item),
     hidden: item.props?.hiddenLegend,
-    style: legendStyleOf(optionsFor(chart, item)),
+    style: legendStyleOf(optionsFor(chart, item, theme)),
   };
 }
 
@@ -862,12 +866,14 @@ function renderItem(
     spec.chartType,
     spec.common.options,
     item.props?.options,
+    size.theme,
   );
   const common = {
     options,
     width: size.width,
     height: size.height,
     pixelRatio: size.pixelRatio,
+    theme: size.theme,
     thumbnail: thumbnail ? THUMBNAIL_SIZE : undefined,
     title: item.label,
     color: itemColor(chart, item),
@@ -879,7 +885,13 @@ function renderItem(
   if (data.kind === "scatter") {
     const group =
       index === undefined ? { start: 0, end: 0 } : data.groups[index];
-    const legend = legendInput(chart, item, legendTitle, data.legend?.values);
+    const legend = legendInput(
+      chart,
+      item,
+      size.theme,
+      legendTitle,
+      data.legend?.values,
+    );
     // 분포 line은 x가 y 컬럼 값이고, y는 누적 비율·확률·분위수다.
     const distribution = isDistributionLine(spec)
       ? (subTypeOf(spec) as DistributionKind)
@@ -985,7 +997,13 @@ function renderItem(
         },
         bins: data.bins,
         counts: group?.counts ?? [],
-        legend: legendInput(chart, item, legendTitle, data.legendValues),
+        legend: legendInput(
+          chart,
+          item,
+          size.theme,
+          legendTitle,
+          data.legendValues,
+        ),
       },
       poolOptions,
     );
@@ -1009,6 +1027,7 @@ function renderItem(
         legend: legendInput(
           chart,
           item,
+          size.theme,
           CANDLE_LEGEND.title,
           [...CANDLE_LEGEND.values],
           CANDLE_LEGEND.colors,
@@ -1026,7 +1045,13 @@ function renderItem(
         rowTitle: columnOf(spec.y)?.label ?? spec.y,
         rows: group?.rows ?? [],
         bars: group?.bars ?? { r: [], s: [], e: [], g: [], n: [] },
-        legend: legendInput(chart, item, legendTitle, data.legendValues),
+        legend: legendInput(
+          chart,
+          item,
+          size.theme,
+          legendTitle,
+          data.legendValues,
+        ),
       },
       poolOptions,
     );
@@ -1037,6 +1062,7 @@ function renderItem(
     const legend = legendInput(
       chart,
       item,
+      size.theme,
       columnOf(spec.x)?.label ?? spec.x,
       data.sources,
     ) as NonNullable<ReturnType<typeof legendInput>>;
@@ -1103,6 +1129,7 @@ function renderItem(
         legend: legendInput(
           chart,
           item,
+          size.theme,
           columnOf(spec.x)?.label ?? spec.x,
           stages,
         ),
@@ -1125,6 +1152,7 @@ function renderItem(
         legend: legendInput(
           chart,
           item,
+          size.theme,
           "구분",
           [...WATERFALL_KINDS],
           waterfallDefaultColors(common.color),
@@ -1145,6 +1173,7 @@ function renderItem(
         legend: legendInput(
           chart,
           { ...item, legendGroups: [] },
+          size.theme,
           legendTitle,
           data.legendValues,
         ),
@@ -1171,7 +1200,13 @@ function renderItem(
       bars: group?.bars,
       boxes: group?.boxes,
       agg: spec.chartType === "bar" ? spec.agg : undefined,
-      legend: legendInput(chart, item, legendTitle, data.legendValues),
+      legend: legendInput(
+        chart,
+        item,
+        size.theme,
+        legendTitle,
+        data.legendValues,
+      ),
     },
     poolOptions,
   );
@@ -1196,7 +1231,11 @@ async function renderItems(
         touch(job);
       };
       const size = target.kind === "detail" ? target.size : chart.itemSize;
-      const thumbnail = target.kind === "item" && target.thumbnail;
+      // 내용이 그대로여도 섬네일이 다른 테마로 그려져 있으면 함께 다시 그린다.
+      const thumbnail =
+        target.kind === "item" &&
+        (target.thumbnail ||
+          (item.thumbnail?.theme ?? "light") !== (size.theme ?? "light"));
       return renderItem(chart, data, item, size, thumbnail, {
         signal,
         onStart: () => {
@@ -1216,7 +1255,7 @@ async function renderItems(
             state.status = "success";
             return;
           }
-          await storeResult(chart, item, result);
+          await storeResult(chart, item, result, size);
           item.meta = result.meta;
           item.selectedCount = result.meta.selected;
           if (!item.view) {
@@ -1259,27 +1298,52 @@ async function storeResult(
   chart: ChartRecord,
   item: ChartItem,
   { png, thumb }: RenderOutput,
+  /** 이 PNG를 그린 크기·배율·테마. 그리는 사이 chart.itemSize가 바뀌어도(resize, 테마 전환) 그린 값을 적는다. */
+  size: ItemSize,
 ) {
   item.version++;
   const url = pngUrl(chart.id, item);
   await putPng(new URL(url, location.origin).href, png);
   // width·height는 CSS 픽셀이다. PNG는 pixelRatio배로 그려져 있어 <img>가 그만큼 촘촘하게 보인다.
-  const { pixelRatio } = chart.itemSize;
-  item.image = {
-    url,
-    width: chart.itemSize.width,
-    height: chart.itemSize.height,
+  const { pixelRatio, theme } = size;
+  const look = {
     ...(pixelRatio ? { pixelRatio } : {}),
+    ...(theme ? { theme } : {}),
   };
+  item.image = { url, width: size.width, height: size.height, ...look };
   if (thumb) {
-    const thumbUrl = thumbnailUrl(chart.id, item);
+    const thumbUrl = thumbnailUrl(chart.id, item, theme);
     await putPng(new URL(thumbUrl, location.origin).href, thumb);
-    item.thumbnail = {
-      url: thumbUrl,
-      ...THUMBNAIL_SIZE,
-      ...(pixelRatio ? { pixelRatio } : {}),
-    };
+    item.thumbnail = { url: thumbUrl, ...THUMBNAIL_SIZE, ...look };
   }
+}
+
+/**
+ * 내려받기·엑셀·공유처럼 화면 밖으로 나가는 PNG. 테마와 상관없이 light로 준다.
+ * 지금 그림이 light면 그 PNG를, 아니면 같은 크기·배율로 한 장 더 그린다 (저장하지 않는다).
+ * 아직 그리지 않은 item이면 undefined.
+ */
+export async function lightPng(
+  chart: ChartRecord,
+  item: ChartItem,
+): Promise<ArrayBuffer | undefined> {
+  const { image } = item;
+  if (!image) return undefined;
+  if ((image.theme ?? "light") === "light") {
+    const cached = await matchPng(new URL(image.url, location.origin).href);
+    return cached?.arrayBuffer();
+  }
+  const { width, height, pixelRatio } = image;
+  const size = { width, height, ...(pixelRatio ? { pixelRatio } : {}) };
+  const { png } = await renderItem(
+    chart,
+    await itemData(chart),
+    item,
+    size,
+    false,
+    {},
+  );
+  return png;
 }
 
 /** 상세 PNG를 크기별 캐시에 넣는다. 밀려난 크기의 PNG는 지운다. */

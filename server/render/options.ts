@@ -420,6 +420,44 @@ export const DEFAULT_OPTIONS: ChartOptions = {
   expression: { x: "", y: "" },
 };
 
+const darkAxis = {
+  line: { color: "#55544f" },
+  grid: { color: "#363632" },
+  tick: { color: "#55544f" },
+  label: { color: "#b5b4ae" },
+} satisfies DeepPartial<AxisOptions>;
+
+/**
+ * 다크 테마에서 DEFAULT_OPTIONS 위에 덮는 값. 글자와 바탕 계열(배경·격자·축선·테두리)만 바꾸고,
+ * 데이터 색(palette·focus 등)은 테마와 상관없이 같다. 사용자가 정한 값은 이 위에 덮이므로 그대로 남는다.
+ * 값은 render/theme.ts의 dark 테마와 같다.
+ */
+export const DARK_OPTIONS: ChartOptionsPatch = {
+  title: {
+    color: "#ecebe8",
+    subtitleColor: "#b5b4ae",
+    summary: { color: "#8a8984" },
+  },
+  axes: { x: darkAxis, y: darkAxis },
+  legend: {
+    borderColor: "#363632",
+    fontColor: "#b5b4ae",
+    titleColor: "#8a8984",
+  },
+  panel: { backColor: "#141413", borderColor: "#55544f" },
+  shape: { medianColor: "#ecebe8" },
+  pointLabel: {
+    color: "#b5b4ae",
+    box: { background: "#232322", border: "#55544f" },
+  },
+  score: { fontColor: "#ecebe8", backColor: "#232322", borderColor: "#55544f" },
+  tooltip: {
+    fontColor: "#ecebe8",
+    background: "#232322",
+    borderColor: "#55544f",
+  },
+};
+
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }

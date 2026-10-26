@@ -1,6 +1,7 @@
 // Worker별 RPC 메서드 정의.
 
 import type {
+  ChartTheme,
   CsvCheck,
   DatasetStatus,
   HistoryDetail,
@@ -231,8 +232,15 @@ export type DbMethods = {
 };
 
 type Size = { width: number; height: number };
-/** 모든 차트 렌더에 덧붙이는 입력. pixelRatio배 캔버스에 그리고, thumbnail 크기를 주면 섬네일도 함께 그린다. */
-type RenderExtras = { thumbnail?: Size; pixelRatio?: number };
+/**
+ * 모든 차트 렌더에 덧붙이는 입력. pixelRatio배 캔버스에 theme(없으면 light) 색으로 그리고,
+ * thumbnail 크기를 주면 섬네일도 함께 그린다.
+ */
+type RenderExtras = {
+  thumbnail?: Size;
+  pixelRatio?: number;
+  theme?: ChartTheme;
+};
 
 export type RenderMethods = {
   /** 1단계 검증용: 임의의 점을 그려 PNG를 만든다. */
