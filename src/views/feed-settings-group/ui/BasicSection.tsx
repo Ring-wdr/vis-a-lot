@@ -54,26 +54,24 @@ export function BasicSection({
 }) {
   const id = useId();
   const router = useRouter();
-  // 서버 값이 바뀌면(다른 곳에서 저장) 초안을 새로 잡는다
-  const [base, setBase] = useState(group);
-  const [draft, setDraft] = useState(() => draftOf(group));
-  if (base !== group) {
-    setBase(group);
-    setDraft(draftOf(group));
-  }
+  // 고친 칸만 들고 서버 값 위에 얹는다. 유형·팀을 저장해 그룹 값이 다시 와도 고치던 칸은 그대로다.
+  const [edits, setEdits] = useState<Partial<Draft>>({});
+  const draft = { ...draftOf(group), ...edits };
   const patch = basicPatch(group, draft);
   const dirty = Object.keys(patch).length > 0;
   const prefixOk = KEY_PREFIX_PATTERN.test(draft.keyPrefix);
   const nameOk = draft.name.trim().length > 0;
-  const set = (p: Partial<Draft>) => setDraft((d) => ({ ...d, ...p }));
+  const set = (p: Partial<Draft>) => setEdits((e) => ({ ...e, ...p }));
 
   const save = async () => {
     if (!dirty || !prefixOk || !nameOk) return;
     const ok = await edit.run("basic", "기본 정보를 저장하지 못했습니다", () =>
       groupsApi.update(group.id, patch),
     );
+    if (!ok) return;
+    setEdits({});
     // 주소의 ?g=는 접두사라 바뀌면 새 접두사로 옮긴다
-    if (ok && patch.keyPrefix)
+    if (patch.keyPrefix)
       router.replace(groupHref(FEED.settingsGroup, patch.keyPrefix));
   };
 
@@ -158,7 +156,7 @@ export function BasicSection({
             <button
               type="button"
               className={button({ size: "sm" })}
-              onClick={() => setDraft(draftOf(group))}
+              onClick={() => setEdits({})}
             >
               되돌리기
             </button>
