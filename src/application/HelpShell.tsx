@@ -3,7 +3,7 @@
 import { CircleHelp, LayoutGrid, Menu, Newspaper, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ThemeToggle } from "@/features/switch-theme/ui/ThemeToggle";
 import { HELP_ROOT } from "@/shared/config/help";
 import { navLink } from "@/shared/ui/nav";
@@ -17,14 +17,7 @@ import { HelpSidebar } from "@/widgets/help-sidebar/ui/HelpSidebar";
  */
 export function HelpShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const scroller = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-
-  // 본문이 따로 스크롤하므로 문서를 옮기면 맨 위에서 시작하게 한다 (#앵커로 들어온 경우는 그대로).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 경로가 바뀔 때마다 실행한다.
-  useEffect(() => {
-    if (!location.hash) scroller.current?.scrollTo(0, 0);
-  }, [pathname]);
 
   return (
     <div className="flex h-dvh flex-col bg-surface text-fg">
@@ -81,7 +74,8 @@ export function HelpShell({ children }: { children: ReactNode }) {
         >
           <HelpSidebar />
         </aside>
-        <div ref={scroller} className="min-w-0 flex-1 overflow-y-auto">
+        {/* 본문이 따로 스크롤하므로 문서를 옮기면 새 스크롤 영역으로 바꿔 맨 위에서 시작한다. */}
+        <div key={pathname} className="min-w-0 flex-1 overflow-y-auto">
           <main className="mx-auto max-w-3xl px-4 pt-6 pb-16 md:px-8">
             {children}
           </main>

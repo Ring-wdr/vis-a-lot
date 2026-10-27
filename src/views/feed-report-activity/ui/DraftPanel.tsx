@@ -55,23 +55,22 @@ export function DraftPanel({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const abort = useRef<AbortController | null>(null);
-  // 다시 만들기를 누를 때마다 늘려 같은 내용으로 다시 흘려받는다.
-  const [attempt, setAttempt] = useState(0);
-  const [prevData, setPrevData] = useState(data);
-  if (data !== prevData) {
-    setPrevData(data);
+  // 흘려받기 한 번. 다시 만들기나 보고 내용이 바뀌면 새 요청 객체가 되어 effect가 다시 흘려받는다.
+  const [request, setRequest] = useState({ data });
+  const start = (next: ActivityData) => {
+    setRequest({ data: next });
     setText("");
     setError(null);
     setState("streaming");
-  }
+  };
+  if (request.data !== data) start(data);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt가 바뀌면(다시 만들기) 다시 흘려받는다.
   useEffect(() => {
     // 다음 실행으로 넘어간 뒤 끝난 이전 실행은 화면을 건드리지 않는다.
     let alive = true;
     const ctrl = new AbortController();
     abort.current = ctrl;
-    void streamDraft(data, ctrl, {
+    void streamDraft(request.data, ctrl, {
       onChunk: (chunk) => alive && setText((t) => t + chunk),
       onEnd: (next, message) => {
         if (!alive) return;
@@ -83,14 +82,7 @@ export function DraftPanel({
       alive = false;
       ctrl.abort();
     };
-  }, [data, attempt]);
-
-  function regenerate() {
-    setText("");
-    setError(null);
-    setState("streaming");
-    setAttempt((n) => n + 1);
-  }
+  }, [request]);
 
   function stop() {
     abort.current?.abort();
@@ -149,7 +141,7 @@ export function DraftPanel({
             <button
               type="button"
               className={button({ size: "sm" })}
-              onClick={regenerate}
+              onClick={() => start(data)}
             >
               <RotateCcw size={13} aria-hidden="true" />
               다시 만들기

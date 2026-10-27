@@ -135,5 +135,6 @@ export function GroupSettingsView() {
   const state = useRouteGroup();
   if (!key) return <GroupPicker />;
   if (!state.group) return <RouteGroupFallback state={state} />;
-  return <GroupSettings groupId={state.group.id} />;
+  // 다른 그룹으로 옮기면 입력하던 이름·고른 사람이 남지 않게 새로 그린다.
+  return <GroupSettings key={state.group.id} groupId={state.group.id} />;
 }

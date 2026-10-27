@@ -219,7 +219,7 @@ export function ItemTooltip({
             {look?.title && <strong>{look.title}</strong>}
             <dl className="flex flex-col gap-0.5">
               {hit.rows.map((row) => (
-                <div key={row.label} className={tooltipRow}>
+                <div key={row.id} className={tooltipRow}>
                   <dt
                     className={cn(row.emphasis && "text-fg")}
                     style={rowStyle}

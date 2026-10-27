@@ -55,9 +55,9 @@ describe("histogramStrategy", () => {
     // x 값 6 → 구간 [5, 10)의 앞 칸(x)
     const hit = histogramStrategy.hitTest(meta, undefined, 60, 50);
     expect(hit?.rows).toEqual([
-      { label: "구간", value: "5 ~ 10 미만" },
-      { label: "종류", value: "x" },
-      { label: "개수", value: "6", emphasis: true },
+      { id: "range", label: "구간", value: "5 ~ 10 미만" },
+      { id: "legend", label: "종류", value: "x" },
+      { id: "count", label: "개수", value: "6", emphasis: true },
     ]);
     // 칸 [5, 7.5) → 50..75px, 개수 6 → 위 40px
     expect(hit?.highlight).toEqual({ x: 47, y: 37, width: 31, height: 63 });
@@ -65,7 +65,11 @@ describe("histogramStrategy", () => {
 
   it("마지막 구간은 끝값을 포함하고, 끈 legend 값의 칸은 무시한다", () => {
     const hit = histogramStrategy.hitTest(meta, undefined, 155, 50);
-    expect(hit?.rows[0]).toEqual({ label: "구간", value: "15 ~ 20" });
+    expect(hit?.rows[0]).toEqual({
+      id: "range",
+      label: "구간",
+      value: "15 ~ 20",
+    });
     expect(histogramStrategy.hitTest(meta, undefined, 190, 50)).toBeNull();
   });
 });
@@ -89,9 +93,9 @@ describe("waterfallStrategy", () => {
   it("범주·값·누적을 보여주고 막대(시작~끝)를 감싼다", () => {
     const hit = waterfallStrategy.hitTest(meta, undefined, 150, 50);
     expect(hit?.rows).toEqual([
-      { label: "범주", value: "B" },
-      { label: "합계", value: "-4", emphasis: true },
-      { label: "누적", value: "6" },
+      { id: "category", label: "범주", value: "B" },
+      { id: "change", label: "합계", value: "-4", emphasis: true },
+      { id: "cumulative", label: "누적", value: "6" },
     ]);
     // 가운데 150, 너비 70, 값 10 → 6 (위 50px ~ 70px)
     expect(hit?.highlight).toEqual({ x: 112, y: 47, width: 76, height: 26 });
@@ -99,8 +103,8 @@ describe("waterfallStrategy", () => {
 
   it("합계 막대는 최종 누적을 보여주고, 막대 사이 빈 곳은 무시한다", () => {
     expect(waterfallStrategy.hitTest(meta, undefined, 250, 80)?.rows).toEqual([
-      { label: "범주", value: "합계" },
-      { label: "누적", value: "6", emphasis: true },
+      { id: "category", label: "범주", value: "합계" },
+      { id: "cumulative", label: "누적", value: "6", emphasis: true },
     ]);
     expect(waterfallStrategy.hitTest(meta, undefined, 100, 50)).toBeNull();
   });
@@ -136,10 +140,10 @@ describe("funnelStrategy", () => {
   it("막대가 놓인 줄이면 단계와 값, 전환율을 보여준다", () => {
     const hit = funnelStrategy.hitTest(meta, undefined, 90, 150);
     expect(hit?.rows).toEqual([
-      { label: "단계", value: "구매" },
-      { label: "개수", value: "25", emphasis: true },
-      { label: "이전 단계 대비", value: "25%" },
-      { label: "첫 단계 대비", value: "25%" },
+      { id: "stage", label: "단계", value: "구매" },
+      { id: "value", label: "개수", value: "25", emphasis: true },
+      { id: "prevRate", label: "이전 단계 대비", value: "25%" },
+      { id: "firstRate", label: "첫 단계 대비", value: "25%" },
     ]);
     expect(hit?.highlight).toEqual({ x: 122, y: 125, width: 56, height: 50 });
   });

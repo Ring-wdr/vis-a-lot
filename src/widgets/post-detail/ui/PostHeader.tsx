@@ -238,7 +238,7 @@ export function PostHeader({
         <span aria-hidden="true">·</span>
         <span>{group?.name ?? post.groupId}</span>
       </p>
-      <TitleEditor key={post.title} post={post} />
+      <TitleEditor post={post} />
       <div className="flex flex-wrap items-center gap-2">
         <span className={statusBadge({ status: post.status })}>
           {statusLabel(post.status, group?.statusNames)}
