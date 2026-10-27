@@ -50,7 +50,9 @@
         },
         "noTailwindLegacyUtilities": "error",
         "noTailwindRawColors": "error",
-        "useTailwindStaticClassStrings": "error"
+        "useTailwindStaticClassStrings": "error",
+        "noReactObjectTypeAsDefaultProp": "error",
+        "noFloatingPromises": "error"
       }
     },
     "domains": {
