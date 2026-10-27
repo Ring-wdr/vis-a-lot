@@ -6,7 +6,7 @@ import type {
   UpdateGroupRequest,
 } from "../services/feed/modules/groups/schemas";
 import {
-  groupRole,
+  groupRoles,
   requireGroupAdmin,
   resolveGroup,
   visibleGroupIds,
@@ -44,18 +44,17 @@ async function toGroups(ctx: OpCtx, ids: string[]): Promise<Group[]> {
     .orderBy("name")
     .orderBy("key_prefix")
     .execute();
-  return Promise.all(
-    rows.map(async (r) => ({
-      id: r.id,
-      name: r.name,
-      keyPrefix: r.key_prefix,
-      description: r.description,
-      isPrivate: r.is_private,
-      statusNames: r.status_names,
-      myRole: await groupRole(ctx, r.id),
-      memberCount: Number(r.member_count ?? 0),
-    })),
-  );
+  const roleOf = await groupRoles(ctx);
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    keyPrefix: r.key_prefix,
+    description: r.description,
+    isPrivate: r.is_private,
+    statusNames: r.status_names,
+    myRole: roleOf(r.id),
+    memberCount: Number(r.member_count ?? 0),
+  }));
 }
 
 /** 그룹 하나의 상세. 가시성은 부르는 쪽이 이미 확인했다 */

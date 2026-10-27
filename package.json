@@ -12,6 +12,7 @@
     "test": "vitest run",
     "gen:api": "tsx scripts/gen-api.mts",
     "gen:api:check": "tsx scripts/gen-api.mts --check",
+    "bench:db": "tsx scripts/bench-db/run.mts",
     "prepare": "husky",
     "lint:css": "stylelint \"**/*.css\""
   },

@@ -48,6 +48,7 @@ describe("filterSql", () => {
   });
 
   it("범위 반전, null 제외, 시계열은 epoch ms로 비교, 파라미터 번호 이어 쓰기", () => {
+    const E = `(round(date_part('epoch', "ts") * 1000000) / 1000)`;
     const { sql, params } = filterSql(
       [
         {
@@ -61,9 +62,7 @@ describe("filterSql", () => {
       ],
       3,
     );
-    expect(sql).toBe(
-      ' and ((extract(epoch from "ts") * 1000) < $3::float8 or (extract(epoch from "ts") * 1000) > $4::float8)',
-    );
+    expect(sql).toBe(` and (${E} < $3::float8 or ${E} > $4::float8)`);
     expect(params).toEqual([10, 20]);
   });
 
