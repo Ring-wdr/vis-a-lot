@@ -2,7 +2,6 @@
 
 // 필드 패널: 바꿀 때마다 postsApi.update로 저장한다. 상태는 머리의 전이 버튼으로만 바꾼다.
 
-import { useState } from "react";
 import { statusLabel } from "@/entities/post/lib/labels";
 import {
   NONE,
@@ -16,6 +15,7 @@ import { useUserMap } from "@/shared/api/feed/lookups";
 import { postsApi } from "@/shared/api/feed/posts";
 import type { Group, UpdatePostRequest } from "@/shared/api/feed/types";
 import { dateTime } from "@/shared/lib/time";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { OrderedSelect } from "@/shared/ui/OrderedSelect";
 import { Select } from "@/shared/ui/Select";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
@@ -46,13 +46,15 @@ function ProgressField({
   save,
 }: {
   post: PostDetail;
-  save: (patch: UpdatePostRequest) => void;
+  save: (patch: UpdatePostRequest) => Promise<unknown>;
 }) {
   const auto = post.childCount > 0 || post.checklist.length > 0;
-  const [value, setValue] = useState(post.progress);
+  // 끄는 동안의 값만 들고 있고, 저장해 새 값을 다시 받으면(실패하면 원래 값으로) 게시물 값을 따른다.
+  const [value, editing] = usePendingValue(post.progress);
   const commit = () => {
     const v = Math.max(0, Math.min(100, Math.round(value)));
-    if (v !== post.progress) save({ progress: v });
+    if (v === post.progress) return editing.release();
+    editing.commit(() => save({ progress: v }));
   };
   const bar = (
     <progress
@@ -88,7 +90,7 @@ function ProgressField({
         value={value}
         aria-label="진행률"
         className="min-w-0 flex-1 accent-accent"
-        onChange={(e) => setValue(Number(e.currentTarget.value))}
+        onChange={(e) => editing.change(Number(e.currentTarget.value))}
         onPointerUp={commit}
         onKeyUp={commit}
       />
@@ -99,7 +101,7 @@ function ProgressField({
         value={value}
         aria-label="진행률 (%)"
         className={field({ class: "w-16 tabular-nums" })}
-        onChange={(e) => setValue(Number(e.currentTarget.value))}
+        onChange={(e) => editing.change(Number(e.currentTarget.value))}
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === "Enter") commit();
@@ -194,7 +196,7 @@ export function PostFields({
           />
         </Row>
         <Row label="진행률">
-          <ProgressField key={post.progress} post={post} save={save} />
+          <ProgressField post={post} save={save} />
         </Row>
         <Select
           label="게시물 유형"

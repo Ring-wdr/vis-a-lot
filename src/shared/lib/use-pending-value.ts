@@ -9,6 +9,7 @@ import { startTransition, useRef, useState } from "react";
  * - `change(next)`: 화면의 값만 바꾼다 (긴급 업데이트).
  * - `commit(emit)`: transition 안에서 `emit`으로 밖에 반영하고, 그사이 더 바뀐 게 없으면 보류를 푼다.
  *   보류를 푸는 일도 같은 transition이라 밖의 새 값이 그려질 때 함께 바뀌어 깜빡이지 않는다.
+ *   `emit`이 Promise를 돌려주면(서버 저장) 끝날 때까지 보류를 보여 주고, 실패해도 풀어 밖의 값으로 돌아간다.
  *   `hold`면 반영만 하고 보류는 계속 보여 준다 (입력 중인 글자처럼 밖의 값과 모양이 다를 때).
  * - `release()`: 보류를 버리고 밖의 값을 보여 준다.
  *
@@ -25,11 +26,19 @@ export function usePendingValue<T>(value: T) {
     seq.current += 1;
     setPending({ value: next, seq: seq.current });
   };
-  const commit = (emit: () => void, { hold = false } = {}) => {
+  const commit = (emit: () => unknown, { hold = false } = {}) => {
     const at = seq.current;
-    startTransition(() => {
-      emit();
+    const settle = () => {
       if (!hold) setPending((p) => (p && p.seq > at ? p : null));
+    };
+    startTransition(() => {
+      const done = emit();
+      if (!(done instanceof Promise)) return settle();
+      // await 뒤의 업데이트는 transition 밖이므로 다시 감싼다.
+      return done.then(
+        () => startTransition(settle),
+        () => startTransition(settle),
+      );
     });
   };
   const release = () => startTransition(() => setPending(null));
