@@ -33,7 +33,6 @@ function useBootstrap() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: attempt가 바뀌면(다시 시도) 다시 부른다.
   useEffect(() => {
     let alive = true;
-    setState({ status: "booting" });
     bootstrapOnce().then(
       () => alive && setState({ status: "ready" }),
       (err: unknown) =>
@@ -47,7 +46,11 @@ function useBootstrap() {
       alive = false;
     };
   }, [attempt]);
-  return { state, retry: () => setAttempt((n) => n + 1) };
+  const retry = () => {
+    setState({ status: "booting" });
+    setAttempt((n) => n + 1);
+  };
+  return { state, retry };
 }
 
 /**

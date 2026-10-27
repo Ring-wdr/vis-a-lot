@@ -3,7 +3,7 @@
 // 보고 초안: 활동 보고를 AI 어댑터(draftReport)로 흘려받아 고칠 수 있는 글상자에 채운다. 멈추기·다시 만들기·복사.
 
 import { Copy, RotateCcw, Sparkles, Square, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ai, useAiStatus } from "@/shared/lib/ai";
 import type { ActivityData } from "@/shared/lib/ai/types";
 import { cn } from "@/shared/lib/tw";
@@ -20,6 +20,27 @@ const STATE_LABEL: Record<DraftState, string> = {
   error: "초안을 만들지 못했습니다",
 };
 
+/** 초안을 흘려받는다. 중간에 멈추면(ctrl.abort) 받은 데까지 두고 끝낸다. */
+async function streamDraft(
+  data: ActivityData,
+  ctrl: AbortController,
+  on: {
+    onChunk: (chunk: string) => void;
+    onEnd: (state: DraftState, error: string | null) => void;
+  },
+) {
+  try {
+    for await (const chunk of ai.draftReport(data, { signal: ctrl.signal })) {
+      if (ctrl.signal.aborted) break;
+      on.onChunk(chunk);
+    }
+    on.onEnd(ctrl.signal.aborted ? "stopped" : "done", null);
+  } catch (e) {
+    if (ctrl.signal.aborted) on.onEnd("stopped", null);
+    else on.onEnd("error", e instanceof Error ? e.message : String(e));
+  }
+}
+
 export function DraftPanel({
   data,
   onClose,
@@ -34,35 +55,42 @@ export function DraftPanel({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const abort = useRef<AbortController | null>(null);
-
-  const run = useCallback(async () => {
-    abort.current?.abort();
-    const ctrl = new AbortController();
-    abort.current = ctrl;
+  // 다시 만들기를 누를 때마다 늘려 같은 내용으로 다시 흘려받는다.
+  const [attempt, setAttempt] = useState(0);
+  const [prevData, setPrevData] = useState(data);
+  if (data !== prevData) {
+    setPrevData(data);
     setText("");
     setError(null);
     setState("streaming");
-    try {
-      for await (const chunk of ai.draftReport(data, { signal: ctrl.signal })) {
-        if (ctrl.signal.aborted) break;
-        setText((t) => t + chunk);
-      }
-      if (abort.current === ctrl)
-        setState(ctrl.signal.aborted ? "stopped" : "done");
-    } catch (e) {
-      if (abort.current !== ctrl) return;
-      if (ctrl.signal.aborted) setState("stopped");
-      else {
-        setError(e instanceof Error ? e.message : String(e));
-        setState("error");
-      }
-    }
-  }, [data]);
+  }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt가 바뀌면(다시 만들기) 다시 흘려받는다.
   useEffect(() => {
-    run();
-    return () => abort.current?.abort();
-  }, [run]);
+    // 다음 실행으로 넘어간 뒤 끝난 이전 실행은 화면을 건드리지 않는다.
+    let alive = true;
+    const ctrl = new AbortController();
+    abort.current = ctrl;
+    streamDraft(data, ctrl, {
+      onChunk: (chunk) => alive && setText((t) => t + chunk),
+      onEnd: (next, message) => {
+        if (!alive) return;
+        setState(next);
+        setError(message);
+      },
+    });
+    return () => {
+      alive = false;
+      ctrl.abort();
+    };
+  }, [data, attempt]);
+
+  function regenerate() {
+    setText("");
+    setError(null);
+    setState("streaming");
+    setAttempt((n) => n + 1);
+  }
 
   function stop() {
     abort.current?.abort();
@@ -121,7 +149,7 @@ export function DraftPanel({
             <button
               type="button"
               className={button({ size: "sm" })}
-              onClick={run}
+              onClick={regenerate}
             >
               <RotateCcw size={13} aria-hidden="true" />
               다시 만들기
