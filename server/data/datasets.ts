@@ -190,6 +190,14 @@ export class DatasetManager {
           .execute();
       }
     }
+    // 통계를 모으기 전에 적재한 데이터셋 (예전 버전)
+    const unanalyzed = await sql<{
+      tbl: string;
+    }>`select m.tbl from dataset_meta m
+       join pg_class c on c.oid = to_regclass(m.tbl)
+       where m.status = 'ready' and c.reltuples < 0`.execute(db);
+    for (const { tbl } of unanalyzed.rows)
+      await sql`analyze ${tableSql(tbl)}`.execute(db);
     return new DatasetManager(db);
   }
 
@@ -687,6 +695,8 @@ export class DatasetManager {
 
     progress.phase = "analyze";
     this.#notify();
+    // PGlite는 autovacuum이 돌지 않아 직접 통계를 모아야 플래너가 행 수·그룹 수를 안다
+    await sql`analyze ${tableSql(table)}`.execute(this.#db);
     const columns = await this.#analyze(table);
     const generateMs = Math.round(performance.now() - started);
     await this.#db
