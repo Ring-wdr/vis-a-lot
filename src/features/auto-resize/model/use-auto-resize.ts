@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import {
@@ -12,6 +13,13 @@ import { useDebounced } from "@/shared/lib/use-debounced";
 
 const RESIZE_DEBOUNCE_MS = 300;
 const RETRY_MS = 1000;
+const RETRY_COUNT = 2;
+
+type ResizeRequest = {
+  chartId: string;
+  size: ItemSize;
+  keys: string[];
+};
 
 /** 크기·배율·테마를 한 문자열로 묶는다. debounce한 값이 바뀔 때만 다시 확인한다. */
 function lookKey(size: ItemSize) {
@@ -43,15 +51,24 @@ export function useAutoResize(
     desired ? lookKey(desired) : "",
     RESIZE_DEBOUNCE_MS,
   );
-  const inFlight = useRef(false);
-  // 요청이 실패하면 잠시 뒤 다시 확인하도록 effect를 깨운다.
-  const [retryTick, setRetryTick] = useState(0);
+  const { mutate: resize, isPending } = useMutation({
+    mutationFn: ({ chartId, size, keys }: ResizeRequest) =>
+      api.resizeItems(chartId, size, keys),
+    onSuccess: ({ jobId }, { keys }) => {
+      for (const key of keys) setItemJob(key, jobId);
+    },
+    // 실패하면 잠시 뒤 같은 요청을 몇 번 더 보낸다. 그래도 실패하면 요청이 끝나 아래 effect가 다시 확인한다.
+    retry: (count, err) => {
+      console.warn("resize 요청 실패, 다시 시도합니다", err);
+      return count < RETRY_COUNT;
+    },
+    retryDelay: RETRY_MS,
+  });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: retryTick은 실패한 요청을 다시 확인하게 하는 트리거다.
   useEffect(() => {
     if (!chartId || !job || !sizeKey || !jobStatus || !isTerminal(jobStatus))
       return;
-    if (inFlight.current) return;
+    if (isPending) return;
     const [w, h, ratio, theme] = sizeKey.split("|");
     const [width, height, pixelRatio] = [w, h, ratio].map(Number);
     // 다시 그리는 중인 item은 빼고, 끝나면(itemJobs가 바뀌면) 다시 확인한다.
@@ -63,28 +80,15 @@ export function useAutoResize(
         lookKey(i.image) !== sizeKey,
     );
     if (stale.length === 0) return;
-    const keys = stale.map((i) => i.key);
-    inFlight.current = true;
-    api
-      .resizeItems(
-        chartId,
-        {
-          width,
-          height,
-          ...(pixelRatio > 1 ? { pixelRatio } : {}),
-          ...(theme === "dark" ? { theme } : {}),
-        },
-        keys,
-      )
-      .then(({ jobId }) => {
-        for (const key of keys) setItemJob(key, jobId);
-      })
-      .catch((err: unknown) => {
-        console.warn("resize 요청 실패, 다시 시도합니다", err);
-        setTimeout(() => setRetryTick((n) => n + 1), RETRY_MS);
-      })
-      .finally(() => {
-        inFlight.current = false;
-      });
-  }, [chartId, job, jobStatus, sizeKey, itemJobs, setItemJob, retryTick]);
+    resize({
+      chartId,
+      size: {
+        width,
+        height,
+        ...(pixelRatio > 1 ? { pixelRatio } : {}),
+        ...(theme === "dark" ? { theme } : {}),
+      },
+      keys: stale.map((i) => i.key),
+    });
+  }, [chartId, job, jobStatus, sizeKey, itemJobs, isPending, resize]);
 }
