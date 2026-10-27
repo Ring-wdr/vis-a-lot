@@ -57,7 +57,7 @@ export function TabBar({ view }: { view: View }) {
     canRight,
     page,
     nudge,
-  } = useTabScroll(mine.length, active);
+  } = useTabScroll(active);
   const overflowing = canLeft || canRight;
   // ‹ ›: 한 번 누르면 탭 몇 개씩, 누르고 있으면 끝까지 흐르듯 넘긴다.
   const press = usePressRepeat({ interval: NUDGE_INTERVAL_MS });
@@ -104,7 +104,7 @@ export function TabBar({ view }: { view: View }) {
             key={tab.id}
             // 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다.
             // 자리가 모자라면 7rem까지 줄고, 그보다 많으면 스크롤한다.
-            data-tab
+            data-tab={tab.id}
             className="group/tab flex h-7.5 w-50 min-w-28 items-center rounded-t-md border border-b-0 border-transparent text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
             data-active={tab.id === active || undefined}
           >

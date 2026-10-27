@@ -20,12 +20,14 @@ const atEnd = (el: HTMLElement, dir: -1 | 1) =>
     ? el.scrollLeft <= 1
     : el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
 
+const reveal = (tab: Element | null | undefined) =>
+  tab?.scrollIntoView({ block: "nearest", inline: "nearest" });
+
 /**
  * 탭 줄 가로 스크롤. 스크롤바는 숨기므로 넘쳤는지(양옆 버튼을 보일지)를 따로 알려 주고,
- * 세로 휠을 가로 스크롤로 바꾸고, 고른 탭이 보이도록 스크롤한다.
- * `tabCount`·`activeId`가 바뀌면 다시 잰다 (탭을 열고 닫으면 내용 폭이 바뀐다).
+ * 세로 휠을 가로 스크롤로 바꾸고, 고른 탭(`data-tab`에 탭 id)이 보이도록 스크롤한다.
  */
-export function useTabScroll(tabCount: number, activeId: string | undefined) {
+export function useTabScroll(activeId: string | undefined) {
   const ref = useRef<HTMLDivElement>(null);
   const [scroll, setScroll] = useState<TabScroll>(NONE);
 
@@ -44,8 +46,15 @@ export function useTabScroll(tabCount: number, activeId: string | undefined) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new ResizeObserver(measure);
+    // 탭 줄 폭이 바뀌거나(창 크기, 처음 넘쳐 양옆 버튼이 생김) 탭을 열고 닫으면 고른 탭이 계속 보이게 하고 다시 잰다.
+    const fit = () => {
+      reveal(el.querySelector('[aria-selected="true"]')?.closest("[data-tab]"));
+      measure();
+    };
+    const observer = new ResizeObserver(fit);
     observer.observe(el);
+    const tabs = new MutationObserver(fit);
+    tabs.observe(el, { childList: true });
     // 트랙패드처럼 가로로 움직이는 휠은 그대로 두고, 세로 휠만 가로로 옮긴다.
     const onWheel = (e: WheelEvent) => {
       if (el.scrollWidth <= el.clientWidth) return;
@@ -57,22 +66,19 @@ export function useTabScroll(tabCount: number, activeId: string | undefined) {
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       observer.disconnect();
+      tabs.disconnect();
       el.removeEventListener("scroll", measure);
       el.removeEventListener("wheel", onWheel);
     };
   }, [measure]);
 
-  // 탭을 열거나 고르면 그 탭이 보이게 한다. 처음 넘쳐 양옆 버튼이 생기면 탭 줄이 좁아지므로 한 번 더 맞춘다.
-  const overflowing = scroll.canLeft || scroll.canRight;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 탭 수·넘침이 바뀌어도 다시 맞춘다.
+  // 탭을 고르면 그 탭이 보이게 한다. 옮겨지면 scroll 이벤트로 다시 잰다.
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.querySelector('[aria-selected="true"]')
-      ?.closest("[data-tab]")
-      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
-    measure();
-  }, [tabCount, activeId, overflowing, measure]);
+    if (activeId)
+      reveal(
+        ref.current?.querySelector(`[data-tab="${CSS.escape(activeId)}"]`),
+      );
+  }, [activeId]);
 
   /** 보이는 폭의 80%만큼 부드럽게 옮긴다 (한 번 누름). 더 갈 곳이 없으면 false */
   const page = useCallback((dir: -1 | 1) => {
