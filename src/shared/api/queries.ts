@@ -417,12 +417,15 @@ export function useTooltipValues(
   chartId: string,
   itemKey: string,
   rowId: number | undefined,
-  columns: ColumnName[],
+  columns: readonly ColumnName[],
 ) {
   return useQuery({
     queryKey: ["tooltip", chartId, itemKey, rowId, columns],
     queryFn: () =>
-      api.tooltip(chartId, itemKey, { rowId: rowId as number, columns }),
+      api.tooltip(chartId, itemKey, {
+        rowId: rowId as number,
+        columns: [...columns],
+      }),
     enabled: rowId !== undefined && columns.length > 0,
     staleTime: Number.POSITIVE_INFINITY,
     ...TOOLTIP_RETRY,

@@ -63,12 +63,15 @@ export function ItemOptionsDialog(props: ItemOptionsProps) {
   );
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_EXTRAS: NonNullable<ItemOptionsProps["extras"]> = {};
+
 function ItemOptionsBody({
   itemKey,
   label,
   original,
   base,
-  extras = {},
+  extras = NO_EXTRAS,
   onConfirm,
   onCancel,
 }: ItemOptionsProps) {

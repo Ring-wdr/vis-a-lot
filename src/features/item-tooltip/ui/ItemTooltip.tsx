@@ -65,7 +65,7 @@ export function ItemTooltip({
   chartId: string;
   itemKey: string;
   /** x, y 외에 툴팁에 보여줄 컬럼 (서버 조회) */
-  columns: ColumnName[];
+  columns: readonly ColumnName[];
 }) {
   const [hovered, setHovered] = useState(false);
   const [cursor, setCursor] = useState<Cursor>();

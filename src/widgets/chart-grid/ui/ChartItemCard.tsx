@@ -170,7 +170,7 @@ function DrawnItem({
   hasLegend: boolean;
   chartId: string;
   primaryJobId: string;
-  tooltipColumns: ColumnName[];
+  tooltipColumns: readonly ColumnName[];
   displaySize: ItemSize;
   /** 띄울 PNG. 크게 보기에서는 grid PNG 대신 그 크기로 그린 PNG를 준다. */
   image?: ChartImage;
@@ -339,13 +339,16 @@ function DrawnItem({
   );
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_COLUMNS: readonly ColumnName[] = [];
+
 /** item 하나. PNG가 있어야만 이미지를 띄우고, 없으면 spinner + progress bar를 보여준다. */
 export function ChartItemCard({
   item,
   placeholder,
   chartId,
   primaryJobId,
-  tooltipColumns = [],
+  tooltipColumns = NO_COLUMNS,
   displaySize,
   hasLegend = false,
   image,
@@ -359,7 +362,7 @@ export function ChartItemCard({
   primaryJobId?: string;
   /** 칸 크기. 없으면 PNG 원래 크기로 보여준다. */
   displaySize?: ItemSize;
-  tooltipColumns?: ColumnName[];
+  tooltipColumns?: readonly ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
   /** 띄울 PNG. 없으면 grid PNG를 띄운다. */

@@ -47,9 +47,12 @@ async function search(q: string, groupId?: string): Promise<PostRef[]> {
   return refs;
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_EXCLUDE: readonly string[] = [];
+
 export function PostPicker({
   groupId,
-  exclude = [],
+  exclude = NO_EXCLUDE,
   onPick,
   label,
   placeholder = "키(FD-12)나 제목으로 찾기",
@@ -58,7 +61,7 @@ export function PostPicker({
   /** 이 그룹 안에서만 찾는다 (그룹 id) */
   groupId?: string;
   /** 고를 수 없는 게시물 id (자기 자신 등) */
-  exclude?: string[];
+  exclude?: readonly string[];
   onPick: (post: PostRef) => void;
   label: string;
   placeholder?: string;

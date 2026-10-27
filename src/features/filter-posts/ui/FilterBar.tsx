@@ -409,8 +409,8 @@ export function FilterBar({
   filter,
   onChange,
   users,
-  teams = [],
-  postTypes = [],
+  teams = NONE,
+  postTypes = NONE,
   statusNames,
   compact = false,
 }: FilterBarProps) {
