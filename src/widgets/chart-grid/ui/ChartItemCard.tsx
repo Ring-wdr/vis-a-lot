@@ -8,7 +8,10 @@ import {
   useDefaultLegendPosition,
 } from "@/entities/chart/model/chart-options";
 import { ChartLegend } from "@/entities/chart/ui/ChartLegend";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceStore,
+} from "@/entities/workspace/model/workspace-scope";
 import {
   useItemAction,
   useItemActionPending,
@@ -192,7 +195,7 @@ function DrawnItem({
   const selected = useWorkspace((s) => s.selectedItem === item.key);
   const setSelectedItem = useWorkspace((s) => s.setSelectedItem);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
-  const setItemJob = useWorkspace((s) => s.setItemJob);
+  const store = useWorkspaceStore();
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
@@ -204,8 +207,10 @@ function DrawnItem({
   const jobStatus = redrawing?.status;
   const redrawnUrl = redrawing?.image?.url;
   const redrawError = redrawing?.error;
+  // 다시 그리기 job이 끝나면 PNG를 다시 받고, 작업 store의 item 조작 차단을 푼다.
   useEffect(() => {
     if (!jobStatus || !isTerminal(jobStatus)) return;
+    const { setItemJob } = store.getState();
     // draw job의 item 상태를 다시 받아 새 PNG로 바꾼다.
     client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
     if (jobStatus === "failed") {
@@ -224,7 +229,7 @@ function DrawnItem({
     item.key,
     primaryJobId,
     client,
-    setItemJob,
+    store,
   ]);
 
   // PNG 위에 겹치는 층: DOM legend 위에 legend 체크박스를 둔다.
