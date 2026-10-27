@@ -218,9 +218,8 @@ export function ItemTooltip({
           >
             {look?.title && <strong>{look.title}</strong>}
             <dl className="flex flex-col gap-0.5">
-              {hit.rows.map((row, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: 줄 순서는 차트 종류마다 고정이고 줄에 상태가 없다. label은 겹칠 수 있다(heatmap에서 x·y가 같은 컬럼).
-                <div key={i} className={tooltipRow}>
+              {hit.rows.map((row) => (
+                <div key={row.id} className={tooltipRow}>
                   <dt
                     className={cn(row.emphasis && "text-fg")}
                     style={rowStyle}
