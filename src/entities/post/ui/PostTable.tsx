@@ -237,11 +237,9 @@ export function PostTable({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const selectable = !!selected && !!onSelectedChange;
 
-  const colKey = columns.join(",");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 열은 이름 목록(colKey)이 바뀔 때만 다시 만든다
   const defs = useMemo(
     () => buildColumns(columns, { userName, today, onOpen }),
-    [colKey, userName, today, onOpen],
+    [columns, userName, today, onOpen],
   );
 
   const table = useTable({
