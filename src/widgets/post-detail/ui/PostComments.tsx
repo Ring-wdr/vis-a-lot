@@ -27,7 +27,7 @@ import { useComments } from "@/shared/api/feed/comment-queries";
 import type { Comment, CommentThread } from "@/shared/api/feed/comments";
 import { commentsApi } from "@/shared/api/feed/comments";
 import { useUserMap } from "@/shared/api/feed/lookups";
-import { useClock } from "@/shared/api/feed/queries";
+import { useFeedNow } from "@/shared/api/feed/queries";
 import { dateTime, relativeTime } from "@/shared/lib/time";
 import { showConfirm } from "@/shared/ui/AlertDialog";
 import { Avatar } from "@/shared/ui/Avatar";
@@ -49,8 +49,7 @@ export function PostComments({ post }: { post: PostDetail }) {
       ),
     [threads.data],
   );
-  // 피드의 "지금" (/feed/dev/clock 오프셋 반영)
-  const now = Date.now() + (useClock().data?.offsetMs ?? 0);
+  const now = useFeedNow();
 
   return (
     <section className={d.section()} aria-labelledby="post-comments-title">
