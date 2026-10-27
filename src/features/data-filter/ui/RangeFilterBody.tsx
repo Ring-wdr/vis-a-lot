@@ -1,8 +1,8 @@
 "use client";
 
 import { Slider } from "@base-ui/react/slider";
-import { useEffect, useState } from "react";
 import type { ColumnSummary, RangeFilter } from "@/shared/api/types";
+import { useDraftState } from "@/shared/lib/use-draft-state";
 import { rangeFilter } from "../model/filters";
 
 type RangeSummary = Extract<ColumnSummary, { kind: "range" }>;
@@ -50,13 +50,10 @@ export function RangeFilterBody({
     filter?.min ?? min ?? 0,
     filter?.max ?? max ?? 0,
   ];
-  const [range, setRange] = useState(committed);
+  // 밖에서 필터가 바뀌면(전체 해제 등) 슬라이더도 맞춘다.
+  const [range, setRange] = useDraftState(committed, committed.join(","));
   const inverse = filter?.inverse ?? false;
   const includeNull = filter?.includeNull ?? true;
-
-  // 밖에서 필터가 바뀌면(전체 해제 등) 슬라이더도 맞춘다.
-  const [lo, hi] = committed;
-  useEffect(() => setRange([lo, hi]), [lo, hi]);
 
   if (min === null || max === null) {
     return <p className="text-fg-muted">값이 없는 컬럼입니다.</p>;

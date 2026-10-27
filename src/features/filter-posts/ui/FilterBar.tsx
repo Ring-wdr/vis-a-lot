@@ -4,7 +4,7 @@
 // 상태는 화면이 URL에 들고 있고, 여기서는 바뀐 필터를 onChange로 돌려줄 뿐이다.
 
 import { ChevronDown, Search, X } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect } from "react";
 import {
   CATEGORY_LABELS,
   FORMAT_LABELS,
@@ -25,6 +25,7 @@ import type {
 } from "@/shared/api/feed/types";
 import { tv } from "@/shared/lib/tw";
 import { useDebounced } from "@/shared/lib/use-debounced";
+import { useDraftState } from "@/shared/lib/use-draft-state";
 import { button } from "@/shared/ui/button";
 import { Popover } from "@/shared/ui/Popover";
 
@@ -75,10 +76,7 @@ export function MultiPick<T extends string | number>({
   highlight?: boolean;
 }) {
   // URL이 바뀌어 값이 돌아오기 전에도 체크가 바로 보이게 고른 값을 먼저 들고 있는다
-  const [value, setValue] = useState<readonly T[]>(given);
-  const givenKey = given.join(",");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 값 목록(givenKey)이 바뀔 때만 따라간다
-  useEffect(() => setValue(given), [givenKey]);
+  const [value, setValue] = useDraftState<readonly T[]>(given, given.join(","));
   const onChange = (next: T[]) => {
     setValue(next);
     emit(next);
@@ -195,8 +193,7 @@ function TagForm({
   onChange: (tags: string[]) => void;
   close: () => void;
 }) {
-  const [text, setText] = useState(tags.join(", "));
-  useEffect(() => setText(tags.join(", ")), [tags]);
+  const [text, setText] = useDraftState(tags.join(", "));
   return (
     <form
       className="flex flex-col gap-2"
@@ -318,10 +315,9 @@ function SearchBox({
   value: string;
   onChange: (q: string) => void;
 }) {
-  const [text, setText] = useState(value);
-  const debounced = useDebounced(text, 300);
   // URL이 바깥에서 바뀌면(뒤로 가기, 지우기) 따라간다
-  useEffect(() => setText(value), [value]);
+  const [text, setText] = useDraftState(value);
+  const debounced = useDebounced(text, 300);
   // biome-ignore lint/correctness/useExhaustiveDependencies: 멈춘 값이 바뀔 때만 보낸다 (onChange·value는 매번 바뀐다)
   useEffect(() => {
     if (debounced.trim() !== value) onChange(debounced.trim());

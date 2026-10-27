@@ -1,7 +1,7 @@
 "use client";
 
 import { History, LayoutGrid, TriangleAlert } from "lucide-react";
-import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useId, useRef } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
@@ -11,6 +11,7 @@ import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { cn } from "@/shared/lib/tw";
+import { useDraftState } from "@/shared/lib/use-draft-state";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
 import { ChartItemCard } from "./ChartItemCard";
@@ -113,7 +114,8 @@ export function ChartGrid() {
   const scroller = useRef<PageScrollerHandle>(null);
   const gridId = useId();
   // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라온다.
-  const [viewPage, setViewPage] = useState(page);
+  // 페이지가 밖에서 바뀌면(grid 변경 등) 보이는 페이지도 맞춘다.
+  const [viewPage, setViewPage] = useDraftState(page);
   // page는 zustand store 값이라 transition으로 감쌀 수 없어(외부 store 갱신은 항상 동기),
   // 조회와 item 렌더는 deferred 값으로 해 스크롤바 조작보다 뒤로 미룬다.
   const deferredPage = useDeferredValue(page);
@@ -160,9 +162,6 @@ export function ChartGrid() {
     if (focus !== null) goToPage(Math.floor(focus / pageSize));
     setFocus(null);
   };
-
-  // 페이지가 밖에서 바뀌면(grid 변경 등) 보이는 페이지도 맞춘다.
-  useEffect(() => setViewPage(page), [page]);
 
   useEffect(() => {
     const el = areaRef.current;

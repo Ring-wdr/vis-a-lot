@@ -6,6 +6,7 @@ import {
   startTransition,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -13,6 +14,7 @@ import {
 import { throttle } from "@/shared/lib/throttle";
 import { tv } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
+import { useDraftState } from "@/shared/lib/use-draft-state";
 import { usePressRepeat } from "@/shared/lib/use-press-repeat";
 import {
   clampPage,
@@ -77,11 +79,13 @@ export function PageScroller({
   const [dragTop, setDragTop] = useState<number | null>(null);
   const dragOffset = useRef(0);
   /** thumb과 화살표가 따르는 페이지. grid보다 먼저(긴급하게) 바뀐다. */
-  const [shownPage, setShownPage] = useState(viewPage);
-  const current = useRef(shownPage);
-  current.current = shownPage;
   // 밖에서 페이지가 바뀌면(이전/다음 버튼, grid 변경) 따라간다.
-  useEffect(() => setShownPage(viewPage), [viewPage]);
+  const [shownPage, setShownPage] = useDraftState(viewPage);
+  // 한 프레임에 여러 번 오는 휠·누르고 있기가 다시 그리기 전에도 이어서 넘기도록 ref에도 둔다.
+  const current = useRef(shownPage);
+  useLayoutEffect(() => {
+    current.current = shownPage;
+  }, [shownPage]);
   const onPageRef = useCallbackRef(onPage);
   const onViewPageRef = useCallbackRef(onViewPage);
   // 화살표·트랙을 누르고 있으면 계속 넘긴다.
