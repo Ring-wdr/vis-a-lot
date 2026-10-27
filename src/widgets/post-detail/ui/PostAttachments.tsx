@@ -95,7 +95,7 @@ export function PostAttachments({ post }: { post: PostDetail }) {
               onChange={(e) => {
                 const file = e.currentTarget.files?.[0];
                 e.currentTarget.value = "";
-                if (file) addFile(file);
+                if (file) void addFile(file);
               }}
             />
           </span>

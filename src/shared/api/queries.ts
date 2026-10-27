@@ -354,7 +354,7 @@ export function useJobProgress(jobId: string | undefined) {
       // 데이터가 없으면 chart 서비스가 data 서비스에 적재를 요청한다. 화면이 모르는 사이
       // 데이터셋 상태가 바뀌므로, 준비 단계에 들어가거나 벗어날 때 데이터셋 목록을 다시 받는다.
       if ((prev?.phase === "dataset") !== (next.phase === "dataset")) {
-        client.invalidateQueries({ queryKey: queryKeys.datasets });
+        void client.invalidateQueries({ queryKey: queryKeys.datasets });
       }
       return next;
     },

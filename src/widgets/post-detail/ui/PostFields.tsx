@@ -189,7 +189,7 @@ export function PostFields({
             aria-label="기한"
             onChange={(e) => {
               const v = e.currentTarget.value || null;
-              if (v !== post.dueDate) save({ dueDate: v });
+              if (v !== post.dueDate) void save({ dueDate: v });
             }}
           />
         </Row>

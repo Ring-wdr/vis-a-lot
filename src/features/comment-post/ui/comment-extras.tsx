@@ -61,7 +61,7 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
                 aria-label={emoji}
                 onClick={() => {
                   close();
-                  toggle(emoji, !mine.has(emoji));
+                  void toggle(emoji, !mine.has(emoji));
                 }}
               >
                 {emoji}

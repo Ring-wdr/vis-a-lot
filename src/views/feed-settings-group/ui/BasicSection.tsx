@@ -86,7 +86,7 @@ export function BasicSection({
         className="flex min-w-0 flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          save();
+          void save();
         }}
       >
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">

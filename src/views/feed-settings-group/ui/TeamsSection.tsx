@@ -113,7 +113,7 @@ export function TeamsSection({
         className={s.addRow()}
         onSubmit={(e) => {
           e.preventDefault();
-          add();
+          void add();
         }}
       >
         <label className={s.label({ class: "w-full max-w-60 flex-1" })}>

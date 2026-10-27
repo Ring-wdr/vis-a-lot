@@ -152,7 +152,7 @@ function UploadBody({
   // 적재가 끝나면 목록을 다시 받고 새 데이터셋으로 닫는다.
   const finished = task?.state === "done" ? task.datasetId : undefined;
   const finish = useCallbackRef((id: DatasetId) => {
-    changed(id);
+    void changed(id);
     onDone(id);
   });
   useEffect(() => {

@@ -162,7 +162,7 @@ export function SeedView() {
             onChange={(e) => {
               const file = e.currentTarget.files?.[0];
               e.currentTarget.value = "";
-              if (file) onImport(file);
+              if (file) void onImport(file);
             }}
           />
           {busy && <LoadingText>처리하는 중</LoadingText>}

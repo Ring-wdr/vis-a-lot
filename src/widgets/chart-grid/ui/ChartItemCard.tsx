@@ -212,7 +212,7 @@ function DrawnItem({
     if (!jobStatus || !isTerminal(jobStatus)) return;
     const { setItemJob } = store.getState();
     // draw job의 item 상태를 다시 받아 새 PNG로 바꾼다.
-    client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
+    void client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
     if (jobStatus === "failed") {
       // 서버가 준 사유(지운 데이터 등)가 있으면 그대로 보여준다.
       showAlert(redrawError ?? "다시 그리기에 실패했습니다.");

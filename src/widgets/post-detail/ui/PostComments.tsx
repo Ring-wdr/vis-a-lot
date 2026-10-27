@@ -339,7 +339,7 @@ function CommentItem({
                         confirmLabel: "지우기",
                       })
                     )
-                      run("delete", "댓글을 지우지 못했습니다", () =>
+                      void run("delete", "댓글을 지우지 못했습니다", () =>
                         commentsApi.remove(comment.id),
                       );
                   }}

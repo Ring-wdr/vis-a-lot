@@ -71,7 +71,7 @@ export function DraftPanel({
     let alive = true;
     const ctrl = new AbortController();
     abort.current = ctrl;
-    streamDraft(data, ctrl, {
+    void streamDraft(data, ctrl, {
       onChunk: (chunk) => alive && setText((t) => t + chunk),
       onEnd: (next, message) => {
         if (!alive) return;
