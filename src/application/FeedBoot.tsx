@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useState } from "react";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { type ReactNode, useEffect } from "react";
 import { resolveCurrentUser } from "@/entities/user/model/default-user";
 import {
   currentUserStore,
@@ -12,54 +12,22 @@ import { systemApi } from "@/shared/api/feed/system";
 import { FeedBootScreen } from "./FeedBootScreen";
 import { FeedShell } from "./FeedShell";
 
-// 부트스트랩은 앱이 뜰 때 한 번만 부른다 (개발 모드의 effect 두 번 실행에도). 실패하면 다시 시도할 수 있게 비운다.
-let bootstrapping: Promise<unknown> | null = null;
-function bootstrapOnce() {
-  bootstrapping ??= systemApi.bootstrap().catch((err) => {
-    bootstrapping = null;
-    throw err;
-  });
-  return bootstrapping;
-}
-
-type BootState =
-  | { status: "booting" }
-  | { status: "ready" }
-  | { status: "error"; message: string };
-
-function useBootstrap() {
-  const [state, setState] = useState<BootState>({ status: "booting" });
-  const [attempt, setAttempt] = useState(0);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt가 바뀌면(다시 시도) 다시 부른다.
-  useEffect(() => {
-    let alive = true;
-    bootstrapOnce().then(
-      () => alive && setState({ status: "ready" }),
-      (err: unknown) =>
-        alive &&
-        setState({
-          status: "error",
-          message: err instanceof Error ? err.message : String(err),
-        }),
-    );
-    return () => {
-      alive = false;
-    };
-  }, [attempt]);
-  const retry = () => {
-    setState({ status: "booting" });
-    setAttempt((n) => n + 1);
-  };
-  return { state, retry };
-}
+// 부트스트랩은 앱이 뜰 때 한 번만 부른다. 피드 query를 통째로 다시 받을 때(['feed', ...]) 함께 다시 불리지 않게
+// key를 'feed' 밖에 두고, 한 번 성공하면 다시 부르지 않는다.
+const bootstrapQuery = queryOptions({
+  queryKey: ["feed-bootstrap"],
+  queryFn: systemApi.bootstrap,
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: Number.POSITIVE_INFINITY,
+});
 
 /**
  * 피드 데이터를 준비한다: 비어 있으면 기본 시나리오를 적재하고, 사용자 목록을 받아
  * 저장한 사용자가 없거나 비활성이면 기본 사용자를 고른다. 로그인은 없다.
  */
 export function FeedBoot({ children }: { children: ReactNode }) {
-  const { state, retry } = useBootstrap();
-  const ready = state.status === "ready";
+  const boot = useQuery(bootstrapQuery);
+  const ready = boot.isSuccess;
   // 기본 시나리오를 적재한 뒤에 사용자 목록을 받는다.
   const users = useQuery({ ...usersQuery, enabled: ready });
   const userId = useCurrentUserId();
@@ -70,12 +38,13 @@ export function FeedBoot({ children }: { children: ReactNode }) {
       currentUserStore.getState().setUserId(resolved);
   }, [resolved, userId]);
 
-  if (state.status === "error")
+  // 다시 시도하는 동안은 부팅 화면을 보여 준다.
+  if (boot.isError && !boot.isFetching)
     return (
       <FeedBootScreen
         message="피드 데이터 준비"
-        error={state.message}
-        onRetry={retry}
+        error={boot.error.message}
+        onRetry={() => boot.refetch()}
       />
     );
   // v5에서는 데이터 없이 실패한 query에 observer가 새로 붙으면 pending으로 돌아가므로,
