@@ -4,7 +4,13 @@
 // 상태는 화면이 URL에 들고 있고, 여기서는 바뀐 필터를 onChange로 돌려줄 뿐이다.
 
 import { ChevronDown, Search, X } from "lucide-react";
-import { type ReactNode, useEffect } from "react";
+import {
+  type ReactNode,
+  startTransition,
+  useEffect,
+  useOptimistic,
+  useRef,
+} from "react";
 import {
   CATEGORY_LABELS,
   FORMAT_LABELS,
@@ -24,8 +30,7 @@ import type {
   Team,
 } from "@/shared/api/feed/types";
 import { tv } from "@/shared/lib/tw";
-import { useDebounced } from "@/shared/lib/use-debounced";
-import { useDraftState } from "@/shared/lib/use-draft-state";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { button } from "@/shared/ui/button";
 import { Popover } from "@/shared/ui/Popover";
 
@@ -75,12 +80,13 @@ export function MultiPick<T extends string | number>({
   /** 고른 것이 있을 때 버튼을 강조한다 (필터). 열 고르기처럼 늘 고른 것이 있으면 끈다 */
   highlight?: boolean;
 }) {
-  // URL이 바뀌어 값이 돌아오기 전에도 체크가 바로 보이게 고른 값을 먼저 들고 있는다
-  const [value, setValue] = useDraftState<readonly T[]>(given, given.join(","));
-  const onChange = (next: T[]) => {
-    setValue(next);
-    emit(next);
-  };
+  // URL이 바뀌어 값이 돌아오기 전에도 체크가 바로 보이게, 반영하는 동안만 고른 값을 먼저 보여 준다
+  const [value, setOptimistic] = useOptimistic(given);
+  const onChange = (next: T[]) =>
+    startTransition(() => {
+      setOptimistic(next);
+      emit(next);
+    });
   const chosen = options.filter((o) => value.includes(o.value));
   const summary =
     chosen.length === 1
@@ -193,20 +199,23 @@ function TagForm({
   onChange: (tags: string[]) => void;
   close: () => void;
 }) {
-  const [text, setText] = useDraftState(tags.join(", "));
+  // 치는 동안은 칸에만 두고, 적용하면 태그로 반영한다.
+  const [text, typing] = usePendingValue(tags.join(", "));
   return (
     <form
       className="flex flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault();
-        onChange([
-          ...new Set(
-            text
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-          ),
-        ]);
+        typing.commit(() =>
+          onChange([
+            ...new Set(
+              text
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+            ),
+          ]),
+        );
         close();
       }}
     >
@@ -216,7 +225,7 @@ function TagForm({
           className={c.input()}
           value={text}
           placeholder="예: 매출, 대시보드"
-          onChange={(e) => setText(e.currentTarget.value)}
+          onChange={(e) => typing.change(e.currentTarget.value)}
         />
       </label>
       <div className="flex justify-end gap-2">
@@ -224,7 +233,7 @@ function TagForm({
           type="button"
           className={button({ size: "sm" })}
           onClick={() => {
-            onChange([]);
+            typing.commit(() => onChange([]));
             close();
           }}
         >
@@ -307,7 +316,10 @@ function DueForm({
 
 const shortDay = (d?: string | null) => (d ? d.slice(5).replace("-", "/") : "");
 
-/** 검색어: 치는 동안은 화면에 두고, 멈추면 onChange */
+/**
+ * 검색어: 치는 동안은 칸에만 두고, 멈추면 onChange.
+ * URL에는 앞뒤 공백을 지운 값이 가므로, 칸에 있는 동안은 친 글자를 그대로 두고 칸을 떠나면 URL 값을 따른다.
+ */
 function SearchBox({
   value,
   onChange,
@@ -315,13 +327,24 @@ function SearchBox({
   value: string;
   onChange: (q: string) => void;
 }) {
-  // URL이 바깥에서 바뀌면(뒤로 가기, 지우기) 따라간다
-  const [text, setText] = useDraftState(value);
-  const debounced = useDebounced(text, 300);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 멈춘 값이 바뀔 때만 보낸다 (onChange·value는 매번 바뀐다)
-  useEffect(() => {
-    if (debounced.trim() !== value) onChange(debounced.trim());
-  }, [debounced]);
+  const [text, typing] = usePendingValue(value);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const type = (next: string) => {
+    typing.change(next);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const q = next.trim();
+      if (q !== value) typing.commit(() => onChange(q), { hold: true });
+    }, 300);
+  };
+  // 칸을 떠나면 기다리던 검색어를 바로 보내고 URL 값을 따른다.
+  const leave = () => {
+    clearTimeout(timer.current);
+    const q = text.trim();
+    if (q !== value) typing.commit(() => onChange(q));
+    else typing.release();
+  };
   return (
     <label className="relative flex h-7 w-48 min-w-0 items-center">
       <Search
@@ -335,7 +358,8 @@ function SearchBox({
         placeholder="제목·본문 검색"
         aria-label="검색"
         value={text}
-        onChange={(e) => setText(e.currentTarget.value)}
+        onChange={(e) => type(e.currentTarget.value)}
+        onBlur={leave}
       />
     </label>
   );

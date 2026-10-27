@@ -11,7 +11,7 @@ import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { cn } from "@/shared/lib/tw";
-import { useDraftState } from "@/shared/lib/use-draft-state";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
 import { ChartItemCard } from "./ChartItemCard";
@@ -113,9 +113,9 @@ export function ChartGrid() {
   const setFocus = useWorkspace((s) => s.setFocus);
   const scroller = useRef<PageScrollerHandle>(null);
   const gridId = useId();
-  // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라온다.
-  // 페이지가 밖에서 바뀌면(grid 변경 등) 보이는 페이지도 맞춘다.
-  const [viewPage, setViewPage] = useDraftState(page);
+  // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라오고,
+  // 따라잡으면 다시 page를 그대로 보여 준다.
+  const [viewPage, scrolling] = usePendingValue(page);
   // page는 zustand store 값이라 transition으로 감쌀 수 없어(외부 store 갱신은 항상 동기),
   // 조회와 item 렌더는 deferred 값으로 해 스크롤바 조작보다 뒤로 미룬다.
   const deferredPage = useDeferredValue(page);
@@ -153,8 +153,8 @@ export function ChartGrid() {
 
   const goToPage = (next: number) => {
     const p = Math.min(totalPages - 1, Math.max(0, next));
-    setViewPage(p);
-    setPage(p);
+    scrolling.change(p);
+    scrolling.commit(() => setPage(p));
   };
 
   // grid로 돌아오면 크게 보던 item이 있는 페이지를 보여준다.
@@ -276,8 +276,8 @@ export function ChartGrid() {
                 controls={gridId}
                 viewPage={viewPage}
                 totalPages={totalPages}
-                onPage={setPage}
-                onViewPage={setViewPage}
+                onPage={(p) => scrolling.commit(() => setPage(p))}
+                onViewPage={scrolling.change}
               />
             </div>
           )}

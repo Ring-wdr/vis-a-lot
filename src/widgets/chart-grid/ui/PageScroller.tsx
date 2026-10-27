@@ -14,7 +14,7 @@ import {
 import { throttle } from "@/shared/lib/throttle";
 import { tv } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
-import { useDraftState } from "@/shared/lib/use-draft-state";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { usePressRepeat } from "@/shared/lib/use-press-repeat";
 import {
   clampPage,
@@ -78,9 +78,8 @@ export function PageScroller({
   /** thumb을 끄는 동안의 위치. 놓으면 페이지 위치로 돌아간다. */
   const [dragTop, setDragTop] = useState<number | null>(null);
   const dragOffset = useRef(0);
-  /** thumb과 화살표가 따르는 페이지. grid보다 먼저(긴급하게) 바뀐다. */
-  // 밖에서 페이지가 바뀌면(이전/다음 버튼, grid 변경) 따라간다.
-  const [shownPage, setShownPage] = useDraftState(viewPage);
+  /** thumb과 화살표가 따르는 페이지. grid보다 먼저(긴급하게) 바뀌고, grid가 따라오면 viewPage를 따른다. */
+  const [shownPage, moving] = usePendingValue(viewPage);
   // 한 프레임에 여러 번 오는 휠·누르고 있기가 다시 그리기 전에도 이어서 넘기도록 ref에도 둔다.
   const current = useRef(shownPage);
   useLayoutEffect(() => {
@@ -108,8 +107,8 @@ export function PageScroller({
     const page = clampPage(next, totalPages);
     if (page === current.current) return false;
     current.current = page;
-    setShownPage(page);
-    startTransition(() => onViewPageRef(page));
+    moving.change(page);
+    moving.commit(() => onViewPageRef(page));
     fetchPage(page);
     return true;
   };

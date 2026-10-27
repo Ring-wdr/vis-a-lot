@@ -2,7 +2,7 @@
 
 import { Slider } from "@base-ui/react/slider";
 import type { ColumnSummary, RangeFilter } from "@/shared/api/types";
-import { useDraftState } from "@/shared/lib/use-draft-state";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { rangeFilter } from "../model/filters";
 
 type RangeSummary = Extract<ColumnSummary, { kind: "range" }>;
@@ -50,8 +50,8 @@ export function RangeFilterBody({
     filter?.min ?? min ?? 0,
     filter?.max ?? max ?? 0,
   ];
-  // 밖에서 필터가 바뀌면(전체 해제 등) 슬라이더도 맞춘다.
-  const [range, setRange] = useDraftState(committed, committed.join(","));
+  // 끄는 동안은 슬라이더에만 보여 주고, 놓으면 필터로 확정한다.
+  const [range, drag] = usePendingValue(committed);
   const inverse = filter?.inverse ?? false;
   const includeNull = filter?.includeNull ?? true;
 
@@ -80,8 +80,10 @@ export function RangeFilterBody({
         value={range}
         disabled={disabled || min === max}
         data-inverse={inverse || undefined}
-        onValueChange={(v) => setRange(v as [number, number])}
-        onValueCommitted={(v) => commit(v as [number, number])}
+        onValueChange={(v) => drag.change(v as [number, number])}
+        onValueCommitted={(v) =>
+          drag.commit(() => commit(v as [number, number]))
+        }
       >
         <Slider.Control className="flex h-4 touch-none items-center">
           <Slider.Track className="relative h-1 w-full rounded-xs bg-line group-data-inverse/slider:bg-accent">
