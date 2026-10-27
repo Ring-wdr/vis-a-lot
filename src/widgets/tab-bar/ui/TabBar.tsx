@@ -51,22 +51,28 @@ export function TabBar({ view }: { view: View }) {
   // 그리는 중에는 지금 탭에 머문다. 막힌 버튼에는 이유를 title로 보여준다.
   const locked = useTabs((s) => s.locked);
   const lockedHint = locked ? TABS_LOCKED_HINT : undefined;
-  const scroll = useTabScroll(mine.length, active);
-  const overflowing = scroll.canLeft || scroll.canRight;
+  const {
+    ref: scrollRef,
+    canLeft,
+    canRight,
+    page,
+    nudge,
+  } = useTabScroll(mine.length, active);
+  const overflowing = canLeft || canRight;
   // ‹ ›: 한 번 누르면 탭 몇 개씩, 누르고 있으면 끝까지 흐르듯 넘긴다.
   const press = usePressRepeat({ interval: NUDGE_INTERVAL_MS });
   const arrowHandlers = (dir: -1 | 1) => ({
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) =>
       press.hold(
         e,
-        () => scroll.page(dir),
-        () => scroll.nudge(dir),
+        () => page(dir),
+        () => nudge(dir),
       ),
     onPointerUp: press.stop,
     onPointerCancel: press.stop,
     // 키보드(Enter·Space)로 누르면 한 번만 넘긴다. 포인터 클릭은 pointerdown에서 이미 넘겼다.
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
-      if (e.detail === 0) scroll.page(dir);
+      if (e.detail === 0) page(dir);
     },
   });
 
@@ -78,7 +84,7 @@ export function TabBar({ view }: { view: View }) {
           className={iconButton({ class: "mb-0.5 size-6.5" })}
           aria-label="앞 탭 보기"
           title="앞 탭 보기"
-          disabled={!scroll.canLeft}
+          disabled={!canLeft}
           {...arrowHandlers(-1)}
         >
           <ChevronLeft size={14} aria-hidden="true" />
@@ -87,7 +93,7 @@ export function TabBar({ view }: { view: View }) {
       {/* 탭이 넘치면 가로로 스크롤한다. 줄 높이를 지키려고 스크롤바는 숨기고 양옆 버튼·휠로 넘긴다.
           고른 탭이 아래 테두리를 덮도록 1px 내려 두고, 세로로 넘친 부분은 자른다. */}
       <div
-        ref={scroll.ref}
+        ref={scrollRef}
         role="tablist"
         aria-label={`${view} 탭`}
         className="-mb-px flex min-w-0 [scrollbar-width:none] items-end gap-0.5 overflow-x-auto overflow-y-hidden"
@@ -138,7 +144,7 @@ export function TabBar({ view }: { view: View }) {
           className={iconButton({ class: "mb-0.5 size-6.5" })}
           aria-label="뒤 탭 보기"
           title="뒤 탭 보기"
-          disabled={!scroll.canRight}
+          disabled={!canRight}
           {...arrowHandlers(1)}
         >
           <ChevronRight size={14} aria-hidden="true" />

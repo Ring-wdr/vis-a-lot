@@ -8,7 +8,10 @@ import {
   useDefaultLegendPosition,
 } from "@/entities/chart/model/chart-options";
 import { ChartLegend } from "@/entities/chart/ui/ChartLegend";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceStore,
+} from "@/entities/workspace/model/workspace-scope";
 import {
   useItemAction,
   useItemActionPending,
@@ -167,7 +170,7 @@ function DrawnItem({
   hasLegend: boolean;
   chartId: string;
   primaryJobId: string;
-  tooltipColumns: ColumnName[];
+  tooltipColumns: readonly ColumnName[];
   displaySize: ItemSize;
   /** 띄울 PNG. 크게 보기에서는 grid PNG 대신 그 크기로 그린 PNG를 준다. */
   image?: ChartImage;
@@ -192,7 +195,7 @@ function DrawnItem({
   const selected = useWorkspace((s) => s.selectedItem === item.key);
   const setSelectedItem = useWorkspace((s) => s.setSelectedItem);
   const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
-  const setItemJob = useWorkspace((s) => s.setItemJob);
+  const store = useWorkspaceStore();
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
@@ -204,10 +207,12 @@ function DrawnItem({
   const jobStatus = redrawing?.status;
   const redrawnUrl = redrawing?.image?.url;
   const redrawError = redrawing?.error;
+  // 다시 그리기 job이 끝나면 PNG를 다시 받고, 작업 store의 item 조작 차단을 푼다.
   useEffect(() => {
     if (!jobStatus || !isTerminal(jobStatus)) return;
+    const { setItemJob } = store.getState();
     // draw job의 item 상태를 다시 받아 새 PNG로 바꾼다.
-    client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
+    void client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
     if (jobStatus === "failed") {
       // 서버가 준 사유(지운 데이터 등)가 있으면 그대로 보여준다.
       showAlert(redrawError ?? "다시 그리기에 실패했습니다.");
@@ -224,7 +229,7 @@ function DrawnItem({
     item.key,
     primaryJobId,
     client,
-    setItemJob,
+    store,
   ]);
 
   // PNG 위에 겹치는 층: DOM legend 위에 legend 체크박스를 둔다.
@@ -334,13 +339,16 @@ function DrawnItem({
   );
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_COLUMNS: readonly ColumnName[] = [];
+
 /** item 하나. PNG가 있어야만 이미지를 띄우고, 없으면 spinner + progress bar를 보여준다. */
 export function ChartItemCard({
   item,
   placeholder,
   chartId,
   primaryJobId,
-  tooltipColumns = [],
+  tooltipColumns = NO_COLUMNS,
   displaySize,
   hasLegend = false,
   image,
@@ -354,7 +362,7 @@ export function ChartItemCard({
   primaryJobId?: string;
   /** 칸 크기. 없으면 PNG 원래 크기로 보여준다. */
   displaySize?: ItemSize;
-  tooltipColumns?: ColumnName[];
+  tooltipColumns?: readonly ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
   /** 띄울 PNG. 없으면 grid PNG를 띄운다. */

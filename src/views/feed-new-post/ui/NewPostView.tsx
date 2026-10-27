@@ -307,7 +307,7 @@ export function NewPostView() {
       className="mx-auto flex w-full max-w-240 flex-col gap-5 p-4 md:p-6"
       onSubmit={(e) => {
         e.preventDefault();
-        submit();
+        void submit();
       }}
     >
       <header className="flex flex-wrap items-center justify-between gap-3">

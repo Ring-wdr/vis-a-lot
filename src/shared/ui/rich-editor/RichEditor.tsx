@@ -10,9 +10,9 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import { Bold, Code, Italic, List, ListOrdered } from "lucide-react";
-import { useEffect, useRef } from "react";
 import { useUserMap } from "@/shared/api/feed/lookups";
 import { cn, tv } from "@/shared/lib/tw";
+import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { toolButton } from "@/shared/ui/button";
 import { mentionExtension, starterKit } from "./extensions";
 import { useMentionSuggestion } from "./mention-suggestion";
@@ -71,25 +71,22 @@ export function RichEditor({
   size?: "md" | "sm";
 }) {
   const users = useUserMap();
-  const usersRef = useRef(users);
-  const submitRef = useRef(onSubmit);
-  useEffect(() => {
-    usersRef.current = users;
-    submitRef.current = onSubmit;
+  // 편집기는 한 번만 만든다. 그 안에서 부르는 함수는 늘 지금 값을 읽는다.
+  const nameOf = useCallbackRef((id: string) => users.get(id)?.name);
+  const submit = useCallbackRef(() => {
+    onSubmit?.();
+    return !!onSubmit;
   });
   const { suggestion, popup } = useMentionSuggestion();
 
   const editor = useEditor({
     extensions: [
       starterKit,
-      mentionExtension((id) => usersRef.current.get(id)?.name, suggestion),
+      mentionExtension(nameOf, suggestion),
       Extension.create({
         name: "submitShortcut",
         addKeyboardShortcuts: () => ({
-          "Mod-Enter": () => {
-            submitRef.current?.();
-            return !!submitRef.current;
-          },
+          "Mod-Enter": submit,
         }),
       }),
     ],

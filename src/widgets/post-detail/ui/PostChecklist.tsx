@@ -24,7 +24,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
     const ids = items.map((i) => i.id);
     const [id] = ids.splice(index, 1);
     ids.splice(index + delta, 0, id);
-    run("reorder", "순서를 바꾸지 못했습니다", () =>
+    void run("reorder", "순서를 바꾸지 못했습니다", () =>
       postsApi.reorderChecklist(post.id, ids),
     );
   };
@@ -58,7 +58,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
                 aria-label={item.text}
                 onChange={(e) => {
                   const next = e.currentTarget.checked;
-                  run("check", "체크하지 못했습니다", () =>
+                  void run("check", "체크하지 못했습니다", () =>
                     postsApi.updateChecklistItem(post.id, item.id, {
                       done: next,
                     }),

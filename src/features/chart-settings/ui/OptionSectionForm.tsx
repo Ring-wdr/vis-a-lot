@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import {
   Controller,
   type FieldPath,
@@ -304,13 +304,14 @@ function DraftInput({
   "value" | "onChange" | "onBlur"
 >) {
   const [text, setText] = useState(value);
-  const parsed = parse(text);
-  const shown = parsed === INVALID ? undefined : String(parsed ?? "");
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 글자가 바뀔 때가 아니라 폼 값이 바뀔 때만 맞춘다.
-  useEffect(() => {
-    if (value !== shown) setText(value);
-  }, [value]);
+  const [prevValue, setPrevValue] = useState(value);
+  // 글자가 바뀔 때가 아니라 폼 값이 바뀔 때만 맞춘다.
+  if (value !== prevValue) {
+    setPrevValue(value);
+    const parsed = parse(text);
+    if (value !== (parsed === INVALID ? undefined : String(parsed ?? "")))
+      setText(value);
+  }
 
   return (
     <input

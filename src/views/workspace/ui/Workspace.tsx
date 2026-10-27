@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect } from "react";
 import { readShareHash } from "@/entities/chart/lib/share";
-import { useTabs } from "@/entities/workspace/model/tabs-scope";
+import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import type { View } from "@/entities/workspace/model/tabs-store";
 import {
   useWorkspace,
@@ -77,10 +77,11 @@ function TabNotices() {
 function DrawLock() {
   const readOnly = useWorkspace((s) => s.readOnly);
   const drawing = useDrawState() !== "draw";
-  const setLocked = useTabs((s) => s.setLocked);
+  const tabs = useTabsStore();
   const locked = !readOnly && drawing;
 
-  useEffect(() => setLocked(locked), [locked, setLocked]);
+  // 그리는 상태는 이 탭의 query·mutation에서 나오므로, 탭 밖(헤더·탭 줄)이 읽는 탭 store에 옮겨 둔다.
+  useEffect(() => tabs.getState().setLocked(locked), [locked, tabs]);
   return null;
 }
 
@@ -137,7 +138,6 @@ function HistorySidebar() {
  */
 export function Workspace() {
   const view = useTabs((s) => s.view);
-  const setView = useTabs((s) => s.setView);
   const tab = useTabs((s) =>
     s.view ? s.tabs.find((t) => t.id === s.active[s.view as View]) : undefined,
   );
@@ -145,11 +145,6 @@ export function Workspace() {
   const emptyHistory = useTabs((s) => s.emptyHistory);
   const store = tab?.store ?? emptyHistory;
   const filterOpen = useTabs((s) => s.filterPanelOpen);
-
-  // 공유 링크(#s=…)로 들어오면 시작 화면을 건너뛰고 gallery에서 그 차트를 연다.
-  useEffect(() => {
-    if (!sharedLinkHandled && readShareHash(location.hash)) setView("gallery");
-  }, [setView]);
 
   // 처음 들어오면 연 차트가 없으므로 작업 화면 대신 시작 화면을 보여준다.
   if (view === null) {

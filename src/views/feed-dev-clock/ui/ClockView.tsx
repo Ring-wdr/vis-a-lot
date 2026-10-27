@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useClock, useSetClock } from "@/shared/api/feed/queries";
+import { useNow } from "@/shared/lib/use-now";
 import { button } from "@/shared/ui/button";
 import { page } from "@/shared/ui/feed-styles";
 import { LoadingText } from "@/shared/ui/Loading";
@@ -34,20 +34,11 @@ export function formatOffset(ms: number) {
 const toDateInput = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** 1초마다 다시 그려 피드의 "지금"을 흘러가게 보여준다. */
-function useNow() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1_000);
-    return () => clearInterval(timer);
-  }, []);
-  return now;
-}
-
 /** /feed/dev/clock: 피드의 "오늘"을 앞뒤로 옮겨 기한 알림·보류 복귀를 바로 확인한다. */
 export function ClockView() {
   const clock = useClock();
   const setClock = useSetClock();
+  // 1초마다 다시 그려 피드의 "지금"을 흘러가게 보여준다.
   const now = useNow();
 
   const offset = clock.data?.offsetMs ?? 0;

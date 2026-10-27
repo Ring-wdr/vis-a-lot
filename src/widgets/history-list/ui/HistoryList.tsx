@@ -126,7 +126,7 @@ export function HistoryList() {
     onSuccess: (_, id) => {
       // 지운 건을 보던 탭도 닫는다. 다시 그릴 설정이 없다.
       closeHistory(id);
-      client.invalidateQueries({ queryKey: ["history"] });
+      void client.invalidateQueries({ queryKey: ["history"] });
     },
     onError: (err) => showAlert(err.message),
   });

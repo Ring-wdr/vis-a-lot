@@ -13,9 +13,9 @@ import {
   LoaderCircle,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { isTerminal, type JobStateResponse } from "@/shared/api/types";
 import { cn, tv } from "@/shared/lib/tw";
+import { useNow } from "@/shared/lib/use-now";
 
 // 하단 바는 테두리 상자 하나에 구획을 나란히 두고 세로 선으로 가른다. 높이는 ChartGrid의 h-8을 채운다.
 // 구획은 줄어들지 않는다. 줄어들면 내용이 넘쳐 뒤 구획과 겹친다. 대신 상자 폭(@container)이 모자라면
@@ -62,24 +62,14 @@ function seconds(ms: number) {
   return `${Math.floor(s / 60)}분 ${Math.round(s % 60)}초`;
 }
 
-/** 진행 중에는 경과 시간이 흐르도록 주기적으로 다시 그린다. */
-function useNow(active: boolean, interval = 500) {
-  const [now, setNow] = useState(Date.now);
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setNow(Date.now()), interval);
-    return () => clearInterval(id);
-  }, [active, interval]);
-  return now;
-}
-
 /**
  * 하단 바: job 단계와 진행률, 상태별 item 수, 경과 시간, 처리 속도와 남은 시간, Render Worker 수.
  * 렌더 단계에서는 끝난 item 수 / 렌더 경과 시간으로 속도를, 남은 item 수로 남은 시간을 어림한다.
  */
 export function JobStatusBar({ job }: { job: JobStateResponse }) {
   const running = !isTerminal(job.status);
-  const now = useNow(running);
+  // 진행 중에는 경과 시간이 흐르도록 주기적으로 다시 그린다.
+  const now = useNow(500, running);
   const { counts, timing, progress } = job;
   const end = timing.endedAt ?? now;
   const elapsed = end - timing.createdAt;

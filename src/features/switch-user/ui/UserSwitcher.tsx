@@ -27,7 +27,7 @@ export function useSwitchUser() {
   return (userId: string) => {
     if (currentUserStore.getState().userId === userId) return;
     currentUserStore.getState().setUserId(userId);
-    resetFeedForUser(client);
+    void resetFeedForUser(client);
   };
 }
 

@@ -17,6 +17,7 @@ import type {
   ItemMeta,
 } from "@/shared/api/types";
 import { tv } from "@/shared/lib/tw";
+import { showAlert } from "@/shared/ui/AlertDialog";
 
 const drawLayer = tv({
   base: "relative cursor-crosshair touch-none select-none",
@@ -131,10 +132,18 @@ export function DrawLayer({
   const [draft, setDraft] = useState<Draft>();
   const [text, setText] = useState("");
 
-  const getMeta = (): Promise<ItemMeta> =>
-    meta.data
-      ? Promise.resolve(meta.data)
-      : client.fetchQuery(itemMetaQuery(image.url));
+  /** 좌표를 바꿀 metadata. 받지 못하면(지운 데이터 등) 알리고 undefined를 준다. */
+  const getMeta = async (): Promise<ItemMeta | undefined> => {
+    if (meta.data) return meta.data;
+    try {
+      return await client.fetchQuery(itemMetaQuery(image.url));
+    } catch (err) {
+      showAlert(
+        `차트 정보를 읽지 못했습니다: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return undefined;
+    }
+  };
 
   // 선택하는 동안 고르는 영역(PNG 좌표 path). 그림 영역에서 이 밖을 덮는다.
   const selecting =
@@ -192,6 +201,7 @@ export function DrawLayer({
     const finished = draft;
     setDraft(undefined);
     const m = await getMeta();
+    if (!m) return;
     const clearSelection = () => {
       if (hasSelection) onAction({ type: "select", region: null });
     };
@@ -261,7 +271,9 @@ export function DrawLayer({
     const at = draft.at;
     setDraft(undefined);
     if (!value) return;
-    const [x, y] = pxToData(await getMeta(), at);
+    const m = await getMeta();
+    if (!m) return;
+    const [x, y] = pxToData(m, at);
     onAction({ type: "addShape", shape: { type: "text", x, y, text: value } });
   };
 
@@ -356,7 +368,8 @@ export function DrawLayer({
           onChange={(e) => setText(e.target.value)}
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
-            if (e.key === "Enter") submitText();
+            // 실패는 getMeta가 알린다.
+            if (e.key === "Enter") void submitText();
             if (e.key === "Escape") setDraft(undefined);
           }}
           onBlur={() => setDraft(undefined)}

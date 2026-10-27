@@ -14,7 +14,7 @@ export function AiBadge() {
   const { adapter, availability, progress, failure } = useAiStatus();
 
   useEffect(() => {
-    status();
+    void status();
   }, []);
 
   const downloading = progress !== null;

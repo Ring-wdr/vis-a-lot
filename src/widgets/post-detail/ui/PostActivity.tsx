@@ -7,7 +7,7 @@ import { eventSentence, isSystemEvent } from "@/entities/post/lib/event-text";
 import { detail } from "@/entities/post/ui/styles";
 import { useUserMap } from "@/shared/api/feed/lookups";
 import { usePostEvents } from "@/shared/api/feed/post-queries";
-import { useClock } from "@/shared/api/feed/queries";
+import { useFeedNow } from "@/shared/api/feed/queries";
 import type { Group } from "@/shared/api/feed/types";
 import { dateTime, relativeTime } from "@/shared/lib/time";
 import { Avatar } from "@/shared/ui/Avatar";
@@ -27,8 +27,7 @@ export function PostActivity({
   const users = useUserMap();
   const userName = (id: string | null) =>
     id ? (users.get(id)?.name ?? id) : "알 수 없음";
-  // 피드의 "지금" (/feed/dev/clock 오프셋 반영)
-  const now = Date.now() + (useClock().data?.offsetMs ?? 0);
+  const now = useFeedNow();
   // 최근 것이 위로
   const rows = [...(events.data ?? [])].reverse();
 

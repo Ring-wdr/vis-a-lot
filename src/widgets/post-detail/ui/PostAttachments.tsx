@@ -48,12 +48,12 @@ export function PostAttachments({ post }: { post: PostDetail }) {
       );
       return;
     }
-    const dataUrl = await readAsDataUrl(file);
-    await run("file", "파일을 첨부하지 못했습니다", () =>
+    // 파일을 읽지 못한 것도 첨부 실패로 알린다.
+    await run("file", "파일을 첨부하지 못했습니다", async () =>
       commentsApi.addAttachment(post.id, {
         kind: "file",
         name: file.name,
-        url: dataUrl,
+        url: await readAsDataUrl(file),
       }),
     );
   };
@@ -95,7 +95,7 @@ export function PostAttachments({ post }: { post: PostDetail }) {
               onChange={(e) => {
                 const file = e.currentTarget.files?.[0];
                 e.currentTarget.value = "";
-                if (file) addFile(file);
+                if (file) void addFile(file);
               }}
             />
           </span>

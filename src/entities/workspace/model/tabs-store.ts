@@ -61,8 +61,11 @@ export type TabsState = {
   toggleFilterPanel: () => void;
 };
 
-/** 서버 기본값(GET /defaults)으로 새 탭의 draft를 만든다. */
-export function createTabsStore(defaults: ChartDefaults) {
+/** 서버 기본값(GET /defaults)으로 새 탭의 draft를 만든다. `view`가 null이면 시작 화면부터 보여준다. */
+export function createTabsStore(
+  defaults: ChartDefaults,
+  view: View | null = null,
+) {
   const base = defaultSpec(defaults);
   const galleryTab = (draft?: Partial<ChartSpec>): WorkspaceTab => ({
     id: crypto.randomUUID(),
@@ -73,7 +76,7 @@ export function createTabsStore(defaults: ChartDefaults) {
     createWorkspaceStore({ readOnly: true, draft: base });
   const first = galleryTab();
   return createStore<TabsState>((set, get) => ({
-    view: null,
+    view,
     tabs: [first],
     active: { gallery: first.id, history: undefined },
     emptyHistory: readOnlyStore(),

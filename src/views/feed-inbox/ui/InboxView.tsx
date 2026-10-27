@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { NOTIFY_KIND_LABELS, statusLabel } from "@/entities/post/lib/labels";
 import { chip, statusBadge } from "@/entities/post/ui/styles";
 import { useGroupMap, useUserMap } from "@/shared/api/feed/lookups";
-import { useClock, useInbox } from "@/shared/api/feed/queries";
+import { useFeedNow, useInbox } from "@/shared/api/feed/queries";
 import type { InboxGroup, Notification } from "@/shared/api/feed/types";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { dateTime, relativeTime } from "@/shared/lib/time";
@@ -246,8 +246,7 @@ function NotificationRow({
   const users = useUserMap();
   const userName = (id: string | null) =>
     id ? (users.get(id)?.name ?? id) : "알 수 없음";
-  // 피드의 "지금" (/feed/dev/clock 오프셋 반영)
-  const now = Date.now() + (useClock().data?.offsetMs ?? 0);
+  const now = useFeedNow();
   const unread = !n.readAt;
 
   return (

@@ -104,7 +104,7 @@ function QuickCreateDialog({
         className="flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          submit();
+          void submit();
         }}
       >
         <h2 id={titleId} className="text-base font-semibold">

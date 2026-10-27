@@ -4,7 +4,7 @@
 // "초안 만들기"는 AI 어댑터로 보고 초안을 쓴다. 처음 들어오면 그룹의 첫 활동 템플릿(주간 업무 보고)을 적용한다.
 
 import { CalendarX, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   RouteGroupFallback,
   useRouteGroup,
@@ -48,7 +48,7 @@ import { DraftPanel } from "./DraftPanel";
 export function ActivityReportView() {
   const route = useRouteGroup();
   const { group, detail, members } = route;
-  const { params, set, blank, today } = useActivityParams();
+  const { params: urlParams, set, blank, today } = useActivityParams();
   const templates = useReportTemplates(group?.id);
   const { present, slide } = usePresentNav();
   const openPeek = useOpenPeek();
@@ -56,16 +56,20 @@ export function ActivityReportView() {
   const userName = (id: string | null) => (id ? name(id) : "누군가");
   const [draft, setDraft] = useState<ActivityData | null>(null);
 
-  // 처음 들어오면(URL에 조건이 없으면) 첫 활동 템플릿을, 없으면 이번 주를 적용한다
-  useEffect(() => {
-    if (!blank || !group || templates.isPending) return;
-    const first = templates.data?.find((t) => t.kind === "activity");
-    set(first ? paramsFromTemplate(first, today) : { ...params });
-  }, [blank, group, templates.isPending, templates.data, today, set, params]);
+  // 처음 들어오면(URL에 조건이 없으면) 첫 활동 템플릿을, 없으면 이번 주를 쓴다. URL에는 조건을 바꿀 때 적는다.
+  const first = blank
+    ? templates.data?.find((t) => t.kind === "activity")
+    : undefined;
+  const params = useMemo(
+    () => (first ? paramsFromTemplate(first, today) : urlParams),
+    [first, today, urlParams],
+  );
+  // 템플릿을 받기 전에는 어느 조건으로 볼지 모르니 아직 조회하지 않는다.
+  const ready = !blank || !templates.isPending;
 
   const request = useMemo(
     () =>
-      group && !blank
+      group && ready
         ? {
             groupId: group.id,
             from: params.from,
@@ -77,7 +81,7 @@ export function ActivityReportView() {
               : undefined,
           }
         : null,
-    [group, blank, params],
+    [group, ready, params],
   );
   const query = useActivityReport(request);
   const data = query.data;

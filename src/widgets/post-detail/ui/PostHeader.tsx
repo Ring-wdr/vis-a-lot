@@ -173,7 +173,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
       className="flex min-w-0 items-center gap-1.5"
       onSubmit={(e) => {
         e.preventDefault();
-        save();
+        void save();
       }}
     >
       <input

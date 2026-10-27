@@ -173,7 +173,7 @@ export function MembersSection({
         className={s.addRow()}
         onSubmit={(e) => {
           e.preventDefault();
-          add();
+          void add();
         }}
       >
         <div className="w-full max-w-60 flex-1">
