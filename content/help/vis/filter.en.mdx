@@ -1,0 +1,32 @@
+Filters choose which rows the chart uses. Press the **Filter** button on the right of the tab bar to open the filter panel on the right.
+
+## Filters per column
+
+The panel has a collapsed entry per column. When you expand an entry, the value range or value list of that column is loaded.
+
+### Numeric and datetime columns
+
+- Set the range to keep with the **range slider**.
+- Turn on **Invert range** (keep only outside the range) to keep only values outside the range.
+- **Include empty values (null)** decides whether rows with no value are kept.
+
+If the range is the full range with no inversion and nulls included, the column counts as unfiltered.
+
+### Categorical columns
+
+- At first every value is checked. Uncheck the values to leave out.
+- **Select all** and **Clear all** change every value at once.
+- **Search values** shows only values whose name contains the text. While searching, the buttons become **Select shown** and **Clear shown**, changing only the matched values.
+- Press and sweep over the list to change every value you pass. Starting on a checked value unchecks, starting on an unchecked value checks. Press <Kbd>Esc</Kbd> to go back to before the drag.
+
+Filtered columns are marked.
+
+## When do filters apply?
+
+<Callout title="Filters apply when you press draw">
+  After changing filters, the drawn charts stay as they are until you press draw. The panel tells you when there are changes not applied yet. Even when charts are redrawn without draw, such as after changing the grid size, changed filters are not applied.
+</Callout>
+
+Filters apply not only to chart data but also to the split by item count (the 30,000 check) and to the data table and data download. The data table uses the filters applied at draw time.
+
+history keeps the filters along with the chart settings. In a history tab, filters are view only.

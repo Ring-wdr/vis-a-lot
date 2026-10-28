@@ -19,6 +19,7 @@ import { useJobRange } from "@/shared/api/queries";
 import { type ItemState, isTerminal } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
+import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
@@ -29,13 +30,38 @@ import { ChartItemCard } from "./ChartItemCard";
 
 const RESIZE_DEBOUNCE_MS = 300;
 
-const THUMB_STATUS: Record<ItemState["status"], string> = {
-  queued: "대기 중",
-  running: "그리는 중",
-  success: "",
-  failed: "실패",
-  cancelled: "취소됨",
-};
+const messages = defineMessages({
+  ko: {
+    thumbStatus: {
+      queued: "대기 중",
+      running: "그리는 중",
+      success: "",
+      failed: "실패",
+      cancelled: "취소됨",
+    } as Record<ItemState["status"], string>,
+    loading: "불러오는 중",
+    nav: "item 이동",
+    first: "처음 item",
+    prev: "이전 item",
+    next: "다음 item",
+    last: "마지막 item",
+  },
+  en: {
+    thumbStatus: {
+      queued: "Queued",
+      running: "Drawing",
+      success: "",
+      failed: "Failed",
+      cancelled: "Cancelled",
+    },
+    loading: "Loading",
+    nav: "Item navigation",
+    first: "First item",
+    prev: "Previous item",
+    next: "Next item",
+    last: "Last item",
+  },
+});
 
 /** 다른 입력이 키를 쓰는 중이면(입력창, 팝업, 대화상자) 크게 보기 단축키를 쓰지 않는다. */
 function keyTaken(e: KeyboardEvent) {
@@ -67,6 +93,7 @@ export function DetailView({
   totalItems: number;
   onClose: () => void;
 }) {
+  const text = useT(messages);
   const setFocus = useWorkspace((s) => s.setFocus);
   const itemJobs = useWorkspace((s) => s.itemJobs);
   const [mainRef, mainArea] = useElementSize<HTMLDivElement>();
@@ -132,18 +159,18 @@ export function DetailView({
             onDoubleClick={onClose}
           />
         ) : (
-          <ChartItemCard placeholder="불러오는 중" />
+          <ChartItemCard placeholder={text.loading} />
         )}
       </div>
       <nav
         className="flex flex-none items-center gap-1.5"
-        aria-label="item 이동"
+        aria-label={text.nav}
       >
         <button
           type="button"
           className={navButton}
-          title="처음 item"
-          aria-label="처음 item"
+          title={text.first}
+          aria-label={text.first}
           disabled={focus === 0}
           onClick={() => go(0)}
         >
@@ -152,8 +179,8 @@ export function DetailView({
         <button
           type="button"
           className={navButton}
-          title="이전 item"
-          aria-label="이전 item"
+          title={text.prev}
+          aria-label={text.prev}
           disabled={focus === 0}
           onClick={() => go(focus - 1)}
         >
@@ -179,7 +206,7 @@ export function DetailView({
                     // 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다.
                     <span className="flex aspect-[128/80] w-full items-center justify-center gap-1.5 bg-panel text-2xs text-fg-muted">
                       {!isTerminal(thumb.status) && <Spinner size="sm" />}
-                      {THUMB_STATUS[thumb.status]}
+                      {text.thumbStatus[thumb.status]}
                     </span>
                   )}
                   <span className="truncate px-1.5 py-0.5 text-left text-2xs">
@@ -193,8 +220,8 @@ export function DetailView({
         <button
           type="button"
           className={navButton}
-          title="다음 item"
-          aria-label="다음 item"
+          title={text.next}
+          aria-label={text.next}
           disabled={focus >= last}
           onClick={() => go(focus + 1)}
         >
@@ -203,15 +230,16 @@ export function DetailView({
         <button
           type="button"
           className={navButton}
-          title="마지막 item"
-          aria-label="마지막 item"
+          title={text.last}
+          aria-label={text.last}
           disabled={focus >= last}
           onClick={() => go(last)}
         >
           <ChevronsRight size={14} aria-hidden="true" />
         </button>
         <span className="min-w-[13ch] flex-none text-right text-xs text-fg-secondary tabular-nums">
-          {(focus + 1).toLocaleString()} / {totalItems.toLocaleString()}
+          {(focus + 1).toLocaleString(intlLocale())} /{" "}
+          {totalItems.toLocaleString(intlLocale())}
         </span>
       </nav>
     </div>

@@ -1,0 +1,41 @@
+## Where are data and history stored?
+
+vis-a-lot runs the "server" inside the browser, without a real server. Registered data (samples and uploads), history and shares all live in **the storage of the browser you are using now**.
+
+- They aren't visible from other browsers or devices.
+- Clearing the browser's site data deletes them too.
+- Storage usage is shown at the bottom of the datastore popup.
+
+## My charts disappear when I reload
+
+Charts being drawn and the work state live only in memory, so they disappear on reload. Every draw is kept in history, though, so reopen it from history and continue with **Edit in gallery**.
+
+## I changed settings but the chart didn't change
+
+Chart settings, filters and Settings apply when you press **draw**. Only grid size changes, item settings and window resizes redraw right away.
+
+## I can't switch tabs
+
+You can't switch tabs while a chart is being drawn. Press **cancel** or wait until it finishes.
+
+## A column isn't in the list
+
+- Each chart type takes different column types. → [Chart types](/help/vis/chart-types)
+- legend only takes categorical columns with 8 or fewer unique values.
+- If uploaded data got a type you didn't expect, change the column type with **Edit** in datastore and reload.
+
+## Some tool buttons are dimmed
+
+Those modes and tools aren't available for the chart type you drew. Hover over a button to see why. Also, only the default mode is available while revisiting in history or before any chart is drawn.
+
+## Limits
+
+| Item | Limit |
+| --- | --- |
+| split by items | 30,000 |
+| grid | 10 × 10 |
+| legend values | 8 (number of palette colors) |
+| New legends | 8 per item |
+| Upload files | 300MB uncompressed, 500 CSV files, 200 columns |
+| Excel download | 300 images |
+| Full data table | 30,000-row sample |

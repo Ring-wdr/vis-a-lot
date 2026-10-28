@@ -1,0 +1,84 @@
+Read values from drawn charts with tooltips, and use the **mode bar** in the tab toolbar to zoom, select, draw shapes and more. Actions apply to each item separately, and the server redraws only the items you acted on.
+
+## Tooltips
+
+Hover over an item to see a tooltip. There is a short wait only the first time you hover; after that it appears right away.
+
+| Chart | Tooltip shows |
+| --- | --- |
+| Scatter · Line | x and y at the cursor and the nearest point |
+| Bar · Pie · Treemap etc. | The value of the bar or slice you point at |
+| Boxplot | Statistics such as quartiles |
+| Histogram | The bin range and count |
+| Candle | Bucket, open, high, low, close, count |
+| Gantt | Row, legend value, start, end, duration |
+
+Columns picked under **tooltip** in the left panel are shown too, with the values of the nearest point (row). The nearest-point marker for scatter and line can be turned off in the tooltip menu of Settings.
+
+## Mode bar
+
+Only one mode can be on at a time. Before drawing, or when revisiting in history, only the **default** mode is available.
+
+| Mode | What it does |
+| --- | --- |
+| Default | Shows tooltips |
+| Pan | Drag the chart to move the visible range. Releasing redraws with the moved range |
+| Zoom | Zooms into the area you drag |
+| Box select · Lasso select | Drag to select an area. Outside the area is dimmed, and the title line shows how many are selected |
+| Box delete · Lasso delete | Removes the points in the area from that item (scatter, line) |
+| Paint | Draws shapes and notes over the chart |
+
+The modes available for each chart are listed in [Chart types](/help/vis/chart-types#en-tools-available-per-chart).
+
+### Zooming in and out
+
+In zoom mode, drag over an area to redraw with that range. Datetime axes can zoom into very narrow ranges too. **Zoom out** in the item's top-right tools zooms out by a fixed ratio, and **Reset zoom** returns to the original range.
+
+### Selecting an area
+
+In select mode, clicking without dragging clears the selection. Each item has one selection. Right-click inside the selection to open a menu.
+
+| Menu | What it does |
+| --- | --- |
+| Add to favorites… | Saves the current area under a name |
+| New legend… | Colors the points in the area as a new legend entry (up to 8) |
+| Clear selection | Clears the selection |
+| Select favorite ▸ | Selects a saved area again |
+| Delete favorite ▸ | Deletes a saved area |
+| Restore all deleted points | Brings back every point removed with delete |
+| Delete new legend ▸ | Deletes a legend entry you made |
+
+When there is a selection, the data table and data download include only the rows inside it (scatter, line, bar, boxplot, histogram, waterfall).
+
+### Deleting points
+
+In box delete or lasso delete mode, the points in the area are removed from that item. The source data is unchanged; they are removed only from the image, point count and tooltips. **Restore deleted points** in the item tools restores the last area, and **Restore all deleted points** in the right-click menu restores all of them.
+
+### Paint
+
+In paint mode, drawing tools appear at the top left of the item.
+
+- Pick **rectangle, line, freehand or text**. Every item in the tab uses the same tool.
+- Releasing the mouse saves the shape and redraws that item. Shapes are stored in data coordinates, so they stay in place when you zoom.
+- Shapes can't be edited. There are only **Undo shape** (remove the last shape) and **Clear all shapes**.
+
+## Item tools
+
+Hover over an item to show tools at its top right.
+
+- **Zoom out**, **Reset zoom**
+- **Restore deleted points** (after deleting points)
+- **Item settings**: Change settings that apply only to this item (legend position, colors and so on). → [Customizing](/help/vis/customize#en-per-item-settings)
+- **Detail view**
+
+## Detail view
+
+Double-click an item or press **Detail view** to show that one item large in place of the grid. Tooltips, zoom, shapes and colors work the same in the detail view.
+
+- Pick another item from the thumbnail strip below.
+- <Kbd>←</Kbd> <Kbd>→</Kbd>: previous/next item, <Kbd>Home</Kbd> <Kbd>End</Kbd>: first/last item
+- Double-click again, press <Kbd>Esc</Kbd> or **Back to grid** to return to the page with that item.
+
+## Picking an item
+
+Click an item to highlight its border and select it. Tools that work on one item, such as chart download, data download and data table, are available after you pick an item. Drawing again clears the picked item.

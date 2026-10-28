@@ -8,16 +8,34 @@ import {
   helpArticlePath,
   helpServicePath,
 } from "@/shared/config/help";
+import type { Locale } from "@/shared/config/locale";
+import { Localized } from "@/shared/ui/Localized";
+import { prefixedHeadings } from "@/shared/ui/mdx/mdx-components";
 import { HELP_CONTENT } from "../config/content";
+
+/** 영어 본문의 제목 id. 한국어 본문과 함께 그려도 id가 겹치지 않는다 (본문 안 링크도 #en-…). */
+const EN_HEADINGS = prefixedHeadings("en-");
+
+const TEXT = {
+  ko: { prev: "이전", next: "다음", nav: "이전·다음 문서", breadcrumb: "위치" },
+  en: {
+    prev: "Previous",
+    next: "Next",
+    nav: "Previous and next",
+    breadcrumb: "Breadcrumb",
+  },
+} as const satisfies Record<Locale, Record<string, string>>;
 
 function Neighbor({
   service,
   article,
   dir,
+  lang,
 }: {
   service: HelpService;
   article: HelpArticle | undefined;
   dir: "prev" | "next";
+  lang: Locale;
 }) {
   if (!article) return <span />;
   const next = dir === "next";
@@ -27,17 +45,20 @@ function Neighbor({
       className="group flex flex-col gap-0.5 rounded-lg border border-line px-4 py-3 hover:border-accent-line data-[dir=next]:items-end data-[dir=next]:text-right"
       data-dir={dir}
     >
-      <span className="text-xs text-fg-muted">{next ? "다음" : "이전"}</span>
+      <span className="text-xs text-fg-muted">{TEXT[lang][dir]}</span>
       <span className="flex items-center gap-1 text-sm font-semibold group-hover:text-accent">
         {!next && <ChevronLeft size={14} aria-hidden="true" />}
-        {article.title}
+        {article.title[lang]}
         {next && <ChevronRight size={14} aria-hidden="true" />}
       </span>
     </Link>
   );
 }
 
-/** 도움말 문서 한 편: 위치, 제목, 본문(MDX), 이전·다음 문서. */
+/**
+ * 도움말 문서 한 편: 위치, 제목, 본문(MDX), 이전·다음 문서.
+ * 정적 서버 컴포넌트라 두 언어를 함께 그리고 <html lang>에 맞는 쪽만 보인다 (Localized).
+ */
 export async function HelpArticleView({
   service,
   slug,
@@ -51,28 +72,78 @@ export async function HelpArticleView({
   if (!found || !load) {
     throw new Error(`도움말 본문이 없습니다: ${service}/${slug}`);
   }
-  const { default: Content } = await load();
+  const [{ default: ContentKo }, { default: ContentEn }] = await Promise.all([
+    load.ko(),
+    load.en(),
+  ]);
   const { article, prev, next } = found;
 
   return (
     <article>
-      <nav aria-label="위치" className="mb-3 text-xs text-fg-muted">
-        <Link href={helpServicePath(service)} className="hover:text-accent">
-          {HELP[service].label}
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <span>{article.title}</span>
-      </nav>
-      <h1 className="text-xl font-bold tracking-tight">{article.title}</h1>
-      <p className="mt-1 text-sm text-fg-secondary">{article.summary}</p>
-      <Content />
-      <nav
-        aria-label="이전·다음 문서"
-        className="mt-12 grid grid-cols-2 gap-3 border-t border-line pt-6"
-      >
-        <Neighbor service={service} article={prev} dir="prev" />
-        <Neighbor service={service} article={next} dir="next" />
-      </nav>
+      {/* aria-label도 언어마다 달라 nav를 언어마다 하나씩 두고 하나만 보인다. */}
+      <Localized
+        ko={<Breadcrumb service={service} article={article} lang="ko" />}
+        en={<Breadcrumb service={service} article={article} lang="en" />}
+      />
+      <h1 className="text-xl font-bold tracking-tight">
+        <Localized {...article.title} />
+      </h1>
+      <p className="mt-1 text-sm text-fg-secondary">
+        <Localized {...article.summary} />
+      </p>
+      <Localized
+        ko={<ContentKo />}
+        en={<ContentEn components={EN_HEADINGS} />}
+      />
+      <Localized
+        ko={<NeighborNav service={service} prev={prev} next={next} lang="ko" />}
+        en={<NeighborNav service={service} prev={prev} next={next} lang="en" />}
+      />
     </article>
+  );
+}
+
+function Breadcrumb({
+  service,
+  article,
+  lang,
+}: {
+  service: HelpService;
+  article: HelpArticle;
+  lang: Locale;
+}) {
+  return (
+    <nav
+      aria-label={TEXT[lang].breadcrumb}
+      className="mb-3 text-xs text-fg-muted"
+    >
+      <Link href={helpServicePath(service)} className="hover:text-accent">
+        {HELP[service].label[lang]}
+      </Link>
+      <span aria-hidden="true"> / </span>
+      <span>{article.title[lang]}</span>
+    </nav>
+  );
+}
+
+function NeighborNav({
+  service,
+  prev,
+  next,
+  lang,
+}: {
+  service: HelpService;
+  prev: HelpArticle | undefined;
+  next: HelpArticle | undefined;
+  lang: Locale;
+}) {
+  return (
+    <nav
+      aria-label={TEXT[lang].nav}
+      className="mt-12 grid grid-cols-2 gap-3 border-t border-line pt-6"
+    >
+      <Neighbor service={service} article={prev} dir="prev" lang={lang} />
+      <Neighbor service={service} article={next} dir="next" lang={lang} />
+    </nav>
   );
 }

@@ -1,5 +1,6 @@
 import { Construction } from "lucide-react";
 import { page } from "./feed-styles";
+import { Localized } from "./Localized";
 
 const p = page();
 
@@ -17,7 +18,10 @@ export function FeedPlaceholder({
       <p className={p.lead()}>{description}</p>
       <p className="flex items-center gap-2 rounded-lg border border-dashed border-line-strong p-4 text-ui text-fg-muted">
         <Construction size={16} aria-hidden="true" />
-        다음 단계에서 만드는 화면입니다.
+        <Localized
+          ko="다음 단계에서 만드는 화면입니다."
+          en="This screen is coming in a later step."
+        />
       </p>
     </div>
   );

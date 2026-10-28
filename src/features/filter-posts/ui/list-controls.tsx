@@ -4,7 +4,7 @@
 
 import { ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react";
 import {
-  COLUMN_LABELS,
+  columnLabels,
   POST_COLUMNS,
   type PostColumn,
 } from "@/entities/post/model/post-model";
@@ -13,26 +13,73 @@ import {
   SORT_FIELDS,
 } from "@/features/filter-posts/model/filter-url";
 import type { PostSortField, ViewGroupBy } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { segmented } from "@/shared/ui/segmented";
 import { MultiPick } from "./FilterBar";
 import { SinglePick } from "./SinglePick";
 
 const seg = segmented();
 
-export const SORT_LABELS: Record<PostSortField, string> = {
-  updatedAt: "수정일",
-  createdAt: "만든 날",
-  dueDate: "기한",
-  priority: "우선순위",
-  key: "키",
-  title: "제목",
-  status: "상태",
-};
-
-const SORT_OPTIONS = SORT_FIELDS.map((value) => ({
-  value,
-  label: SORT_LABELS[value],
-}));
+const messages = defineMessages<{
+  sortFields: Record<PostSortField, string>;
+  sort: string;
+  ascLabel: string;
+  descLabel: string;
+  asc: string;
+  desc: string;
+  groupBy: Record<ViewGroupBy | "none", string>;
+  group: string;
+  columns: string;
+}>({
+  ko: {
+    sortFields: {
+      updatedAt: "수정일",
+      createdAt: "만든 날",
+      dueDate: "기한",
+      priority: "우선순위",
+      key: "키",
+      title: "제목",
+      status: "상태",
+    },
+    sort: "정렬",
+    ascLabel: "오름차순 (누르면 내림차순)",
+    descLabel: "내림차순 (누르면 오름차순)",
+    asc: "오름차순",
+    desc: "내림차순",
+    groupBy: {
+      none: "없음",
+      status: "상태",
+      assignee: "담당자",
+      priority: "우선순위",
+    },
+    group: "그룹",
+    columns: "열",
+  },
+  en: {
+    sortFields: {
+      updatedAt: "Updated",
+      createdAt: "Created",
+      dueDate: "Due",
+      priority: "Priority",
+      key: "Key",
+      title: "Title",
+      status: "Status",
+    },
+    sort: "Sort",
+    ascLabel: "Ascending (click for descending)",
+    descLabel: "Descending (click for ascending)",
+    asc: "Ascending",
+    desc: "Descending",
+    groupBy: {
+      none: "None",
+      status: "Status",
+      assignee: "Assignee",
+      priority: "Priority",
+    },
+    group: "Group",
+    columns: "Columns",
+  },
+});
 
 export function SortPick({
   sort,
@@ -41,22 +88,25 @@ export function SortPick({
   sort: ListSort;
   onChange: (sort: ListSort) => void;
 }) {
+  const text = useT(messages);
   const asc = sort.dir === "asc";
+  const options = SORT_FIELDS.map((value) => ({
+    value,
+    label: text.sortFields[value],
+  }));
   return (
     <span className="inline-flex items-center gap-1">
       <SinglePick
-        label="정렬"
+        label={text.sort}
         value={sort.field}
-        options={SORT_OPTIONS}
+        options={options}
         onPick={(field) => onChange({ ...sort, field })}
       />
       <button
         type="button"
         className="inline-grid size-7 cursor-pointer place-items-center rounded-md border border-line bg-elevated text-fg-secondary hover:border-line-strong"
-        aria-label={
-          asc ? "오름차순 (누르면 내림차순)" : "내림차순 (누르면 오름차순)"
-        }
-        title={asc ? "오름차순" : "내림차순"}
+        aria-label={asc ? text.ascLabel : text.descLabel}
+        title={asc ? text.asc : text.desc}
         onClick={() => onChange({ ...sort, dir: asc ? "desc" : "asc" })}
       >
         {asc ? (
@@ -69,11 +119,11 @@ export function SortPick({
   );
 }
 
-const GROUP_OPTIONS: { value: ViewGroupBy | null; label: string }[] = [
-  { value: null, label: "없음" },
-  { value: "status", label: "상태" },
-  { value: "assignee", label: "담당자" },
-  { value: "priority", label: "우선순위" },
+const GROUP_OPTIONS: readonly (ViewGroupBy | null)[] = [
+  null,
+  "status",
+  "assignee",
+  "priority",
 ];
 
 export function GroupByPick({
@@ -83,32 +133,32 @@ export function GroupByPick({
   value: ViewGroupBy | null;
   onChange: (v: ViewGroupBy | null) => void;
 }) {
+  const text = useT(messages);
   return (
     <fieldset className="inline-flex items-center gap-1.5">
-      <legend className="sr-only">그룹</legend>
-      <span className="text-xs text-fg-muted" aria-hidden="true">
-        그룹
+      <legend className="sr-only">{text.group}</legend>
+      <span
+        className="text-xs whitespace-nowrap text-fg-muted"
+        aria-hidden="true"
+      >
+        {text.group}
       </span>
       <span className={seg.root({ class: "self-auto" })}>
         {GROUP_OPTIONS.map((o) => (
           <button
-            key={String(o.value)}
+            key={String(o)}
             type="button"
             className={seg.item()}
-            aria-pressed={value === o.value}
-            onClick={() => onChange(o.value)}
+            aria-pressed={value === o}
+            onClick={() => onChange(o)}
           >
-            {o.label}
+            {text.groupBy[o ?? "none"]}
           </button>
         ))}
       </span>
     </fieldset>
   );
 }
-
-const COLUMN_OPTIONS = POST_COLUMNS.filter((c) => c !== "title").map(
-  (value) => ({ value, label: COLUMN_LABELS[value] }),
-);
 
 /** 열 고르기. 제목은 늘 보인다 */
 export function ColumnPick({
@@ -118,11 +168,17 @@ export function ColumnPick({
   columns: readonly PostColumn[];
   onChange: (columns: PostColumn[]) => void;
 }) {
+  const text = useT(messages);
+  // 열 이름은 지금 언어로 읽는다 (useT가 언어 변경을 구독한다)
+  const options = POST_COLUMNS.filter((c) => c !== "title").map((value) => ({
+    value,
+    label: columnLabels()[value],
+  }));
   return (
     <MultiPick
-      label="열"
+      label={text.columns}
       highlight={false}
-      options={COLUMN_OPTIONS}
+      options={options}
       value={columns.filter((c) => c !== "title")}
       onChange={(picked) =>
         onChange(

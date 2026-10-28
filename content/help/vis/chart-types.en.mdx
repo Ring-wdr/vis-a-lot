@@ -1,0 +1,95 @@
+You can draw 14 kinds of charts. Each chart type fixes which column types x, y and z accept, and columns that don't fit are not listed.
+
+## At a glance
+
+| Chart | x | y | z | Aggregate | legend column |
+| --- | --- | --- | --- | --- | --- |
+| Scatter | Numeric·Datetime | Numeric | | | O |
+| Line | Numeric·Datetime | Numeric | | | O |
+| Bar | Categorical | Numeric | | O | O |
+| Boxplot | Categorical | Numeric | | | O |
+| Histogram | Numeric | None | | | O |
+| Heatmap | Categorical·Datetime | Categorical | Numeric | O | |
+| Treemap | Categorical | Numeric | | O | O |
+| Pie | Categorical | Numeric | | O | |
+| Radar | Categorical | Numeric | | O | O |
+| Waterfall | Categorical | Numeric | | O | |
+| Funnel | Categorical | Numeric | | O | |
+| Sankey | Categorical (source) | Categorical (target) | Numeric (flow) | O | |
+| Candle | Datetime | Numeric | | | |
+| Gantt | Datetime | Categorical (task row) | | | O |
+
+Charts that don't take a legend column draw their legend from values the chart decides (pie slices, funnel stages, waterfall increase/decrease/total and so on).
+
+## Chart by chart
+
+### Scatter
+
+Plots a point for each x and y value. However many points there are, it is drawn as a PNG, so the screen doesn't slow down. Pick a legend to color points by legend value.
+
+### Line
+
+Connects the same data as scatter in x order. There is one line per legend value. Pick **ECDF, NCDF or Probability** as the sub chart to draw the distribution of y values; x is not used then.
+
+### Bar
+
+Draws a bar per x category with y aggregated by the aggregate function. Pick a legend to place a bar per legend value inside each category. Sub charts are side by side (**Side**), stacked (**Stack**) and 100% stacked (**Stack 100**).
+
+### Boxplot
+
+Shows the distribution of y per x category as a quartile box, whiskers (1.5 IQR) and outliers. The **Dot** sub chart also plots the points.
+
+### Histogram
+
+The distribution of one numeric column. The vertical axis is the count, and the bin width is set automatically from the data range. All items use the same bins.
+
+### Heatmap
+
+Aggregates z for each x × y cell and shows it as color intensity.
+
+### Treemap
+
+Shows y aggregated per x category as area.
+
+### Pie
+
+x categories are the slices and aggregated y is the slice size. Up to 8 of the largest are labeled and the rest are grouped as 'Other'. Sub charts are **Doughnut, Pie 3D and Sunburst**. In Sunburst the legend becomes the outer ring.
+
+### Radar
+
+x categories are the axes (at least 3, up to 12) and aggregated y is the distance along each axis. There is one polygon per legend value.
+
+### Waterfall
+
+Accumulates y in x category order, draws how much each bar goes up or down, and ends with a total bar.
+
+### Funnel
+
+Places x categories (stages) from top to bottom by value, largest first, and notes the conversion rate from the previous stage and the ratio to the first stage. Beyond 8 stages, it shows 7 plus 'Other'.
+
+### Sankey
+
+Draws flows from source categories (x) to target categories (y), with thickness by z. Up to the 7 largest source nodes and 11 target nodes are shown; the rest are grouped as 'Other'.
+
+### Candle
+
+Splits the datetime x into time buckets automatically and draws y's open, high, low and close for each. The legend has two values: up and down.
+
+### Gantt
+
+Draws time bars for each task row of y. Pick a legend (e.g. status) to split bars wherever the same value continues.
+
+## Tools available per chart
+
+Some modes and the checkbox display in the tab toolbar aren't available for every chart type. Unavailable buttons are dimmed, and hovering shows why.
+
+| Chart | Pan·Zoom | Select | Delete points | Paint | Show checkboxes |
+| --- | --- | --- | --- | --- | --- |
+| Scatter, Line | O | O | O | O | O |
+| Bar, Boxplot, Histogram, Waterfall | O | O | | O | O |
+| Heatmap | O | O | | O | |
+| Treemap | O | O | | | O |
+| Candle, Gantt | O | O | | O | O |
+| Pie, Radar, Funnel, Sankey | | O | | | O |
+
+Each tool is explained in [Exploring charts](/help/vis/explore).

@@ -9,6 +9,7 @@ import {
   type TooltipOptions,
 } from "@/entities/chart/model/chart-options";
 import type { ChartType } from "@/shared/api/types";
+import { intlLocale } from "@/shared/lib/i18n";
 
 /**
  * 기본값 → 공통 → item 개별로 합친 툴팁 속성. 차트가 툴팁 속성을 쓰지 않거나(boxplot)
@@ -38,7 +39,7 @@ export function formatTooltipText(text: string, o: TooltipOptions) {
   if (o.decimals !== null && NUMBER.test(text)) {
     const n = Number(text.replace(/,/g, ""));
     if (Number.isFinite(n))
-      out = n.toLocaleString(undefined, {
+      out = n.toLocaleString(intlLocale(), {
         minimumFractionDigits: o.decimals,
         maximumFractionDigits: o.decimals,
       });

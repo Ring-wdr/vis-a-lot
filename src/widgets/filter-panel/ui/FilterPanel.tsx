@@ -2,15 +2,38 @@
 
 import { Accordion } from "@base-ui/react/accordion";
 import { ChevronDown, Database } from "lucide-react";
-import {
-  COLUMN_TYPE_LABELS,
-  DELETED_DATASET_HINT,
-} from "@/entities/dataset/lib/labels";
+import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { filterOf, sameFilters } from "@/features/data-filter/model/filters";
 import { ColumnFilter } from "@/features/data-filter/ui/ColumnFilter";
 import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    filters: "필터",
+    clearAll: "모두 지우기",
+    readOnly: "이 차트에 적용된 필터입니다.",
+    pending: "바뀐 필터는 draw를 눌러야 적용됩니다.",
+    idle: "필터는 draw할 때 적용됩니다.",
+    noColumns: "컬럼 없음",
+    generating: "데이터 등록이 끝나면 컬럼이 나타납니다.",
+    missing: "데이터를 등록하면 컬럼이 나타납니다.",
+    active: "필터 적용됨",
+  },
+  en: {
+    filters: "Filters",
+    clearAll: "Clear all",
+    readOnly: "Filters applied to this chart.",
+    pending: "Press draw to apply changed filters.",
+    idle: "Filters apply when you draw.",
+    noColumns: "No columns",
+    generating: "Columns appear once the data is registered.",
+    missing: "Columns appear after you register the data.",
+    active: "Filter applied",
+  },
+});
 
 const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
 
@@ -20,6 +43,8 @@ const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
  * 필터는 draw할 때만 적용된다.
  */
 export function FilterPanel() {
+  const text = useT(messages);
+  const labels = useDatasetLabels();
   const filters = useWorkspace((s) => s.draft.filters);
   const applied = useWorkspace((s) => s.current?.spec.filters);
   const drawn = useWorkspace((s) => s.current !== undefined);
@@ -36,10 +61,10 @@ export function FilterPanel() {
   return (
     <section
       className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-line bg-panel"
-      aria-label="필터"
+      aria-label={text.filters}
     >
       <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
-        <strong>필터</strong>
+        <strong>{text.filters}</strong>
         {count > 0 && (
           <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent">
             {count}
@@ -51,7 +76,7 @@ export function FilterPanel() {
             className="ml-auto cursor-pointer text-xs text-accent"
             onClick={() => updateDraft({ filters: [] })}
           >
-            모두 지우기
+            {text.clearAll}
           </button>
         )}
       </header>
@@ -59,21 +84,21 @@ export function FilterPanel() {
         className="px-3.5 pb-2.5 text-xs text-fg-muted data-pending:text-accent"
         data-pending={pending || undefined}
       >
-        {readOnly
-          ? "이 차트에 적용된 필터입니다."
-          : pending
-            ? "바뀐 필터는 draw를 눌러야 적용됩니다."
-            : "필터는 draw할 때 적용됩니다."}
+        {readOnly ? text.readOnly : pending ? text.pending : text.idle}
       </p>
       {(schemaState === "missing" ||
         schemaState === "generating" ||
         schemaState === "deleted") && (
-        <EmptyState size="sm" icon={<Database size={16} />} title="컬럼 없음">
+        <EmptyState
+          size="sm"
+          icon={<Database size={16} />}
+          title={text.noColumns}
+        >
           {schemaState === "generating"
-            ? "데이터 등록이 끝나면 컬럼이 나타납니다."
+            ? text.generating
             : schemaState === "deleted"
-              ? DELETED_DATASET_HINT
-              : "데이터를 등록하면 컬럼이 나타납니다."}
+              ? labels.deletedDataset
+              : text.missing}
         </EmptyState>
       )}
       {schemaState === "loading" && (
@@ -112,7 +137,7 @@ export function FilterPanel() {
                   <Accordion.Trigger className="group/trigger flex h-8.5 w-full cursor-pointer items-center gap-1.5 px-3.5 text-left text-ui font-bold text-fg hover:bg-panel-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
                     <span className="min-w-0 flex-1 truncate">{c.label}</span>
                     <span className="text-2xs text-fg-muted">
-                      {COLUMN_TYPE_LABELS[c.type]}
+                      {labels.columnTypes[c.type]}
                     </span>
                     {active && (
                       <>
@@ -120,7 +145,7 @@ export function FilterPanel() {
                           className="size-2 rounded-full bg-accent"
                           aria-hidden="true"
                         />
-                        <span className="sr-only">필터 적용됨</span>
+                        <span className="sr-only">{text.active}</span>
                       </>
                     )}
                     <ChevronDown

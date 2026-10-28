@@ -3,8 +3,28 @@
 import { AlarmClock, CheckCheck, UserCheck } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { myWorkHref } from "@/entities/post/lib/my-work";
+import { DUE_SOON_DAYS, myWorkHref } from "@/entities/post/lib/my-work";
 import { useMySummary } from "@/shared/api/feed/queries";
+import { defineMessages, useT } from "@/shared/lib/i18n";
+
+const messages = defineMessages({
+  ko: {
+    section: "내 작업 요약",
+    assigned: "담당",
+    review: "승인 대기",
+    dueSoon: "기한 임박",
+    dueSoonHint: (days: number) => `${days}일 안·지남`,
+    loadFailed: (reason: string) => `요약을 불러오지 못했습니다 (${reason})`,
+  },
+  en: {
+    section: "My work summary",
+    assigned: "Assigned",
+    review: "To approve",
+    dueSoon: "Due soon",
+    dueSoonHint: (days: number) => `within ${days}d or overdue`,
+    loadFailed: (reason: string) => `Couldn't load the summary (${reason})`,
+  },
+});
 
 function Stat({
   href,
@@ -43,34 +63,35 @@ function Stat({
 
 /** 홈 위 내 작업 요약 띠: 담당·승인 대기·기한 임박. 누르면 내 작업의 그 탭으로 */
 export function MySummaryStrip() {
+  const text = useT(messages);
   const summary = useMySummary();
   const s = summary.data;
   return (
-    <section aria-label="내 작업 요약" className="flex flex-col gap-1">
+    <section aria-label={text.section} className="flex flex-col gap-1">
       <ul className="grid grid-cols-3 gap-2">
         <Stat
           href={myWorkHref({ tab: "assigned" })}
           icon={<UserCheck size={16} />}
-          label="담당"
+          label={text.assigned}
           value={s?.assigned}
         />
         <Stat
           href={myWorkHref({ tab: "review" })}
           icon={<CheckCheck size={16} />}
-          label="승인 대기"
+          label={text.review}
           value={s?.awaitingReview}
         />
         <Stat
           href={myWorkHref({ tab: "assigned", dueSoon: true })}
           icon={<AlarmClock size={16} />}
-          label="기한 임박"
-          hint="3일 안·지남"
+          label={text.dueSoon}
+          hint={text.dueSoonHint(DUE_SOON_DAYS)}
           value={s?.dueSoon}
         />
       </ul>
       {summary.isError && (
         <p className="text-xs text-danger">
-          요약을 불러오지 못했습니다 ({summary.error.message})
+          {text.loadFailed(summary.error.message)}
         </p>
       )}
     </section>

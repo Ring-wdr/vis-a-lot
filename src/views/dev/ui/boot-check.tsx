@@ -7,7 +7,37 @@ import { api } from "@/shared/api/api";
 import { useHealth } from "@/shared/api/queries";
 import type { DatasetId, DebugRenderResponse } from "@/shared/api/types";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
+
+const messages = defineMessages({
+  ko: {
+    title: "구조 확인",
+    failed: (message: string) => `실패: ${message}`,
+    booting: "PGlite 부팅 중…",
+    boot: (ms: number, count: number) =>
+      `부팅 ${ms}ms · 누적 부팅 ${count}회 (새로고침하면 늘어나야 IndexedDB 유지)`,
+    workers: (n: number) => `Render Worker ${n}개`,
+    datasets: "데이터셋 (절차적 생성 → COPY 적재)",
+    pointsPerItem: "item당 점 개수",
+    renderAll: (n: number) => `${n}개 동시 렌더`,
+    total: (ms: number) => `전체 ${ms}ms`,
+    rendering: "렌더 중…",
+  },
+  en: {
+    title: "Boot check",
+    failed: (message: string) => `Failed: ${message}`,
+    booting: "Booting PGlite…",
+    boot: (ms: number, count: number) =>
+      `Boot ${ms}ms · ${count} boots total (should grow on reload if IndexedDB persists)`,
+    workers: (n: number) => `${n} Render ${n === 1 ? "Worker" : "Workers"}`,
+    datasets: "Datasets (procedural generation → COPY load)",
+    pointsPerItem: "Points per item",
+    renderAll: (n: number) => `Render ${n} at once`,
+    total: (ms: number) => `Total ${ms}ms`,
+    rendering: "Rendering…",
+  },
+});
 
 const heading = "mb-2 font-bold text-base";
 
@@ -20,6 +50,7 @@ type Item = { key: string; result?: DebugRenderResponse; error?: string };
 
 /** 구조 검증 페이지: DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더, `<img>` → MSW → Cache API 경로. */
 export function BootCheck() {
+  const text = useT(messages);
   const { data: health, error: healthError } = useHealth();
   const [dataset, setDataset] = useState<DatasetId>(DEFAULT_DATASET);
   const [items, setItems] = useState<Item[]>([]);
@@ -58,26 +89,25 @@ export function BootCheck() {
 
   return (
     <main className="flex flex-col gap-6 p-6">
-      <h1 className="text-xl font-bold">구조 확인</h1>
+      <h1 className="text-xl font-bold">{text.title}</h1>
 
       <section>
         <h2 className={heading}>DB Worker (PGlite)</h2>
-        {healthError && <p role="alert">실패: {healthError.message}</p>}
-        {!health && !healthError && <p>PGlite 부팅 중…</p>}
+        {healthError && <p role="alert">{text.failed(healthError.message)}</p>}
+        {!health && !healthError && <p>{text.booting}</p>}
         {health && (
           <ul className="list-disc pl-5 leading-relaxed">
             <li>{health.db.version}</li>
             <li>
-              부팅 {Math.round(health.db.bootMs)}ms · 누적 부팅{" "}
-              {health.db.bootCount}회 (새로고침하면 늘어나야 IndexedDB 유지)
+              {text.boot(Math.round(health.db.bootMs), health.db.bootCount)}
             </li>
-            <li>Render Worker {health.renderWorkers}개</li>
+            <li>{text.workers(health.renderWorkers)}</li>
           </ul>
         )}
       </section>
 
       <section>
-        <h2 className={heading}>데이터셋 (절차적 생성 → COPY 적재)</h2>
+        <h2 className={heading}>{text.datasets}</h2>
         <DatasetPanel dataset={dataset} onChange={setDataset} showColumns />
       </section>
 
@@ -87,7 +117,7 @@ export function BootCheck() {
         </h2>
         <div className="mb-3 flex items-center gap-3">
           <label>
-            item당 점 개수{" "}
+            {text.pointsPerItem}{" "}
             <input
               type="number"
               className="w-24 rounded-sm border border-line bg-elevated px-1"
@@ -102,9 +132,11 @@ export function BootCheck() {
             className={button({ size: "sm" })}
             onClick={renderAll}
           >
-            {ITEM_COUNT}개 동시 렌더
+            {text.renderAll(ITEM_COUNT)}
           </button>
-          {totalMs !== undefined && <span>전체 {Math.round(totalMs)}ms</span>}
+          {totalMs !== undefined && (
+            <span>{text.total(Math.round(totalMs))}</span>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -116,7 +148,7 @@ export function BootCheck() {
                 ) : it.result ? (
                   <ChartImage data={it.result} alt={it.key} />
                 ) : (
-                  <span>렌더 중…</span>
+                  <span>{text.rendering}</span>
                 )}
               </div>
               {it.result && (

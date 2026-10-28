@@ -1,22 +1,57 @@
 import type { MDXContent } from "mdx/types";
 import type { HelpService } from "@/shared/config/help";
+import type { Locale } from "@/shared/config/locale";
 
 type Loader = () => Promise<{ default: MDXContent }>;
 
-// 문서 본문. import 경로는 문자열 그대로 적어야 번들러가 파일을 찾는다.
+// 문서 본문. 한국어는 <slug>.mdx, 영어는 <slug>.en.mdx다. 화면은 두 본문을 함께 그리고 <html lang>에 맞는 쪽을 보인다.
+// import 경로는 문자열 그대로 적어야 번들러가 파일을 찾는다.
 // 목차(shared/config/help.ts)에 문서를 더하면 여기에도 한 줄 더한다. 빠지면 빌드가 실패한다.
-export const HELP_CONTENT: Record<HelpService, Record<string, Loader>> = {
+export const HELP_CONTENT: Record<
+  HelpService,
+  Record<string, Record<Locale, Loader>>
+> = {
   vis: {
-    "getting-started": () => import("@content/help/vis/getting-started.mdx"),
-    data: () => import("@content/help/vis/data.mdx"),
-    draw: () => import("@content/help/vis/draw.mdx"),
-    "chart-types": () => import("@content/help/vis/chart-types.mdx"),
-    filter: () => import("@content/help/vis/filter.mdx"),
-    explore: () => import("@content/help/vis/explore.mdx"),
-    customize: () => import("@content/help/vis/customize.mdx"),
-    "export-share": () => import("@content/help/vis/export-share.mdx"),
-    history: () => import("@content/help/vis/history.mdx"),
-    faq: () => import("@content/help/vis/faq.mdx"),
+    "getting-started": {
+      ko: () => import("@content/help/vis/getting-started.mdx"),
+      en: () => import("@content/help/vis/getting-started.en.mdx"),
+    },
+    data: {
+      ko: () => import("@content/help/vis/data.mdx"),
+      en: () => import("@content/help/vis/data.en.mdx"),
+    },
+    draw: {
+      ko: () => import("@content/help/vis/draw.mdx"),
+      en: () => import("@content/help/vis/draw.en.mdx"),
+    },
+    "chart-types": {
+      ko: () => import("@content/help/vis/chart-types.mdx"),
+      en: () => import("@content/help/vis/chart-types.en.mdx"),
+    },
+    filter: {
+      ko: () => import("@content/help/vis/filter.mdx"),
+      en: () => import("@content/help/vis/filter.en.mdx"),
+    },
+    explore: {
+      ko: () => import("@content/help/vis/explore.mdx"),
+      en: () => import("@content/help/vis/explore.en.mdx"),
+    },
+    customize: {
+      ko: () => import("@content/help/vis/customize.mdx"),
+      en: () => import("@content/help/vis/customize.en.mdx"),
+    },
+    "export-share": {
+      ko: () => import("@content/help/vis/export-share.mdx"),
+      en: () => import("@content/help/vis/export-share.en.mdx"),
+    },
+    history: {
+      ko: () => import("@content/help/vis/history.mdx"),
+      en: () => import("@content/help/vis/history.en.mdx"),
+    },
+    faq: {
+      ko: () => import("@content/help/vis/faq.mdx"),
+      en: () => import("@content/help/vis/faq.en.mdx"),
+    },
   },
   feed: {},
 };

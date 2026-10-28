@@ -16,13 +16,11 @@ import {
   useReportTemplates,
 } from "@/shared/api/feed/report-queries";
 import type { ActivityData } from "@/shared/lib/ai/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/Loading";
-import {
-  PERIOD_LABELS,
-  shortDay,
-} from "@/views/feed-report-activity/lib/period";
+import { periodLabel, shortDay } from "@/views/feed-report-activity/lib/period";
 import {
   paramsFromTemplate,
   useActivityParams,
@@ -45,7 +43,50 @@ import { ActivityControls } from "./ActivityControls";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { DraftPanel } from "./DraftPanel";
 
+const messages = defineMessages({
+  ko: {
+    someone: "누군가",
+    resolved: "해결",
+    created: "생성",
+    title: (group: string) => `${group} 활동 보고`,
+    draft: "초안 만들기",
+    activity: "활동",
+    unit: "건",
+    days: (n: number) => `${n}일`,
+    empty: "이 기간에 활동이 없습니다",
+    emptyHint: "기간을 넓히거나 팀·담당자·유형 조건을 지워 보세요.",
+    byUser: "사람별 활동",
+    approvedResolved: "승인(해결)",
+    approved: "승인",
+    otherActivity: "그 밖의 활동",
+    resolvedCount: (n: number) => `해결 ${n}`,
+    byDay: "날짜별 활동",
+    refreshing: "새로 받는 중…",
+  },
+  en: {
+    someone: "Someone",
+    resolved: "Resolved",
+    created: "Created",
+    title: (group: string) => `${group} activity report`,
+    draft: "Write draft",
+    activity: "Activity",
+    unit: "",
+    days: (n: number) => `${n} ${n === 1 ? "day" : "days"}`,
+    empty: "No activity in this period",
+    emptyHint:
+      "Try a wider period or clear the team, assignee or type filters.",
+    byUser: "Activity by person",
+    approvedResolved: "Approved (resolved)",
+    approved: "Approved",
+    otherActivity: "Other activity",
+    resolvedCount: (n: number) => `${n} resolved`,
+    byDay: "Activity by day",
+    refreshing: "Refreshing…",
+  },
+});
+
 export function ActivityReportView() {
+  const text = useT(messages);
   const route = useRouteGroup();
   const { group, detail, members } = route;
   const { params: urlParams, set, blank, today } = useActivityParams();
@@ -53,7 +94,7 @@ export function ActivityReportView() {
   const { present, slide } = usePresentNav();
   const openPeek = useOpenPeek();
   const name = useUserName();
-  const userName = (id: string | null) => (id ? name(id) : "누군가");
+  const userName = (id: string | null) => (id ? name(id) : text.someone);
   const [draft, setDraft] = useState<ActivityData | null>(null);
 
   // 처음 들어오면(URL에 조건이 없으면) 첫 활동 템플릿을, 없으면 이번 주를 쓴다. URL에는 조건을 바꿀 때 적는다.
@@ -90,20 +131,20 @@ export function ActivityReportView() {
     if (!data) return [];
     const items: DeckItem[] = data.completed.map((c) => ({
       key: c.post.key,
-      note: "해결",
+      note: text.resolved,
     }));
     for (const p of data.created)
       if (!items.some((i) => i.key === p.key))
-        items.push({ key: p.key, note: "생성" });
+        items.push({ key: p.key, note: text.created });
     return items;
-  }, [data]);
+  }, [data, text]);
 
   if (!group) return <RouteGroupFallback state={route} />;
   const r = report({ present });
   const statusNames = group.statusNames;
   const total = data?.days.reduce((n, d) => n + d.entries.length, 0) ?? 0;
   const period = `${shortDay(params.from)} ~ ${shortDay(params.to)}`;
-  const title = `${group.name} 활동 보고`;
+  const title = text.title(group.name);
 
   if (present && slide !== null && data)
     return <PresentDeck items={deck} title={`${title} · ${period}`} />;
@@ -113,20 +154,24 @@ export function ActivityReportView() {
     <div className={r.root()}>
       <ReportHeader
         title={title}
-        subtitle={`${PERIOD_LABELS[params.preset]} · ${period}`}
+        subtitle={`${periodLabel(params.preset)} · ${period}`}
         slideCount={deck.length}
       >
         {!present && (
           <button
             type="button"
-            className={button({ size: "sm", variant: "primary" })}
+            className={button({
+              size: "sm",
+              variant: "primary",
+              class: "whitespace-nowrap",
+            })}
             disabled={!data || total === 0}
             onClick={() =>
               data && setDraft(toActivityData(data, userName, statusNames))
             }
           >
             <Sparkles size={14} aria-hidden="true" />
-            초안 만들기
+            {text.draft}
           </button>
         )}
       </ReportHeader>
@@ -153,35 +198,36 @@ export function ActivityReportView() {
         <>
           <div className="grid grid-cols-3 gap-3">
             <StatTile
-              label="활동"
+              label={text.activity}
               value={total}
-              unit="건"
-              hint={`${data.days.length}일`}
+              unit={text.unit}
+              hint={text.days(data.days.length)}
             />
             <StatTile
-              label="해결"
+              label={text.resolved}
               value={data.completed.length}
-              unit="건"
+              unit={text.unit}
               tone="accent"
             />
-            <StatTile label="생성" value={data.created.length} unit="건" />
+            <StatTile
+              label={text.created}
+              value={data.created.length}
+              unit={text.unit}
+            />
           </div>
 
           {total === 0 ? (
-            <EmptyState
-              icon={<CalendarX size={20} />}
-              title="이 기간에 활동이 없습니다"
-            >
-              <p>기간을 넓히거나 팀·담당자·유형 조건을 지워 보세요.</p>
+            <EmptyState icon={<CalendarX size={20} />} title={text.empty}>
+              <p>{text.emptyHint}</p>
             </EmptyState>
           ) : (
             <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
               <section className={r.section({ class: "self-start" })}>
-                <h2 className={r.sectionTitle()}>사람별 활동</h2>
+                <h2 className={r.sectionTitle()}>{text.byUser}</h2>
                 <Legend
                   items={[
-                    { label: "활동", className: "bg-accent/40" },
-                    { label: "승인(해결)", className: "bg-accent" },
+                    { label: text.activity, className: "bg-accent/40" },
+                    { label: text.approvedResolved, className: "bg-accent" },
                   ]}
                 />
                 <ul className="flex flex-col gap-2">
@@ -192,12 +238,12 @@ export function ActivityReportView() {
                       max={maxEvents}
                       segments={[
                         {
-                          label: "승인",
+                          label: text.approved,
                           value: u.completed,
                           className: "bg-accent",
                         },
                         {
-                          label: "그 밖의 활동",
+                          label: text.otherActivity,
                           value: u.events - u.completed,
                           className: "bg-accent/40",
                         },
@@ -206,7 +252,7 @@ export function ActivityReportView() {
                       aside={
                         u.completed > 0 ? (
                           <span className="text-accent">
-                            해결 {u.completed}
+                            {text.resolvedCount(u.completed)}
                           </span>
                         ) : undefined
                       }
@@ -215,7 +261,7 @@ export function ActivityReportView() {
                 </ul>
               </section>
               <section className={r.section()}>
-                <h2 className={r.sectionTitle()}>날짜별 활동</h2>
+                <h2 className={r.sectionTitle()}>{text.byDay}</h2>
                 <ActivityTimeline
                   days={data.days}
                   userName={userName}
@@ -227,7 +273,7 @@ export function ActivityReportView() {
             </div>
           )}
           {query.isFetching && (
-            <span className="text-2xs text-fg-muted">새로 받는 중…</span>
+            <span className="text-2xs text-fg-muted">{text.refreshing}</span>
           )}
         </>
       )}

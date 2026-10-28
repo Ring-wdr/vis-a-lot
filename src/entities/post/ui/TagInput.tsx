@@ -4,19 +4,37 @@
 
 import { X } from "lucide-react";
 import { useState } from "react";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { field } from "./styles";
+
+const messages = defineMessages({
+  ko: {
+    tags: "태그",
+    remove: (tag: string) => `태그 ${tag} 빼기`,
+    placeholder: "태그 입력 후 Enter",
+    add: (label: string) => `${label} 더하기`,
+  },
+  en: {
+    tags: "Tags",
+    remove: (tag: string) => `Remove tag ${tag}`,
+    placeholder: "Type a tag, press Enter",
+    add: (label: string) => `Add ${label.toLowerCase()}`,
+  },
+});
 
 export function TagInput({
   value,
   onChange,
   disabled = false,
-  label = "태그",
+  label: labelProp,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
   label?: string;
 }) {
+  const msg = useT(messages);
+  const label = labelProp ?? msg.tags;
   const [text, setText] = useState("");
   const add = () => {
     const tags = text
@@ -40,7 +58,7 @@ export function TagInput({
                 <button
                   type="button"
                   className="inline-grid size-5 cursor-pointer place-items-center rounded-full hover:bg-panel-strong"
-                  aria-label={`태그 ${t} 빼기`}
+                  aria-label={msg.remove(t)}
                   onClick={() => onChange(value.filter((v) => v !== t))}
                 >
                   <X size={11} aria-hidden="true" />
@@ -54,8 +72,8 @@ export function TagInput({
         <input
           className={field()}
           value={text}
-          placeholder="태그 입력 후 Enter"
-          aria-label={`${label} 더하기`}
+          placeholder={msg.placeholder}
+          aria-label={msg.add(label)}
           onChange={(e) => setText(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;

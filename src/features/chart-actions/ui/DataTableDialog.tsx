@@ -17,10 +17,47 @@ import type {
   SampleRowsResponse,
 } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
+import { defineMessages, intlLocale, t, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    filterNote: (n: number) => ` · draw 시점 필터 ${n}개 적용`,
+    loading: "불러오는 중",
+    noRows: "행이 없습니다",
+    sortBy: (label: string, name: string) => `${label} (${name}) 정렬`,
+    close: "닫기",
+    itemTitle: (label: string) => `${label} 데이터`,
+    rows: (n: string) => `${n}행`,
+    selectedRows: (n: string) => `선택한 ${n}행`,
+    noSelected: "선택 영역 안에 든 데이터가 없습니다.",
+    noDrawn: "이 차트에 그린 데이터가 없습니다.",
+    sampleTitle: (title: string) => `전체 데이터 · ${title}`,
+    sampled: (sample: string, population: string) =>
+      `전체 ${population}행 중 ${sample}행 샘플`,
+    noMatch: "필터에 맞는 데이터가 없습니다.",
+  },
+  en: {
+    filterNote: (n: number) =>
+      ` · ${n} draw-time ${n === 1 ? "filter" : "filters"} applied`,
+    loading: "Loading",
+    noRows: "No rows",
+    sortBy: (label: string, name: string) => `Sort by ${label} (${name})`,
+    close: "Close",
+    itemTitle: (label: string) => `${label} data`,
+    rows: (n: string) => `${n} rows`,
+    selectedRows: (n: string) => `${n} selected rows`,
+    noSelected: "No data inside the selection.",
+    noDrawn: "No data drawn in this chart.",
+    sampleTitle: (title: string) => `All data · ${title}`,
+    sampled: (sample: string, population: string) =>
+      `Sample of ${sample} out of ${population} rows`,
+    noMatch: "No data matches the filters.",
+  },
+});
 
 // 열 폭을 고정해 스크롤하며 행이 바뀌어도 칸이 흔들리지 않게 한다.
 const cell =
@@ -48,11 +85,11 @@ type TablePage = Pick<
   "columns" | "rows" | "total" | "filterCount"
 >;
 
-/** 표가 읽는 곳: 제목, 페이지 조회, 행 수 요약, 빈 표 안내 */
+/** 표가 읽는 곳: 제목, 페이지 조회, 행 수 요약, 빈 표 안내. 문구는 그릴 때 지금 언어로 만든다. */
 type TableSource<P extends TablePage> = {
   /** 쿼리 키. 같은 내용이면 받아 둔 페이지를 다시 쓴다. */
   key: readonly unknown[];
-  title: string;
+  title: () => string;
   fetch: (request: ItemRowsRequest, signal: AbortSignal) => Promise<P>;
   summary: (page: P) => string;
   empty: (page: P) => string;
@@ -60,7 +97,7 @@ type TableSource<P extends TablePage> = {
 
 /** draw 시점 필터 안내. 화면에 지금 보이는 필터가 아니라 차트를 그릴 때의 필터다. */
 const filterNote = (page: TablePage) =>
-  page.filterCount > 0 ? ` · draw 시점 필터 ${page.filterCount}개 적용` : "";
+  page.filterCount > 0 ? t(messages).filterNote(page.filterCount) : "";
 
 /**
  * 데이터를 표로 본다. 보이는 행이 든 페이지만 받아 오는 가상 스크롤이고, 열 머리를 눌러 서버에서 정렬한다.
@@ -72,6 +109,8 @@ function DataTable<P extends TablePage>({
   source: TableSource<P>;
   onClose: () => void;
 }) {
+  // source의 문구 함수는 t로 읽으므로 useT로 언어 변경을 구독한다.
+  const text = useT(messages);
   const titleId = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [sort, setSort] = useState<Sort>();
@@ -134,10 +173,10 @@ function DataTable<P extends TablePage>({
     <div className="flex flex-col gap-2.5">
       <header className="flex items-baseline gap-2.5">
         <h2 id={titleId} className="text-base font-bold">
-          {source.title}
+          {source.title()}
         </h2>
         <span className="text-ui text-fg-muted">
-          {first ? source.summary(first) + filterNote(first) : "불러오는 중"}
+          {first ? source.summary(first) + filterNote(first) : text.loading}
         </span>
       </header>
 
@@ -146,7 +185,7 @@ function DataTable<P extends TablePage>({
           {failed.message}
         </p>
       ) : first && total === 0 ? (
-        <EmptyState icon={<TableIcon size={20} />} title="행이 없습니다">
+        <EmptyState icon={<TableIcon size={20} />} title={text.noRows}>
           {source.empty(first)}
         </EmptyState>
       ) : (
@@ -191,7 +230,7 @@ function DataTable<P extends TablePage>({
                           "inline-flex max-w-full cursor-pointer items-center gap-1 font-semibold text-fg-secondary",
                           c.type !== "categorical" && "flex-row-reverse",
                         )}
-                        title={`${c.label} (${c.name}) 정렬`}
+                        title={text.sortBy(c.label, c.name)}
                         onClick={() => changeSort(c.name)}
                       >
                         <span className="overflow-hidden text-ellipsis">
@@ -224,7 +263,7 @@ function DataTable<P extends TablePage>({
                   return (
                     <tr key={v.index} className="group/row">
                       <td className={cn(cell, rowNumber, rowHover)}>
-                        {(v.index + 1).toLocaleString()}
+                        {(v.index + 1).toLocaleString(intlLocale())}
                       </td>
                       {columns.map((c, i) => (
                         <td
@@ -258,7 +297,7 @@ function DataTable<P extends TablePage>({
           className={button({ variant: "primary" })}
           onClick={onClose}
         >
-          닫기
+          {text.close}
         </button>
       </div>
     </div>
@@ -287,15 +326,16 @@ type ItemTarget = { chartId: string; itemKey: string; label: string };
 export function openDataTable(target: ItemTarget, version: string) {
   openTable<ItemRowsResponse>({
     key: ["item-rows", target.chartId, target.itemKey, version],
-    title: `${target.label} 데이터`,
+    title: () => t(messages).itemTitle(target.label),
     fetch: (request, signal) =>
       api.itemRows(target.chartId, target.itemKey, request, signal),
-    summary: (page) =>
-      `${page.selected ? "선택한 " : ""}${page.total.toLocaleString()}행`,
+    summary: (page) => {
+      const text = t(messages);
+      const rows = page.total.toLocaleString(intlLocale());
+      return page.selected ? text.selectedRows(rows) : text.rows(rows);
+    },
     empty: (page) =>
-      page.selected
-        ? "선택 영역 안에 든 데이터가 없습니다."
-        : "이 차트에 그린 데이터가 없습니다.",
+      page.selected ? t(messages).noSelected : t(messages).noDrawn,
   });
 }
 
@@ -310,12 +350,18 @@ export function openSampleTable(chart: {
 }) {
   openTable<SampleRowsResponse>({
     key: ["sample-rows", chart.chartId, chart.jobId],
-    title: `전체 데이터 · ${chart.title}`,
+    title: () => t(messages).sampleTitle(chart.title),
     fetch: (request, signal) => api.sampleRows(chart.chartId, request, signal),
-    summary: (page) =>
-      page.sampled
-        ? `전체 ${page.population.toLocaleString()}행 중 ${page.total.toLocaleString()}행 샘플`
-        : `${page.total.toLocaleString()}행`,
-    empty: () => "필터에 맞는 데이터가 없습니다.",
+    summary: (page) => {
+      const text = t(messages);
+      const locale = intlLocale();
+      return page.sampled
+        ? text.sampled(
+            page.total.toLocaleString(locale),
+            page.population.toLocaleString(locale),
+          )
+        : text.rows(page.total.toLocaleString(locale));
+    },
+    empty: () => t(messages).noMatch,
   });
 }

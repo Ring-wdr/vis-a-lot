@@ -1,0 +1,52 @@
+Change how charts look with **Settings**, which apply to every item, and **item settings**, which apply to a single item.
+
+## Settings
+
+Press **Settings** at the bottom of the left panel to open a popup. Pick a section in the menu on the left, change values and press **OK**.
+
+<Callout title="Applies on the next draw">
+  Settings don't redraw right away. Press draw after OK to apply them to the drawn charts. When you redraw with changed settings, every per-item setting is replaced by the Settings values.
+</Callout>
+
+The menu shows only the sections used by the selected chart type.
+
+| Section | What it changes |
+| --- | --- |
+| Title | Title and subtitle text and color, alignment, summary display, the character joining split item names |
+| Axes | Show the X and Y axes, titles, min and max, log axes, lines, grid, ticks and tick labels |
+| Legend | Show the legend, position (top, bottom, left, right), border, reverse order, text |
+| Panel | Background color, gradient, border, padding |
+| Palette | Base color, colors per legend value, gradient colors, other color |
+| Shape | Point shape, fill style, opacity, outline, intensity outside the selection, bar corner radius |
+| Size | Point size (auto or fixed), text size (auto), line width |
+| Point labels | Write values next to points (position, angle, prefix and suffix, decimals) |
+| Scores | Correlation, ANOVA F, probability within spec, process capability (Cpk) |
+| Forecast | Predict the next values with a moving average or exponential smoothing and draw them with a confidence band |
+| Values | Value for empty cells, removing outliers (IQR, normal distribution) |
+| Highlight | Highlight points and bars that match a condition |
+| Tooltip | Show the nearest point (changes the display only) |
+| Expression | Draw x and y transformed by an expression, e.g. `log(y)`, `x * 2 + 1` |
+
+## Legend colors and position
+
+The server draws the legend inside the PNG. The same value has the same color in every item.
+
+- Hover over an item and press the **●** of a legend entry to open a color picker. The color you pick applies only to that item.
+- Colors are decided in the order item settings → Settings → default palette. Legend position follows the same order.
+
+### Hiding values with checkboxes
+
+Turn on **Show checkboxes** in the chart tools to put checkboxes in front of legend entries. Uncheck one to redraw that item without that value's points, bars and so on. Hidden values are kept in history and shares too.
+
+## Per-item settings
+
+Press **Item settings** (⚙) in the item tools to open a popup with the same sections as Settings, applied only to that item. Press **OK** to redraw just that item right away.
+
+- In the legend section, change the legend position and colors per legend value. Choosing **Use common position** or **Use common color** uses the Settings values.
+- **Use common settings for this section** in each section, and **Use common settings for all** at the bottom, reset to the Settings values.
+- Sections with item settings changed get a • after the menu name.
+- Item settings are kept in history and shares too.
+
+## Dark mode
+
+Pick system, light or dark with the theme button in the top bar. Chart PNGs are redrawn in the same theme, and chart downloads use the theme you are viewing.

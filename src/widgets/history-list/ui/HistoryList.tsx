@@ -20,6 +20,13 @@ import {
 } from "@/shared/api/queries";
 import type { HistoryEventType, HistorySummary } from "@/shared/api/types";
 import type { ColumnLookup } from "@/shared/lib/format";
+import {
+  defineMessages,
+  intlLocale,
+  localeCached,
+  t,
+  useT,
+} from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
@@ -35,33 +42,72 @@ const muted = "text-2xs text-fg-muted";
 const deleteButton =
   "absolute top-1 right-1 grid size-4.5 cursor-pointer place-items-center rounded-full border border-line bg-elevated text-fg-secondary opacity-0 shadow-sm transition-opacity duration-120 group-hover/entry:opacity-100 focus-visible:opacity-100 hover:border-danger hover:text-danger disabled:cursor-default hover-none:opacity-100";
 
-const EVENT_LABELS: Record<HistoryEventType, string> = {
-  zoom: "확대",
-  shape: "도형",
-  undo: "되돌리기",
-  clearShapes: "도형 삭제",
-  selection: "선택",
-  favorite: "즐겨찾기",
-  delete: "점 삭제",
-  color: "개별 색",
-  legend: "legend",
-  common: "공통 속성",
-  grid: "grid",
-  options: "개별 속성",
-};
+const messages = defineMessages({
+  ko: {
+    events: {
+      zoom: "확대",
+      shape: "도형",
+      undo: "되돌리기",
+      clearShapes: "도형 삭제",
+      selection: "선택",
+      favorite: "즐겨찾기",
+      delete: "점 삭제",
+      color: "개별 색",
+      legend: "legend",
+      common: "공통 속성",
+      grid: "grid",
+      options: "개별 속성",
+    } satisfies Record<HistoryEventType, string>,
+    status: { cancelled: "취소", failed: "실패" },
+    noSplit: "split 없음",
+    confirmDelete: (title: string) =>
+      `'${title}' 기록을 지울까요? 지우면 이 기록으로 다시 볼 수 없고, 열려 있는 탭도 닫힙니다.`,
+    deleteTitle: "history 삭제",
+    delete: "삭제",
+    emptyTitle: "기록 없음",
+    emptyHint: "gallery에서 draw하면 여기에 쌓입니다.",
+    deleteEntry: (title: string) => `${title} 기록 삭제`,
+    deleteEntryShort: "기록 삭제",
+  },
+  en: {
+    events: {
+      zoom: "zoom",
+      shape: "shape",
+      undo: "undo",
+      clearShapes: "clear shapes",
+      selection: "selection",
+      favorite: "favorite",
+      delete: "delete points",
+      color: "item color",
+      legend: "legend",
+      common: "common props",
+      grid: "grid",
+      options: "item props",
+    },
+    status: { cancelled: "cancelled", failed: "failed" },
+    noSplit: "no split",
+    confirmDelete: (title: string) =>
+      `Delete the '${title}' history? You won't be able to view it again, and its open tab will close.`,
+    deleteTitle: "Delete history",
+    delete: "Delete",
+    emptyTitle: "No history",
+    emptyHint: "Charts you draw in gallery show up here.",
+    deleteEntry: (title: string) => `Delete ${title} history`,
+    deleteEntryShort: "Delete history",
+  },
+});
 
-const STATUS_LABELS = { cancelled: "취소", failed: "실패" } as const;
-
-const relative = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
+const relative = localeCached(
+  (locale) => new Intl.RelativeTimeFormat(locale, { numeric: "auto" }),
+);
 
 function timeAgo(ms: number) {
   const diff = (ms - Date.now()) / 1000;
-  if (Math.abs(diff) < 60) return relative.format(Math.round(diff), "second");
-  if (Math.abs(diff) < 3600)
-    return relative.format(Math.round(diff / 60), "minute");
-  if (Math.abs(diff) < 86_400)
-    return relative.format(Math.round(diff / 3600), "hour");
-  return relative.format(Math.round(diff / 86_400), "day");
+  const r = relative();
+  if (Math.abs(diff) < 60) return r.format(Math.round(diff), "second");
+  if (Math.abs(diff) < 3600) return r.format(Math.round(diff / 60), "minute");
+  if (Math.abs(diff) < 86_400) return r.format(Math.round(diff / 3600), "hour");
+  return r.format(Math.round(diff / 86_400), "day");
 }
 
 function detailOf(
@@ -69,23 +115,25 @@ function detailOf(
   columns: ColumnLookup,
   datasetName: string,
 ) {
+  const text = t(messages);
   const parts = [
     datasetName,
     entry.spec.splitBy.length > 0
       ? `split ${entry.spec.splitBy.map(columns.label).join(entry.spec.splitSeparator)}`
-      : "split 없음",
-    `${entry.itemCount.toLocaleString()} item`,
+      : text.noSplit,
+    `${entry.itemCount.toLocaleString(intlLocale())} item`,
   ];
   for (const status of ["cancelled", "failed"] as const) {
     const n = entry.statusCounts[status];
-    if (n) parts.push(`${STATUS_LABELS[status]} ${n}`);
+    if (n) parts.push(`${text.status[status]} ${n}`);
   }
   return parts.join(" · ");
 }
 
 function eventsOf(entry: HistorySummary) {
+  const { events } = t(messages);
   return Object.entries(entry.eventCounts)
-    .map(([type, n]) => `${EVENT_LABELS[type as HistoryEventType]} ${n}`)
+    .map(([type, n]) => `${events[type as HistoryEventType]} ${n}`)
     .join(" · ");
 }
 
@@ -94,6 +142,7 @@ function eventsOf(entry: HistorySummary) {
  * 다시 보기는 history에 기록하지 않으므로 목록 순서와 썸네일이 바뀌지 않는다.
  */
 export function HistoryList() {
+  const text = useT(messages);
   const list = useHistoryList();
   const openHistory = useTabs((s) => s.openHistory);
   const close = useTabs((s) => s.close);
@@ -131,23 +180,20 @@ export function HistoryList() {
     onError: (err) => showAlert(err.message),
   });
   const confirmDelete = async (entry: HistorySummary, title: string) => {
-    const ok = await showConfirm(
-      `'${title}' 기록을 지울까요? 지우면 이 기록으로 다시 볼 수 없고, 열려 있는 탭도 닫힙니다.`,
-      {
-        title: "history 삭제",
-        confirmLabel: "삭제",
-        danger: true,
-        children: entry.thumbnail && (
-          <img
-            src={entry.thumbnail}
-            alt=""
-            width={240}
-            height={150}
-            className="mt-3 w-full rounded-sm border border-line bg-panel object-contain"
-          />
-        ),
-      },
-    );
+    const ok = await showConfirm(text.confirmDelete(title), {
+      title: text.deleteTitle,
+      confirmLabel: text.delete,
+      danger: true,
+      children: entry.thumbnail && (
+        <img
+          src={entry.thumbnail}
+          alt=""
+          width={240}
+          height={150}
+          className="mt-3 w-full rounded-sm border border-line bg-panel object-contain"
+        />
+      ),
+    });
     if (ok) remove.mutate(entry.id);
   };
 
@@ -179,8 +225,12 @@ export function HistoryList() {
   }
   if (list.data.entries.length === 0) {
     return (
-      <EmptyState size="sm" icon={<History size={16} />} title="기록 없음">
-        gallery에서 draw하면 여기에 쌓입니다.
+      <EmptyState
+        size="sm"
+        icon={<History size={16} />}
+        title={text.emptyTitle}
+      >
+        {text.emptyHint}
       </EmptyState>
     );
   }
@@ -245,8 +295,8 @@ export function HistoryList() {
             <button
               type="button"
               className={deleteButton}
-              aria-label={`${title} 기록 삭제`}
-              title="기록 삭제"
+              aria-label={text.deleteEntry(title)}
+              title={text.deleteEntryShort}
               disabled={removing}
               onClick={() => confirmDelete(entry, title)}
             >
