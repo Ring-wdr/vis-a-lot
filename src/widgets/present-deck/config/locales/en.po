@@ -1,0 +1,86 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. key: 게시물 키 (FD-12)
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "{key} 불러오는 중"
+msgstr "Loading {key}"
+
+#. key: 게시물 키 (FD-12)
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "{key}를 불러오지 못했습니다"
+msgstr "Couldn't load {key}"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "기한"
+msgstr "Due"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "넘겨 볼 게시물이 없습니다"
+msgstr "No posts to page through"
+
+#. 이름을 모르는 행위자
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "누군가"
+msgstr "Someone"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "slide navigation"
+msgid "다음"
+msgstr "Next"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "담당자"
+msgstr "Assignee"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "보고서 조건을 넓혀 보세요."
+msgstr "Try widening the report filters."
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "보고서로 돌아가기"
+msgstr "Back to report"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "불러오는 중"
+msgstr "Loading"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "no due date"
+msgid "없음"
+msgstr "None"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "우선순위"
+msgstr "Priority"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "slide navigation"
+msgid "이전"
+msgstr "Prev"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "자세히 보기"
+msgstr "View details"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "진행률"
+msgstr "Progress"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "최근 활동"
+msgstr "Latest activity"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "활동이 없습니다"
+msgstr "No activity"

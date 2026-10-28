@@ -7,10 +7,31 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/features/auth/ui/LoginForm.tsx
+msgid "데모 계정:"
+msgstr "Demo account:"
+
 #: src/features/auth/ui/UserMenu.tsx
 msgid "로그아웃"
 msgstr "Log out"
 
+#: src/features/auth/ui/LoginForm.tsx
+msgctxt "login button"
+msgid "로그인"
+msgstr "Log in"
+
+#: src/features/auth/ui/LoginForm.tsx
+msgid "로그인 중"
+msgstr "Logging in"
+
+#: src/features/auth/ui/LoginForm.tsx
+msgid "비밀번호"
+msgstr "Password"
+
 #: src/features/auth/ui/UserMenu.tsx
 msgid "사용자 메뉴"
 msgstr "User menu"
+
+#: src/features/auth/ui/LoginForm.tsx
+msgid "아이디"
+msgstr "Username"

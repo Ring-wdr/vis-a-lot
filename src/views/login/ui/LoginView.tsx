@@ -1,15 +1,10 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { LoginForm } from "@/features/auth/ui/LoginForm";
-import { defineMessages, useT } from "@/shared/lib/i18n";
-
-const messages = defineMessages({
-  ko: { tagline: "서버사이드 렌더링 차트" },
-  en: { tagline: "Server-side rendered charts" },
-});
+import "../config/messages";
 
 export function LoginView({ notice }: { notice?: string }) {
-  const text = useT(messages);
   return (
     <main className="grid min-h-screen place-items-center bg-surface p-4 text-fg">
       <section
@@ -19,7 +14,9 @@ export function LoginView({ notice }: { notice?: string }) {
         <h1 id="login-title" className="text-xl font-bold">
           vis-a-lot
         </h1>
-        <p className="mt-1 mb-5 text-ui text-fg-muted">{text.tagline}</p>
+        <p className="mt-1 mb-5 text-ui text-fg-muted">
+          <Trans>서버사이드 렌더링 차트</Trans>
+        </p>
         <LoginForm notice={notice} />
       </section>
     </main>
