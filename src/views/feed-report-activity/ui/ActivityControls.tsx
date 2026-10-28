@@ -2,6 +2,7 @@
 
 // 활동 보고 조건: 기간 프리셋(직접 선택은 날짜 둘), 팀, 담당자, 게시물 유형(여럿), 템플릿(적용·저장·덮어쓰기·지우기).
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Save, Trash2 } from "lucide-react";
 import {
   useDeleteReportTemplate,
@@ -10,7 +11,6 @@ import {
 } from "@/shared/api/feed/report-queries";
 import type { ReportTemplate } from "@/shared/api/feed/reports";
 import type { FeedUser, PostType, Team } from "@/shared/api/feed/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showAlert, showConfirm, showPrompt } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { Select } from "@/shared/ui/Select";
@@ -26,70 +26,13 @@ import {
   type ActivityParams,
   paramsFromTemplate,
 } from "@/views/feed-report-activity/model/activity-state";
+import "../config/messages";
 
 const seg = segmented();
 const ALL = "_all";
 
 const dateInput =
   "h-7.5 rounded-md border border-line bg-elevated px-2 text-ui text-fg tabular-nums";
-
-const messages = defineMessages({
-  ko: {
-    period: "기간",
-    from: "시작",
-    to: "끝",
-    team: "팀",
-    allTeams: "모든 팀",
-    assignee: "담당자",
-    everyone: "모든 사람",
-    postType: "게시물 유형",
-    allTypes: "(모두)",
-    all: "모두",
-    template: "템플릿",
-    loading: "불러오는 중",
-    pickTemplate: "템플릿 고르기",
-    reapply: "다시 적용",
-    saveAs: "새 템플릿으로 저장",
-    overwrite: "덮어쓰기",
-    delete: "지우기",
-    loadFailed: "템플릿을 불러오지 못했습니다",
-    newName: "새 템플릿 이름",
-    copyName: (name: string) => `${name} 사본`,
-    save: "저장",
-    saveFailed: (err: string) => `템플릿을 저장하지 못했습니다: ${err}`,
-    confirmOverwrite: (name: string) => `‘${name}’를 지금 조건으로 덮어쓸까요?`,
-    confirmDelete: (name: string) => `‘${name}’ 템플릿을 지울까요?`,
-    deleteFailed: (err: string) => `템플릿을 지우지 못했습니다: ${err}`,
-  },
-  en: {
-    period: "Period",
-    from: "From",
-    to: "To",
-    team: "Team",
-    allTeams: "All teams",
-    assignee: "Assignee",
-    everyone: "Everyone",
-    postType: "Post type",
-    allTypes: "(all)",
-    all: "All",
-    template: "Template",
-    loading: "Loading",
-    pickTemplate: "Choose template",
-    reapply: "Reapply",
-    saveAs: "Save as template",
-    overwrite: "Overwrite",
-    delete: "Delete",
-    loadFailed: "Couldn't load templates",
-    newName: "New template name",
-    copyName: (name: string) => `${name} copy`,
-    save: "Save",
-    saveFailed: (err: string) => `Couldn't save the template: ${err}`,
-    confirmOverwrite: (name: string) =>
-      `Overwrite ‘${name}’ with the current filters?`,
-    confirmDelete: (name: string) => `Delete the ‘${name}’ template?`,
-    deleteFailed: (err: string) => `Couldn't delete the template: ${err}`,
-  },
-});
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -110,7 +53,7 @@ export function ActivityControls({
   members: readonly FeedUser[];
   postTypes: readonly PostType[];
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const update = (patch: Partial<ActivityParams>) =>
     onChange({ ...params, ...patch });
 
@@ -126,7 +69,7 @@ export function ActivityControls({
     const has = params.postTypeIds.includes(id);
     update({
       postTypeIds: has
-        ? params.postTypeIds.filter((t) => t !== id)
+        ? params.postTypeIds.filter((x) => x !== id)
         : [...params.postTypeIds, id],
     });
   }
@@ -136,7 +79,7 @@ export function ActivityControls({
       <div className="flex flex-wrap items-end gap-3">
         <fieldset className="min-w-0">
           <legend className="float-left mb-1.5 w-full text-xs text-fg-secondary">
-            {text.period}
+            <Trans>기간</Trans>
           </legend>
           <div className={seg.root({ class: "clear-left self-start" })}>
             {PERIOD_PRESETS.map((p) => (
@@ -155,7 +98,7 @@ export function ActivityControls({
         {params.preset === "custom" && (
           <div className="flex items-end gap-1.5">
             <label className="flex flex-col gap-1 text-xs text-fg-secondary">
-              {text.from}
+              <Trans context="date range start">시작</Trans>
               <input
                 type="date"
                 className={dateInput}
@@ -169,7 +112,7 @@ export function ActivityControls({
             </label>
             <span className="pb-1.5 text-fg-muted">~</span>
             <label className="flex flex-col gap-1 text-xs text-fg-secondary">
-              {text.to}
+              <Trans context="date range end">끝</Trans>
               <input
                 type="date"
                 className={dateInput}
@@ -184,10 +127,10 @@ export function ActivityControls({
         )}
         <div className="w-36">
           <Select
-            label={text.team}
+            label={t`팀`}
             value={params.teamId ?? ALL}
             options={[
-              { value: ALL, label: text.allTeams },
+              { value: ALL, label: t`모든 팀` },
               ...teams.map((t) => ({ value: t.id, label: t.name })),
             ]}
             onChange={(v) => update({ teamId: v === ALL ? undefined : v })}
@@ -195,10 +138,10 @@ export function ActivityControls({
         </div>
         <div className="w-36">
           <Select
-            label={text.assignee}
+            label={t`담당자`}
             value={params.assigneeId ?? ALL}
             options={[
-              { value: ALL, label: text.everyone },
+              { value: ALL, label: t`모든 사람` },
               ...members.map((u) => ({ value: u.id, label: u.name })),
             ]}
             onChange={(v) => update({ assigneeId: v === ALL ? undefined : v })}
@@ -209,9 +152,9 @@ export function ActivityControls({
       {postTypes.length > 0 && (
         <fieldset className="min-w-0">
           <legend className="float-left mb-1.5 w-full text-xs text-fg-secondary">
-            {text.postType}{" "}
+            {t`게시물 유형`}{" "}
             <span className="text-fg-muted">
-              {params.postTypeIds.length ? "" : text.allTypes}
+              {params.postTypeIds.length ? "" : t`(모두)`}
             </span>
           </legend>
           <div className="clear-left flex flex-wrap gap-1.5">
@@ -237,7 +180,7 @@ export function ActivityControls({
                 className="h-7 cursor-pointer px-1.5 text-xs text-accent"
                 onClick={() => update({ postTypeIds: [] })}
               >
-                {text.all}
+                <Trans context="clear post type filter">모두</Trans>
               </button>
             )}
           </div>
@@ -266,13 +209,20 @@ function TemplateBar({
   today: string;
   onApply: (next: ActivityParams) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const templates = useReportTemplates(groupId);
   const save = useSaveReportTemplate();
   const remove = useDeleteReportTemplate(groupId);
   const list = (templates.data ?? []).filter((t) => t.kind === "activity");
   const current = list.find((t) => t.id === params.templateId);
   const busy = save.isPending || remove.isPending;
+
+  const copyName = (name: string) => t`${name} 사본`;
+  const saveFailed = (err: string) => t`템플릿을 저장하지 못했습니다: ${err}`;
+  const confirmOverwrite = (name: string) =>
+    t`‘${name}’를 지금 조건으로 덮어쓸까요?`;
+  const confirmDelete = (name: string) => t`‘${name}’ 템플릿을 지울까요?`;
+  const deleteFailed = (err: string) => t`템플릿을 지우지 못했습니다: ${err}`;
 
   const body = (name: string, id?: string) => ({
     id,
@@ -288,9 +238,9 @@ function TemplateBar({
   });
 
   async function saveAs() {
-    const name = await showPrompt(text.newName, {
-      defaultValue: current ? text.copyName(current.name) : "",
-      confirmLabel: text.save,
+    const name = await showPrompt(t`새 템플릿 이름`, {
+      defaultValue: current ? copyName(current.name) : "",
+      confirmLabel: t({ message: "저장", context: "save report template" }),
       maxLength: 60,
     });
     if (!name) return;
@@ -298,36 +248,42 @@ function TemplateBar({
       const saved = await save.mutateAsync(body(name));
       onApply({ ...params, templateId: saved.id });
     } catch (e) {
-      showAlert(text.saveFailed(errorText(e)));
+      showAlert(saveFailed(errorText(e)));
     }
   }
 
-  async function overwrite(t: ReportTemplate) {
+  async function overwrite(tpl: ReportTemplate) {
     if (
-      !(await showConfirm(text.confirmOverwrite(t.name), {
-        confirmLabel: text.overwrite,
+      !(await showConfirm(confirmOverwrite(tpl.name), {
+        confirmLabel: t({
+          message: "덮어쓰기",
+          context: "overwrite report template",
+        }),
       }))
     )
       return;
     try {
-      await save.mutateAsync(body(t.name, t.id));
+      await save.mutateAsync(body(tpl.name, tpl.id));
     } catch (e) {
-      showAlert(text.saveFailed(errorText(e)));
+      showAlert(saveFailed(errorText(e)));
     }
   }
 
-  async function del(t: ReportTemplate) {
+  async function del(tpl: ReportTemplate) {
     if (
-      !(await showConfirm(text.confirmDelete(t.name), {
-        confirmLabel: text.delete,
+      !(await showConfirm(confirmDelete(tpl.name), {
+        confirmLabel: t({
+          message: "지우기",
+          context: "delete report template",
+        }),
       }))
     )
       return;
     try {
-      await remove.mutateAsync(t.id);
+      await remove.mutateAsync(tpl.id);
       onApply({ ...params, templateId: undefined });
     } catch (e) {
-      showAlert(text.deleteFailed(errorText(e)));
+      showAlert(deleteFailed(errorText(e)));
     }
   }
 
@@ -335,9 +291,9 @@ function TemplateBar({
     <div className="flex flex-wrap items-end gap-2 border-t border-line pt-3">
       <div className="w-52">
         <Select
-          label={text.template}
+          label={t`템플릿`}
           value={current?.id ?? null}
-          placeholder={templates.isPending ? text.loading : text.pickTemplate}
+          placeholder={templates.isPending ? t`불러오는 중` : t`템플릿 고르기`}
           disabled={list.length === 0}
           options={list.map((t) => ({ value: t.id, label: t.name }))}
           onChange={(id) => {
@@ -352,7 +308,7 @@ function TemplateBar({
           className={button({ size: "sm" })}
           onClick={() => onApply(paramsFromTemplate(current, today))}
         >
-          {text.reapply}
+          <Trans>다시 적용</Trans>
         </button>
       )}
       <button
@@ -362,7 +318,7 @@ function TemplateBar({
         onClick={saveAs}
       >
         <Save size={14} aria-hidden="true" />
-        {text.saveAs}
+        <Trans>새 템플릿으로 저장</Trans>
       </button>
       {current?.editable && (
         <>
@@ -372,7 +328,7 @@ function TemplateBar({
             disabled={busy}
             onClick={() => overwrite(current)}
           >
-            {text.overwrite}
+            <Trans context="overwrite report template">덮어쓰기</Trans>
           </button>
           <button
             type="button"
@@ -381,12 +337,14 @@ function TemplateBar({
             onClick={() => del(current)}
           >
             <Trash2 size={14} aria-hidden="true" />
-            {text.delete}
+            <Trans context="delete report template">지우기</Trans>
           </button>
         </>
       )}
       {templates.isError && (
-        <span className="text-xs text-danger">{text.loadFailed}</span>
+        <span className="text-xs text-danger">
+          <Trans>템플릿을 불러오지 못했습니다</Trans>
+        </span>
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 
 // 활동 보고·현황 보고가 함께 쓰는 조각: 머리 줄(발표 모드), 숫자 칸, 가로 막대, 자리 잡기·오류.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   GalleryHorizontal,
   Presentation,
@@ -10,25 +11,10 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { usePresentNav } from "@/features/present-mode/model/present-nav";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
-
-const messages = defineMessages({
-  ko: {
-    browsePosts: "게시물 넘겨 보기",
-    presentMode: "발표 모드",
-    failed: "보고서를 만들지 못했습니다",
-    retry: "다시 시도",
-  },
-  en: {
-    browsePosts: "Browse posts",
-    presentMode: "Present",
-    failed: "Couldn't build the report",
-    retry: "Try again",
-  },
-});
+import "../config/messages";
 
 export const report = tv({
   slots: {
@@ -59,7 +45,6 @@ export function ReportHeader({
   /** 제목 줄 오른쪽에 더 붙일 것 */
   children?: ReactNode;
 }) {
-  const text = useT(messages);
   const { present, start, openSlide } = usePresentNav();
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -89,7 +74,7 @@ export function ReportHeader({
             onClick={() => openSlide(0)}
           >
             <GalleryHorizontal size={16} aria-hidden="true" />
-            {text.browsePosts}
+            <Trans>게시물 넘겨 보기</Trans>
             <span className="tabular-nums">({slideCount})</span>
           </button>
         ) : (
@@ -99,7 +84,7 @@ export function ReportHeader({
             onClick={start}
           >
             <Presentation size={14} aria-hidden="true" />
-            {text.presentMode}
+            <Trans>발표 모드</Trans>
           </button>
         )}
       </div>
@@ -236,9 +221,12 @@ export function ReportError({
   error: Error;
   onRetry: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   return (
-    <EmptyState icon={<TriangleAlert size={20} />} title={text.failed}>
+    <EmptyState
+      icon={<TriangleAlert size={20} />}
+      title={t`보고서를 만들지 못했습니다`}
+    >
       <p>{error.message}</p>
       <button
         type="button"
@@ -246,7 +234,7 @@ export function ReportError({
         onClick={onRetry}
       >
         <RefreshCw size={14} aria-hidden="true" />
-        {text.retry}
+        <Trans context="retry building the report">다시 시도</Trans>
       </button>
     </EmptyState>
   );

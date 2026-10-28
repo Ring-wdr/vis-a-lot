@@ -1,0 +1,144 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#. placeholder {0}: data.posts.length
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgctxt "open post count"
+msgid "{0, plural, other {#건}}"
+msgstr "{0, plural, other {#건}}"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "{groupName} 현황 보고"
+msgstr "{groupName} 현황 보고"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "{teamName} · 지금 기준"
+msgstr "{teamName} · 지금 기준"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "30일 리드타임 평균"
+msgstr "30일 리드타임 평균"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "검토 대기 평균"
+msgstr "검토 대기 평균"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "검토 중"
+msgstr "검토 중"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "검토 중 {inReview}"
+msgstr "검토 중 {inReview}"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "검토 중 없음"
+msgstr "검토 중 없음"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "게시물이 없습니다."
+msgstr "게시물이 없습니다."
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "그 밖의 열림"
+msgstr "그 밖의 열림"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "기한 초과"
+msgstr "기한 초과"
+
+#. placeholder {0}: l.overdue
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "기한 초과 {0}"
+msgstr "기한 초과 {0}"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgctxt "status report tile"
+msgid "닫힘"
+msgstr "닫힘"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "담당자 없음"
+msgstr "담당자 없음"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "담당자별 부하 (열린 게시물)"
+msgstr "담당자별 부하 (열린 게시물)"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgctxt "status report tile"
+msgid "멈춤"
+msgstr "멈춤"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "모든 팀"
+msgstr "모든 팀"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "모든 팀 · 지금 기준"
+msgstr "모든 팀 · 지금 기준"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "상태 분포"
+msgstr "상태 분포"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "새로 받는 중…"
+msgstr "새로 받는 중…"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgctxt "hours unit after a number"
+msgid "시간"
+msgstr "시간"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "열린 게시물 중"
+msgstr "열린 게시물 중"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "열린 게시물이 없습니다"
+msgstr "열린 게시물이 없습니다"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "열린 게시물이 없습니다."
+msgstr "열린 게시물이 없습니다."
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "열린·멈춘 게시물"
+msgstr "열린·멈춘 게시물"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgctxt "status report tile"
+msgid "열림"
+msgstr "열림"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgctxt "days unit after a number"
+msgid "일"
+msgstr "일"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "중앙값 {medianDays}일 · {leadCount, plural, other {#건}}"
+msgstr "중앙값 {medianDays}일 · {leadCount, plural, other {#건}}"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "최대 {maxHours}시간 · {waitCount, plural, other {#건}}"
+msgstr "최대 {maxHours}시간 · {waitCount, plural, other {#건}}"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "팀"
+msgstr "팀"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "해결 {resolved} · 취소 {cancelled}"
+msgstr "해결 {resolved} · 취소 {cancelled}"
+
+#: src/views/feed-report-status/ui/StatusReportView.tsx
+msgid "해결 없음"
+msgstr "해결 없음"

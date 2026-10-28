@@ -1,5 +1,6 @@
 "use client";
 
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { Download, RotateCcw, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import {
@@ -9,78 +10,12 @@ import {
 } from "@/shared/api/feed/queries";
 import { seedApi } from "@/shared/api/feed/seed";
 import type { FeedSnapshot } from "@/shared/api/feed/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { saveBlob } from "@/shared/lib/save-file";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { page } from "@/shared/ui/feed-styles";
 import { LoadingText } from "@/shared/ui/Loading";
-
-const messages = defineMessages({
-  ko: {
-    resetConfirm: "피드 데이터를 모두 지우고 기본 시나리오를 다시 적재할까요?",
-    reset: "리셋",
-    resetDone: (users: number, posts: number) =>
-      `리셋했습니다: 사용자 ${users}명, 게시물 ${posts}개`,
-    resetFailed: (error: string) => `리셋하지 못했습니다: ${error}`,
-    exportFailed: (error: string) => `내보내지 못했습니다: ${error}`,
-    parseFailed: (error: string) => `JSON을 읽지 못했습니다: ${error}`,
-    notSnapshot: "피드 스냅숏 형식(schemaVersion, tables)이 아닙니다.",
-    importConfirm: (file: string) =>
-      `지금 피드 데이터를 지우고 '${file}'으로 채울까요?`,
-    import: "가져오기",
-    importDone: (rows: number) => `가져왔습니다: ${rows}행`,
-    importFailed: (error: string) => `가져오지 못했습니다: ${error}`,
-    title: "시드",
-    lead: "프로토타입 데이터를 처음 상태로 되돌리거나, JSON으로 저장해 두고 다시 채웁니다.",
-    current: "지금 데이터",
-    loading: "불러오는 중",
-    statusFailed: (error: string) => `상태를 불러오지 못했습니다: ${error}`,
-    users: "사용자",
-    usersCount: (n: number) => `${n}명`,
-    posts: "게시물",
-    postsCount: (n: number) => `${n}개`,
-    manage: "관리",
-    exportJson: "JSON 내보내기",
-    importJson: "JSON 가져오기",
-    importFile: "가져올 JSON 파일",
-    working: "처리하는 중",
-    resetHint:
-      "리셋은 기본 시나리오(사용자 8명, 그룹 2개, 게시물 60개, 4주치 이벤트)를 다시 적재합니다.",
-  },
-  en: {
-    resetConfirm: "Erase all feed data and reload the default scenario?",
-    reset: "Reset",
-    resetDone: (users: number, posts: number) =>
-      `Reset: ${users} ${users === 1 ? "user" : "users"}, ${posts} ${posts === 1 ? "post" : "posts"}`,
-    resetFailed: (error: string) => `Couldn't reset: ${error}`,
-    exportFailed: (error: string) => `Couldn't export: ${error}`,
-    parseFailed: (error: string) => `Couldn't read the JSON: ${error}`,
-    notSnapshot: "Not a feed snapshot (schemaVersion, tables).",
-    importConfirm: (file: string) =>
-      `Erase current feed data and fill it from '${file}'?`,
-    import: "Import",
-    importDone: (rows: number) =>
-      `Imported: ${rows} ${rows === 1 ? "row" : "rows"}`,
-    importFailed: (error: string) => `Couldn't import: ${error}`,
-    title: "Seed",
-    lead: "Restore the prototype data to its initial state, or save it as JSON and load it back.",
-    current: "Current data",
-    loading: "Loading",
-    statusFailed: (error: string) => `Couldn't load status: ${error}`,
-    users: "Users",
-    usersCount: (n: number) => `${n}`,
-    posts: "Posts",
-    postsCount: (n: number) => `${n}`,
-    manage: "Manage",
-    exportJson: "Export JSON",
-    importJson: "Import JSON",
-    importFile: "JSON file to import",
-    working: "Working",
-    resetHint:
-      "Reset reloads the default scenario (8 users, 2 groups, 60 posts, 4 weeks of events).",
-  },
-});
+import "../config/messages";
 
 type Result =
   | { kind: "reset"; users: number; posts: number }
@@ -107,7 +42,7 @@ function isSnapshot(v: unknown): v is FeedSnapshot {
 
 /** /feed/dev/seed: 리셋(기본 시나리오 다시 적재), JSON 내보내기·가져오기, 지금 데이터 수 */
 export function SeedView() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const status = useFeedStatus();
   const reset = useResetFeed();
   const importSeed = useImportSeed();
@@ -117,14 +52,20 @@ export function SeedView() {
   const busy = reset.isPending || importSeed.isPending || exporting;
 
   const onReset = async () => {
-    const ok = await showConfirm(text.resetConfirm, {
-      confirmLabel: text.reset,
-    });
+    const ok = await showConfirm(
+      t`피드 데이터를 모두 지우고 기본 시나리오를 다시 적재할까요?`,
+      {
+        confirmLabel: t({ message: "리셋", context: "reset feed data" }),
+      },
+    );
     if (!ok) return;
     reset.mutate(undefined, {
       onSuccess: (s) =>
         setResult({ kind: "reset", users: s.users, posts: s.posts }),
-      onError: (err) => showAlert(text.resetFailed(err.message)),
+      onError: (err) => {
+        const error = err.message;
+        showAlert(t`리셋하지 못했습니다: ${error}`);
+      },
     });
   };
 
@@ -139,7 +80,8 @@ export function SeedView() {
         `feed-seed-${stamp()}.json`,
       );
     } catch (err) {
-      showAlert(text.exportFailed(errorText(err)));
+      const error = errorText(err);
+      showAlert(t`내보내지 못했습니다: ${error}`);
     } finally {
       setExporting(false);
     }
@@ -150,48 +92,85 @@ export function SeedView() {
     try {
       snapshot = JSON.parse(await file.text());
     } catch (err) {
-      showAlert(text.parseFailed(errorText(err)));
+      const error = errorText(err);
+      showAlert(t`JSON을 읽지 못했습니다: ${error}`);
       return;
     }
     if (!isSnapshot(snapshot)) {
-      showAlert(text.notSnapshot);
+      showAlert(t`피드 스냅숏 형식(schemaVersion, tables)이 아닙니다.`);
       return;
     }
-    const ok = await showConfirm(text.importConfirm(file.name), {
-      confirmLabel: text.import,
-    });
+    const fileName = file.name;
+    const ok = await showConfirm(
+      t`지금 피드 데이터를 지우고 ''${fileName}''으로 채울까요?`,
+      {
+        confirmLabel: t({ message: "가져오기", context: "import seed JSON" }),
+      },
+    );
     if (!ok) return;
     importSeed.mutate(snapshot, {
       onSuccess: (r) => setResult({ kind: "import", rows: r.rows }),
-      onError: (err) => showAlert(text.importFailed(err.message)),
+      onError: (err) => {
+        const error = err.message;
+        showAlert(t`가져오지 못했습니다: ${error}`);
+      },
     });
   };
 
   return (
     <div className={p.root()}>
-      <h1 className={p.title()}>{text.title}</h1>
-      <p className={p.lead()}>{text.lead}</p>
+      <h1 className={p.title()}>
+        <Trans context="dev seed page title">시드</Trans>
+      </h1>
+      <p className={p.lead()}>
+        <Trans>
+          프로토타입 데이터를 처음 상태로 되돌리거나, JSON으로 저장해 두고 다시
+          채웁니다.
+        </Trans>
+      </p>
 
       <section className={p.section()}>
-        <h2 className={p.sectionTitle()}>{text.current}</h2>
+        <h2 className={p.sectionTitle()}>
+          <Trans>지금 데이터</Trans>
+        </h2>
         {status.isPending ? (
-          <LoadingText>{text.loading}</LoadingText>
+          <LoadingText>
+            <Trans>불러오는 중</Trans>
+          </LoadingText>
         ) : status.isError ? (
           <p role="alert" className="text-danger">
-            {text.statusFailed(status.error.message)}
+            <Trans>상태를 불러오지 못했습니다: {status.error.message}</Trans>
           </p>
         ) : (
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 tabular-nums">
-            <dt className="text-fg-muted">{text.users}</dt>
-            <dd>{text.usersCount(status.data.users)}</dd>
-            <dt className="text-fg-muted">{text.posts}</dt>
-            <dd>{text.postsCount(status.data.posts)}</dd>
+            <dt className="text-fg-muted">
+              <Trans>사용자</Trans>
+            </dt>
+            <dd>
+              <Plural
+                value={status.data.users}
+                other="#명"
+                context="user count"
+              />
+            </dd>
+            <dt className="text-fg-muted">
+              <Trans>게시물</Trans>
+            </dt>
+            <dd>
+              <Plural
+                value={status.data.posts}
+                other="#개"
+                context="post count"
+              />
+            </dd>
           </dl>
         )}
       </section>
 
       <section className={p.section()} aria-busy={busy}>
-        <h2 className={p.sectionTitle()}>{text.manage}</h2>
+        <h2 className={p.sectionTitle()}>
+          <Trans>관리</Trans>
+        </h2>
         <div className={p.row()}>
           <button
             type="button"
@@ -200,7 +179,7 @@ export function SeedView() {
             onClick={onReset}
           >
             <RotateCcw size={14} aria-hidden="true" />
-            {text.reset}
+            <Trans context="reset feed data">리셋</Trans>
           </button>
           <button
             type="button"
@@ -209,7 +188,7 @@ export function SeedView() {
             onClick={onExport}
           >
             <Download size={14} aria-hidden="true" />
-            {text.exportJson}
+            <Trans>JSON 내보내기</Trans>
           </button>
           <button
             type="button"
@@ -218,28 +197,43 @@ export function SeedView() {
             onClick={() => fileRef.current?.click()}
           >
             <Upload size={14} aria-hidden="true" />
-            {text.importJson}
+            <Trans>JSON 가져오기</Trans>
           </button>
           <input
             ref={fileRef}
             type="file"
             accept="application/json,.json"
             className="hidden"
-            aria-label={text.importFile}
+            aria-label={t`가져올 JSON 파일`}
             onChange={(e) => {
               const file = e.currentTarget.files?.[0];
               e.currentTarget.value = "";
               if (file) void onImport(file);
             }}
           />
-          {busy && <LoadingText>{text.working}</LoadingText>}
+          {busy && (
+            <LoadingText>
+              <Trans>처리하는 중</Trans>
+            </LoadingText>
+          )}
         </div>
-        <p className="text-xs text-fg-muted">{text.resetHint}</p>
+        <p className="text-xs text-fg-muted">
+          <Trans>
+            리셋은 기본 시나리오(사용자 8명, 그룹 2개, 게시물 60개, 4주치
+            이벤트)를 다시 적재합니다.
+          </Trans>
+        </p>
         {result && (
           <output className="text-fg-secondary">
-            {result.kind === "reset"
-              ? text.resetDone(result.users, result.posts)
-              : text.importDone(result.rows)}
+            {result.kind === "reset" ? (
+              <Trans>
+                리셋했습니다: 사용자 {result.users}명, 게시물 {result.posts}개
+              </Trans>
+            ) : (
+              <Trans>
+                가져왔습니다: <Plural value={result.rows} other="#행" />
+              </Trans>
+            )}
           </output>
         )}
       </section>

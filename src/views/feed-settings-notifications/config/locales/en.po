@@ -1,0 +1,107 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. 체크박스 이름. kind는 알림 이벤트 이름, channel은 채널 이름
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "{kind} {channel}"
+msgstr "{kind}: {channel}"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "구독한 게시물에 댓글이 달렸을 때"
+msgstr "When a post I follow gets a comment"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "구독한 게시물의 상태가 바뀌었을 때"
+msgstr "When a post I follow changes status"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "기본값으로"
+msgstr "Reset"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "나를 담당자로 정했을 때"
+msgstr "When I'm made the assignee"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "나를 막던 게시물이 닫혀 차단이 풀렸을 때"
+msgstr "When a post blocking me closes and unblocks it"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "내 게시물이 반려되었을 때"
+msgstr "When my post is rejected"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "내 게시물이 승인되었을 때"
+msgstr "When my post is approved"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "내가 승인할 게시물에 완료 요청이 왔을 때"
+msgstr "When a post I approve is submitted for review"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "담당 게시물의 기한이 내일이거나 오늘일 때"
+msgstr "When a post I own is due today or tomorrow"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "담당 게시물의 기한이 지났을 때"
+msgstr "When a post I own is past due"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "댓글·설명에서 나를 @멘션했을 때"
+msgstr "When I'm @mentioned in a comment or description"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "되돌리기"
+msgstr "Revert"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "보류한 게시물이 재개일에 다시 열렸을 때"
+msgstr "When a held post reopens on its resume date"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "설정을 불러오는 중"
+msgstr "Loading settings"
+
+#. placeholder {0}: settings.error.message
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "설정을 불러오지 못했습니다 ({0})"
+msgstr "Couldn't load settings ({0})"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "설정을 저장하지 못했습니다: {error}"
+msgstr "Couldn't save settings: {error}"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "알림 설정"
+msgstr "Notification settings"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "이벤트"
+msgstr "Event"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "이벤트마다 받을 채널을 고릅니다. 슬랙·이메일은 실제로 보내지 않고 발송 로그에 남습니다. 내가 한 일은 알리지 않습니다."
+msgstr "Choose which channels to use for each event. Slack and email aren't actually sent; they're recorded in the delivery log. You're never notified about your own actions."
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "이벤트별 알림 채널"
+msgstr "Notification channels by event"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgctxt "save notification settings"
+msgid "저장"
+msgstr "Save"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "저장하지 않은 변경이 있습니다"
+msgstr "You have unsaved changes"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "하위 이슈가 모두 해결되어 검토할 차례일 때"
+msgstr "When all sub-issues are resolved and it's ready to review"

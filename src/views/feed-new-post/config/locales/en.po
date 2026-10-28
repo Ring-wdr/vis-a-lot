@@ -1,0 +1,258 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. 필드 이름 둘을 잇는다
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{a}·{b}"
+msgstr "{a} and {b}"
+
+#. 필드 이름 셋을 잇는다
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{a}·{b}·{c}"
+msgstr "{a}, {b} and {c}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{chartTitle} 차트"
+msgstr "{chartTitle} chart"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{shareId}: {reason}. 공유가 지워졌거나 다른 브라우저에서 만든 공유일 수 있습니다. 차트 없이 게시물을 쓸 수 있습니다."
+msgstr "{shareId}: {reason}. The share may have been deleted or made in another browser. You can still write the post without a chart."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "AI 추천"
+msgstr "AI suggest"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "AI 추천에 실패했습니다: {error}"
+msgstr "AI suggestion failed: {error}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "one field filled"
+msgid "AI가 {list}{josa, select, none {를} other {을}} 채웠습니다. 바꿔도 됩니다."
+msgstr "AI filled in {list}. Feel free to change it."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "several fields filled"
+msgid "AI가 {list}{josa, select, none {를} other {을}} 채웠습니다. 바꿔도 됩니다."
+msgstr "AI filled in {list}. Feel free to change them."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "AI가 추천할 값을 찾지 못했습니다."
+msgstr "AI couldn't find anything to suggest."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "https://… 또는 data:image/…"
+msgstr "https://… or data:image/…"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "vis-a-lot 공유에서 가져옴"
+msgstr "Imported from vis-a-lot share"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "vis-a-lot 차트"
+msgstr "vis-a-lot chart"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "vis-a-lot 차트 공유를 불러오는 중"
+msgstr "Loading vis-a-lot chart share"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "게시물 만들기"
+msgstr "Create post"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "게시물 유형"
+msgstr "Post type"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "field name inside the AI suggestion sentence"
+msgid "게시물 유형"
+msgstr "post type"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "group select label"
+msgid "그룹"
+msgstr "Group"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "그룹 없음"
+msgstr "No groups"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "그룹을 골라 주세요."
+msgstr "Please choose a group."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "기한"
+msgstr "Due date"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "담당자"
+msgstr "Assignee"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "field name inside the AI suggestion sentence"
+msgid "담당자"
+msgstr "assignee"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "동영상 주소"
+msgstr "Video URL"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 {n} 빼기"
+msgstr "Remove link {n}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 {n} 이름"
+msgstr "Link {n} name"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 {n} 주소"
+msgstr "Link {n} URL"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 더하기"
+msgstr "Add link"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 첨부"
+msgstr "Links"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "만들지 못했습니다: {error}"
+msgstr "Couldn't create: {error}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "loading groups placeholder"
+msgid "불러오는 중"
+msgstr "Loading"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "비어 있으면 작성자(나)가 요청자 역할을 합니다."
+msgstr "If empty, you (the author) act as the requester."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "상위 이슈"
+msgstr "Parent issue"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "상위 이슈 (선택)"
+msgstr "Parent issue (optional)"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "상위 이슈 빼기"
+msgstr "Remove parent issue"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "새 게시물"
+msgstr "New post"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "설명"
+msgstr "Description"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "썸네일로도 씁니다"
+msgstr "Also used as the thumbnail"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "code language field label"
+msgid "언어"
+msgstr "Language"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "없는 공유"
+msgstr "share not found"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "no stakeholders placeholder"
+msgid "없음"
+msgstr "None"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "요청자"
+msgstr "Requester"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "우선순위"
+msgstr "Priority"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "field name inside the AI suggestion sentence"
+msgid "우선순위"
+msgstr "priority"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "link name placeholder"
+msgid "이름"
+msgstr "Name"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "이미지 주소"
+msgstr "Image URL"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "이해관계자"
+msgstr "Stakeholders"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목 (필수)"
+msgstr "Title (required)"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목·설명으로 게시물 유형·우선순위·담당자를 추천합니다"
+msgstr "Suggests post type, priority and assignee from the title and description"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목을 먼저 적어 주세요."
+msgstr "Please enter a title first."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목을 적어 주세요."
+msgstr "Please enter a title."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "차트 게시물은 vis-a-lot의 탭 도구 줄이나 공유 페이지에서 \"피드에 올리기\"로 만들면 차트 이미지와 링크가 함께 들어옵니다."
+msgstr "To make a chart post, use \"Post to feed\" from a vis-a-lot tab toolbar or share page, and the chart image and link come along."
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "차트 공유를 가져오지 못했습니다"
+msgstr "Couldn't import the chart share"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "체크리스트"
+msgstr "Checklist"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "cancel creating a post"
+msgid "취소"
+msgstr "Cancel"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "code post field label"
+msgid "코드"
+msgstr "Code"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "태그"
+msgstr "Tags"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "팀"
+msgstr "Team"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "한 줄에 항목 하나"
+msgstr "One item per line"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "형식"
+msgstr "Format"

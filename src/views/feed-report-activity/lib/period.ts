@@ -1,6 +1,9 @@
 // 활동 보고 기간. 날짜는 로컬 'YYYY-MM-DD'이고, 한 주는 월요일에 시작한다.
 
-import { defineMessages, t } from "@/shared/lib/i18n";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, t } from "@lingui/core/macro";
+import { linguiFor } from "@/shared/lib/i18n";
+import "../config/messages";
 
 export const PERIOD_PRESETS = [
   "this-week",
@@ -11,55 +14,44 @@ export const PERIOD_PRESETS = [
 ] as const;
 export type PeriodPreset = (typeof PERIOD_PRESETS)[number];
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+const PRESET_LABELS: Record<PeriodPreset, MessageDescriptor> = {
+  "this-week": msg`이번 주`,
+  "last-week": msg`지난주`,
+  "7d": msg`최근 7일`,
+  month: msg`이번 달`,
+  custom: msg`직접 선택`,
+};
+
+/** 요일 짧은 이름 (일요일부터). 한 글자라 다른 뜻과 갈리지 않게 context를 붙인다 */
+const WEEKDAYS: MessageDescriptor[] = [
+  msg({ message: "일", context: "short weekday: Sunday" }),
+  msg({ message: "월", context: "short weekday: Monday" }),
+  msg({ message: "화", context: "short weekday: Tuesday" }),
+  msg({ message: "수", context: "short weekday: Wednesday" }),
+  msg({ message: "목", context: "short weekday: Thursday" }),
+  msg({ message: "금", context: "short weekday: Friday" }),
+  msg({ message: "토", context: "short weekday: Saturday" }),
 ];
 
-const messages = defineMessages({
-  ko: {
-    preset: {
-      "this-week": "이번 주",
-      "last-week": "지난주",
-      "7d": "최근 7일",
-      month: "이번 달",
-      custom: "직접 선택",
-    } as Record<PeriodPreset, string>,
-    weekdays: ["일", "월", "화", "수", "목", "금", "토"],
-    dayHeading: (month: number, date: number, weekday: string) =>
-      `${month}월 ${date}일 (${weekday})`,
-    shortDay: (month: number, date: number, weekday: string) =>
-      `${month}/${date}(${weekday})`,
-  },
-  en: {
-    preset: {
-      "this-week": "This week",
-      "last-week": "Last week",
-      "7d": "Last 7 days",
-      month: "This month",
-      custom: "Custom",
-    },
-    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    dayHeading: (month: number, date: number, weekday: string) =>
-      `${weekday}, ${MONTHS[month - 1]} ${date}`,
-    shortDay: (month: number, date: number, weekday: string) =>
-      `${month}/${date} (${weekday})`,
-  },
-});
+/** 날짜 머리의 달 이름 (1월부터) */
+const MONTHS: MessageDescriptor[] = [
+  msg({ message: "1월", context: "month in day heading" }),
+  msg({ message: "2월", context: "month in day heading" }),
+  msg({ message: "3월", context: "month in day heading" }),
+  msg({ message: "4월", context: "month in day heading" }),
+  msg({ message: "5월", context: "month in day heading" }),
+  msg({ message: "6월", context: "month in day heading" }),
+  msg({ message: "7월", context: "month in day heading" }),
+  msg({ message: "8월", context: "month in day heading" }),
+  msg({ message: "9월", context: "month in day heading" }),
+  msg({ message: "10월", context: "month in day heading" }),
+  msg({ message: "11월", context: "month in day heading" }),
+  msg({ message: "12월", context: "month in day heading" }),
+];
 
 /** 기간 프리셋의 화면 이름 (지금 언어) */
 export function periodLabel(preset: PeriodPreset) {
-  return t(messages).preset[preset];
+  return linguiFor()._(PRESET_LABELS[preset]);
 }
 
 export const isPreset = (v: string | null): v is PeriodPreset =>
@@ -108,22 +100,25 @@ export function presetRange(preset: PeriodPreset, today: string) {
 
 /** '2026-10-22' → '10월 22일 (목)' */
 export function dayHeading(day: string) {
-  const text = t(messages);
+  const i18n = linguiFor();
   const d = toDate(day);
-  return text.dayHeading(
-    d.getMonth() + 1,
-    d.getDate(),
-    text.weekdays[d.getDay()],
-  );
+  const month = i18n._(MONTHS[d.getMonth()]);
+  const date = d.getDate();
+  const weekday = i18n._(WEEKDAYS[d.getDay()]);
+  return t({
+    message: `${month} ${date}일 (${weekday})`,
+    comment: "날짜 머리. month는 달 이름(10월, Oct), weekday는 요일 짧은 이름",
+  });
 }
 
 /** '2026-10-22' → '10/22(목)' (기간 표시용) */
 export function shortDay(day: string) {
-  const text = t(messages);
   const d = toDate(day);
-  return text.shortDay(
-    d.getMonth() + 1,
-    d.getDate(),
-    text.weekdays[d.getDay()],
-  );
+  const month = d.getMonth() + 1;
+  const date = d.getDate();
+  const weekday = linguiFor()._(WEEKDAYS[d.getDay()]);
+  return t({
+    message: `${month}/${date}(${weekday})`,
+    comment: "기간 표시의 짧은 날짜. month는 달 숫자, weekday는 요일 짧은 이름",
+  });
 }

@@ -1,0 +1,378 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "‘{name}’ 템플릿을 지울까요?"
+msgstr "Delete the ‘{name}’ template?"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "‘{name}’를 지금 조건으로 덮어쓸까요?"
+msgstr "Overwrite ‘{name}’ with the current filters?"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "(모두)"
+msgstr "(all)"
+
+#. placeholder {0}: day.entries.length
+#: src/views/feed-report-activity/ui/ActivityTimeline.tsx
+msgctxt "activity events in a day"
+msgid "{0, plural, other {#건}}"
+msgstr "{0, plural, one {# event} other {# events}}"
+
+#. placeholder {0}: data.days.length
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgctxt "days in report period"
+msgid "{0, plural, other {#일}}"
+msgstr "{0, plural, one {# day} other {# days}}"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "{groupName} 활동 보고"
+msgstr "{groupName} activity report"
+
+#. 날짜 머리. month는 달 이름(10월, Oct), weekday는 요일 짧은 이름
+#: src/views/feed-report-activity/lib/period.ts
+msgid "{month} {date}일 ({weekday})"
+msgstr "{weekday}, {month} {date}"
+
+#. 기간 표시의 짧은 날짜. month는 달 숫자, weekday는 요일 짧은 이름
+#: src/views/feed-report-activity/lib/period.ts
+msgid "{month}/{date}({weekday})"
+msgstr "{month}/{date} ({weekday})"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "{name} 사본"
+msgstr "{name} copy"
+
+#. 활동 로그 한 줄. actor는 사람 이름, sentence는 활동 문장
+#: src/views/feed-report-activity/ui/ActivityTimeline.tsx
+msgid "<0>{actor}</0>님이 {sentence}"
+msgstr "<0>{actor}</0> {sentence}"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "10월"
+msgstr "Oct"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "11월"
+msgstr "Nov"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "12월"
+msgstr "Dec"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "1월"
+msgstr "Jan"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "2월"
+msgstr "Feb"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "3월"
+msgstr "Mar"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "4월"
+msgstr "Apr"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "5월"
+msgstr "May"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "6월"
+msgstr "Jun"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "7월"
+msgstr "Jul"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "8월"
+msgstr "Aug"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "month in day heading"
+msgid "9월"
+msgstr "Sep"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "Chrome 내장 AI"
+msgstr "Chrome built-in AI"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "게시물 유형"
+msgstr "Post type"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "그 밖의 활동"
+msgstr "Other activity"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Friday"
+msgid "금"
+msgstr "Fri"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "기간"
+msgstr "Period"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "기간을 넓히거나 팀·담당자·유형 조건을 지워 보세요."
+msgstr "Try a wider period or clear the team, assignee or type filters."
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgctxt "date range end"
+msgid "끝"
+msgstr "To"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "날짜별 활동"
+msgstr "Activity by day"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "누군가"
+msgstr "Someone"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "다 썼습니다"
+msgstr "Done"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "다시 만들기"
+msgstr "Regenerate"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "다시 적용"
+msgstr "Reapply"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "담당자"
+msgstr "Assignee"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgctxt "overwrite report template"
+msgid "덮어쓰기"
+msgstr "Overwrite"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "멈추기"
+msgstr "Stop"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "멈췄습니다"
+msgstr "Stopped"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgctxt "clear post type filter"
+msgid "모두"
+msgstr "All"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "모든 사람"
+msgstr "Everyone"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "모든 팀"
+msgstr "All teams"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Thursday"
+msgid "목"
+msgstr "Thu"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "보고 초안"
+msgstr "Report draft"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "복사"
+msgstr "Copy"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "복사했습니다"
+msgstr "Copied"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "불러오는 중"
+msgstr "Loading"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "사람별 활동"
+msgstr "Activity by person"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "새 템플릿 이름"
+msgstr "New template name"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "새 템플릿으로 저장"
+msgstr "Save as template"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "새로 받는 중…"
+msgstr "Refreshing…"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "생성"
+msgstr "Created"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Wednesday"
+msgid "수"
+msgstr "Wed"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "승인"
+msgstr "Approved"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "승인(해결)"
+msgstr "Approved (resolved)"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgctxt "date range start"
+msgid "시작"
+msgstr "From"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "쓰는 중…"
+msgstr "Writing…"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Monday"
+msgid "월"
+msgstr "Mon"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "이 기간에 활동이 없습니다"
+msgstr "No activity in this period"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgid "이번 달"
+msgstr "This month"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgid "이번 주"
+msgstr "This week"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Sunday"
+msgid "일"
+msgstr "Sun"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgctxt "save report template"
+msgid "저장"
+msgstr "Save"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgid "지난주"
+msgstr "Last week"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgctxt "delete report template"
+msgid "지우기"
+msgstr "Delete"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgid "직접 선택"
+msgstr "Custom"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "초안 내용 (고칠 수 있습니다)"
+msgstr "Draft content (editable)"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "초안 닫기"
+msgstr "Close draft"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "초안 만들기"
+msgstr "Write draft"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "초안을 만들지 못했습니다"
+msgstr "Couldn't write the draft"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "초안을 쓰는 AI 어댑터"
+msgstr "AI adapter writing the draft"
+
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "초안을 쓰는 중입니다"
+msgstr "Writing the draft"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgid "최근 7일"
+msgstr "Last 7 days"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "템플릿"
+msgstr "Template"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "템플릿 고르기"
+msgstr "Choose template"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "템플릿을 불러오지 못했습니다"
+msgstr "Couldn't load templates"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "템플릿을 저장하지 못했습니다: {err}"
+msgstr "Couldn't save the template: {err}"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "템플릿을 지우지 못했습니다: {err}"
+msgstr "Couldn't delete the template: {err}"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Saturday"
+msgid "토"
+msgstr "Sat"
+
+#: src/views/feed-report-activity/ui/ActivityControls.tsx
+msgid "팀"
+msgstr "Team"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "해결"
+msgstr "Resolved"
+
+#. placeholder {0}: u.completed
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "해결 {0}"
+msgstr "{0} resolved"
+
+#: src/views/feed-report-activity/lib/period.ts
+msgctxt "short weekday: Tuesday"
+msgid "화"
+msgstr "Tue"
+
+#: src/views/feed-report-activity/ui/ActivityReportView.tsx
+msgid "활동"
+msgstr "Activity"
+
+#. 테스트용 가짜 AI 어댑터 이름
+#: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgid "흉내"
+msgstr "Mock"
