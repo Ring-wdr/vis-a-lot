@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { type ReactNode, type SyntheticEvent, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { type FieldPath, useFormContext } from "react-hook-form";
@@ -9,9 +10,9 @@ import {
   supportsOption,
 } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button, linkButton } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+import "../config/messages";
 import { getPath, hasSection, sectionPaths } from "../model/option-fields";
 import {
   type OptionsBase,
@@ -23,29 +24,6 @@ import { type MenuTarget, resolveTarget, SectionMenu } from "./SectionMenu";
 import { settingsDialog } from "./settings-dialog-styles";
 
 const sd = settingsDialog();
-
-const messages = defineMessages({
-  ko: {
-    title: (label: string) => `${label} 속성`,
-    menu: "속성 메뉴",
-    followSection: "이 구역은 공통 속성 따르기",
-    note: "확인을 누르면 이 item만 다시 그립니다. 전체 설정에서 바꾼 공통 속성으로 다시 그리면 item별 속성은 모두 공통 속성으로 바뀝니다.",
-    followAll: "모두 공통 속성 따르기",
-    cancel: "취소",
-    ok: "확인",
-    busy: "다시 그리는 중에는 바꿀 수 없습니다",
-  },
-  en: {
-    title: (label: string) => `${label} properties`,
-    menu: "Properties menu",
-    followSection: "Use common properties for this section",
-    note: "OK redraws only this item. Redrawing with common properties changed in Settings replaces all per-item properties.",
-    followAll: "Use common properties for all",
-    cancel: "Cancel",
-    ok: "OK",
-    busy: "Can't change while redrawing",
-  },
-});
 
 type ItemOptionsProps = OptionsBase & {
   itemKey: string;
@@ -99,7 +77,7 @@ function ItemOptionsBody({
   onConfirm,
   onCancel,
 }: ItemOptionsProps) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const titleId = useId();
   const chartType = useWorkspace((s) => s.current?.spec.chartType);
   const readOnly = useWorkspace((s) => s.readOnly);
@@ -134,11 +112,11 @@ function ItemOptionsBody({
       }}
     >
       <h2 id={titleId} className={sd.title()}>
-        {text.title(label)}
+        <Trans>{label} 속성</Trans>
       </h2>
       <div className={sd.layout()}>
         <SectionMenu
-          label={text.menu}
+          label={t`속성 메뉴`}
           sections={sections}
           active={active}
           onSelect={setMenu}
@@ -153,13 +131,18 @@ function ItemOptionsBody({
               original={original}
               base={base}
               disabled={readOnly}
-              resetLabel={text.followSection}
+              resetLabel={t`이 구역은 공통 속성 따르기`}
               showFields={supportsOption(chartType, active.section)}
             >
               {extras[active.section]}
             </OptionSectionForm>
           )}
-          <p className="mt-2.5 text-xs text-fg-muted">{text.note}</p>
+          <p className="mt-2.5 text-xs text-fg-muted">
+            <Trans>
+              확인을 누르면 이 item만 다시 그립니다. 전체 설정에서 바꾼 공통
+              속성으로 다시 그리면 item별 속성은 모두 공통 속성으로 바뀝니다.
+            </Trans>
+          </p>
         </div>
       </div>
       <div className={dialogActions}>
@@ -169,19 +152,19 @@ function ItemOptionsBody({
             className={linkButton({ class: "mr-auto self-center" })}
             onClick={followAll}
           >
-            {text.followAll}
+            <Trans>모두 공통 속성 따르기</Trans>
           </button>
         )}
         <button type="button" className={button()} onClick={onCancel}>
-          {text.cancel}
+          <Trans context="dialog button">취소</Trans>
         </button>
         <button
           type="submit"
           className={button({ variant: "primary" })}
           disabled={!formState.isDirty || busy || readOnly}
-          title={busy ? text.busy : undefined}
+          title={busy ? t`다시 그리는 중에는 바꿀 수 없습니다` : undefined}
         >
-          {text.ok}
+          <Trans context="dialog button">확인</Trans>
         </button>
       </div>
     </form>

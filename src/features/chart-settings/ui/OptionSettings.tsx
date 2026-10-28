@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   Calculator,
   Crosshair,
@@ -24,22 +25,11 @@ import {
   useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import { OptionSectionForm } from "./OptionSectionForm";
 
 const s = settingsStyles();
-
-const messages = defineMessages({
-  ko: {
-    reset: "기본값으로 되돌리기",
-    note: "확인을 누르면 다음 draw에 적용됩니다. 그리면 item별로 정한 속성은 모두 공통 속성으로 바뀝니다.",
-  },
-  en: {
-    reset: "Reset to defaults",
-    note: "Applies on the next draw after OK. Drawing replaces all per-item properties with the common ones.",
-  },
-});
 
 export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
   title: Type,
@@ -80,7 +70,7 @@ export function CommonOptionSettings({
   readOnly: boolean;
   children?: ReactNode;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const chartType = useWorkspace((w) => w.draft.chartType);
   const defaults = useDefaultOptions(chartType);
   return (
@@ -91,12 +81,17 @@ export function CommonOptionSettings({
         original={original}
         base={defaults}
         disabled={readOnly}
-        resetLabel={text.reset}
+        resetLabel={t`기본값으로 되돌리기`}
         showFields={supported}
       >
         {children}
       </OptionSectionForm>
-      <p className="text-xs text-fg-muted">{text.note}</p>
+      <p className="text-xs text-fg-muted">
+        <Trans>
+          확인을 누르면 다음 draw에 적용됩니다. 그리면 item별로 정한 속성은 모두
+          공통 속성으로 바뀝니다.
+        </Trans>
+      </p>
     </div>
   );
 }

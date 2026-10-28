@@ -1,27 +1,11 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { ArchiveRestore, RotateCcw, Settings, ZoomOut } from "lucide-react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { itemButton } from "@/shared/ui/button";
-
-const messages = defineMessages({
-  ko: {
-    toolbar: (item: string) => `${item} 도구`,
-    zoomOut: "축소",
-    resetZoom: "확대 초기화",
-    undoDeletion: "지운 점 되돌리기",
-    settings: "item 속성",
-  },
-  en: {
-    toolbar: (item: string) => `${item} tools`,
-    zoomOut: "Zoom out",
-    resetZoom: "Reset zoom",
-    undoDeletion: "Restore erased points",
-    settings: "item properties",
-  },
-});
+import "../config/messages";
 
 const ZOOM_OUT_RATIO = 2;
 
@@ -41,21 +25,22 @@ export function ItemToolbar({
   onOpenSettings?: () => void;
   onAction: (action: ItemAction) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
+  const label = item.label;
+  const zoomOut = t({ message: "축소", context: "zoom out" });
+  const resetZoom = t`확대 초기화`;
+  const undoDeletion = t`지운 점 되돌리기`;
+  const settings = t`item 속성`;
   const drawn = item.status === "success";
   const disabled = busy || !drawn;
 
   return (
-    <div
-      className="flex gap-0.5"
-      role="toolbar"
-      aria-label={text.toolbar(item.label)}
-    >
+    <div className="flex gap-0.5" role="toolbar" aria-label={t`${label} 도구`}>
       <button
         type="button"
         className={itemButton()}
-        title={text.zoomOut}
-        aria-label={text.zoomOut}
+        title={zoomOut}
+        aria-label={zoomOut}
         disabled={disabled || !item.zoomed}
         onClick={() =>
           onAction({
@@ -69,8 +54,8 @@ export function ItemToolbar({
       <button
         type="button"
         className={itemButton()}
-        title={text.resetZoom}
-        aria-label={text.resetZoom}
+        title={resetZoom}
+        aria-label={resetZoom}
         disabled={disabled || !item.zoomed}
         onClick={() => onAction({ type: "view", body: { type: "reset" } })}
       >
@@ -81,8 +66,8 @@ export function ItemToolbar({
         <button
           type="button"
           className={itemButton()}
-          title={text.undoDeletion}
-          aria-label={text.undoDeletion}
+          title={undoDeletion}
+          aria-label={undoDeletion}
           disabled={disabled}
           onClick={() => onAction({ type: "undoDeletion" })}
         >
@@ -93,8 +78,8 @@ export function ItemToolbar({
         <button
           type="button"
           className={itemButton()}
-          title={text.settings}
-          aria-label={text.settings}
+          title={settings}
+          aria-label={settings}
           aria-haspopup="dialog"
           disabled={busy}
           onClick={onOpenSettings}

@@ -1,5 +1,7 @@
 "use client";
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { type ReactNode, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -20,7 +22,6 @@ import type {
   ColumnName,
 } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
@@ -30,22 +31,7 @@ import {
   resolveTooltipOptions,
   tooltipBoxStyle,
 } from "./tooltip-options";
-
-const messages = defineMessages({
-  ko: {
-    deleted: "삭제된 데이터라 값을 읽을 수 없습니다",
-    failed: "값을 읽지 못했습니다",
-    changeColor: (alt: string, value: string) => `${alt} · ${value} 색 바꾸기`,
-    loading: "불러오는 중",
-  },
-  en: {
-    deleted: "The data was deleted, so values can't be read",
-    failed: "Couldn't read values",
-    changeColor: (alt: string, value: string) =>
-      `${alt} · change ${value} color`,
-    loading: "Loading",
-  },
-});
+import "../config/messages";
 
 /** x, y는 PNG 좌표, left·top은 레이어의 화면 위치 (툴팁을 portal로 띄울 때 쓴다) */
 type Cursor = { x: number; y: number; left: number; top: number };
@@ -85,7 +71,7 @@ export function ItemTooltip({
   columns: readonly ColumnName[];
 }) {
   // 툴팁 줄 문구(strategies의 t)도 지금 언어로 다시 그린다.
-  const copy = useT(messages);
+  const { t } = useLingui();
   const [hovered, setHovered] = useState(false);
   const [cursor, setCursor] = useState<Cursor>();
   const meta = useItemMeta(image.url, hovered);
@@ -124,8 +110,8 @@ export function ItemTooltip({
   const extra = useTooltipValues(chartId, itemKey, rowId, columns);
   const extraFailure =
     extra.error instanceof ApiRequestError && extra.error.status === 404
-      ? copy.deleted
-      : copy.failed;
+      ? t`삭제된 데이터라 값을 읽을 수 없습니다`
+      : t`값을 읽지 못했습니다`;
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     // 커서가 이미 올라가 있을 때 레이어가 새로 생겨도(크게 보기, 모드 전환) 받아 오도록 여기서도 켠다.
@@ -185,7 +171,7 @@ export function ItemTooltip({
                 height: entry.rect.height * sy,
               }}
               color={entry.color}
-              label={copy.changeColor(alt, entry.value)}
+              label={t`${alt} · ${ph({ value: entry.value })} 색 바꾸기`}
               onCommit={(color) => onLegendColor(entry.value, color)}
             />
           ))}
@@ -295,7 +281,9 @@ export function ItemTooltip({
         (meta.isPending || meta.isFetching) &&
         createPortal(
           <div className={tooltipBox} style={tooltipPosition}>
-            <LoadingText>{copy.loading}</LoadingText>
+            <LoadingText>
+              <Trans>불러오는 중</Trans>
+            </LoadingText>
           </div>,
           document.body,
         )}
