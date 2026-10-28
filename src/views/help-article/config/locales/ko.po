@@ -8,6 +8,11 @@ msgstr ""
 "Language: ko\n"
 
 #: src/views/help-article/ui/HelpArticleView.tsx
+#~ msgid "다음"
+#~ msgstr "다음"
+
+#: src/views/help-article/ui/HelpArticleView.tsx
+msgctxt "next help article"
 msgid "다음"
 msgstr "다음"
 
@@ -16,6 +21,11 @@ msgid "위치"
 msgstr "위치"
 
 #: src/views/help-article/ui/HelpArticleView.tsx
+#~ msgid "이전"
+#~ msgstr "이전"
+
+#: src/views/help-article/ui/HelpArticleView.tsx
+msgctxt "previous help article"
 msgid "이전"
 msgstr "이전"
 

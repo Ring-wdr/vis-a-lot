@@ -2,6 +2,7 @@
 
 // 피드 Tiptap 편집기·보기. 설명과 댓글이 같이 쓴다. @로 사람을 멘션하고, Ctrl/Cmd+Enter로 보낸다(onSubmit).
 
+import { useLingui } from "@lingui/react/macro";
 import {
   EditorContent,
   Extension,
@@ -11,31 +12,12 @@ import {
 } from "@tiptap/react";
 import { Bold, Code, Italic, List, ListOrdered } from "lucide-react";
 import { useUserMap } from "@/shared/api/feed/lookups";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { toolButton } from "@/shared/ui/button";
 import { mentionExtension, starterKit } from "./extensions";
 import { useMentionSuggestion } from "./mention-suggestion";
-
-const messages = defineMessages({
-  ko: {
-    bold: "굵게",
-    italic: "기울임",
-    bulletList: "글머리 목록",
-    orderedList: "번호 목록",
-    codeBlock: "코드 블록",
-    toolbar: (label: string) => `${label} 서식`,
-  },
-  en: {
-    bold: "Bold",
-    italic: "Italic",
-    bulletList: "Bulleted list",
-    orderedList: "Numbered list",
-    codeBlock: "Code block",
-    toolbar: (label: string) => `${label} formatting`,
-  },
-});
+import "@/shared/config/messages";
 
 /** 읽기 전용 문서. 멘션은 지금 이름의 @칩으로 그린다 */
 export function RichView({
@@ -90,7 +72,7 @@ export function RichEditor({
   toolbar?: boolean;
   size?: "md" | "sm";
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const users = useUserMap();
   // 편집기는 한 번만 만든다. 그 안에서 부르는 함수는 늘 지금 값을 읽는다.
   const nameOf = useCallbackRef((id: string) => users.get(id)?.name);
@@ -139,31 +121,31 @@ export function RichEditor({
   const tools = [
     {
       key: "bold",
-      label: text.bold,
+      label: t`굵게`,
       icon: Bold,
       run: () => editor?.chain().focus().toggleBold().run(),
     },
     {
       key: "italic",
-      label: text.italic,
+      label: t`기울임`,
       icon: Italic,
       run: () => editor?.chain().focus().toggleItalic().run(),
     },
     {
       key: "bulletList",
-      label: text.bulletList,
+      label: t`글머리 목록`,
       icon: List,
       run: () => editor?.chain().focus().toggleBulletList().run(),
     },
     {
       key: "orderedList",
-      label: text.orderedList,
+      label: t`번호 목록`,
       icon: ListOrdered,
       run: () => editor?.chain().focus().toggleOrderedList().run(),
     },
     {
       key: "codeBlock",
-      label: text.codeBlock,
+      label: t`코드 블록`,
       icon: Code,
       run: () => editor?.chain().focus().toggleCodeBlock().run(),
     },
@@ -174,21 +156,24 @@ export function RichEditor({
       {toolbar && (
         <div
           role="toolbar"
-          aria-label={text.toolbar(label)}
+          aria-label={t({
+            message: `${label} 서식`,
+            comment: "label은 편집기 이름 (설명, 댓글 등)",
+          })}
           className="flex gap-1 rounded-t-md border border-b-0 border-line bg-panel p-1"
         >
-          {tools.map((t) => (
+          {tools.map((tool) => (
             <button
-              key={t.key}
+              key={tool.key}
               type="button"
               className={cn(toolButton(), "h-6.5 w-7")}
-              aria-label={t.label}
-              title={t.label}
-              aria-pressed={active?.[t.key] ?? false}
+              aria-label={tool.label}
+              title={tool.label}
+              aria-pressed={active?.[tool.key] ?? false}
               disabled={!editor}
-              onClick={t.run}
+              onClick={tool.run}
             >
-              <t.icon size={14} aria-hidden="true" />
+              <tool.icon size={14} aria-hidden="true" />
             </button>
           ))}
         </div>

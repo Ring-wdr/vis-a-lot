@@ -39,7 +39,15 @@ function Neighbor({
       data-dir={dir}
     >
       <span className="text-xs text-fg-muted">
-        {next ? t(linguiFor(lang))`다음` : t(linguiFor(lang))`이전`}
+        {next
+          ? t(linguiFor(lang))({
+              message: "다음",
+              context: "next help article",
+            })
+          : t(linguiFor(lang))({
+              message: "이전",
+              context: "previous help article",
+            })}
       </span>
       <span className="flex items-center gap-1 text-sm font-semibold group-hover:text-accent">
         {!next && <ChevronLeft size={14} aria-hidden="true" />}

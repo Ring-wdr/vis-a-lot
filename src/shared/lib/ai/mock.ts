@@ -1,6 +1,7 @@
 // 흉내 AI 어댑터. 모델 없이 규칙과 템플릿으로 같은 입력에 늘 같은 출력을 낸다.
 
-import { defineMessages, t } from "@/shared/lib/i18n";
+import { plural, t } from "@lingui/core/macro";
+import "@/shared/config/messages";
 import type {
   ActivityData,
   AiAdapter,
@@ -9,40 +10,21 @@ import type {
   SummarizeInput,
 } from "./types";
 
-const messages = defineMessages({
-  ko: {
-    heading: (group: string, from: string, to: string) =>
-      `# ${group} 활동 보고 (${from} ~ ${to})`,
-    totals: (total: number, done: number) =>
-      `기간 동안 활동 ${total}건, 완료 ${done}건이 있었습니다.`,
-    actor: (name: string, items: string) => `- ${name}님: ${items}.`,
-    doneHeading: "## 완료한 일",
-    noneDone: "- 이번 기간에 완료한 일은 없습니다.",
-    assignee: (name: string | null) => (name ? `담당 ${name}` : "담당자 없음"),
-    lastComment: (comment: string) => `마지막 댓글: ${comment}`,
-    generated: (prompt: string) => `(흉내 응답) ${prompt}`,
-  },
-  en: {
-    heading: (group: string, from: string, to: string) =>
-      `# ${group} activity report (${from} – ${to})`,
-    totals: (total: number, done: number) =>
-      `${total} ${total === 1 ? "activity" : "activities"} and ${done} completed ${done === 1 ? "item" : "items"} in this period.`,
-    actor: (name: string, items: string) => `- ${name}: ${items}.`,
-    doneHeading: "## Completed",
-    noneDone: "- Nothing was completed in this period.",
-    assignee: (name: string | null) =>
-      name ? `assignee ${name}` : "no assignee",
-    lastComment: (comment: string) => `Last comment: ${comment}`,
-    generated: (prompt: string) => `(mock response) ${prompt}`,
-  },
-});
+const assigneeText = (name: string | null) =>
+  name
+    ? t({ message: `담당 ${name}`, comment: "name은 담당자 이름" })
+    : t`담당자 없음`;
 
 /** 보고 초안 문장들. 줄 하나가 스트리밍 조각 하나다. */
 export function draftLines(a: ActivityData): string[] {
-  const text = t(messages);
-  const lines = [text.heading(a.groupName, a.from, a.to), ""];
+  const { groupName: group, from, to } = a;
+  const lines = [t`# ${group} 활동 보고 (${from} ~ ${to})`, ""];
   const total = a.days.reduce((n, d) => n + d.entries.length, 0);
-  lines.push(text.totals(total, a.completed.length), "");
+  const done = a.completed.length;
+  lines.push(
+    t`기간 동안 활동 ${plural(total, { other: "#건" })}, 완료 ${plural(done, { other: "#건" })}이 있었습니다.`,
+    "",
+  );
 
   for (const day of a.days) {
     if (day.entries.length === 0) continue;
@@ -54,19 +36,26 @@ export function draftLines(a: ActivityData): string[] {
       list.push(e);
       byActor.set(e.actorName, list);
     }
-    for (const [actor, entries] of byActor) {
-      const items = entries.map((e) =>
-        `${e.key} '${e.title}' ${e.text}`.trim(),
+    for (const [name, entries] of byActor) {
+      const items = entries
+        .map((e) => `${e.key} '${e.title}' ${e.text}`.trim())
+        .join(", ");
+      lines.push(
+        t({
+          message: `- ${name}님: ${items}.`,
+          comment:
+            "name은 행위자 이름, items는 그 사람의 활동을 쉼표로 이은 목록",
+        }),
       );
-      lines.push(text.actor(actor, items.join(", ")));
     }
     lines.push("");
   }
 
-  lines.push(text.doneHeading);
-  if (a.completed.length === 0) lines.push(text.noneDone);
+  lines.push(t`## 완료한 일`);
+  if (a.completed.length === 0)
+    lines.push(t`- 이번 기간에 완료한 일은 없습니다.`);
   for (const c of a.completed)
-    lines.push(`- ${c.key} ${c.title} (${text.assignee(c.assigneeName)})`);
+    lines.push(`- ${c.key} ${c.title} (${assigneeText(c.assigneeName)})`);
   return lines;
 }
 
@@ -85,10 +74,10 @@ export function summarizeMock({
   lastComment,
 }: SummarizeInput) {
   const first = clip(firstParagraph(bodyText) || title, 200);
-  const comment = lastComment?.trim();
-  return comment
-    ? `${first} ${t(messages).lastComment(clip(comment, 120))}`
-    : first;
+  const trimmed = lastComment?.trim();
+  if (!trimmed) return first;
+  const comment = clip(trimmed, 120);
+  return `${first} ${t`마지막 댓글: ${comment}`}`;
 }
 
 /**
@@ -172,6 +161,8 @@ export function sampleFromSchema(schema: Record<string, unknown>): unknown {
   }
 }
 
+const mockResponse = (prompt: string) => t`(흉내 응답) ${prompt}`;
+
 export const mockAdapter: AiAdapter = {
   async *draftReport(activity, opts) {
     for (const line of draftLines(activity)) {
@@ -184,5 +175,5 @@ export const mockAdapter: AiAdapter = {
   generate: async (prompt, opts) =>
     opts?.schema
       ? JSON.stringify(sampleFromSchema(opts.schema))
-      : t(messages).generated(clip(prompt.trim(), 80)),
+      : mockResponse(clip(prompt.trim(), 80)),
 };

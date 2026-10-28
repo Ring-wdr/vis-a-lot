@@ -3,10 +3,11 @@
 // 로그인 세션. access token은 메모리에만 두고, refresh token은 새로고침해도 이어지도록 localStorage에 둔다.
 // (실서비스라면 refresh token은 httpOnly 쿠키가 맞다. 브라우저 안 mock 서버라 쿠키를 쓸 수 없다.)
 
+import { t } from "@lingui/core/macro";
 import createClient from "openapi-fetch";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
-import { defineMessages, t } from "@/shared/lib/i18n";
+import "@/shared/config/messages";
 import type { paths as AuthPaths } from "./generated/auth";
 import type { TokenResponse, User } from "./types";
 
@@ -59,17 +60,6 @@ function accept(tokens: TokenResponse) {
   });
 }
 
-const messages = defineMessages({
-  ko: {
-    loginFailed: "로그인하지 못했습니다.",
-    expired: "세션이 만료되었습니다. 다시 로그인해 주세요.",
-  },
-  en: {
-    loginFailed: "Could not sign in.",
-    expired: "Your session has expired. Please sign in again.",
-  },
-});
-
 function signOut(reason?: string) {
   writeRefreshToken(null);
   sessionStore.setState({ status: "anonymous", reason });
@@ -79,7 +69,7 @@ export async function login(username: string, password: string) {
   const { data, error } = await auth.POST("/login", {
     body: { username, password },
   });
-  if (!data) throw new Error(error?.error ?? t(messages).loginFailed);
+  if (!data) throw new Error(error?.error ?? t`로그인하지 못했습니다.`);
   accept(data);
 }
 
@@ -101,7 +91,7 @@ export function refreshSession() {
       .POST("/refresh", { body: { refreshToken } })
       .catch(() => ({ data: undefined, error: undefined }));
     if (!data) {
-      signOut(error?.error ?? t(messages).expired);
+      signOut(error?.error ?? t`세션이 만료되었습니다. 다시 로그인해 주세요.`);
       return false;
     }
     accept(data);
