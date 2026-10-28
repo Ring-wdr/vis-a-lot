@@ -1,5 +1,7 @@
 "use client";
 
+import { t as tGlobal } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import {
   Download,
@@ -20,10 +22,11 @@ import {
 } from "@/features/chart-actions/model/chart-download";
 import { useColumns } from "@/shared/api/queries";
 import { supports } from "@/shared/config/chart-kinds";
-import { defineMessages, intlLocale, t, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { toolButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { openDataTable, openSampleTable } from "./DataTableDialog";
 
 /** 누르면 바로 동작하는 도구 버튼. 진행 중이면 아이콘 대신 spinner를 보인다. */
@@ -59,41 +62,6 @@ function ActionButton({
   );
 }
 
-const messages = defineMessages({
-  ko: {
-    /** 고른 item을 쓰는 도구의 라벨 */
-    needsItem: (name: string) => `${name} (차트를 눌러 고른 뒤 쓸 수 있습니다)`,
-    /** 이 차트 종류에서 못 쓰는 도구의 안내 */
-    unsupported: (name: string, chartType: string) =>
-      `${name} (${chartType}에서는 쓸 수 없음)`,
-    noChart: "그린 차트가 없습니다.",
-    excelTruncated: (total: string, written: string) =>
-      `차트가 ${total}개라 앞에서부터 ${written}개만 넣었습니다.`,
-    toolbar: "차트 도구",
-    checkboxes: "체크박스 표시",
-    downloadChart: "차트 다운로드",
-    downloadAllExcel: "모든 차트 엑셀로 다운로드",
-    downloadData: "데이터 다운로드",
-    dataTable: "데이터 테이블",
-    sampleTable: "전체 데이터 테이블 (최대 30,000행 샘플)",
-  },
-  en: {
-    needsItem: (name: string) => `${name} (click a chart to select it first)`,
-    unsupported: (name: string, chartType: string) =>
-      `${name} (not available for ${chartType})`,
-    noChart: "No chart has been drawn.",
-    excelTruncated: (total: string, written: string) =>
-      `There are ${total} charts, so only the first ${written} were included.`,
-    toolbar: "Chart tools",
-    checkboxes: "Show checkboxes",
-    downloadChart: "Download chart",
-    downloadAllExcel: "Download all charts as Excel",
-    downloadData: "Download data",
-    dataTable: "Data table",
-    sampleTable: "Full data table (sample of up to 30,000 rows)",
-  },
-});
-
 /**
  * 모드 바 옆의 차트 도구: legend 체크박스 표시, 고른 차트 다운로드, 모든 차트 엑셀로 다운로드,
  * 고른 차트의 데이터 다운로드(CSV)·데이터 테이블(모든 컬럼), 전체 데이터 테이블(최대 30,000행 샘플).
@@ -102,7 +70,7 @@ const messages = defineMessages({
  * 체크박스 표시는 차트 종류가 지원할 때만 켠다(CHART_SUPPORT).
  */
 export function ChartActionBar() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const current = useWorkspace((s) => s.current);
   const selectedItem = useWorkspace((s) => s.selectedItem);
   const checkboxes = useWorkspace((s) => s.showLegendCheckboxes);
@@ -110,7 +78,7 @@ export function ChartActionBar() {
   const notify = useWorkspace((s) => s.notify);
   const drawn = current !== undefined;
   const chartType = current?.spec.chartType;
-  const typeLabel = current ? chartKindLabel(current.spec) : "";
+  const chartKind = current ? chartKindLabel(current.spec) : "";
   const checkboxOk = !chartType || supports(current?.spec, "checkbox");
   const columns = useColumns(current?.spec.dataset ?? "");
 
@@ -128,7 +96,7 @@ export function ChartActionBar() {
   });
   const excel = useMutation({
     mutationFn: () => {
-      if (!current) throw new Error(t(messages).noChart);
+      if (!current) throw new Error(tGlobal`그린 차트가 없습니다.`);
       return downloadAllChartsExcel(
         current.chartId,
         current.jobId,
@@ -136,13 +104,16 @@ export function ChartActionBar() {
       );
     },
     onSuccess: ({ written, total }) => {
-      if (written < total)
+      if (written < total) {
+        const totalText = total.toLocaleString(intlLocale());
+        const writtenText = written.toLocaleString(intlLocale());
         showAlert(
-          t(messages).excelTruncated(
-            total.toLocaleString(intlLocale()),
-            written.toLocaleString(intlLocale()),
-          ),
+          tGlobal({
+            message: `차트가 ${totalText}개라 앞에서부터 ${writtenText}개만 넣었습니다.`,
+            comment: "totalText, writtenText: 자릿수 구분을 넣은 숫자",
+          }),
         );
+      }
     },
     onError: (err) => notify(err.message),
   });
@@ -171,19 +142,30 @@ export function ChartActionBar() {
       ? { chartId: current.chartId, jobId: current.jobId, key: selectedItem }
       : undefined;
   /** 고른 item을 쓰는 도구의 라벨 */
-  const itemLabel = (name: string) => (target ? name : text.needsItem(name));
+  const needsItem = (name: string) =>
+    t({
+      message: `${name} (차트를 눌러 고른 뒤 쓸 수 있습니다)`,
+      comment: "name: 도구 이름",
+    });
+  const itemLabel = (name: string) => (target ? name : needsItem(name));
+  const checkboxesText = t`체크박스 표시`;
+  const downloadChart = t`차트 다운로드`;
+  /** 이 차트 종류에서 못 쓰는 도구의 안내 */
+  const unsupported = (name: string, chartKind: string) =>
+    t({
+      message: `${name} (${chartKind}에서는 쓸 수 없음)`,
+      comment: "name: 도구 이름, chartKind: 차트 종류 이름",
+    });
 
   return (
-    <div className="flex gap-1" role="toolbar" aria-label={text.toolbar}>
+    <div className="flex gap-1" role="toolbar" aria-label={t`차트 도구`}>
       <button
         type="button"
         className={toolButton()}
         title={
-          checkboxOk
-            ? text.checkboxes
-            : text.unsupported(text.checkboxes, typeLabel)
+          checkboxOk ? checkboxesText : unsupported(checkboxesText, chartKind)
         }
-        aria-label={text.checkboxes}
+        aria-label={checkboxesText}
         aria-pressed={checkboxes && checkboxOk}
         disabled={!drawn || !checkboxOk}
         onClick={toggleCheckboxes}
@@ -191,37 +173,35 @@ export function ChartActionBar() {
         <SquareCheck size={16} strokeWidth={1.8} aria-hidden="true" />
       </button>
       <ActionButton
-        label={
-          selectedItem ? text.downloadChart : text.needsItem(text.downloadChart)
-        }
+        label={selectedItem ? downloadChart : needsItem(downloadChart)}
         Icon={ImageDown}
         pending={chartPng.isPending}
         disabled={!target}
         onClick={() => target && chartPng.mutate(target)}
       />
       <ActionButton
-        label={text.downloadAllExcel}
+        label={t`모든 차트 엑셀로 다운로드`}
         Icon={FileSpreadsheet}
         pending={excel.isPending}
         disabled={!drawn}
         onClick={() => excel.mutate()}
       />
       <ActionButton
-        label={itemLabel(text.downloadData)}
+        label={itemLabel(t`데이터 다운로드`)}
         Icon={Download}
         pending={data.isPending}
         disabled={!target}
         onClick={() => target && data.mutate(target)}
       />
       <ActionButton
-        label={itemLabel(text.dataTable)}
+        label={itemLabel(t`데이터 테이블`)}
         Icon={Table}
         pending={table.isPending}
         disabled={!target}
         onClick={() => target && table.mutate(target)}
       />
       <ActionButton
-        label={text.sampleTable}
+        label={t`전체 데이터 테이블 (최대 30,000행 샘플)`}
         Icon={TableProperties}
         disabled={!current}
         onClick={() =>

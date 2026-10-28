@@ -1,37 +1,14 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { ColumnSummary, ExcludeFilter } from "@/shared/api/types";
-import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { useDragSelect } from "@/shared/lib/use-drag-select";
+import "../config/messages";
 
 type ValuesSummary = Extract<ColumnSummary, { kind: "values" }>;
-
-const messages = defineMessages({
-  ko: {
-    searchPlaceholder: (n: string) => `${n}개 값에서 검색`,
-    search: "값 검색",
-    selectShown: "보이는 값 선택",
-    selectAll: "전체 선택",
-    clearShown: "보이는 값 해제",
-    clearAll: "전체 해제",
-    excluded: (n: string) => `${n}개 제외`,
-    allIncluded: "전부 포함",
-    noMatch: "일치하는 값이 없습니다.",
-  },
-  en: {
-    searchPlaceholder: (n: string) => `Search ${n} values`,
-    search: "Search values",
-    selectShown: "Select shown",
-    selectAll: "Select all",
-    clearShown: "Clear shown",
-    clearAll: "Clear all",
-    excluded: (n: string) => `${n} excluded`,
-    allIncluded: "All included",
-    noMatch: "No matching values.",
-  },
-});
 
 const ROW_HEIGHT = 26;
 
@@ -57,7 +34,7 @@ export function ValuesFilterBody({
   disabled: boolean;
   onChange: (next: ExcludeFilter | undefined) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const locale = intlLocale();
   const [keyword, setKeyword] = useState("");
   /** 드래그 중 미리 보기(제외할 값). 확정 전까지 onChange를 부르지 않는다. */
@@ -81,6 +58,9 @@ export function ValuesFilterBody({
     estimateSize: () => ROW_HEIGHT,
     overscan: 8,
   });
+
+  const valueCount = summary.values.length.toLocaleString(locale);
+  const excludedCount = excluded.size.toLocaleString(locale);
 
   const commit = (next: Set<string>) =>
     onChange(
@@ -119,10 +99,11 @@ export function ValuesFilterBody({
       <input
         type="search"
         className="rounded-md border border-line bg-elevated px-2 py-1 text-xs text-fg"
-        placeholder={text.searchPlaceholder(
-          summary.values.length.toLocaleString(locale),
-        )}
-        aria-label={text.search}
+        placeholder={t({
+          message: `${valueCount}개 값에서 검색`,
+          comment: "valueCount: 컬럼의 값 개수 (자릿수 구분을 넣은 숫자)",
+        })}
+        aria-label={t`값 검색`}
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
@@ -133,7 +114,7 @@ export function ValuesFilterBody({
           disabled={disabled}
           onClick={() => setShown(true)}
         >
-          {keyword ? text.selectShown : text.selectAll}
+          {keyword ? <Trans>보이는 값 선택</Trans> : <Trans>전체 선택</Trans>}
         </button>
         <button
           type="button"
@@ -141,16 +122,21 @@ export function ValuesFilterBody({
           disabled={disabled}
           onClick={() => setShown(false)}
         >
-          {keyword ? text.clearShown : text.clearAll}
+          {keyword ? <Trans>보이는 값 해제</Trans> : <Trans>전체 해제</Trans>}
         </button>
         <span className="ml-auto text-fg-muted">
           {excluded.size > 0
-            ? text.excluded(excluded.size.toLocaleString(locale))
-            : text.allIncluded}
+            ? t({
+                message: `${excludedCount}개 제외`,
+                comment: "excludedCount: 뺀 값 개수 (자릿수 구분을 넣은 숫자)",
+              })
+            : t`전부 포함`}
         </span>
       </div>
       {shown.length === 0 ? (
-        <p className="text-fg-muted">{text.noMatch}</p>
+        <p className="text-fg-muted">
+          <Trans>일치하는 값이 없습니다.</Trans>
+        </p>
       ) : (
         <div
           ref={listRef}

@@ -1,0 +1,15 @@
+msgid ""
+msgstr ""
+
+#: src/features/draw-chart/ui/DrawButton.tsx
+msgid "grid 영역 크기를 아직 모릅니다."
+msgstr "The grid area size isn't known yet."
+
+#. countText, limitText: 자릿수 구분을 넣은 숫자
+#: src/features/draw-chart/ui/DrawButton.tsx
+msgid "split 조합이 {countText}개입니다. 최대 {limitText}개까지 그릴 수 있습니다."
+msgstr "There are {countText} split combinations. Up to {limitText} can be drawn."
+
+#: src/features/draw-chart/ui/DrawButton.tsx
+msgid "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
+msgstr "Register data and pick x, y to draw"

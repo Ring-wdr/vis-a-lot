@@ -1,0 +1,39 @@
+msgid ""
+msgstr ""
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "데이터 등록이 끝나면 컬럼이 나타납니다."
+msgstr "Columns appear once the data is registered."
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "데이터를 등록하면 컬럼이 나타납니다."
+msgstr "Columns appear after you register the data."
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "모두 지우기"
+msgstr "Clear all"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "바뀐 필터는 draw를 눌러야 적용됩니다."
+msgstr "Press draw to apply changed filters."
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "이 차트에 적용된 필터입니다."
+msgstr "Filters applied to this chart."
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "컬럼 없음"
+msgstr "No columns"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgctxt "data filter panel"
+msgid "필터"
+msgstr "Filters"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "필터 적용됨"
+msgstr "Filter applied"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "필터는 draw할 때 적용됩니다."
+msgstr "Filters apply when you draw."

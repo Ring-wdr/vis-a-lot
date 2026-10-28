@@ -1,30 +1,17 @@
 "use client";
 
+import { t as tGlobal } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { chartTitle } from "@/entities/chart/lib/title";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { createChartShare } from "@/features/share-chart/model/create-share";
 import { useColumns } from "@/shared/api/queries";
 import type { Share } from "@/shared/api/types";
-import { defineMessages, t, useT } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
-
-const messages = defineMessages({
-  ko: {
-    title: "이 차트로 데이터 공유 피드에 게시물을 쓰는 화면을 새 탭에서 엽니다",
-    failed: (reason: string) => `피드에 올리지 못했습니다: ${reason}`,
-    post: "피드에 올리기",
-    noChart: "그린 차트가 없습니다.",
-  },
-  en: {
-    title: "Open a new tab to write a data feed post with this chart",
-    failed: (reason: string) => `Couldn't post to the feed: ${reason}`,
-    post: "Post to feed",
-    noChart: "No chart has been drawn.",
-  },
-});
+import "../config/messages";
 
 /** 피드 새 게시물 폼. 같은 출처라 피드가 공유 id로 PNG·설정을 직접 읽는다. */
 export const feedNewPostPath = (shareId: string) =>
@@ -41,14 +28,14 @@ export function FeedPostButton({
   share: () => Promise<Share>;
   disabled?: boolean;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const [opening, setOpening] = useState(false);
 
   return (
     <button
       type="button"
       className={button({ size: "sm", class: "whitespace-nowrap" })}
-      title={text.title}
+      title={t`이 차트로 데이터 공유 피드에 게시물을 쓰는 화면을 새 탭에서 엽니다`}
       disabled={disabled || opening}
       aria-busy={opening}
       onClick={async () => {
@@ -57,16 +44,15 @@ export function FeedPostButton({
           const shared = await share();
           window.open(feedNewPostPath(shared.id), "_blank", "noopener");
         } catch (err) {
-          showAlert(
-            text.failed(err instanceof Error ? err.message : String(err)),
-          );
+          const reason = err instanceof Error ? err.message : String(err);
+          showAlert(t`피드에 올리지 못했습니다: ${reason}`);
         } finally {
           setOpening(false);
         }
       }}
     >
       {opening && <Spinner size="sm" />}
-      {text.post}
+      <Trans>피드에 올리기</Trans>
     </button>
   );
 }
@@ -80,7 +66,7 @@ export function ChartFeedPostButton() {
     <FeedPostButton
       disabled={!current}
       share={() => {
-        if (!current) throw new Error(t(messages).noChart);
+        if (!current) throw new Error(tGlobal`그린 차트가 없습니다.`);
         return createChartShare({
           chartId: current.chartId,
           selectedItem,

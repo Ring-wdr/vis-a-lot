@@ -1,30 +1,10 @@
 // 차트 도구의 다운로드: 고른 item의 PNG와 데이터(CSV), 모든 item을 grid 배치로 넣은 엑셀(xlsx).
 
+import { t } from "@lingui/core/macro";
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemState } from "@/shared/api/types";
-import { defineMessages, t } from "@/shared/lib/i18n";
 import { safeFileName, saveBlob } from "@/shared/lib/save-file";
-
-const messages = defineMessages({
-  ko: {
-    notDrawn: "아직 그려지지 않은 차트입니다.",
-    selectionSuffix: "_선택",
-    chartsSheet: "차트",
-    listSheet: "목록",
-    index: "순번",
-    name: "이름",
-    status: "상태",
-  },
-  en: {
-    notDrawn: "This chart hasn't been drawn yet.",
-    selectionSuffix: "_selection",
-    chartsSheet: "Charts",
-    listSheet: "List",
-    index: "No.",
-    name: "Name",
-    status: "Status",
-  },
-});
+import "../config/messages";
 
 /** 엑셀 한 파일에 넣는 item 수 상한. 넘으면 앞에서부터 이만큼만 넣는다. */
 export const MAX_EXCEL_ITEMS = 300;
@@ -35,7 +15,7 @@ const RANGE_SIZE = 100;
 export async function drawnItemState(jobId: string, key: string) {
   const state = await api.jobItems(jobId, [key], -1);
   const item = state.items[0];
-  if (!item?.image) throw new Error(t(messages).notDrawn);
+  if (!item?.image) throw new Error(t`아직 그려지지 않은 차트입니다.`);
   return { ...item, image: item.image };
 }
 
@@ -48,7 +28,13 @@ export async function downloadItemData(
   const item = await drawnItemState(jobId, key);
   const csv = await api.exportItemRows(chartId, key);
   const suffix =
-    item.selectedCount !== undefined ? t(messages).selectionSuffix : "";
+    item.selectedCount !== undefined
+      ? t({
+          message: "_선택",
+          context: "file name suffix",
+          comment: "선택 영역의 데이터만 받은 CSV 파일 이름 끝에 붙인다",
+        })
+      : "";
   saveBlob(csv, `${safeFileName(item.label)}${suffix}.csv`);
 }
 
@@ -101,14 +87,29 @@ export async function downloadAllChartsExcel(
     import("exceljs"),
     allItems(jobId, MAX_EXCEL_ITEMS),
   ]);
-  const text = t(messages);
   const book = new ExcelJS.Workbook();
-  const sheet = book.addWorksheet(text.chartsSheet);
-  const list = book.addWorksheet(text.listSheet);
+  const sheet = book.addWorksheet(
+    t({ message: "차트", context: "excel sheet" }),
+  );
+  const list = book.addWorksheet(
+    t({ message: "목록", context: "excel sheet" }),
+  );
   list.columns = [
-    { header: text.index, key: "index", width: 8 },
-    { header: text.name, key: "label", width: 40 },
-    { header: text.status, key: "status", width: 12 },
+    {
+      header: t({ message: "순번", context: "excel column header" }),
+      key: "index",
+      width: 8,
+    },
+    {
+      header: t({ message: "이름", context: "excel column header" }),
+      key: "label",
+      width: 40,
+    },
+    {
+      header: t({ message: "상태", context: "excel column header" }),
+      key: "status",
+      width: 12,
+    },
   ];
 
   const cols = spec.grid.cols;

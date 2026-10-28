@@ -1,5 +1,6 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { Grid3x3 } from "lucide-react";
 import { useState } from "react";
@@ -12,27 +13,10 @@ import {
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
 import { type ChartSpec, isTerminal } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
 import { selectStyles } from "@/shared/ui/select-styles";
-
-const messages = defineMessages({
-  ko: {
-    rendering:
-      "렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요.",
-    cell: (rows: number, cols: number) => `${rows}행 ${cols}열`,
-    size: (rows: number, cols: number) => `${rows}행 × ${cols}열`,
-    current: (grid: string) => ` (현재 ${grid})`,
-  },
-  en: {
-    rendering:
-      "The grid size can't change while rendering. Change it after it finishes or is cancelled.",
-    cell: (rows: number, cols: number) => `${rows} rows, ${cols} columns`,
-    size: (rows: number, cols: number) => `${rows} rows × ${cols} cols`,
-    current: (grid: string) => ` (now ${grid})`,
-  },
-});
+import "../config/messages";
 
 const s = selectStyles();
 
@@ -52,7 +36,7 @@ const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
  * 그린 차트가 있으면 draw 없이 바로 전체를 다시 그리고, 렌더링 중에는 바꿀 수 없어 팝업으로 알린다.
  */
 export function GridPicker() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const draft = useWorkspace((s) => s.draft);
   const current = useWorkspace((s) => s.current);
   const page = useWorkspace((s) => s.page);
@@ -93,10 +77,15 @@ export function GridPicker() {
     current !== undefined && (!job.data || !isTerminal(job.data.status));
   const selected = draft.grid;
   const preview = hover ?? selected;
+  const { rows, cols } = preview;
+  const sizeText = t`${rows}행 × ${cols}열`;
+  const selectedGrid = gridLabel(selected);
 
   const pick = (next: Grid) => {
     if (current && rendering) {
-      showAlert(text.rendering);
+      showAlert(
+        t`렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요.`,
+      );
       return;
     }
     updateDraft({ grid: next });
@@ -126,12 +115,13 @@ export function GridPicker() {
             >
               {CELLS.map(({ row, col }) => {
                 const cell = { rows: row + 1, cols: col + 1 };
+                const { rows, cols } = cell;
                 return (
                   <button
                     key={`${row}-${col}`}
                     type="button"
                     className="aspect-square cursor-pointer rounded-xs border border-line bg-elevated focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent data-active:border-accent data-active:bg-accent-soft data-selected:not-data-active:border-accent-line"
-                    aria-label={text.cell(cell.rows, cell.cols)}
+                    aria-label={t`${rows}행 ${cols}열`}
                     data-active={
                       (row < preview.rows && col < preview.cols) || undefined
                     }
@@ -153,9 +143,8 @@ export function GridPicker() {
               className="text-center text-xs text-fg-secondary"
               aria-live="polite"
             >
-              {text.size(preview.rows, preview.cols)}
-              {!sameGrid(preview, selected) &&
-                text.current(gridLabel(selected))}
+              {sizeText}
+              {!sameGrid(preview, selected) && ` ${t`(현재 ${selectedGrid})`}`}
             </span>
           </div>
         )}

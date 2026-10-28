@@ -1,0 +1,10 @@
+msgid ""
+msgstr ""
+
+#: src/entities/chart/ui/ChartLegend.tsx
+msgid "(숨김)"
+msgstr "(hidden)"
+
+#: src/entities/chart/ui/ChartLegend.tsx
+msgid "{title} 범례"
+msgstr "{title} legend"

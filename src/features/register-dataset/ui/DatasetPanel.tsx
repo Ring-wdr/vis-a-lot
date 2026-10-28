@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect } from "react";
 import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import {
@@ -8,35 +9,9 @@ import {
   useGenerateDataset,
 } from "@/shared/api/queries";
 import type { DatasetId } from "@/shared/api/types";
-import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { Select } from "@/shared/ui/Select";
-
-const messages = defineMessages({
-  ko: {
-    scale: "데이터 규모",
-    ready: " · 준비됨",
-    analyzing: "컬럼 통계 계산 중…",
-    generating: (done: string, total: string) =>
-      `데이터 생성 중 ${done} / ${total}`,
-    generated: (rows: string, seconds: string) =>
-      `${rows}행 · 생성 ${seconds}초`,
-    column: "컬럼",
-    type: "타입",
-    distinct: "고유값",
-  },
-  en: {
-    scale: "Data size",
-    ready: " · ready",
-    analyzing: "Computing column stats…",
-    generating: (done: string, total: string) =>
-      `Generating data ${done} / ${total}`,
-    generated: (rows: string, seconds: string) =>
-      `${rows} rows · generated in ${seconds}s`,
-    column: "Column",
-    type: "Type",
-    distinct: "Distinct",
-  },
-});
+import "../config/messages";
 
 const cell = "border-line border-b px-2 py-1 text-left last:text-right";
 
@@ -51,7 +26,7 @@ export function DatasetPanel({
   /** 컬럼 타입과 고유값 표를 함께 보여준다. */
   showColumns?: boolean;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const labels = useDatasetLabels();
   const locale = intlLocale();
   const datasets = useDatasets();
@@ -60,6 +35,18 @@ export function DatasetPanel({
   const status = samples?.find((d) => d.id === dataset);
   const columns = useDatasetSchema(dataset);
   const { mutate } = generate;
+  const readyLabel = (name: string) =>
+    t({ message: `${name} · 준비됨`, comment: "name: 데이터 이름" });
+  const generating = (s: { done: number; total: number }) => {
+    const done = s.done.toLocaleString(locale);
+    const total = s.total.toLocaleString(locale);
+    return t`데이터 생성 중 ${done} / ${total}`;
+  };
+  const generated = (count: number, ms: number) => {
+    const rows = count.toLocaleString(locale);
+    const seconds = (ms / 1000).toFixed(1);
+    return t`${rows}행 · 생성 ${seconds}초`;
+  };
 
   // 규모를 고르면 그 데이터가 없을 때 바로 생성을 시작한다.
   useEffect(() => {
@@ -69,11 +56,11 @@ export function DatasetPanel({
   return (
     <section className="flex max-w-90 flex-col gap-2">
       <Select
-        label={text.scale}
+        label={t`데이터 규모`}
         value={dataset}
         options={(samples ?? []).map((s) => ({
           value: s.id,
-          label: `${s.name}${s.state === "ready" ? text.ready : ""}`,
+          label: s.state === "ready" ? readyLabel(s.name) : s.name,
         }))}
         onChange={onChange}
       />
@@ -83,21 +70,15 @@ export function DatasetPanel({
           <progress className="w-full" value={status.done} max={status.total} />
           <span>
             {status.phase === "analyze"
-              ? text.analyzing
-              : text.generating(
-                  status.done.toLocaleString(locale),
-                  status.total.toLocaleString(locale),
-                )}
+              ? t`컬럼 통계 계산 중…`
+              : generating(status)}
           </span>
         </div>
       )}
 
       {status?.state === "ready" && status.generateMs !== undefined && (
         <p className="text-xs text-fg-muted">
-          {text.generated(
-            status.total.toLocaleString(locale),
-            (status.generateMs / 1000).toFixed(1),
-          )}
+          {generated(status.total, status.generateMs)}
         </p>
       )}
 
@@ -108,9 +89,15 @@ export function DatasetPanel({
         <table className="border-collapse text-xs">
           <thead>
             <tr>
-              <th className={cell}>{text.column}</th>
-              <th className={cell}>{text.type}</th>
-              <th className={cell}>{text.distinct}</th>
+              <th className={cell}>
+                <Trans context="column table header">컬럼</Trans>
+              </th>
+              <th className={cell}>
+                <Trans context="column table header">타입</Trans>
+              </th>
+              <th className={cell}>
+                <Trans context="column table header">고유값</Trans>
+              </th>
             </tr>
           </thead>
           <tbody>

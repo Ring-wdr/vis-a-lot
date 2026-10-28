@@ -1,0 +1,48 @@
+msgid ""
+msgstr ""
+
+#. name: 모드 이름, chartKind: 차트 종류 이름
+#: src/features/select-mode/ui/ModeBar.tsx
+msgid "{name} ({chartKind}에서는 쓸 수 없음)"
+msgstr "{name} (not available for {chartKind})"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgctxt "chart interaction mode"
+msgid "기본"
+msgstr "Default"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgctxt "chart interaction mode toolbar"
+msgid "모드"
+msgstr "Mode"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgid "사각형 삭제"
+msgstr "Box delete"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgid "사각형 선택"
+msgstr "Box select"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgctxt "chart interaction mode"
+msgid "이동"
+msgstr "Pan"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgid "자유형 삭제"
+msgstr "Lasso delete"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgid "자유형 선택"
+msgstr "Lasso select"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgctxt "chart interaction mode"
+msgid "페인트"
+msgstr "Paint"
+
+#: src/features/select-mode/ui/ModeBar.tsx
+msgctxt "chart interaction mode"
+msgid "확대"
+msgstr "Zoom"

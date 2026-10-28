@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect } from "react";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
 import { ChartIcon } from "@/entities/chart/ui/ChartIcon";
@@ -29,39 +30,10 @@ import {
   usesLegendColumn,
 } from "@/shared/config/chart-kinds";
 import { AGG_FNS, aggLabel } from "@/shared/config/dataset";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { LoadingText } from "@/shared/ui/Loading";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 import { Select, type SelectOption } from "@/shared/ui/Select";
-
-const messages = defineMessages({
-  ko: {
-    loadingColumns: "컬럼 불러오는 중",
-    generating: "데이터 등록이 끝나면 고를 수 있습니다",
-    missing: "데이터를 등록하면 고를 수 있습니다",
-    deleted: "삭제된 데이터라 고를 컬럼이 없습니다",
-    chart: "차트",
-    subChart: "서브 차트",
-    none: "없음",
-    distribution: "분포를 볼 값 (y)",
-    legendOuter: "legend (바깥 고리)",
-    agg: "통계 함수",
-    tooltipPlaceholder: "x, y 외 컬럼 추가…",
-  },
-  en: {
-    loadingColumns: "Loading columns",
-    generating: "Available once the data is registered",
-    missing: "Available after you register the data",
-    deleted: "Deleted data has no columns",
-    chart: "Chart",
-    subChart: "Sub chart",
-    none: "None",
-    distribution: "Value to plot (y)",
-    legendOuter: "legend (outer ring)",
-    agg: "Aggregate",
-    tooltipPlaceholder: "Add columns other than x, y…",
-  },
-});
+import "../config/messages";
 
 /** legend 없음. select는 빈 값을 '고르지 않음'으로 보므로 컬럼 이름이 될 수 없는 값을 쓴다. */
 const NO_LEGEND = "\u0000none";
@@ -85,8 +57,12 @@ function toOptions(columns: readonly ColumnInfo[]): Option<ColumnName>[] {
  * fieldset disabled로 안의 입력을 모두 막는다.
  */
 export function ControlPanel() {
-  // 통계 함수·축·하위 차트 이름(aggLabel 등)도 지금 언어로 읽으므로 useT가 언어 변경을 구독한다.
-  const text = useT(messages);
+  // 통계 함수·축·하위 차트 이름(aggLabel 등)도 지금 언어로 읽으므로 useLingui가 언어 변경을 구독한다.
+  const { t } = useLingui();
+  const none = t({
+    message: "없음",
+    context: "no sub chart / no legend option",
+  });
   const draft = useWorkspace((s) => s.draft);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const readOnly = useWorkspace((s) => s.readOnly);
@@ -96,13 +72,15 @@ export function ControlPanel() {
   const schemaState = useSchemaState(draft.dataset);
   const noColumns =
     schemaState === "loading" ? (
-      <LoadingText announce={false}>{text.loadingColumns}</LoadingText>
+      <LoadingText announce={false}>
+        <Trans>컬럼 불러오는 중</Trans>
+      </LoadingText>
     ) : schemaState === "generating" ? (
-      text.generating
+      t`데이터 등록이 끝나면 고를 수 있습니다`
     ) : schemaState === "missing" ? (
-      text.missing
+      t`데이터를 등록하면 고를 수 있습니다`
     ) : schemaState === "deleted" ? (
-      text.deleted
+      t`삭제된 데이터라 고를 컬럼이 없습니다`
     ) : undefined;
 
   // 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
@@ -135,7 +113,7 @@ export function ControlPanel() {
       {/* 차트 종류가 늘어도 한 줄 높이를 지키도록 버튼 격자 대신 select 둘을 나란히 둔다. */}
       <div className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-2">
         <Select
-          label={text.chart}
+          label={t({ message: "차트", context: "chart type select" })}
           value={draft.chartType}
           options={CHART_OPTIONS}
           onChange={(type) => {
@@ -150,7 +128,7 @@ export function ControlPanel() {
           }}
         />
         <Select
-          label={text.subChart}
+          label={t`서브 차트`}
           value={subTypeOf(draft) ?? NO_SUB_TYPE}
           disabled={!subTypes}
           options={
@@ -159,7 +137,7 @@ export function ControlPanel() {
                   value: sub,
                   label: subTypeLabel(sub),
                 }))
-              : [{ value: NO_SUB_TYPE, label: text.none }]
+              : [{ value: NO_SUB_TYPE, label: none }]
           }
           onChange={(subType) => updateDraft({ subType })}
         />
@@ -180,7 +158,9 @@ export function ControlPanel() {
       {fields.y && (
         <Select
           label={
-            distribution ? text.distribution : fieldLabel(draft.chartType, "y")
+            distribution
+              ? t`분포를 볼 값 (y)`
+              : fieldLabel(draft.chartType, "y")
           }
           value={draft.y || null}
           placeholder={noColumns}
@@ -201,10 +181,10 @@ export function ControlPanel() {
 
       {usesLegendColumn(draft) && (
         <Select
-          label={sunburst ? text.legendOuter : "legend"}
+          label={sunburst ? t`legend (바깥 고리)` : "legend"}
           value={draft.legend ?? NO_LEGEND}
           options={[
-            { value: NO_LEGEND, label: text.none },
+            { value: NO_LEGEND, label: none },
             ...toOptions(legendColumns(columns ?? [])),
           ]}
           onChange={(legend) =>
@@ -215,7 +195,7 @@ export function ControlPanel() {
 
       {fields.agg && (
         <Select
-          label={text.agg}
+          label={t`통계 함수`}
           value={draft.agg}
           options={aggOptions()}
           onChange={(agg) => updateDraft({ agg })}
@@ -235,7 +215,7 @@ export function ControlPanel() {
           (o) => o.value !== draft.x && o.value !== draft.y,
         )}
         value={draft.tooltip}
-        placeholder={text.tooltipPlaceholder}
+        placeholder={t`x, y 외 컬럼 추가…`}
         onChange={(tooltip) => updateDraft({ tooltip })}
       />
     </fieldset>

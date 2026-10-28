@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { History, LayoutGrid, TriangleAlert } from "lucide-react";
 import { useDeferredValue, useEffect, useId, useRef } from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
@@ -9,55 +10,17 @@ import { useJob, useJobProgress } from "@/shared/api/queries";
 import { isTerminal } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
-import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { cn } from "@/shared/lib/tw";
 import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { ChartItemCard } from "./ChartItemCard";
 import { DetailView } from "./DetailView";
 import { JobStatusBar } from "./JobStatusBar";
 import { PageScroller, type PageScrollerHandle } from "./PageScroller";
-
-const messages = defineMessages({
-  ko: {
-    page: "페이지",
-    prev: "이전 페이지",
-    next: "다음 페이지",
-    opening: "차트 여는 중",
-    pickTitle: "다시 볼 차트 고르기",
-    pickBody:
-      "왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시 그립니다.",
-    emptyTitle: "아직 그린 차트가 없습니다",
-    emptyBody:
-      "왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면 조합마다 item 하나씩 grid로 그립니다.",
-    preparing: "데이터 준비 중",
-    querying: "데이터 조회",
-    failedTitle: "그리지 못했습니다",
-    failedBody: "다시 draw를 눌러 보세요.",
-    moving: (page: string, total: string) =>
-      `${page} / ${total} 페이지로 이동 중…`,
-  },
-  en: {
-    page: "Page",
-    prev: "Previous page",
-    next: "Next page",
-    opening: "Opening chart",
-    pickTitle: "Pick a chart to revisit",
-    pickBody:
-      "Pick a chart in the list on the left to redraw it with its saved settings, zoom, shapes and colors.",
-    emptyTitle: "No charts drawn yet",
-    emptyBody:
-      "Pick data and x, y on the left, then press draw. With split by, each combination is drawn as one item in the grid.",
-    preparing: "Loading data",
-    querying: "Querying data",
-    failedTitle: "Couldn't draw",
-    failedBody: "Try pressing draw again.",
-    moving: (page: string, total: string) =>
-      `Going to page ${page} / ${total}…`,
-  },
-});
 
 // 행·열 수(1..10)마다 클래스를 고른다. Tailwind가 찾을 수 있게 이름을 그대로 적는다.
 const GRID_COLS = [
@@ -108,17 +71,17 @@ function Pager({
   totalPages: number;
   onPage: (page: number) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   if (totalPages <= 1) return null;
   return (
     <nav
       className="ml-auto flex h-full flex-none items-center gap-1.5 border-l border-line px-2"
-      aria-label={text.page}
+      aria-label={t({ message: "페이지", context: "grid pages" })}
     >
       <button
         type="button"
         className={pagerButton}
-        aria-label={text.prev}
+        aria-label={t`이전 페이지`}
         disabled={page === 0}
         onClick={() => onPage(page - 1)}
       >
@@ -131,7 +94,7 @@ function Pager({
       <button
         type="button"
         className={pagerButton}
-        aria-label={text.next}
+        aria-label={t`다음 페이지`}
         disabled={page >= totalPages - 1}
         onClick={() => onPage(page + 1)}
       >
@@ -142,7 +105,7 @@ function Pager({
 }
 
 export function ChartGrid() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const areaRef = useRef<HTMLDivElement>(null);
   const setGridArea = useWorkspace((s) => s.setGridArea);
   const current = useWorkspace((s) => s.current);
@@ -170,6 +133,8 @@ export function ChartGrid() {
   const totalItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;
   const totalPages =
     totalItems === null ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+  const pageText = (viewPage + 1).toLocaleString(intlLocale());
+  const totalText = totalPages.toLocaleString(intlLocale());
   const jobError = progress.data?.error;
   const gridArea = useWorkspace((s) => s.gridArea);
   // PNG를 띄울 크기. resize 중에는 이 크기로 기존 PNG를 늘리거나 줄여 보여준다.
@@ -226,16 +191,28 @@ export function ChartGrid() {
           <div className={gridClass(draftGrid)} aria-busy="true">
             {Array.from({ length: draftGrid.rows * draftGrid.cols }, (_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: 여는 동안의 자리 표시용
-              <ChartItemCard key={i} placeholder={text.opening} />
+              <ChartItemCard key={i} placeholder={t`차트 여는 중`} />
             ))}
           </div>
         ) : readOnly ? (
-          <EmptyState icon={<History size={20} />} title={text.pickTitle}>
-            {text.pickBody}
+          <EmptyState
+            icon={<History size={20} />}
+            title={t`다시 볼 차트 고르기`}
+          >
+            <Trans>
+              왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시
+              그립니다.
+            </Trans>
           </EmptyState>
         ) : (
-          <EmptyState icon={<LayoutGrid size={20} />} title={text.emptyTitle}>
-            {text.emptyBody}
+          <EmptyState
+            icon={<LayoutGrid size={20} />}
+            title={t`아직 그린 차트가 없습니다`}
+          >
+            <Trans>
+              왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면
+              조합마다 item 하나씩 grid로 그립니다.
+            </Trans>
           </EmptyState>
         ))}
       {current && (
@@ -279,8 +256,8 @@ export function ChartGrid() {
                       key={i}
                       placeholder={
                         job.data?.phase === "dataset"
-                          ? text.preparing
-                          : text.querying
+                          ? t`데이터 준비 중`
+                          : t`데이터 조회`
                       }
                     />
                   ))}
@@ -290,9 +267,9 @@ export function ChartGrid() {
                     <div className="col-span-full row-span-full self-center">
                       <EmptyState
                         icon={<TriangleAlert size={20} />}
-                        title={text.failedTitle}
+                        title={t`그리지 못했습니다`}
                       >
-                        {jobError ?? text.failedBody}
+                        {jobError ?? <Trans>다시 draw를 눌러 보세요.</Trans>}
                       </EmptyState>
                     </div>
                   )}
@@ -303,10 +280,11 @@ export function ChartGrid() {
                     aria-live="polite"
                   >
                     <Spinner />
-                    {text.moving(
-                      (viewPage + 1).toLocaleString(intlLocale()),
-                      totalPages.toLocaleString(intlLocale()),
-                    )}
+                    {t({
+                      message: `${pageText} / ${totalText} 페이지로 이동 중…`,
+                      comment:
+                        "pageText: 지금 페이지 번호, totalText: 전체 페이지 수",
+                    })}
                   </div>
                 )}
               </div>
