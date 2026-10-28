@@ -1,14 +1,10 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { LOCALE_NAMES, LOCALES } from "@/shared/config/locale";
-import { defineMessages, setLocale, useLocale, useT } from "@/shared/lib/i18n";
+import { setLocale } from "@/shared/lib/i18n";
 import { preferencesPopover } from "@/shared/ui/preferences-popover";
 import { segmented } from "@/shared/ui/segmented";
-
-const messages = defineMessages({
-  ko: { label: "언어" },
-  en: { label: "Language" },
-});
 
 const p = preferencesPopover();
 const s = segmented();
@@ -18,11 +14,11 @@ const s = segmented();
  * 버튼 폭은 같게 나눠 언어가 바뀌어도 그대로다.
  */
 export function LocaleSelect() {
-  const text = useT(messages);
+  const t = useTranslations("LocaleSelect");
   const locale = useLocale();
   return (
     <fieldset className={p.section()}>
-      <legend className={p.label()}>{text.label}</legend>
+      <legend className={p.label()}>{t("label")}</legend>
       <div className={s.root()}>
         {LOCALES.map((value) => (
           <button

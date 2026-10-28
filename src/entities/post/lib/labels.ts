@@ -1,5 +1,6 @@
 // 피드 값의 화면 이름. 생성 타입의 enum으로 Record를 만들어, 서버에 값이 늘면 여기서 컴파일 오류가 난다.
 // 표는 지금 언어(또는 넘긴 언어)로 읽는 함수다 (statusLabels()[s]). 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다.
+// 문구는 next-intl translator로 읽는다. 표 전체가 필요한 곳(필터·보드 열)이 많아 t.raw로 표째 꺼낸다.
 
 import type {
   CancelReason,
@@ -12,7 +13,9 @@ import type {
   StatusCategory,
   StatusNames,
 } from "@/shared/api/feed/types";
-import { defineMessages, getLocale, type Locale } from "@/shared/lib/i18n";
+import { getLocale, type Locale } from "@/shared/lib/i18n";
+import { intlTranslator } from "@/shared/lib/intl";
+import { defineIntlMessages } from "@/shared/lib/intl-messages";
 
 /** 우선순위는 0~4 정수다. */
 export type PriorityLevel = 0 | 1 | 2 | 3 | 4;
@@ -29,7 +32,7 @@ type Labels = {
   channel: Record<OutboxChannel | "inapp", string>;
 };
 
-const messages = defineMessages<Labels>({
+const messages = defineIntlMessages({
   ko: {
     status: {
       unresolved: "미해결",
@@ -74,7 +77,7 @@ const messages = defineMessages<Labels>({
       children_resolved: "하위 이슈 완료",
     },
     channel: { inapp: "앱 내", slack: "슬랙", email: "이메일" },
-  },
+  } satisfies Labels,
   en: {
     status: {
       unresolved: "Unresolved",
@@ -122,8 +125,32 @@ const messages = defineMessages<Labels>({
   },
 });
 
-export const statusLabels = (locale: Locale = getLocale()) =>
-  messages[locale].status;
+const translator = intlTranslator(messages);
+
+/**
+ * 표 하나를 지금 언어(또는 넘긴 언어)로 꺼낸다. next-intl의 t는 문구 하나("status.resolved")만 받으므로
+ * 키마다 t로 읽어 표를 만들고 언어마다 한 번만 만든다. (t.raw는 문구 하나만 받아 표째 꺼낼 수 없다.)
+ */
+const tables = new Map<string, unknown>();
+const table =
+  <K extends keyof Labels>(key: K) =>
+  (locale: Locale = getLocale()): Labels[K] => {
+    const id = `${locale}:${key}`;
+    let value = tables.get(id) as Labels[K] | undefined;
+    if (!value) {
+      const t = translator(locale);
+      value = Object.fromEntries(
+        Object.keys(messages.ko[key]).map((k) => [
+          k,
+          t(`${key}.${k}` as Parameters<typeof t>[0]),
+        ]),
+      ) as Labels[K];
+      tables.set(id, value);
+    }
+    return value;
+  };
+
+export const statusLabels = table("status");
 
 /** 보드 열·필터 순서 */
 export const STATUSES: readonly PostStatus[] = [
@@ -135,32 +162,24 @@ export const STATUSES: readonly PostStatus[] = [
   "cancelled",
 ];
 
-export const categoryLabels = (locale: Locale = getLocale()) =>
-  messages[locale].category;
+export const categoryLabels = table("category");
 
-export const priorityLabels = (locale: Locale = getLocale()) =>
-  messages[locale].priority;
+export const priorityLabels = table("priority");
 
 export const priorityLabel = (p: number, locale?: Locale) =>
   priorityLabels(locale)[p as PriorityLevel] ?? String(p);
 
-export const formatLabels = (locale: Locale = getLocale()) =>
-  messages[locale].format;
+export const formatLabels = table("format");
 
-export const cancelReasonLabels = (locale: Locale = getLocale()) =>
-  messages[locale].cancelReason;
+export const cancelReasonLabels = table("cancelReason");
 
-export const holdReasonLabels = (locale: Locale = getLocale()) =>
-  messages[locale].holdReason;
+export const holdReasonLabels = table("holdReason");
 
-export const relationLabels = (locale: Locale = getLocale()) =>
-  messages[locale].relation;
+export const relationLabels = table("relation");
 
-export const notifyKindLabels = (locale: Locale = getLocale()) =>
-  messages[locale].notifyKind;
+export const notifyKindLabels = table("notifyKind");
 
-export const channelLabels = (locale: Locale = getLocale()) =>
-  messages[locale].channel;
+export const channelLabels = table("channel");
 
 /** 그룹이 바꾼 상태 이름이 있으면 그것을, 없으면 기본 이름을 쓴다. */
 export const statusLabel = (

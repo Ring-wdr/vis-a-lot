@@ -1,5 +1,6 @@
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   // 서버 없이 정적 호스팅한다. "서버"는 브라우저 안의 MSW + Worker가 맡는다.
@@ -17,4 +18,7 @@ const withMDX = createMDX({
   },
 });
 
-export default withMDX(nextConfig);
+// next-intl: 서버 컴포넌트의 getTranslations가 읽는 설정. FSD라 기본 위치(src/i18n/request.ts) 대신 application에 둔다.
+const withNextIntl = createNextIntlPlugin("./src/application/i18n-request.ts");
+
+export default withNextIntl(withMDX(nextConfig));

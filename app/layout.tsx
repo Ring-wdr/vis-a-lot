@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { IntlRoot } from "@/application/IntlRoot";
 import { DEFAULT_LOCALE, LOCALE_INIT_SCRIPT } from "@/shared/config/locale";
 import { THEME_INIT_SCRIPT } from "@/shared/config/theme";
 import { cn } from "@/shared/lib/tw";
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{ __html: LOCALE_INIT_SCRIPT }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <IntlRoot>{children}</IntlRoot>
+      </body>
     </html>
   );
 }
