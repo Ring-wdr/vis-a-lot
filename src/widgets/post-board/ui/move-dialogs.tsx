@@ -2,6 +2,7 @@
 
 // 보드 드래그에서 사유가 필요한 전이(보류·취소·반려)를 묻는 팝업. 취소·Esc면 null로 끝난다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { overlay } from "overlay-kit";
 import { useState } from "react";
 import {
@@ -9,45 +10,16 @@ import {
   holdReasonLabels,
 } from "@/entities/post/lib/labels";
 import type { CancelReason, HoldReason } from "@/shared/api/feed/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { Select } from "@/shared/ui/Select";
+import "../config/messages";
 
 const options = <T extends string>(labels: Record<T, string>) =>
   (Object.keys(labels) as T[]).map((value) => ({
     value,
     label: labels[value],
   }));
-
-const messages = defineMessages({
-  ko: {
-    cancel: "취소",
-    holdTitle: (title: string) => `보류: ${title}`,
-    reason: "사유",
-    pickReason: "사유를 고르세요",
-    resumeDate: "재개 예정일",
-    hold: "보류",
-    cancelTitle: (title: string) => `취소: ${title}`,
-    moveToCancelled: "취소로 옮기기",
-    rejectTitle: (title: string) => `반려: ${title}`,
-    rejectReason: "반려 사유 (댓글로 남습니다)",
-    reject: "반려",
-  },
-  en: {
-    cancel: "Cancel",
-    holdTitle: (title: string) => `Hold: ${title}`,
-    reason: "Reason",
-    pickReason: "Pick a reason",
-    resumeDate: "Resume on",
-    hold: "Hold",
-    cancelTitle: (title: string) => `Cancel: ${title}`,
-    moveToCancelled: "Move to cancelled",
-    rejectTitle: (title: string) => `Reject: ${title}`,
-    rejectReason: "Reason for rejecting (posted as a comment)",
-    reject: "Reject",
-  },
-});
 
 const input =
   "rounded-md border border-line bg-elevated px-2 py-1.5 text-ui text-fg";
@@ -69,11 +41,10 @@ function Actions({
   confirmLabel: string;
   disabled?: boolean;
 }) {
-  const text = useT(messages);
   return (
     <div className={dialogActions}>
       <button type="button" className={button()} onClick={onCancel}>
-        {text.cancel}
+        <Trans context="dismiss dialog">취소</Trans>
       </button>
       <button
         type="submit"
@@ -95,7 +66,7 @@ function HoldForm({
   today: string;
   close: (v: { reason: HoldReason; holdUntil: string } | null) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const [reason, setReason] = useState<HoldReason | null>(null);
   const [until, setUntil] = useState(addDays(today, 7));
   return (
@@ -106,16 +77,18 @@ function HoldForm({
         if (reason && until) close({ reason, holdUntil: until });
       }}
     >
-      <p className="font-semibold">{text.holdTitle(title)}</p>
+      <p className="font-semibold">{t`보류: ${title}`}</p>
       <Select
-        label={text.reason}
+        label={t`사유`}
         value={reason}
-        placeholder={text.pickReason}
+        placeholder={t`사유를 고르세요`}
         options={options(holdReasonLabels())}
         onChange={setReason}
       />
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-fg-secondary">{text.resumeDate}</span>
+        <span className="text-xs text-fg-secondary">
+          <Trans>재개 예정일</Trans>
+        </span>
         <input
           type="date"
           className={input}
@@ -127,7 +100,7 @@ function HoldForm({
       </label>
       <Actions
         onCancel={() => close(null)}
-        confirmLabel={text.hold}
+        confirmLabel={t({ message: "보류", context: "confirm: put on hold" })}
         disabled={!reason || !until}
       />
     </form>
@@ -141,7 +114,7 @@ function CancelForm({
   title: string;
   close: (v: CancelReason | null) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const [reason, setReason] = useState<CancelReason | null>(null);
   return (
     <form
@@ -151,17 +124,17 @@ function CancelForm({
         if (reason) close(reason);
       }}
     >
-      <p className="font-semibold">{text.cancelTitle(title)}</p>
+      <p className="font-semibold">{t`취소: ${title}`}</p>
       <Select
-        label={text.reason}
+        label={t`사유`}
         value={reason}
-        placeholder={text.pickReason}
+        placeholder={t`사유를 고르세요`}
         options={options(cancelReasonLabels())}
         onChange={setReason}
       />
       <Actions
         onCancel={() => close(null)}
-        confirmLabel={text.moveToCancelled}
+        confirmLabel={t`취소로 옮기기`}
         disabled={!reason}
       />
     </form>
@@ -175,7 +148,7 @@ function RejectForm({
   title: string;
   close: (v: string | null) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const [comment, setComment] = useState("");
   return (
     <form
@@ -185,9 +158,11 @@ function RejectForm({
         if (comment.trim()) close(comment.trim());
       }}
     >
-      <p className="font-semibold">{text.rejectTitle(title)}</p>
+      <p className="font-semibold">{t`반려: ${title}`}</p>
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-fg-secondary">{text.rejectReason}</span>
+        <span className="text-xs text-fg-secondary">
+          <Trans>반려 사유 (댓글로 남습니다)</Trans>
+        </span>
         <textarea
           className={input}
           rows={4}
@@ -201,7 +176,7 @@ function RejectForm({
       </label>
       <Actions
         onCancel={() => close(null)}
-        confirmLabel={text.reject}
+        confirmLabel={t({ message: "반려", context: "confirm: reject" })}
         disabled={!comment.trim()}
       />
     </form>

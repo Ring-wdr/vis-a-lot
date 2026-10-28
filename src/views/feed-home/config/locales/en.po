@@ -7,6 +7,10 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "{days}일 안·지남"
+msgstr "within {days}d or overdue"
+
 #: src/views/feed-home/ui/HomeView.tsx
 msgid "게시물"
 msgstr "Posts"
@@ -27,9 +31,22 @@ msgstr "Groups"
 msgid "그룹을 불러오지 못했습니다 ({groupsError})"
 msgstr "Couldn't load groups ({groupsError})"
 
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "기한 임박"
+msgstr "Due soon"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "내 작업 요약"
+msgstr "My work summary"
+
 #: src/views/feed-home/ui/HomeView.tsx
 msgid "다시 시도"
 msgstr "Retry"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgctxt "my work summary: posts assigned to me"
+msgid "담당"
+msgstr "Assigned"
 
 #: src/views/feed-home/ui/HomeView.tsx
 msgid "더 보기"
@@ -46,6 +63,14 @@ msgstr "Loading"
 #: src/views/feed-home/ui/HomeView.tsx
 msgid "새 게시물 만들기"
 msgstr "Create a post"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "승인 대기"
+msgstr "To approve"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "요약을 불러오지 못했습니다 ({reason})"
+msgstr "Couldn't load the summary ({reason})"
 
 #: src/views/feed-home/ui/HomeView.tsx
 msgid "전체"

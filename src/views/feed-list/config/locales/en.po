@@ -1,0 +1,124 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "· {failed}건 실패"
+msgstr "· {failed} failed"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "{count}건 선택"
+msgstr "{count} selected"
+
+#. 저장할 뷰의 기본 이름. {groupName}은 그룹 이름
+#: src/views/feed-list/ui/ListView.tsx
+msgid "{groupName} 리스트"
+msgstr "{groupName} list"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "{total, plural, other {#건}}"
+msgstr "{total, plural, one {# post} other {# posts}}"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "{total, plural, other {#건}} 중 {shown}건 표시"
+msgstr "{total, plural, one {# post} other {# posts}}, showing {shown}"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "{updated}건 바꿈"
+msgstr "{updated} updated"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "게시물을 불러오지 못했습니다"
+msgstr "Couldn't load posts"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "결과 닫기"
+msgstr "Close result"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgctxt "bulk edit field: due date"
+msgid "기한"
+msgstr "Due"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "기한 없애기"
+msgstr "Clear due date"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "다시 시도"
+msgstr "Retry"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "담당자"
+msgstr "Assignee"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "담당자 없음"
+msgstr "No assignee"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "뷰로 저장"
+msgstr "Save view"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "뷰를 저장하지 못했습니다: {reason}"
+msgstr "Couldn't save the view: {reason}"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "상태"
+msgstr "Status"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "새 기한"
+msgstr "New due date"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "새로 받는 중…"
+msgstr "Refreshing…"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "선택 해제"
+msgstr "Deselect"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgctxt "bulk edit: clear the field"
+msgid "없음"
+msgstr "None"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "우선순위"
+msgstr "Priority"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgctxt "bulk edit field: post type"
+msgid "유형"
+msgstr "Type"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "일괄 변경"
+msgstr "Bulk edit"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "적용"
+msgstr "Apply"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "조건에 맞는 게시물이 없습니다"
+msgstr "No posts match these filters"
+
+#: src/views/feed-list/ui/BulkBar.tsx
+msgid "팀"
+msgstr "Team"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "필터 지우기"
+msgstr "Clear filters"
+
+#: src/views/feed-list/ui/ListView.tsx
+msgid "필터를 줄이거나 지워 보세요."
+msgstr "Try removing or clearing some filters."

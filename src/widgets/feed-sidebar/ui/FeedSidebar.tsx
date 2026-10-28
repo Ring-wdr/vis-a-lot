@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   Bell,
   ChevronRight,
@@ -25,8 +26,8 @@ import { useViews } from "@/shared/api/feed/post-queries";
 import { useGroups, useMe, useUnreadCount } from "@/shared/api/feed/queries";
 import type { Group, SavedView } from "@/shared/api/feed/types";
 import { FEED, groupHref, isCurrent } from "@/shared/config/feed-routes";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { countBadge, sideHeading, sideLink } from "@/shared/ui/feed-styles";
+import "../config/messages";
 
 function SideLink({
   href,
@@ -55,62 +56,7 @@ function SideLink({
 
 const ICON = 14;
 
-const messages = defineMessages({
-  ko: {
-    list: "리스트",
-    board: "보드",
-    reportActivity: "활동 보고",
-    reportStatus: "현황 보고",
-    groupSettings: "그룹 설정",
-    sharedIn: (group: string | undefined) => `${group ?? "그룹"} 공유`,
-    savedViews: "저장된 뷰",
-    loadingViews: "뷰를 불러오는 중",
-    viewsFailed: "뷰를 불러오지 못했습니다",
-    allViews: (n: number) => `모든 뷰 (${n})`,
-    nav: "피드",
-    feed: "피드",
-    home: "홈",
-    my: "내 작업",
-    inbox: "알림함",
-    unread: "개 안읽음",
-    loadingGroups: "그룹을 불러오는 중",
-    groupsFailed: (reason: string) => `그룹을 불러오지 못했습니다 (${reason})`,
-    admin: "관리 콘솔",
-    dev: "개발 장치",
-    outbox: "발송 로그",
-    seed: "시드",
-    clock: "시계",
-  },
-  en: {
-    list: "List",
-    board: "Board",
-    reportActivity: "Activity report",
-    reportStatus: "Status report",
-    groupSettings: "Group settings",
-    sharedIn: (group: string | undefined) =>
-      group ? `shared in ${group}` : "shared with group",
-    savedViews: "Saved views",
-    loadingViews: "Loading views",
-    viewsFailed: "Couldn't load views",
-    allViews: (n: number) => `All views (${n})`,
-    nav: "Feed",
-    feed: "Feed",
-    home: "Home",
-    my: "My work",
-    inbox: "Inbox",
-    unread: " unread",
-    loadingGroups: "Loading groups",
-    groupsFailed: (reason: string) => `Couldn't load groups (${reason})`,
-    admin: "Admin console",
-    dev: "Dev tools",
-    outbox: "Outbox log",
-    seed: "Seed",
-    clock: "Clock",
-  },
-});
-
 function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
-  const text = useT(messages);
   const key = group.keyPrefix;
   return (
     <li>
@@ -124,7 +70,7 @@ function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
             href={groupHref(FEED.list, key)}
             icon={<List size={ICON} />}
           >
-            {text.list}
+            <Trans context="sidebar: group list page">리스트</Trans>
           </SideLink>
         </li>
         <li>
@@ -132,7 +78,7 @@ function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
             href={groupHref(FEED.board, key)}
             icon={<Columns3 size={ICON} />}
           >
-            {text.board}
+            <Trans context="sidebar: group board page">보드</Trans>
           </SideLink>
         </li>
         <li>
@@ -140,7 +86,7 @@ function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
             href={groupHref(FEED.reportActivity, key)}
             icon={<FileBarChart size={ICON} />}
           >
-            {text.reportActivity}
+            <Trans>활동 보고</Trans>
           </SideLink>
         </li>
         <li>
@@ -148,7 +94,7 @@ function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
             href={groupHref(FEED.reportStatus, key)}
             icon={<PieChart size={ICON} />}
           >
-            {text.reportStatus}
+            <Trans>현황 보고</Trans>
           </SideLink>
         </li>
         {admin && (
@@ -157,7 +103,7 @@ function GroupLinks({ group, admin }: { group: Group; admin: boolean }) {
               href={groupHref(FEED.settingsGroup, key)}
               icon={<Settings size={ICON} />}
             >
-              {text.groupSettings}
+              <Trans>그룹 설정</Trans>
             </SideLink>
           </li>
         )}
@@ -183,9 +129,15 @@ function ViewLink({
   /** 그룹 뷰면 이름 옆에 접두사(FD)를 붙여 같은 이름을 가른다 */
   groupKey?: string;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const pathname = usePathname();
   const search = useSearchParams();
+  const sharedIn = groupKey
+    ? t`${groupKey} 공유`
+    : t({
+        message: "그룹 공유",
+        context: "sidebar tooltip: view shared with a group",
+      });
   const current =
     pathname.replace(/\/+$/, "") === FEED.view && search.get("id") === view.id;
   return (
@@ -193,9 +145,7 @@ function ViewLink({
       href={`${FEED.view}?id=${encodeURIComponent(view.id)}`}
       className={sideLink()}
       aria-current={current ? "page" : undefined}
-      title={
-        view.shared ? `${view.name} (${text.sharedIn(groupKey)})` : view.name
-      }
+      title={view.shared ? `${view.name} (${sharedIn})` : view.name}
     >
       <span className="flex-none text-fg-muted" aria-hidden="true">
         {VIEW_ICON[view.id] ?? VIEW_ICON[view.layout]}
@@ -212,7 +162,7 @@ function ViewLink({
 
 /** 사이드바 "저장된 뷰": 고정한 뷰(탐색·관심 포함) + 나머지는 "모든 뷰"에 접어 둔다 */
 function SavedViewLinks() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const views = useViews();
   const groups = useGroups();
   const [open, setOpen] = useState(false);
@@ -220,14 +170,23 @@ function SavedViewLinks() {
     groups.data?.find((g) => g.id === v.groupId)?.keyPrefix;
   const pinned = views.data?.filter((v) => v.pinned) ?? [];
   const rest = views.data?.filter((v) => !v.pinned) ?? [];
+  const restCount = rest.length;
   return (
     <>
-      <p className={sideHeading()}>{text.savedViews}</p>
+      <p className={sideHeading()}>
+        <Trans>저장된 뷰</Trans>
+      </p>
       {views.isPending && (
-        <p className="px-2 py-1 text-xs text-fg-muted">{text.loadingViews}</p>
+        <p className="px-2 py-1 text-xs text-fg-muted">
+          <Trans>뷰를 불러오는 중</Trans>
+        </p>
       )}
       {views.isError && (
-        <p className="px-2 py-1 text-xs text-fg-muted">{text.viewsFailed}</p>
+        <p className="px-2 py-1 text-xs text-fg-muted">
+          <Trans context="sidebar: saved views list">
+            뷰를 불러오지 못했습니다
+          </Trans>
+        </p>
       )}
       <ul className="flex flex-col gap-0.5">
         {pinned.map((v) => (
@@ -250,7 +209,7 @@ function SavedViewLinks() {
               className="transition-transform group-aria-expanded/more:rotate-90"
               aria-hidden="true"
             />
-            {text.allViews(rest.length)}
+            {t`모든 뷰 (${restCount})`}
           </button>
           {open && (
             <ul id="feed-all-views" className="flex flex-col gap-0.5">
@@ -269,34 +228,42 @@ function SavedViewLinks() {
 
 /** 왼쪽 사이드바: 개인 화면, 그룹별 화면, 저장된 뷰, 관리·개발 장치 */
 export function FeedSidebar() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const groups = useGroups();
   const unread = useUnreadCount();
+  const reason = groups.error?.message;
   const me = useMe();
   const systemAdmin = me.data?.isAdmin === true;
 
   return (
-    <nav className="h-full overflow-y-auto p-2" aria-label={text.nav}>
+    <nav className="h-full overflow-y-auto p-2" aria-label={t`피드`}>
       {/* 안쪽 상자는 내용만큼 늘어나 스크롤되고(항목이 찌그러지지 않게), 짧으면 화면 높이를 채워 개발 장치를 아래에 붙인다 */}
       <div className="flex min-h-full flex-col gap-0.5">
         <Link
           href={FEED.home}
           className="mb-2 px-2 py-1.5 text-base font-bold text-fg no-underline"
         >
-          {text.feed}
+          <Trans>피드</Trans>
         </Link>
         <SideLink href={FEED.home} icon={<Home size={ICON} />}>
-          {text.home}
+          <Trans>홈</Trans>
         </SideLink>
         <SideLink href={FEED.my} icon={<ClipboardList size={ICON} />}>
-          {text.my}
+          <Trans>내 작업</Trans>
         </SideLink>
         <SideLink href={FEED.inbox} icon={<Bell size={ICON} />}>
-          {text.inbox}
+          <Trans>알림함</Trans>
           {!!unread.data && (
             <span className={countBadge()}>
               {unread.data > 99 ? "99+" : unread.data}
-              <span className="sr-only">{text.unread}</span>
+              <span className="sr-only">
+                <Trans
+                  context="unit after the unread count"
+                  comment="숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다"
+                >
+                  개 안읽음
+                </Trans>
+              </span>
             </span>
           )}
         </SideLink>
@@ -312,12 +279,12 @@ export function FeedSidebar() {
         </ul>
         {groups.isPending && (
           <p className="px-2 py-1 text-xs text-fg-muted">
-            {text.loadingGroups}
+            <Trans>그룹을 불러오는 중</Trans>
           </p>
         )}
         {groups.isError && (
           <p className="px-2 py-1 text-xs text-fg-muted">
-            {text.groupsFailed(groups.error.message)}
+            {t`그룹을 불러오지 못했습니다 (${reason})`}
           </p>
         )}
 
@@ -326,18 +293,20 @@ export function FeedSidebar() {
         <div className="mt-auto flex flex-col gap-0.5 border-t border-line pt-2">
           {systemAdmin && (
             <SideLink href={FEED.admin} icon={<Shield size={ICON} />}>
-              {text.admin}
+              <Trans>관리 콘솔</Trans>
             </SideLink>
           )}
-          <p className={sideHeading({ class: "mt-1" })}>{text.dev}</p>
+          <p className={sideHeading({ class: "mt-1" })}>
+            <Trans>개발 장치</Trans>
+          </p>
           <SideLink href={FEED.devOutbox} icon={<Mail size={ICON} />}>
-            {text.outbox}
+            <Trans>발송 로그</Trans>
           </SideLink>
           <SideLink href={FEED.devSeed} icon={<Database size={ICON} />}>
-            {text.seed}
+            <Trans>시드</Trans>
           </SideLink>
           <SideLink href={FEED.devClock} icon={<Clock size={ICON} />}>
-            {text.clock}
+            <Trans>시계</Trans>
           </SideLink>
         </div>
       </div>

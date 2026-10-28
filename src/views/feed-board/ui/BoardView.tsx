@@ -2,6 +2,8 @@
 
 // 보드 (/feed/board?g=FD): 상태 열 칸반. 필터는 리스트와 같은 URL 규칙, 스윔레인은 ?lane=team.
 
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Columns3, RefreshCw } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
@@ -13,38 +15,15 @@ import { withGroup } from "@/features/filter-posts/model/filter-url";
 import { useListState } from "@/features/filter-posts/model/use-list-state";
 import { FilterBar } from "@/features/filter-posts/ui/FilterBar";
 import { usePostQuery } from "@/shared/api/feed/post-queries";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/Loading";
 import { segmented } from "@/shared/ui/segmented";
 import { BoardSkeleton } from "@/widgets/post-board/ui/BoardSkeleton";
 import { PostBoard } from "@/widgets/post-board/ui/PostBoard";
+import "../config/messages";
 
 const seg = segmented();
-
-const messages = defineMessages({
-  ko: {
-    title: (group: string) => `${group} 보드`,
-    total: (n: number) => `${n}건`,
-    swimlane: "스윔레인",
-    none: "없음",
-    team: "팀",
-    loadFailed: "게시물을 불러오지 못했습니다",
-    retry: "다시 시도",
-    empty: "조건에 맞는 게시물이 없습니다. 필터를 줄여 보세요.",
-  },
-  en: {
-    title: (group: string) => `${group} board`,
-    total: (n: number) => `${n} ${n === 1 ? "post" : "posts"}`,
-    swimlane: "Lanes",
-    none: "None",
-    team: "Team",
-    loadFailed: "Couldn't load posts",
-    retry: "Retry",
-    empty: "No posts match these filters. Try removing some.",
-  },
-});
 
 function useLane() {
   const search = useSearchParams();
@@ -61,7 +40,7 @@ function useLane() {
 }
 
 export function BoardView() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const route = useRouteGroup();
   const { group, detail, members } = route;
   const [state, update] = useListState();
@@ -81,24 +60,33 @@ export function BoardView() {
   const query = usePostQuery(request, !!group);
 
   if (!group) return <RouteGroupFallback state={route} />;
+  const groupName = group.name;
+  const total = query.data?.total ?? 0;
 
   return (
     <div className="flex min-w-0 flex-col gap-3 p-4 md:p-6">
       <header className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-bold">{text.title(group.name)}</h1>
+        <h1 className="text-xl font-bold">
+          {t({
+            message: `${groupName} 보드`,
+            comment: "{groupName}은 그룹 이름",
+          })}
+        </h1>
         <span className="font-mono text-xs text-fg-muted">
           {group.keyPrefix}
         </span>
         <span className="text-xs text-fg-muted tabular-nums">
-          {query.data ? text.total(query.data.total) : ""}
+          {query.data ? t`${plural(total, { other: "#건" })}` : ""}
         </span>
         <fieldset className="ml-auto inline-flex items-center gap-1.5">
-          <legend className="sr-only">{text.swimlane}</legend>
+          <legend className="sr-only">
+            <Trans>스윔레인</Trans>
+          </legend>
           <span
             className="text-xs whitespace-nowrap text-fg-muted"
             aria-hidden="true"
           >
-            {text.swimlane}
+            <Trans>스윔레인</Trans>
           </span>
           <span className={seg.root({ class: "self-auto" })}>
             <button
@@ -107,7 +95,7 @@ export function BoardView() {
               aria-pressed={!lane}
               onClick={() => setLane(null)}
             >
-              {text.none}
+              <Trans context="board swimlane: no lanes">없음</Trans>
             </button>
             <button
               type="button"
@@ -115,7 +103,7 @@ export function BoardView() {
               aria-pressed={lane === "team"}
               onClick={() => setLane("team")}
             >
-              {text.team}
+              <Trans>팀</Trans>
             </button>
           </span>
         </fieldset>
@@ -134,7 +122,10 @@ export function BoardView() {
       {query.isPending ? (
         <BoardSkeleton />
       ) : query.isError ? (
-        <EmptyState icon={<Columns3 size={20} />} title={text.loadFailed}>
+        <EmptyState
+          icon={<Columns3 size={20} />}
+          title={t`게시물을 불러오지 못했습니다`}
+        >
           <p>{query.error.message}</p>
           <button
             type="button"
@@ -142,13 +133,15 @@ export function BoardView() {
             onClick={() => query.refetch()}
           >
             <RefreshCw size={14} aria-hidden="true" />
-            {text.retry}
+            <Trans>다시 시도</Trans>
           </button>
         </EmptyState>
       ) : (
         <>
           {query.data.posts.length === 0 && (
-            <p className="text-xs text-fg-muted">{text.empty}</p>
+            <p className="text-xs text-fg-muted">
+              <Trans>조건에 맞는 게시물이 없습니다. 필터를 줄여 보세요.</Trans>
+            </p>
           )}
           <PostBoard
             posts={query.data.posts}

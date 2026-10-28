@@ -1,22 +1,22 @@
 "use client";
 
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { Menu as MenuIcon, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { UserSwitcher } from "@/features/switch-user/ui/UserSwitcher";
 import { FEED } from "@/shared/config/feed-routes";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import { inAllLocales } from "@/shared/lib/lingui";
 import { AiBadge } from "@/shared/ui/AiBadge";
 import { button } from "@/shared/ui/button";
 import { navButton } from "@/shared/ui/nav";
 import { StableText } from "@/shared/ui/StableText";
 import { CommandPalette } from "@/widgets/command-palette/ui/CommandPalette";
+import "./messages";
 import { PreferencesMenu } from "./PreferencesMenu";
 
-const messages = defineMessages({
-  ko: { menu: "메뉴", search: "검색·명령", newPost: "새 게시물" },
-  en: { menu: "Menu", search: "Search & commands", newPost: "New post" },
-});
+const NEW_POST = msg`새 게시물`;
 
 /** Cmd/Ctrl+K: 커맨드 팔레트를 열고 닫는다 */
 function usePaletteShortcut(toggle: () => void) {
@@ -42,7 +42,7 @@ export function FeedTopBar({
   menuOpen: boolean;
   onToggleMenu: () => void;
 }) {
-  const text = useT(messages);
+  const { t, i18n } = useLingui();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = () => setPaletteOpen(true);
   usePaletteShortcut(useCallback(() => setPaletteOpen((open) => !open), []));
@@ -52,7 +52,7 @@ export function FeedTopBar({
         <button
           type="button"
           className={navButton({ class: "md:hidden" })}
-          aria-label={text.menu}
+          aria-label={t`메뉴`}
           aria-expanded={menuOpen}
           aria-controls="feed-sidebar"
           onClick={onToggleMenu}
@@ -68,7 +68,7 @@ export function FeedTopBar({
         onClick={openPalette}
       >
         <Search size={14} aria-hidden="true" />
-        <span className="truncate whitespace-nowrap">{text.search}</span>
+        <span className="truncate whitespace-nowrap">{t`검색·명령`}</span>
         <kbd className="ml-auto hidden rounded-xs border border-line px-1 font-sans text-2xs sm:inline">
           Ctrl K
         </kbd>
@@ -76,7 +76,7 @@ export function FeedTopBar({
       <div className="ml-auto flex items-center gap-2">
         <Link
           href={FEED.new}
-          aria-label={text.newPost}
+          aria-label={i18n._(NEW_POST)}
           className={button({
             variant: "primary",
             size: "sm",
@@ -85,7 +85,7 @@ export function FeedTopBar({
         >
           <Plus size={14} aria-hidden="true" />
           <span className="hidden sm:inline" aria-hidden="true">
-            <StableText ko={messages.ko.newPost} en={messages.en.newPost} />
+            <StableText {...inAllLocales(NEW_POST)} />
           </span>
         </Link>
         <AiBadge />

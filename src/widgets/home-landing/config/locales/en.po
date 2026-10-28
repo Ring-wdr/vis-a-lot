@@ -1,0 +1,54 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. {historyCount}는 언어에 맞춰 적은 건수(받는 중이면 …), historyN은 복수형을 고르는 수
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "{historyN, plural, other {그렸던 차트 {historyCount}건을 보기 전용으로 다시 엽니다.}}"
+msgstr "{historyN, plural, one {Reopen {historyCount} past chart read-only.} other {Reopen {historyCount} past charts read-only.}}"
+
+#. {readyCount}는 언어에 맞춰 적은 개수(받는 중이면 …), readyN은 복수형을 고르는 수
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "{readyN, plural, other {쓸 수 있는 데이터 {readyCount}개를 살펴보고 고칩니다.}}"
+msgstr "{readyN, plural, one {Review and edit {readyCount} ready dataset.} other {Review and edit {readyCount} ready datasets.}}"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "CSV나 zip을 올려 새 데이터로 등록합니다."
+msgstr "Upload a CSV or zip to register it as new data."
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "gallery에서 데이터와 축을 고르고 draw합니다."
+msgstr "Pick data and axes in gallery, then draw."
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "기록 다시 보기"
+msgstr "Revisit history"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "데이터 관리"
+msgstr "Manage data"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "데이터 올리기"
+msgstr "Upload data"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "무엇을 할까요?"
+msgstr "What would you like to do?"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "브라우저 안의 서버가 데이터를 조회해 차트를 PNG로 그립니다. 새 차트를 그리거나, 그렸던 차트를 다시 보거나, 데이터를 먼저 올려 주세요."
+msgstr "A server inside your browser queries the data and draws charts as PNGs. Draw a new chart, revisit past ones, or upload data first."
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "새 차트 그리기"
+msgstr "Draw a new chart"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "시작하기"
+msgstr "Get started"

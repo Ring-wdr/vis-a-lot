@@ -2,6 +2,8 @@
 
 // 리스트 (/feed/list?g=FD): 필터(URL) + 정렬·그룹핑·열 + 다중 선택 일괄 변경 + 뷰로 저장. 행을 누르면 옆 패널.
 
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { BookmarkPlus, ListX, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -22,44 +24,15 @@ import {
 import { askSaveView } from "@/features/save-view/ui/save-view-dialog";
 import { usePostQuery, useSaveView } from "@/shared/api/feed/post-queries";
 import { FEED } from "@/shared/config/feed-routes";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/Loading";
+import "../config/messages";
 import { BulkBar } from "./BulkBar";
 
-const messages = defineMessages({
-  ko: {
-    defaultViewName: (group: string) => `${group} 리스트`,
-    saveFailed: (reason: string) => `뷰를 저장하지 못했습니다: ${reason}`,
-    total: (n: number) => `${n}건`,
-    shown: (n: number) => ` 중 ${n}건 표시`,
-    saveAsView: "뷰로 저장",
-    refreshing: "새로 받는 중…",
-    loadFailed: "게시물을 불러오지 못했습니다",
-    retry: "다시 시도",
-    empty: "조건에 맞는 게시물이 없습니다",
-    emptyHint: "필터를 줄이거나 지워 보세요.",
-    clearFilter: "필터 지우기",
-  },
-  en: {
-    defaultViewName: (group: string) => `${group} list`,
-    saveFailed: (reason: string) => `Couldn't save the view: ${reason}`,
-    total: (n: number) => `${n} ${n === 1 ? "post" : "posts"}`,
-    shown: (n: number) => `, showing ${n}`,
-    saveAsView: "Save view",
-    refreshing: "Refreshing…",
-    loadFailed: "Couldn't load posts",
-    retry: "Retry",
-    empty: "No posts match these filters",
-    emptyHint: "Try removing or clearing some filters.",
-    clearFilter: "Clear filters",
-  },
-});
-
 export function ListView() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const route = useRouteGroup();
   const { group, detail, members } = route;
   const [state, update] = useListState();
@@ -85,11 +58,17 @@ export function ListView() {
 
   const teams = detail?.teams ?? [];
   const postTypes = detail?.postTypes ?? [];
+  const groupName = group.name;
+  const total = query.data?.total ?? 0;
+  const shown = posts.length;
 
   async function saveAsView() {
     if (!group) return;
     const answer = await askSaveView({
-      defaultName: text.defaultViewName(group.name),
+      defaultName: t({
+        message: `${groupName} 리스트`,
+        comment: "저장할 뷰의 기본 이름. {groupName}은 그룹 이름",
+      }),
       groupName: group.name,
     });
     if (!answer) return;
@@ -106,7 +85,8 @@ export function ListView() {
       });
       router.push(`${FEED.view}?id=${encodeURIComponent(view.id)}`);
     } catch (e) {
-      showAlert(text.saveFailed(e instanceof Error ? e.message : String(e)));
+      const reason = e instanceof Error ? e.message : String(e);
+      showAlert(t`뷰를 저장하지 못했습니다: ${reason}`);
     }
   }
 
@@ -118,10 +98,11 @@ export function ListView() {
           {group.keyPrefix}
         </span>
         <span className="text-xs text-fg-muted tabular-nums">
-          {query.data ? text.total(query.data.total) : ""}
-          {query.data && query.data.total > posts.length
-            ? text.shown(posts.length)
-            : ""}
+          {!query.data
+            ? ""
+            : total > shown
+              ? t`${plural(total, { other: "#건" })} 중 ${shown}건 표시`
+              : t`${plural(total, { other: "#건" })}`}
         </span>
         <button
           type="button"
@@ -133,7 +114,7 @@ export function ListView() {
           onClick={saveAsView}
         >
           <BookmarkPlus size={14} aria-hidden="true" />
-          {text.saveAsView}
+          <Trans>뷰로 저장</Trans>
         </button>
       </header>
 
@@ -156,7 +137,9 @@ export function ListView() {
           onChange={(columns) => update({ columns })}
         />
         {query.isFetching && !query.isPending && (
-          <span className="text-2xs text-fg-muted">{text.refreshing}</span>
+          <span className="text-2xs text-fg-muted">
+            <Trans>새로 받는 중…</Trans>
+          </span>
         )}
       </div>
 
@@ -173,7 +156,10 @@ export function ListView() {
       {query.isPending ? (
         <TableSkeleton />
       ) : query.isError ? (
-        <EmptyState icon={<ListX size={20} />} title={text.loadFailed}>
+        <EmptyState
+          icon={<ListX size={20} />}
+          title={t`게시물을 불러오지 못했습니다`}
+        >
           <p>{query.error.message}</p>
           <button
             type="button"
@@ -181,18 +167,23 @@ export function ListView() {
             onClick={() => query.refetch()}
           >
             <RefreshCw size={14} aria-hidden="true" />
-            {text.retry}
+            <Trans>다시 시도</Trans>
           </button>
         </EmptyState>
       ) : posts.length === 0 ? (
-        <EmptyState icon={<ListX size={20} />} title={text.empty}>
-          <p>{text.emptyHint}</p>
+        <EmptyState
+          icon={<ListX size={20} />}
+          title={t`조건에 맞는 게시물이 없습니다`}
+        >
+          <p>
+            <Trans>필터를 줄이거나 지워 보세요.</Trans>
+          </p>
           <button
             type="button"
             className={button({ size: "sm", class: "mt-2" })}
             onClick={() => update({ filter: {} })}
           >
-            {text.clearFilter}
+            <Trans>필터 지우기</Trans>
           </button>
         </EmptyState>
       ) : (
