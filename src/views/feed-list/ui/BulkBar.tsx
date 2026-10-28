@@ -156,7 +156,13 @@ export function BulkBar({
             showValue={false}
             disabled={busy}
             options={[
-              { value: null, label: t`담당자 없음` },
+              {
+                value: null,
+                label: t({
+                  message: "담당자 없음",
+                  context: "bulk edit: unassign",
+                }),
+              },
               ...users.map((u) => ({ value: u.id, label: u.name })),
             ]}
             onPick={(assigneeId) => apply({ assigneeId }, assigneeField)}
@@ -220,7 +226,7 @@ export function BulkBar({
             onClick={() => onSelectedChange(new Set())}
           >
             <X size={12} aria-hidden="true" />
-            <Trans>선택 해제</Trans>
+            <Trans context="bulk edit bar">선택 해제</Trans>
           </button>
         </div>
       )}

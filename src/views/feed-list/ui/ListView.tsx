@@ -114,7 +114,7 @@ export function ListView() {
           onClick={saveAsView}
         >
           <BookmarkPlus size={14} aria-hidden="true" />
-          <Trans>뷰로 저장</Trans>
+          <Trans context="list header button">뷰로 저장</Trans>
         </button>
       </header>
 

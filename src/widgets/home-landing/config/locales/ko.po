@@ -50,5 +50,6 @@ msgid "새 차트 그리기"
 msgstr "새 차트 그리기"
 
 #: src/widgets/home-landing/ui/HomeLanding.tsx
+msgctxt "home landing actions"
 msgid "시작하기"
 msgstr "시작하기"

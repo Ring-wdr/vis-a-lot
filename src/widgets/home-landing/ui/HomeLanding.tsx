@@ -84,7 +84,13 @@ export function HomeLanding() {
             </Trans>
           </p>
         </header>
-        <section className="grid gap-3 sm:grid-cols-2" aria-label={t`시작하기`}>
+        <section
+          className="grid gap-3 sm:grid-cols-2"
+          aria-label={t({
+            message: "시작하기",
+            context: "home landing actions",
+          })}
+        >
           <ActionCard
             Icon={LayoutGrid}
             title={t`새 차트 그리기`}

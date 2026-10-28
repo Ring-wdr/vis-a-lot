@@ -58,12 +58,14 @@ msgid "담당자"
 msgstr "Assignee"
 
 #: src/views/feed-list/ui/BulkBar.tsx
+msgctxt "bulk edit: unassign"
 msgid "담당자 없음"
-msgstr "No assignee"
+msgstr "no assignee"
 
 #: src/views/feed-list/ui/ListView.tsx
+msgctxt "list header button"
 msgid "뷰로 저장"
-msgstr "Save view"
+msgstr "Save as view"
 
 #: src/views/feed-list/ui/ListView.tsx
 msgid "뷰를 저장하지 못했습니다: {reason}"
@@ -82,8 +84,9 @@ msgid "새로 받는 중…"
 msgstr "Refreshing…"
 
 #: src/views/feed-list/ui/BulkBar.tsx
+msgctxt "bulk edit bar"
 msgid "선택 해제"
-msgstr "Deselect"
+msgstr "Clear selection"
 
 #: src/views/feed-list/ui/BulkBar.tsx
 msgctxt "bulk edit: clear the field"
