@@ -12,9 +12,27 @@ import {
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
 import { type ChartSpec, isTerminal } from "@/shared/api/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
 import { selectStyles } from "@/shared/ui/select-styles";
+
+const messages = defineMessages({
+  ko: {
+    rendering:
+      "렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요.",
+    cell: (rows: number, cols: number) => `${rows}행 ${cols}열`,
+    size: (rows: number, cols: number) => `${rows}행 × ${cols}열`,
+    current: (grid: string) => ` (현재 ${grid})`,
+  },
+  en: {
+    rendering:
+      "The grid size can't change while rendering. Change it after it finishes or is cancelled.",
+    cell: (rows: number, cols: number) => `${rows} rows, ${cols} columns`,
+    size: (rows: number, cols: number) => `${rows} rows × ${cols} cols`,
+    current: (grid: string) => ` (now ${grid})`,
+  },
+});
 
 const s = selectStyles();
 
@@ -34,6 +52,7 @@ const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
  * 그린 차트가 있으면 draw 없이 바로 전체를 다시 그리고, 렌더링 중에는 바꿀 수 없어 팝업으로 알린다.
  */
 export function GridPicker() {
+  const text = useT(messages);
   const draft = useWorkspace((s) => s.draft);
   const current = useWorkspace((s) => s.current);
   const page = useWorkspace((s) => s.page);
@@ -77,9 +96,7 @@ export function GridPicker() {
 
   const pick = (next: Grid) => {
     if (current && rendering) {
-      showAlert(
-        "렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요.",
-      );
+      showAlert(text.rendering);
       return;
     }
     updateDraft({ grid: next });
@@ -114,7 +131,7 @@ export function GridPicker() {
                     key={`${row}-${col}`}
                     type="button"
                     className="aspect-square cursor-pointer rounded-xs border border-line bg-elevated focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent data-active:border-accent data-active:bg-accent-soft data-selected:not-data-active:border-accent-line"
-                    aria-label={`${cell.rows}행 ${cell.cols}열`}
+                    aria-label={text.cell(cell.rows, cell.cols)}
                     data-active={
                       (row < preview.rows && col < preview.cols) || undefined
                     }
@@ -136,8 +153,9 @@ export function GridPicker() {
               className="text-center text-xs text-fg-secondary"
               aria-live="polite"
             >
-              {preview.rows}행 × {preview.cols}열
-              {!sameGrid(preview, selected) && ` (현재 ${gridLabel(selected)})`}
+              {text.size(preview.rows, preview.cols)}
+              {!sameGrid(preview, selected) &&
+                text.current(gridLabel(selected))}
             </span>
           </div>
         )}

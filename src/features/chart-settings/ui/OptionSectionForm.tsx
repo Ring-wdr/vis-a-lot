@@ -8,6 +8,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import type { OptionSection } from "@/entities/chart/model/chart-options";
+import { defineMessages, useLocale, useT } from "@/shared/lib/i18n";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import {
@@ -15,9 +16,9 @@ import {
   getPath,
   hasSection,
   type OptionField,
-  SECTION_HINTS,
-  SECTION_LABELS,
-  SECTION_PARTS,
+  sectionHints,
+  sectionLabels,
+  sectionParts,
   sectionPaths,
 } from "../model/option-fields";
 import {
@@ -32,8 +33,23 @@ const check = "flex items-center gap-1.5 text-fg-secondary";
 const control =
   "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg";
 
+const messages = defineMessages({
+  ko: {
+    change: (label: string) => `${label} 바꾸기`,
+    none: "없음",
+    clear: "비우기",
+    auto: "자동",
+  },
+  en: {
+    change: (label: string) => `Change ${label}`,
+    none: "None",
+    clear: "Clear",
+    auto: "Auto",
+  },
+});
+
 /**
- * 속성 구역 하나의 편집 폼(react-hook-form). 필드 표(SECTION_FIELDS, 하위 항목이 있으면 그 항목의 필드)대로
+ * 속성 구역 하나의 편집 폼(react-hook-form). 필드 표(sectionFields(), 하위 항목이 있으면 그 항목의 필드)대로
  * options.<경로> 필드를 그린다. 값은 팝업의 폼에만 쓰고, 서버나 draft로 보내는 것은 팝업의 확인 버튼이다.
  */
 export function OptionSectionForm({
@@ -64,8 +80,10 @@ export function OptionSectionForm({
   } = useFormContext<OptionsFormValues>();
   const values = useWatch({ control: form, name: "options" });
   const patch = useOptionsPatch({ original, base });
-  const hint = SECTION_HINTS[section];
-  const parts = SECTION_PARTS[section];
+  // 필드 표(라벨)는 지금 언어로 읽으므로 언어가 바뀌면 다시 그린다.
+  useLocale();
+  const hint = sectionHints()[section];
+  const parts = sectionParts()[section];
   const partLabel = (parts?.find((p) => p.id === part) ?? parts?.[0])?.label;
 
   // 구역을 따르는 값으로 돌리고, 저장할 때 그 구역을 부분 값에서 지우도록 표시한다.
@@ -85,7 +103,7 @@ export function OptionSectionForm({
   return (
     <div className="flex flex-col gap-2.5 text-ui">
       <h3 className="text-ui font-semibold">
-        {SECTION_LABELS[section]}
+        {sectionLabels()[section]}
         {partLabel && ` · ${partLabel}`}
       </h3>
       {children}
@@ -144,6 +162,7 @@ function FieldInput({
   disabled: boolean;
   onCommit: (value: unknown) => void;
 }) {
+  const text = useT(messages);
   const id = useId();
   switch (field.kind) {
     case "boolean":
@@ -217,11 +236,11 @@ function FieldInput({
               className="size-5.5 flex-none rounded-sm border border-line"
               style={{ background: color || "transparent" }}
               color={color || "#ffffff"}
-              label={`${field.label} 바꾸기`}
+              label={text.change(field.label)}
               disabled={disabled}
               onCommit={onCommit}
             />
-            <code className="text-2xs text-fg-muted">{color || "없음"}</code>
+            <code className="text-2xs text-fg-muted">{color || text.none}</code>
             {field.optional && color && (
               <button
                 type="button"
@@ -229,7 +248,7 @@ function FieldInput({
                 disabled={disabled}
                 onClick={() => onCommit("")}
               >
-                비우기
+                {text.clear}
               </button>
             )}
           </span>
@@ -244,7 +263,7 @@ function FieldInput({
             id={id}
             type="number"
             value={value === null || value === undefined ? "" : String(value)}
-            placeholder={field.nullable ? "자동" : undefined}
+            placeholder={field.nullable ? text.auto : undefined}
             min={field.min}
             max={field.max}
             step={field.step ?? 1}

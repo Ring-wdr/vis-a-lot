@@ -8,10 +8,44 @@ import { field } from "@/entities/post/ui/styles";
 import { groupsApi } from "@/shared/api/feed/groups";
 import type { GroupDetail, UpdateGroupRequest } from "@/shared/api/feed/types";
 import { FEED, groupHref } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { settings } from "@/shared/ui/feed-settings-styles";
 import { Spinner } from "@/shared/ui/Loading";
 import type { useGroupEdit } from "@/views/feed-settings-group/model/use-group-edit";
+
+const messages = defineMessages({
+  ko: {
+    saveFailed: "기본 정보를 저장하지 못했습니다",
+    title: "기본 정보",
+    name: "이름",
+    keyPrefix: "이슈 키 접두사",
+    prefixNoteBefore: "접두사를 바꿔도 기존 게시물의 키(",
+    prefixNoteAfter: ")는 그대로이고, 새 게시물부터 새 접두사를 씁니다.",
+    prefixInvalid: "접두사는 영문 대문자로 시작하는 대문자·숫자 2~6자입니다.",
+    description: "설명",
+    private: "비공개 그룹",
+    privateHint: "멤버와 시스템 관리자만 이 그룹과 게시물을 봅니다.",
+    revert: "되돌리기",
+    save: "저장",
+  },
+  en: {
+    saveFailed: "Couldn't save basic info",
+    title: "Basic info",
+    name: "Name",
+    keyPrefix: "Issue key prefix",
+    prefixNoteBefore: "Changing the prefix keeps existing post keys (",
+    prefixNoteAfter: "); new posts use the new prefix.",
+    prefixInvalid:
+      "The prefix is 2–6 uppercase letters or digits, starting with a letter.",
+    description: "Description",
+    private: "Private group",
+    privateHint:
+      "Only members and system admins can see this group and its posts.",
+    revert: "Revert",
+    save: "Save",
+  },
+});
 
 const s = settings();
 
@@ -52,6 +86,7 @@ export function BasicSection({
   group: GroupDetail;
   edit: ReturnType<typeof useGroupEdit>;
 }) {
+  const text = useT(messages);
   const id = useId();
   const router = useRouter();
   // 고친 칸만 들고 서버 값 위에 얹는다. 유형·팀을 저장해 그룹 값이 다시 와도 고치던 칸은 그대로다.
@@ -65,7 +100,7 @@ export function BasicSection({
 
   const save = async () => {
     if (!dirty || !prefixOk || !nameOk) return;
-    const ok = await edit.run("basic", "기본 정보를 저장하지 못했습니다", () =>
+    const ok = await edit.run("basic", text.saveFailed, () =>
       groupsApi.update(group.id, patch),
     );
     if (!ok) return;
@@ -78,7 +113,7 @@ export function BasicSection({
   return (
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`} className={s.sectionTitle()}>
-        기본 정보
+        {text.title}
       </h2>
       <form
         className="flex min-w-0 flex-col gap-3"
@@ -89,7 +124,7 @@ export function BasicSection({
       >
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">
           <label className={s.label()}>
-            이름
+            {text.name}
             <input
               className={field()}
               value={draft.name}
@@ -100,7 +135,7 @@ export function BasicSection({
             />
           </label>
           <label className={s.label()}>
-            이슈 키 접두사
+            {text.keyPrefix}
             <input
               className={field({ class: "font-mono uppercase" })}
               value={draft.keyPrefix}
@@ -118,17 +153,17 @@ export function BasicSection({
           </label>
         </div>
         <p id={`${id}-prefix`} className={s.warn()}>
-          접두사를 바꿔도 기존 게시물의 키(
-          <span className="font-mono">{group.keyPrefix}-12</span>)는 그대로이고,
-          새 게시물부터 새 접두사를 씁니다.
+          {text.prefixNoteBefore}
+          <span className="font-mono">{group.keyPrefix}-12</span>
+          {text.prefixNoteAfter}
         </p>
         {!prefixOk && (
           <p role="alert" className="text-xs text-danger">
-            접두사는 영문 대문자로 시작하는 대문자·숫자 2~6자입니다.
+            {text.prefixInvalid}
           </p>
         )}
         <label className={s.label()}>
-          설명
+          {text.description}
           <textarea
             className={field({ class: "h-auto min-h-16 py-1.5" })}
             value={draft.description}
@@ -145,10 +180,8 @@ export function BasicSection({
             onChange={(e) => set({ isPrivate: e.currentTarget.checked })}
           />
           <span className="flex flex-col">
-            비공개 그룹
-            <span className={s.hint()}>
-              멤버와 시스템 관리자만 이 그룹과 게시물을 봅니다.
-            </span>
+            {text.private}
+            <span className={s.hint()}>{text.privateHint}</span>
           </span>
         </label>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -158,7 +191,7 @@ export function BasicSection({
               className={button({ size: "sm" })}
               onClick={() => setEdits({})}
             >
-              되돌리기
+              {text.revert}
             </button>
           )}
           <button
@@ -167,7 +200,7 @@ export function BasicSection({
             disabled={!dirty || !prefixOk || !nameOk || !!edit.pending}
           >
             {edit.pending === "basic" && <Spinner size="sm" tone="inherit" />}
-            저장
+            {text.save}
           </button>
         </div>
       </form>

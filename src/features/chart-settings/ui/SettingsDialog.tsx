@@ -18,6 +18,7 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import {
@@ -34,6 +35,11 @@ import { settingsDialog } from "./settings-dialog-styles";
 import { TooltipSettings } from "./TooltipSettings";
 
 const sd = settingsDialog();
+
+const messages = defineMessages({
+  ko: { title: "전체 설정", menu: "설정 메뉴", cancel: "취소", ok: "확인" },
+  en: { title: "Settings", menu: "Settings menu", cancel: "Cancel", ok: "OK" },
+});
 
 /**
  * 속성 모델(common.options) 밖에 저장하지만 원본에서 같은 구역에 있는 설정. 그 구역의 필드 표 위에 붙인다.
@@ -56,6 +62,7 @@ const SECTION_EXTRAS: Partial<
 const ALWAYS_SHOWN: readonly OptionSection[] = ["legend"];
 
 function SettingsBody({ onClose }: { onClose: () => void }) {
+  const text = useT(messages);
   const titleId = useId();
   const store = useWorkspaceStore();
   const chartType = useWorkspace((s) => s.draft.chartType);
@@ -113,11 +120,11 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
     <FormProvider {...form}>
       <form className={sd.body()} onSubmit={confirm}>
         <h2 id={titleId} className={sd.title()}>
-          전체 설정
+          {text.title}
         </h2>
         <div className={sd.layout()}>
           <SectionMenu
-            label="설정 메뉴"
+            label={text.menu}
             sections={sections}
             active={active}
             onSelect={setMenu}
@@ -137,14 +144,14 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
         </div>
         <div className={dialogActions}>
           <button type="button" className={button()} onClick={onClose}>
-            취소
+            {text.cancel}
           </button>
           <button
             type="submit"
             className={button({ variant: "primary" })}
             disabled={!isDirty}
           >
-            확인
+            {text.ok}
           </button>
         </div>
       </form>

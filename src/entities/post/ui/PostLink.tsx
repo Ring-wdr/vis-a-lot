@@ -7,6 +7,7 @@ import { createContext, type ReactNode, useContext } from "react";
 import { statusLabel } from "@/entities/post/lib/labels";
 import type { PostRef } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
+import { useLocale } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { statusBadge } from "./styles";
 
@@ -51,6 +52,7 @@ export function PostRefRow({
   post: PostRef;
   aside?: ReactNode;
 }) {
+  useLocale(); // statusLabel이 지금 언어로 읽는다
   return (
     <span className="flex min-h-7.5 min-w-0 items-center gap-2 rounded-md px-1.5 hover:bg-panel">
       <PostLink

@@ -7,8 +7,26 @@ import { useEffect, useId, useState } from "react";
 import { statusLabel } from "@/entities/post/lib/labels";
 import { postsApi } from "@/shared/api/feed/posts";
 import type { PostRef } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { LoadingText } from "@/shared/ui/Loading";
 import { field } from "./styles";
+
+const messages = defineMessages({
+  ko: {
+    placeholder: "키(FD-12)나 제목으로 찾기",
+    results: (label: string) => `${label} 결과`,
+    searching: "찾는 중",
+    failed: (reason: string) => `찾지 못했습니다: ${reason}`,
+    empty: "맞는 게시물이 없습니다.",
+  },
+  en: {
+    placeholder: "Search by key (FD-12) or title",
+    results: (label: string) => `${label} results`,
+    searching: "Searching",
+    failed: (reason: string) => `Search failed: ${reason}`,
+    empty: "No matching posts.",
+  },
+});
 
 const KEY_RE = /^[A-Za-z][A-Za-z0-9]*-\d+$/;
 
@@ -55,7 +73,7 @@ export function PostPicker({
   exclude = NO_EXCLUDE,
   onPick,
   label,
-  placeholder = "키(FD-12)나 제목으로 찾기",
+  placeholder,
   disabled = false,
 }: {
   /** 이 그룹 안에서만 찾는다 (그룹 id) */
@@ -67,6 +85,7 @@ export function PostPicker({
   placeholder?: string;
   disabled?: boolean;
 }) {
+  const msg = useT(messages);
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -96,7 +115,7 @@ export function PostPicker({
         aria-controls={listId}
         aria-autocomplete="list"
         value={text}
-        placeholder={placeholder}
+        placeholder={placeholder ?? msg.placeholder}
         disabled={disabled}
         onChange={(e) => {
           setText(e.currentTarget.value);
@@ -127,21 +146,19 @@ export function PostPicker({
         <div
           id={listId}
           role="listbox"
-          aria-label={`${label} 결과`}
+          aria-label={msg.results(label)}
           className="z-popover absolute inset-x-0 top-full mt-1 max-h-64 overflow-y-auto rounded-lg border border-line bg-elevated py-1 shadow-lg"
         >
           {results.isPending || q !== text.trim() ? (
             <div className="px-2 py-1.5">
-              <LoadingText>찾는 중</LoadingText>
+              <LoadingText>{msg.searching}</LoadingText>
             </div>
           ) : results.isError ? (
             <p className="px-2 py-1.5 text-xs text-danger">
-              찾지 못했습니다: {results.error.message}
+              {msg.failed(results.error.message)}
             </p>
           ) : items.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-fg-muted">
-              맞는 게시물이 없습니다.
-            </p>
+            <p className="px-2 py-1.5 text-xs text-fg-muted">{msg.empty}</p>
           ) : (
             items.map((p, i) => (
               <div

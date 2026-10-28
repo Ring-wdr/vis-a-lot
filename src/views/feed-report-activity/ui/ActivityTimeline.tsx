@@ -5,13 +5,29 @@
 import { eventText } from "@/entities/post/lib/event-text";
 import type { ActivityReport } from "@/shared/api/feed/reports";
 import type { StatusNames } from "@/shared/api/feed/types";
+import { defineMessages, localeCached, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { dayHeading } from "@/views/feed-report-activity/lib/period";
 
-const clock = new Intl.DateTimeFormat("ko-KR", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
+const clock = localeCached(
+  (locale) =>
+    new Intl.DateTimeFormat(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }),
+);
+
+const messages = defineMessages({
+  ko: {
+    count: (n: number) => `${n}건`,
+    /** 이름 뒤, 활동 문장 앞 */
+    actorSuffix: "님이 ",
+  },
+  en: {
+    count: (n: number) => `${n} ${n === 1 ? "event" : "events"}`,
+    actorSuffix: " ",
+  },
 });
 
 export function ActivityTimeline({
@@ -27,6 +43,7 @@ export function ActivityTimeline({
   onOpen: (key: string) => void;
   present?: boolean;
 }) {
+  const text = useT(messages);
   return (
     <ol className="flex flex-col gap-5">
       {days.map((day) => (
@@ -39,7 +56,7 @@ export function ActivityTimeline({
           >
             <time dateTime={day.date}>{dayHeading(day.date)}</time>
             <span className="text-xs font-normal text-fg-muted tabular-nums">
-              {day.entries.length}건
+              {text.count(day.entries.length)}
             </span>
           </h3>
           <ul className="flex flex-col gap-1.5">
@@ -52,7 +69,7 @@ export function ActivityTimeline({
                   dateTime={event.createdAt}
                   className="text-xs text-fg-muted tabular-nums"
                 >
-                  {clock.format(new Date(event.createdAt))}
+                  {clock().format(new Date(event.createdAt))}
                 </time>
                 <p className="min-w-0">
                   <button
@@ -69,7 +86,8 @@ export function ActivityTimeline({
                   <span className="font-semibold">
                     {userName(event.actorId)}
                   </span>
-                  님이 {eventText(event, { userName, statusNames })}
+                  {text.actorSuffix}
+                  {eventText(event, { userName, statusNames })}
                 </p>
               </li>
             ))}

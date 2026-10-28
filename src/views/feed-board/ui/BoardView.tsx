@@ -13,6 +13,7 @@ import { withGroup } from "@/features/filter-posts/model/filter-url";
 import { useListState } from "@/features/filter-posts/model/use-list-state";
 import { FilterBar } from "@/features/filter-posts/ui/FilterBar";
 import { usePostQuery } from "@/shared/api/feed/post-queries";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/Loading";
@@ -21,6 +22,29 @@ import { BoardSkeleton } from "@/widgets/post-board/ui/BoardSkeleton";
 import { PostBoard } from "@/widgets/post-board/ui/PostBoard";
 
 const seg = segmented();
+
+const messages = defineMessages({
+  ko: {
+    title: (group: string) => `${group} 보드`,
+    total: (n: number) => `${n}건`,
+    swimlane: "스윔레인",
+    none: "없음",
+    team: "팀",
+    loadFailed: "게시물을 불러오지 못했습니다",
+    retry: "다시 시도",
+    empty: "조건에 맞는 게시물이 없습니다. 필터를 줄여 보세요.",
+  },
+  en: {
+    title: (group: string) => `${group} board`,
+    total: (n: number) => `${n} ${n === 1 ? "post" : "posts"}`,
+    swimlane: "Lanes",
+    none: "None",
+    team: "Team",
+    loadFailed: "Couldn't load posts",
+    retry: "Retry",
+    empty: "No posts match these filters. Try removing some.",
+  },
+});
 
 function useLane() {
   const search = useSearchParams();
@@ -37,6 +61,7 @@ function useLane() {
 }
 
 export function BoardView() {
+  const text = useT(messages);
   const route = useRouteGroup();
   const { group, detail, members } = route;
   const [state, update] = useListState();
@@ -60,17 +85,20 @@ export function BoardView() {
   return (
     <div className="flex min-w-0 flex-col gap-3 p-4 md:p-6">
       <header className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-bold">{group.name} 보드</h1>
+        <h1 className="text-xl font-bold">{text.title(group.name)}</h1>
         <span className="font-mono text-xs text-fg-muted">
           {group.keyPrefix}
         </span>
         <span className="text-xs text-fg-muted tabular-nums">
-          {query.data ? `${query.data.total}건` : ""}
+          {query.data ? text.total(query.data.total) : ""}
         </span>
         <fieldset className="ml-auto inline-flex items-center gap-1.5">
-          <legend className="sr-only">스윔레인</legend>
-          <span className="text-xs text-fg-muted" aria-hidden="true">
-            스윔레인
+          <legend className="sr-only">{text.swimlane}</legend>
+          <span
+            className="text-xs whitespace-nowrap text-fg-muted"
+            aria-hidden="true"
+          >
+            {text.swimlane}
           </span>
           <span className={seg.root({ class: "self-auto" })}>
             <button
@@ -79,7 +107,7 @@ export function BoardView() {
               aria-pressed={!lane}
               onClick={() => setLane(null)}
             >
-              없음
+              {text.none}
             </button>
             <button
               type="button"
@@ -87,7 +115,7 @@ export function BoardView() {
               aria-pressed={lane === "team"}
               onClick={() => setLane("team")}
             >
-              팀
+              {text.team}
             </button>
           </span>
         </fieldset>
@@ -106,10 +134,7 @@ export function BoardView() {
       {query.isPending ? (
         <BoardSkeleton />
       ) : query.isError ? (
-        <EmptyState
-          icon={<Columns3 size={20} />}
-          title="게시물을 불러오지 못했습니다"
-        >
+        <EmptyState icon={<Columns3 size={20} />} title={text.loadFailed}>
           <p>{query.error.message}</p>
           <button
             type="button"
@@ -117,15 +142,13 @@ export function BoardView() {
             onClick={() => query.refetch()}
           >
             <RefreshCw size={14} aria-hidden="true" />
-            다시 시도
+            {text.retry}
           </button>
         </EmptyState>
       ) : (
         <>
           {query.data.posts.length === 0 && (
-            <p className="text-xs text-fg-muted">
-              조건에 맞는 게시물이 없습니다. 필터를 줄여 보세요.
-            </p>
+            <p className="text-xs text-fg-muted">{text.empty}</p>
           )}
           <PostBoard
             posts={query.data.posts}

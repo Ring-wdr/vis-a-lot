@@ -2,7 +2,29 @@
 
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemState } from "@/shared/api/types";
+import { defineMessages, t } from "@/shared/lib/i18n";
 import { safeFileName, saveBlob } from "@/shared/lib/save-file";
+
+const messages = defineMessages({
+  ko: {
+    notDrawn: "아직 그려지지 않은 차트입니다.",
+    selectionSuffix: "_선택",
+    chartsSheet: "차트",
+    listSheet: "목록",
+    index: "순번",
+    name: "이름",
+    status: "상태",
+  },
+  en: {
+    notDrawn: "This chart hasn't been drawn yet.",
+    selectionSuffix: "_selection",
+    chartsSheet: "Charts",
+    listSheet: "List",
+    index: "No.",
+    name: "Name",
+    status: "Status",
+  },
+});
 
 /** 엑셀 한 파일에 넣는 item 수 상한. 넘으면 앞에서부터 이만큼만 넣는다. */
 export const MAX_EXCEL_ITEMS = 300;
@@ -13,7 +35,7 @@ const RANGE_SIZE = 100;
 export async function drawnItemState(jobId: string, key: string) {
   const state = await api.jobItems(jobId, [key], -1);
   const item = state.items[0];
-  if (!item?.image) throw new Error("아직 그려지지 않은 차트입니다.");
+  if (!item?.image) throw new Error(t(messages).notDrawn);
   return { ...item, image: item.image };
 }
 
@@ -25,7 +47,8 @@ export async function downloadItemData(
 ) {
   const item = await drawnItemState(jobId, key);
   const csv = await api.exportItemRows(chartId, key);
-  const suffix = item.selectedCount !== undefined ? "_선택" : "";
+  const suffix =
+    item.selectedCount !== undefined ? t(messages).selectionSuffix : "";
   saveBlob(csv, `${safeFileName(item.label)}${suffix}.csv`);
 }
 
@@ -78,13 +101,14 @@ export async function downloadAllChartsExcel(
     import("exceljs"),
     allItems(jobId, MAX_EXCEL_ITEMS),
   ]);
+  const text = t(messages);
   const book = new ExcelJS.Workbook();
-  const sheet = book.addWorksheet("차트");
-  const list = book.addWorksheet("목록");
+  const sheet = book.addWorksheet(text.chartsSheet);
+  const list = book.addWorksheet(text.listSheet);
   list.columns = [
-    { header: "순번", key: "index", width: 8 },
-    { header: "이름", key: "label", width: 40 },
-    { header: "상태", key: "status", width: 12 },
+    { header: text.index, key: "index", width: 8 },
+    { header: text.name, key: "label", width: 40 },
+    { header: text.status, key: "status", width: 12 },
   ];
 
   const cols = spec.grid.cols;

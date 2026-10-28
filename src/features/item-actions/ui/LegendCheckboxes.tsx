@@ -5,6 +5,12 @@ import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ChartImage } from "@/shared/api/types";
 import { supports } from "@/shared/config/chart-kinds";
+import { defineMessages, useT } from "@/shared/lib/i18n";
+
+const messages = defineMessages({
+  ko: { show: (alt: string, value: string) => `${alt} · ${value} 보이기` },
+  en: { show: (alt: string, value: string) => `Show ${value} · ${alt}` },
+});
 
 /**
  * PNG legend 항목의 색 표시(●) 자리에 체크박스를 겹친다. 위치는 metadata에서 읽는다.
@@ -23,6 +29,7 @@ export function LegendCheckboxes({
   disabled: boolean;
   onAction: (action: ItemAction) => void;
 }) {
+  const text = useT(messages);
   // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
   const shown = useWorkspace(
     (s) => s.showLegendCheckboxes && supports(s.current?.spec, "checkbox"),
@@ -42,7 +49,7 @@ export function LegendCheckboxes({
           type="checkbox"
           className="pointer-events-auto absolute m-0 size-3 -translate-1/2 cursor-pointer accent-accent"
           style={{ left: entry.marker.x * sx, top: entry.marker.y * sy }}
-          aria-label={`${alt} · ${entry.value} 보이기`}
+          aria-label={text.show(alt, entry.value)}
           checked={entry.visible}
           disabled={disabled}
           // 확대·그리기 레이어가 누름을 드래그로 받지 않게 한다.

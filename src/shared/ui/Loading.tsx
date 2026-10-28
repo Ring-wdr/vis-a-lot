@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { cn, tv } from "@/shared/lib/tw";
 import { button } from "./button";
+import { Localized } from "./Localized";
 
 // 움직임을 줄이도록 설정한 사용자에게는 회전을 늦추고 반짝임을 멈춘다.
 const spinner = tv({
@@ -127,12 +128,21 @@ export function EmptyState({
 export const BOOT_STEPS = ["app", "server", "session", "defaults"] as const;
 export type BootStep = (typeof BOOT_STEPS)[number];
 
-const BOOT_MESSAGES: Record<BootStep, string> = {
-  app: "화면을 불러오는 중",
-  server: "브라우저 안의 서버를 띄우는 중",
-  session: "로그인 확인 중",
-  defaults: "차트 기본값을 받는 중",
-};
+// 부팅 화면은 서버 컴포넌트(Suspense fallback)에서도 그리므로 훅 대신 Localized로 두 언어를 함께 둔다.
+const BOOT_MESSAGES = {
+  ko: {
+    app: "화면을 불러오는 중",
+    server: "브라우저 안의 서버를 띄우는 중",
+    session: "로그인 확인 중",
+    defaults: "차트 기본값을 받는 중",
+  },
+  en: {
+    app: "Loading the app",
+    server: "Starting the in-browser server",
+    session: "Checking sign-in",
+    defaults: "Fetching chart defaults",
+  },
+} satisfies Record<"ko" | "en", Record<BootStep, string>>;
 
 export function BootScreen({
   step,
@@ -164,20 +174,26 @@ export function BootScreen({
         {error ? (
           <>
             <p role="alert" className="text-ui text-danger">
-              {BOOT_MESSAGES[step]}에 실패했습니다: {error}
+              <Localized
+                ko={`${BOOT_MESSAGES.ko[step]}에 실패했습니다: ${error}`}
+                en={`${BOOT_MESSAGES.en[step]} failed: ${error}`}
+              />
             </p>
             <button
               type="button"
               className={button({ class: "text-ui" })}
               onClick={() => location.reload()}
             >
-              새로고침
+              <Localized ko="새로고침" en="Reload" />
             </button>
           </>
         ) : (
           <output className="inline-flex items-center gap-2 text-ui text-fg-secondary">
             <Spinner />
-            {BOOT_MESSAGES[step]}
+            <Localized
+              ko={BOOT_MESSAGES.ko[step]}
+              en={BOOT_MESSAGES.en[step]}
+            />
           </output>
         )}
       </div>

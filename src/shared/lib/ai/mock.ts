@@ -1,5 +1,6 @@
 // 흉내 AI 어댑터. 모델 없이 규칙과 템플릿으로 같은 입력에 늘 같은 출력을 낸다.
 
+import { defineMessages, t } from "@/shared/lib/i18n";
 import type {
   ActivityData,
   AiAdapter,
@@ -8,14 +9,40 @@ import type {
   SummarizeInput,
 } from "./types";
 
+const messages = defineMessages({
+  ko: {
+    heading: (group: string, from: string, to: string) =>
+      `# ${group} 활동 보고 (${from} ~ ${to})`,
+    totals: (total: number, done: number) =>
+      `기간 동안 활동 ${total}건, 완료 ${done}건이 있었습니다.`,
+    actor: (name: string, items: string) => `- ${name}님: ${items}.`,
+    doneHeading: "## 완료한 일",
+    noneDone: "- 이번 기간에 완료한 일은 없습니다.",
+    assignee: (name: string | null) => (name ? `담당 ${name}` : "담당자 없음"),
+    lastComment: (comment: string) => `마지막 댓글: ${comment}`,
+    generated: (prompt: string) => `(흉내 응답) ${prompt}`,
+  },
+  en: {
+    heading: (group: string, from: string, to: string) =>
+      `# ${group} activity report (${from} – ${to})`,
+    totals: (total: number, done: number) =>
+      `${total} ${total === 1 ? "activity" : "activities"} and ${done} completed ${done === 1 ? "item" : "items"} in this period.`,
+    actor: (name: string, items: string) => `- ${name}: ${items}.`,
+    doneHeading: "## Completed",
+    noneDone: "- Nothing was completed in this period.",
+    assignee: (name: string | null) =>
+      name ? `assignee ${name}` : "no assignee",
+    lastComment: (comment: string) => `Last comment: ${comment}`,
+    generated: (prompt: string) => `(mock response) ${prompt}`,
+  },
+});
+
 /** 보고 초안 문장들. 줄 하나가 스트리밍 조각 하나다. */
 export function draftLines(a: ActivityData): string[] {
-  const lines = [`# ${a.groupName} 활동 보고 (${a.from} ~ ${a.to})`, ""];
+  const text = t(messages);
+  const lines = [text.heading(a.groupName, a.from, a.to), ""];
   const total = a.days.reduce((n, d) => n + d.entries.length, 0);
-  lines.push(
-    `기간 동안 활동 ${total}건, 완료 ${a.completed.length}건이 있었습니다.`,
-    "",
-  );
+  lines.push(text.totals(total, a.completed.length), "");
 
   for (const day of a.days) {
     if (day.entries.length === 0) continue;
@@ -31,18 +58,15 @@ export function draftLines(a: ActivityData): string[] {
       const items = entries.map((e) =>
         `${e.key} '${e.title}' ${e.text}`.trim(),
       );
-      lines.push(`- ${actor}님: ${items.join(", ")}.`);
+      lines.push(text.actor(actor, items.join(", ")));
     }
     lines.push("");
   }
 
-  lines.push("## 완료한 일");
-  if (a.completed.length === 0)
-    lines.push("- 이번 기간에 완료한 일은 없습니다.");
+  lines.push(text.doneHeading);
+  if (a.completed.length === 0) lines.push(text.noneDone);
   for (const c of a.completed)
-    lines.push(
-      `- ${c.key} ${c.title} (${c.assigneeName ? `담당 ${c.assigneeName}` : "담당자 없음"})`,
-    );
+    lines.push(`- ${c.key} ${c.title} (${text.assignee(c.assigneeName)})`);
   return lines;
 }
 
@@ -62,21 +86,29 @@ export function summarizeMock({
 }: SummarizeInput) {
   const first = clip(firstParagraph(bodyText) || title, 200);
   const comment = lastComment?.trim();
-  return comment ? `${first} 마지막 댓글: ${clip(comment, 120)}` : first;
+  return comment
+    ? `${first} ${t(messages).lastComment(clip(comment, 120))}`
+    : first;
 }
 
-/** 게시물 유형 이름 → 제목·본문에서 찾을 말. 위에서부터 처음 맞는 규칙을 쓴다. */
-const TYPE_RULES: [type: string, pattern: RegExp][] = [
-  ["버그", /오류|에러|안\s?됨|안\s?돼|안\s?되|버그|깨짐|실패|error|bug/i],
-  ["데이터 요청", /요청|추출|뽑아/],
-  ["기능", /기능|추가|개선|지원/],
-  ["질문", /\?|문의|궁금|어떻게/],
-  ["업무 기록", /기록|회의|정리|공유/],
+/**
+ * 게시물 유형 이름(한국어·영어) → 제목·본문에서 찾을 말. 위에서부터 처음 맞는 규칙을 쓴다.
+ * 유형 이름은 그룹이 정한 데이터라 화면 언어와 상관없이 두 이름을 다 찾는다.
+ */
+const TYPE_RULES: [types: string[], pattern: RegExp][] = [
+  [
+    ["버그", "bug"],
+    /오류|에러|안\s?됨|안\s?돼|안\s?되|버그|깨짐|실패|error|bug|broken|fail/i,
+  ],
+  [["데이터 요청", "data request"], /요청|추출|뽑아|request|extract/i],
+  [["기능", "feature"], /기능|추가|개선|지원|feature|improve|support/i],
+  [["질문", "question"], /\?|문의|궁금|어떻게|question|how to/i],
+  [["업무 기록", "work log"], /기록|회의|정리|공유|\b(?:meeting|notes|log)\b/i],
 ];
 
 const PRIORITY_RULES: [priority: number, pattern: RegExp][] = [
-  [4, /긴급|급함|asap|당장/i],
-  [3, /중요|빨리|오늘\s?까지/],
+  [4, /긴급|급함|asap|당장|urgent/i],
+  [3, /중요|빨리|오늘\s?까지|important|\bby today\b/i],
 ];
 
 export function suggestFieldsMock({
@@ -88,9 +120,11 @@ export function suggestFieldsMock({
   const text = `${title}\n${body}`;
   const result: SuggestedFields = {};
 
-  for (const [name, pattern] of TYPE_RULES) {
+  for (const [names, pattern] of TYPE_RULES) {
     if (!pattern.test(text)) continue;
-    const type = postTypes.find((t) => t.name === name);
+    const type = postTypes.find((p) =>
+      names.includes(p.name.trim().toLowerCase()),
+    );
     if (type) {
       result.postTypeId = type.id;
       break;
@@ -150,5 +184,5 @@ export const mockAdapter: AiAdapter = {
   generate: async (prompt, opts) =>
     opts?.schema
       ? JSON.stringify(sampleFromSchema(opts.schema))
-      : `(흉내 응답) ${clip(prompt.trim(), 80)}`,
+      : t(messages).generated(clip(prompt.trim(), 80)),
 };

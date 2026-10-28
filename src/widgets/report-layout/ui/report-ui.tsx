@@ -10,9 +10,25 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { usePresentNav } from "@/features/present-mode/model/present-nav";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    browsePosts: "게시물 넘겨 보기",
+    presentMode: "발표 모드",
+    failed: "보고서를 만들지 못했습니다",
+    retry: "다시 시도",
+  },
+  en: {
+    browsePosts: "Browse posts",
+    presentMode: "Present",
+    failed: "Couldn't build the report",
+    retry: "Try again",
+  },
+});
 
 export const report = tv({
   slots: {
@@ -43,6 +59,7 @@ export function ReportHeader({
   /** 제목 줄 오른쪽에 더 붙일 것 */
   children?: ReactNode;
 }) {
+  const text = useT(messages);
   const { present, start, openSlide } = usePresentNav();
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -64,22 +81,25 @@ export function ReportHeader({
         {present ? (
           <button
             type="button"
-            className={button({ variant: "primary" })}
+            className={button({
+              variant: "primary",
+              class: "whitespace-nowrap",
+            })}
             disabled={slideCount === 0}
             onClick={() => openSlide(0)}
           >
             <GalleryHorizontal size={16} aria-hidden="true" />
-            게시물 넘겨 보기
+            {text.browsePosts}
             <span className="tabular-nums">({slideCount})</span>
           </button>
         ) : (
           <button
             type="button"
-            className={button({ size: "sm" })}
+            className={button({ size: "sm", class: "whitespace-nowrap" })}
             onClick={start}
           >
             <Presentation size={14} aria-hidden="true" />
-            발표 모드
+            {text.presentMode}
           </button>
         )}
       </div>
@@ -216,11 +236,9 @@ export function ReportError({
   error: Error;
   onRetry: () => void;
 }) {
+  const text = useT(messages);
   return (
-    <EmptyState
-      icon={<TriangleAlert size={20} />}
-      title="보고서를 만들지 못했습니다"
-    >
+    <EmptyState icon={<TriangleAlert size={20} />} title={text.failed}>
       <p>{error.message}</p>
       <button
         type="button"
@@ -228,7 +246,7 @@ export function ReportError({
         onClick={onRetry}
       >
         <RefreshCw size={14} aria-hidden="true" />
-        다시 시도
+        {text.retry}
       </button>
     </EmptyState>
   );

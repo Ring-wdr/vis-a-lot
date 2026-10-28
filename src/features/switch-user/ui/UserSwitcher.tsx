@@ -16,8 +16,25 @@ import {
   useUsers,
 } from "@/shared/api/feed/queries";
 import type { FeedUser, GroupDetail } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { Avatar } from "@/shared/ui/Avatar";
 import { menuStyles } from "@/shared/ui/feed-styles";
+
+const messages = defineMessages({
+  ko: {
+    switchUser: "사용자 전환",
+    noUser: "사용자 없음",
+    loadFailed: (message: string) =>
+      `사용자 목록을 불러오지 못했습니다: ${message}`,
+    current: "지금 사용자",
+  },
+  en: {
+    switchUser: "Switch user",
+    noUser: "No user",
+    loadFailed: (message: string) => `Couldn't load users: ${message}`,
+    current: "Current user",
+  },
+});
 
 const m = menuStyles();
 
@@ -33,6 +50,7 @@ export function useSwitchUser() {
 
 /** 상단 바 오른쪽: 사용자 전환 (프로토타입의 "로그인"). 역할을 함께 보여준다. */
 export function UserSwitcher() {
+  const text = useT(messages);
   const users = useUsers();
   const userId = useCurrentUserId();
   const [open, setOpen] = useState(false);
@@ -54,11 +72,11 @@ export function UserSwitcher() {
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
         className="inline-flex h-7.5 max-w-48 cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-1.5 text-ui text-fg-secondary hover:bg-panel data-popup-open:border-line data-popup-open:bg-elevated"
-        aria-label="사용자 전환"
+        aria-label={text.switchUser}
       >
         <Avatar name={me?.name ?? "?"} />
         <span className="hidden truncate sm:inline">
-          {me?.name ?? "사용자 없음"}
+          {me?.name ?? text.noUser}
         </span>
         <ChevronDown size={13} aria-hidden="true" />
       </Menu.Trigger>
@@ -67,11 +85,11 @@ export function UserSwitcher() {
           <Menu.Popup className={m.popup()}>
             <Menu.Group>
               <Menu.GroupLabel className={m.label()}>
-                사용자 전환
+                {text.switchUser}
               </Menu.GroupLabel>
               {users.isError && (
                 <p className="px-2 py-1.5 text-xs text-danger">
-                  사용자 목록을 불러오지 못했습니다: {users.error.message}
+                  {text.loadFailed(users.error.message)}
                 </p>
               )}
               {active.map((u) => (
@@ -91,7 +109,7 @@ export function UserSwitcher() {
                     <Check
                       size={14}
                       className="ml-auto flex-none text-accent"
-                      aria-label="지금 사용자"
+                      aria-label={text.current}
                     />
                   )}
                 </Menu.Item>

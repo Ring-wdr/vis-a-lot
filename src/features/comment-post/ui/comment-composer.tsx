@@ -8,10 +8,44 @@ import { useState } from "react";
 import { field } from "@/entities/post/ui/styles";
 import { useCommentAction } from "@/features/comment-post/model/use-comment-action";
 import { commentsApi } from "@/shared/api/feed/comments";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button, itemButton, linkButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import { RichEditor } from "@/shared/ui/rich-editor/RichEditor";
 import { isEmptyDoc } from "@/shared/ui/rich-editor/rich-text";
+
+const messages = defineMessages({
+  ko: {
+    comment: "댓글",
+    submit: "댓글 달기",
+    failed: "댓글을 달지 못했습니다",
+    createPoll: "투표 만들기",
+    question: "질문",
+    pollQuestion: "투표 질문",
+    removePoll: "투표 빼기",
+    option: (n: number) => `선택지 ${n}`,
+    removeOption: (n: number) => `선택지 ${n} 빼기`,
+    addOption: "선택지 더하기",
+    closes: "마감",
+    hint: "@로 멘션 · Ctrl/⌘+Enter로 보내기",
+    cancel: "취소",
+  },
+  en: {
+    comment: "Comment",
+    submit: "Comment",
+    failed: "Couldn't post the comment",
+    createPoll: "Create poll",
+    question: "Question",
+    pollQuestion: "Poll question",
+    removePoll: "Remove poll",
+    option: (n: number) => `Option ${n}`,
+    removeOption: (n: number) => `Remove option ${n}`,
+    addOption: "Add option",
+    closes: "Closes",
+    hint: "@ to mention · Ctrl/⌘+Enter to send",
+    cancel: "Cancel",
+  },
+});
 
 type PollDraft = { question: string; options: string[]; closesAt: string };
 
@@ -24,8 +58,8 @@ const emptyPoll = (): PollDraft => ({
 export function CommentComposer({
   postId,
   parentId,
-  label = "댓글",
-  submitLabel = "댓글 달기",
+  label,
+  submitLabel,
   autoFocus = false,
   onDone,
 }: {
@@ -38,6 +72,7 @@ export function CommentComposer({
   /** 보낸 뒤나 취소 (대댓글 칸 닫기) */
   onDone?: () => void;
 }) {
+  const text = useT(messages);
   const { run, pending } = useCommentAction();
   const [doc, setDoc] = useState<JSONContent | null>(null);
   // 보낸 뒤 편집기를 새로 만든다
@@ -55,7 +90,7 @@ export function CommentComposer({
 
   const submit = async () => {
     if (!canSubmit) return;
-    const ok = await run("comment", "댓글을 달지 못했습니다", () =>
+    const ok = await run("comment", text.failed, () =>
       commentsApi.create(postId, {
         body: hasText ? doc : null,
         parentId,
@@ -90,7 +125,7 @@ export function CommentComposer({
         key={round}
         initial={null}
         onChange={setDoc}
-        label={label}
+        label={label ?? text.comment}
         size="sm"
         toolbar={false}
         autoFocus={autoFocus}
@@ -98,7 +133,7 @@ export function CommentComposer({
       />
       {poll && (
         <fieldset className="flex flex-col gap-2 rounded-lg border border-line bg-panel-subtle p-3">
-          <legend className="sr-only">투표 만들기</legend>
+          <legend className="sr-only">{text.createPoll}</legend>
           <div className="flex items-center gap-2">
             <ChartBar
               size={14}
@@ -109,8 +144,8 @@ export function CommentComposer({
               className={field()}
               value={poll.question}
               maxLength={200}
-              placeholder="질문"
-              aria-label="투표 질문"
+              placeholder={text.question}
+              aria-label={text.pollQuestion}
               onChange={(e) =>
                 setPoll({ ...poll, question: e.currentTarget.value })
               }
@@ -118,7 +153,7 @@ export function CommentComposer({
             <button
               type="button"
               className={itemButton()}
-              aria-label="투표 빼기"
+              aria-label={text.removePoll}
               onClick={() => setPoll(null)}
             >
               <X size={12} aria-hidden="true" />
@@ -132,14 +167,14 @@ export function CommentComposer({
                   className={field()}
                   value={option}
                   maxLength={80}
-                  placeholder={`선택지 ${i + 1}`}
-                  aria-label={`선택지 ${i + 1}`}
+                  placeholder={text.option(i + 1)}
+                  aria-label={text.option(i + 1)}
                   onChange={(e) => setOption(i, e.currentTarget.value)}
                 />
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label={`선택지 ${i + 1} 빼기`}
+                  aria-label={text.removeOption(i + 1)}
                   disabled={poll.options.length <= 2}
                   onClick={() =>
                     setPoll({
@@ -163,11 +198,11 @@ export function CommentComposer({
                 }
               >
                 <Plus size={12} aria-hidden="true" />
-                선택지 더하기
+                {text.addOption}
               </button>
             )}
             <label className="flex items-center gap-1.5 text-xs text-fg-secondary">
-              마감
+              {text.closes}
               <input
                 type="datetime-local"
                 className={field({ class: "w-auto" })}
@@ -188,11 +223,11 @@ export function CommentComposer({
             onClick={() => setPoll(emptyPoll())}
           >
             <ChartBar size={13} aria-hidden="true" />
-            투표 만들기
+            {text.createPoll}
           </button>
         )}
         <span className="text-2xs text-fg-muted max-sm:hidden">
-          @로 멘션 · Ctrl/⌘+Enter로 보내기
+          {text.hint}
         </span>
         <span className="ml-auto flex gap-1.5">
           {onDone && (
@@ -202,7 +237,7 @@ export function CommentComposer({
               disabled={!!pending}
               onClick={onDone}
             >
-              취소
+              {text.cancel}
             </button>
           )}
           <button
@@ -212,7 +247,7 @@ export function CommentComposer({
             onClick={submit}
           >
             {pending && <Spinner size="sm" tone="inherit" />}
-            {submitLabel}
+            {submitLabel ?? text.submit}
           </button>
         </span>
       </div>

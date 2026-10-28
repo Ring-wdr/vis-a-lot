@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
-import { DELETED_DATASET_HINT } from "@/entities/dataset/lib/labels";
+import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import {
   useWorkspace,
   useWorkspaceMutationKey,
@@ -14,14 +14,32 @@ import {
   useDatasetStatus,
   useSchemaState,
 } from "@/shared/api/queries";
+import { defineMessages, intlLocale, t, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import { useDrawState } from "../model/draw-state";
+
+const messages = defineMessages({
+  ko: {
+    noGridArea: "grid 영역 크기를 아직 모릅니다.",
+    tooManySplits: (count: string, limit: string) =>
+      `split 조합이 ${count}개입니다. 최대 ${limit}개까지 그릴 수 있습니다.`,
+    notReady: "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다",
+  },
+  en: {
+    noGridArea: "The grid area size isn't known yet.",
+    tooManySplits: (count: string, limit: string) =>
+      `There are ${count} split combinations. Up to ${limit} can be drawn.`,
+    notReady: "Register data and pick x, y to draw",
+  },
+});
 
 /**
  * draw → pending(비활성) → 서버에서 작업 상태를 받으면 cancel → job이 끝나면 다시 draw.
  */
 export function DrawButton() {
+  const text = useT(messages);
+  const labels = useDatasetLabels();
   const draft = useWorkspace((s) => s.draft);
   const gridArea = useWorkspace((s) => s.gridArea);
   const current = useWorkspace((s) => s.current);
@@ -38,7 +56,7 @@ export function DrawButton() {
   const draw = useMutation({
     mutationKey: useWorkspaceMutationKey("draw"),
     mutationFn: async () => {
-      if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
+      if (!gridArea) throw new Error(t(messages).noGridArea);
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
       if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
         // 최대 개수는 서버가 정해 응답에 담아 준다.
@@ -49,7 +67,10 @@ export function DrawButton() {
         );
         if (count > limit) {
           notify(
-            `split 조합이 ${count.toLocaleString()}개입니다. 최대 ${limit.toLocaleString()}개까지 그릴 수 있습니다.`,
+            t(messages).tooManySplits(
+              count.toLocaleString(intlLocale()),
+              limit.toLocaleString(intlLocale()),
+            ),
           );
           return undefined;
         }
@@ -82,11 +103,7 @@ export function DrawButton() {
           className={button({ variant: "primary", size: "lg" })}
           disabled={state === "pending" || !gridArea || !ready || deleted}
           title={
-            deleted
-              ? DELETED_DATASET_HINT
-              : ready
-                ? undefined
-                : "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
+            deleted ? labels.deletedDataset : ready ? undefined : text.notReady
           }
           aria-busy={state === "pending"}
           onClick={() => draw.mutate()}

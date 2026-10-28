@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { throttle } from "@/shared/lib/throttle";
 import { tv } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
@@ -33,6 +34,11 @@ const arrow = tv({
       down: "after:border-t-4 after:border-t-current",
     },
   },
+});
+
+const messages = defineMessages({
+  ko: { page: "페이지", prev: "이전 페이지", next: "다음 페이지" },
+  en: { page: "Page", prev: "Previous page", next: "Next page" },
 });
 
 /** 서버에서 페이지를 받아오는 간격. 빠르게 넘겨도 이 간격으로만 조회한다. */
@@ -73,6 +79,7 @@ export function PageScroller({
   onPage: (page: number) => void;
   onViewPage: (page: number) => void;
 }) {
+  const text = useT(messages);
   const trackRef = useRef<HTMLDivElement>(null);
   const [track, setTrack] = useState(0);
   /** thumb을 끄는 동안의 위치. 놓으면 페이지 위치로 돌아간다. */
@@ -177,7 +184,7 @@ export function PageScroller({
       role="scrollbar"
       aria-controls={controls}
       aria-orientation="vertical"
-      aria-label="페이지"
+      aria-label={text.page}
       aria-valuemin={1}
       aria-valuemax={totalPages}
       aria-valuenow={shownPage + 1}
@@ -205,7 +212,7 @@ export function PageScroller({
         type="button"
         tabIndex={-1}
         className={arrow({ dir: "up" })}
-        aria-label="이전 페이지"
+        aria-label={text.prev}
         disabled={disabled || shownPage <= 0}
         onPointerDown={(e) => hold(e, () => go(current.current - 1))}
         onPointerUp={stopRepeat}
@@ -235,7 +242,7 @@ export function PageScroller({
         type="button"
         tabIndex={-1}
         className={arrow({ dir: "down" })}
-        aria-label="다음 페이지"
+        aria-label={text.next}
         disabled={disabled || shownPage >= totalPages - 1}
         onPointerDown={(e) => hold(e, () => go(current.current + 1))}
         onPointerUp={stopRepeat}

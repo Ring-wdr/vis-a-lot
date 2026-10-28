@@ -3,13 +3,20 @@
 import { Menu as MenuIcon, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ThemeToggle } from "@/features/switch-theme/ui/ThemeToggle";
 import { UserSwitcher } from "@/features/switch-user/ui/UserSwitcher";
 import { FEED } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { AiBadge } from "@/shared/ui/AiBadge";
 import { button } from "@/shared/ui/button";
 import { navButton } from "@/shared/ui/nav";
+import { StableText } from "@/shared/ui/StableText";
 import { CommandPalette } from "@/widgets/command-palette/ui/CommandPalette";
+import { PreferencesMenu } from "./PreferencesMenu";
+
+const messages = defineMessages({
+  ko: { menu: "메뉴", search: "검색·명령", newPost: "새 게시물" },
+  en: { menu: "Menu", search: "Search & commands", newPost: "New post" },
+});
 
 /** Cmd/Ctrl+K: 커맨드 팔레트를 열고 닫는다 */
 function usePaletteShortcut(toggle: () => void) {
@@ -35,6 +42,7 @@ export function FeedTopBar({
   menuOpen: boolean;
   onToggleMenu: () => void;
 }) {
+  const text = useT(messages);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const openPalette = () => setPaletteOpen(true);
   usePaletteShortcut(useCallback(() => setPaletteOpen((open) => !open), []));
@@ -44,7 +52,7 @@ export function FeedTopBar({
         <button
           type="button"
           className={navButton({ class: "md:hidden" })}
-          aria-label="메뉴"
+          aria-label={text.menu}
           aria-expanded={menuOpen}
           aria-controls="feed-sidebar"
           onClick={onToggleMenu}
@@ -60,7 +68,7 @@ export function FeedTopBar({
         onClick={openPalette}
       >
         <Search size={14} aria-hidden="true" />
-        <span className="truncate">검색·명령</span>
+        <span className="truncate whitespace-nowrap">{text.search}</span>
         <kbd className="ml-auto hidden rounded-xs border border-line px-1 font-sans text-2xs sm:inline">
           Ctrl K
         </kbd>
@@ -68,20 +76,20 @@ export function FeedTopBar({
       <div className="ml-auto flex items-center gap-2">
         <Link
           href={FEED.new}
-          aria-label="새 게시물"
+          aria-label={text.newPost}
           className={button({
             variant: "primary",
             size: "sm",
-            class: "no-underline",
+            class: "whitespace-nowrap no-underline",
           })}
         >
           <Plus size={14} aria-hidden="true" />
           <span className="hidden sm:inline" aria-hidden="true">
-            새 게시물
+            <StableText ko={messages.ko.newPost} en={messages.en.newPost} />
           </span>
         </Link>
         <AiBadge />
-        <ThemeToggle />
+        <PreferencesMenu />
         <UserSwitcher />
       </div>
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}

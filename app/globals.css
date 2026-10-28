@@ -161,6 +161,9 @@
 /* dark: 변형도 시스템 설정이 아니라 <html data-theme>을 따른다 */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* 화면 언어(<html lang>). 서버 컴포넌트가 두 언어를 함께 그리고 하나만 보일 때 쓴다 (shared/ui/Localized.tsx) */
+@custom-variant lang-en (&:where(:root[lang="en"] *));
+
 /* 현재 항목 (aria-current="true") */
 @custom-variant aria-current (&[aria-current="true"]);
 

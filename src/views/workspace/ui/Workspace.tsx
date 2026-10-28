@@ -15,6 +15,7 @@ import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
 import { useOpenChart } from "@/features/open-chart/model/open-chart";
 import { takeQueuedOpen } from "@/features/open-chart/model/pending-open";
 import { EditInGalleryButton } from "@/features/open-chart/ui/EditInGalleryButton";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { AppHeader } from "@/widgets/app-header/ui/AppHeader";
@@ -25,6 +26,11 @@ import { HistoryList } from "@/widgets/history-list/ui/HistoryList";
 import { HomeLanding } from "@/widgets/home-landing/ui/HomeLanding";
 import { TabBar } from "@/widgets/tab-bar/ui/TabBar";
 import { TabToolbar } from "@/widgets/tab-toolbar/ui/TabToolbar";
+
+const messages = defineMessages({
+  ko: { settingsReadOnly: "설정 (보기 전용)" },
+  en: { settingsReadOnly: "Settings (read-only)" },
+});
 
 // tab을 오가며 gallery가 다시 마운트돼도 공유 링크는 처음 한 번만 연다.
 let sharedLinkHandled = false;
@@ -108,6 +114,7 @@ function GallerySidebar() {
 }
 
 function HistorySidebar() {
+  const text = useT(messages);
   const viewing = useWorkspace((s) => s.current !== undefined);
   return (
     <>
@@ -120,7 +127,7 @@ function HistorySidebar() {
           <section
             className={cn(panelSection, "mt-5 border-t border-line pt-4")}
           >
-            <h2 className={sectionTitle}>설정 (보기 전용)</h2>
+            <h2 className={sectionTitle}>{text.settingsReadOnly}</h2>
             <ControlPanel />
           </section>
         )}

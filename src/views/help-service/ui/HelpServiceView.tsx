@@ -1,16 +1,27 @@
 import Link from "next/link";
 import { HELP, type HelpService, helpArticlePath } from "@/shared/config/help";
+import { Localized } from "@/shared/ui/Localized";
 
-/** 서비스 도움말 목차: 문서를 순서대로 카드로 보여 준다. 아직 문서가 없으면 준비 중 안내를 띄운다. */
+/**
+ * 서비스 도움말 목차: 문서를 순서대로 카드로 보여 준다. 아직 문서가 없으면 준비 중 안내를 띄운다.
+ * 정적 서버 컴포넌트라 두 언어를 함께 그린다 (Localized).
+ */
 export function HelpServiceView({ service }: { service: HelpService }) {
   const { label, summary, articles } = HELP[service];
   return (
     <>
-      <h1 className="text-xl font-bold tracking-tight">{label} 도움말</h1>
-      <p className="mt-2 text-sm text-fg-secondary">{summary}</p>
+      <h1 className="text-xl font-bold tracking-tight">
+        <Localized ko={`${label.ko} 도움말`} en={`${label.en} help`} />
+      </h1>
+      <p className="mt-2 text-sm text-fg-secondary">
+        <Localized {...summary} />
+      </p>
       {articles.length === 0 ? (
         <p className="mt-6 rounded-lg border border-dashed border-line px-4 py-8 text-center text-sm text-fg-secondary">
-          {label} 도움말은 준비 중입니다.
+          <Localized
+            ko={`${label.ko} 도움말은 준비 중입니다.`}
+            en={`${label.en} help is coming soon.`}
+          />
         </p>
       ) : (
         <ol className="mt-6 flex flex-col gap-2">
@@ -25,9 +36,11 @@ export function HelpServiceView({ service }: { service: HelpService }) {
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold group-hover:text-accent">
-                    {a.title}
+                    <Localized {...a.title} />
                   </span>
-                  <span className="text-ui text-fg-secondary">{a.summary}</span>
+                  <span className="text-ui text-fg-secondary">
+                    <Localized {...a.summary} />
+                  </span>
                 </span>
               </Link>
             </li>

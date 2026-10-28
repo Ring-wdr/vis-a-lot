@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { isTerminal, type JobStateResponse } from "@/shared/api/types";
+import { defineMessages, intlLocale, t, useLocale } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
 import { useNow } from "@/shared/lib/use-now";
 
@@ -38,28 +39,90 @@ const metaItem =
   "inline-flex items-center gap-1 data-zero:text-fg-muted data-zero:opacity-60";
 const caption = "text-fg-muted";
 
-const STATUS_LABEL: Record<JobStateResponse["status"], string> = {
-  init: "대기",
-  progress: "진행 중",
-  success: "완료",
-  failed: "실패",
-  cancelled: "취소됨",
-};
+const messages = defineMessages({
+  ko: {
+    status: {
+      init: "대기",
+      progress: "진행 중",
+      success: "완료",
+      failed: "실패",
+      cancelled: "취소됨",
+    } as Record<JobStateResponse["status"], string>,
+    partlyFailed: "일부 실패",
+    preparing: "데이터 준비 중",
+    querying: "데이터 조회 중",
+    redrawing: "다시 그리는 중",
+    rendering: "렌더링 중",
+    seconds: (s: string) => `${s}초`,
+    minutes: (m: number, s: number) => `${m}분 ${s}초`,
+    done: "완료",
+    running: "그리는 중",
+    queued: "대기",
+    failed: "실패",
+    cancelled: "취소",
+    rows: "행",
+    progress: "진행률",
+    counting: "item 수 세는 중",
+    elapsedTitle: "경과 시간",
+    elapsed: "경과 ",
+    rateTitle: "처리 속도",
+    rate: "속도 ",
+    etaTitle: "남은 시간 (어림)",
+    eta: "남은 ",
+    about: (time: string) => `약 ${time}`,
+    workersTitle: "Render Worker 수",
+  },
+  en: {
+    status: {
+      init: "Waiting",
+      progress: "Running",
+      success: "Done",
+      failed: "Failed",
+      cancelled: "Cancelled",
+    },
+    partlyFailed: "Partly failed",
+    preparing: "Loading data",
+    querying: "Querying",
+    redrawing: "Redrawing",
+    rendering: "Rendering",
+    seconds: (s: string) => `${s}s`,
+    minutes: (m: number, s: number) => `${m}m ${s}s`,
+    done: "Done",
+    running: "Drawing",
+    queued: "Queued",
+    failed: "Failed",
+    cancelled: "Cancelled",
+    rows: "rows",
+    progress: "Progress",
+    counting: "Counting items",
+    elapsedTitle: "Elapsed time",
+    elapsed: "Time ",
+    rateTitle: "Throughput",
+    rate: "Rate ",
+    etaTitle: "Time left (estimate)",
+    eta: "ETA ",
+    about: (time: string) => `~${time}`,
+    workersTitle: "Render Worker count",
+  },
+});
 
 function phaseLabel(job: JobStateResponse) {
+  const text = t(messages);
   if (isTerminal(job.status)) {
-    if (job.status === "success" && job.counts.failed > 0) return "일부 실패";
-    return STATUS_LABEL[job.status];
+    if (job.status === "success" && job.counts.failed > 0)
+      return text.partlyFailed;
+    return text.status[job.status];
   }
-  if (job.phase === "dataset") return "데이터 준비 중";
-  if (job.phase === "query") return "데이터 조회 중";
-  return job.kind === "redraw" ? "다시 그리는 중" : "렌더링 중";
+  if (job.phase === "dataset") return text.preparing;
+  if (job.phase === "query") return text.querying;
+  return job.kind === "redraw" ? text.redrawing : text.rendering;
 }
 
 function seconds(ms: number) {
+  const text = t(messages);
   const s = ms / 1000;
-  if (s < 60) return `${s.toFixed(1)}초`;
-  return `${Math.floor(s / 60)}분 ${Math.round(s % 60)}초`;
+  if (s < 60) return text.seconds(s.toFixed(1));
+  return text.minutes(Math.floor(s / 60), Math.round(s % 60));
 }
 
 /**
@@ -67,6 +130,10 @@ function seconds(ms: number) {
  * 렌더 단계에서는 끝난 item 수 / 렌더 경과 시간으로 속도를, 남은 item 수로 남은 시간을 어림한다.
  */
 export function JobStatusBar({ job }: { job: JobStateResponse }) {
+  // phaseLabel·seconds는 t로 읽으므로 여기서 언어 변경을 구독한다.
+  const locale = useLocale();
+  const text = messages[locale];
+  const intl = intlLocale(locale);
   const running = !isTerminal(job.status);
   // 진행 중에는 경과 시간이 흐르도록 주기적으로 다시 그린다.
   const now = useNow(500, running);
@@ -105,30 +172,40 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
     value: number;
     tone?: string;
   }[] = [
-    { key: "success", Icon: CircleCheck, title: "완료", value: counts.success },
+    {
+      key: "success",
+      Icon: CircleCheck,
+      title: text.done,
+      value: counts.success,
+    },
     {
       key: "running",
       Icon: LoaderCircle,
-      title: "그리는 중",
+      title: text.running,
       value: counts.running,
       tone: "text-accent",
     },
-    { key: "queued", Icon: Hourglass, title: "대기", value: counts.queued },
+    {
+      key: "queued",
+      Icon: Hourglass,
+      title: text.queued,
+      value: counts.queued,
+    },
     {
       key: "failed",
       Icon: CircleX,
-      title: "실패",
+      title: text.failed,
       value: counts.failed,
       tone: "text-danger",
     },
     {
       key: "cancelled",
       Icon: CircleDashed,
-      title: "취소",
+      title: text.cancelled,
       value: counts.cancelled,
     },
   ];
-  const unit = job.phase === "dataset" ? "행" : "item";
+  const unit = job.phase === "dataset" ? text.rows : "item";
 
   return (
     <>
@@ -155,7 +232,7 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
       <span className={section}>
         <span
           role="progressbar"
-          aria-label="진행률"
+          aria-label={text.progress}
           aria-valuemin={0}
           aria-valuemax={progress.total || 1}
           aria-valuenow={job.phase === "query" ? undefined : progress.done}
@@ -180,18 +257,18 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
           </span>
         )}
         {/* 숫자가 늘어나도 칸 폭이 바뀌지 않도록 가장 긴 값만큼 자리를 잡아 둔다.
-            '1,000,000 / 1,000,000 행'과 '30,000 / 30,000 item' 중 긴 쪽 */}
-        <span className="min-w-[22ch]">
+            '1,000,000 / 1,000,000 rows'(영어가 가장 길다). 언어를 바꿔도 폭이 같다 */}
+        <span className="min-w-[28ch]">
           {job.phase === "query" ? (
-            <span className={caption}>item 수 세는 중</span>
+            <span className={caption}>{text.counting}</span>
           ) : (
             <>
               <span className="font-semibold text-fg">
-                {progress.done.toLocaleString()}
+                {progress.done.toLocaleString(intl)}
               </span>
               <span className={caption}>
                 {" "}
-                / {progress.total.toLocaleString()} {unit}
+                / {progress.total.toLocaleString(intl)} {unit}
               </span>
             </>
           )}
@@ -209,36 +286,39 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
             className={cn(metaItem, "min-w-[6ch]", value > 0 && tone)}
           >
             <Icon size={13} aria-label={title} />
-            {value.toLocaleString()}
+            {value.toLocaleString(intl)}
           </span>
         ))}
       </span>
 
       {/* 시간: 경과 · 처리 속도 · 남은 시간 */}
       <span className={cn(section, "gap-3 @max-5xl:hidden")}>
-        <span title="경과 시간" className="min-w-[9ch]">
-          <span className={caption}>경과 </span>
+        <span title={text.elapsedTitle} className="min-w-[9ch]">
+          <span className={caption}>{text.elapsed}</span>
           {seconds(elapsed)}
         </span>
         <span
-          title="처리 속도"
+          title={text.rateTitle}
           className={cn(metaItem, "min-w-[11ch]")}
           data-zero={rate === 0 || undefined}
         >
-          <span className={caption}>속도 </span>
+          <span className={caption}>{text.rate}</span>
           {rate > 0 ? `${rate.toFixed(1)} item/s` : "–"}
         </span>
         <span
-          title="남은 시간 (어림)"
+          title={text.etaTitle}
           className={cn(metaItem, "min-w-[11ch]")}
           data-zero={eta === 0 || undefined}
         >
-          <span className={caption}>남은 </span>
-          {eta > 0 ? `약 ${seconds(eta)}` : "–"}
+          <span className={caption}>{text.eta}</span>
+          {eta > 0 ? text.about(seconds(eta)) : "–"}
         </span>
       </span>
 
-      <span className={cn(section, "@max-6xl:hidden")} title="Render Worker 수">
+      <span
+        className={cn(section, "@max-6xl:hidden")}
+        title={text.workersTitle}
+      >
         <Cpu size={13} aria-hidden="true" />
         <span>
           <span className={caption}>Worker </span>

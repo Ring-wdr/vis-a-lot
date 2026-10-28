@@ -12,6 +12,7 @@ import {
 } from "@/entities/group/ui/route-group";
 import { useGroup, useGroups } from "@/shared/api/feed/queries";
 import { FEED, groupHref } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { settings } from "@/shared/ui/feed-settings-styles";
 import { EmptyState, LoadingText } from "@/shared/ui/Loading";
@@ -22,21 +23,57 @@ import { PostTypesSection } from "./PostTypesSection";
 import { StatusNamesSection } from "./StatusNamesSection";
 import { TeamsSection } from "./TeamsSection";
 
+const messages = defineMessages({
+  ko: {
+    title: "그룹 설정",
+    pick: "설정할 그룹을 고르세요.",
+    loading: "불러오는 중",
+    loadGroupsFailed: (error: string) => `그룹을 불러오지 못했습니다: ${error}`,
+    private: "비공개",
+    admin: "관리자",
+    readOnly: "읽기 전용",
+    loadingGroup: "그룹을 불러오는 중",
+    loadGroupFailed: "그룹을 불러오지 못했습니다",
+    retry: "다시 시도",
+    list: "리스트",
+    board: "보드",
+    readOnlyNote:
+      "그룹 관리자만 설정을 바꿀 수 있습니다. 지금은 읽기 전용으로 봅니다.",
+  },
+  en: {
+    title: "Group settings",
+    pick: "Choose a group to configure.",
+    loading: "Loading",
+    loadGroupsFailed: (error: string) => `Couldn't load groups: ${error}`,
+    private: "Private",
+    admin: "Admin",
+    readOnly: "Read-only",
+    loadingGroup: "Loading group",
+    loadGroupFailed: "Couldn't load the group",
+    retry: "Try again",
+    list: "List",
+    board: "Board",
+    readOnlyNote:
+      "Only group admins can change settings. You're viewing them read-only.",
+  },
+});
+
 const s = settings();
 
 /** ?g=가 없을 때: 고칠 그룹 고르기 */
 function GroupPicker() {
+  const text = useT(messages);
   const groups = useGroups();
   return (
     <div className={s.root()}>
       <div className={s.head()}>
-        <h1 className={s.title()}>그룹 설정</h1>
-        <p className={s.lead()}>설정할 그룹을 고르세요.</p>
+        <h1 className={s.title()}>{text.title}</h1>
+        <p className={s.lead()}>{text.pick}</p>
       </div>
-      {groups.isPending && <LoadingText>불러오는 중</LoadingText>}
+      {groups.isPending && <LoadingText>{text.loading}</LoadingText>}
       {groups.isError && (
         <p role="alert" className="text-danger">
-          그룹을 불러오지 못했습니다: {groups.error.message}
+          {text.loadGroupsFailed(groups.error.message)}
         </p>
       )}
       <ul className={s.list()}>
@@ -51,11 +88,15 @@ function GroupPicker() {
                 {g.keyPrefix}
               </span>
               {g.isPrivate && (
-                <Lock size={12} className="text-fg-muted" aria-label="비공개" />
+                <Lock
+                  size={12}
+                  className="text-fg-muted"
+                  aria-label={text.private}
+                />
               )}
             </Link>
             <span className="text-2xs text-fg-muted">
-              {g.myRole === "admin" ? "관리자" : "읽기 전용"}
+              {g.myRole === "admin" ? text.admin : text.readOnly}
             </span>
           </li>
         ))}
@@ -65,19 +106,20 @@ function GroupPicker() {
 }
 
 function GroupSettings({ groupId }: { groupId: string }) {
+  const text = useT(messages);
   const detail = useGroup(groupId);
   const edit = useGroupEdit(groupId);
   if (detail.isPending)
     return (
       <div className={s.root()}>
-        <LoadingText>그룹을 불러오는 중</LoadingText>
+        <LoadingText>{text.loadingGroup}</LoadingText>
       </div>
     );
   if (detail.isError)
     return (
       <EmptyState
         icon={<SettingsIcon size={20} />}
-        title="그룹을 불러오지 못했습니다"
+        title={text.loadGroupFailed}
       >
         <p>{detail.error.message}</p>
         <button
@@ -85,7 +127,7 @@ function GroupSettings({ groupId }: { groupId: string }) {
           className={button({ size: "sm", class: "mt-2" })}
           onClick={() => detail.refetch()}
         >
-          다시 시도
+          {text.retry}
         </button>
       </EmptyState>
     );
@@ -96,13 +138,15 @@ function GroupSettings({ groupId }: { groupId: string }) {
     <div className={s.root()}>
       <div className={s.head()}>
         <p className="text-xs text-fg-muted">
-          그룹 설정 · <span className="font-mono">{group.keyPrefix}</span>
+          {text.title} · <span className="font-mono">{group.keyPrefix}</span>
         </p>
         <h1 className={s.title()}>{group.name}</h1>
         <p className={s.lead()}>
-          <Link href={groupHref(FEED.list, group.keyPrefix)}>리스트</Link>
+          <Link href={groupHref(FEED.list, group.keyPrefix)}>{text.list}</Link>
           {" · "}
-          <Link href={groupHref(FEED.board, group.keyPrefix)}>보드</Link>
+          <Link href={groupHref(FEED.board, group.keyPrefix)}>
+            {text.board}
+          </Link>
         </p>
       </div>
       {!canEdit && (
@@ -111,7 +155,7 @@ function GroupSettings({ groupId }: { groupId: string }) {
           className="flex items-start gap-2 rounded-md border border-line bg-panel px-3 py-2 text-ui text-fg-secondary"
         >
           <Lock size={14} className="mt-0.5 flex-none" aria-hidden="true" />
-          그룹 관리자만 설정을 바꿀 수 있습니다. 지금은 읽기 전용으로 봅니다.
+          {text.readOnlyNote}
         </p>
       )}
       <fieldset

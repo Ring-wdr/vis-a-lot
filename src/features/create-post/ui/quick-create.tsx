@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
-import { FORMAT_LABELS } from "@/entities/post/lib/labels";
+import { formatLabels } from "@/entities/post/lib/labels";
 import { errorMessage } from "@/entities/post/model/use-post-action";
 import { field } from "@/entities/post/ui/styles";
 import { invalidatePosts } from "@/shared/api/feed/post-queries";
@@ -14,6 +14,7 @@ import { postsApi } from "@/shared/api/feed/posts";
 import { useGroups } from "@/shared/api/feed/queries";
 import type { Group, PostFormat } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { Spinner } from "@/shared/ui/Loading";
@@ -26,9 +27,46 @@ export type QuickCreateOptions = {
   onCreated?: (key: string) => void;
 };
 
-export const FORMAT_OPTIONS = (
-  Object.entries(FORMAT_LABELS) as [PostFormat, string][]
-).map(([value, label]) => ({ value, label }));
+const messages = defineMessages({
+  ko: {
+    titleRequired: "제목을 적어 주세요.",
+    groupRequired: "그룹을 골라 주세요.",
+    createFailed: (err: string) => `만들지 못했습니다: ${err}`,
+    heading: "빠른 생성",
+    title: "제목",
+    group: "그룹",
+    loading: "불러오는 중",
+    noGroups: "그룹 없음",
+    format: "형식",
+    groupsFailed: (err: string) => `그룹을 불러오지 못했습니다: ${err}`,
+    fullForm: "전체 폼으로",
+    close: "닫기",
+    create: "만들기",
+    hint: "Enter로 만들고 옆 패널에서 나머지를 채웁니다.",
+  },
+  en: {
+    titleRequired: "Please enter a title.",
+    groupRequired: "Please choose a group.",
+    createFailed: (err: string) => `Couldn't create: ${err}`,
+    heading: "Quick create",
+    title: "Title",
+    group: "Group",
+    loading: "Loading",
+    noGroups: "No groups",
+    format: "Format",
+    groupsFailed: (err: string) => `Couldn't load groups: ${err}`,
+    fullForm: "Full form",
+    close: "Close",
+    create: "Create",
+    hint: "Press Enter to create, then fill in the rest in the side panel.",
+  },
+});
+
+/** 형식 고르기 목록 (지금 언어) */
+export const formatOptions = () =>
+  (Object.entries(formatLabels()) as [PostFormat, string][]).map(
+    ([value, label]) => ({ value, label }),
+  );
 
 /** 기본 그룹: 키 접두사나 id가 맞는 그룹, 없으면 첫 그룹 */
 export function defaultGroup(groups: Group[], hint?: string | null) {
@@ -52,6 +90,7 @@ function QuickCreateDialog({
   unmount: () => void;
   options: QuickCreateOptions;
 }) {
+  const text = useT(messages);
   const titleId = useId();
   const client = useQueryClient();
   const groups = useGroups();
@@ -66,8 +105,8 @@ function QuickCreateDialog({
 
   const submit = async () => {
     const t = title.trim();
-    if (!t) return setError("제목을 적어 주세요.");
-    if (!group) return setError("그룹을 골라 주세요.");
+    if (!t) return setError(text.titleRequired);
+    if (!group) return setError(text.groupRequired);
     setSaving(true);
     setError(null);
     try {
@@ -85,7 +124,7 @@ function QuickCreateDialog({
       close();
       options.onCreated?.(created.key);
     } catch (err) {
-      setError(`만들지 못했습니다: ${errorMessage(err)}`);
+      setError(text.createFailed(errorMessage(err)));
     } finally {
       setSaving(false);
     }
@@ -108,14 +147,14 @@ function QuickCreateDialog({
         }}
       >
         <h2 id={titleId} className="text-base font-semibold">
-          빠른 생성
+          {text.heading}
         </h2>
         <input
           className={field({ class: "h-9 text-sm" })}
           value={title}
           maxLength={200}
-          placeholder="제목"
-          aria-label="제목"
+          placeholder={text.title}
+          aria-label={text.title}
           aria-invalid={!!error && !title.trim()}
           autoFocus
           onChange={(e) => {
@@ -125,9 +164,9 @@ function QuickCreateDialog({
         />
         <div className="grid grid-cols-2 gap-2">
           <Select
-            label="그룹"
+            label={text.group}
             value={group}
-            placeholder={groups.isPending ? "불러오는 중" : "그룹 없음"}
+            placeholder={groups.isPending ? text.loading : text.noGroups}
             options={list.map((g) => ({
               value: g.id,
               label: `${g.name} (${g.keyPrefix})`,
@@ -135,15 +174,15 @@ function QuickCreateDialog({
             onChange={setGroupId}
           />
           <Select
-            label="형식"
+            label={text.format}
             value={format}
-            options={FORMAT_OPTIONS}
+            options={formatOptions()}
             onChange={setFormat}
           />
         </div>
         {groups.isError && (
           <p role="alert" className="text-xs text-danger">
-            그룹을 불러오지 못했습니다: {groups.error.message}
+            {text.groupsFailed(groups.error.message)}
           </p>
         )}
         {error && (
@@ -154,13 +193,13 @@ function QuickCreateDialog({
         <div className={dialogActions}>
           <Link
             href={FEED.new}
-            className={button({ class: "mr-auto" })}
+            className={button({ class: "mr-auto whitespace-nowrap" })}
             onClick={close}
           >
-            전체 폼으로
+            {text.fullForm}
           </Link>
           <button type="button" className={button()} onClick={close}>
-            닫기
+            {text.close}
           </button>
           <button
             type="submit"
@@ -168,12 +207,10 @@ function QuickCreateDialog({
             disabled={saving}
           >
             {saving && <Spinner size="sm" tone="inherit" />}
-            만들기
+            {text.create}
           </button>
         </div>
-        <p className="text-2xs text-fg-muted">
-          Enter로 만들고 옆 패널에서 나머지를 채웁니다.
-        </p>
+        <p className="text-2xs text-fg-muted">{text.hint}</p>
       </form>
     </Dialog>
   );

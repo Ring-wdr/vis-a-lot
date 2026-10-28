@@ -20,6 +20,7 @@ import {
   type UploadTask,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
+import { defineMessages, t, useLocale } from "@/shared/lib/i18n";
 import { ApiRequestError, api } from "./api";
 
 /**
@@ -100,17 +101,23 @@ export function useDatasets() {
   return useQuery(datasetsQuery);
 }
 
-/** 목록에 없는 데이터셋(지운 업로드)의 이름 */
-export const DELETED_DATASET_NAME = "삭제된 데이터";
+const messages = defineMessages({
+  ko: { deletedDataset: "삭제된 데이터" },
+  en: { deletedDataset: "Deleted data" },
+});
+
+/** 목록에 없는 데이터셋(지운 업로드)의 이름. 그리는 컴포넌트는 useLocale로 구독한다. */
+export const deletedDatasetName = () => t(messages).deletedDataset;
 
 /** 데이터셋 이름. 목록을 받기 전이면 id를, 목록에 없으면(지운 데이터) '삭제된 데이터'를 쓴다. */
 export function useDatasetNames() {
   const datasets = useDatasets().data?.datasets;
+  const locale = useLocale();
   return useMemo(() => {
     const names = new Map(datasets?.map((d) => [d.id, d.name]));
-    return (id: DatasetId) =>
-      names.get(id) ?? (datasets ? DELETED_DATASET_NAME : id);
-  }, [datasets]);
+    const deleted = messages[locale].deletedDataset;
+    return (id: DatasetId) => names.get(id) ?? (datasets ? deleted : id);
+  }, [datasets, locale]);
 }
 
 export function useDatasetStatus(id: DatasetId) {
