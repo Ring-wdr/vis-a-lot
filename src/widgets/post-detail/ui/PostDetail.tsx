@@ -68,7 +68,10 @@ export function PostDetail({
           title={
             missing
               ? t`없거나 볼 수 없는 게시물입니다`
-              : t`게시물을 불러오지 못했습니다`
+              : t({
+                  message: "게시물을 불러오지 못했습니다",
+                  context: "single post",
+                })
           }
         >
           {missing ? (

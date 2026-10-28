@@ -80,6 +80,7 @@ msgid "게시물 유형"
 msgstr "Post type"
 
 #: src/widgets/post-detail/ui/PostDetail.tsx
+msgctxt "single post"
 msgid "게시물을 불러오지 못했습니다"
 msgstr "Couldn't load the post"
 

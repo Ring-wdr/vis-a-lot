@@ -13,7 +13,7 @@ import type {
 const assigneeText = (name: string | null) =>
   name
     ? t({ message: `담당 ${name}`, comment: "name은 담당자 이름" })
-    : t`담당자 없음`;
+    : t({ message: "담당자 없음", context: "AI mock summary" });
 
 /** 보고 초안 문장들. 줄 하나가 스트리밍 조각 하나다. */
 export function draftLines(a: ActivityData): string[] {
