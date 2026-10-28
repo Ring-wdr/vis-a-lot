@@ -3,6 +3,8 @@
 // 리스트 표: 열 선택·정렬·그룹핑·다중 선택. 리스트, 내 작업, 저장된 뷰(리스트 표시)가 쓴다.
 // 정렬은 받은 행 안에서 화면이 한다 (서버 정렬은 화면의 정렬 고르기가 맡는다).
 
+import { t } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   type ColumnDef,
   createColumnHelper,
@@ -36,7 +38,7 @@ import type {
   PostSummary,
   ViewGroupBy,
 } from "@/shared/api/feed/types";
-import { defineMessages, type Locale, t, useLocale } from "@/shared/lib/i18n";
+import { type Locale, linguiFor, useLocale } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import {
   DueLabel,
@@ -49,6 +51,7 @@ import {
   useToday,
   useUserName,
 } from "./post-meta";
+import "../config/messages";
 
 export { POST_COLUMNS, type PostColumn };
 
@@ -61,19 +64,6 @@ export type PostTableProps = {
   onSelectedChange?: (ids: Set<string>) => void;
   onOpen?: (key: string) => void;
 };
-
-const messages = defineMessages({
-  ko: {
-    blocked: "막힘",
-    selectAll: "모두 선택",
-    select: (key: string) => `${key} 선택`,
-  },
-  en: {
-    blocked: "Blocked",
-    selectAll: "Select all",
-    select: (key: string) => `Select ${key}`,
-  },
-});
 
 const features = tableFeatures({
   rowSortingFeature,
@@ -117,7 +107,7 @@ type PostColumnDef = ColumnDef<typeof features, PostSummary, any>;
 
 function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
   const labels = columnLabels(ctx.locale);
-  const text = messages[ctx.locale];
+  const blocked = t(linguiFor(ctx.locale))`막힘`;
   const defs: Record<PostColumn, PostColumnDef> = {
     key: helper.accessor("key", {
       id: "key",
@@ -145,7 +135,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
             <Ban
               size={12}
               className="flex-none text-danger"
-              aria-label={text.blocked}
+              aria-label={blocked}
             />
           )}
         </span>
@@ -224,6 +214,7 @@ function SelectAll({
   partial: boolean;
   onChange: (on: boolean) => void;
 }) {
+  const { t } = useLingui();
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (ref.current) ref.current.indeterminate = partial;
@@ -234,7 +225,7 @@ function SelectAll({
       type="checkbox"
       className="size-3.5 cursor-pointer accent-accent"
       checked={checked}
-      aria-label={t(messages).selectAll}
+      aria-label={t`모두 선택`}
       onChange={(e) => onChange(e.currentTarget.checked)}
     />
   );
@@ -249,6 +240,7 @@ export function PostTable({
   onOpen,
 }: PostTableProps) {
   const locale = useLocale();
+  const { t } = useLingui();
   const userName = useUserName();
   const statusName = useStatusName();
   const today = useToday();
@@ -305,35 +297,38 @@ export function PostTable({
     onSelectedChange(next);
   };
 
-  const renderRow = (row: (typeof rows)[number]) => (
-    <tr
-      key={row.id}
-      data-selected={(selectable && selected.has(row.id)) || undefined}
-      className="cursor-pointer hover:bg-panel-hover data-selected:bg-accent-soft"
-      onClick={() => onOpen?.(row.original.key)}
-    >
-      {selectable && (
-        <td className={cell({ class: "w-8" })}>
-          <input
-            type="checkbox"
-            className="size-3.5 cursor-pointer accent-accent"
-            checked={selected.has(row.id)}
-            aria-label={t(messages).select(row.original.key)}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => toggle(row.id, e.currentTarget.checked)}
-          />
-        </td>
-      )}
-      {row.getAllCells().map((c) => (
-        <td
-          key={c.id}
-          className={cell({ class: COLUMN_CLASS[c.column.id as PostColumn] })}
-        >
-          <table.FlexRender cell={c} />
-        </td>
-      ))}
-    </tr>
-  );
+  const renderRow = (row: (typeof rows)[number]) => {
+    const { key } = row.original;
+    return (
+      <tr
+        key={row.id}
+        data-selected={(selectable && selected.has(row.id)) || undefined}
+        className="cursor-pointer hover:bg-panel-hover data-selected:bg-accent-soft"
+        onClick={() => onOpen?.(row.original.key)}
+      >
+        {selectable && (
+          <td className={cell({ class: "w-8" })}>
+            <input
+              type="checkbox"
+              className="size-3.5 cursor-pointer accent-accent"
+              checked={selected.has(row.id)}
+              aria-label={t`${key} 선택`}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => toggle(row.id, e.currentTarget.checked)}
+            />
+          </td>
+        )}
+        {row.getAllCells().map((c) => (
+          <td
+            key={c.id}
+            className={cell({ class: COLUMN_CLASS[c.column.id as PostColumn] })}
+          >
+            <table.FlexRender cell={c} />
+          </td>
+        ))}
+      </tr>
+    );
+  };
 
   return (
     // relative: 칸 안의 sr-only 글자(absolute)가 스크롤 상자 밖으로 나가 페이지를 넓히지 않게 한다

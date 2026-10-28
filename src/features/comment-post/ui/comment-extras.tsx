@@ -2,62 +2,34 @@
 
 // 댓글에 붙는 것: 반응 막대(이모지 켜기·끄기)와 투표.
 
+import { ph, plural, select } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChartBar, Check, SmilePlus } from "lucide-react";
 import { useCommentAction } from "@/features/comment-post/model/use-comment-action";
 import type { Comment, Poll } from "@/shared/api/feed/comments";
 import { commentsApi } from "@/shared/api/feed/comments";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { dateTime } from "@/shared/lib/time";
 import { tv } from "@/shared/lib/tw";
 import { Popover } from "@/shared/ui/Popover";
+import "../config/messages";
 
 export const EMOJIS = ["👍", "🎉", "👀", "❤️", "😄", "🙏"] as const;
-
-const messages = defineMessages({
-  ko: {
-    reactFailed: "반응을 바꾸지 못했습니다",
-    reaction: (emoji: string, n: number, mine: boolean) =>
-      `${emoji} ${n}명${mine ? ", 내가 누름" : ""}`,
-    addReaction: "반응 더하기",
-    pickReaction: "반응 고르기",
-    poll: (question: string) => `투표: ${question}`,
-    voteFailed: "투표하지 못했습니다",
-    myVote: "내 선택",
-    votes: (n: number, pct: number) => `${n}표 · ${pct}%`,
-    participants: (n: number) => `${n}명 참여`,
-    closed: " · 마감됨",
-    closesAt: (at: string) => ` · ${at} 마감`,
-    changeHint: " · 다른 선택지를 누르면 바뀝니다",
-  },
-  en: {
-    reactFailed: "Couldn't update the reaction",
-    reaction: (emoji: string, n: number, mine: boolean) =>
-      `${emoji} ${n}${mine ? ", including you" : ""}`,
-    addReaction: "Add reaction",
-    pickReaction: "Pick a reaction",
-    poll: (question: string) => `Poll: ${question}`,
-    voteFailed: "Couldn't vote",
-    myVote: "My vote",
-    votes: (n: number, pct: number) =>
-      `${n} ${n === 1 ? "vote" : "votes"} · ${pct}%`,
-    participants: (n: number) => `${n} voted`,
-    closed: " · Closed",
-    closesAt: (at: string) => ` · Closes ${at}`,
-    changeHint: " · Pick another option to change",
-  },
-});
 
 const reactionButton = tv({
   base: "inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border border-line bg-elevated px-2 text-xs text-fg-secondary hover:border-line-strong disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:border-accent-line aria-pressed:bg-accent-soft aria-pressed:text-accent",
 });
 
 export function ReactionsBar({ comment }: { comment: Comment }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { run, pending } = useCommentAction();
   const toggle = (emoji: string, on: boolean) =>
-    run("react", text.reactFailed, () =>
+    run("react", t`반응을 바꾸지 못했습니다`, () =>
       commentsApi.react(comment.id, emoji, on),
     );
+  const reactionLabel = (emoji: string, count: number, isMine: boolean) => {
+    const by = isMine ? "me" : "others";
+    return t`${emoji} ${count}명${select(by, { me: ", 내가 누름", other: "" })}`;
+  };
   const mine = new Set(
     comment.reactions.filter((r) => r.mine).map((r) => r.emoji),
   );
@@ -70,7 +42,7 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
           type="button"
           className={reactionButton()}
           aria-pressed={r.mine}
-          aria-label={text.reaction(r.emoji, r.count, r.mine)}
+          aria-label={reactionLabel(r.emoji, r.count, r.mine)}
           disabled={!!pending}
           onClick={() => toggle(r.emoji, !r.mine)}
         >
@@ -80,14 +52,16 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
       ))}
       <Popover
         trigger={<SmilePlus size={13} aria-hidden="true" />}
-        triggerLabel={text.addReaction}
+        triggerLabel={t`반응 더하기`}
         triggerClassName={reactionButton({ class: "px-1.5" })}
         width={208}
         panelClassName="p-1.5"
       >
         {(close) => (
           <fieldset className="flex gap-0.5">
-            <legend className="sr-only">{text.pickReaction}</legend>
+            <legend className="sr-only">
+              <Trans>반응 고르기</Trans>
+            </legend>
             {EMOJIS.map((emoji) => (
               <button
                 key={emoji}
@@ -111,12 +85,12 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
 }
 
 export function PollView({ poll }: { poll: Poll }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { run, pending } = useCommentAction();
   const total = poll.votes.reduce((a, b) => a + b, 0);
   return (
     <fieldset className="flex flex-col gap-1.5 rounded-lg border border-line bg-panel-subtle p-3">
-      <legend className="sr-only">{text.poll(poll.question)}</legend>
+      <legend className="sr-only">{t`투표: ${ph({ question: poll.question })}`}</legend>
       <p className="flex items-center gap-1.5 text-ui font-semibold">
         <ChartBar
           size={14}
@@ -138,7 +112,9 @@ export function PollView({ poll }: { poll: Poll }) {
             aria-pressed={mine}
             disabled={poll.closed || !!pending}
             onClick={() =>
-              run("vote", text.voteFailed, () => commentsApi.vote(poll.id, i))
+              run("vote", t`투표하지 못했습니다`, () =>
+                commentsApi.vote(poll.id, i),
+              )
             }
           >
             <span
@@ -151,25 +127,27 @@ export function PollView({ poll }: { poll: Poll }) {
                 <Check
                   size={13}
                   className="flex-none text-accent"
-                  aria-label={text.myVote}
+                  aria-label={t`내 선택`}
                 />
               )}
               <span className="min-w-0 truncate">{option}</span>
             </span>
             <span className="relative text-xs text-fg-secondary tabular-nums">
-              {text.votes(votes, pct)}
+              {t`${plural(votes, { other: "#표" })} · ${pct}%`}
             </span>
           </button>
         );
       })}
       <p className="text-2xs text-fg-muted">
-        {text.participants(total)}
+        {t`${total}명 참여`}
         {poll.closed
-          ? text.closed
+          ? t` · 마감됨`
           : poll.closesAt
-            ? text.closesAt(dateTime().format(new Date(poll.closesAt)))
+            ? t` · ${ph({ at: dateTime().format(new Date(poll.closesAt)) })} 마감`
             : ""}
-        {!poll.closed && poll.myVote !== null && text.changeHint}
+        {!poll.closed &&
+          poll.myVote !== null &&
+          t` · 다른 선택지를 누르면 바뀝니다`}
       </p>
     </fieldset>
   );

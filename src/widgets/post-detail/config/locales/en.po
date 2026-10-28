@@ -1,0 +1,638 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:56+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "(수정됨)"
+msgstr "(edited)"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "{author}의 댓글"
+msgstr "Comment by {author}"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "{done}/{total} 해결"
+msgstr "{done}/{total} resolved"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "{item} 빼기"
+msgstr "Remove {item}"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "{item} 아래로"
+msgstr "Move {item} down"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "{item} 위로"
+msgstr "Move {item} up"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "{key} ''{title}''을(를) 지울까요?"
+msgstr "Delete {key} ''{title}''?"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "{key} {label} 관계 끊기"
+msgstr "Remove {label} relation with {key}"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "{name} 첨부 빼기"
+msgstr "Remove attachment {name}"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "{name}은(는) {mb}MB라 올릴 수 없습니다. 2MB 이하 파일만 첨부할 수 있어요."
+msgstr "{name} is {mb}MB and can't be uploaded. Files must be 2MB or smaller."
+
+#: src/widgets/post-detail/ui/PostDetail.tsx
+msgid "{postKey} 불러오는 중"
+msgstr "Loading {postKey}"
+
+#: src/widgets/post-detail/ui/PostDetail.tsx
+msgid "{postKey}는 지워졌거나, 키가 틀렸거나, 비공개 그룹의 게시물입니다."
+msgstr "{postKey} was deleted, the key is wrong, or it's in a private group."
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "{replyCount, plural, other {답글 #}}"
+msgstr "{replyCount, plural, one {# reply} other {# replies}}"
+
+#: src/widgets/post-detail/ui/PostContent.tsx
+msgid "{title} 차트"
+msgstr "{title} chart"
+
+#: src/widgets/post-detail/ui/PostContent.tsx
+msgid "vis-a-lot에서 차트 열기"
+msgstr "Open chart in vis-a-lot"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "갱신 시각"
+msgstr "Updated"
+
+#: src/widgets/post-detail/ui/PostPeek.tsx
+msgid "게시물 {key}"
+msgstr "Post {key}"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "게시물 유형"
+msgstr "Post type"
+
+#: src/widgets/post-detail/ui/PostDetail.tsx
+msgid "게시물을 불러오지 못했습니다"
+msgstr "Couldn't load the post"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "고정 풀기"
+msgstr "Unpin"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "고정됨"
+msgstr "Pinned"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "고정을 바꾸지 못했습니다"
+msgstr "Couldn't change the pin"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "고치기"
+msgstr "Edit"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "고치기 취소"
+msgstr "Cancel editing"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "관계"
+msgstr "Relations"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "관계 더하기"
+msgstr "Add relation"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "관계를 끊지 못했습니다"
+msgstr "Couldn't remove the relation"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "관계를 맺을 게시물"
+msgstr "Post to link"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "관계를 맺지 못했습니다"
+msgstr "Couldn't add the relation"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgctxt "relation choice"
+msgid "관련"
+msgstr "Related"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "구독"
+msgstr "Subscribe"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "구독 끄기"
+msgstr "Unsubscribe"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "구독 중: 누르면 알림을 끕니다"
+msgstr "Subscribed: click to turn off notifications"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "구독: 바뀌면 알림을 받습니다"
+msgstr "Subscribe: get notified of changes"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "구독을 바꾸지 못했습니다"
+msgstr "Couldn't change the subscription"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "기한"
+msgstr "Due"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "끌어올리기"
+msgstr "Pin"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "끌어올리기 해제"
+msgstr "Unpin"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "끌어올리기: 홈 피드 위쪽에 둡니다"
+msgstr "Pin: keep at the top of the home feed"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "끌어올리기를 바꾸지 못했습니다"
+msgstr "Couldn't change the pin"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "끌어올림: 누르면 해제합니다"
+msgstr "Pinned: click to unpin"
+
+#: src/widgets/post-detail/ui/PostDetail.tsx
+msgid "다시 시도"
+msgstr "Retry"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "다시 연 횟수 {reopenCount}"
+msgstr "Reopened {reopenCount}×"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "다시 열기"
+msgstr "Reopen"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "다시 열지 못했습니다"
+msgstr "Couldn't reopen"
+
+#: src/widgets/post-detail/ui/PostPeek.tsx
+msgid "닫기 (Esc)"
+msgstr "Close (Esc)"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "담당자"
+msgstr "Assignee"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "답글"
+msgstr "Reply"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "답글 달기"
+msgstr "Reply"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgctxt "comments section heading"
+msgid "댓글"
+msgstr "Comments"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "댓글 고치기"
+msgstr "Edit comment"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "댓글 스레드"
+msgstr "Comment threads"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "댓글을 고치지 못했습니다"
+msgstr "Couldn't edit the comment"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "댓글을 불러오는 중"
+msgstr "Loading comments"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "댓글을 불러오지 못했습니다: {reason}"
+msgstr "Couldn't load comments: {reason}"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "댓글을 지우지 못했습니다"
+msgstr "Couldn't delete the comment"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "더하기"
+msgstr "Add"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "링크"
+msgstr "Link"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "링크 URL"
+msgstr "Link URL"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "링크 이름"
+msgstr "Link name"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "링크나 2MB 이하 파일을 첨부할 수 있습니다."
+msgstr "Attach links or files up to 2MB."
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "링크를 첨부하지 못했습니다"
+msgstr "Couldn't attach the link"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgctxt "relation choice"
+msgid "막음"
+msgstr "Blocks"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "막힘"
+msgstr "Blocked"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgctxt "relation choice"
+msgid "막힘"
+msgstr "Blocked by"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "만든 시각"
+msgstr "Created"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "미해결로"
+msgstr "Resume"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "바꾸지 못했습니다"
+msgstr "Couldn't update"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgctxt "post transition button"
+msgid "반려"
+msgstr "Reject"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "반려하지 못했습니다"
+msgstr "Couldn't reject"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgctxt "post transition button"
+msgid "보류"
+msgstr "Hold"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "보류 사유: {reason}"
+msgstr "Hold reason: {reason}"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "보류를 풀지 못했습니다"
+msgstr "Couldn't lift the hold"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "보류하지 못했습니다"
+msgstr "Couldn't put on hold"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "비어 있으면 작성자({author})가 요청자 역할을 합니다."
+msgstr "If empty, the author ({author}) acts as requester."
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "삭제된 댓글"
+msgstr "Deleted comment"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "삭제된 댓글입니다."
+msgstr "This comment was deleted."
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "상위 이슈"
+msgstr "Parent issue"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "상위 이슈 빼기"
+msgstr "Remove parent issue"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "상위 이슈 정하기"
+msgstr "Set parent issue"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "상위 이슈를 빼지 못했습니다"
+msgstr "Couldn't remove the parent issue"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "상위 이슈를 정하지 못했습니다"
+msgstr "Couldn't set the parent issue"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "상태"
+msgstr "Status"
+
+#: src/widgets/post-detail/ui/PostBody.tsx
+msgid "설명"
+msgstr "Description"
+
+#: src/widgets/post-detail/ui/PostBody.tsx
+msgid "설명을 저장하지 못했습니다"
+msgstr "Couldn't save the description"
+
+#: src/widgets/post-detail/ui/PostBody.tsx
+msgid "설명이 없습니다."
+msgstr "No description."
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "순서를 바꾸지 못했습니다"
+msgstr "Couldn't reorder"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "스레드 고정"
+msgstr "Pin thread"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "스레드 해결"
+msgstr "Resolve thread"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgctxt "post transition button"
+msgid "승인"
+msgstr "Approve"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "승인하지 못했습니다"
+msgstr "Couldn't approve"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "아직 댓글이 없습니다. 첫 댓글을 남겨 보세요."
+msgstr "No comments yet. Be the first to comment."
+
+#: src/widgets/post-detail/ui/PostActivity.tsx
+msgid "아직 활동이 없습니다."
+msgstr "No activity yet."
+
+#: src/widgets/post-detail/ui/PostActivity.tsx
+msgid "알 수 없음"
+msgstr "Unknown"
+
+#: src/widgets/post-detail/ui/PostDetail.tsx
+msgid "없거나 볼 수 없는 게시물입니다"
+msgstr "Post not found or not visible"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgctxt "empty field value"
+msgid "없음"
+msgstr "None"
+
+#: src/widgets/post-detail/ui/PostPeek.tsx
+msgid "옆 패널 닫기"
+msgstr "Close side panel"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgctxt "post transition button"
+msgid "완료 요청"
+msgstr "Request review"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "완료를 요청하지 못했습니다"
+msgstr "Couldn't request review"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "요청자"
+msgstr "Requester"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "우선순위"
+msgstr "Priority"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "이 댓글을 지울까요?"
+msgstr "Delete this comment?"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "이름 (비우면 URL)"
+msgstr "Name (defaults to URL)"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgctxt "post field"
+msgid "이해관계자"
+msgstr "Stakeholders"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "자동"
+msgstr "Auto"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "작성자"
+msgstr "Author"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "재개일 {holdUntil}"
+msgstr "Resumes {holdUntil}"
+
+#: src/widgets/post-detail/ui/PostBody.tsx
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgctxt "save edit"
+msgid "저장"
+msgstr "Save"
+
+#: src/widgets/post-detail/ui/PostPeek.tsx
+msgid "전체 페이지로"
+msgstr "Full page"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "접기"
+msgstr "Collapse"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgctxt "post title input"
+msgid "제목"
+msgstr "Title"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "제목 고치기"
+msgstr "Edit title"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "제목 저장"
+msgstr "Save title"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "제목을 바꾸지 못했습니다"
+msgstr "Couldn't change the title"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "종류"
+msgstr "Type"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgctxt "relation choice"
+msgid "중복"
+msgstr "Duplicate"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "지우기"
+msgstr "Delete"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "지우지 못했습니다"
+msgstr "Couldn't delete"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "진행 시작"
+msgstr "Start"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "진행률"
+msgstr "Progress"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "진행률 (%)"
+msgstr "Progress (%)"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "진행을 시작하지 못했습니다"
+msgstr "Couldn't start progress"
+
+#: src/widgets/post-detail/ui/PostContent.tsx
+msgid "차트 이미지가 없습니다."
+msgstr "No chart image."
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "첨부"
+msgstr "Attachments"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "첨부를 빼지 못했습니다"
+msgstr "Couldn't remove the attachment"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "첨부할 파일"
+msgstr "File to attach"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "체크리스트"
+msgstr "Checklist"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "체크리스트 항목 더하기"
+msgstr "Add checklist item"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "체크하지 못했습니다"
+msgstr "Couldn't update the item"
+
+#: src/widgets/post-detail/ui/PostBody.tsx
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgctxt "cancel editing"
+msgid "취소"
+msgstr "Cancel"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgctxt "post transition button"
+msgid "취소"
+msgstr "Cancel"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "취소 사유: {reason}"
+msgstr "Cancel reason: {reason}"
+
+#: src/widgets/post-detail/ui/PostHeader.tsx
+msgid "취소하지 못했습니다"
+msgstr "Couldn't cancel"
+
+#: src/widgets/post-detail/ui/PostContent.tsx
+msgid "코드"
+msgstr "Code"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "태그"
+msgstr "Tags"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "팀"
+msgstr "Team"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgctxt "relation choice"
+msgid "파생"
+msgstr "Derived"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "파일"
+msgstr "File"
+
+#: src/widgets/post-detail/ui/PostAttachments.tsx
+msgid "파일을 첨부하지 못했습니다"
+msgstr "Couldn't attach the file"
+
+#: src/widgets/post-detail/ui/PostBody.tsx
+msgid "편집"
+msgstr "Edit"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "필드"
+msgstr "Fields"
+
+#: src/widgets/post-detail/ui/PostRelations.tsx
+msgid "하위 이슈"
+msgstr "Sub-issues"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "하위 이슈(해결 비율)나 체크리스트(체크 비율)로 계산합니다"
+msgstr "Calculated from sub-issues (resolved) or the checklist (checked)"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "항목 더하기"
+msgstr "Add item"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "항목을 더하지 못했습니다"
+msgstr "Couldn't add the item"
+
+#: src/widgets/post-detail/ui/PostChecklist.tsx
+msgid "항목을 빼지 못했습니다"
+msgstr "Couldn't remove the item"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "해결 상태를 바꾸지 못했습니다"
+msgstr "Couldn't change the resolved state"
+
+#: src/widgets/post-detail/ui/PostFields.tsx
+msgid "해결 시각"
+msgstr "Resolved"
+
+#: src/widgets/post-detail/ui/PostComments.tsx
+msgid "해결됨"
+msgstr "Resolved"
+
+#: src/widgets/post-detail/ui/PostActivity.tsx
+msgid "활동 로그"
+msgstr "Activity"
+
+#: src/widgets/post-detail/ui/PostActivity.tsx
+msgid "활동을 불러오는 중"
+msgstr "Loading activity"
+
+#: src/widgets/post-detail/ui/PostActivity.tsx
+msgid "활동을 불러오지 못했습니다: {reason}"
+msgstr "Couldn't load activity: {reason}"

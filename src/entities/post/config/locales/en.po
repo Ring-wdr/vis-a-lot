@@ -7,6 +7,10 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#: src/entities/post/ui/post-meta.tsx
+msgid " 기한 지남"
+msgstr " overdue"
+
 #: src/entities/post/lib/event-text.ts
 msgid "{actor}님이 {text}"
 msgstr "{actor} {text}"
@@ -15,9 +19,25 @@ msgstr "{actor} {text}"
 msgid "{blocker}{blockerB, select, none {가} other {이}} 닫혀 차단이 풀렸습니다"
 msgstr "Unblocked: {blocker} was closed"
 
+#: src/entities/post/ui/PostCard.tsx
+msgid "{commentCount, plural, other {댓글 #개}}"
+msgstr "{commentCount, plural, one {# comment} other {# comments}}"
+
+#: src/entities/post/ui/PostTable.tsx
+msgid "{key} 선택"
+msgstr "Select {key}"
+
 #: src/entities/post/lib/event-text.ts
 msgid "{kind} 변경"
 msgstr "changed {kind}"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "{label} 결과"
+msgstr "{label} results"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "{labelProp} 더하기"
+msgstr "Add {labelProp}"
 
 #: src/entities/post/lib/event-text.ts
 msgid "{place, select, comment {댓글에서} other {설명에서}} {name}님을 멘션했습니다"
@@ -39,6 +59,10 @@ msgstr "removed the ''{label}'' relation with {target}"
 msgid "{to}님을 담당자로 정했습니다"
 msgstr "assigned {to}"
 
+#: src/entities/post/ui/PostCard.tsx
+msgid "개 댓글"
+msgstr " comments"
+
 #: src/entities/post/lib/labels.ts
 msgid "검토 중"
 msgstr "In review"
@@ -51,9 +75,18 @@ msgstr "created the post"
 msgid "관련"
 msgstr "Related"
 
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "기한"
+msgstr "Due"
+
 #: src/entities/post/lib/labels.ts
 msgid "기한 임박"
 msgstr "Due soon"
+
+#: src/entities/post/ui/post-meta.tsx
+msgid "기한 지남 ({due})"
+msgstr "Overdue ({due})"
 
 #: src/entities/post/lib/labels.ts
 msgid "기한 초과"
@@ -87,6 +120,10 @@ msgstr "Urgent"
 msgid "낮음"
 msgstr "Low"
 
+#: src/entities/post/lib/my-work.ts
+msgid "내가 요청"
+msgstr "Requested"
+
 #: src/entities/post/lib/labels.ts
 msgid "높음"
 msgstr "High"
@@ -98,6 +135,21 @@ msgstr "reopened"
 #: src/entities/post/lib/labels.ts
 msgid "닫힘"
 msgstr "Closed"
+
+#: src/entities/post/lib/my-work.ts
+msgctxt "my work tab"
+msgid "담당"
+msgstr "Assigned"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "담당자"
+msgstr "Assignee"
+
+#: src/entities/post/model/post-model.ts
+#: src/entities/post/ui/post-meta.tsx
+msgid "담당자 없음"
+msgstr "Unassigned"
 
 #: src/entities/post/lib/event-text.ts
 msgid "담당자를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
@@ -127,6 +179,19 @@ msgstr "Awaiting resources"
 msgid "막던 게시물이 닫혀 차단이 풀렸습니다"
 msgstr "Unblocked: the blocking post was closed"
 
+#: src/entities/post/ui/PostCard.tsx
+#: src/entities/post/ui/PostTable.tsx
+msgid "막힘"
+msgstr "Blocked"
+
+#: src/entities/post/ui/PostCard.tsx
+msgid "막힘: 열린 게시물이 이 게시물을 막고 있습니다"
+msgstr "Blocked: an open post is blocking this one"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "맞는 게시물이 없습니다."
+msgstr "No matching posts."
+
 #: src/entities/post/lib/labels.ts
 msgid "멈춤"
 msgstr "Paused"
@@ -134,6 +199,15 @@ msgstr "Paused"
 #: src/entities/post/lib/labels.ts
 msgid "멘션"
 msgstr "Mention"
+
+#. 고르기 목록에서 사람 이름 뒤 괄호
+#: src/entities/post/model/options.ts
+msgid "멤버 아님"
+msgstr "not a member"
+
+#: src/entities/post/ui/PostTable.tsx
+msgid "모두 선택"
+msgstr "Select all"
 
 #: src/entities/post/lib/labels.ts
 msgid "미해결"
@@ -167,6 +241,11 @@ msgstr "Hold resumed"
 msgid "보통"
 msgstr "Medium"
 
+#. 고르기 목록에서 사람 이름 뒤 괄호
+#: src/entities/post/model/options.ts
+msgid "비활성"
+msgstr "inactive"
+
 #: src/entities/post/lib/event-text.ts
 msgid "상위 이슈 {from}{fromB, select, none {를} other {을}} 뺐습니다"
 msgstr "removed parent issue {from}"
@@ -179,6 +258,11 @@ msgstr "changed the parent issue {from} → {to}"
 msgid "상위 이슈를 {to}{toB, select, none {로} rieul {로} other {으로}} 정했습니다"
 msgstr "set the parent issue to {to}"
 
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "상태"
+msgstr "Status"
+
 #: src/entities/post/lib/labels.ts
 msgid "상태 변경"
 msgstr "Status change"
@@ -186,6 +270,11 @@ msgstr "Status change"
 #: src/entities/post/lib/event-text.ts
 msgid "상태를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
 msgstr "changed status {from} → {to}"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "수정"
+msgstr "Updated"
 
 #: src/entities/post/lib/labels.ts
 msgid "슬랙"
@@ -195,9 +284,18 @@ msgstr "Slack"
 msgid "승인"
 msgstr "Approved"
 
+#: src/entities/post/lib/my-work.ts
+msgid "승인 대기"
+msgstr "To approve"
+
 #: src/entities/post/lib/event-text.ts
 msgid "승인했습니다"
 msgstr "approved"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "썸네일"
+msgstr "Thumbnail"
 
 #: src/entities/post/lib/labels.ts
 msgid "앱 내"
@@ -205,6 +303,11 @@ msgstr "In-app"
 
 #: src/entities/post/lib/event-text.ts
 #: src/entities/post/lib/labels.ts
+msgid "없음"
+msgstr "None"
+
+#: src/entities/post/model/options.ts
+msgctxt "empty select option"
 msgid "없음"
 msgstr "None"
 
@@ -219,6 +322,15 @@ msgstr "Review request"
 #: src/entities/post/lib/event-text.ts
 msgid "완료를 요청했습니다"
 msgstr "requested review"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "우선순위"
+msgstr "Priority"
+
+#: src/entities/post/ui/post-meta.tsx
+msgid "우선순위 {label}"
+msgstr "Priority {label}"
 
 #: src/entities/post/lib/labels.ts
 msgid "우선순위 낮음"
@@ -244,6 +356,10 @@ msgstr "Email"
 msgid "이미지"
 msgstr "Image"
 
+#: src/entities/post/lib/my-work.ts
+msgid "이해관계자"
+msgstr "Stakeholder"
+
 #: src/entities/post/lib/event-text.ts
 msgid "재개일이 되어 보류가 풀렸습니다"
 msgstr "Hold lifted on the resume date"
@@ -252,6 +368,11 @@ msgstr "Hold lifted on the resume date"
 msgid "재현 안 됨"
 msgstr "Can't reproduce"
 
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "제목"
+msgstr "Title"
+
 #: src/entities/post/lib/labels.ts
 msgid "중복"
 msgstr "Duplicate"
@@ -259,6 +380,10 @@ msgstr "Duplicate"
 #: src/entities/post/lib/labels.ts
 msgid "진행 중"
 msgstr "In progress"
+
+#: src/entities/post/ui/PostCard.tsx
+msgid "진행률"
+msgstr "Progress"
 
 #: src/entities/post/lib/event-text.ts
 msgid "진행률을 {from}% → {to}%로 바꿨습니다"
@@ -276,6 +401,14 @@ msgstr "Unblocked"
 msgid "차트"
 msgstr "Chart"
 
+#: src/entities/post/ui/PostPicker.tsx
+msgid "찾는 중"
+msgstr "Searching"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "찾지 못했습니다: {reason}"
+msgstr "Search failed: {reason}"
+
 #: src/entities/post/lib/event-text.ts
 msgid "체크리스트 ''{item}'' 항목을 {action, select, added {추가했습니다} removed {지웠습니다} done {완료로 표시했습니다} undone {완료를 해제했습니다} other {바꿨습니다}}"
 msgstr "{action, select, added {added} removed {removed} done {checked off} undone {unchecked} other {changed}} checklist item ''{item}''"
@@ -288,6 +421,35 @@ msgstr "Cancelled"
 #: src/entities/post/lib/labels.ts
 msgid "코드"
 msgstr "Code"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "키"
+msgstr "Key"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "키(FD-12)나 제목으로 찾기"
+msgstr "Search by key (FD-12) or title"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그"
+msgstr "Tags"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그 {t} 빼기"
+msgstr "Remove tag {t}"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그 더하기"
+msgstr "Add tags"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그 입력 후 Enter"
+msgstr "Type a tag, press Enter"
+
+#: src/entities/post/model/post-model.ts
+msgid "팀 없음"
+msgstr "No team"
 
 #: src/entities/post/lib/labels.ts
 msgid "파생"

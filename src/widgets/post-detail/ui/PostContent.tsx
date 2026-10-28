@@ -3,26 +3,13 @@
 
 // 형식별 내용: 차트(썸네일 + vis-a-lot 링크), 이미지, 동영상, 코드.
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ExternalLink } from "lucide-react";
 import { formatLabels } from "@/entities/post/lib/labels";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { linkButton } from "@/shared/ui/button";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
-
-const messages = defineMessages({
-  ko: {
-    chartAlt: (title: string) => `${title} 차트`,
-    noChartImage: "차트 이미지가 없습니다.",
-    openChart: "vis-a-lot에서 차트 열기",
-    code: "코드",
-  },
-  en: {
-    chartAlt: (title: string) => `${title} chart`,
-    noChartImage: "No chart image.",
-    openChart: "Open chart in vis-a-lot",
-    code: "Code",
-  },
-});
+import "../config/messages";
 
 type Payload = Record<string, unknown>;
 
@@ -40,7 +27,7 @@ const media =
   "mx-auto block h-auto max-h-80 w-auto max-w-full rounded-md object-contain";
 
 export function PostContent({ post }: { post: PostDetail }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const p = (post.payload ?? {}) as Payload;
   const thumb = post.thumbnail;
 
@@ -54,10 +41,12 @@ export function PostContent({ post }: { post: PostDetail }) {
             <img
               className={media}
               src={thumb}
-              alt={text.chartAlt(post.title)}
+              alt={t`${ph({ title: post.title })} 차트`}
             />
           ) : (
-            <p className="text-xs text-fg-muted">{text.noChartImage}</p>
+            <p className="text-xs text-fg-muted">
+              <Trans>차트 이미지가 없습니다.</Trans>
+            </p>
           )}
           <figcaption className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
             <span>
@@ -73,7 +62,7 @@ export function PostContent({ post }: { post: PostDetail }) {
                 rel="noopener"
               >
                 <ExternalLink size={12} aria-hidden="true" />
-                {text.openChart}
+                <Trans>vis-a-lot에서 차트 열기</Trans>
               </a>
             )}
           </figcaption>
@@ -124,7 +113,7 @@ export function PostContent({ post }: { post: PostDetail }) {
       return (
         <figure className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-panel">
           <figcaption className="border-b border-line px-3 py-1.5 text-2xs font-semibold text-fg-secondary">
-            {str(p.language) ?? text.code}
+            {str(p.language) ?? t`코드`}
           </figcaption>
           <pre className="overflow-x-auto p-3 font-mono text-xs leading-relaxed">
             <code>{code}</code>
