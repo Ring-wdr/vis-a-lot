@@ -200,6 +200,7 @@ msgid "이미지 주소"
 msgstr "Image URL"
 
 #: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "post field"
 msgid "이해관계자"
 msgstr "Stakeholders"
 

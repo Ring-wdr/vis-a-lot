@@ -581,7 +581,7 @@ export function NewPostView() {
             )}
           </div>
           <OrderedSelect
-            label={t`이해관계자`}
+            label={t({ message: "이해관계자", context: "post field" })}
             options={o.people}
             value={stakeholderIds}
             placeholder={t({

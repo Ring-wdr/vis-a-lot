@@ -18,7 +18,7 @@ msgstr "Recipient"
 
 #: src/views/feed-dev-outbox/ui/OutboxView.tsx
 msgid "발송 로그"
-msgstr "Delivery log"
+msgstr "Outbox log"
 
 #: src/views/feed-dev-outbox/ui/OutboxView.tsx
 msgid "발송 로그를 불러오는 중"

@@ -115,6 +115,7 @@ msgid "9월"
 msgstr "9월"
 
 #: src/views/feed-report-activity/ui/DraftPanel.tsx
+msgctxt "AI adapter in draft panel"
 msgid "Chrome 내장 AI"
 msgstr "Chrome 내장 AI"
 

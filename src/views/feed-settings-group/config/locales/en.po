@@ -112,10 +112,12 @@ msgid "그룹에서 빼기"
 msgstr "Remove from group"
 
 #: src/views/feed-settings-group/ui/GroupSettingsView.tsx
+msgctxt "group settings"
 msgid "그룹을 불러오는 중"
 msgstr "Loading group"
 
 #: src/views/feed-settings-group/ui/GroupSettingsView.tsx
+msgctxt "group settings"
 msgid "그룹을 불러오지 못했습니다"
 msgstr "Couldn't load the group"
 

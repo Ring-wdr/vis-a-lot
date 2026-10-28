@@ -92,7 +92,7 @@ function GroupSettings({ groupId }: { groupId: string }) {
     return (
       <div className={s.root()}>
         <LoadingText>
-          <Trans>그룹을 불러오는 중</Trans>
+          <Trans context="group settings">그룹을 불러오는 중</Trans>
         </LoadingText>
       </div>
     );
@@ -100,7 +100,10 @@ function GroupSettings({ groupId }: { groupId: string }) {
     return (
       <EmptyState
         icon={<SettingsIcon size={20} />}
-        title={t`그룹을 불러오지 못했습니다`}
+        title={t({
+          message: "그룹을 불러오지 못했습니다",
+          context: "group settings",
+        })}
       >
         <p>{detail.error.message}</p>
         <button

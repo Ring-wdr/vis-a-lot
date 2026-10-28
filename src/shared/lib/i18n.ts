@@ -9,9 +9,9 @@ import {
 import { activateGlobal, linguiFor as linguiForLocale } from "./lingui";
 
 // 화면 언어. 사용자가 고른 값을 localStorage에 두고 <html lang>에 적는다 (color-scheme.ts와 같은 방식).
-// 문구는 쓰는 slice가 defineMessages로 언어별 표를 두고, 컴포넌트는 useT로, 컴포넌트 밖 함수는 t로 읽는다.
-// Lingui로 옮긴 slice는 lingui.ts의 instance를 쓰고, 여기서 고른 언어가 Lingui 전역 i18n도 바꾼다.
-// t는 지금 언어를 읽기만 하므로, t로 만든 문구를 그리는 컴포넌트는 useLocale(또는 useT)로 언어 변경을 구독한다.
+// 문구는 Lingui 매크로로 쓴다 (docs/i18n.md).
+// 여기서 고른 언어가 Lingui 전역 i18n(lingui.ts)도 바꾼다.
+// 컴포넌트 밖의 t``는 지금 언어를 읽기만 하므로, 그 문구를 그리는 컴포넌트는 useLocale(또는 useLingui)로 언어 변경을 구독한다.
 
 export type { Locale } from "@/shared/config/locale";
 
@@ -96,26 +96,6 @@ export function useApplyLocale() {
   useLayoutEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
-}
-
-/** 언어별 문구 표. 문구는 문자열이나 값을 받아 문자열을 만드는 함수다. en은 ko와 같은 모양이어야 한다. */
-export type Messages<M> = Readonly<Record<Locale, M>>;
-
-export function defineMessages<M extends object>(messages: {
-  ko: M;
-  en: NoInfer<M>;
-}): Messages<M> {
-  return messages;
-}
-
-/** 컴포넌트 밖에서 지금 언어의 문구를 읽는다. 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다. */
-export function t<M>(messages: Messages<M>): M {
-  return messages[getLocale()];
-}
-
-/** 컴포넌트에서 지금 언어의 문구를 읽고, 언어가 바뀌면 다시 렌더한다. */
-export function useT<M>(messages: Messages<M>): M {
-  return messages[useLocale()];
 }
 
 /** Intl API에 넘기는 locale 태그 */

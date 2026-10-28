@@ -150,6 +150,7 @@ msgid "구독을 바꾸지 못했습니다"
 msgstr "Couldn't change the subscription"
 
 #: src/widgets/post-detail/ui/PostFields.tsx
+msgctxt "post detail field"
 msgid "기한"
 msgstr "Due"
 

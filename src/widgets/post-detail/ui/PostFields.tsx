@@ -189,13 +189,13 @@ export function PostFields({
           placeholder={t({ message: "없음", context: "empty field value" })}
           onChange={(stakeholderIds) => save({ stakeholderIds })}
         />
-        <Row label={t`기한`}>
+        <Row label={t({ message: "기한", context: "post detail field" })}>
           <input
             type="date"
             className={field()}
             value={post.dueDate ?? ""}
             disabled={disabled}
-            aria-label={t`기한`}
+            aria-label={t({ message: "기한", context: "post detail field" })}
             onChange={(e) => {
               const v = e.currentTarget.value || null;
               if (v !== post.dueDate) void save({ dueDate: v });

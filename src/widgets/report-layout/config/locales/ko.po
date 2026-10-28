@@ -17,6 +17,7 @@ msgid "다시 시도"
 msgstr "다시 시도"
 
 #: src/widgets/report-layout/ui/report-ui.tsx
+msgctxt "report header button"
 msgid "발표 모드"
 msgstr "발표 모드"
 

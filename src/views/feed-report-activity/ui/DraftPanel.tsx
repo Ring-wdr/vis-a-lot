@@ -16,7 +16,10 @@ import "../config/messages";
 type DraftState = "streaming" | "done" | "stopped" | "error";
 
 const ADAPTER_LABELS = {
-  chrome: msg`Chrome 내장 AI`,
+  chrome: msg({
+    message: "Chrome 내장 AI",
+    context: "AI adapter in draft panel",
+  }),
   mock: msg({ message: "흉내", comment: "테스트용 가짜 AI 어댑터 이름" }),
 };
 

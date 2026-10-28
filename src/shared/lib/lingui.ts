@@ -8,9 +8,9 @@ import {
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/shared/config/locale";
 
 // Lingui instance. 훅이 없어 서버 컴포넌트(도움말)도 import한다. 지금 언어(localStorage)는 i18n.ts가 맡는다.
-// 언어마다 instance를 하나씩 둔다: 서버 컴포넌트·정적 HTML은 두 언어를 함께 그리고, React context는
+// 언어마다 instance를 하나씩 둔다: 서버 컴포넌트·정적 HTML은 모든 언어를 함께 그리고, React context는
 // hydration 중에 useLocale의 서버 값(ko)으로 그려야 해서다. 컴포넌트 밖 코드가 쓰는 전역 i18n
-// (@lingui/core/macro의 t``)은 i18n.ts가 지금 언어로 activate한다. 그래서 옛 API(useT·t)와 함께 바뀐다.
+// (@lingui/core/macro의 t``)은 i18n.ts가 지금 언어로 activate한다.
 
 const instances = Object.fromEntries(
   LOCALES.map((locale) => [

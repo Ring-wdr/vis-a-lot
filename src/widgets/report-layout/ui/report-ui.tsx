@@ -84,7 +84,7 @@ export function ReportHeader({
             onClick={start}
           >
             <Presentation size={14} aria-hidden="true" />
-            <Trans>발표 모드</Trans>
+            <Trans context="report header button">발표 모드</Trans>
           </button>
         )}
       </div>
