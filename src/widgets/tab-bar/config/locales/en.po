@@ -42,5 +42,6 @@ msgid "탭 닫기"
 msgstr "Close tab"
 
 #: src/widgets/tab-bar/ui/TabBar.tsx
+msgctxt "filter panel button"
 msgid "필터"
 msgstr "Filter"

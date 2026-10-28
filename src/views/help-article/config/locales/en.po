@@ -8,10 +8,6 @@ msgstr ""
 "Language: en\n"
 
 #: src/views/help-article/ui/HelpArticleView.tsx
-#~ msgid "다음"
-#~ msgstr "Next"
-
-#: src/views/help-article/ui/HelpArticleView.tsx
 msgctxt "next help article"
 msgid "다음"
 msgstr "Next"
@@ -19,10 +15,6 @@ msgstr "Next"
 #: src/views/help-article/ui/HelpArticleView.tsx
 msgid "위치"
 msgstr "Breadcrumb"
-
-#: src/views/help-article/ui/HelpArticleView.tsx
-#~ msgid "이전"
-#~ msgstr "Previous"
 
 #: src/views/help-article/ui/HelpArticleView.tsx
 msgctxt "previous help article"

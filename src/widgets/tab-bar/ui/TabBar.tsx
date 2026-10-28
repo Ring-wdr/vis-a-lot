@@ -189,7 +189,7 @@ function FilterToggle() {
       onClick={toggle}
     >
       <Filter size={13} aria-hidden="true" />
-      <Trans>필터</Trans>
+      <Trans context="filter panel button">필터</Trans>
       {count > 0 && (
         <span className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-3xs text-on-accent">
           {count}
