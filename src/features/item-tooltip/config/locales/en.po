@@ -1,0 +1,234 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:01+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/features/item-tooltip/ui/ItemTooltip.tsx
+msgid "{alt} · {value} 색 바꾸기"
+msgstr "{alt} · change {value} color"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "{from} ~ {to} 미만"
+msgstr "{from} ~ <{to}"
+
+#. n: 개수
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "{n}개"
+msgstr "{n}"
+
+#. 기간의 분 단위
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "{n}분"
+msgstr "{n}m"
+
+#. 기간의 시간 단위
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "{n}시간"
+msgstr "{n}h"
+
+#. 기간의 일 단위 (2일)
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "{n}일"
+msgstr "{n}d"
+
+#. 기간의 초 단위
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "{n}초"
+msgstr "{n}s"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "가까운 점 x"
+msgstr "nearest x"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "가까운 점 y"
+msgstr "nearest y"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "값"
+msgstr "Value"
+
+#: src/features/item-tooltip/ui/ItemTooltip.tsx
+msgid "값을 읽지 못했습니다"
+msgstr "Couldn't read values"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "개수"
+msgstr "Count"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "계열"
+msgstr "Series"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "고가"
+msgstr "High"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "구간"
+msgstr "Range"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "길이"
+msgstr "Duration"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "끝"
+msgstr "End"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "나가는 합"
+msgstr "Outflow"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "나눈 값"
+msgstr "Subdivision"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "누적"
+msgstr "Cumulative"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "단계"
+msgstr "Stage"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "도착"
+msgstr "To"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "도착 노드"
+msgstr "Target node"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "들어오는 합"
+msgstr "Inflow"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "묶음 안 비율"
+msgstr "Ratio in group"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "범주"
+msgstr "Category"
+
+#: src/features/item-tooltip/ui/ItemTooltip.tsx
+msgid "불러오는 중"
+msgstr "Loading"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "비율"
+msgstr "Ratio"
+
+#: src/features/item-tooltip/ui/ItemTooltip.tsx
+msgid "삭제된 데이터라 값을 읽을 수 없습니다"
+msgstr "The data was deleted, so values can't be read"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "시가"
+msgstr "Open"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "시작"
+msgstr "Start"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "이름"
+msgstr "Name"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "이상치"
+msgstr "Outliers"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "이전 단계 대비"
+msgstr "vs. previous"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "저가"
+msgstr "Low"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "조각"
+msgstr "Slice"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "조각 안 비율"
+msgstr "Ratio in slice"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "종가"
+msgstr "Close"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "중앙값"
+msgstr "Median"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "첫 단계 대비"
+msgstr "vs. first"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "최댓값(수염)"
+msgstr "Max (whisker)"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "최솟값(수염)"
+msgstr "Min (whisker)"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "출발"
+msgstr "From"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "출발 노드"
+msgstr "Source node"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "커서 x"
+msgstr "cursor x"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "커서 y"
+msgstr "cursor y"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "평균"
+msgstr "Mean"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgctxt "chart tooltip"
+msgid "합계"
+msgstr "Total"
+
+#: src/features/item-tooltip/lib/strategies.ts
+msgid "합친 구간"
+msgstr "Merged"
