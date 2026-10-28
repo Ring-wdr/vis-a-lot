@@ -1,0 +1,110 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "post_status_unresolved": "Unresolved",
+  "post_status_in_progress": "In progress",
+  "post_status_in_review": "In review",
+  "post_status_resolved": "Resolved",
+  "post_status_on_hold": "On hold",
+  "post_status_cancelled": "Cancelled",
+  "post_category_open": "Open",
+  "post_category_paused": "Paused",
+  "post_category_closed": "Closed",
+  "post_priority_0": "None",
+  "post_priority_1": "Low",
+  "post_priority_2": "Medium",
+  "post_priority_3": "High",
+  "post_priority_4": "Urgent",
+  "post_format_chart": "Chart",
+  "post_format_image": "Image",
+  "post_format_video": "Video",
+  "post_format_code": "Code",
+  "post_cancel_reason_duplicate": "Duplicate",
+  "post_cancel_reason_cannot_reproduce": "Can't reproduce",
+  "post_cancel_reason_out_of_scope": "Out of scope",
+  "post_cancel_reason_low_priority": "Low priority",
+  "post_hold_reason_dependency": "Dependency",
+  "post_hold_reason_decision": "Decision",
+  "post_hold_reason_resource": "Awaiting resources",
+  "post_relation_blocks": "Blocks",
+  "post_relation_duplicate": "Duplicate",
+  "post_relation_relates": "Related",
+  "post_relation_derived": "Derived",
+  "post_notify_kind_assigned": "Assigned",
+  "post_notify_kind_mention": "Mention",
+  "post_notify_kind_comment": "Comment",
+  "post_notify_kind_status": "Status change",
+  "post_notify_kind_review_requested": "Review request",
+  "post_notify_kind_approved": "Approved",
+  "post_notify_kind_rejected": "Rejected",
+  "post_notify_kind_due_soon": "Due soon",
+  "post_notify_kind_overdue": "Overdue",
+  "post_notify_kind_hold_resumed": "Hold resumed",
+  "post_notify_kind_unblocked": "Unblocked",
+  "post_notify_kind_children_resolved": "Sub-issues done",
+  "post_channel_inapp": "In-app",
+  "post_channel_slack": "Slack",
+  "post_channel_email": "Email",
+
+  "event_none": "None",
+  "event_created": "created the post",
+  "event_status_changed": "changed status {from} → {to}",
+  "event_assignee_cleared": "cleared the assignee",
+  "event_assignee_set": "assigned {name}",
+  "event_assignee_changed": "changed assignee {from} → {to}",
+  "event_priority_changed": "changed priority {from} → {to}",
+  "event_due_cleared": "cleared the due date",
+  "event_due_set": "set the due date to {due}",
+  "event_due_changed": "changed the due date {from} → {to}",
+  "event_progress_changed": "changed progress {from}% → {to}%",
+  "event_commented": "left a comment",
+  "event_mentioned": [
+    {
+      "declarations": ["input place"],
+      "selectors": ["place"],
+      "match": {
+        "place=comment": "mentioned in a comment",
+        "place=*": "mentioned in the description"
+      }
+    }
+  ],
+  "event_mentioned_user": [
+    {
+      "declarations": ["input place", "input name"],
+      "selectors": ["place"],
+      "match": {
+        "place=comment": "mentioned {name} in a comment",
+        "place=*": "mentioned {name} in the description"
+      }
+    }
+  ],
+  "event_review_requested": "requested review",
+  "event_approved": "approved",
+  "event_rejected": "rejected",
+  "event_reopened": "reopened",
+  "event_parent_changed": "changed the parent issue {from} → {to}",
+  "event_parent_set": "set the parent issue to {to}",
+  "event_parent_removed": "removed parent issue {from}",
+  "event_relation_added": "added a '{label}' relation with {target}",
+  "event_relation_removed": "removed the '{label}' relation with {target}",
+  "event_checklist": [
+    {
+      "declarations": ["input item", "input action"],
+      "selectors": ["action"],
+      "match": {
+        "action=added": "added checklist item '{item}'",
+        "action=removed": "removed checklist item '{item}'",
+        "action=done": "checked off checklist item '{item}'",
+        "action=undone": "unchecked checklist item '{item}'",
+        "action=*": "changed checklist item '{item}'"
+      }
+    }
+  ],
+  "event_due_soon": "Due date ({due}) is approaching",
+  "event_overdue": "Due date ({due}) has passed",
+  "event_hold_resumed": "Hold lifted on the resume date",
+  "event_unblocked": "Unblocked: the blocking post was closed",
+  "event_unblocked_by": "Unblocked: {blocker} was closed",
+  "event_children_resolved": "All sub-issues done; moved to review",
+  "event_other": "changed {kind}",
+  "event_sentence": "{actor} {text}"
+}

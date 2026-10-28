@@ -1,4 +1,5 @@
 import type { Locale } from "@/shared/config/locale";
+import type { PlainMessage } from "@/shared/lib/i18n";
 
 /**
  * 짧은 글자(상단 바·탭·배지)를 두 언어 중 긴 쪽 폭으로 그린다. 두 언어를 한 칸에 겹쳐 두고
@@ -18,5 +19,15 @@ export function StableText(text: Record<Locale, string>) {
         {text.en}
       </span>
     </span>
+  );
+}
+
+/** Paraglide 메시지를 StableText로 그린다: 두 언어를 함께 그려 정적 HTML에서도 깜빡이지 않는다. */
+export function StableMessage({ message }: { message: PlainMessage }) {
+  return (
+    <StableText
+      ko={message({}, { locale: "ko" })}
+      en={message({}, { locale: "en" })}
+    />
   );
 }

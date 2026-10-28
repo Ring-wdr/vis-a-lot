@@ -3,18 +3,19 @@
   "version": "0.17.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "paraglide-js compile --silent && (paraglide-js compile --watch --silent & next dev)",
+    "build": "paraglide-js compile --silent && next build",
     "start": "next start",
     "lint": "node scripts/check-fsd.mjs && biome check && stylelint \"**/*.css\"",
     "lint:fsd": "node scripts/check-fsd.mjs",
     "format": "biome format --write",
-    "test": "vitest run",
+    "test": "paraglide-js compile --silent && vitest run",
     "gen:api": "tsx scripts/gen-api.mts",
     "gen:api:check": "tsx scripts/gen-api.mts --check",
     "bench:db": "tsx scripts/bench-db/run.mts",
-    "prepare": "husky",
-    "lint:css": "stylelint \"**/*.css\""
+    "prepare": "husky && paraglide-js compile --silent",
+    "lint:css": "stylelint \"**/*.css\"",
+    "i18n": "paraglide-js compile"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
@@ -62,6 +63,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",
+    "@inlang/paraglide-js": "2.29.2",
+    "@inlang/plugin-message-format": "4.5.5",
     "@tailwindcss/postcss": "4.3.3",
     "@types/d3-array": "3.2.2",
     "@types/d3-hierarchy": "3.1.7",

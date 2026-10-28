@@ -1,0 +1,7 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "help_article_prev": "이전",
+  "help_article_next": "다음",
+  "help_article_nav": "이전·다음 문서",
+  "help_article_breadcrumb": "위치"
+}

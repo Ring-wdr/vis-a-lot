@@ -1,0 +1,110 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "post_status_unresolved": "미해결",
+  "post_status_in_progress": "진행 중",
+  "post_status_in_review": "검토 중",
+  "post_status_resolved": "해결됨",
+  "post_status_on_hold": "보류",
+  "post_status_cancelled": "취소",
+  "post_category_open": "열림",
+  "post_category_paused": "멈춤",
+  "post_category_closed": "닫힘",
+  "post_priority_0": "없음",
+  "post_priority_1": "낮음",
+  "post_priority_2": "보통",
+  "post_priority_3": "높음",
+  "post_priority_4": "긴급",
+  "post_format_chart": "차트",
+  "post_format_image": "이미지",
+  "post_format_video": "동영상",
+  "post_format_code": "코드",
+  "post_cancel_reason_duplicate": "중복",
+  "post_cancel_reason_cannot_reproduce": "재현 안 됨",
+  "post_cancel_reason_out_of_scope": "범위 밖",
+  "post_cancel_reason_low_priority": "우선순위 낮음",
+  "post_hold_reason_dependency": "의존성",
+  "post_hold_reason_decision": "의사결정",
+  "post_hold_reason_resource": "리소스 대기",
+  "post_relation_blocks": "차단",
+  "post_relation_duplicate": "중복",
+  "post_relation_relates": "관련",
+  "post_relation_derived": "파생",
+  "post_notify_kind_assigned": "배정",
+  "post_notify_kind_mention": "멘션",
+  "post_notify_kind_comment": "댓글",
+  "post_notify_kind_status": "상태 변경",
+  "post_notify_kind_review_requested": "완료 요청",
+  "post_notify_kind_approved": "승인",
+  "post_notify_kind_rejected": "반려",
+  "post_notify_kind_due_soon": "기한 임박",
+  "post_notify_kind_overdue": "기한 초과",
+  "post_notify_kind_hold_resumed": "보류 재개",
+  "post_notify_kind_unblocked": "차단 해제",
+  "post_notify_kind_children_resolved": "하위 이슈 완료",
+  "post_channel_inapp": "앱 내",
+  "post_channel_slack": "슬랙",
+  "post_channel_email": "이메일",
+
+  "event_none": "없음",
+  "event_created": "게시물을 만들었습니다",
+  "event_status_changed": "상태를 {from} → {toRo} 바꿨습니다",
+  "event_assignee_cleared": "담당자를 비웠습니다",
+  "event_assignee_set": "{name}님을 담당자로 정했습니다",
+  "event_assignee_changed": "담당자를 {from} → {toRo} 바꿨습니다",
+  "event_priority_changed": "우선순위를 {from} → {toRo} 바꿨습니다",
+  "event_due_cleared": "기한을 지웠습니다",
+  "event_due_set": "기한을 {dueRo} 정했습니다",
+  "event_due_changed": "기한을 {from} → {toRo} 바꿨습니다",
+  "event_progress_changed": "진행률을 {from}% → {to}%로 바꿨습니다",
+  "event_commented": "댓글을 남겼습니다",
+  "event_mentioned": [
+    {
+      "declarations": ["input place"],
+      "selectors": ["place"],
+      "match": {
+        "place=comment": "댓글에서 멘션했습니다",
+        "place=*": "설명에서 멘션했습니다"
+      }
+    }
+  ],
+  "event_mentioned_user": [
+    {
+      "declarations": ["input place", "input name"],
+      "selectors": ["place"],
+      "match": {
+        "place=comment": "댓글에서 {name}님을 멘션했습니다",
+        "place=*": "설명에서 {name}님을 멘션했습니다"
+      }
+    }
+  ],
+  "event_review_requested": "완료를 요청했습니다",
+  "event_approved": "승인했습니다",
+  "event_rejected": "반려했습니다",
+  "event_reopened": "다시 열었습니다",
+  "event_parent_changed": "상위 이슈를 {from} → {toRo} 바꿨습니다",
+  "event_parent_set": "상위 이슈를 {toRo} 정했습니다",
+  "event_parent_removed": "상위 이슈 {fromEul} 뺐습니다",
+  "event_relation_added": "{targetWa} '{label}' 관계를 맺었습니다",
+  "event_relation_removed": "{targetWa}의 '{label}' 관계를 끊었습니다",
+  "event_checklist": [
+    {
+      "declarations": ["input item", "input action"],
+      "selectors": ["action"],
+      "match": {
+        "action=added": "체크리스트 '{item}' 항목을 추가했습니다",
+        "action=removed": "체크리스트 '{item}' 항목을 지웠습니다",
+        "action=done": "체크리스트 '{item}' 항목을 완료로 표시했습니다",
+        "action=undone": "체크리스트 '{item}' 항목을 완료를 해제했습니다",
+        "action=*": "체크리스트 '{item}' 항목을 바꿨습니다"
+      }
+    }
+  ],
+  "event_due_soon": "기한({due})이 다가옵니다",
+  "event_overdue": "기한({due})이 지났습니다",
+  "event_hold_resumed": "재개일이 되어 보류가 풀렸습니다",
+  "event_unblocked": "막던 게시물이 닫혀 차단이 풀렸습니다",
+  "event_unblocked_by": "{blockerIga} 닫혀 차단이 풀렸습니다",
+  "event_children_resolved": "하위 이슈가 모두 끝나 검토 중이 되었습니다",
+  "event_other": "{kind} 변경",
+  "event_sentence": "{actor}님이 {text}"
+}

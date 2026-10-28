@@ -4,15 +4,11 @@ import { Popover } from "@base-ui/react/popover";
 import { ChevronDown, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { logout, useSession } from "@/shared/api/session";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import { useLocale } from "@/shared/lib/i18n";
+import * as m from "@/shared/lib/paraglide/messages/_index.js";
 import { Avatar } from "@/shared/ui/Avatar";
 import { button } from "@/shared/ui/button";
 import { preferencesPopover } from "@/shared/ui/preferences-popover";
-
-const messages = defineMessages({
-  ko: { menu: "사용자 메뉴", logout: "로그아웃" },
-  en: { menu: "User menu", logout: "Log out" },
-});
 
 const p = preferencesPopover();
 
@@ -21,14 +17,17 @@ const p = preferencesPopover();
  * 트리거에는 사용자 이름만 두어 화면 언어가 바뀌어도 상단 바 폭이 그대로다.
  */
 export function UserMenu({ children }: { children?: ReactNode }) {
-  const text = useT(messages);
+  const locale = useLocale();
   const name = useSession((s) =>
     s.status === "authenticated" ? s.user.name : undefined,
   );
   if (!name) return null;
   return (
     <Popover.Root>
-      <Popover.Trigger className={p.trigger()} aria-label={text.menu}>
+      <Popover.Trigger
+        className={p.trigger()}
+        aria-label={m.user_menu_label({}, { locale })}
+      >
         <Avatar name={name} />
         <span className="truncate whitespace-nowrap">{name}</span>
         <ChevronDown size={13} className="flex-none" aria-hidden="true" />
@@ -62,7 +61,7 @@ export function UserMenu({ children }: { children?: ReactNode }) {
               onClick={() => logout()}
             >
               <LogOut size={14} aria-hidden="true" />
-              {text.logout}
+              {m.user_menu_logout({}, { locale })}
             </button>
           </Popover.Popup>
         </Popover.Positioner>

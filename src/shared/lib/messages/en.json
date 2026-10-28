@@ -1,0 +1,17 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "time_just_now": "just now",
+  "time_minutes_ago": "{n}m ago",
+  "time_hours_ago": "{n}h ago",
+  "time_days_ago": "{n}d ago",
+  "time_date": [
+    {
+      "declarations": [
+        "input at",
+        "local formatted = at: datetime dateStyle=medium timeStyle=short"
+      ],
+      "selectors": [],
+      "match": { "*": "{formatted}" }
+    }
+  ]
+}

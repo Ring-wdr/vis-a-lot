@@ -1,0 +1,10 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "preferences_menu_label": "Display settings",
+  "help_shell_title": "vis-a-lot Help",
+  "help_shell_open_toc": "Open contents",
+  "help_shell_close_toc": "Close contents",
+  "help_shell_services": "Services",
+  "help_shell_vis": "Charts",
+  "help_shell_feed": "Feed"
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "time_just_now": "방금",
+  "time_minutes_ago": "{n}분 전",
+  "time_hours_ago": "{n}시간 전",
+  "time_days_ago": "{n}일 전",
+  "time_date": [
+    {
+      "declarations": [
+        "input at",
+        "local formatted = at: datetime dateStyle=medium timeStyle=short"
+      ],
+      "selectors": [],
+      "match": { "*": "{formatted}" }
+    }
+  ]
+}

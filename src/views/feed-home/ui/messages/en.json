@@ -1,0 +1,16 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "feed_home_groups": "Groups",
+  "feed_home_all": "All",
+  "feed_home_load_failed": "Couldn't load posts ({reason})",
+  "feed_home_retry": "Retry",
+  "feed_home_empty": "No posts yet",
+  "feed_home_new_post": "Create a post",
+  "feed_home_posts": "Posts",
+  "feed_home_loading": "Loading",
+  "feed_home_more": "Load more",
+  "feed_home_home": "Home",
+  "feed_home_groups_failed": "Couldn't load groups ({reason})",
+  "feed_home_unknown_group": "Unknown group",
+  "feed_home_show_all": "Show all"
+}

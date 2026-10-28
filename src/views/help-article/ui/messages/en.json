@@ -1,0 +1,7 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "help_article_prev": "Previous",
+  "help_article_next": "Next",
+  "help_article_nav": "Previous and next",
+  "help_article_breadcrumb": "Breadcrumb"
+}

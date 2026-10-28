@@ -5,38 +5,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { HELP_ROOT } from "@/shared/config/help";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import { useLocale } from "@/shared/lib/i18n";
+import * as m from "@/shared/lib/paraglide/messages/_index.js";
 import { navLink } from "@/shared/ui/nav";
-import { StableText } from "@/shared/ui/StableText";
+import { StableMessage } from "@/shared/ui/StableText";
 import { HelpSidebar } from "@/widgets/help-sidebar/ui/HelpSidebar";
 import { PreferencesMenu } from "./PreferencesMenu";
-
-const messages = defineMessages({
-  ko: {
-    openToc: "목차 열기",
-    closeToc: "목차 닫기",
-    services: "서비스",
-    vis: "시각화",
-    feed: "피드",
-  },
-  en: {
-    openToc: "Open contents",
-    closeToc: "Close contents",
-    services: "Services",
-    vis: "Charts",
-    feed: "Feed",
-  },
-});
 
 /**
  * 도움말 화면 틀: 상단 바 + 왼쪽 목차 + 본문. 로그인 없이 열리는 정적 페이지라 mock 서버를 띄우지 않는다.
  * 화면 높이에 맞춰 상단 바는 늘 보이고, 목차와 본문이 따로 스크롤한다
  * (html·body의 overflow-x 때문에 문서 스크롤에서는 sticky가 붙지 않는다).
  * 48rem보다 좁으면 목차는 메뉴 버튼으로 여닫는 서랍이 된다.
- * 정적 HTML이라 보이는 글자는 StableText로(깜빡임·폭 변화 없음), 속성(aria-label)은 useT로 바꾼다.
+ * 정적 HTML이라 보이는 글자는 StableText로(깜빡임·폭 변화 없음), 속성(aria-label)은 useLocale로 바꾼다.
  */
 export function HelpShell({ children }: { children: ReactNode }) {
-  const text = useT(messages);
+  const locale = useLocale();
+  const o = { locale };
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -46,7 +31,9 @@ export function HelpShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           className="-ml-1.5 inline-grid size-8 cursor-pointer place-items-center rounded-md text-fg-secondary hover:bg-panel md:hidden"
-          aria-label={open ? text.closeToc : text.openToc}
+          aria-label={
+            open ? m.help_shell_close_toc({}, o) : m.help_shell_open_toc({}, o)
+          }
           aria-expanded={open}
           aria-controls="help-sidebar"
           onClick={() => setOpen((v) => !v)}
@@ -58,22 +45,30 @@ export function HelpShell({ children }: { children: ReactNode }) {
           className="flex items-center gap-1.5 text-base font-bold text-fg"
         >
           <CircleHelp size={16} aria-hidden="true" />
-          <StableText ko="vis-a-lot 도움말" en="vis-a-lot Help" />
+          <StableMessage message={m.help_shell_title} />
         </Link>
         <nav
           className="ml-auto flex items-center gap-1"
-          aria-label={text.services}
+          aria-label={m.help_shell_services({}, o)}
         >
-          <Link href="/" className={navLink()} aria-label={text.vis}>
+          <Link
+            href="/"
+            className={navLink()}
+            aria-label={m.help_shell_vis({}, o)}
+          >
             <LayoutGrid size={14} aria-hidden="true" />
             <span className="whitespace-nowrap max-sm:hidden">
-              <StableText ko="시각화" en="Charts" />
+              <StableMessage message={m.help_shell_vis} />
             </span>
           </Link>
-          <Link href="/feed" className={navLink()} aria-label={text.feed}>
+          <Link
+            href="/feed"
+            className={navLink()}
+            aria-label={m.help_shell_feed({}, o)}
+          >
             <Newspaper size={14} aria-hidden="true" />
             <span className="whitespace-nowrap max-sm:hidden">
-              <StableText ko="피드" en="Feed" />
+              <StableMessage message={m.help_shell_feed} />
             </span>
           </Link>
           <PreferencesMenu />
@@ -84,7 +79,7 @@ export function HelpShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             className="z-drawer absolute inset-0 cursor-default bg-backdrop md:hidden"
-            aria-label={text.closeToc}
+            aria-label={m.help_shell_close_toc({}, o)}
             onClick={() => setOpen(false)}
           />
         )}

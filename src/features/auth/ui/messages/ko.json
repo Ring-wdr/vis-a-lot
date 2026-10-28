@@ -1,0 +1,5 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "user_menu_label": "사용자 메뉴",
+  "user_menu_logout": "로그아웃"
+}

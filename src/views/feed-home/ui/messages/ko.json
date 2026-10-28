@@ -1,0 +1,16 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "feed_home_groups": "그룹",
+  "feed_home_all": "전체",
+  "feed_home_load_failed": "게시물을 불러오지 못했습니다 ({reason})",
+  "feed_home_retry": "다시 시도",
+  "feed_home_empty": "게시물이 없습니다",
+  "feed_home_new_post": "새 게시물 만들기",
+  "feed_home_posts": "게시물",
+  "feed_home_loading": "불러오는 중",
+  "feed_home_more": "더 보기",
+  "feed_home_home": "홈",
+  "feed_home_groups_failed": "그룹을 불러오지 못했습니다 ({reason})",
+  "feed_home_unknown_group": "모르는 그룹입니다",
+  "feed_home_show_all": "전체 보기"
+}

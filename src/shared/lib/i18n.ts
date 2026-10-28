@@ -5,6 +5,10 @@ import {
   LOCALES,
   type Locale,
 } from "@/shared/config/locale";
+import {
+  overwriteGetLocale,
+  overwriteSetLocale,
+} from "@/shared/lib/paraglide/runtime.js";
 
 // 화면 언어. 사용자가 고른 값을 localStorage에 두고 <html lang>에 적는다 (color-scheme.ts와 같은 방식).
 // 문구는 쓰는 slice가 defineMessages로 언어별 표를 두고, 컴포넌트는 useT로, 컴포넌트 밖 함수는 t로 읽는다.
@@ -49,6 +53,12 @@ export function setLocale(locale: Locale) {
   document.documentElement.lang = locale;
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
+
+// Paraglide(shared/lib/paraglide, 컴파일 결과)의 언어를 이 store에 묶는다. 메시지 함수(m.*)가 locale 없이 불려도
+// 이 store의 값을 쓰고, Paraglide의 setLocale은 새로고침 대신 여기로 와서 구독한 컴포넌트를 다시 그린다.
+// 이 모듈이 아직 안 불렸으면 Paraglide는 같은 localStorage 키(project.inlang/paraglide.config.mjs)를 직접 읽는다.
+overwriteGetLocale(getLocale);
+overwriteSetLocale((locale) => setLocale(locale));
 
 /** 고른 값이나 다른 탭에서 고른 값이 바뀌면 알린다. */
 function subscribe(onChange: () => void) {
@@ -126,5 +136,34 @@ export function localeCached<T>(make: (intlLocale: string) => T) {
       cache.set(locale, value);
     }
     return value;
+  };
+}
+
+/** 입력이 없는 Paraglide 메시지(m.*) */
+export type PlainMessage = (
+  inputs: object,
+  options: { locale: Locale },
+) => string;
+
+/**
+ * 값별 Paraglide 메시지 표를 언어별 문자열 표로 읽는다. 표는 언어마다 한 번만 만든다.
+ * `const statusLabels = messageTable({ open: m.post_status_open, ... })` → `statusLabels()[s]`
+ */
+export function messageTable<K extends PropertyKey>(
+  messages: Record<K, PlainMessage>,
+) {
+  const cache = new Map<Locale, Record<K, string>>();
+  return (locale: Locale = getLocale()): Record<K, string> => {
+    let table = cache.get(locale);
+    if (!table) {
+      table = Object.fromEntries(
+        Object.entries<PlainMessage>(messages).map(([k, message]) => [
+          k,
+          message({}, { locale }),
+        ]),
+      ) as Record<K, string>;
+      cache.set(locale, table);
+    }
+    return table;
   };
 }

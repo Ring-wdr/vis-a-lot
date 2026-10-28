@@ -9,6 +9,7 @@ import {
   helpServicePath,
 } from "@/shared/config/help";
 import type { Locale } from "@/shared/config/locale";
+import * as m from "@/shared/lib/paraglide/messages/_index.js";
 import { Localized } from "@/shared/ui/Localized";
 import { prefixedHeadings } from "@/shared/ui/mdx/mdx-components";
 import { HELP_CONTENT } from "../config/content";
@@ -16,15 +17,10 @@ import { HELP_CONTENT } from "../config/content";
 /** 영어 본문의 제목 id. 한국어 본문과 함께 그려도 id가 겹치지 않는다 (본문 안 링크도 #en-…). */
 const EN_HEADINGS = prefixedHeadings("en-");
 
-const TEXT = {
-  ko: { prev: "이전", next: "다음", nav: "이전·다음 문서", breadcrumb: "위치" },
-  en: {
-    prev: "Previous",
-    next: "Next",
-    nav: "Previous and next",
-    breadcrumb: "Breadcrumb",
-  },
-} as const satisfies Record<Locale, Record<string, string>>;
+const DIR_LABEL = {
+  prev: m.help_article_prev,
+  next: m.help_article_next,
+};
 
 function Neighbor({
   service,
@@ -45,7 +41,9 @@ function Neighbor({
       className="group flex flex-col gap-0.5 rounded-lg border border-line px-4 py-3 hover:border-accent-line data-[dir=next]:items-end data-[dir=next]:text-right"
       data-dir={dir}
     >
-      <span className="text-xs text-fg-muted">{TEXT[lang][dir]}</span>
+      <span className="text-xs text-fg-muted">
+        {DIR_LABEL[dir]({}, { locale: lang })}
+      </span>
       <span className="flex items-center gap-1 text-sm font-semibold group-hover:text-accent">
         {!next && <ChevronLeft size={14} aria-hidden="true" />}
         {article.title[lang]}
@@ -114,7 +112,7 @@ function Breadcrumb({
 }) {
   return (
     <nav
-      aria-label={TEXT[lang].breadcrumb}
+      aria-label={m.help_article_breadcrumb({}, { locale: lang })}
       className="mb-3 text-xs text-fg-muted"
     >
       <Link href={helpServicePath(service)} className="hover:text-accent">
@@ -139,7 +137,7 @@ function NeighborNav({
 }) {
   return (
     <nav
-      aria-label={TEXT[lang].nav}
+      aria-label={m.help_article_nav({}, { locale: lang })}
       className="mt-12 grid grid-cols-2 gap-3 border-t border-line pt-6"
     >
       <Neighbor service={service} article={prev} dir="prev" lang={lang} />

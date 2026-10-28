@@ -1,0 +1,7 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "switch_theme_label": "테마",
+  "switch_theme_system": "시스템",
+  "switch_theme_light": "라이트",
+  "switch_theme_dark": "다크"
+}

@@ -1,12 +1,14 @@
 // 활동 로그 문장. 변경 이력(FeedEvent) 한 줄을 "김지훈님이 상태를 진행 중 → 검토 중으로 바꿨습니다"처럼 읽는다.
 // 영어는 "Kim changed status In progress → In review"처럼 이름 뒤에 동사를 붙인다.
+// 문구는 ./messages/{ko,en}.json (Paraglide, 키 event_*). 메시지에는 함수를 둘 수 없어 조사는 여기서 붙여
+// 따로 넘긴다 (toRo = josa(to, "으로/로")). 한국어 문구만 그 값을 쓰고 영어 문구는 원래 값을 쓴다.
 
 import type {
   FeedEvent,
   PostStatus,
   StatusNames,
 } from "@/shared/api/feed/types";
-import { defineMessages, t } from "@/shared/lib/i18n";
+import * as m from "@/shared/lib/paraglide/messages/_index.js";
 import { priorityLabel, relationLabels, statusLabel } from "./labels";
 
 // 숫자를 한국어로 읽었을 때 받침: 0 영 1 일 2 이 3 삼 4 사 5 오 6 육 7 칠 8 팔 9 구
@@ -77,185 +79,103 @@ export function isSystemEvent(e: FeedEvent) {
   return SYSTEM_KINDS.has(e.kind);
 }
 
-type ChecklistAction = "added" | "removed" | "done" | "undone";
-
-const messages = defineMessages({
-  ko: {
-    none: "없음",
-    created: "게시물을 만들었습니다",
-    statusChanged: (from: string, to: string) =>
-      `상태를 ${from} → ${josa(to, "으로/로")} 바꿨습니다`,
-    assigneeCleared: "담당자를 비웠습니다",
-    assigneeSet: (name: string) => `${name}님을 담당자로 정했습니다`,
-    assigneeChanged: (from: string, to: string) =>
-      `담당자를 ${from} → ${josa(to, "으로/로")} 바꿨습니다`,
-    priorityChanged: (from: string, to: string) =>
-      `우선순위를 ${from} → ${josa(to, "으로/로")} 바꿨습니다`,
-    dueCleared: "기한을 지웠습니다",
-    dueSet: (due: string) => `기한을 ${josa(due, "으로/로")} 정했습니다`,
-    dueChanged: (from: string, to: string) =>
-      `기한을 ${from} → ${josa(to, "으로/로")} 바꿨습니다`,
-    progressChanged: (from: string, to: string) =>
-      `진행률을 ${from}% → ${to}%로 바꿨습니다`,
-    commented: "댓글을 남겼습니다",
-    mentioned: (inComment: boolean, name?: string) =>
-      name
-        ? `${inComment ? "댓글에서" : "설명에서"} ${name}님을 멘션했습니다`
-        : `${inComment ? "댓글에서" : "설명에서"} 멘션했습니다`,
-    reviewRequested: "완료를 요청했습니다",
-    approved: "승인했습니다",
-    rejected: "반려했습니다",
-    reopened: "다시 열었습니다",
-    parentChanged: (from: string, to: string) =>
-      `상위 이슈를 ${from} → ${josa(to, "으로/로")} 바꿨습니다`,
-    parentSet: (to: string) => `상위 이슈를 ${josa(to, "으로/로")} 정했습니다`,
-    parentRemoved: (from: string) =>
-      `상위 이슈 ${josa(from, "을/를")} 뺐습니다`,
-    relationAdded: (target: string, label: string) =>
-      `${josa(target, "과/와")} '${label}' 관계를 맺었습니다`,
-    relationRemoved: (target: string, label: string) =>
-      `${josa(target, "과/와")}의 '${label}' 관계를 끊었습니다`,
-    checklist: (item: string, action: string) =>
-      `체크리스트 '${item}' 항목을 ${
-        {
-          added: "추가했습니다",
-          removed: "지웠습니다",
-          done: "완료로 표시했습니다",
-          undone: "완료를 해제했습니다",
-        }[action as ChecklistAction] ?? "바꿨습니다"
-      }`,
-    dueSoon: (due: string) => `기한(${due})이 다가옵니다`,
-    overdue: (due: string) => `기한(${due})이 지났습니다`,
-    holdResumed: "재개일이 되어 보류가 풀렸습니다",
-    unblocked: (blocker?: string) =>
-      `${josa(blocker ?? "막던 게시물", "이/가")} 닫혀 차단이 풀렸습니다`,
-    childrenResolved: "하위 이슈가 모두 끝나 검토 중이 되었습니다",
-    other: (kind: string) => `${kind} 변경`,
-    sentence: (actor: string, text: string) => `${actor}님이 ${text}`,
-  },
-  en: {
-    none: "None",
-    created: "created the post",
-    statusChanged: (from: string, to: string) =>
-      `changed status ${from} → ${to}`,
-    assigneeCleared: "cleared the assignee",
-    assigneeSet: (name: string) => `assigned ${name}`,
-    assigneeChanged: (from: string, to: string) =>
-      `changed assignee ${from} → ${to}`,
-    priorityChanged: (from: string, to: string) =>
-      `changed priority ${from} → ${to}`,
-    dueCleared: "cleared the due date",
-    dueSet: (due: string) => `set the due date to ${due}`,
-    dueChanged: (from: string, to: string) =>
-      `changed the due date ${from} → ${to}`,
-    progressChanged: (from: string, to: string) =>
-      `changed progress ${from}% → ${to}%`,
-    commented: "left a comment",
-    mentioned: (inComment: boolean, name?: string) =>
-      `mentioned ${name ? `${name} ` : ""}in ${inComment ? "a comment" : "the description"}`,
-    reviewRequested: "requested review",
-    approved: "approved",
-    rejected: "rejected",
-    reopened: "reopened",
-    parentChanged: (from: string, to: string) =>
-      `changed the parent issue ${from} → ${to}`,
-    parentSet: (to: string) => `set the parent issue to ${to}`,
-    parentRemoved: (from: string) => `removed parent issue ${from}`,
-    relationAdded: (target: string, label: string) =>
-      `added a '${label}' relation with ${target}`,
-    relationRemoved: (target: string, label: string) =>
-      `removed the '${label}' relation with ${target}`,
-    checklist: (item: string, action: string) =>
-      `${
-        {
-          added: "added",
-          removed: "removed",
-          done: "checked off",
-          undone: "unchecked",
-        }[action as ChecklistAction] ?? "changed"
-      } checklist item '${item}'`,
-    dueSoon: (due: string) => `Due date (${due}) is approaching`,
-    overdue: (due: string) => `Due date (${due}) has passed`,
-    holdResumed: "Hold lifted on the resume date",
-    unblocked: (blocker?: string) =>
-      `Unblocked: ${blocker ?? "the blocking post"} was closed`,
-    childrenResolved: "All sub-issues done; moved to review",
-    other: (kind: string) => `changed ${kind}`,
-    sentence: (actor: string, text: string) => `${actor} ${text}`,
-  },
-});
+// 영어 문구만 쓰는 경우에도 늘 계산하므로, 표에 없는 값(undefined)이 와도 멈추지 않게 문자열로 바꾼다.
+const ro = (word: string) => josa(String(word), "으로/로");
 
 /** 행위자 이름을 뺀 문장 (행위자는 따로 굵게 붙인다) */
 export function eventText(e: FeedEvent, ctx: EventTextContext): string {
-  const text = t(messages);
   const status = (s: string | null) =>
-    s ? statusLabel(s as PostStatus, ctx.statusNames) : text.none;
+    s ? statusLabel(s as PostStatus, ctx.statusNames) : m.event_none();
+  const change = (from: string, to: string) => ({ from, to, toRo: ro(to) });
 
   switch (e.kind) {
     case "created":
-      return text.created;
+      return m.event_created();
     case "status":
-      return text.statusChanged(status(e.oldValue), status(e.newValue));
+      return m.event_status_changed(
+        change(status(e.oldValue), status(e.newValue)),
+      );
     case "assignee":
-      if (!e.newValue) return text.assigneeCleared;
-      if (!e.oldValue) return text.assigneeSet(ctx.userName(e.newValue));
-      return text.assigneeChanged(
-        ctx.userName(e.oldValue),
-        ctx.userName(e.newValue),
+      if (!e.newValue) return m.event_assignee_cleared();
+      if (!e.oldValue)
+        return m.event_assignee_set({ name: ctx.userName(e.newValue) });
+      return m.event_assignee_changed(
+        change(ctx.userName(e.oldValue), ctx.userName(e.newValue)),
       );
     case "priority":
-      return text.priorityChanged(
-        priorityLabel(Number(e.oldValue)),
-        priorityLabel(Number(e.newValue)),
+      return m.event_priority_changed(
+        change(
+          priorityLabel(Number(e.oldValue)),
+          priorityLabel(Number(e.newValue)),
+        ),
       );
     case "due":
-      if (!e.newValue) return text.dueCleared;
-      if (!e.oldValue) return text.dueSet(e.newValue);
-      return text.dueChanged(e.oldValue, e.newValue);
+      if (!e.newValue) return m.event_due_cleared();
+      if (!e.oldValue)
+        return m.event_due_set({ due: e.newValue, dueRo: ro(e.newValue) });
+      return m.event_due_changed(change(e.oldValue, e.newValue));
     case "progress":
-      return text.progressChanged(e.oldValue ?? "0", e.newValue ?? "0");
+      return m.event_progress_changed({
+        from: e.oldValue ?? "0",
+        to: e.newValue ?? "0",
+      });
     case "comment":
-      return text.commented;
-    case "mention":
-      return text.mentioned(
-        !!e.commentId,
-        e.newValue ? ctx.userName(e.newValue) : undefined,
-      );
+      return m.event_commented();
+    case "mention": {
+      const place = e.commentId ? "comment" : "description";
+      const name = e.newValue ? ctx.userName(e.newValue) : undefined;
+      return name
+        ? m.event_mentioned_user({ place, name })
+        : m.event_mentioned({ place });
+    }
     case "review_requested":
-      return text.reviewRequested;
+      return m.event_review_requested();
     case "approved":
-      return text.approved;
+      return m.event_approved();
     case "rejected":
-      return text.rejected;
+      return m.event_rejected();
     case "reopened":
-      return text.reopened;
+      return m.event_reopened();
     case "relation": {
       if (e.field === "parent") {
         if (e.newValue && e.oldValue)
-          return text.parentChanged(e.oldValue, e.newValue);
-        if (e.newValue) return text.parentSet(e.newValue);
-        return text.parentRemoved(e.oldValue ?? "");
+          return m.event_parent_changed(change(e.oldValue, e.newValue));
+        if (e.newValue)
+          return m.event_parent_set({ to: e.newValue, toRo: ro(e.newValue) });
+        const from = e.oldValue ?? "";
+        return m.event_parent_removed({ from, fromEul: josa(from, "을/를") });
       }
       const relations = relationLabels();
       const label =
         relations[e.field as keyof typeof relations] ?? e.field ?? "";
-      if (e.newValue) return text.relationAdded(e.newValue, label);
-      return text.relationRemoved(e.oldValue ?? "", label);
+      const target = (e.newValue || e.oldValue) ?? "";
+      const args = { target, targetWa: josa(target, "과/와"), label };
+      return e.newValue
+        ? m.event_relation_added(args)
+        : m.event_relation_removed(args);
     }
     case "checklist":
-      return text.checklist(e.field ?? "", e.newValue ?? "");
+      return m.event_checklist({
+        item: e.field ?? "",
+        action: e.newValue ?? "",
+      });
     case "due_soon":
-      return text.dueSoon(e.newValue ?? "");
+      return m.event_due_soon({ due: e.newValue ?? "" });
     case "overdue":
-      return text.overdue(e.newValue ?? "");
+      return m.event_overdue({ due: e.newValue ?? "" });
     case "hold_resumed":
-      return text.holdResumed;
+      return m.event_hold_resumed();
     case "unblocked":
-      return text.unblocked(e.newValue ?? undefined);
+      return e.newValue != null
+        ? m.event_unblocked_by({
+            blocker: e.newValue,
+            blockerIga: josa(e.newValue, "이/가"),
+          })
+        : m.event_unblocked();
     case "children_resolved":
-      return text.childrenResolved;
+      return m.event_children_resolved();
     default:
-      return text.other(e.kind);
+      return m.event_other({ kind: e.kind });
   }
 }
 
@@ -264,5 +184,5 @@ export function eventSentence(e: FeedEvent, ctx: EventTextContext) {
   const text = eventText(e, ctx);
   return isSystemEvent(e)
     ? text
-    : t(messages).sentence(ctx.userName(e.actorId), text);
+    : m.event_sentence({ actor: ctx.userName(e.actorId), text });
 }

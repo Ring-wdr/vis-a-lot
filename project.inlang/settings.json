@@ -1,0 +1,18 @@
+{
+  "$schema": "https://inlang.com/schema/project-settings",
+  "baseLocale": "ko",
+  "locales": ["ko", "en"],
+  "modules": ["./node_modules/@inlang/plugin-message-format/dist/index.js"],
+  "plugin.inlang.messageFormat": {
+    "pathPattern": [
+      "./src/shared/lib/messages/{locale}.json",
+      "./src/entities/post/lib/messages/{locale}.json",
+      "./src/features/auth/ui/messages/{locale}.json",
+      "./src/features/switch-locale/ui/messages/{locale}.json",
+      "./src/features/switch-theme/ui/messages/{locale}.json",
+      "./src/views/feed-home/ui/messages/{locale}.json",
+      "./src/views/help-article/ui/messages/{locale}.json",
+      "./src/application/messages.{locale}.json"
+    ]
+  }
+}

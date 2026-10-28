@@ -1,0 +1,10 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "preferences_menu_label": "화면 설정",
+  "help_shell_title": "vis-a-lot 도움말",
+  "help_shell_open_toc": "목차 열기",
+  "help_shell_close_toc": "목차 닫기",
+  "help_shell_services": "서비스",
+  "help_shell_vis": "시각화",
+  "help_shell_feed": "피드"
+}

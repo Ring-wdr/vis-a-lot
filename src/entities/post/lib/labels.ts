@@ -1,5 +1,6 @@
 // 피드 값의 화면 이름. 생성 타입의 enum으로 Record를 만들어, 서버에 값이 늘면 여기서 컴파일 오류가 난다.
 // 표는 지금 언어(또는 넘긴 언어)로 읽는 함수다 (statusLabels()[s]). 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다.
+// 문구는 ./messages/{ko,en}.json (Paraglide, 키 post_<표>_<값>).
 
 import type {
   CancelReason,
@@ -12,118 +13,20 @@ import type {
   StatusCategory,
   StatusNames,
 } from "@/shared/api/feed/types";
-import { defineMessages, getLocale, type Locale } from "@/shared/lib/i18n";
+import { type Locale, messageTable } from "@/shared/lib/i18n";
+import * as m from "@/shared/lib/paraglide/messages/_index.js";
 
 /** 우선순위는 0~4 정수다. */
 export type PriorityLevel = 0 | 1 | 2 | 3 | 4;
 
-type Labels = {
-  status: Record<PostStatus, string>;
-  category: Record<StatusCategory, string>;
-  priority: Record<PriorityLevel, string>;
-  format: Record<PostFormat, string>;
-  cancelReason: Record<CancelReason, string>;
-  holdReason: Record<HoldReason, string>;
-  relation: Record<RelationKind, string>;
-  notifyKind: Record<NotifyKind, string>;
-  channel: Record<OutboxChannel | "inapp", string>;
-};
-
-const messages = defineMessages<Labels>({
-  ko: {
-    status: {
-      unresolved: "미해결",
-      in_progress: "진행 중",
-      in_review: "검토 중",
-      resolved: "해결됨",
-      on_hold: "보류",
-      cancelled: "취소",
-    },
-    category: { open: "열림", paused: "멈춤", closed: "닫힘" },
-    priority: { 0: "없음", 1: "낮음", 2: "보통", 3: "높음", 4: "긴급" },
-    format: { chart: "차트", image: "이미지", video: "동영상", code: "코드" },
-    cancelReason: {
-      duplicate: "중복",
-      cannot_reproduce: "재현 안 됨",
-      out_of_scope: "범위 밖",
-      low_priority: "우선순위 낮음",
-    },
-    holdReason: {
-      dependency: "의존성",
-      decision: "의사결정",
-      resource: "리소스 대기",
-    },
-    relation: {
-      blocks: "차단",
-      duplicate: "중복",
-      relates: "관련",
-      derived: "파생",
-    },
-    notifyKind: {
-      assigned: "배정",
-      mention: "멘션",
-      comment: "댓글",
-      status: "상태 변경",
-      review_requested: "완료 요청",
-      approved: "승인",
-      rejected: "반려",
-      due_soon: "기한 임박",
-      overdue: "기한 초과",
-      hold_resumed: "보류 재개",
-      unblocked: "차단 해제",
-      children_resolved: "하위 이슈 완료",
-    },
-    channel: { inapp: "앱 내", slack: "슬랙", email: "이메일" },
-  },
-  en: {
-    status: {
-      unresolved: "Unresolved",
-      in_progress: "In progress",
-      in_review: "In review",
-      resolved: "Resolved",
-      on_hold: "On hold",
-      cancelled: "Cancelled",
-    },
-    category: { open: "Open", paused: "Paused", closed: "Closed" },
-    priority: { 0: "None", 1: "Low", 2: "Medium", 3: "High", 4: "Urgent" },
-    format: { chart: "Chart", image: "Image", video: "Video", code: "Code" },
-    cancelReason: {
-      duplicate: "Duplicate",
-      cannot_reproduce: "Can't reproduce",
-      out_of_scope: "Out of scope",
-      low_priority: "Low priority",
-    },
-    holdReason: {
-      dependency: "Dependency",
-      decision: "Decision",
-      resource: "Awaiting resources",
-    },
-    relation: {
-      blocks: "Blocks",
-      duplicate: "Duplicate",
-      relates: "Related",
-      derived: "Derived",
-    },
-    notifyKind: {
-      assigned: "Assigned",
-      mention: "Mention",
-      comment: "Comment",
-      status: "Status change",
-      review_requested: "Review request",
-      approved: "Approved",
-      rejected: "Rejected",
-      due_soon: "Due soon",
-      overdue: "Overdue",
-      hold_resumed: "Hold resumed",
-      unblocked: "Unblocked",
-      children_resolved: "Sub-issues done",
-    },
-    channel: { inapp: "In-app", slack: "Slack", email: "Email" },
-  },
+export const statusLabels = messageTable<PostStatus>({
+  unresolved: m.post_status_unresolved,
+  in_progress: m.post_status_in_progress,
+  in_review: m.post_status_in_review,
+  resolved: m.post_status_resolved,
+  on_hold: m.post_status_on_hold,
+  cancelled: m.post_status_cancelled,
 });
-
-export const statusLabels = (locale: Locale = getLocale()) =>
-  messages[locale].status;
 
 /** 보드 열·필터 순서 */
 export const STATUSES: readonly PostStatus[] = [
@@ -135,32 +38,70 @@ export const STATUSES: readonly PostStatus[] = [
   "cancelled",
 ];
 
-export const categoryLabels = (locale: Locale = getLocale()) =>
-  messages[locale].category;
+export const categoryLabels = messageTable<StatusCategory>({
+  open: m.post_category_open,
+  paused: m.post_category_paused,
+  closed: m.post_category_closed,
+});
 
-export const priorityLabels = (locale: Locale = getLocale()) =>
-  messages[locale].priority;
+export const priorityLabels = messageTable<PriorityLevel>({
+  0: m.post_priority_0,
+  1: m.post_priority_1,
+  2: m.post_priority_2,
+  3: m.post_priority_3,
+  4: m.post_priority_4,
+});
 
 export const priorityLabel = (p: number, locale?: Locale) =>
   priorityLabels(locale)[p as PriorityLevel] ?? String(p);
 
-export const formatLabels = (locale: Locale = getLocale()) =>
-  messages[locale].format;
+export const formatLabels = messageTable<PostFormat>({
+  chart: m.post_format_chart,
+  image: m.post_format_image,
+  video: m.post_format_video,
+  code: m.post_format_code,
+});
 
-export const cancelReasonLabels = (locale: Locale = getLocale()) =>
-  messages[locale].cancelReason;
+export const cancelReasonLabels = messageTable<CancelReason>({
+  duplicate: m.post_cancel_reason_duplicate,
+  cannot_reproduce: m.post_cancel_reason_cannot_reproduce,
+  out_of_scope: m.post_cancel_reason_out_of_scope,
+  low_priority: m.post_cancel_reason_low_priority,
+});
 
-export const holdReasonLabels = (locale: Locale = getLocale()) =>
-  messages[locale].holdReason;
+export const holdReasonLabels = messageTable<HoldReason>({
+  dependency: m.post_hold_reason_dependency,
+  decision: m.post_hold_reason_decision,
+  resource: m.post_hold_reason_resource,
+});
 
-export const relationLabels = (locale: Locale = getLocale()) =>
-  messages[locale].relation;
+export const relationLabels = messageTable<RelationKind>({
+  blocks: m.post_relation_blocks,
+  duplicate: m.post_relation_duplicate,
+  relates: m.post_relation_relates,
+  derived: m.post_relation_derived,
+});
 
-export const notifyKindLabels = (locale: Locale = getLocale()) =>
-  messages[locale].notifyKind;
+export const notifyKindLabels = messageTable<NotifyKind>({
+  assigned: m.post_notify_kind_assigned,
+  mention: m.post_notify_kind_mention,
+  comment: m.post_notify_kind_comment,
+  status: m.post_notify_kind_status,
+  review_requested: m.post_notify_kind_review_requested,
+  approved: m.post_notify_kind_approved,
+  rejected: m.post_notify_kind_rejected,
+  due_soon: m.post_notify_kind_due_soon,
+  overdue: m.post_notify_kind_overdue,
+  hold_resumed: m.post_notify_kind_hold_resumed,
+  unblocked: m.post_notify_kind_unblocked,
+  children_resolved: m.post_notify_kind_children_resolved,
+});
 
-export const channelLabels = (locale: Locale = getLocale()) =>
-  messages[locale].channel;
+export const channelLabels = messageTable<OutboxChannel | "inapp">({
+  inapp: m.post_channel_inapp,
+  slack: m.post_channel_slack,
+  email: m.post_channel_email,
+});
 
 /** 그룹이 바꾼 상태 이름이 있으면 그것을, 없으면 기본 이름을 쓴다. */
 export const statusLabel = (
