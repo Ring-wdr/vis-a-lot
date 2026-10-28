@@ -1,16 +1,19 @@
 // 목록·보드가 함께 쓰는 순수 계산: 열 이름, 보드 상태 순서, 그룹 나누기, 기한 지남, 드래그 전이 고르기.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import type {
   PostStatus,
   PostSummary,
   ViewGroupBy,
 } from "@/shared/api/feed/types";
 import {
-  defineMessages,
   getLocale,
   intlLocale,
   type Locale,
+  linguiFor,
 } from "@/shared/lib/i18n";
+import "../config/messages";
 
 export const POST_COLUMNS = [
   "key",
@@ -24,41 +27,28 @@ export const POST_COLUMNS = [
 ] as const;
 export type PostColumn = (typeof POST_COLUMNS)[number];
 
-const messages = defineMessages({
-  ko: {
-    columns: {
-      key: "키",
-      title: "제목",
-      status: "상태",
-      priority: "우선순위",
-      assignee: "담당자",
-      dueDate: "기한",
-      updatedAt: "수정",
-      thumbnail: "썸네일",
-    } satisfies Record<PostColumn, string>,
-    noAssignee: "담당자 없음",
-    noTeam: "팀 없음",
-  },
-  en: {
-    columns: {
-      key: "Key",
-      title: "Title",
-      status: "Status",
-      priority: "Priority",
-      assignee: "Assignee",
-      dueDate: "Due",
-      updatedAt: "Updated",
-      thumbnail: "Thumbnail",
-    },
-    noAssignee: "Unassigned",
-    noTeam: "No team",
-  },
-});
+const COLUMN_LABELS: Record<PostColumn, MessageDescriptor> = {
+  key: msg({ message: "키", context: "post table column" }),
+  title: msg({ message: "제목", context: "post table column" }),
+  status: msg({ message: "상태", context: "post table column" }),
+  priority: msg({ message: "우선순위", context: "post table column" }),
+  assignee: msg({ message: "담당자", context: "post table column" }),
+  dueDate: msg({ message: "기한", context: "post table column" }),
+  updatedAt: msg({ message: "수정", context: "post table column" }),
+  thumbnail: msg({ message: "썸네일", context: "post table column" }),
+};
+const NO_ASSIGNEE = msg`담당자 없음`;
+const NO_TEAM_LABEL = msg`팀 없음`;
 
 /** 열 이름 (지금 언어) */
 export const columnLabels = (
   locale: Locale = getLocale(),
-): Record<PostColumn, string> => messages[locale].columns;
+): Record<PostColumn, string> => {
+  const i18n = linguiFor(locale);
+  return Object.fromEntries(
+    POST_COLUMNS.map((c) => [c, i18n._(COLUMN_LABELS[c])]),
+  ) as Record<PostColumn, string>;
+};
 
 /** 리스트 기본 열 (썸네일은 끈다) */
 export const DEFAULT_COLUMNS: readonly PostColumn[] = POST_COLUMNS.filter(
@@ -119,7 +109,7 @@ export function groupPosts(
           ? names.priority(Number(id))
           : id
             ? names.user(id)
-            : messages[locale].noAssignee,
+            : linguiFor(locale)._(NO_ASSIGNEE),
     posts: list,
   }));
   if (groupBy === "status")
@@ -154,7 +144,11 @@ export function teamLanes(
   }));
   const rest = posts.filter((p) => !p.teamId || !known.has(p.teamId));
   if (rest.length)
-    lanes.push({ id: NO_TEAM, label: messages[locale].noTeam, posts: rest });
+    lanes.push({
+      id: NO_TEAM,
+      label: linguiFor(locale)._(NO_TEAM_LABEL),
+      posts: rest,
+    });
   return lanes;
 }
 

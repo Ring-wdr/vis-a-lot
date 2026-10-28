@@ -1,20 +1,8 @@
 // 사용자 전환 메뉴에 붙이는 역할 설명.
 
+import { t } from "@lingui/core/macro";
 import type { FeedUser, GroupDetail } from "@/shared/api/feed/types";
-import { defineMessages, t } from "@/shared/lib/i18n";
-
-const messages = defineMessages({
-  ko: {
-    systemAdmin: "시스템 관리자",
-    groupAdmin: (groups: string) => `그룹 관리자 · ${groups}`,
-    member: "멤버",
-  },
-  en: {
-    systemAdmin: "System admin",
-    groupAdmin: (groups: string) => `Group admin · ${groups}`,
-    member: "Member",
-  },
-});
+import "../config/messages";
 
 /** 사용자 id → 그룹 관리자인 그룹 이름들 */
 export function adminGroupsByUser(groups: GroupDetail[]) {
@@ -27,8 +15,13 @@ export function adminGroupsByUser(groups: GroupDetail[]) {
 }
 
 export function roleHint(user: FeedUser, adminOf: string[] = []) {
-  const text = t(messages);
-  if (user.isAdmin) return text.systemAdmin;
-  if (adminOf.length) return text.groupAdmin(adminOf.join(", "));
-  return text.member;
+  if (user.isAdmin) return t`시스템 관리자`;
+  if (adminOf.length) {
+    const groups = adminOf.join(", ");
+    return t({
+      message: `그룹 관리자 · ${groups}`,
+      comment: "groups: 관리하는 그룹 이름을 쉼표로 이은 목록",
+    });
+  }
+  return t({ message: "멤버", context: "user role" });
 }

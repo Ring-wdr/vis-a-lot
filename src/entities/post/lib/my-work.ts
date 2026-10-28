@@ -1,9 +1,10 @@
 // 내 작업 탭과 필터. 홈의 요약 띠도 여기서 링크를 만든다.
 // 기한 임박은 서버의 요약(posts.mySummary)과 같게: 담당 · 열림 · 기한이 오늘+3일까지(지난 것 포함).
 
+import { t } from "@lingui/core/macro";
 import type { PostFilter, StatusCategory } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
-import { defineMessages, t } from "@/shared/lib/i18n";
+import "../config/messages";
 
 export type MyTab = NonNullable<PostFilter["mine"]>;
 
@@ -14,24 +15,14 @@ export const MY_TAB_IDS: readonly MyTab[] = [
   "stakeholder",
 ];
 
-const messages = defineMessages<Record<MyTab, string>>({
-  ko: {
-    assigned: "담당",
-    requested: "내가 요청",
-    review: "승인 대기",
-    stakeholder: "이해관계자",
-  },
-  en: {
-    assigned: "Assigned",
-    requested: "Requested",
-    review: "To approve",
-    stakeholder: "Stakeholder",
-  },
-});
-
 /** 탭 목록 (지금 언어). 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다 */
 export const myTabs = (): readonly { id: MyTab; label: string }[] => {
-  const labels = t(messages);
+  const labels: Record<MyTab, string> = {
+    assigned: t({ message: "담당", context: "my work tab" }),
+    requested: t`내가 요청`,
+    review: t`승인 대기`,
+    stakeholder: t`이해관계자`,
+  };
   return MY_TAB_IDS.map((id) => ({ id, label: labels[id] }));
 };
 

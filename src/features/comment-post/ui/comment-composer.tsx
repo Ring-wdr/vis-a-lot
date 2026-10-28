@@ -2,50 +2,19 @@
 
 // 댓글 입력: @멘션 편집기, Ctrl/Cmd+Enter로 보내기, 첫 댓글에는 "투표 만들기"(질문 + 선택지 2~6개 + 마감).
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { JSONContent } from "@tiptap/react";
 import { ChartBar, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { field } from "@/entities/post/ui/styles";
 import { useCommentAction } from "@/features/comment-post/model/use-comment-action";
 import { commentsApi } from "@/shared/api/feed/comments";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button, itemButton, linkButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import { RichEditor } from "@/shared/ui/rich-editor/RichEditor";
 import { isEmptyDoc } from "@/shared/ui/rich-editor/rich-text";
-
-const messages = defineMessages({
-  ko: {
-    comment: "댓글",
-    submit: "댓글 달기",
-    failed: "댓글을 달지 못했습니다",
-    createPoll: "투표 만들기",
-    question: "질문",
-    pollQuestion: "투표 질문",
-    removePoll: "투표 빼기",
-    option: (n: number) => `선택지 ${n}`,
-    removeOption: (n: number) => `선택지 ${n} 빼기`,
-    addOption: "선택지 더하기",
-    closes: "마감",
-    hint: "@로 멘션 · Ctrl/⌘+Enter로 보내기",
-    cancel: "취소",
-  },
-  en: {
-    comment: "Comment",
-    submit: "Comment",
-    failed: "Couldn't post the comment",
-    createPoll: "Create poll",
-    question: "Question",
-    pollQuestion: "Poll question",
-    removePoll: "Remove poll",
-    option: (n: number) => `Option ${n}`,
-    removeOption: (n: number) => `Remove option ${n}`,
-    addOption: "Add option",
-    closes: "Closes",
-    hint: "@ to mention · Ctrl/⌘+Enter to send",
-    cancel: "Cancel",
-  },
-});
+import "../config/messages";
 
 type PollDraft = { question: string; options: string[]; closesAt: string };
 
@@ -72,7 +41,7 @@ export function CommentComposer({
   /** 보낸 뒤나 취소 (대댓글 칸 닫기) */
   onDone?: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { run, pending } = useCommentAction();
   const [doc, setDoc] = useState<JSONContent | null>(null);
   // 보낸 뒤 편집기를 새로 만든다
@@ -90,7 +59,7 @@ export function CommentComposer({
 
   const submit = async () => {
     if (!canSubmit) return;
-    const ok = await run("comment", text.failed, () =>
+    const ok = await run("comment", t`댓글을 달지 못했습니다`, () =>
       commentsApi.create(postId, {
         body: hasText ? doc : null,
         parentId,
@@ -125,7 +94,7 @@ export function CommentComposer({
         key={round}
         initial={null}
         onChange={setDoc}
-        label={label ?? text.comment}
+        label={label ?? t`댓글`}
         size="sm"
         toolbar={false}
         autoFocus={autoFocus}
@@ -133,7 +102,9 @@ export function CommentComposer({
       />
       {poll && (
         <fieldset className="flex flex-col gap-2 rounded-lg border border-line bg-panel-subtle p-3">
-          <legend className="sr-only">{text.createPoll}</legend>
+          <legend className="sr-only">
+            <Trans>투표 만들기</Trans>
+          </legend>
           <div className="flex items-center gap-2">
             <ChartBar
               size={14}
@@ -144,8 +115,8 @@ export function CommentComposer({
               className={field()}
               value={poll.question}
               maxLength={200}
-              placeholder={text.question}
-              aria-label={text.pollQuestion}
+              placeholder={t`질문`}
+              aria-label={t`투표 질문`}
               onChange={(e) =>
                 setPoll({ ...poll, question: e.currentTarget.value })
               }
@@ -153,7 +124,7 @@ export function CommentComposer({
             <button
               type="button"
               className={itemButton()}
-              aria-label={text.removePoll}
+              aria-label={t`투표 빼기`}
               onClick={() => setPoll(null)}
             >
               <X size={12} aria-hidden="true" />
@@ -167,14 +138,14 @@ export function CommentComposer({
                   className={field()}
                   value={option}
                   maxLength={80}
-                  placeholder={text.option(i + 1)}
-                  aria-label={text.option(i + 1)}
+                  placeholder={t`선택지 ${ph({ n: i + 1 })}`}
+                  aria-label={t`선택지 ${ph({ n: i + 1 })}`}
                   onChange={(e) => setOption(i, e.currentTarget.value)}
                 />
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label={text.removeOption(i + 1)}
+                  aria-label={t`선택지 ${ph({ n: i + 1 })} 빼기`}
                   disabled={poll.options.length <= 2}
                   onClick={() =>
                     setPoll({
@@ -198,11 +169,11 @@ export function CommentComposer({
                 }
               >
                 <Plus size={12} aria-hidden="true" />
-                {text.addOption}
+                <Trans>선택지 더하기</Trans>
               </button>
             )}
             <label className="flex items-center gap-1.5 text-xs text-fg-secondary">
-              {text.closes}
+              <Trans context="poll deadline">마감</Trans>
               <input
                 type="datetime-local"
                 className={field({ class: "w-auto" })}
@@ -223,11 +194,11 @@ export function CommentComposer({
             onClick={() => setPoll(emptyPoll())}
           >
             <ChartBar size={13} aria-hidden="true" />
-            {text.createPoll}
+            <Trans>투표 만들기</Trans>
           </button>
         )}
         <span className="text-2xs text-fg-muted max-sm:hidden">
-          {text.hint}
+          <Trans>@로 멘션 · Ctrl/⌘+Enter로 보내기</Trans>
         </span>
         <span className="ml-auto flex gap-1.5">
           {onDone && (
@@ -237,7 +208,7 @@ export function CommentComposer({
               disabled={!!pending}
               onClick={onDone}
             >
-              {text.cancel}
+              <Trans context="cancel comment">취소</Trans>
             </button>
           )}
           <button
@@ -247,7 +218,7 @@ export function CommentComposer({
             onClick={submit}
           >
             {pending && <Spinner size="sm" tone="inherit" />}
-            {submitLabel ?? text.submit}
+            {submitLabel ?? t`댓글 달기`}
           </button>
         </span>
       </div>

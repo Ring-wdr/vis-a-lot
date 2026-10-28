@@ -2,6 +2,7 @@
 
 // 게시물 상세. 전체 페이지(/feed/post?key=)와 옆 패널(?peek=)이 같이 쓴다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { FileQuestion } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -12,7 +13,6 @@ import { detail } from "@/entities/post/ui/styles";
 import { FeedApiError } from "@/shared/api/feed/client";
 import { useGroupMap } from "@/shared/api/feed/lookups";
 import { usePost } from "@/shared/api/feed/post-queries";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { EmptyState, LoadingText, Skeleton } from "@/shared/ui/Loading";
 import { PostActivity } from "./PostActivity";
@@ -24,25 +24,7 @@ import { PostContent } from "./PostContent";
 import { PostFields } from "./PostFields";
 import { PostHeader } from "./PostHeader";
 import { PostRelations } from "./PostRelations";
-
-const messages = defineMessages({
-  ko: {
-    loading: (key: string) => `${key} 불러오는 중`,
-    missing: "없거나 볼 수 없는 게시물입니다",
-    loadFailed: "게시물을 불러오지 못했습니다",
-    missingHint: (key: string) =>
-      `${key}는 지워졌거나, 키가 틀렸거나, 비공개 그룹의 게시물입니다.`,
-    retry: "다시 시도",
-  },
-  en: {
-    loading: (key: string) => `Loading ${key}`,
-    missing: "Post not found or not visible",
-    loadFailed: "Couldn't load the post",
-    missingHint: (key: string) =>
-      `${key} was deleted, the key is wrong, or it's in a private group.`,
-    retry: "Retry",
-  },
-});
+import "../config/messages";
 
 const d = detail();
 
@@ -59,7 +41,7 @@ export function PostDetail({
   /** 머리 위 줄 (패널의 닫기·전체 페이지 링크) */
   toolbar?: ReactNode;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const post = usePost(postKey);
   const groups = useGroupMap();
 
@@ -67,7 +49,7 @@ export function PostDetail({
     return (
       <div className="flex flex-col gap-3" aria-busy="true">
         {toolbar}
-        <LoadingText>{text.loading(postKey)}</LoadingText>
+        <LoadingText>{t`${postKey} 불러오는 중`}</LoadingText>
         <Skeleton width={70} className="h-5" />
         <Skeleton width={90} />
         <Skeleton width={50} />
@@ -83,10 +65,14 @@ export function PostDetail({
         {toolbar}
         <EmptyState
           icon={<FileQuestion size={20} />}
-          title={missing ? text.missing : text.loadFailed}
+          title={
+            missing
+              ? t`없거나 볼 수 없는 게시물입니다`
+              : t`게시물을 불러오지 못했습니다`
+          }
         >
           {missing ? (
-            <p>{text.missingHint(postKey)}</p>
+            <p>{t`${postKey}는 지워졌거나, 키가 틀렸거나, 비공개 그룹의 게시물입니다.`}</p>
           ) : (
             <>
               <p>{post.error.message}</p>
@@ -95,7 +81,7 @@ export function PostDetail({
                 className={button({ size: "sm", class: "mt-2" })}
                 onClick={() => post.refetch()}
               >
-                {text.retry}
+                <Trans>다시 시도</Trans>
               </button>
             </>
           )}
