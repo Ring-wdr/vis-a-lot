@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:05+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#: src/features/switch-theme/ui/ThemeSelect.tsx
+msgid "다크"
+msgstr "다크"
+
+#: src/features/switch-theme/ui/ThemeSelect.tsx
+msgid "라이트"
+msgstr "라이트"
+
+#: src/features/switch-theme/ui/ThemeSelect.tsx
+msgid "시스템"
+msgstr "시스템"
+
+#: src/features/switch-theme/ui/ThemeSelect.tsx
+msgid "테마"
+msgstr "테마"

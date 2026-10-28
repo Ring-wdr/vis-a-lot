@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:02+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/shared/lib/time.ts
+msgid "{days, plural, other {#일 전}}"
+msgstr "{days, plural, other {#d ago}}"
+
+#: src/shared/lib/time.ts
+msgid "{hours, plural, other {#시간 전}}"
+msgstr "{hours, plural, other {#h ago}}"
+
+#: src/shared/lib/time.ts
+msgid "{minutes, plural, other {#분 전}}"
+msgstr "{minutes, plural, other {#m ago}}"
+
+#: src/shared/lib/time.ts
+msgid "방금"
+msgstr "just now"

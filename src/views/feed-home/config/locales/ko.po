@@ -1,0 +1,60 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:05+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "게시물"
+msgstr "게시물"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "게시물을 불러오지 못했습니다 ({reason})"
+msgstr "게시물을 불러오지 못했습니다 ({reason})"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "게시물이 없습니다"
+msgstr "게시물이 없습니다"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "그룹"
+msgstr "그룹"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "그룹을 불러오지 못했습니다 ({groupsError})"
+msgstr "그룹을 불러오지 못했습니다 ({groupsError})"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "다시 시도"
+msgstr "다시 시도"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "더 보기"
+msgstr "더 보기"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "모르는 그룹입니다"
+msgstr "모르는 그룹입니다"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "불러오는 중"
+msgstr "불러오는 중"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "새 게시물 만들기"
+msgstr "새 게시물 만들기"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "전체"
+msgstr "전체"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "전체 보기"
+msgstr "전체 보기"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "홈"
+msgstr "홈"

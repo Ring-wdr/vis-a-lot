@@ -1,3 +1,4 @@
+import type { I18n } from "@lingui/core";
 import { useLayoutEffect, useSyncExternalStore } from "react";
 import {
   DEFAULT_LOCALE,
@@ -5,9 +6,11 @@ import {
   LOCALES,
   type Locale,
 } from "@/shared/config/locale";
+import { activateGlobal, linguiFor as linguiForLocale } from "./lingui";
 
 // 화면 언어. 사용자가 고른 값을 localStorage에 두고 <html lang>에 적는다 (color-scheme.ts와 같은 방식).
 // 문구는 쓰는 slice가 defineMessages로 언어별 표를 두고, 컴포넌트는 useT로, 컴포넌트 밖 함수는 t로 읽는다.
+// Lingui로 옮긴 slice는 lingui.ts의 instance를 쓰고, 여기서 고른 언어가 Lingui 전역 i18n도 바꾼다.
 // t는 지금 언어를 읽기만 하므로, t로 만든 문구를 그리는 컴포넌트는 useLocale(또는 useT)로 언어 변경을 구독한다.
 
 export type { Locale } from "@/shared/config/locale";
@@ -31,11 +34,23 @@ function readLocale(): Locale {
 
 let current: Locale | undefined;
 
+function applyLocale(locale: Locale) {
+  current = locale;
+  activateGlobal(locale);
+}
+
 /** 지금 화면 언어. 서버 렌더(SSR)와 테스트에서는 DEFAULT_LOCALE */
 export function getLocale(): Locale {
   if (typeof window === "undefined") return DEFAULT_LOCALE;
-  current ??= readLocale();
-  return current;
+  if (current === undefined) applyLocale(readLocale());
+  return current as Locale;
+}
+// 컴포넌트 밖의 t``가 처음 불리기 전에 전역 i18n을 고른 언어로 맞춘다.
+getLocale();
+
+/** 지금(또는 넘긴) 언어의 Lingui instance. 컴포넌트 밖 표(labels.ts)가 언어별로 번역할 때 쓴다. */
+export function linguiFor(locale: Locale = getLocale()): I18n {
+  return linguiForLocale(locale);
 }
 
 export function setLocale(locale: Locale) {
@@ -45,7 +60,7 @@ export function setLocale(locale: Locale) {
   } catch {
     // 저장소를 못 쓰면 이번 페이지에서만 바뀐다.
   }
-  current = locale;
+  applyLocale(locale);
   document.documentElement.lang = locale;
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
@@ -54,8 +69,9 @@ export function setLocale(locale: Locale) {
 function subscribe(onChange: () => void) {
   const onStorage = (e: StorageEvent) => {
     if (e.key !== LOCALE_STORAGE_KEY) return;
-    current = readLocale();
-    document.documentElement.lang = current;
+    const next = readLocale();
+    applyLocale(next);
+    document.documentElement.lang = next;
     onChange();
   };
   window.addEventListener("storage", onStorage);
