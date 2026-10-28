@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { HELP_ROOT } from "@/shared/config/help";
-import { inBothLocales } from "@/shared/lib/lingui";
+import { inAllLocales } from "@/shared/lib/lingui";
 import { LinguiProvider } from "@/shared/lib/lingui-provider";
 import { navLink } from "@/shared/ui/nav";
 import { StableText } from "@/shared/ui/StableText";
@@ -54,19 +54,19 @@ function HelpFrame({ children }: { children: ReactNode }) {
           className="flex items-center gap-1.5 text-base font-bold text-fg"
         >
           <CircleHelp size={16} aria-hidden="true" />
-          <StableText {...inBothLocales(msg`vis-a-lot 도움말`)} />
+          <StableText {...inAllLocales(msg`vis-a-lot 도움말`)} />
         </Link>
         <nav className="ml-auto flex items-center gap-1" aria-label={t`서비스`}>
           <Link href="/" className={navLink()} aria-label={t`시각화`}>
             <LayoutGrid size={14} aria-hidden="true" />
             <span className="whitespace-nowrap max-sm:hidden">
-              <StableText {...inBothLocales(msg`시각화`)} />
+              <StableText {...inAllLocales(msg`시각화`)} />
             </span>
           </Link>
           <Link href="/feed" className={navLink()} aria-label={t`피드`}>
             <Newspaper size={14} aria-hidden="true" />
             <span className="whitespace-nowrap max-sm:hidden">
-              <StableText {...inBothLocales(msg`피드`)} />
+              <StableText {...inAllLocales(msg`피드`)} />
             </span>
           </Link>
           <PreferencesMenu />

@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "lingui compile && next dev",
-    "build": "lingui check sync && lingui compile --strict && next build",
+    "build": "lingui check sync && lingui compile --strict && node scripts/check-i18n.mjs && next build",
     "start": "next start",
-    "lint": "node scripts/check-fsd.mjs && biome check && stylelint \"**/*.css\"",
+    "lint": "node scripts/check-fsd.mjs && node scripts/check-i18n.mjs && biome check && stylelint \"**/*.css\"",
     "lint:fsd": "node scripts/check-fsd.mjs",
     "format": "biome format --write",
     "test": "lingui compile && vitest run",
@@ -17,7 +17,7 @@
     "lint:css": "stylelint \"**/*.css\"",
     "lingui:extract": "lingui extract",
     "lingui:compile": "lingui compile",
-    "lingui:check": "lingui check sync && lingui check missing"
+    "lingui:check": "lingui check sync && lingui check missing && node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

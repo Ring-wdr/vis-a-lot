@@ -12,11 +12,18 @@ import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/shared/config/locale";
 // hydration 중에 useLocale의 서버 값(ko)으로 그려야 해서다. 컴포넌트 밖 코드가 쓰는 전역 i18n
 // (@lingui/core/macro의 t``)은 i18n.ts가 지금 언어로 activate한다. 그래서 옛 API(useT·t)와 함께 바뀐다.
 
-const instances: Record<Locale, I18n> = {
-  ko: setupI18n({ locale: "ko", messages: { ko: {} } }),
-  en: setupI18n({ locale: "en", messages: { en: {} } }),
-};
-linguiGlobal.load({ ko: {}, en: {} });
+const instances = Object.fromEntries(
+  LOCALES.map((locale) => [
+    locale,
+    setupI18n({ locale, messages: { [locale]: {} } }),
+  ]),
+) as Record<Locale, I18n>;
+linguiGlobal.load(
+  Object.fromEntries(LOCALES.map((locale) => [locale, {}])) as Record<
+    Locale,
+    LinguiCatalog
+  >,
+);
 linguiGlobal.activate(DEFAULT_LOCALE);
 
 /** 그 언어의 Lingui instance. 서버 컴포넌트에서는 `t(linguiFor(lang))\`…\`` */
@@ -37,9 +44,11 @@ export function registerCatalog(catalog: Record<Locale, LinguiCatalog>) {
   }
 }
 
-/** 두 언어로 번역한 문구. 두 언어를 함께 그리는 StableText·Localized에 넘긴다 (정적 HTML). */
-export function inBothLocales(
+/** 모든 언어로 번역한 문구. 언어를 함께 그리는 StableText·Localized에 넘긴다 (정적 HTML). */
+export function inAllLocales(
   descriptor: MessageDescriptor,
 ): Record<Locale, string> {
-  return { ko: instances.ko._(descriptor), en: instances.en._(descriptor) };
+  return Object.fromEntries(
+    LOCALES.map((locale) => [locale, instances[locale]._(descriptor)]),
+  ) as Record<Locale, string>;
 }

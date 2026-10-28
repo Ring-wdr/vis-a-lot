@@ -14,7 +14,7 @@ import { usePostQuery } from "@/shared/api/feed/post-queries";
 import { useGroups } from "@/shared/api/feed/queries";
 import type { Group } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
-import { inBothLocales } from "@/shared/lib/lingui";
+import { inAllLocales } from "@/shared/lib/lingui";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { button } from "@/shared/ui/button";
 import { EmptyState, LoadingText, Skeleton } from "@/shared/ui/Loading";
@@ -44,7 +44,7 @@ function GroupTabs({
         className={tabs.tab()}
         aria-current={current === null ? "page" : undefined}
       >
-        <StableText {...inBothLocales(ALL)} />
+        <StableText {...inAllLocales(ALL)} />
       </Link>
       {groups.map((g) => (
         <Link
