@@ -1,0 +1,60 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgctxt "message body column"
+msgid "내용"
+msgstr "내용"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "받는 사람"
+msgstr "받는 사람"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "발송 로그"
+msgstr "발송 로그"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "발송 로그를 불러오는 중"
+msgstr "발송 로그를 불러오는 중"
+
+#. placeholder {0}: outbox.error.message
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "발송 로그를 불러오지 못했습니다: {0}"
+msgstr "발송 로그를 불러오지 못했습니다: {0}"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다."
+msgstr "배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다."
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "보낸 메시지가 없습니다"
+msgstr "보낸 메시지가 없습니다"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "새로 고침"
+msgstr "새로 고침"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgctxt "sent time column"
+msgid "시각"
+msgstr "시각"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "알림 설정에서 슬랙·이메일을 켠 알림이 실제로 나가는 대신 여기에 남습니다."
+msgstr "알림 설정에서 슬랙·이메일을 켠 알림이 실제로 나가는 대신 여기에 남습니다."
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgctxt "message subject column"
+msgid "제목"
+msgstr "제목"
+
+#: src/views/feed-dev-outbox/ui/OutboxView.tsx
+msgid "채널"
+msgstr "채널"

@@ -3,12 +3,14 @@
 
 // 새 게시물 전체 폼 (/feed/new). ?share=<공유 id>면 vis-a-lot 차트 공유로 차트 게시물을 채운다.
 
+import { select } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import { Plus, Sparkles, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { josa } from "@/entities/post/lib/event-text";
+import { batchim } from "@/entities/post/lib/event-text";
 import { formatLabels, type PriorityLevel } from "@/entities/post/lib/labels";
 import {
   NONE,
@@ -34,7 +36,6 @@ import type {
   PostRef,
 } from "@/shared/api/feed/types";
 import { ai } from "@/shared/lib/ai";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { button, itemButton } from "@/shared/ui/button";
 import { LoadingText, Spinner } from "@/shared/ui/Loading";
@@ -51,132 +52,7 @@ import {
   type FormatInputs,
   linkRows,
 } from "@/views/feed-new-post/model/payload";
-
-const messages = defineMessages({
-  ko: {
-    loadingShare: "vis-a-lot 차트 공유를 불러오는 중",
-    shareFailed: "차트 공유를 가져오지 못했습니다",
-    missingShare: "없는 공유",
-    shareFailedDetail: (id: string, reason: string) =>
-      `${id}: ${reason}. 공유가 지워졌거나 다른 브라우저에서 만든 공유일 수 있습니다. 차트 없이 게시물을 쓸 수 있습니다.`,
-    chartAlt: (title: string) => `${title} 차트`,
-    importedFrom: "vis-a-lot 공유에서 가져옴",
-    chartLinkName: "vis-a-lot 차트",
-    titleFirst: "제목을 먼저 적어 주세요.",
-    postType: "게시물 유형",
-    priority: "우선순위",
-    assignee: "담당자",
-    postTypeLabel: "게시물 유형",
-    priorityLabel: "우선순위",
-    assigneeLabel: "담당자",
-    aiFilled: (names: string[]) =>
-      `AI가 ${josa(names.join("·"), "을/를")} 채웠습니다. 바꿔도 됩니다.`,
-    aiNothing: "AI가 추천할 값을 찾지 못했습니다.",
-    aiFailed: (err: string) => `AI 추천에 실패했습니다: ${err}`,
-    titleRequired: "제목을 적어 주세요.",
-    groupRequired: "그룹을 골라 주세요.",
-    createFailed: (err: string) => `만들지 못했습니다: ${err}`,
-    heading: "새 게시물",
-    aiTitle: "제목·설명으로 게시물 유형·우선순위·담당자를 추천합니다",
-    aiSuggest: "AI 추천",
-    format: "형식",
-    titleField: "제목 (필수)",
-    description: "설명",
-    checklist: "체크리스트",
-    checklistHint: "한 줄에 항목 하나",
-    links: "링크 첨부",
-    linkName: "이름",
-    linkNameLabel: (n: number) => `링크 ${n} 이름`,
-    linkUrlLabel: (n: number) => `링크 ${n} 주소`,
-    removeLink: (n: number) => `링크 ${n} 빼기`,
-    addLink: "링크 더하기",
-    group: "그룹",
-    loading: "불러오는 중",
-    noGroups: "그룹 없음",
-    team: "팀",
-    requester: "요청자",
-    requesterHint: "비어 있으면 작성자(나)가 요청자 역할을 합니다.",
-    stakeholders: "이해관계자",
-    none: "없음",
-    due: "기한",
-    tags: "태그",
-    parentOptional: "상위 이슈 (선택)",
-    removeParent: "상위 이슈 빼기",
-    parent: "상위 이슈",
-    cancel: "취소",
-    create: "게시물 만들기",
-    chartHint:
-      '차트 게시물은 vis-a-lot의 탭 도구 줄이나 공유 페이지에서 "피드에 올리기"로 만들면 차트 이미지와 링크가 함께 들어옵니다.',
-    imageUrl: "이미지 주소",
-    imageHint: "썸네일로도 씁니다",
-    imagePlaceholder: "https://… 또는 data:image/…",
-    videoUrl: "동영상 주소",
-    language: "언어",
-    code: "코드",
-  },
-  en: {
-    loadingShare: "Loading vis-a-lot chart share",
-    shareFailed: "Couldn't import the chart share",
-    missingShare: "share not found",
-    shareFailedDetail: (id: string, reason: string) =>
-      `${id}: ${reason}. The share may have been deleted or made in another browser. You can still write the post without a chart.`,
-    chartAlt: (title: string) => `${title} chart`,
-    importedFrom: "Imported from vis-a-lot share",
-    chartLinkName: "vis-a-lot chart",
-    titleFirst: "Please enter a title first.",
-    postType: "post type",
-    priority: "priority",
-    assignee: "assignee",
-    postTypeLabel: "Post type",
-    priorityLabel: "Priority",
-    assigneeLabel: "Assignee",
-    aiFilled: (names: string[]) =>
-      `AI filled in ${names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0]}. Feel free to change ${names.length > 1 ? "them" : "it"}.`,
-    aiNothing: "AI couldn't find anything to suggest.",
-    aiFailed: (err: string) => `AI suggestion failed: ${err}`,
-    titleRequired: "Please enter a title.",
-    groupRequired: "Please choose a group.",
-    createFailed: (err: string) => `Couldn't create: ${err}`,
-    heading: "New post",
-    aiTitle:
-      "Suggests post type, priority and assignee from the title and description",
-    aiSuggest: "AI suggest",
-    format: "Format",
-    titleField: "Title (required)",
-    description: "Description",
-    checklist: "Checklist",
-    checklistHint: "One item per line",
-    links: "Links",
-    linkName: "Name",
-    linkNameLabel: (n: number) => `Link ${n} name`,
-    linkUrlLabel: (n: number) => `Link ${n} URL`,
-    removeLink: (n: number) => `Remove link ${n}`,
-    addLink: "Add link",
-    group: "Group",
-    loading: "Loading",
-    noGroups: "No groups",
-    team: "Team",
-    requester: "Requester",
-    requesterHint: "If empty, you (the author) act as the requester.",
-    stakeholders: "Stakeholders",
-    none: "None",
-    due: "Due date",
-    tags: "Tags",
-    parentOptional: "Parent issue (optional)",
-    removeParent: "Remove parent issue",
-    parent: "Parent issue",
-    cancel: "Cancel",
-    create: "Create post",
-    chartHint:
-      'To make a chart post, use "Post to feed" from a vis-a-lot tab toolbar or share page, and the chart image and link come along.',
-    imageUrl: "Image URL",
-    imageHint: "Also used as the thumbnail",
-    imagePlaceholder: "https://… or data:image/…",
-    videoUrl: "Video URL",
-    language: "Language",
-    code: "Code",
-  },
-});
+import "../config/messages";
 
 const seg = segmented();
 const r = fieldRow();
@@ -227,35 +103,42 @@ function SharePreview({
   isPending: boolean;
   error: Error | null;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   if (isPending)
     return (
       <div className="rounded-lg border border-line bg-elevated p-4">
-        <LoadingText>{text.loadingShare}</LoadingText>
+        <LoadingText>
+          <Trans>vis-a-lot 차트 공유를 불러오는 중</Trans>
+        </LoadingText>
       </div>
     );
-  if (error || !share)
+  if (error || !share) {
+    const reason = error?.message ?? t`없는 공유`;
+    const shareFailedDetail = t`${shareId}: ${reason}. 공유가 지워졌거나 다른 브라우저에서 만든 공유일 수 있습니다. 차트 없이 게시물을 쓸 수 있습니다.`;
     return (
       <div
         role="alert"
         className="flex flex-col gap-1 rounded-lg border border-danger/40 bg-danger/12 p-4 text-ui text-danger"
       >
-        <strong>{text.shareFailed}</strong>
-        <span className="text-xs">
-          {text.shareFailedDetail(shareId, error?.message ?? text.missingShare)}
-        </span>
+        <strong>
+          <Trans>차트 공유를 가져오지 못했습니다</Trans>
+        </strong>
+        <span className="text-xs">{shareFailedDetail}</span>
       </div>
     );
+  }
+  const chartTitle = share.title;
+  const chartAlt = t`${chartTitle} 차트`;
   return (
     <figure className="flex flex-col gap-2 rounded-lg border border-accent-line bg-accent-soft p-3">
       <img
         src={share.thumbnail}
-        alt={text.chartAlt(share.title)}
+        alt={chartAlt}
         className="block size-auto max-h-80 max-w-full rounded-md bg-elevated object-contain"
       />
       <figcaption className="text-xs text-fg-secondary">
-        {text.importedFrom} · {share.createdByName} · {share.payload.chartType}{" "}
-        · {share.payload.dataset}
+        {t`vis-a-lot 공유에서 가져옴`} · {share.createdByName} ·{" "}
+        {share.payload.chartType} · {share.payload.dataset}
         {share.payload.item.key !== "all" && ` · ${share.payload.item.label}`}
       </figcaption>
     </figure>
@@ -263,7 +146,7 @@ function SharePreview({
 }
 
 export function NewPostView() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const search = useSearchParams();
   const shareId = search.get("share");
   const router = useRouter();
@@ -307,13 +190,13 @@ export function NewPostView() {
 
   // 차트 공유를 한 번만 채운다 (사용자가 고친 값을 덮지 않는다).
   const filled = useRef(false);
-  const chartLinkName = text.chartLinkName;
+  const chartLinkName = t`vis-a-lot 차트`;
   useEffect(() => {
     const s = share.data;
     if (!s || filled.current) return;
     filled.current = true;
     setFormat("chart");
-    setTitle((t) => t || s.title);
+    setTitle((prev) => prev || s.title);
     setLinks((l) =>
       l.some((x) => x.url === s.payload.link)
         ? l
@@ -334,9 +217,31 @@ export function NewPostView() {
     setSuggested({});
   };
 
+  /** AI가 채운 필드 이름(1~3개)으로 알림 문장을 만든다 */
+  const aiFilled = (names: string[]) => {
+    const [a, b, c] = names;
+    const list =
+      names.length === 1
+        ? a
+        : names.length === 2
+          ? t({ message: `${a}·${b}`, comment: "필드 이름 둘을 잇는다" })
+          : t({ message: `${a}·${b}·${c}`, comment: "필드 이름 셋을 잇는다" });
+    // 조사(을/를)는 받침으로 고른다. 영어 번역은 쓰지 않는다.
+    const josa = batchim(list);
+    return names.length === 1
+      ? t({
+          message: `AI가 ${list}${select(josa, { none: "를", other: "을" })} 채웠습니다. 바꿔도 됩니다.`,
+          context: "one field filled",
+        })
+      : t({
+          message: `AI가 ${list}${select(josa, { none: "를", other: "을" })} 채웠습니다. 바꿔도 됩니다.`,
+          context: "several fields filled",
+        });
+  };
+
   const suggest = async () => {
     if (!title.trim()) {
-      setAiNote(text.titleFirst);
+      setAiNote(t`제목을 먼저 적어 주세요.`);
       return;
     }
     setSuggesting(true);
@@ -345,16 +250,16 @@ export function NewPostView() {
       const s = await ai.suggestFields({
         title: title.trim(),
         body: docText(body),
-        postTypes: (o.group?.postTypes ?? []).map((t) => ({
-          id: t.id,
-          name: t.name,
+        postTypes: (o.group?.postTypes ?? []).map((pt) => ({
+          id: pt.id,
+          name: pt.name,
         })),
         users: o.people.map((p) => ({ id: p.value, name: p.label })),
       });
       const next: Suggested = {};
       if (
         s.postTypeId &&
-        o.group?.postTypes.some((t) => t.id === s.postTypeId)
+        o.group?.postTypes.some((pt) => pt.id === s.postTypeId)
       ) {
         setPostTypeId(s.postTypeId);
         next.postTypeId = true;
@@ -373,27 +278,42 @@ export function NewPostView() {
       }
       setSuggested(next);
       const names = [
-        next.postTypeId && text.postType,
-        next.priority && text.priority,
-        next.assigneeId && text.assignee,
+        next.postTypeId &&
+          t({
+            message: "게시물 유형",
+            context: "field name inside the AI suggestion sentence",
+          }),
+        next.priority &&
+          t({
+            message: "우선순위",
+            context: "field name inside the AI suggestion sentence",
+          }),
+        next.assigneeId &&
+          t({
+            message: "담당자",
+            context: "field name inside the AI suggestion sentence",
+          }),
       ].filter((n): n is string => !!n);
-      setAiNote(names.length ? text.aiFilled(names) : text.aiNothing);
+      setAiNote(
+        names.length ? aiFilled(names) : t`AI가 추천할 값을 찾지 못했습니다.`,
+      );
     } catch (err) {
-      setAiNote(text.aiFailed(errorMessage(err)));
+      const error = errorMessage(err);
+      setAiNote(t`AI 추천에 실패했습니다: ${error}`);
     } finally {
       setSuggesting(false);
     }
   };
 
   const submit = async () => {
-    const t = title.trim();
-    if (!t) return setError(text.titleRequired);
-    if (!groupId) return setError(text.groupRequired);
+    const trimmed = title.trim();
+    if (!trimmed) return setError(t`제목을 적어 주세요.`);
+    if (!groupId) return setError(t`그룹을 골라 주세요.`);
     const { payload, thumbnail } = buildPayload(format, inputs, share.data);
     const orNull = (v: string) => (v === NONE ? null : v);
     const req: CreatePostRequest = {
       groupId,
-      title: t,
+      title: trimmed,
       format,
       priority,
       postTypeId: orNull(postTypeId),
@@ -420,7 +340,8 @@ export function NewPostView() {
       await invalidatePosts(client);
       router.push(postPageHref(created.key));
     } catch (err) {
-      setError(text.createFailed(errorMessage(err)));
+      const error = errorMessage(err);
+      setError(t`만들지 못했습니다: ${error}`);
       setSaving(false);
     }
   };
@@ -435,13 +356,15 @@ export function NewPostView() {
       }}
     >
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">{text.heading}</h1>
+        <h1 className="text-xl font-bold">
+          <Trans>새 게시물</Trans>
+        </h1>
         <button
           type="button"
           className={button({ size: "sm", class: "whitespace-nowrap" })}
           disabled={suggesting || !groupId}
           aria-busy={suggesting}
-          title={text.aiTitle}
+          title={t`제목·설명으로 게시물 유형·우선순위·담당자를 추천합니다`}
           onClick={suggest}
         >
           {suggesting ? (
@@ -449,7 +372,7 @@ export function NewPostView() {
           ) : (
             <Sparkles size={13} aria-hidden="true" />
           )}
-          {text.aiSuggest}
+          <Trans>AI 추천</Trans>
         </button>
       </header>
       {aiNote && (
@@ -471,7 +394,7 @@ export function NewPostView() {
         <div className="flex min-w-0 flex-col gap-4">
           <fieldset className="flex flex-col gap-1">
             <legend className="mb-1 text-xs text-fg-secondary">
-              {text.format}
+              <Trans>형식</Trans>
             </legend>
             <div className={seg.root()}>
               {(Object.keys(formatLabels()) as PostFormat[]).map((f) => (
@@ -488,7 +411,7 @@ export function NewPostView() {
             </div>
           </fieldset>
 
-          <Field label={text.titleField} htmlFor={ids.title}>
+          <Field label={t`제목 (필수)`} htmlFor={ids.title}>
             <input
               id={ids.title}
               className={field({ class: "h-9 text-sm" })}
@@ -503,12 +426,10 @@ export function NewPostView() {
           </Field>
 
           <div className={r.root()}>
-            <span className={r.label()}>{text.description}</span>
-            <RichTextEditor
-              initial={null}
-              onChange={setBody}
-              label={text.description}
-            />
+            <span className={r.label()}>
+              <Trans>설명</Trans>
+            </span>
+            <RichTextEditor initial={null} onChange={setBody} label={t`설명`} />
           </div>
 
           <FormatInputsFields
@@ -519,9 +440,9 @@ export function NewPostView() {
           />
 
           <Field
-            label={text.checklist}
+            label={t`체크리스트`}
             htmlFor={ids.checklist}
-            hint={text.checklistHint}
+            hint={t`한 줄에 항목 하나`}
           >
             <textarea
               id={ids.checklist}
@@ -533,60 +454,77 @@ export function NewPostView() {
           </Field>
 
           <div className={r.root()}>
-            <span className={r.label()}>{text.links}</span>
-            {links.map((l, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: 줄을 지우고 더하는 입력 목록이라 자리가 곧 정체다
-              <div key={i} className="flex gap-1.5">
-                <input
-                  className={field({ class: "w-40 flex-none" })}
-                  value={l.name}
-                  placeholder={text.linkName}
-                  aria-label={text.linkNameLabel(i + 1)}
-                  onChange={(e) => {
-                    const name = e.currentTarget.value;
-                    setLinks((ls) =>
-                      ls.map((x, j) => (j === i ? { ...x, name } : x)),
-                    );
-                  }}
-                />
-                <input
-                  className={field()}
-                  value={l.url}
-                  placeholder="https://…"
-                  aria-label={text.linkUrlLabel(i + 1)}
-                  onChange={(e) => {
-                    const url = e.currentTarget.value;
-                    setLinks((ls) =>
-                      ls.map((x, j) => (j === i ? { ...x, url } : x)),
-                    );
-                  }}
-                />
-                <button
-                  type="button"
-                  className={cn(itemButton(), "size-7.5 flex-none")}
-                  aria-label={text.removeLink(i + 1)}
-                  onClick={() => setLinks((ls) => ls.filter((_, j) => j !== i))}
-                >
-                  <X size={13} aria-hidden="true" />
-                </button>
-              </div>
-            ))}
+            <span className={r.label()}>
+              <Trans>링크 첨부</Trans>
+            </span>
+            {links.map((l, i) => {
+              const n = i + 1;
+              return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: 줄을 지우고 더하는 입력 목록이라 자리가 곧 정체다
+                <div key={i} className="flex gap-1.5">
+                  <input
+                    className={field({ class: "w-40 flex-none" })}
+                    value={l.name}
+                    placeholder={t({
+                      message: "이름",
+                      context: "link name placeholder",
+                    })}
+                    aria-label={t`링크 ${n} 이름`}
+                    onChange={(e) => {
+                      const name = e.currentTarget.value;
+                      setLinks((ls) =>
+                        ls.map((x, j) => (j === i ? { ...x, name } : x)),
+                      );
+                    }}
+                  />
+                  <input
+                    className={field()}
+                    value={l.url}
+                    placeholder="https://…"
+                    aria-label={t`링크 ${n} 주소`}
+                    onChange={(e) => {
+                      const url = e.currentTarget.value;
+                      setLinks((ls) =>
+                        ls.map((x, j) => (j === i ? { ...x, url } : x)),
+                      );
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={cn(itemButton(), "size-7.5 flex-none")}
+                    aria-label={t`링크 ${n} 빼기`}
+                    onClick={() =>
+                      setLinks((ls) => ls.filter((_, j) => j !== i))
+                    }
+                  >
+                    <X size={13} aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
             <button
               type="button"
               className={button({ size: "sm", class: "self-start" })}
               onClick={() => setLinks((ls) => [...ls, { name: "", url: "" }])}
             >
               <Plus size={13} aria-hidden="true" />
-              {text.addLink}
+              <Trans>링크 더하기</Trans>
             </button>
           </div>
         </div>
 
         <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-line bg-elevated p-3">
           <Select
-            label={text.group}
+            label={t({ message: "그룹", context: "group select label" })}
             value={groupId}
-            placeholder={groups.isPending ? text.loading : text.noGroups}
+            placeholder={
+              groups.isPending
+                ? t({
+                    message: "불러오는 중",
+                    context: "loading groups placeholder",
+                  })
+                : t`그룹 없음`
+            }
             options={groupList.map((g) => ({
               value: g.id,
               label: `${g.name} (${g.keyPrefix})`,
@@ -594,13 +532,13 @@ export function NewPostView() {
             onChange={pickGroup}
           />
           <Select
-            label={text.team}
+            label={t`팀`}
             value={teamId}
             options={o.teams}
             onChange={setTeamId}
           />
           <Select
-            label={text.postTypeLabel}
+            label={t`게시물 유형`}
             aside={suggested.postTypeId && aiChip}
             value={postTypeId}
             options={o.postTypes}
@@ -610,7 +548,7 @@ export function NewPostView() {
             }}
           />
           <Select
-            label={text.priorityLabel}
+            label={t`우선순위`}
             aside={suggested.priority && aiChip}
             value={priority}
             options={priorityOptions()}
@@ -620,7 +558,7 @@ export function NewPostView() {
             }}
           />
           <Select
-            label={text.assigneeLabel}
+            label={t`담당자`}
             aside={suggested.assigneeId && aiChip}
             value={assigneeId}
             options={o.peopleOrNone}
@@ -631,23 +569,28 @@ export function NewPostView() {
           />
           <div className="flex flex-col gap-1">
             <Select
-              label={text.requester}
+              label={t`요청자`}
               value={requesterId}
               options={o.peopleOrNone}
               onChange={setRequesterId}
             />
             {requesterId === NONE && (
-              <p className="text-2xs text-fg-muted">{text.requesterHint}</p>
+              <p className="text-2xs text-fg-muted">
+                <Trans>비어 있으면 작성자(나)가 요청자 역할을 합니다.</Trans>
+              </p>
             )}
           </div>
           <OrderedSelect
-            label={text.stakeholders}
+            label={t`이해관계자`}
             options={o.people}
             value={stakeholderIds}
-            placeholder={text.none}
+            placeholder={t({
+              message: "없음",
+              context: "no stakeholders placeholder",
+            })}
             onChange={setStakeholderIds}
           />
-          <Field label={text.due} htmlFor={ids.due}>
+          <Field label={t`기한`} htmlFor={ids.due}>
             <input
               id={ids.due}
               type="date"
@@ -657,11 +600,15 @@ export function NewPostView() {
             />
           </Field>
           <div className={r.root()}>
-            <span className={r.label()}>{text.tags}</span>
+            <span className={r.label()}>
+              <Trans>태그</Trans>
+            </span>
             <TagInput value={tags} onChange={setTags} />
           </div>
           <div className={r.root()}>
-            <span className={r.label()}>{text.parentOptional}</span>
+            <span className={r.label()}>
+              <Trans>상위 이슈 (선택)</Trans>
+            </span>
             {parent ? (
               <span className="flex min-h-7.5 items-center gap-2 rounded-md bg-panel px-2">
                 <span className="text-xs font-semibold text-fg-secondary tabular-nums">
@@ -671,7 +618,7 @@ export function NewPostView() {
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label={text.removeParent}
+                  aria-label={t`상위 이슈 빼기`}
                   onClick={() => setParent(null)}
                 >
                   <X size={12} aria-hidden="true" />
@@ -679,7 +626,7 @@ export function NewPostView() {
               </span>
             ) : (
               <PostPicker
-                label={text.parent}
+                label={t`상위 이슈`}
                 groupId={groupId ?? undefined}
                 disabled={!groupId}
                 onPick={setParent}
@@ -700,7 +647,7 @@ export function NewPostView() {
           className={button()}
           onClick={() => router.back()}
         >
-          {text.cancel}
+          <Trans context="cancel creating a post">취소</Trans>
         </button>
         <button
           type="submit"
@@ -709,7 +656,7 @@ export function NewPostView() {
           aria-busy={saving}
         >
           {saving && <Spinner size="sm" tone="inherit" />}
-          {text.create}
+          <Trans>게시물 만들기</Trans>
         </button>
       </footer>
     </form>
@@ -730,28 +677,33 @@ function FormatInputsFields({
 }) {
   const set = (patch: Partial<FormatInputs>) =>
     onChange({ ...inputs, ...patch });
-  const text = useT(messages);
+  const { t } = useLingui();
   const id = useId();
   switch (format) {
     case "chart":
       return fromShare ? null : (
-        <p className="text-xs text-fg-muted">{text.chartHint}</p>
+        <p className="text-xs text-fg-muted">
+          <Trans>
+            차트 게시물은 vis-a-lot의 탭 도구 줄이나 공유 페이지에서 "피드에
+            올리기"로 만들면 차트 이미지와 링크가 함께 들어옵니다.
+          </Trans>
+        </p>
       );
     case "image":
       return (
-        <Field label={text.imageUrl} htmlFor={id} hint={text.imageHint}>
+        <Field label={t`이미지 주소`} htmlFor={id} hint={t`썸네일로도 씁니다`}>
           <input
             id={id}
             className={field()}
             value={inputs.imageUrl}
-            placeholder={text.imagePlaceholder}
+            placeholder={t`https://… 또는 data:image/…`}
             onChange={(e) => set({ imageUrl: e.currentTarget.value })}
           />
         </Field>
       );
     case "video":
       return (
-        <Field label={text.videoUrl} htmlFor={id}>
+        <Field label={t`동영상 주소`} htmlFor={id}>
           <input
             id={id}
             className={field()}
@@ -764,7 +716,10 @@ function FormatInputsFields({
     case "code":
       return (
         <div className="flex flex-col gap-2">
-          <Field label={text.language} htmlFor={`${id}-lang`}>
+          <Field
+            label={t({ message: "언어", context: "code language field label" })}
+            htmlFor={`${id}-lang`}
+          >
             <input
               id={`${id}-lang`}
               className={field({ class: "w-40" })}
@@ -773,7 +728,10 @@ function FormatInputsFields({
               onChange={(e) => set({ language: e.currentTarget.value })}
             />
           </Field>
-          <Field label={text.code} htmlFor={`${id}-code`}>
+          <Field
+            label={t({ message: "코드", context: "code post field label" })}
+            htmlFor={`${id}-code`}
+          >
             <textarea
               id={`${id}-code`}
               className={field({ multiline: true })}
