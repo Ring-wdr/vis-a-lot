@@ -1,42 +1,38 @@
 "use client";
 
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { CircleHelp, LayoutGrid, Menu, Newspaper, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { HELP_ROOT } from "@/shared/config/help";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import { inBothLocales } from "@/shared/lib/lingui";
+import { LinguiProvider } from "@/shared/lib/lingui-provider";
 import { navLink } from "@/shared/ui/nav";
 import { StableText } from "@/shared/ui/StableText";
 import { HelpSidebar } from "@/widgets/help-sidebar/ui/HelpSidebar";
+import "./messages";
 import { PreferencesMenu } from "./PreferencesMenu";
-
-const messages = defineMessages({
-  ko: {
-    openToc: "목차 열기",
-    closeToc: "목차 닫기",
-    services: "서비스",
-    vis: "시각화",
-    feed: "피드",
-  },
-  en: {
-    openToc: "Open contents",
-    closeToc: "Close contents",
-    services: "Services",
-    vis: "Charts",
-    feed: "Feed",
-  },
-});
 
 /**
  * 도움말 화면 틀: 상단 바 + 왼쪽 목차 + 본문. 로그인 없이 열리는 정적 페이지라 mock 서버를 띄우지 않는다.
  * 화면 높이에 맞춰 상단 바는 늘 보이고, 목차와 본문이 따로 스크롤한다
  * (html·body의 overflow-x 때문에 문서 스크롤에서는 sticky가 붙지 않는다).
  * 48rem보다 좁으면 목차는 메뉴 버튼으로 여닫는 서랍이 된다.
- * 정적 HTML이라 보이는 글자는 StableText로(깜빡임·폭 변화 없음), 속성(aria-label)은 useT로 바꾼다.
+ * 정적 HTML이라 보이는 글자는 StableText로(깜빡임·폭 변화 없음), 속성(aria-label)은 useLingui로 바꾼다.
+ * 도움말은 Providers 밖이라 Lingui context를 여기서 연다.
  */
 export function HelpShell({ children }: { children: ReactNode }) {
-  const text = useT(messages);
+  return (
+    <LinguiProvider>
+      <HelpFrame>{children}</HelpFrame>
+    </LinguiProvider>
+  );
+}
+
+function HelpFrame({ children }: { children: ReactNode }) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -46,7 +42,7 @@ export function HelpShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           className="-ml-1.5 inline-grid size-8 cursor-pointer place-items-center rounded-md text-fg-secondary hover:bg-panel md:hidden"
-          aria-label={open ? text.closeToc : text.openToc}
+          aria-label={open ? t`목차 닫기` : t`목차 열기`}
           aria-expanded={open}
           aria-controls="help-sidebar"
           onClick={() => setOpen((v) => !v)}
@@ -58,22 +54,19 @@ export function HelpShell({ children }: { children: ReactNode }) {
           className="flex items-center gap-1.5 text-base font-bold text-fg"
         >
           <CircleHelp size={16} aria-hidden="true" />
-          <StableText ko="vis-a-lot 도움말" en="vis-a-lot Help" />
+          <StableText {...inBothLocales(msg`vis-a-lot 도움말`)} />
         </Link>
-        <nav
-          className="ml-auto flex items-center gap-1"
-          aria-label={text.services}
-        >
-          <Link href="/" className={navLink()} aria-label={text.vis}>
+        <nav className="ml-auto flex items-center gap-1" aria-label={t`서비스`}>
+          <Link href="/" className={navLink()} aria-label={t`시각화`}>
             <LayoutGrid size={14} aria-hidden="true" />
             <span className="whitespace-nowrap max-sm:hidden">
-              <StableText ko="시각화" en="Charts" />
+              <StableText {...inBothLocales(msg`시각화`)} />
             </span>
           </Link>
-          <Link href="/feed" className={navLink()} aria-label={text.feed}>
+          <Link href="/feed" className={navLink()} aria-label={t`피드`}>
             <Newspaper size={14} aria-hidden="true" />
             <span className="whitespace-nowrap max-sm:hidden">
-              <StableText ko="피드" en="Feed" />
+              <StableText {...inBothLocales(msg`피드`)} />
             </span>
           </Link>
           <PreferencesMenu />
@@ -84,7 +77,7 @@ export function HelpShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             className="z-drawer absolute inset-0 cursor-default bg-backdrop md:hidden"
-            aria-label={text.closeToc}
+            aria-label={t`목차 닫기`}
             onClick={() => setOpen(false)}
           />
         )}

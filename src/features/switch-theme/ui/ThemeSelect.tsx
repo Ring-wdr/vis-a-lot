@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Monitor, Moon, Sun } from "lucide-react";
 import {
   setThemePreference,
@@ -7,24 +10,15 @@ import {
   type ThemePreference,
   useThemePreference,
 } from "@/shared/lib/color-scheme";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { preferencesPopover } from "@/shared/ui/preferences-popover";
 import { segmented } from "@/shared/ui/segmented";
+import "../config/messages";
 
-const messages = defineMessages({
-  ko: {
-    label: "테마",
-    system: "시스템",
-    light: "라이트",
-    dark: "다크",
-  },
-  en: {
-    label: "Theme",
-    system: "System",
-    light: "Light",
-    dark: "Dark",
-  },
-});
+const LABEL: Record<ThemePreference, MessageDescriptor> = {
+  system: msg`시스템`,
+  light: msg`라이트`,
+  dark: msg`다크`,
+};
 
 const ICON: Record<ThemePreference, typeof Sun> = {
   system: Monitor,
@@ -40,11 +34,13 @@ const s = segmented();
  * (현재 페이지만, resize와 같은 규칙). 버튼 폭은 같게 나눠 언어가 바뀌어도 그대로다.
  */
 export function ThemeSelect() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const preference = useThemePreference();
   return (
     <fieldset className={p.section()}>
-      <legend className={p.label()}>{text.label}</legend>
+      <legend className={p.label()}>
+        <Trans>테마</Trans>
+      </legend>
       <div className={s.root()}>
         {THEME_PREFERENCES.map((value) => {
           const Icon = ICON[value];
@@ -57,7 +53,7 @@ export function ThemeSelect() {
               onClick={() => setThemePreference(value)}
             >
               <Icon size={13} className="flex-none" aria-hidden="true" />
-              <span className="truncate">{text[value]}</span>
+              <span className="truncate">{t(LABEL[value])}</span>
             </button>
           );
         })}

@@ -1,0 +1,36 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:02+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/application/HelpShell.tsx
+msgid "vis-a-lot 도움말"
+msgstr "vis-a-lot Help"
+
+#: src/application/HelpShell.tsx
+msgid "목차 닫기"
+msgstr "Close contents"
+
+#: src/application/HelpShell.tsx
+msgid "목차 열기"
+msgstr "Open contents"
+
+#: src/application/HelpShell.tsx
+msgid "서비스"
+msgstr "Services"
+
+#: src/application/HelpShell.tsx
+msgid "시각화"
+msgstr "Charts"
+
+#: src/application/HelpShell.tsx
+msgid "피드"
+msgstr "Feed"
+
+#: src/application/PreferencesMenu.tsx
+msgid "화면 설정"
+msgstr "Display settings"

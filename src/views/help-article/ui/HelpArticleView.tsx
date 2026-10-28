@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import {
@@ -9,22 +10,14 @@ import {
   helpServicePath,
 } from "@/shared/config/help";
 import type { Locale } from "@/shared/config/locale";
+import { linguiFor } from "@/shared/lib/lingui";
 import { Localized } from "@/shared/ui/Localized";
 import { prefixedHeadings } from "@/shared/ui/mdx/mdx-components";
 import { HELP_CONTENT } from "../config/content";
+import "../config/messages";
 
 /** 영어 본문의 제목 id. 한국어 본문과 함께 그려도 id가 겹치지 않는다 (본문 안 링크도 #en-…). */
 const EN_HEADINGS = prefixedHeadings("en-");
-
-const TEXT = {
-  ko: { prev: "이전", next: "다음", nav: "이전·다음 문서", breadcrumb: "위치" },
-  en: {
-    prev: "Previous",
-    next: "Next",
-    nav: "Previous and next",
-    breadcrumb: "Breadcrumb",
-  },
-} as const satisfies Record<Locale, Record<string, string>>;
 
 function Neighbor({
   service,
@@ -45,7 +38,9 @@ function Neighbor({
       className="group flex flex-col gap-0.5 rounded-lg border border-line px-4 py-3 hover:border-accent-line data-[dir=next]:items-end data-[dir=next]:text-right"
       data-dir={dir}
     >
-      <span className="text-xs text-fg-muted">{TEXT[lang][dir]}</span>
+      <span className="text-xs text-fg-muted">
+        {next ? t(linguiFor(lang))`다음` : t(linguiFor(lang))`이전`}
+      </span>
       <span className="flex items-center gap-1 text-sm font-semibold group-hover:text-accent">
         {!next && <ChevronLeft size={14} aria-hidden="true" />}
         {article.title[lang]}
@@ -58,6 +53,7 @@ function Neighbor({
 /**
  * 도움말 문서 한 편: 위치, 제목, 본문(MDX), 이전·다음 문서.
  * 정적 서버 컴포넌트라 두 언어를 함께 그리고 <html lang>에 맞는 쪽만 보인다 (Localized).
+ * 서버 컴포넌트는 Lingui context가 없어 언어별 instance로 번역한다 (t(linguiFor(lang))``).
  */
 export async function HelpArticleView({
   service,
@@ -114,7 +110,7 @@ function Breadcrumb({
 }) {
   return (
     <nav
-      aria-label={TEXT[lang].breadcrumb}
+      aria-label={t(linguiFor(lang))`위치`}
       className="mb-3 text-xs text-fg-muted"
     >
       <Link href={helpServicePath(service)} className="hover:text-accent">
@@ -139,7 +135,7 @@ function NeighborNav({
 }) {
   return (
     <nav
-      aria-label={TEXT[lang].nav}
+      aria-label={t(linguiFor(lang))`이전·다음 문서`}
       className="mt-12 grid grid-cols-2 gap-3 border-t border-line pt-6"
     >
       <Neighbor service={service} article={prev} dir="prev" lang={lang} />

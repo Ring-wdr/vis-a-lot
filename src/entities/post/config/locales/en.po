@@ -1,0 +1,306 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:05+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{actor}님이 {text}"
+msgstr "{actor} {text}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{blocker}{blockerB, select, none {가} other {이}} 닫혀 차단이 풀렸습니다"
+msgstr "Unblocked: {blocker} was closed"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{kind} 변경"
+msgstr "changed {kind}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{place, select, comment {댓글에서} other {설명에서}} {name}님을 멘션했습니다"
+msgstr "mentioned {name} in {place, select, comment {a comment} other {the description}}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{place, select, comment {댓글에서} other {설명에서}} 멘션했습니다"
+msgstr "mentioned in {place, select, comment {a comment} other {the description}}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{target}{targetB, select, none {와} other {과}} ''{label}'' 관계를 맺었습니다"
+msgstr "added a ''{label}'' relation with {target}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{target}{targetB, select, none {와} other {과}}의 ''{label}'' 관계를 끊었습니다"
+msgstr "removed the ''{label}'' relation with {target}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{to}님을 담당자로 정했습니다"
+msgstr "assigned {to}"
+
+#: src/entities/post/lib/labels.ts
+msgid "검토 중"
+msgstr "In review"
+
+#: src/entities/post/lib/event-text.ts
+msgid "게시물을 만들었습니다"
+msgstr "created the post"
+
+#: src/entities/post/lib/labels.ts
+msgid "관련"
+msgstr "Related"
+
+#: src/entities/post/lib/labels.ts
+msgid "기한 임박"
+msgstr "Due soon"
+
+#: src/entities/post/lib/labels.ts
+msgid "기한 초과"
+msgstr "Overdue"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한({due})이 다가옵니다"
+msgstr "Due date ({due}) is approaching"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한({due})이 지났습니다"
+msgstr "Due date ({due}) has passed"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한을 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "changed the due date {from} → {to}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한을 {to}{toB, select, none {로} rieul {로} other {으로}} 정했습니다"
+msgstr "set the due date to {to}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한을 지웠습니다"
+msgstr "cleared the due date"
+
+#: src/entities/post/lib/labels.ts
+msgid "긴급"
+msgstr "Urgent"
+
+#: src/entities/post/lib/labels.ts
+msgid "낮음"
+msgstr "Low"
+
+#: src/entities/post/lib/labels.ts
+msgid "높음"
+msgstr "High"
+
+#: src/entities/post/lib/event-text.ts
+msgid "다시 열었습니다"
+msgstr "reopened"
+
+#: src/entities/post/lib/labels.ts
+msgid "닫힘"
+msgstr "Closed"
+
+#: src/entities/post/lib/event-text.ts
+msgid "담당자를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "changed assignee {from} → {to}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "담당자를 비웠습니다"
+msgstr "cleared the assignee"
+
+#: src/entities/post/lib/labels.ts
+msgid "댓글"
+msgstr "Comment"
+
+#: src/entities/post/lib/event-text.ts
+msgid "댓글을 남겼습니다"
+msgstr "left a comment"
+
+#: src/entities/post/lib/labels.ts
+msgid "동영상"
+msgstr "Video"
+
+#: src/entities/post/lib/labels.ts
+msgid "리소스 대기"
+msgstr "Awaiting resources"
+
+#: src/entities/post/lib/event-text.ts
+msgid "막던 게시물이 닫혀 차단이 풀렸습니다"
+msgstr "Unblocked: the blocking post was closed"
+
+#: src/entities/post/lib/labels.ts
+msgid "멈춤"
+msgstr "Paused"
+
+#: src/entities/post/lib/labels.ts
+msgid "멘션"
+msgstr "Mention"
+
+#: src/entities/post/lib/labels.ts
+msgid "미해결"
+msgstr "Unresolved"
+
+#: src/entities/post/lib/labels.ts
+msgid "반려"
+msgstr "Rejected"
+
+#: src/entities/post/lib/event-text.ts
+msgid "반려했습니다"
+msgstr "rejected"
+
+#: src/entities/post/lib/labels.ts
+msgid "배정"
+msgstr "Assigned"
+
+#: src/entities/post/lib/labels.ts
+msgid "범위 밖"
+msgstr "Out of scope"
+
+#: src/entities/post/lib/labels.ts
+msgid "보류"
+msgstr "On hold"
+
+#: src/entities/post/lib/labels.ts
+msgid "보류 재개"
+msgstr "Hold resumed"
+
+#: src/entities/post/lib/labels.ts
+msgid "보통"
+msgstr "Medium"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상위 이슈 {from}{fromB, select, none {를} other {을}} 뺐습니다"
+msgstr "removed parent issue {from}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상위 이슈를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "changed the parent issue {from} → {to}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상위 이슈를 {to}{toB, select, none {로} rieul {로} other {으로}} 정했습니다"
+msgstr "set the parent issue to {to}"
+
+#: src/entities/post/lib/labels.ts
+msgid "상태 변경"
+msgstr "Status change"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상태를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "changed status {from} → {to}"
+
+#: src/entities/post/lib/labels.ts
+msgid "슬랙"
+msgstr "Slack"
+
+#: src/entities/post/lib/labels.ts
+msgid "승인"
+msgstr "Approved"
+
+#: src/entities/post/lib/event-text.ts
+msgid "승인했습니다"
+msgstr "approved"
+
+#: src/entities/post/lib/labels.ts
+msgid "앱 내"
+msgstr "In-app"
+
+#: src/entities/post/lib/event-text.ts
+#: src/entities/post/lib/labels.ts
+msgid "없음"
+msgstr "None"
+
+#: src/entities/post/lib/labels.ts
+msgid "열림"
+msgstr "Open"
+
+#: src/entities/post/lib/labels.ts
+msgid "완료 요청"
+msgstr "Review request"
+
+#: src/entities/post/lib/event-text.ts
+msgid "완료를 요청했습니다"
+msgstr "requested review"
+
+#: src/entities/post/lib/labels.ts
+msgid "우선순위 낮음"
+msgstr "Low priority"
+
+#: src/entities/post/lib/event-text.ts
+msgid "우선순위를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "changed priority {from} → {to}"
+
+#: src/entities/post/lib/labels.ts
+msgid "의사결정"
+msgstr "Decision"
+
+#: src/entities/post/lib/labels.ts
+msgid "의존성"
+msgstr "Dependency"
+
+#: src/entities/post/lib/labels.ts
+msgid "이메일"
+msgstr "Email"
+
+#: src/entities/post/lib/labels.ts
+msgid "이미지"
+msgstr "Image"
+
+#: src/entities/post/lib/event-text.ts
+msgid "재개일이 되어 보류가 풀렸습니다"
+msgstr "Hold lifted on the resume date"
+
+#: src/entities/post/lib/labels.ts
+msgid "재현 안 됨"
+msgstr "Can't reproduce"
+
+#: src/entities/post/lib/labels.ts
+msgid "중복"
+msgstr "Duplicate"
+
+#: src/entities/post/lib/labels.ts
+msgid "진행 중"
+msgstr "In progress"
+
+#: src/entities/post/lib/event-text.ts
+msgid "진행률을 {from}% → {to}%로 바꿨습니다"
+msgstr "changed progress {from}% → {to}%"
+
+#: src/entities/post/lib/labels.ts
+msgid "차단"
+msgstr "Blocks"
+
+#: src/entities/post/lib/labels.ts
+msgid "차단 해제"
+msgstr "Unblocked"
+
+#: src/entities/post/lib/labels.ts
+msgid "차트"
+msgstr "Chart"
+
+#: src/entities/post/lib/event-text.ts
+msgid "체크리스트 ''{item}'' 항목을 {action, select, added {추가했습니다} removed {지웠습니다} done {완료로 표시했습니다} undone {완료를 해제했습니다} other {바꿨습니다}}"
+msgstr "{action, select, added {added} removed {removed} done {checked off} undone {unchecked} other {changed}} checklist item ''{item}''"
+
+#: src/entities/post/lib/labels.ts
+msgctxt "post status"
+msgid "취소"
+msgstr "Cancelled"
+
+#: src/entities/post/lib/labels.ts
+msgid "코드"
+msgstr "Code"
+
+#: src/entities/post/lib/labels.ts
+msgid "파생"
+msgstr "Derived"
+
+#: src/entities/post/lib/labels.ts
+msgid "하위 이슈 완료"
+msgstr "Sub-issues done"
+
+#: src/entities/post/lib/event-text.ts
+msgid "하위 이슈가 모두 끝나 검토 중이 되었습니다"
+msgstr "All sub-issues done; moved to review"
+
+#: src/entities/post/lib/labels.ts
+msgid "해결됨"
+msgstr "Resolved"
