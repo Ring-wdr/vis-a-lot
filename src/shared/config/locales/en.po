@@ -7,18 +7,431 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. name은 행위자 이름, items는 그 사람의 활동을 쉼표로 이은 목록
+#: src/shared/lib/ai/mock.ts
+msgid "- {name}님: {items}."
+msgstr "- {name}: {items}."
+
+#: src/shared/lib/ai/mock.ts
+msgid "- 이번 기간에 완료한 일은 없습니다."
+msgstr "- Nothing was completed in this period."
+
+#: src/shared/lib/ai/chrome.ts
+msgctxt "AI prompt"
+msgid "(없음)"
+msgstr "(none)"
+
+#: src/shared/lib/ai/mock.ts
+msgid "(흉내 응답) {prompt}"
+msgstr "(mock response) {prompt}"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "[완료]"
+msgstr "[Completed]"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "[활동 로그]"
+msgstr "[Activity log]"
+
 #: src/shared/lib/time.ts
 msgid "{days, plural, other {#일 전}}"
 msgstr "{days, plural, other {#d ago}}"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "{group} 그룹의 {from} ~ {to} 활동 보고 초안을 써라."
+msgstr "Write a draft activity report for the {group} group from {from} to {to}."
 
 #: src/shared/lib/time.ts
 msgid "{hours, plural, other {#시간 전}}"
 msgstr "{hours, plural, other {#h ago}}"
 
+#. label은 편집기 이름 (설명, 댓글 등)
+#: src/shared/ui/rich-editor/RichEditor.tsx
+msgid "{label} 서식"
+msgstr "{label} formatting"
+
+#: src/shared/ui/OrderedSelect.tsx
+msgid "{label} 옵션"
+msgstr "{label} options"
+
+#. label은 선택 칸 이름, summary는 고른 값을 쉼표로 이은 목록
+#: src/shared/ui/OrderedSelect.tsx
+msgid "{label}: {summary}"
+msgstr "{label}: {summary}"
+
+#. label은 선택 칸 이름. 아무것도 고르지 않았을 때
+#: src/shared/ui/OrderedSelect.tsx
+msgid "{label}: 없음"
+msgstr "{label}: none"
+
 #: src/shared/lib/time.ts
 msgid "{minutes, plural, other {#분 전}}"
 msgstr "{minutes, plural, other {#m ago}}"
 
+#: src/shared/lib/ai/mock.ts
+msgid "# {group} 활동 보고 ({from} ~ {to})"
+msgstr "# {group} activity report ({from} – {to})"
+
+#: src/shared/lib/ai/mock.ts
+msgid "## 완료한 일"
+msgstr "## Completed"
+
+#: src/shared/config/help.ts
+msgid "14가지 차트와 서브 차트, 차트마다 고르는 컬럼"
+msgstr "14 charts, sub charts and the columns each one uses"
+
+#: src/shared/ui/AiBadge.tsx
+msgid "AI 어댑터: {adapterLabel}"
+msgstr "AI adapter: {adapterLabel}"
+
+#: src/shared/ui/AiBadge.tsx
+msgid "Chrome 내장 AI"
+msgstr "Chrome AI"
+
+#: src/shared/ui/LegendPositionPicker.tsx
+msgid "legend 위치"
+msgstr "legend position"
+
+#: src/shared/config/chart-kinds.ts
+msgid "y (작업 행)"
+msgstr "y (task row)"
+
+#: src/shared/config/dataset.ts
+msgid "개수"
+msgstr "Count"
+
+#: src/shared/ui/OrderedSelect.tsx
+msgctxt "search input placeholder"
+msgid "검색"
+msgstr "Search"
+
+#: src/shared/ui/rich-editor/RichEditor.tsx
+msgid "굵게"
+msgstr "Bold"
+
+#: src/shared/config/help.ts
+msgid "그린 차트를 다시 보고 이어서 편집하기"
+msgstr "Revisit charts you drew and keep editing"
+
+#: src/shared/ui/rich-editor/RichEditor.tsx
+msgid "글머리 목록"
+msgstr "Bulleted list"
+
+#: src/shared/lib/ai/mock.ts
+msgid "기간 동안 활동 {total, plural, other {#건}}, 완료 {done, plural, other {#건}}이 있었습니다."
+msgstr "{total, plural, one {# activity} other {# activities}} and {done, plural, one {# completed item} other {# completed items}} in this period."
+
+#: src/shared/config/chart-kinds.ts
+msgctxt "chart sub type"
+msgid "기본"
+msgstr "Default"
+
+#: src/shared/ui/rich-editor/RichEditor.tsx
+msgid "기울임"
+msgstr "Italic"
+
+#: src/shared/config/help.ts
+msgid "꾸미기"
+msgstr "Customizing"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "날짜순으로, 같은 날은 사람별로 묶어 한두 문장씩 쓰고, 마지막에 완료한 일을 목록으로 정리한다."
+msgstr "Go in date order; within a day, group by person with one or two sentences each, and finish with a list of completed work."
+
+#: src/shared/ui/AiBadge.tsx
+msgid "내려받는 중"
+msgstr "Downloading"
+
+#: src/shared/config/help.ts
+msgid "내보내기와 공유"
+msgstr "Export and share"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "너는 사내 이슈 트래커의 업무 보조다. 항상 한국어로, 사실만 간결하게 쓴다. 입력에 없는 내용은 지어내지 않는다."
+msgstr "You are an assistant for an internal issue tracker. Always write in English, stating only facts, concisely. Do not invent anything that is not in the input."
+
+#: src/shared/lib/palette.ts
+msgid "노랑"
+msgstr "Yellow"
+
+#: src/shared/config/help.ts
+msgid "다운로드, 데이터 테이블, 링크 복사, 피드에 올리기"
+msgstr "Downloads, data table, copying links, posting to the feed"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "다음 게시물을 두 문장 이내로 요약하라."
+msgstr "Summarize the following post in at most two sentences."
+
+#. name은 담당자 이름
+#. name은 담당자 이름
+#: src/shared/lib/ai/chrome.ts
+#: src/shared/lib/ai/mock.ts
+msgid "담당 {name}"
+msgstr "assignee {name}"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "담당 없음"
+msgstr "assignee none"
+
+#: src/shared/lib/ai/mock.ts
+msgid "담당자 없음"
+msgstr "no assignee"
+
+#: src/shared/config/help.ts
+msgid "데이터 보관 위치, 한도, 자주 묻는 질문"
+msgstr "Where data is stored, limits, FAQ"
+
+#: src/shared/config/help.ts
+msgid "데이터 준비"
+msgstr "Preparing data"
+
+#: src/shared/config/help.ts
+msgid "데이터를 올리고 차트를 그려 살펴보고, 기록을 다시 보고 공유하는 방법"
+msgstr "Upload data, draw and explore charts, revisit your history and share"
+
+#: src/shared/config/chart-kinds.ts
+msgid "도착 (y)"
+msgstr "Target (y)"
+
+#: src/shared/config/help.ts
+msgid "로그인과 화면 구성"
+msgstr "Signing in and the screen layout"
+
+#: src/shared/api/session.ts
+msgid "로그인하지 못했습니다."
+msgstr "Could not sign in."
+
+#: src/shared/lib/ai/mock.ts
+msgid "마지막 댓글: {comment}"
+msgstr "Last comment: {comment}"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "마지막 댓글: {lastComment}"
+msgstr "Last comment: {lastComment}"
+
+#: src/shared/ui/rich-editor/mention-suggestion.tsx
+msgid "맞는 사람이 없습니다"
+msgstr "No matching people"
+
+#: src/shared/ui/rich-editor/mention-suggestion.tsx
+msgid "멘션할 사람"
+msgstr "People to mention"
+
+#: src/shared/ui/AiBadge.tsx
+msgid "모델 다운로드"
+msgstr "Download model"
+
+#: src/shared/ui/AiBadge.tsx
+msgid "모델 없이 규칙과 템플릿으로 같은 기능을 흉내 냅니다."
+msgstr "Mimics the same features with rules and templates, no model."
+
 #: src/shared/lib/time.ts
 msgid "방금"
 msgstr "just now"
+
+#: src/shared/ui/rich-editor/RichEditor.tsx
+msgid "번호 목록"
+msgstr "Numbered list"
+
+#: src/shared/ui/AiBadge.tsx
+msgid "보고 초안·요약·필드 추천을 브라우저 안의 모델이 만듭니다."
+msgstr "A model in your browser writes report drafts, summaries and field suggestions."
+
+#: src/shared/lib/palette.ts
+msgid "보라"
+msgstr "Purple"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "본문: {body}"
+msgstr "Body: {body}"
+
+#: src/shared/lib/palette.ts
+msgid "분홍"
+msgstr "Pink"
+
+#: src/shared/lib/palette.ts
+msgid "빨강"
+msgstr "Red"
+
+#. users는 id=이름 목록
+#: src/shared/lib/ai/chrome.ts
+msgid "사용자: {users}"
+msgstr "Users: {users}"
+
+#: src/shared/api/queries.ts
+msgid "삭제된 데이터"
+msgstr "Deleted data"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "새 게시물의 유형·우선순위(0 없음 ~ 4 긴급)·담당자를 추천하라. 모르면 빈 문자열이나 0을 쓴다."
+msgstr "Suggest the type, priority (0 none to 4 urgent) and assignee for a new post. If unsure, use an empty string or 0."
+
+#: src/shared/config/help.ts
+msgid "샘플 데이터 등록, CSV·zip 올리기, 데이터스토어"
+msgstr "Registering samples, uploading CSV·zip, the datastore"
+
+#: src/shared/api/session.ts
+msgid "세션이 만료되었습니다. 다시 로그인해 주세요."
+msgstr "Your session has expired. Please sign in again."
+
+#: src/shared/config/help.ts
+msgctxt "help service name"
+msgid "시각화"
+msgstr "Visualization"
+
+#: src/shared/config/help.ts
+msgid "시작하기"
+msgstr "Getting started"
+
+#: src/shared/ui/LegendPositionPicker.tsx
+msgctxt "legend position"
+msgid "아래"
+msgstr "Bottom"
+
+#: src/shared/config/help.ts
+msgid "알아 두기"
+msgstr "Good to know"
+
+#: src/shared/ui/LegendPositionPicker.tsx
+msgctxt "legend position"
+msgid "오른쪽"
+msgstr "Right"
+
+#: src/shared/ui/OrderedSelect.tsx
+msgid "옵션 검색"
+msgstr "Search options"
+
+#: src/shared/ui/LegendPositionPicker.tsx
+msgctxt "legend position"
+msgid "왼쪽"
+msgstr "Left"
+
+#: src/shared/ui/LegendPositionPicker.tsx
+msgctxt "legend position"
+msgid "위"
+msgstr "Top"
+
+#. types는 id=이름 목록
+#: src/shared/lib/ai/chrome.ts
+msgid "유형: {types}"
+msgstr "Types: {types}"
+
+#: src/shared/ui/OrderedSelect.tsx
+msgid "일치하는 항목이 없습니다"
+msgstr "No matching items"
+
+#: src/shared/config/help.ts
+msgid "전체 설정, legend 색·위치, item 개별 속성"
+msgstr "Global settings, legend colors and position, per-item settings"
+
+#: src/shared/lib/ai/chrome.ts
+msgid "제목: {title}"
+msgstr "Title: {title}"
+
+#: src/shared/lib/palette.ts
+msgid "주황"
+msgstr "Orange"
+
+#: src/shared/config/dataset.ts
+msgid "중앙값"
+msgstr "Median"
+
+#: src/shared/config/help.ts
+msgid "차트 그리기"
+msgstr "Drawing charts"
+
+#: src/shared/config/help.ts
+msgid "차트 살펴보기"
+msgstr "Exploring charts"
+
+#: src/shared/config/help.ts
+msgid "차트 종류"
+msgstr "Chart types"
+
+#: src/shared/config/help.ts
+msgid "차트·이미지·코드를 게시물로 올리고 이슈로 다루는 방법"
+msgstr "Post charts, images and code, and track them as issues"
+
+#: src/shared/lib/palette.ts
+msgid "청록"
+msgstr "Teal"
+
+#: src/shared/lib/palette.ts
+msgid "초록"
+msgstr "Green"
+
+#: src/shared/config/dataset.ts
+msgid "최댓값"
+msgstr "Max"
+
+#: src/shared/config/dataset.ts
+msgid "최솟값"
+msgstr "Min"
+
+#: src/shared/ui/OrderedSelect.tsx
+msgid "추가…"
+msgstr "Add…"
+
+#: src/shared/config/chart-kinds.ts
+msgid "출발 (x)"
+msgstr "Source (x)"
+
+#: src/shared/ui/AlertDialog.tsx
+msgctxt "dialog button"
+msgid "취소"
+msgstr "Cancel"
+
+#: src/shared/config/help.ts
+msgid "컬럼 고르기, split by와 grid, draw와 진행 상황"
+msgstr "Picking columns, split by and grid, draw and progress"
+
+#: src/shared/config/help.ts
+msgid "컬럼별 범위·값 필터와 적용 시점"
+msgstr "Range and value filters per column, and when they apply"
+
+#: src/shared/ui/rich-editor/RichEditor.tsx
+msgid "코드 블록"
+msgstr "Code block"
+
+#: src/shared/config/help.ts
+msgid "툴팁, 모드(이동·확대·선택·삭제·페인트), 크게 보기"
+msgstr "Tooltips, modes (pan, zoom, select, delete, paint), detail view"
+
+#: src/shared/lib/palette.ts
+msgid "파랑"
+msgstr "Blue"
+
+#: src/shared/config/dataset.ts
+msgid "평균"
+msgstr "Mean"
+
+#: src/shared/config/help.ts
+msgctxt "help service name"
+msgid "피드"
+msgstr "Feed"
+
+#: src/shared/config/help.ts
+msgid "필터"
+msgstr "Filters"
+
+#: src/shared/config/dataset.ts
+msgid "합계"
+msgstr "Sum"
+
+#: src/shared/ui/AlertDialog.tsx
+msgctxt "dialog button"
+msgid "확인"
+msgstr "OK"
+
+#. AI 어댑터 이름: 모델 없이 규칙으로 흉내 내는 어댑터
+#: src/shared/ui/AiBadge.tsx
+msgid "흉내"
+msgstr "Mock"
+
+#: src/shared/ui/AiBadge.tsx
+msgid "흉내로 바꾼 이유"
+msgstr "Why it fell back to mock"
+
+#: src/shared/config/chart-kinds.ts
+msgid "흐름 값 (z)"
+msgstr "Flow (z)"

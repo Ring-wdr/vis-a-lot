@@ -1,6 +1,8 @@
 // Chrome 내장 AI(Prompt API) 어댑터. 세션은 index.ts가 만들어 넘기고, 실패 처리(흉내로 내려가기)도 index.ts가 한다.
 
-import { defineMessages, getLocale, type Locale, t } from "@/shared/lib/i18n";
+import { msg, t } from "@lingui/core/macro";
+import { getLocale, type Locale, linguiFor } from "@/shared/lib/i18n";
+import "@/shared/config/messages";
 import type {
   ActivityData,
   SuggestedFields,
@@ -8,48 +10,10 @@ import type {
   SummarizeInput,
 } from "./types";
 
-const messages = defineMessages({
-  ko: {
-    system:
-      "너는 사내 이슈 트래커의 업무 보조다. 항상 한국어로, 사실만 간결하게 쓴다. 입력에 없는 내용은 지어내지 않는다.",
-    assignee: (name: string | null) => `담당 ${name ?? "없음"}`,
-    draft: (group: string, from: string, to: string) =>
-      `${group} 그룹의 ${from} ~ ${to} 활동 보고 초안을 써라.`,
-    draftRule:
-      "날짜순으로, 같은 날은 사람별로 묶어 한두 문장씩 쓰고, 마지막에 완료한 일을 목록으로 정리한다.",
-    log: "[활동 로그]",
-    done: "[완료]",
-    none: "(없음)",
-    summarize: "다음 게시물을 두 문장 이내로 요약하라.",
-    title: "제목",
-    body: "본문",
-    lastComment: "마지막 댓글",
-    suggest:
-      "새 게시물의 유형·우선순위(0 없음 ~ 4 긴급)·담당자를 추천하라. 모르면 빈 문자열이나 0을 쓴다.",
-    types: "유형",
-    users: "사용자",
-  },
-  en: {
-    system:
-      "You are an assistant for an internal issue tracker. Always write in English, stating only facts, concisely. Do not invent anything that is not in the input.",
-    assignee: (name: string | null) => `assignee ${name ?? "none"}`,
-    draft: (group: string, from: string, to: string) =>
-      `Write a draft activity report for the ${group} group from ${from} to ${to}.`,
-    draftRule:
-      "Go in date order; within a day, group by person with one or two sentences each, and finish with a list of completed work.",
-    log: "[Activity log]",
-    done: "[Completed]",
-    none: "(none)",
-    summarize: "Summarize the following post in at most two sentences.",
-    title: "Title",
-    body: "Body",
-    lastComment: "Last comment",
-    suggest:
-      "Suggest the type, priority (0 none to 4 urgent) and assignee for a new post. If unsure, use an empty string or 0.",
-    types: "Types",
-    users: "Users",
-  },
-});
+const SYSTEM_PROMPT = msg`너는 사내 이슈 트래커의 업무 보조다. 항상 한국어로, 사실만 간결하게 쓴다. 입력에 없는 내용은 지어내지 않는다.`;
+
+/** 프롬프트에서 비어 있는 목록 자리 */
+const noneText = () => t({ message: "(없음)", context: "AI prompt" });
 
 /** 지금 화면 언어로 입출력한다고 알린다. */
 export function languageOptions(locale: Locale = getLocale()) {
@@ -62,12 +26,11 @@ export function languageOptions(locale: Locale = getLocale()) {
 
 /** 지금 화면 언어의 시스템 프롬프트 */
 export const systemPrompt = (locale: Locale = getLocale()) =>
-  messages[locale].system;
+  linguiFor(locale)._(SYSTEM_PROMPT);
 
 export const hasLanguageModel = () => typeof LanguageModel !== "undefined";
 
 export function draftPrompt(a: ActivityData) {
-  const text = t(messages);
   const days = a.days
     .map(
       (d) =>
@@ -80,27 +43,34 @@ export function draftPrompt(a: ActivityData) {
     )
     .join("\n");
   const done = a.completed
-    .map((c) => `- ${c.key} ${c.title} (${text.assignee(c.assigneeName)})`)
+    .map((c) => {
+      const name = c.assigneeName;
+      const assignee = name
+        ? t({ message: `담당 ${name}`, comment: "name은 담당자 이름" })
+        : t`담당 없음`;
+      return `- ${c.key} ${c.title} (${assignee})`;
+    })
     .join("\n");
+  const { groupName: group, from, to } = a;
   return [
-    text.draft(a.groupName, a.from, a.to),
-    text.draftRule,
+    t`${group} 그룹의 ${from} ~ ${to} 활동 보고 초안을 써라.`,
+    t`날짜순으로, 같은 날은 사람별로 묶어 한두 문장씩 쓰고, 마지막에 완료한 일을 목록으로 정리한다.`,
     "",
-    text.log,
-    days || text.none,
+    t`[활동 로그]`,
+    days || noneText(),
     "",
-    text.done,
-    done || text.none,
+    t`[완료]`,
+    done || noneText(),
   ].join("\n");
 }
 
 export function summarizePrompt(p: SummarizeInput) {
-  const text = t(messages);
+  const { title, bodyText: body, lastComment } = p;
   return [
-    text.summarize,
-    `${text.title}: ${p.title}`,
-    `${text.body}: ${p.bodyText}`,
-    p.lastComment ? `${text.lastComment}: ${p.lastComment}` : "",
+    t`다음 게시물을 두 문장 이내로 요약하라.`,
+    t`제목: ${title}`,
+    t`본문: ${body}`,
+    lastComment ? t`마지막 댓글: ${lastComment}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -122,13 +92,15 @@ export function suggestSchema(input: SuggestFieldsInput) {
 }
 
 export function suggestPrompt(input: SuggestFieldsInput) {
-  const text = t(messages);
+  const types = input.postTypes.map((p) => `${p.id}=${p.name}`).join(", ");
+  const users = input.users.map((u) => `${u.id}=${u.name}`).join(", ");
+  const { title, body } = input;
   return [
-    text.suggest,
-    `${text.types}: ${input.postTypes.map((p) => `${p.id}=${p.name}`).join(", ")}`,
-    `${text.users}: ${input.users.map((u) => `${u.id}=${u.name}`).join(", ")}`,
-    `${text.title}: ${input.title}`,
-    `${text.body}: ${input.body}`,
+    t`새 게시물의 유형·우선순위(0 없음 ~ 4 긴급)·담당자를 추천하라. 모르면 빈 문자열이나 0을 쓴다.`,
+    t({ message: `유형: ${types}`, comment: "types는 id=이름 목록" }),
+    t({ message: `사용자: ${users}`, comment: "users는 id=이름 목록" }),
+    t`제목: ${title}`,
+    t`본문: ${body}`,
   ].join("\n");
 }
 
