@@ -1,0 +1,54 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:56+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "legend (바깥 고리)"
+msgstr "legend (바깥 고리)"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "x, y 외 컬럼 추가…"
+msgstr "x, y 외 컬럼 추가…"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "데이터 등록이 끝나면 고를 수 있습니다"
+msgstr "데이터 등록이 끝나면 고를 수 있습니다"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "데이터를 등록하면 고를 수 있습니다"
+msgstr "데이터를 등록하면 고를 수 있습니다"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "분포를 볼 값 (y)"
+msgstr "분포를 볼 값 (y)"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "삭제된 데이터라 고를 컬럼이 없습니다"
+msgstr "삭제된 데이터라 고를 컬럼이 없습니다"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "서브 차트"
+msgstr "서브 차트"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgctxt "no sub chart / no legend option"
+msgid "없음"
+msgstr "없음"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgctxt "chart type select"
+msgid "차트"
+msgstr "차트"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "컬럼 불러오는 중"
+msgstr "컬럼 불러오는 중"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "통계 함수"
+msgstr "통계 함수"

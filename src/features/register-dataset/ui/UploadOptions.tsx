@@ -1,14 +1,15 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useId } from "react";
 import {
   DATETIME_FORMATS,
   useDatasetLabels,
 } from "@/entities/dataset/lib/labels";
 import type { CsvEncoding, CsvOptions } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { Select } from "@/shared/ui/Select";
 import { segmented } from "@/shared/ui/segmented";
+import "../config/messages";
 
 const option = "flex min-w-0 flex-col gap-1 text-ui";
 const optionLabel = "p-0 font-medium text-xs text-fg-secondary";
@@ -16,55 +17,6 @@ const input =
   "min-w-0 rounded-md border border-line bg-elevated px-2 py-1 text-ui";
 const hint = "m-0 text-2xs text-fg-muted leading-normal";
 const seg = segmented();
-
-const messages = defineMessages({
-  ko: {
-    yes: "예",
-    no: "아니오",
-    name: "이름",
-    namePlaceholder: "파일 이름",
-    delimiter: "구분 기호",
-    custom: "직접 입력",
-    customDelimiter: "구분 기호 직접 입력",
-    oneChar: "한 글자",
-    header: "첫 번째 행 헤더",
-    nullValue: "Null 값",
-    emptyValue: "(빈 값)",
-    quote: "따옴표",
-    datetimeFormat: "날짜 시간 형식",
-    autoIso: "자동 (ISO 8601)",
-    customDatetimeFormat: "날짜 시간 형식 직접 입력",
-    datetimeHint:
-      "yyyy·MM·dd·HH·mm·ss·SSS. 이 형식으로 읽히는 컬럼을 시계열로 봅니다.",
-    ignoreErrors: "데이터 오류 무시",
-    ignoreErrorsHint:
-      "켜면 타입으로 바꿀 수 없는 값은 null로, 필드 수가 맞지 않는 행은 건너뜁니다.",
-    encoding: "인코딩",
-  },
-  en: {
-    yes: "Yes",
-    no: "No",
-    name: "Name",
-    namePlaceholder: "File name",
-    delimiter: "Delimiter",
-    custom: "Custom",
-    customDelimiter: "Custom delimiter",
-    oneChar: "One char",
-    header: "First row is header",
-    nullValue: "Null value",
-    emptyValue: "(empty)",
-    quote: "Quote",
-    datetimeFormat: "Date/time format",
-    autoIso: "Auto (ISO 8601)",
-    customDatetimeFormat: "Custom date/time format",
-    datetimeHint:
-      "yyyy·MM·dd·HH·mm·ss·SSS. Columns that parse in this format become time.",
-    ignoreErrors: "Ignore data errors",
-    ignoreErrorsHint:
-      "When on, values that can't be converted become null and rows with the wrong field count are skipped.",
-    encoding: "Encoding",
-  },
-});
 
 const CUSTOM = "custom";
 const ISO = "iso";
@@ -89,7 +41,6 @@ function YesNo({
   value: boolean;
   onChange: (next: boolean) => void;
 }) {
-  const text = useT(messages);
   return (
     <fieldset className={option}>
       <legend className={optionLabel}>{label}</legend>
@@ -100,7 +51,7 @@ function YesNo({
           aria-pressed={value}
           onClick={() => onChange(true)}
         >
-          {text.yes}
+          <Trans context="yes/no toggle">예</Trans>
         </button>
         <button
           type="button"
@@ -108,7 +59,7 @@ function YesNo({
           aria-pressed={!value}
           onClick={() => onChange(false)}
         >
-          {text.no}
+          <Trans context="yes/no toggle">아니오</Trans>
         </button>
       </div>
     </fieldset>
@@ -131,7 +82,7 @@ export function UploadOptions({
   onChange: (next: CsvOptions) => void;
 }) {
   const id = useId();
-  const text = useT(messages);
+  const { t } = useLingui();
   const labels = useDatasetLabels();
   const knownDelimiter = value.delimiter in labels.delimiters;
   const format = value.datetimeFormat;
@@ -143,45 +94,48 @@ export function UploadOptions({
     <div className="flex flex-col gap-3">
       <div className={option}>
         <label className={optionLabel} htmlFor={`${id}-name`}>
-          {text.name}
+          <Trans context="dataset name field">이름</Trans>
         </label>
         <input
           id={`${id}-name`}
           className={input}
           value={name}
           maxLength={100}
-          placeholder={text.namePlaceholder}
+          placeholder={t`파일 이름`}
           onChange={(e) => onNameChange(e.target.value)}
         />
       </div>
 
       <div className={option}>
         <Select
-          label={text.delimiter}
+          label={t`구분 기호`}
           value={knownDelimiter ? value.delimiter : CUSTOM}
           options={[
             ...Object.entries(labels.delimiters).map(([d, label]) => ({
               value: d,
               label,
             })),
-            { value: CUSTOM, label: text.custom },
+            {
+              value: CUSTOM,
+              label: t({ message: "직접 입력", context: "custom option" }),
+            },
           ]}
           onChange={(next) => set({ delimiter: next === CUSTOM ? "" : next })}
         />
         {!knownDelimiter && (
           <input
-            aria-label={text.customDelimiter}
+            aria-label={t`구분 기호 직접 입력`}
             className={input}
             value={value.delimiter}
             maxLength={1}
-            placeholder={text.oneChar}
+            placeholder={t`한 글자`}
             onChange={(e) => set({ delimiter: e.target.value })}
           />
         )}
       </div>
 
       <YesNo
-        label={text.header}
+        label={t`첫 번째 행 헤더`}
         value={value.header}
         onChange={(header) => set({ header })}
       />
@@ -189,27 +143,27 @@ export function UploadOptions({
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
         <div className={option}>
           <label className={optionLabel} htmlFor={`${id}-null`}>
-            {text.nullValue}
+            <Trans>Null 값</Trans>
           </label>
           <input
             id={`${id}-null`}
             className={input}
             value={value.nullValue}
             maxLength={20}
-            placeholder={text.emptyValue}
+            placeholder={t`(빈 값)`}
             onChange={(e) => set({ nullValue: e.target.value })}
           />
         </div>
         <div className={option}>
           <label className={optionLabel} htmlFor={`${id}-quote`}>
-            {text.quote}
+            <Trans>따옴표</Trans>
           </label>
           <input
             id={`${id}-quote`}
             className={input}
             value={value.quote}
             maxLength={1}
-            placeholder={text.oneChar}
+            placeholder={t`한 글자`}
             onChange={(e) => set({ quote: e.target.value })}
           />
         </div>
@@ -217,12 +171,15 @@ export function UploadOptions({
 
       <div className={option}>
         <Select
-          label={text.datetimeFormat}
+          label={t`날짜 시간 형식`}
           value={format === null ? ISO : knownFormat ? format : CUSTOM}
           options={[
-            { value: ISO, label: text.autoIso },
+            { value: ISO, label: t`자동 (ISO 8601)` },
             ...DATETIME_FORMATS.map((f) => ({ value: f, label: f })),
-            { value: CUSTOM, label: text.custom },
+            {
+              value: CUSTOM,
+              label: t({ message: "직접 입력", context: "custom option" }),
+            },
           ]}
           onChange={(next) =>
             set({
@@ -233,7 +190,7 @@ export function UploadOptions({
         />
         {!knownFormat && (
           <input
-            aria-label={text.customDatetimeFormat}
+            aria-label={t`날짜 시간 형식 직접 입력`}
             className={input}
             value={format ?? ""}
             maxLength={40}
@@ -241,19 +198,28 @@ export function UploadOptions({
             onChange={(e) => set({ datetimeFormat: e.target.value || null })}
           />
         )}
-        <p className={hint}>{text.datetimeHint}</p>
+        <p className={hint}>
+          <Trans>
+            yyyy·MM·dd·HH·mm·ss·SSS. 이 형식으로 읽히는 컬럼을 시계열로 봅니다.
+          </Trans>
+        </p>
       </div>
 
       <YesNo
-        label={text.ignoreErrors}
+        label={t`데이터 오류 무시`}
         value={value.ignoreErrors}
         onChange={(ignoreErrors) => set({ ignoreErrors })}
       />
-      <p className={hint}>{text.ignoreErrorsHint}</p>
+      <p className={hint}>
+        <Trans>
+          켜면 타입으로 바꿀 수 없는 값은 null로, 필드 수가 맞지 않는 행은
+          건너뜁니다.
+        </Trans>
+      </p>
 
       <div className={option}>
         <Select
-          label={text.encoding}
+          label={t`인코딩`}
           value={value.encoding}
           options={(
             Object.entries(labels.encodings) as [CsvEncoding, string][]

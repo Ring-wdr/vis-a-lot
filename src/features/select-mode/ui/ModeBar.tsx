@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   Lasso,
   type LucideProps,
@@ -19,8 +22,8 @@ import {
   type Mode,
   modeSupported,
 } from "@/entities/workspace/model/workspace-store";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { toolButton } from "@/shared/ui/button";
+import "../config/messages";
 
 /** 자유형 삭제: lucide에 없어 올가미 오른쪽 아래에 x를 겹친다. */
 function LassoX(props: LucideProps) {
@@ -47,38 +50,16 @@ const MODE_ICONS: Record<Mode, ComponentType<LucideProps>> = {
   paint: Paintbrush,
 };
 
-const messages = defineMessages({
-  ko: {
-    modes: {
-      normal: "기본",
-      pan: "이동",
-      zoom: "확대",
-      rectSelect: "사각형 선택",
-      lassoSelect: "자유형 선택",
-      rectDelete: "사각형 삭제",
-      lassoDelete: "자유형 삭제",
-      paint: "페인트",
-    } as Record<Mode, string>,
-    unsupported: (name: string, chartType: string) =>
-      `${name} (${chartType}에서는 쓸 수 없음)`,
-    toolbar: "모드",
-  },
-  en: {
-    modes: {
-      normal: "Default",
-      pan: "Pan",
-      zoom: "Zoom",
-      rectSelect: "Box select",
-      lassoSelect: "Lasso select",
-      rectDelete: "Box delete",
-      lassoDelete: "Lasso delete",
-      paint: "Paint",
-    },
-    unsupported: (name: string, chartType: string) =>
-      `${name} (not available for ${chartType})`,
-    toolbar: "Mode",
-  },
-});
+const MODE_NAMES: Record<Mode, MessageDescriptor> = {
+  normal: msg({ message: "기본", context: "chart interaction mode" }),
+  pan: msg({ message: "이동", context: "chart interaction mode" }),
+  zoom: msg({ message: "확대", context: "chart interaction mode" }),
+  rectSelect: msg`사각형 선택`,
+  lassoSelect: msg`자유형 선택`,
+  rectDelete: msg`사각형 삭제`,
+  lassoDelete: msg`자유형 삭제`,
+  paint: msg({ message: "페인트", context: "chart interaction mode" }),
+};
 
 /**
  * 기본 외의 모드는 그린 차트가 있고 편집할 수 있을 때만 고를 수 있다.
@@ -86,7 +67,7 @@ const messages = defineMessages({
  * 그린 차트 종류가 지원하지 않는 모드(CHART_SUPPORT)도 막는다.
  */
 export function ModeBar() {
-  const text = useT(messages);
+  const { t, i18n } = useLingui();
   const mode = useWorkspace((s) => s.mode);
   const setMode = useWorkspace((s) => s.setMode);
   const editable = useWorkspace((s) => !s.readOnly && s.current !== undefined);
@@ -95,15 +76,26 @@ export function ModeBar() {
   const spec = chartType && { chartType, subType };
 
   return (
-    <div className="flex gap-1" role="toolbar" aria-label={text.toolbar}>
+    <div
+      className="flex gap-1"
+      role="toolbar"
+      aria-label={t({
+        message: "모드",
+        context: "chart interaction mode toolbar",
+      })}
+    >
       {MODES.map((m) => {
-        const name = text.modes[m];
+        const name = i18n._(MODE_NAMES[m]);
         const Icon = MODE_ICONS[m];
         const supported = modeSupported(m, spec);
+        const chartKind = spec ? chartKindLabel(spec) : "";
         const label =
           supported || !spec
             ? name
-            : text.unsupported(name, chartKindLabel(spec));
+            : t({
+                message: `${name} (${chartKind}에서는 쓸 수 없음)`,
+                comment: "name: 모드 이름, chartKind: 차트 종류 이름",
+              });
         return (
           <button
             key={m}

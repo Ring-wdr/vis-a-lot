@@ -1,0 +1,48 @@
+msgid ""
+msgstr ""
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "legend (바깥 고리)"
+msgstr "legend (outer ring)"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "x, y 외 컬럼 추가…"
+msgstr "Add columns other than x, y…"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "데이터 등록이 끝나면 고를 수 있습니다"
+msgstr "Available once the data is registered"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "데이터를 등록하면 고를 수 있습니다"
+msgstr "Available after you register the data"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "분포를 볼 값 (y)"
+msgstr "Value to plot (y)"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "삭제된 데이터라 고를 컬럼이 없습니다"
+msgstr "Deleted data has no columns"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "서브 차트"
+msgstr "Sub chart"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgctxt "no sub chart / no legend option"
+msgid "없음"
+msgstr "None"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgctxt "chart type select"
+msgid "차트"
+msgstr "Chart"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "컬럼 불러오는 중"
+msgstr "Loading columns"
+
+#: src/widgets/control-panel/ui/ControlPanel.tsx
+msgid "통계 함수"
+msgstr "Aggregate"

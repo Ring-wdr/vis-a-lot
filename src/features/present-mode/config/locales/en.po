@@ -1,0 +1,14 @@
+msgid ""
+msgstr ""
+
+#: src/features/present-mode/ui/PresentBar.tsx
+msgid "←/→ 게시물 넘기기 · Esc 보고서로"
+msgstr "←/→ next/prev post · Esc to report"
+
+#: src/features/present-mode/ui/PresentBar.tsx
+msgid "발표 끝내기"
+msgstr "End presentation"
+
+#: src/features/present-mode/ui/PresentBar.tsx
+msgid "발표 모드"
+msgstr "Present mode"

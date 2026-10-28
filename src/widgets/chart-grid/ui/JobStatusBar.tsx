@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   Ban,
   Check,
@@ -14,9 +16,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { isTerminal, type JobStateResponse } from "@/shared/api/types";
-import { defineMessages, intlLocale, t, useLocale } from "@/shared/lib/i18n";
+import { intlLocale, useLocale } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
 import { useNow } from "@/shared/lib/use-now";
+import "../config/messages";
 
 // 하단 바는 테두리 상자 하나에 구획을 나란히 두고 세로 선으로 가른다. 높이는 ChartGrid의 h-8을 채운다.
 // 구획은 줄어들지 않는다. 줄어들면 내용이 넘쳐 뒤 구획과 겹친다. 대신 상자 폭(@container)이 모자라면
@@ -39,90 +42,40 @@ const metaItem =
   "inline-flex items-center gap-1 data-zero:text-fg-muted data-zero:opacity-60";
 const caption = "text-fg-muted";
 
-const messages = defineMessages({
-  ko: {
-    status: {
-      init: "대기",
-      progress: "진행 중",
-      success: "완료",
-      failed: "실패",
-      cancelled: "취소됨",
-    } as Record<JobStateResponse["status"], string>,
-    partlyFailed: "일부 실패",
-    preparing: "데이터 준비 중",
-    querying: "데이터 조회 중",
-    redrawing: "다시 그리는 중",
-    rendering: "렌더링 중",
-    seconds: (s: string) => `${s}초`,
-    minutes: (m: number, s: number) => `${m}분 ${s}초`,
-    done: "완료",
-    running: "그리는 중",
-    queued: "대기",
-    failed: "실패",
-    cancelled: "취소",
-    rows: "행",
-    progress: "진행률",
-    counting: "item 수 세는 중",
-    elapsedTitle: "경과 시간",
-    elapsed: "경과 ",
-    rateTitle: "처리 속도",
-    rate: "속도 ",
-    etaTitle: "남은 시간 (어림)",
-    eta: "남은 ",
-    about: (time: string) => `약 ${time}`,
-    workersTitle: "Render Worker 수",
-  },
-  en: {
-    status: {
-      init: "Waiting",
-      progress: "Running",
-      success: "Done",
-      failed: "Failed",
-      cancelled: "Cancelled",
-    },
-    partlyFailed: "Partly failed",
-    preparing: "Loading data",
-    querying: "Querying",
-    redrawing: "Redrawing",
-    rendering: "Rendering",
-    seconds: (s: string) => `${s}s`,
-    minutes: (m: number, s: number) => `${m}m ${s}s`,
-    done: "Done",
-    running: "Drawing",
-    queued: "Queued",
-    failed: "Failed",
-    cancelled: "Cancelled",
-    rows: "rows",
-    progress: "Progress",
-    counting: "Counting items",
-    elapsedTitle: "Elapsed time",
-    elapsed: "Time ",
-    rateTitle: "Throughput",
-    rate: "Rate ",
-    etaTitle: "Time left (estimate)",
-    eta: "ETA ",
-    about: (time: string) => `~${time}`,
-    workersTitle: "Render Worker count",
-  },
-});
+function statusLabel(status: JobStateResponse["status"]) {
+  switch (status) {
+    case "init":
+      return t({ message: "대기", context: "job status" });
+    case "progress":
+      return t({ message: "진행 중", context: "job status" });
+    case "success":
+      return t({ message: "완료", context: "job status" });
+    case "failed":
+      return t({ message: "실패", context: "job status" });
+    case "cancelled":
+      return t({ message: "취소됨", context: "job status" });
+  }
+}
 
 function phaseLabel(job: JobStateResponse) {
-  const text = t(messages);
   if (isTerminal(job.status)) {
-    if (job.status === "success" && job.counts.failed > 0)
-      return text.partlyFailed;
-    return text.status[job.status];
+    if (job.status === "success" && job.counts.failed > 0) return t`일부 실패`;
+    return statusLabel(job.status);
   }
-  if (job.phase === "dataset") return text.preparing;
-  if (job.phase === "query") return text.querying;
-  return job.kind === "redraw" ? text.redrawing : text.rendering;
+  if (job.phase === "dataset") return t`데이터 준비 중`;
+  if (job.phase === "query") return t`데이터 조회 중`;
+  return job.kind === "redraw" ? t`다시 그리는 중` : t`렌더링 중`;
 }
 
 function seconds(ms: number) {
-  const text = t(messages);
-  const s = ms / 1000;
-  if (s < 60) return text.seconds(s.toFixed(1));
-  return text.minutes(Math.floor(s / 60), Math.round(s % 60));
+  const total = ms / 1000;
+  if (total < 60) {
+    const s = total.toFixed(1);
+    return t({ message: `${s}초`, comment: "s: 초 (소수 한 자리)" });
+  }
+  const m = Math.floor(total / 60);
+  const s = Math.round(total % 60);
+  return t({ message: `${m}분 ${s}초`, comment: "m: 분, s: 초" });
 }
 
 /**
@@ -130,9 +83,9 @@ function seconds(ms: number) {
  * 렌더 단계에서는 끝난 item 수 / 렌더 경과 시간으로 속도를, 남은 item 수로 남은 시간을 어림한다.
  */
 export function JobStatusBar({ job }: { job: JobStateResponse }) {
-  // phaseLabel·seconds는 t로 읽으므로 여기서 언어 변경을 구독한다.
+  // phaseLabel·seconds는 전역 t로 읽으므로 여기서 언어 변경을 구독한다.
   const locale = useLocale();
-  const text = messages[locale];
+  const { t } = useLingui();
   const intl = intlLocale(locale);
   const running = !isTerminal(job.status);
   // 진행 중에는 경과 시간이 흐르도록 주기적으로 다시 그린다.
@@ -150,6 +103,7 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
       ? (remaining / rate) * 1000
       : 0;
   const ratio = progress.total > 0 ? progress.done / progress.total : 0;
+  const etaText = eta > 0 ? seconds(eta) : "";
 
   if (job.error) {
     return (
@@ -175,37 +129,40 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
     {
       key: "success",
       Icon: CircleCheck,
-      title: text.done,
+      title: t({ message: "완료", context: "item count" }),
       value: counts.success,
     },
     {
       key: "running",
       Icon: LoaderCircle,
-      title: text.running,
+      title: t({ message: "그리는 중", context: "item count" }),
       value: counts.running,
       tone: "text-accent",
     },
     {
       key: "queued",
       Icon: Hourglass,
-      title: text.queued,
+      title: t({ message: "대기", context: "item count" }),
       value: counts.queued,
     },
     {
       key: "failed",
       Icon: CircleX,
-      title: text.failed,
+      title: t({ message: "실패", context: "item count" }),
       value: counts.failed,
       tone: "text-danger",
     },
     {
       key: "cancelled",
       Icon: CircleDashed,
-      title: text.cancelled,
+      title: t({ message: "취소", context: "item count" }),
       value: counts.cancelled,
     },
   ];
-  const unit = job.phase === "dataset" ? text.rows : "item";
+  const unit =
+    job.phase === "dataset"
+      ? t({ message: "행", context: "count unit" })
+      : "item";
 
   return (
     <>
@@ -232,7 +189,7 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
       <span className={section}>
         <span
           role="progressbar"
-          aria-label={text.progress}
+          aria-label={t`진행률`}
           aria-valuemin={0}
           aria-valuemax={progress.total || 1}
           aria-valuenow={job.phase === "query" ? undefined : progress.done}
@@ -260,7 +217,9 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
             '1,000,000 / 1,000,000 rows'(영어가 가장 길다). 언어를 바꿔도 폭이 같다 */}
         <span className="min-w-[28ch]">
           {job.phase === "query" ? (
-            <span className={caption}>{text.counting}</span>
+            <span className={caption}>
+              <Trans>item 수 세는 중</Trans>
+            </span>
           ) : (
             <>
               <span className="font-semibold text-fg">
@@ -293,31 +252,42 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
 
       {/* 시간: 경과 · 처리 속도 · 남은 시간 */}
       <span className={cn(section, "gap-3 @max-5xl:hidden")}>
-        <span title={text.elapsedTitle} className="min-w-[9ch]">
-          <span className={caption}>{text.elapsed}</span>
+        <span title={t`경과 시간`} className="min-w-[9ch]">
+          <span className={caption}>
+            {t({ message: "경과", context: "elapsed time caption" })}{" "}
+          </span>
           {seconds(elapsed)}
         </span>
         <span
-          title={text.rateTitle}
+          title={t`처리 속도`}
           className={cn(metaItem, "min-w-[11ch]")}
           data-zero={rate === 0 || undefined}
         >
-          <span className={caption}>{text.rate}</span>
+          <span className={caption}>
+            {t({ message: "속도", context: "throughput caption" })}{" "}
+          </span>
           {rate > 0 ? `${rate.toFixed(1)} item/s` : "–"}
         </span>
         <span
-          title={text.etaTitle}
+          title={t`남은 시간 (어림)`}
           className={cn(metaItem, "min-w-[11ch]")}
           data-zero={eta === 0 || undefined}
         >
-          <span className={caption}>{text.eta}</span>
-          {eta > 0 ? text.about(seconds(eta)) : "–"}
+          <span className={caption}>
+            {t({ message: "남은", context: "time left caption" })}{" "}
+          </span>
+          {eta > 0
+            ? t({
+                message: `약 ${etaText}`,
+                comment: "etaText: 2.5초, 1분 3초 같은 시간",
+              })
+            : "–"}
         </span>
       </span>
 
       <span
         className={cn(section, "@max-6xl:hidden")}
-        title={text.workersTitle}
+        title={t`Render Worker 수`}
       >
         <Cpu size={13} aria-hidden="true" />
         <span>

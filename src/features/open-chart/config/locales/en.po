@@ -1,0 +1,10 @@
+msgid ""
+msgstr ""
+
+#: src/features/open-chart/ui/EditInGalleryButton.tsx
+msgid "gallery에서 편집"
+msgstr "Edit in gallery"
+
+#: src/features/open-chart/model/open-chart.ts
+msgid "grid 영역 크기를 아직 모릅니다."
+msgstr "The grid area size isn't known yet."
