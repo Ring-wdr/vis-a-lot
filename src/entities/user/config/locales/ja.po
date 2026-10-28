@@ -1,0 +1,22 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. groups: 관리하는 그룹 이름을 쉼표로 이은 목록
+#: src/entities/user/model/roles.ts
+msgid "그룹 관리자 · {groups}"
+msgstr "グループ管理者 · {groups}"
+
+#: src/entities/user/model/roles.ts
+msgctxt "user role"
+msgid "멤버"
+msgstr "メンバー"
+
+#: src/entities/user/model/roles.ts
+msgid "시스템 관리자"
+msgstr "システム管理者"

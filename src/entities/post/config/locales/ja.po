@@ -1,0 +1,468 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/entities/post/ui/post-meta.tsx
+msgid " 기한 지남"
+msgstr " 期限切れ"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{actor}님이 {text}"
+msgstr "{actor}さんが{text}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{blocker}{blockerB, select, none {가} other {이}} 닫혀 차단이 풀렸습니다"
+msgstr "{blocker}がクローズされ、ブロックが解除されました"
+
+#: src/entities/post/ui/PostCard.tsx
+msgid "{commentCount, plural, other {댓글 #개}}"
+msgstr "{commentCount, plural, other {コメント#件}}"
+
+#: src/entities/post/ui/PostTable.tsx
+msgid "{key} 선택"
+msgstr "{key}を選択"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{kind} 변경"
+msgstr "{kind}を変更"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "{label} 결과"
+msgstr "{label}の結果"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "{labelProp} 더하기"
+msgstr "{labelProp}を追加"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{place, select, comment {댓글에서} other {설명에서}} {name}님을 멘션했습니다"
+msgstr "{place, select, comment {コメントで} other {説明で}}{name}さんをメンションしました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{place, select, comment {댓글에서} other {설명에서}} 멘션했습니다"
+msgstr "{place, select, comment {コメントで} other {説明で}}メンションしました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{target}{targetB, select, none {와} other {과}} ''{label}'' 관계를 맺었습니다"
+msgstr "{target}との「{label}」関係を追加しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{target}{targetB, select, none {와} other {과}}의 ''{label}'' 관계를 끊었습니다"
+msgstr "{target}との「{label}」関係を削除しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "{to}님을 담당자로 정했습니다"
+msgstr "{to}さんを担当者に設定しました"
+
+#: src/entities/post/ui/PostCard.tsx
+msgid "개 댓글"
+msgstr "件のコメント"
+
+#: src/entities/post/lib/labels.ts
+msgid "검토 중"
+msgstr "レビュー中"
+
+#: src/entities/post/lib/event-text.ts
+msgid "게시물을 만들었습니다"
+msgstr "投稿を作成しました"
+
+#: src/entities/post/lib/labels.ts
+msgid "관련"
+msgstr "関連"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "기한"
+msgstr "期限"
+
+#: src/entities/post/lib/labels.ts
+msgid "기한 임박"
+msgstr "期限間近"
+
+#: src/entities/post/ui/post-meta.tsx
+msgid "기한 지남 ({due})"
+msgstr "期限切れ（{due}）"
+
+#: src/entities/post/lib/labels.ts
+msgid "기한 초과"
+msgstr "期限超過"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한({due})이 다가옵니다"
+msgstr "期限（{due}）が近づいています"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한({due})이 지났습니다"
+msgstr "期限（{due}）を過ぎました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한을 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "期限を{from} → {to}に変更しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한을 {to}{toB, select, none {로} rieul {로} other {으로}} 정했습니다"
+msgstr "期限を{to}に設定しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "기한을 지웠습니다"
+msgstr "期限を削除しました"
+
+#: src/entities/post/lib/labels.ts
+msgid "긴급"
+msgstr "緊急"
+
+#: src/entities/post/lib/labels.ts
+msgid "낮음"
+msgstr "低"
+
+#: src/entities/post/lib/my-work.ts
+msgid "내가 요청"
+msgstr "自分が依頼"
+
+#: src/entities/post/lib/labels.ts
+msgid "높음"
+msgstr "高"
+
+#: src/entities/post/lib/event-text.ts
+msgid "다시 열었습니다"
+msgstr "再オープンしました"
+
+#: src/entities/post/lib/labels.ts
+msgid "닫힘"
+msgstr "クローズ"
+
+#: src/entities/post/lib/my-work.ts
+msgctxt "my work tab"
+msgid "담당"
+msgstr "担当"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "담당자"
+msgstr "担当者"
+
+#: src/entities/post/model/post-model.ts
+#: src/entities/post/ui/post-meta.tsx
+msgid "담당자 없음"
+msgstr "担当者なし"
+
+#: src/entities/post/lib/event-text.ts
+msgid "담당자를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "担当者を{from} → {to}に変更しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "담당자를 비웠습니다"
+msgstr "担当者を外しました"
+
+#: src/entities/post/lib/labels.ts
+msgid "댓글"
+msgstr "コメント"
+
+#: src/entities/post/lib/event-text.ts
+msgid "댓글을 남겼습니다"
+msgstr "コメントしました"
+
+#: src/entities/post/lib/labels.ts
+msgid "동영상"
+msgstr "動画"
+
+#: src/entities/post/lib/labels.ts
+msgid "리소스 대기"
+msgstr "リソース待ち"
+
+#: src/entities/post/lib/event-text.ts
+msgid "막던 게시물이 닫혀 차단이 풀렸습니다"
+msgstr "ブロックしていた投稿がクローズされ、ブロックが解除されました"
+
+#: src/entities/post/ui/PostCard.tsx
+#: src/entities/post/ui/PostTable.tsx
+msgid "막힘"
+msgstr "ブロック中"
+
+#: src/entities/post/ui/PostCard.tsx
+msgid "막힘: 열린 게시물이 이 게시물을 막고 있습니다"
+msgstr "ブロック中：オープンの投稿がこの投稿をブロックしています"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "맞는 게시물이 없습니다."
+msgstr "一致する投稿がありません。"
+
+#: src/entities/post/lib/labels.ts
+msgid "멈춤"
+msgstr "停止中"
+
+#: src/entities/post/lib/labels.ts
+msgid "멘션"
+msgstr "メンション"
+
+#. 고르기 목록에서 사람 이름 뒤 괄호
+#: src/entities/post/model/options.ts
+msgid "멤버 아님"
+msgstr "メンバー外"
+
+#: src/entities/post/ui/PostTable.tsx
+msgid "모두 선택"
+msgstr "すべて選択"
+
+#: src/entities/post/lib/labels.ts
+msgid "미해결"
+msgstr "未解決"
+
+#: src/entities/post/lib/labels.ts
+msgid "반려"
+msgstr "却下"
+
+#: src/entities/post/lib/event-text.ts
+msgid "반려했습니다"
+msgstr "却下しました"
+
+#: src/entities/post/lib/labels.ts
+msgid "배정"
+msgstr "割り当て"
+
+#: src/entities/post/lib/labels.ts
+msgid "범위 밖"
+msgstr "対象外"
+
+#: src/entities/post/lib/labels.ts
+msgid "보류"
+msgstr "保留"
+
+#: src/entities/post/lib/labels.ts
+msgid "보류 재개"
+msgstr "保留再開"
+
+#: src/entities/post/lib/labels.ts
+msgid "보통"
+msgstr "中"
+
+#. 고르기 목록에서 사람 이름 뒤 괄호
+#: src/entities/post/model/options.ts
+msgid "비활성"
+msgstr "無効"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상위 이슈 {from}{fromB, select, none {를} other {을}} 뺐습니다"
+msgstr "親イシュー{from}を外しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상위 이슈를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "親イシューを{from} → {to}に変更しました"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상위 이슈를 {to}{toB, select, none {로} rieul {로} other {으로}} 정했습니다"
+msgstr "親イシューを{to}に設定しました"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "상태"
+msgstr "ステータス"
+
+#: src/entities/post/lib/labels.ts
+msgid "상태 변경"
+msgstr "ステータス変更"
+
+#: src/entities/post/lib/event-text.ts
+msgid "상태를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "ステータスを{from} → {to}に変更しました"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "수정"
+msgstr "更新"
+
+#: src/entities/post/lib/labels.ts
+msgid "슬랙"
+msgstr "Slack"
+
+#: src/entities/post/lib/labels.ts
+msgid "승인"
+msgstr "承認"
+
+#: src/entities/post/lib/my-work.ts
+msgid "승인 대기"
+msgstr "承認待ち"
+
+#: src/entities/post/lib/event-text.ts
+msgid "승인했습니다"
+msgstr "承認しました"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "썸네일"
+msgstr "サムネイル"
+
+#: src/entities/post/lib/labels.ts
+msgid "앱 내"
+msgstr "アプリ内"
+
+#: src/entities/post/lib/event-text.ts
+#: src/entities/post/lib/labels.ts
+msgid "없음"
+msgstr "なし"
+
+#: src/entities/post/model/options.ts
+msgctxt "empty select option"
+msgid "없음"
+msgstr "なし"
+
+#: src/entities/post/lib/labels.ts
+msgid "열림"
+msgstr "オープン"
+
+#: src/entities/post/lib/labels.ts
+msgid "완료 요청"
+msgstr "完了リクエスト"
+
+#: src/entities/post/lib/event-text.ts
+msgid "완료를 요청했습니다"
+msgstr "完了をリクエストしました"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/entities/post/ui/post-meta.tsx
+msgid "우선순위 {label}"
+msgstr "優先度 {label}"
+
+#: src/entities/post/lib/labels.ts
+msgid "우선순위 낮음"
+msgstr "低優先度"
+
+#: src/entities/post/lib/event-text.ts
+msgid "우선순위를 {from} → {to}{toB, select, none {로} rieul {로} other {으로}} 바꿨습니다"
+msgstr "優先度を{from} → {to}に変更しました"
+
+#: src/entities/post/lib/labels.ts
+msgid "의사결정"
+msgstr "意思決定"
+
+#: src/entities/post/lib/labels.ts
+msgid "의존성"
+msgstr "依存関係"
+
+#: src/entities/post/lib/labels.ts
+msgid "이메일"
+msgstr "メール"
+
+#: src/entities/post/lib/labels.ts
+msgid "이미지"
+msgstr "画像"
+
+#: src/entities/post/lib/my-work.ts
+msgid "이해관계자"
+msgstr "関係者"
+
+#: src/entities/post/lib/event-text.ts
+msgid "재개일이 되어 보류가 풀렸습니다"
+msgstr "再開日になり、保留が解除されました"
+
+#: src/entities/post/lib/labels.ts
+msgid "재현 안 됨"
+msgstr "再現不可"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "제목"
+msgstr "タイトル"
+
+#: src/entities/post/lib/labels.ts
+msgid "중복"
+msgstr "重複"
+
+#: src/entities/post/lib/labels.ts
+msgid "진행 중"
+msgstr "進行中"
+
+#: src/entities/post/ui/PostCard.tsx
+msgid "진행률"
+msgstr "進捗"
+
+#: src/entities/post/lib/event-text.ts
+msgid "진행률을 {from}% → {to}%로 바꿨습니다"
+msgstr "進捗を{from}% → {to}%に変更しました"
+
+#: src/entities/post/lib/labels.ts
+msgid "차단"
+msgstr "ブロック"
+
+#: src/entities/post/lib/labels.ts
+msgid "차단 해제"
+msgstr "ブロック解除"
+
+#: src/entities/post/lib/labels.ts
+msgid "차트"
+msgstr "チャート"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "찾는 중"
+msgstr "検索中"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "찾지 못했습니다: {reason}"
+msgstr "検索できませんでした：{reason}"
+
+#: src/entities/post/lib/event-text.ts
+msgid "체크리스트 ''{item}'' 항목을 {action, select, added {추가했습니다} removed {지웠습니다} done {완료로 표시했습니다} undone {완료를 해제했습니다} other {바꿨습니다}}"
+msgstr "チェックリスト項目「{item}」を{action, select, added {追加しました} removed {削除しました} done {完了にしました} undone {未完了に戻しました} other {変更しました}}"
+
+#: src/entities/post/lib/labels.ts
+msgctxt "post status"
+msgid "취소"
+msgstr "キャンセル済み"
+
+#: src/entities/post/lib/labels.ts
+msgid "코드"
+msgstr "コード"
+
+#: src/entities/post/model/post-model.ts
+msgctxt "post table column"
+msgid "키"
+msgstr "キー"
+
+#: src/entities/post/ui/PostPicker.tsx
+msgid "키(FD-12)나 제목으로 찾기"
+msgstr "キー（FD-12）またはタイトルで検索"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그"
+msgstr "タグ"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그 {t} 빼기"
+msgstr "タグ「{t}」を削除"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그 더하기"
+msgstr "タグを追加"
+
+#: src/entities/post/ui/TagInput.tsx
+msgid "태그 입력 후 Enter"
+msgstr "タグを入力してEnter"
+
+#: src/entities/post/model/post-model.ts
+msgid "팀 없음"
+msgstr "チームなし"
+
+#: src/entities/post/lib/labels.ts
+msgid "파생"
+msgstr "派生"
+
+#: src/entities/post/lib/labels.ts
+msgid "하위 이슈 완료"
+msgstr "子イシュー完了"
+
+#: src/entities/post/lib/event-text.ts
+msgid "하위 이슈가 모두 끝나 검토 중이 되었습니다"
+msgstr "子イシューがすべて完了し、レビュー中になりました"
+
+#: src/entities/post/lib/labels.ts
+msgid "해결됨"
+msgstr "解決済み"

@@ -44,11 +44,24 @@ export function registerCatalog(catalog: Record<Locale, LinguiCatalog>) {
   }
 }
 
-/** 모든 언어로 번역한 문구. 언어를 함께 그리는 StableText·Localized에 넘긴다 (정적 HTML). */
+/**
+ * 모든 언어로 번역한 문구. 언어를 함께 그리는 StableText·Localized에 넘긴다 (정적 HTML).
+ * 자리표시자 값도 언어마다 번역해야 하면 values를 그 언어의 instance를 받는 함수로 넘긴다.
+ */
 export function inAllLocales(
   descriptor: MessageDescriptor,
+  values?: Record<string, unknown> | ((i18n: I18n) => Record<string, unknown>),
 ): Record<Locale, string> {
   return Object.fromEntries(
-    LOCALES.map((locale) => [locale, instances[locale]._(descriptor)]),
+    LOCALES.map((locale) => {
+      const i18n = instances[locale];
+      return [
+        locale,
+        i18n._({
+          ...descriptor,
+          values: typeof values === "function" ? values(i18n) : values,
+        }),
+      ];
+    }),
   ) as Record<Locale, string>;
 }

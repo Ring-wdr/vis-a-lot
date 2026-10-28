@@ -1,0 +1,36 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "‘{key}’ 그룹을 찾을 수 없습니다"
+msgstr "「{key}」グループが見つかりません"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "그룹을 고르세요"
+msgstr "グループを選択してください"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "그룹을 불러오지 못했습니다"
+msgstr "グループを読み込めませんでした"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "다시 시도"
+msgstr "再試行"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "사이드바에서 그룹의 리스트나 보드를 고르세요."
+msgstr "サイドバーでグループのリストまたはボードを選択してください。"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "없는 그룹이거나, 비공개 그룹이라 볼 수 없습니다."
+msgstr "存在しないグループか、非公開グループのため表示できません。"
+
+#: src/entities/group/ui/route-group.tsx
+msgid "홈으로"
+msgstr "ホームへ"

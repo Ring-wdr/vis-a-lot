@@ -1,0 +1,48 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "{count}개 동시 렌더"
+msgstr "{count}件同時レンダリング"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "{workers, plural, other {Render Worker #개}}"
+msgstr "{workers, plural, other {Render Worker #個}}"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "item당 점 개수"
+msgstr "itemあたりの点の数"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "PGlite 부팅 중…"
+msgstr "PGlite起動中…"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "구조 확인"
+msgstr "構成確認"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "데이터셋 (절차적 생성 → COPY 적재)"
+msgstr "データセット (手続き的生成 → COPY取り込み)"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "렌더 중…"
+msgstr "レンダリング中…"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "부팅 {bootMs}ms · 누적 부팅 {bootCount}회 (새로고침하면 늘어나야 IndexedDB 유지)"
+msgstr "起動 {bootMs}ms · 累計起動 {bootCount}回 (再読み込みで増えればIndexedDB維持)"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "실패: {healthMessage}"
+msgstr "失敗: {healthMessage}"
+
+#: src/views/dev/ui/boot-check.tsx
+msgid "전체 {totalMs}ms"
+msgstr "合計 {totalMs}ms"

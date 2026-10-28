@@ -1,0 +1,85 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "{days}일 안·지남"
+msgstr "{days}日以内・期限切れ"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "게시물"
+msgstr "投稿"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "게시물을 불러오지 못했습니다 ({reason})"
+msgstr "投稿を読み込めませんでした ({reason})"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "게시물이 없습니다"
+msgstr "投稿はありません"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "그룹"
+msgstr "グループ"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "그룹을 불러오지 못했습니다 ({groupsError})"
+msgstr "グループを読み込めませんでした ({groupsError})"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "기한 임박"
+msgstr "期限間近"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "내 작업 요약"
+msgstr "自分の作業の概要"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "다시 시도"
+msgstr "再試行"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgctxt "my work summary: posts assigned to me"
+msgid "담당"
+msgstr "担当"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "더 보기"
+msgstr "さらに表示"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "모르는 그룹입니다"
+msgstr "不明なグループです"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "새 게시물 만들기"
+msgstr "新しい投稿を作成"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "승인 대기"
+msgstr "承認待ち"
+
+#: src/views/feed-home/ui/MySummaryStrip.tsx
+msgid "요약을 불러오지 못했습니다 ({reason})"
+msgstr "概要を読み込めませんでした ({reason})"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "전체"
+msgstr "すべて"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "전체 보기"
+msgstr "すべて表示"
+
+#: src/views/feed-home/ui/HomeView.tsx
+msgid "홈"
+msgstr "ホーム"

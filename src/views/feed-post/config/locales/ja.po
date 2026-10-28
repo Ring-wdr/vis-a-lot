@@ -1,0 +1,20 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/feed-post/ui/PostView.tsx
+msgid "게시물 키가 없습니다"
+msgstr "投稿キーがありません"
+
+#: src/views/feed-post/ui/PostView.tsx
+msgid "주소에 ?key=FD-12처럼 이슈 키를 붙여 엽니다."
+msgstr "アドレスに ?key=FD-12 のようにイシューキーを付けて開きます。"
+
+#: src/views/feed-post/ui/PostView.tsx
+msgid "홈 피드로"
+msgstr "ホームフィードへ"

@@ -2,7 +2,8 @@
 
 한국어·영어 화면을 직접 만든 층(`src/shared/lib/i18n.ts`)으로 구현한 뒤, 같은 대표 화면을 세 라이브러리로 각각 옮겨 보고 같은 기준으로 재고 실제 브라우저에서 확인했다.
 
-- 결론: **직접 구현 유지**. 라이브러리로 옮긴다면 **Lingui**가 1순위다.
+- 결론(2026-10-28 비교 시점): **직접 구현 유지**. 라이브러리로 옮긴다면 **Lingui**가 1순위다.
+- 이후 결정: 일본어를 더하면서 세 언어와 번역 파일(`.po`) 작업을 위해 **Lingui로 옮겼다** (`refactor/i18n-lingui-migration`). 아래 5절의 "옮길 때" 조건에 맞춰, Lingui가 잡지 못하는 자리표시자·카탈로그 충돌·등록 누락은 `scripts/check-i18n.mjs`로 검사한다.
 - 비교 시점: 2026-10-28, 기준 커밋 `20f8d08` (`feat/i18n`, PR #67)
 - 실험 구현(보관): 태그 `archive/i18n-paraglide`(`c32afa4`), `archive/i18n-next-intl`(`c678bfb`), `archive/i18n-lingui`(`a0c5fae`). `git checkout archive/i18n-lingui`로 열어 볼 수 있다.
 

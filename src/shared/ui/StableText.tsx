@@ -2,8 +2,9 @@ import { LOCALES, type Locale } from "@/shared/config/locale";
 
 // 언어마다 <html lang>에 맞을 때만 보이는 클래스. 언어를 더하면 app/globals.css의 lang-* 변형과 함께 늘린다.
 const VISIBLE: Record<Locale, string> = {
-  ko: "col-start-1 row-start-1 lang-en:invisible",
+  ko: "col-start-1 row-start-1 lang-en:invisible lang-ja:invisible",
   en: "invisible col-start-1 row-start-1 lang-en:visible",
+  ja: "invisible col-start-1 row-start-1 lang-ja:visible",
 };
 
 /**

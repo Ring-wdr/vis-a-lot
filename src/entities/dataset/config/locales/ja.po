@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "CSV encoding"
+msgid "EUC-KR (CP949)"
+msgstr "EUC-KR (CP949)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "CSV encoding"
+msgid "UTF-8"
+msgstr "UTF-8"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "column type"
+msgid "범주"
+msgstr "カテゴリ"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "삭제된 데이터입니다. datastore에서 다른 데이터를 고르세요."
+msgstr "削除されたデータです。datastoreで別のデータを選んでください。"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "세로 막대 (|)"
+msgstr "縦棒 (|)"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "세미콜론 (;)"
+msgstr "セミコロン (;)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "column type"
+msgid "숫자"
+msgstr "数値"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "쉼표 (,)"
+msgstr "カンマ (,)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "column type"
+msgid "시계열"
+msgstr "時系列"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "자동 (UTF-8, 깨지면 EUC-KR)"
+msgstr "自動 (UTF-8、文字化け時はEUC-KR)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "CSV delimiter"
+msgid "탭"
+msgstr "タブ"

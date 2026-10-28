@@ -1,0 +1,86 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. key: 게시물 키 (FD-12)
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "{key} 불러오는 중"
+msgstr "{key} を読み込み中"
+
+#. key: 게시물 키 (FD-12)
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "{key}를 불러오지 못했습니다"
+msgstr "{key} を読み込めませんでした"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "기한"
+msgstr "期限"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "넘겨 볼 게시물이 없습니다"
+msgstr "めくる投稿がありません"
+
+#. 이름을 모르는 행위자
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "누군가"
+msgstr "誰か"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "slide navigation"
+msgid "다음"
+msgstr "次へ"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "담당자"
+msgstr "担当者"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "보고서 조건을 넓혀 보세요."
+msgstr "レポートの条件を広げてみてください。"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "보고서로 돌아가기"
+msgstr "レポートに戻る"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "no due date"
+msgid "없음"
+msgstr "なし"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "slide navigation"
+msgid "이전"
+msgstr "前へ"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "자세히 보기"
+msgstr "詳細を見る"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgctxt "post field"
+msgid "진행률"
+msgstr "進捗"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "최근 활동"
+msgstr "最近の活動"
+
+#: src/widgets/present-deck/ui/PresentDeck.tsx
+msgid "활동이 없습니다"
+msgstr "活動がありません"

@@ -1,6 +1,10 @@
 // 로딩 표시 모음. 빈 화면에 글자만 띄우지 않고, 무엇이 어디에 올지 자리를 잡아 보여준다.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import type { ReactNode } from "react";
+import "@/shared/config/messages";
+import { inAllLocales } from "@/shared/lib/lingui";
 import { cn, tv } from "@/shared/lib/tw";
 import { button } from "./button";
 import { Localized } from "./Localized";
@@ -129,20 +133,12 @@ export const BOOT_STEPS = ["app", "server", "session", "defaults"] as const;
 export type BootStep = (typeof BOOT_STEPS)[number];
 
 // 부팅 화면은 서버 컴포넌트(Suspense fallback)에서도 그리므로 훅 대신 Localized로 두 언어를 함께 둔다.
-const BOOT_MESSAGES = {
-  ko: {
-    app: "화면을 불러오는 중",
-    server: "브라우저 안의 서버를 띄우는 중",
-    session: "로그인 확인 중",
-    defaults: "차트 기본값을 받는 중",
-  },
-  en: {
-    app: "Loading the app",
-    server: "Starting the in-browser server",
-    session: "Checking sign-in",
-    defaults: "Fetching chart defaults",
-  },
-} satisfies Record<"ko" | "en", Record<BootStep, string>>;
+const BOOT_MESSAGES: Record<BootStep, MessageDescriptor> = {
+  app: msg({ message: "화면을 불러오는 중", context: "boot step" }),
+  server: msg`브라우저 안의 서버를 띄우는 중`,
+  session: msg`로그인 확인 중`,
+  defaults: msg`차트 기본값을 받는 중`,
+};
 
 export function BootScreen({
   step,
@@ -175,8 +171,13 @@ export function BootScreen({
           <>
             <p role="alert" className="text-ui text-danger">
               <Localized
-                ko={`${BOOT_MESSAGES.ko[step]}에 실패했습니다: ${error}`}
-                en={`${BOOT_MESSAGES.en[step]} failed: ${error}`}
+                {...inAllLocales(
+                  msg`{step}에 실패했습니다: {error}`,
+                  (i18n) => ({
+                    step: i18n._(BOOT_MESSAGES[step]),
+                    error,
+                  }),
+                )}
               />
             </p>
             <button
@@ -184,16 +185,17 @@ export function BootScreen({
               className={button({ class: "text-ui" })}
               onClick={() => location.reload()}
             >
-              <Localized ko="새로고침" en="Reload" />
+              <Localized
+                {...inAllLocales(
+                  msg({ message: "새로고침", context: "reload page" }),
+                )}
+              />
             </button>
           </>
         ) : (
           <output className="inline-flex items-center gap-2 text-ui text-fg-secondary">
             <Spinner />
-            <Localized
-              ko={BOOT_MESSAGES.ko[step]}
-              en={BOOT_MESSAGES.en[step]}
-            />
+            <Localized {...inAllLocales(BOOT_MESSAGES[step])} />
           </output>
         )}
       </div>

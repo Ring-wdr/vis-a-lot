@@ -1,0 +1,64 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "게시물 취소"
+msgstr "投稿をキャンセル"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgctxt "close dialog"
+msgid "닫기"
+msgstr "閉じる"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "무엇을 더 해야 하는지 댓글로 남깁니다 (필수)"
+msgstr "まだ必要な作業をコメントで残します（必須）"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgctxt "post transition button"
+msgid "반려"
+msgstr "却下"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "반려 사유를 적어 주세요."
+msgstr "却下の理由を入力してください。"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgctxt "post transition button"
+msgid "보류"
+msgstr "保留"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "보류 사유를 골라 주세요."
+msgstr "保留の理由を選択してください。"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "사유"
+msgstr "理由"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "재개일 (이날 미해결로 돌아옵니다)"
+msgstr "再開日（この日に未解決に戻ります）"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "재개일은 오늘 이후여야 합니다."
+msgstr "再開日は今日以降にしてください。"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "재개일을 정해 주세요."
+msgstr "再開日を設定してください。"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgctxt "post transition button"
+msgid "취소"
+msgstr "キャンセル"
+
+#: src/features/transition-post/ui/transition-dialogs.tsx
+msgid "취소 사유를 골라 주세요."
+msgstr "キャンセルの理由を選択してください。"

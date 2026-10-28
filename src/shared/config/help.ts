@@ -91,7 +91,7 @@ export const HELP: Record<HelpService, HelpServiceInfo> = {
       },
       {
         slug: "history",
-        title: { ko: "history", en: "history" },
+        title: { ko: "history", en: "history", ja: "history" },
         summary: inAllLocales(msg`그린 차트를 다시 보고 이어서 편집하기`),
       },
       {

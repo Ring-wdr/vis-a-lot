@@ -1,0 +1,62 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "{total}개 중 {shown}개만 보여줍니다"
+msgstr "{total}件中 {shown}件のみ表示しています"
+
+#. 숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgctxt "unit after a tab's post count"
+msgid "개"
+msgstr "件"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "기한 임박 거르기 해제"
+msgstr "期限間近の絞り込みを解除"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "기한 임박만 ({days}일 안·지남)"
+msgstr "期限間近のみ ({days}日以内・期限切れ)"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "기한이 이른 순"
+msgstr "期限の早い順"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "내 작업"
+msgstr "自分の作業"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "내 작업 탭"
+msgstr "自分の作業タブ"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "다시 시도"
+msgstr "再試行"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "닫힌 것 포함"
+msgstr "クローズを含む"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "닫힌 것 포함을 켜면 끝난 일도 보입니다."
+msgstr "「クローズを含む」をオンにすると終わった作業も表示されます。"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "목록을 불러오는 중"
+msgstr "一覧を読み込み中"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "목록을 불러오지 못했습니다 ({reason})"
+msgstr "一覧を読み込めませんでした ({reason})"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "해당하는 게시물이 없습니다"
+msgstr "該当する投稿がありません"

@@ -1,0 +1,110 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid " · {at} 마감"
+msgstr " · {at}締め切り"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid " · 다른 선택지를 누르면 바뀝니다"
+msgstr " · 別の選択肢を押すと変更されます"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid " · 마감됨"
+msgstr " · 締め切り済み"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "{emoji} {count}명{by, select, me {, 내가 누름} other {}}"
+msgstr "{emoji} {count}人{by, select, me {（自分を含む）} other {}}"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "{total}명 참여"
+msgstr "{total}人が投票"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "{votes, plural, other {#표}} · {pct}%"
+msgstr "{votes, plural, other {#票}} · {pct}%"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "@로 멘션 · Ctrl/⌘+Enter로 보내기"
+msgstr "@でメンション · Ctrl/⌘+Enterで送信"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "내 선택"
+msgstr "自分の選択"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "댓글"
+msgstr "コメント"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "댓글 달기"
+msgstr "コメントする"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "댓글을 달지 못했습니다"
+msgstr "コメントを投稿できませんでした"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgctxt "poll deadline"
+msgid "마감"
+msgstr "締め切り"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "반응 고르기"
+msgstr "リアクションを選択"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "반응 더하기"
+msgstr "リアクションを追加"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "반응을 바꾸지 못했습니다"
+msgstr "リアクションを変更できませんでした"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "선택지 {n}"
+msgstr "選択肢{n}"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "선택지 {n} 빼기"
+msgstr "選択肢{n}を削除"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "선택지 더하기"
+msgstr "選択肢を追加"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "질문"
+msgstr "質問"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgctxt "cancel comment"
+msgid "취소"
+msgstr "キャンセル"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "투표 만들기"
+msgstr "投票を作成"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "투표 빼기"
+msgstr "投票を削除"
+
+#: src/features/comment-post/ui/comment-composer.tsx
+msgid "투표 질문"
+msgstr "投票の質問"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "투표: {question}"
+msgstr "投票：{question}"
+
+#: src/features/comment-post/ui/comment-extras.tsx
+msgid "투표하지 못했습니다"
+msgstr "投票できませんでした"

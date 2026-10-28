@@ -10,7 +10,7 @@ export const preferencesPopover = tv({
       "inline-flex h-7.5 max-w-48 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-1.5 text-ui text-fg-secondary hover:bg-panel data-popup-open:border-line data-popup-open:bg-elevated",
     positioner: "z-popover outline-0",
     popup:
-      "flex w-64 flex-col gap-3 rounded-lg border border-line bg-elevated p-3 text-ui shadow-xl outline-0",
+      "flex w-72 flex-col gap-3 rounded-lg border border-line bg-elevated p-3 text-ui shadow-xl outline-0",
     section: "flex min-w-0 flex-col",
     label:
       "mb-1.5 truncate text-2xs font-semibold whitespace-nowrap text-fg-muted",

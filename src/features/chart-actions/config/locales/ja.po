@@ -1,0 +1,146 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. 선택 영역의 데이터만 받은 CSV 파일 이름 끝에 붙인다
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "file name suffix"
+msgid "_선택"
+msgstr "_選択"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "{count, plural, other {draw 시점 필터 #개 적용}}"
+msgstr "{count, plural, other {draw 時のフィルター #件を適用}}"
+
+#. label: 컬럼 표시 이름, name: 컬럼 이름
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "{label} ({name}) 정렬"
+msgstr "{label} ({name}) で並べ替え"
+
+#. label: 차트 item 이름
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "{label} 데이터"
+msgstr "{label} データ"
+
+#. name: 도구 이름, chartKind: 차트 종류 이름
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "{name} ({chartKind}에서는 쓸 수 없음)"
+msgstr "{name} ({chartKind} では使用不可)"
+
+#. name: 도구 이름
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "{name} (차트를 눌러 고른 뒤 쓸 수 있습니다)"
+msgstr "{name} (チャートをクリックして選択すると使えます)"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "{rows}행"
+msgstr "{rows}行"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "그린 차트가 없습니다."
+msgstr "描画したチャートがありません。"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgctxt "data table dialog"
+msgid "닫기"
+msgstr "閉じる"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "데이터 다운로드"
+msgstr "データをダウンロード"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "데이터 테이블"
+msgstr "データテーブル"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "모든 차트 엑셀로 다운로드"
+msgstr "全チャートを Excel でダウンロード"
+
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "excel sheet"
+msgid "목록"
+msgstr "一覧"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgctxt "data table summary"
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "excel column header"
+msgid "상태"
+msgstr "状態"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "선택 영역 안에 든 데이터가 없습니다."
+msgstr "選択範囲内にデータがありません。"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "선택한 {rows}행"
+msgstr "選択した {rows}行"
+
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "excel column header"
+msgid "순번"
+msgstr "No."
+
+#: src/features/chart-actions/model/chart-download.ts
+msgid "아직 그려지지 않은 차트입니다."
+msgstr "まだ描画されていないチャートです。"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "이 차트에 그린 데이터가 없습니다."
+msgstr "このチャートに描画したデータがありません。"
+
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "excel column header"
+msgid "이름"
+msgstr "名前"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "전체 {population}행 중 {sample}행 샘플"
+msgstr "全 {population}行中 {sample}行のサンプル"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "전체 데이터 · {title}"
+msgstr "全データ · {title}"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "전체 데이터 테이블 (최대 30,000행 샘플)"
+msgstr "全データテーブル (最大 30,000行のサンプル)"
+
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "excel sheet"
+msgid "차트"
+msgstr "チャート"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "차트 다운로드"
+msgstr "チャートをダウンロード"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "차트 도구"
+msgstr "チャートツール"
+
+#. totalText, writtenText: 자릿수 구분을 넣은 숫자
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "차트가 {totalText}개라 앞에서부터 {writtenText}개만 넣었습니다."
+msgstr "チャートが {totalText} 件あるため、先頭から {writtenText} 件のみ含めました。"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
+msgid "체크박스 표시"
+msgstr "チェックボックスを表示"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "필터에 맞는 데이터가 없습니다."
+msgstr "フィルターに一致するデータがありません。"
+
+#: src/features/chart-actions/ui/DataTableDialog.tsx
+msgid "행이 없습니다"
+msgstr "行がありません"

@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/help-home/ui/HelpHomeView.tsx
+msgid "vis-a-lot의 서비스별 사용 방법입니다. 보고 싶은 서비스를 고르세요."
+msgstr "vis-a-lot のサービスごとの使い方です。読みたいサービスを選んでください。"
+
+#: src/views/help-home/ui/HelpHomeView.tsx
+msgid "도움말"
+msgstr "ヘルプ"
+
+#: src/views/help-home/ui/HelpHomeView.tsx
+msgid "문서 {count, plural, other {#개}}"
+msgstr "ドキュメント {count, plural, other {#件}}"
+
+#: src/views/help-home/ui/HelpHomeView.tsx
+msgid "준비 중"
+msgstr "準備中"

@@ -1,0 +1,203 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "검색"
+msgstr "検索"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "고를 항목이 없습니다"
+msgstr "選択できる項目がありません"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "group posts by (label)"
+msgid "그룹"
+msgstr "グループ"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field: due date"
+msgid "기한"
+msgstr "期限"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "기한"
+msgstr "期限"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "기한 지남"
+msgstr "期限切れ"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "due date range end"
+msgid "까지"
+msgstr "まで"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgid "내림차순"
+msgstr "降順"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgid "내림차순 (누르면 오름차순)"
+msgstr "降順 (クリックで昇順)"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "close filter popover"
+msgid "닫기"
+msgstr "閉じる"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "담당자"
+msgstr "担当者"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "group posts by"
+msgid "담당자"
+msgstr "担当者"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "만든 날"
+msgstr "作成日"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "모두 해제"
+msgstr "すべて解除"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "due date range start"
+msgid "부터"
+msgstr "から"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "상태"
+msgstr "ステータス"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "group posts by"
+msgid "상태"
+msgstr "ステータス"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "상태"
+msgstr "ステータス"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "수정일"
+msgstr "更新日"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "group posts by: no grouping"
+msgid "없음"
+msgstr "なし"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "table columns"
+msgid "열"
+msgstr "列"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "예: 매출, 대시보드"
+msgstr "例: 売上, ダッシュボード"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgid "오름차순"
+msgstr "昇順"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgid "오름차순 (누르면 내림차순)"
+msgstr "昇順 (クリックで降順)"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "요청자"
+msgstr "依頼者"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "group posts by"
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field: post type"
+msgid "유형"
+msgstr "種類"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "적용"
+msgstr "適用"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgid "정렬"
+msgstr "並べ替え"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "제목"
+msgstr "タイトル"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "제목·본문 검색"
+msgstr "タイトル・本文を検索"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "clear a filter field"
+msgid "지우기"
+msgstr "クリア"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "카테고리"
+msgstr "カテゴリ"
+
+#: src/features/filter-posts/ui/list-controls.tsx
+msgctxt "sort field"
+msgid "키"
+msgstr "キー"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "태그"
+msgstr "タグ"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "태그 (쉼표로 여럿)"
+msgstr "タグ (カンマ区切りで複数)"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field"
+msgid "팀"
+msgstr "チーム"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "필터"
+msgstr "フィルター"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgid "필터 지우기"
+msgstr "フィルターをクリア"
+
+#: src/features/filter-posts/ui/FilterBar.tsx
+msgctxt "filter field: post format"
+msgid "형식"
+msgstr "形式"

@@ -1,0 +1,456 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. name: 데이터 이름
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "''{name}''을 삭제할까요? 이 데이터로 그린 탭은 다시 그릴 수 없게 됩니다."
+msgstr "「{name}」を削除しますか？このデータで描いたタブは再描画できなくなります。"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "(빈 값)"
+msgstr "(空の値)"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "{count, plural, other {데이터 #개}}"
+msgstr "{count, plural, other {データ #件}}"
+
+#. name: 데이터 이름
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "{name} · 등록 중"
+msgstr "{name} · 登録中"
+
+#. name: 데이터 이름
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "{name} · 미등록"
+msgstr "{name} · 未登録"
+
+#. name: 데이터 이름
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "{name} · 실패"
+msgstr "{name} · 失敗"
+
+#. name: 데이터 이름
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgid "{name} · 준비됨"
+msgstr "{name} · 準備完了"
+
+#. name: 컬럼 이름
+#: src/features/register-dataset/ui/PreviewGrid.tsx
+msgid "{name} 타입"
+msgstr "{name}の型"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgid "{rows}행 · 생성 {seconds}초"
+msgstr "{rows}行 · 生成 {seconds}秒"
+
+#. n: zip 안의 CSV 수
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "CSV {n}개를 하나로 합칩니다"
+msgstr "CSV {n}件を1つに結合します"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "CSV 또는 CSV를 묶은 zip. 여기로 끌어다 놓아도 됩니다."
+msgstr "CSV、またはCSVをまとめたzip。ここにドロップしても構いません。"
+
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "datastore에서 다른 데이터를 고르세요"
+msgstr "datastoreで別のデータを選んでください"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "gallery에서 열기"
+msgstr "galleryで開く"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "Null 값"
+msgstr "Null値"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "yyyy·MM·dd·HH·mm·ss·SSS. 이 형식으로 읽히는 컬럼을 시계열로 봅니다."
+msgstr "yyyy·MM·dd·HH·mm·ss·SSS。この形式で読み取れるカラムを時系列として扱います。"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "upload task"
+msgid "거절됨"
+msgstr "拒否"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "건너뛴 행 {skipped}개"
+msgstr "スキップした行 {skipped}件"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "check whole file button"
+msgid "검사"
+msgstr "検査"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "검사 통과 · {rows}행"
+msgstr "検査OK · {rows}行"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "검사·변환 중 {percent}%"
+msgstr "検査・変換中 {percent}%"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgctxt "column table header"
+msgid "고유값"
+msgstr "ユニーク値"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "구분 기호"
+msgstr "区切り文字"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "구분 기호 직접 입력"
+msgstr "区切り文字を直接入力"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "날짜 시간 형식"
+msgstr "日時形式"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "날짜 시간 형식 직접 입력"
+msgstr "日時形式を直接入力"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "내 저장소 사용량"
+msgstr "自分のストレージ使用量"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "다른 적재가 끝나기를 기다리는 중"
+msgstr "他の取り込みの完了を待機中"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "다시 적재"
+msgstr "再取り込み"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore dialog"
+msgid "닫기"
+msgstr "閉じる"
+
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgctxt "dataset select"
+msgid "데이터"
+msgstr "データ"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgid "데이터 규모"
+msgstr "データ規模"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgid "데이터 생성 중 {done} / {total}"
+msgstr "データ生成中 {done} / {total}"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "데이터 수정"
+msgstr "データを編集"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "데이터 스토어"
+msgstr "データストア"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "데이터 오류 무시"
+msgstr "データエラーを無視"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "데이터가 없습니다"
+msgstr "データがありません"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "register sample button"
+msgid "등록"
+msgstr "登録"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore table header"
+msgid "등록 시간"
+msgstr "登録日時"
+
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "등록 중 {percent}%"
+msgstr "登録中 {percent}%"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "따옴표"
+msgstr "引用符"
+
+#: src/features/register-dataset/ui/PreviewGrid.tsx
+msgid "모든 컬럼 적재"
+msgstr "全カラムを取り込む"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "dataset status"
+msgid "미등록"
+msgstr "未登録"
+
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "미등록 · datastore에서 등록"
+msgstr "未登録 · datastoreで登録"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "미리보기"
+msgstr "プレビュー"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore table header"
+msgid "번호"
+msgstr "番号"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "file list header"
+msgid "번호"
+msgstr "番号"
+
+#: src/features/register-dataset/ui/PreviewGrid.tsx
+msgid "변환 불가 {count}개"
+msgstr "変換不可 {count}件"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "변환 불가 값은 null로 넣습니다"
+msgstr "変換できない値はnullで取り込みます"
+
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgctxt "dataset select"
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "raw file preview"
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "delete dataset"
+msgid "삭제"
+msgstr "削除"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore table header"
+msgid "상태"
+msgstr "状態"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "새로고침"
+msgstr "更新"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "dataset kind"
+msgid "샘플"
+msgstr "サンプル"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "샘플은 삭제할 수 없습니다"
+msgstr "サンプルは削除できません"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "샘플은 수정할 수 없습니다"
+msgstr "サンプルは編集できません"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "edit dataset"
+msgid "수정"
+msgstr "編集"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "수정에서는 원본 파일을 바꿀 수 없습니다"
+msgstr "編集では元のファイルを変更できません"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "dataset status"
+msgid "실패"
+msgstr "失敗"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "upload task"
+msgid "실패"
+msgstr "失敗"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgctxt "yes/no toggle"
+msgid "아니오"
+msgstr "いいえ"
+
+#. n: 미리보기 행 수
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "앞 {n}행 미리보기입니다. 검사를 누르면 파일 전체를 확인합니다."
+msgstr "先頭{n}行のプレビューです。検査を押すとファイル全体を確認します。"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgctxt "yes/no toggle"
+msgid "예"
+msgstr "はい"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "upload task"
+msgid "완료"
+msgstr "完了"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "raw file preview"
+msgid "원본"
+msgstr "元データ"
+
+#: src/features/register-dataset/ui/PreviewGrid.tsx
+msgid "이 타입으로 바꿀 수 없는 값"
+msgstr "この型に変換できない値"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgctxt "dataset name field"
+msgid "이름"
+msgstr "名前"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore table header"
+msgid "이름"
+msgstr "名前"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "file list header"
+msgid "이름"
+msgstr "名前"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "이름 검색"
+msgstr "名前で検索"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "이름·전처리 옵션·컬럼 타입 수정"
+msgstr "名前・前処理オプション・カラム型を編集"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "인코딩"
+msgstr "エンコーディング"
+
+#. type: 자동으로 고른 컬럼 타입 이름
+#: src/features/register-dataset/ui/PreviewGrid.tsx
+msgid "자동 ({type})"
+msgstr "自動 ({type})"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "자동 (ISO 8601)"
+msgstr "自動 (ISO 8601)"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "저장소 사용량"
+msgstr "ストレージ使用量"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "적재 중 {done} / {total}행"
+msgstr "取り込み中 {done} / {total}行"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "적재하지 않고 파일 전체를 검사합니다"
+msgstr "取り込まずにファイル全体を検査します"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "전처리 옵션"
+msgstr "前処理オプション"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "준비된 데이터를 선택하세요"
+msgstr "準備完了のデータを選んでください"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "dataset status"
+msgid "준비됨"
+msgstr "準備完了"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgctxt "custom option"
+msgid "직접 입력"
+msgstr "直接入力"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "찾는 데이터가 없습니다"
+msgstr "該当するデータがありません"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "첫 번째 행 헤더"
+msgstr "1行目をヘッダーにする"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "upload dialog"
+msgid "취소"
+msgstr "キャンセル"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgctxt "column table header"
+msgid "컬럼"
+msgstr "カラム"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "컬럼 통계 계산 중"
+msgstr "カラム統計を計算中"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgid "컬럼 통계 계산 중…"
+msgstr "カラム統計を計算中…"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "켜면 타입으로 바꿀 수 없는 값은 null로, 필드 수가 맞지 않는 행은 건너뜁니다."
+msgstr "オンにすると、型に変換できない値はnullになり、フィールド数が合わない行はスキップします。"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore table header"
+msgid "크기"
+msgstr "サイズ"
+
+#: src/features/register-dataset/ui/DatasetPanel.tsx
+msgctxt "column table header"
+msgid "타입"
+msgstr "型"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "dataset status"
+msgid "통계"
+msgstr "統計"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "uploaded files list"
+msgid "파일"
+msgstr "ファイル"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "파일 선택"
+msgstr "ファイルを選択"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "파일 열기"
+msgstr "ファイルを開く"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "파일 이름"
+msgstr "ファイル名"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgid "파일을 선택하세요"
+msgstr "ファイルを選択してください"
+
+#: src/features/register-dataset/ui/UploadOptions.tsx
+msgid "한 글자"
+msgstr "1文字"
+
+#: src/features/register-dataset/ui/PreviewGrid.tsx
+msgid "행 번호"
+msgstr "行番号"
+
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgctxt "datastore table header"
+msgid "행 수"
+msgstr "行数"
+
+#: src/features/register-dataset/ui/UploadDialog.tsx
+msgctxt "upload dialog"
+msgid "확인"
+msgstr "OK"
+
+#: src/features/register-dataset/ui/DatasetSelect.tsx
+msgid "확인 중"
+msgstr "確認中"
