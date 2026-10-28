@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. view: 화면 이름 gallery 또는 history (번역하지 않는다)
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "{view} 탭"
+msgstr "{view} tabs"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "뒤 탭 보기"
+msgstr "Scroll tabs right"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "불러오는 중"
+msgstr "Loading"
+
+#. name: 데이터셋 이름
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "새 차트 · {name}"
+msgstr "New chart · {name}"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "새 탭"
+msgstr "New tab"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "앞 탭 보기"
+msgstr "Scroll tabs left"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "왼쪽 목록에서 고르면 탭으로 열립니다."
+msgstr "Pick one from the list on the left to open it in a tab."
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "탭 닫기"
+msgstr "Close tab"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "필터"
+msgstr "Filter"
