@@ -3,6 +3,9 @@
 // 저장된 뷰 (/feed/view?id=…): 저장한 필터·정렬로 받아 피드·리스트·보드로 보인다.
 // 표시 방식·그룹핑은 저장하기 전까지 이 화면에서만 바뀐다.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BookmarkX,
@@ -37,7 +40,6 @@ import type {
 } from "@/shared/api/feed/types";
 import { viewsApi } from "@/shared/api/feed/views";
 import { FEED } from "@/shared/config/feed-routes";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
@@ -46,94 +48,39 @@ import { EmptyState, Skeleton } from "@/shared/ui/Loading";
 import { segmented } from "@/shared/ui/segmented";
 import { BoardSkeleton } from "@/widgets/post-board/ui/BoardSkeleton";
 import { PostBoard } from "@/widgets/post-board/ui/PostBoard";
+import "../config/messages";
 
 const seg = segmented();
 
 const LAYOUTS: ViewLayout[] = ["feed", "list", "board"];
 
-const messages = defineMessages({
-  ko: {
-    layouts: { feed: "피드", list: "리스트", board: "보드" } as Record<
-      ViewLayout,
-      string
-    >,
-    toHome: "홈으로",
-    builtin: "기본 제공",
-    shared: "그룹 공유",
-    personal: "개인",
-    saveFailed: (reason: string) => `뷰를 저장하지 못했습니다: ${reason}`,
-    copyName: (name: string) => `${name} 사본`,
-    copyFailed: (reason: string) => `뷰를 복사하지 못했습니다: ${reason}`,
-    pinFailed: (reason: string) => `고정을 바꾸지 못했습니다: ${reason}`,
-    removeConfirm: (name: string) => `‘${name}’ 뷰를 지울까요?`,
-    remove: "지우기",
-    removeFailed: (reason: string) => `뷰를 지우지 못했습니다: ${reason}`,
-    total: (n: number) => `${n}건`,
-    save: "저장",
-    copyAsMine: "내 뷰로 복사",
-    pin: "고정",
-    unpin: "고정 해제",
-    postsFailed: "게시물을 불러오지 못했습니다",
-    retry: "다시 시도",
-    empty: "이 뷰에 맞는 게시물이 없습니다",
-    pickView: "뷰를 고르세요",
-    pickViewHint: "사이드바의 저장된 뷰나 리스트의 ‘뷰로 저장’에서 엽니다.",
-    notFound: "뷰를 찾을 수 없습니다",
-    notFoundHint: "지워졌거나, 볼 수 없는 그룹의 뷰입니다.",
-    viewFailed: "뷰를 불러오지 못했습니다",
-  },
-  en: {
-    layouts: { feed: "Feed", list: "List", board: "Board" },
-    toHome: "Go home",
-    builtin: "Built-in",
-    shared: "Shared",
-    personal: "Personal",
-    saveFailed: (reason: string) => `Couldn't save the view: ${reason}`,
-    copyName: (name: string) => `${name} copy`,
-    copyFailed: (reason: string) => `Couldn't copy the view: ${reason}`,
-    pinFailed: (reason: string) => `Couldn't change the pin: ${reason}`,
-    removeConfirm: (name: string) => `Delete the view ‘${name}’?`,
-    remove: "Delete",
-    removeFailed: (reason: string) => `Couldn't delete the view: ${reason}`,
-    total: (n: number) => `${n} ${n === 1 ? "post" : "posts"}`,
-    save: "Save",
-    copyAsMine: "Copy to mine",
-    pin: "Pin",
-    unpin: "Unpin",
-    postsFailed: "Couldn't load posts",
-    retry: "Retry",
-    empty: "No posts match this view",
-    pickView: "Pick a view",
-    pickViewHint:
-      "Open one from Saved views in the sidebar or ‘Save view’ in a list.",
-    notFound: "View not found",
-    notFoundHint: "It was deleted, or belongs to a group you can't see.",
-    viewFailed: "Couldn't load the view",
-  },
-});
+const LAYOUT_LABELS = {
+  feed: msg({ message: "피드", context: "view layout" }),
+  list: msg({ message: "리스트", context: "view layout" }),
+  board: msg({ message: "보드", context: "view layout" }),
+} satisfies Record<ViewLayout, MessageDescriptor>;
 
 const errorMessage = (e: unknown) =>
   e instanceof Error ? e.message : String(e);
 
 function HomeLink() {
-  const text = useT(messages);
   return (
     <Link
       href={FEED.home}
       className={button({ size: "sm", class: "mt-2 no-underline" })}
     >
-      {text.toHome}
+      <Trans>홈으로</Trans>
     </Link>
   );
 }
 
 function ViewBadge({ view }: { view: SavedView }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const label = view.builtin
-    ? text.builtin
+    ? t`기본 제공`
     : view.shared
-      ? text.shared
-      : text.personal;
+      ? t`그룹 공유`
+      : t({ message: "개인", context: "personal saved view" });
   return (
     <span
       className={cn(
@@ -171,7 +118,7 @@ function CardGridSkeleton() {
 }
 
 function ViewBody({ view }: { view: SavedView }) {
-  const text = useT(messages);
+  const { t, i18n } = useLingui();
   const client = useQueryClient();
   const router = useRouter();
   const openPeek = useOpenPeek();
@@ -192,6 +139,8 @@ function ViewBody({ view }: { view: SavedView }) {
   const group = view.groupId ? groups.get(view.groupId) : undefined;
   const canEdit = view.editable && !view.builtin;
   const dirty = layout !== view.layout || groupBy !== view.groupBy;
+  const name = view.name;
+  const total = query.data?.total ?? 0;
 
   const refreshViews = () =>
     client.invalidateQueries({ queryKey: ["feed", "views"] });
@@ -210,13 +159,17 @@ function ViewBody({ view }: { view: SavedView }) {
         pinned: view.pinned,
       });
     } catch (e) {
-      showAlert(text.saveFailed(errorMessage(e)));
+      const reason = errorMessage(e);
+      showAlert(t`뷰를 저장하지 못했습니다: ${reason}`);
     }
   }
 
   async function copyAsMine() {
     const answer = await askSaveView({
-      defaultName: text.copyName(view.name),
+      defaultName: t({
+        message: `${name} 사본`,
+        comment: "복사한 뷰의 기본 이름. {name}은 원래 뷰 이름",
+      }),
       groupName: group?.name,
     });
     if (!answer) return;
@@ -233,7 +186,8 @@ function ViewBody({ view }: { view: SavedView }) {
       });
       router.push(`${FEED.view}?id=${encodeURIComponent(copy.id)}`);
     } catch (e) {
-      showAlert(text.copyFailed(errorMessage(e)));
+      const reason = errorMessage(e);
+      showAlert(t`뷰를 복사하지 못했습니다: ${reason}`);
     }
   }
 
@@ -243,15 +197,16 @@ function ViewBody({ view }: { view: SavedView }) {
       await viewsApi.pin(view.id, !view.pinned);
       await refreshViews();
     } catch (e) {
-      showAlert(text.pinFailed(errorMessage(e)));
+      const reason = errorMessage(e);
+      showAlert(t`고정을 바꾸지 못했습니다: ${reason}`);
     } finally {
       setBusy(false);
     }
   }
 
   async function remove() {
-    const ok = await showConfirm(text.removeConfirm(view.name), {
-      confirmLabel: text.remove,
+    const ok = await showConfirm(t`‘${name}’ 뷰를 지울까요?`, {
+      confirmLabel: t({ message: "지우기", context: "delete a saved view" }),
     });
     if (!ok) return;
     setBusy(true);
@@ -260,7 +215,8 @@ function ViewBody({ view }: { view: SavedView }) {
       await refreshViews();
       router.push(FEED.home);
     } catch (e) {
-      showAlert(text.removeFailed(errorMessage(e)));
+      const reason = errorMessage(e);
+      showAlert(t`뷰를 지우지 못했습니다: ${reason}`);
       setBusy(false);
     }
   }
@@ -272,7 +228,7 @@ function ViewBody({ view }: { view: SavedView }) {
         <ViewBadge view={view} />
         {group && <span className="text-xs text-fg-muted">{group.name}</span>}
         <span className="text-xs text-fg-muted tabular-nums">
-          {query.data ? text.total(query.data.total) : ""}
+          {query.data ? t`${plural(total, { other: "#건" })}` : ""}
         </span>
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
           <span className={seg.root({ class: "self-auto" })}>
@@ -284,7 +240,7 @@ function ViewBody({ view }: { view: SavedView }) {
                 aria-pressed={layout === value}
                 onClick={() => setLayout(value)}
               >
-                {text.layouts[value]}
+                {i18n._(LAYOUT_LABELS[value])}
               </button>
             ))}
           </span>
@@ -300,7 +256,7 @@ function ViewBody({ view }: { view: SavedView }) {
               onClick={saveChanges}
             >
               <Save size={14} aria-hidden="true" />
-              {text.save}
+              <Trans context="save saved-view changes">저장</Trans>
             </button>
           ) : (
             <button
@@ -310,7 +266,7 @@ function ViewBody({ view }: { view: SavedView }) {
               onClick={copyAsMine}
             >
               <Copy size={14} aria-hidden="true" />
-              {text.copyAsMine}
+              <Trans>내 뷰로 복사</Trans>
             </button>
           )}
           <button
@@ -325,7 +281,11 @@ function ViewBody({ view }: { view: SavedView }) {
             ) : (
               <Pin size={14} aria-hidden="true" />
             )}
-            {view.pinned ? text.unpin : text.pin}
+            {view.pinned ? (
+              <Trans>고정 해제</Trans>
+            ) : (
+              <Trans context="pin a saved view">고정</Trans>
+            )}
           </button>
           {canEdit && (
             <button
@@ -339,7 +299,7 @@ function ViewBody({ view }: { view: SavedView }) {
               onClick={remove}
             >
               <Trash2 size={14} aria-hidden="true" />
-              {text.remove}
+              {t({ message: "지우기", context: "delete a saved view" })}
             </button>
           )}
         </div>
@@ -358,7 +318,10 @@ function ViewBody({ view }: { view: SavedView }) {
           <CardGridSkeleton />
         )
       ) : query.isError ? (
-        <EmptyState icon={<LayoutGrid size={20} />} title={text.postsFailed}>
+        <EmptyState
+          icon={<LayoutGrid size={20} />}
+          title={t`게시물을 불러오지 못했습니다`}
+        >
           <p>{query.error.message}</p>
           <button
             type="button"
@@ -366,11 +329,14 @@ function ViewBody({ view }: { view: SavedView }) {
             onClick={() => query.refetch()}
           >
             <RefreshCw size={14} aria-hidden="true" />
-            {text.retry}
+            <Trans>다시 시도</Trans>
           </button>
         </EmptyState>
       ) : posts.length === 0 && layout !== "board" ? (
-        <EmptyState icon={<LayoutGrid size={20} />} title={text.empty} />
+        <EmptyState
+          icon={<LayoutGrid size={20} />}
+          title={t`이 뷰에 맞는 게시물이 없습니다`}
+        />
       ) : layout === "feed" ? (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
           {posts.map((p) => (
@@ -395,12 +361,14 @@ function ViewBody({ view }: { view: SavedView }) {
 export function SavedViewView() {
   const id = useSearchParams().get("id");
   const view = useView(id);
-  const text = useT(messages);
+  const { t } = useLingui();
 
   if (!id)
     return (
-      <EmptyState icon={<BookmarkX size={20} />} title={text.pickView}>
-        <p>{text.pickViewHint}</p>
+      <EmptyState icon={<BookmarkX size={20} />} title={t`뷰를 고르세요`}>
+        <p>
+          <Trans>사이드바의 저장된 뷰나 리스트의 ‘뷰로 저장’에서 엽니다.</Trans>
+        </p>
         <HomeLink />
       </EmptyState>
     );
@@ -416,12 +384,20 @@ export function SavedViewView() {
       view.error instanceof FeedApiError &&
       (view.error.status === 404 || view.error.status === 403);
     return missing ? (
-      <EmptyState icon={<BookmarkX size={20} />} title={text.notFound}>
-        <p>{text.notFoundHint}</p>
+      <EmptyState
+        icon={<BookmarkX size={20} />}
+        title={t`뷰를 찾을 수 없습니다`}
+      >
+        <p>
+          <Trans>지워졌거나, 볼 수 없는 그룹의 뷰입니다.</Trans>
+        </p>
         <HomeLink />
       </EmptyState>
     ) : (
-      <EmptyState icon={<BookmarkX size={20} />} title={text.viewFailed}>
+      <EmptyState
+        icon={<BookmarkX size={20} />}
+        title={t`뷰를 불러오지 못했습니다`}
+      >
         <p>{view.error.message}</p>
         <button
           type="button"
@@ -429,7 +405,7 @@ export function SavedViewView() {
           onClick={() => view.refetch()}
         >
           <RefreshCw size={14} aria-hidden="true" />
-          {text.retry}
+          <Trans>다시 시도</Trans>
         </button>
       </EmptyState>
     );

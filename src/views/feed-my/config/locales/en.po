@@ -1,0 +1,62 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "{total}개 중 {shown}개만 보여줍니다"
+msgstr "Showing {shown} of {total}"
+
+#. 숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgctxt "unit after a tab's post count"
+msgid "개"
+msgstr " posts"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "기한 임박 거르기 해제"
+msgstr "Clear due-soon filter"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "기한 임박만 ({days}일 안·지남)"
+msgstr "Due soon only (within {days}d or overdue)"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "기한이 이른 순"
+msgstr "Earliest due first"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "내 작업"
+msgstr "My work"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "내 작업 탭"
+msgstr "My work tabs"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "다시 시도"
+msgstr "Retry"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "닫힌 것 포함"
+msgstr "Include closed"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "닫힌 것 포함을 켜면 끝난 일도 보입니다."
+msgstr "Turn on Include closed to see finished work too."
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "목록을 불러오는 중"
+msgstr "Loading list"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "목록을 불러오지 못했습니다 ({reason})"
+msgstr "Couldn't load the list ({reason})"
+
+#: src/views/feed-my/ui/MyWorkView.tsx
+msgid "해당하는 게시물이 없습니다"
+msgstr "No matching posts"

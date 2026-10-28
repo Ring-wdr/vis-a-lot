@@ -1,0 +1,108 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "{count, plural, other {#건}}"
+msgstr "{count, plural, one {# post} other {# posts}}"
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "{key} 카드를 집었습니다. 화살표로 열을 옮기고 Space로 놓습니다."
+msgstr "Picked up card {key}. Use the arrow keys to change columns and Space to drop."
+
+#. {key}는 게시물 키, {toName}은 옮기려던 상태 이름
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "{key}을(를) {toName}(으)로 옮기지 못했습니다: {reason}"
+msgstr "Couldn't move {key} to {toName}: {reason}"
+
+#. {label}은 보드 칸 이름(상태, 스윔레인이면 '팀 · 상태')
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "{label} {count, plural, other {#건}}"
+msgstr "{label}, {count, plural, one {# post} other {# posts}}"
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "{label} 열 위"
+msgstr "Over the {label} column"
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "{label} 열에 놓았습니다."
+msgstr "Dropped in the {label} column."
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "Space로 카드를 집고, 화살표로 열을 옮긴 뒤 Space로 놓습니다. Esc는 취소, Enter는 카드 열기입니다."
+msgstr "Press Space to pick up a card, move it between columns with the arrow keys, and press Space to drop. Esc cancels, Enter opens the card."
+
+#. 숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgctxt "unit after a card's comment count"
+msgid "개 댓글"
+msgstr " comments"
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "놓을 열이 없어 그대로 둡니다."
+msgstr "No column to drop into; left as is."
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgctxt "blocked post icon"
+msgid "막힘"
+msgstr "Blocked"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgctxt "confirm: reject"
+msgid "반려"
+msgstr "Reject"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "반려 사유 (댓글로 남습니다)"
+msgstr "Reason for rejecting (posted as a comment)"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "반려: {title}"
+msgstr "Reject: {title}"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgctxt "confirm: put on hold"
+msgid "보류"
+msgstr "Hold"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "보류: {title}"
+msgstr "Hold: {title}"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "사유"
+msgstr "Reason"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "사유를 고르세요"
+msgstr "Pick a reason"
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "옮기기를 취소했습니다."
+msgstr "Move cancelled."
+
+#: src/widgets/post-board/ui/PostBoard.tsx
+msgid "옮길 수 있는 카드"
+msgstr "movable card"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "재개 예정일"
+msgstr "Resume on"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgctxt "dismiss dialog"
+msgid "취소"
+msgstr "Cancel"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "취소: {title}"
+msgstr "Cancel: {title}"
+
+#: src/widgets/post-board/ui/move-dialogs.tsx
+msgid "취소로 옮기기"
+msgstr "Move to cancelled"

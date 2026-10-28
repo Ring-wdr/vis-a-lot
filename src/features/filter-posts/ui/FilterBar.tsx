@@ -3,6 +3,7 @@
 // 목록 필터 줄: 검색, 다중 선택(상태·카테고리·우선순위·사람·유형·팀·형식), 태그, 기한 범위, 기한 지남.
 // 상태는 화면이 URL에 들고 있고, 여기서는 바뀐 필터를 onChange로 돌려줄 뿐이다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronDown, Search, X } from "lucide-react";
 import {
   type ReactNode,
@@ -29,11 +30,11 @@ import type {
   StatusNames,
   Team,
 } from "@/shared/api/feed/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { button } from "@/shared/ui/button";
 import { Popover } from "@/shared/ui/Popover";
+import "../config/messages";
 
 export const filterChip = tv({
   slots: {
@@ -56,61 +57,6 @@ export const filterChip = tv({
 });
 
 const c = filterChip();
-
-const messages = defineMessages({
-  ko: {
-    noOptions: "고를 항목이 없습니다",
-    clearAll: "모두 해제",
-    close: "닫기",
-    tagsField: "태그 (쉼표로 여럿)",
-    tagsPlaceholder: "예: 매출, 대시보드",
-    clear: "지우기",
-    apply: "적용",
-    from: "부터",
-    to: "까지",
-    searchPlaceholder: "제목·본문 검색",
-    search: "검색",
-    filter: "필터",
-    status: "상태",
-    category: "카테고리",
-    priority: "우선순위",
-    assignee: "담당자",
-    requester: "요청자",
-    postType: "유형",
-    team: "팀",
-    format: "형식",
-    tags: "태그",
-    due: "기한",
-    overdue: "기한 지남",
-    clearFilters: "필터 지우기",
-  },
-  en: {
-    noOptions: "Nothing to pick",
-    clearAll: "Clear all",
-    close: "Close",
-    tagsField: "Tags (comma-separated)",
-    tagsPlaceholder: "e.g. sales, dashboard",
-    clear: "Clear",
-    apply: "Apply",
-    from: "From",
-    to: "To",
-    searchPlaceholder: "Search title & body",
-    search: "Search",
-    filter: "Filters",
-    status: "Status",
-    category: "Category",
-    priority: "Priority",
-    assignee: "Assignee",
-    requester: "Requester",
-    postType: "Type",
-    team: "Team",
-    format: "Format",
-    tags: "Tags",
-    due: "Due",
-    overdue: "Overdue",
-    clearFilters: "Clear filters",
-  },
-});
 
 export type PickOption<T extends string | number> = {
   value: T;
@@ -136,7 +82,6 @@ export function MultiPick<T extends string | number>({
   /** 고른 것이 있을 때 버튼을 강조한다 (필터). 열 고르기처럼 늘 고른 것이 있으면 끈다 */
   highlight?: boolean;
 }) {
-  const text = useT(messages);
   // URL이 바뀌어 값이 돌아오기 전에도 체크가 바로 보이게, 반영하는 동안만 고른 값을 먼저 보여 준다
   const [value, setOptimistic] = useOptimistic(given);
   const onChange = (next: T[]) =>
@@ -171,7 +116,7 @@ export function MultiPick<T extends string | number>({
           </legend>
           {options.length === 0 ? (
             <p className="px-1.5 py-1 text-xs text-fg-muted">
-              {text.noOptions}
+              <Trans>고를 항목이 없습니다</Trans>
             </p>
           ) : (
             <div className={c.list()}>
@@ -202,14 +147,14 @@ export function MultiPick<T extends string | number>({
               disabled={!value.length}
               onClick={() => onChange([])}
             >
-              {text.clearAll}
+              <Trans>모두 해제</Trans>
             </button>
             <button
               type="button"
               className={button({ size: "sm", variant: "primary" })}
               onClick={close}
             >
-              {text.close}
+              <Trans context="close filter popover">닫기</Trans>
             </button>
           </div>
         </fieldset>
@@ -257,7 +202,7 @@ function TagForm({
   close: () => void;
 }) {
   // 치는 동안은 칸에만 두고, 적용하면 태그로 반영한다.
-  const m = useT(messages);
+  const { t } = useLingui();
   const [text, typing] = usePendingValue(tags.join(", "));
   return (
     <form
@@ -269,7 +214,7 @@ function TagForm({
             ...new Set(
               text
                 .split(",")
-                .map((t) => t.trim())
+                .map((s) => s.trim())
                 .filter(Boolean),
             ),
           ]),
@@ -278,11 +223,11 @@ function TagForm({
       }}
     >
       <label className={c.field()}>
-        {m.tagsField}
+        <Trans>태그 (쉼표로 여럿)</Trans>
         <input
           className={c.input()}
           value={text}
-          placeholder={m.tagsPlaceholder}
+          placeholder={t`예: 매출, 대시보드`}
           onChange={(e) => typing.change(e.currentTarget.value)}
         />
       </label>
@@ -295,13 +240,13 @@ function TagForm({
             close();
           }}
         >
-          {m.clear}
+          <Trans context="clear a filter field">지우기</Trans>
         </button>
         <button
           type="submit"
           className={button({ size: "sm", variant: "primary" })}
         >
-          {m.apply}
+          <Trans>적용</Trans>
         </button>
       </div>
     </form>
@@ -319,7 +264,6 @@ function DueForm({
   onChange: (from: string | undefined, to: string | undefined) => void;
   close: () => void;
 }) {
-  const text = useT(messages);
   return (
     <form
       className="flex flex-col gap-2"
@@ -334,7 +278,7 @@ function DueForm({
       }}
     >
       <label className={c.field()}>
-        {text.from}
+        <Trans context="due date range start">부터</Trans>
         <input
           name="from"
           type="date"
@@ -343,7 +287,7 @@ function DueForm({
         />
       </label>
       <label className={c.field()}>
-        {text.to}
+        <Trans context="due date range end">까지</Trans>
         <input
           name="to"
           type="date"
@@ -360,13 +304,13 @@ function DueForm({
             close();
           }}
         >
-          {text.clear}
+          <Trans context="clear a filter field">지우기</Trans>
         </button>
         <button
           type="submit"
           className={button({ size: "sm", variant: "primary" })}
         >
-          {text.apply}
+          <Trans>적용</Trans>
         </button>
       </div>
     </form>
@@ -386,7 +330,7 @@ function SearchBox({
   value: string;
   onChange: (q: string) => void;
 }) {
-  const m = useT(messages);
+  const { t } = useLingui();
   const [text, typing] = usePendingValue(value);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -415,8 +359,8 @@ function SearchBox({
       <input
         type="search"
         className="size-full rounded-md border border-line bg-elevated pr-2 pl-7 text-xs text-fg"
-        placeholder={m.searchPlaceholder}
-        aria-label={m.search}
+        placeholder={t`제목·본문 검색`}
+        aria-label={t`검색`}
         value={text}
         onChange={(e) => type(e.currentTarget.value)}
         onBlur={leave}
@@ -437,7 +381,7 @@ export type FilterBarProps = {
   compact?: boolean;
 };
 
-/** 라벨은 지금 언어로 읽는다. 그리는 FilterBar가 useT로 언어 변경을 구독한다 */
+/** 라벨은 지금 언어로 읽는다. 그리는 FilterBar가 useLingui로 언어 변경을 구독한다 */
 function priorityOptions() {
   const labels = priorityLabels();
   return ([4, 3, 2, 1, 0] as const).map((p) => ({
@@ -486,7 +430,7 @@ export function FilterBar({
   statusNames,
   compact = false,
 }: FilterBarProps) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const set = <K extends keyof PostFilter>(key: K, value: PostFilter[K]) =>
     onChange(patch(filter, key, value));
   const people = users.map((u) => ({ value: u.id, label: u.name }));
@@ -499,19 +443,19 @@ export function FilterBar({
   return (
     <search
       className="flex flex-wrap items-center gap-1.5"
-      aria-label={text.filter}
+      aria-label={t`필터`}
     >
       <SearchBox value={filter.q ?? ""} onChange={(q) => set("q", q)} />
       {!compact && (
         <>
           <MultiPick
-            label={text.status}
+            label={t({ message: "상태", context: "filter field" })}
             options={statusOptions}
             value={filter.statuses}
             onChange={(v) => set("statuses", v)}
           />
           <MultiPick
-            label={text.category}
+            label={t({ message: "카테고리", context: "filter field" })}
             options={categoryOptions()}
             value={filter.categories}
             onChange={(v) => set("categories", v)}
@@ -519,43 +463,43 @@ export function FilterBar({
         </>
       )}
       <MultiPick
-        label={text.priority}
+        label={t({ message: "우선순위", context: "filter field" })}
         options={priorityOptions()}
         value={filter.priorities}
         onChange={(v) => set("priorities", v)}
       />
       <MultiPick
-        label={text.assignee}
+        label={t({ message: "담당자", context: "filter field" })}
         options={people}
         value={filter.assigneeIds}
         onChange={(v) => set("assigneeIds", v)}
       />
       <MultiPick
-        label={text.requester}
+        label={t({ message: "요청자", context: "filter field" })}
         options={people}
         value={filter.requesterIds}
         onChange={(v) => set("requesterIds", v)}
       />
       <MultiPick
-        label={text.postType}
-        options={postTypes.map((t) => ({ value: t.id, label: t.name }))}
+        label={t({ message: "유형", context: "filter field: post type" })}
+        options={postTypes.map((pt) => ({ value: pt.id, label: pt.name }))}
         value={filter.postTypeIds}
         onChange={(v) => set("postTypeIds", v)}
       />
       <MultiPick
-        label={text.team}
-        options={teams.map((t) => ({ value: t.id, label: t.name }))}
+        label={t({ message: "팀", context: "filter field" })}
+        options={teams.map((tm) => ({ value: tm.id, label: tm.name }))}
         value={filter.teamIds}
         onChange={(v) => set("teamIds", v)}
       />
       <MultiPick
-        label={text.format}
+        label={t({ message: "형식", context: "filter field: post format" })}
         options={formatOptions()}
         value={filter.formats}
         onChange={(v) => set("formats", v)}
       />
       <PopoverForm
-        label={text.tags}
+        label={t({ message: "태그", context: "filter field" })}
         summary={
           filter.tags?.length === 1
             ? filter.tags[0]
@@ -573,7 +517,7 @@ export function FilterBar({
         )}
       </PopoverForm>
       <PopoverForm
-        label={text.due}
+        label={t({ message: "기한", context: "filter field: due date" })}
         width={200}
         summary={
           filter.dueFrom || filter.dueTo
@@ -598,7 +542,7 @@ export function FilterBar({
         aria-pressed={!!filter.overdue}
         onClick={() => set("overdue", !filter.overdue)}
       >
-        {text.overdue}
+        <Trans>기한 지남</Trans>
       </button>
       {active > 0 && (
         <button
@@ -607,7 +551,7 @@ export function FilterBar({
           onClick={() => onChange({})}
         >
           <X size={12} aria-hidden="true" />
-          {text.clearFilters}
+          <Trans>필터 지우기</Trans>
         </button>
       )}
     </search>

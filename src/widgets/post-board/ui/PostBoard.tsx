@@ -20,6 +20,8 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Ban, MessageSquare } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -40,10 +42,11 @@ import {
 import { invalidatePosts } from "@/shared/api/feed/post-queries";
 import { postsApi } from "@/shared/api/feed/posts";
 import type { PostStatus, PostSummary, Team } from "@/shared/api/feed/types";
-import { defineMessages, useLocale, useT } from "@/shared/lib/i18n";
+import { useLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { askCancel, askHold, askReject } from "./move-dialogs";
 
 export type PostBoardProps = {
@@ -57,44 +60,6 @@ export type PostBoardProps = {
 };
 
 const NO_TEAMS: Team[] = [];
-
-const messages = defineMessages({
-  ko: {
-    blocked: "막힘",
-    comments: "개 댓글",
-    draggable: "옮길 수 있는 카드",
-    cellLabel: (label: string, n: number) => `${label} ${n}건`,
-    count: (n: number) => `${n}건`,
-    moveFailed: (key: string, to: string, reason: string) =>
-      `${key}을(를) ${to}(으)로 옮기지 못했습니다: ${reason}`,
-    picked: (key: string) =>
-      `${key} 카드를 집었습니다. 화살표로 열을 옮기고 Space로 놓습니다.`,
-    over: (label: string) => `${label} 열 위`,
-    dropped: (label: string) => `${label} 열에 놓았습니다.`,
-    noTarget: "놓을 열이 없어 그대로 둡니다.",
-    cancelled: "옮기기를 취소했습니다.",
-    instructions:
-      "Space로 카드를 집고, 화살표로 열을 옮긴 뒤 Space로 놓습니다. Esc는 취소, Enter는 카드 열기입니다.",
-  },
-  en: {
-    blocked: "Blocked",
-    comments: " comments",
-    draggable: "movable card",
-    cellLabel: (label: string, n: number) =>
-      `${label}, ${n} ${n === 1 ? "post" : "posts"}`,
-    count: (n: number) => `${n} ${n === 1 ? "post" : "posts"}`,
-    moveFailed: (key: string, to: string, reason: string) =>
-      `Couldn't move ${key} to ${to}: ${reason}`,
-    picked: (key: string) =>
-      `Picked up card ${key}. Use the arrow keys to change columns and Space to drop.`,
-    over: (label: string) => `Over the ${label} column`,
-    dropped: (label: string) => `Dropped in the ${label} column.`,
-    noTarget: "No column to drop into; left as is.",
-    cancelled: "Move cancelled.",
-    instructions:
-      "Press Space to pick up a card, move it between columns with the arrow keys, and press Space to drop. Esc cancels, Enter opens the card.",
-  },
-});
 
 /** 열 머리의 카테고리 표시 */
 const CATEGORY_DOT: Record<PostStatus, string> = {
@@ -148,13 +113,17 @@ const jumpToCell: KeyboardCoordinateGetter = (event, { context }) => {
 };
 
 function BoardCardBody({ post, today }: { post: PostSummary; today: string }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   return (
     <>
       <span className="flex items-center gap-1.5">
         <span className="font-mono text-2xs text-fg-muted">{post.key}</span>
         {post.blocked && (
-          <Ban size={12} className="text-danger" aria-label={text.blocked} />
+          <Ban
+            size={12}
+            className="text-danger"
+            aria-label={t({ message: "막힘", context: "blocked post icon" })}
+          />
         )}
         <span className="ml-auto">
           <PriorityMark priority={post.priority} />
@@ -181,7 +150,14 @@ function BoardCardBody({ post, today }: { post: PostSummary; today: string }) {
             <span className="inline-flex items-center gap-0.5 text-xs text-fg-muted tabular-nums">
               <MessageSquare size={12} aria-hidden="true" />
               {post.commentCount}
-              <span className="sr-only">{text.comments}</span>
+              <span className="sr-only">
+                <Trans
+                  context="unit after a card's comment count"
+                  comment="숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다"
+                >
+                  개 댓글
+                </Trans>
+              </span>
             </span>
           )}
           <DueLabel post={post} today={today} />
@@ -207,12 +183,12 @@ function BoardCard({
   onOpen?: (key: string) => void;
   suppressClick: React.RefObject<boolean>;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { setNodeRef, attributes, listeners, isDragging } = useDraggable({
     id: post.id,
     data: { post } satisfies CardData,
     disabled: pending,
-    attributes: { roleDescription: text.draggable },
+    attributes: { roleDescription: t`옮길 수 있는 카드` },
   });
   return (
     <li className="relative">
@@ -254,7 +230,7 @@ function BoardCell({
   showCount: boolean;
   children: React.ReactNode;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { setNodeRef, isOver } = useDroppable({
     id: `${laneId}|${status}`,
     data: { status, label } satisfies CellData,
@@ -262,13 +238,16 @@ function BoardCell({
   return (
     <section
       ref={setNodeRef}
-      aria-label={text.cellLabel(label, count)}
+      aria-label={t({
+        message: `${label} ${plural(count, { other: "#건" })}`,
+        comment: "{label}은 보드 칸 이름(상태, 스윔레인이면 '팀 · 상태')",
+      })}
       data-over={isOver || undefined}
       className="flex min-h-24 min-w-0 flex-col gap-2 rounded-lg border border-transparent bg-panel p-2 data-over:border-accent data-over:bg-accent-soft"
     >
       {showCount && (
         <p className="px-0.5 text-2xs text-fg-muted tabular-nums">
-          {text.count(count)}
+          {t`${plural(count, { other: "#건" })}`}
         </p>
       )}
       <ul className="flex flex-col gap-2">{children}</ul>
@@ -283,7 +262,7 @@ export function PostBoard({
   onOpen,
   groupId,
 }: PostBoardProps) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const locale = useLocale();
   const client = useQueryClient();
   const today = useToday();
@@ -370,12 +349,14 @@ export function PostBoard({
       forget(post.id);
     } catch (e) {
       forget(post.id);
+      const key = post.key;
+      const toName = label(to);
+      const reason = e instanceof Error ? e.message : String(e);
       showAlert(
-        text.moveFailed(
-          post.key,
-          label(to),
-          e instanceof Error ? e.message : String(e),
-        ),
+        t({
+          message: `${key}을(를) ${toName}(으)로 옮기지 못했습니다: ${reason}`,
+          comment: "{key}는 게시물 키, {toName}은 옮기려던 상태 이름",
+        }),
       );
     }
   }
@@ -398,17 +379,21 @@ export function PostBoard({
   };
 
   const announcements: Announcements = {
-    onDragStart: ({ active }) =>
-      text.picked(
-        (active.data.current as CardData | undefined)?.post.key ?? "",
-      ),
-    onDragOver: ({ over }) =>
-      over ? text.over((over.data.current as CellData).label) : undefined,
-    onDragEnd: ({ over }) =>
-      over
-        ? text.dropped((over.data.current as CellData).label)
-        : text.noTarget,
-    onDragCancel: () => text.cancelled,
+    onDragStart: ({ active }) => {
+      const key = (active.data.current as CardData | undefined)?.post.key ?? "";
+      return t`${key} 카드를 집었습니다. 화살표로 열을 옮기고 Space로 놓습니다.`;
+    },
+    onDragOver: ({ over }) => {
+      if (!over) return undefined;
+      const label = (over.data.current as CellData).label;
+      return t`${label} 열 위`;
+    },
+    onDragEnd: ({ over }) => {
+      if (!over) return t`놓을 열이 없어 그대로 둡니다.`;
+      const label = (over.data.current as CellData).label;
+      return t`${label} 열에 놓았습니다.`;
+    },
+    onDragCancel: () => t`옮기기를 취소했습니다.`,
   };
 
   const pendingIds = new Set(Object.keys(moved));
@@ -427,7 +412,7 @@ export function PostBoard({
       accessibility={{
         announcements,
         screenReaderInstructions: {
-          draggable: text.instructions,
+          draggable: t`Space로 카드를 집고, 화살표로 열을 옮긴 뒤 Space로 놓습니다. Esc는 취소, Enter는 카드 열기입니다.`,
         },
       }}
     >

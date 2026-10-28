@@ -2,6 +2,7 @@
 
 // 고른 게시물 일괄 변경 줄: 상태·우선순위·담당자·기한·유형·팀. 끝나면 바뀐 수와 실패 이유를 보인다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, CircleCheck, X } from "lucide-react";
 import { useState } from "react";
@@ -19,9 +20,9 @@ import type {
   StatusNames,
   Team,
 } from "@/shared/api/feed/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 
 type Patch = BulkUpdateRequest["patch"];
 
@@ -40,47 +41,6 @@ export type BulkSummary = {
 
 const c = filterChip();
 
-const messages = defineMessages({
-  ko: {
-    none: "없음",
-    toolbar: "일괄 변경",
-    selected: (n: number) => `${n}건 선택`,
-    status: "상태",
-    priority: "우선순위",
-    assignee: "담당자",
-    noAssignee: "담당자 없음",
-    due: "기한",
-    clearDue: "기한 없애기",
-    newDue: "새 기한",
-    apply: "적용",
-    postType: "유형",
-    team: "팀",
-    clearSelection: "선택 해제",
-    updated: (n: number) => `${n}건 바꿈`,
-    failed: (n: number) => `· ${n}건 실패`,
-    closeResult: "결과 닫기",
-  },
-  en: {
-    none: "None",
-    toolbar: "Bulk edit",
-    selected: (n: number) => `${n} selected`,
-    status: "Status",
-    priority: "Priority",
-    assignee: "Assignee",
-    noAssignee: "No assignee",
-    due: "Due",
-    clearDue: "Clear due date",
-    newDue: "New due date",
-    apply: "Apply",
-    postType: "Type",
-    team: "Team",
-    clearSelection: "Deselect",
-    updated: (n: number) => `${n} updated`,
-    failed: (n: number) => `· ${n} failed`,
-    closeResult: "Close result",
-  },
-});
-
 export function BulkBar({
   posts,
   selected,
@@ -98,7 +58,7 @@ export function BulkBar({
   postTypes: readonly PostType[];
   statusNames?: StatusNames;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<BulkSummary | null>(null);
@@ -140,58 +100,73 @@ export function BulkBar({
     }
   }
 
-  const none = { value: null, label: text.none } as const;
+  const none = {
+    value: null,
+    label: t({ message: "없음", context: "bulk edit: clear the field" }),
+  } as const;
+  const count = ids.length;
+  const statusField = t`상태`;
+  const priorityField = t`우선순위`;
+  const assigneeField = t`담당자`;
+  const dueField = t({ message: "기한", context: "bulk edit field: due date" });
+  const postTypeField = t({
+    message: "유형",
+    context: "bulk edit field: post type",
+  });
+  const teamField = t`팀`;
 
   if (!ids.length && !summary) return null;
+  const updated = summary?.updated ?? 0;
+  const failed = summary?.failed.length ?? 0;
 
   return (
     <div className="flex flex-col gap-2">
       {ids.length > 0 && (
         <div
           role="toolbar"
-          aria-label={text.toolbar}
+          aria-label={t`일괄 변경`}
           className="flex flex-wrap items-center gap-1.5 rounded-lg border border-accent-line bg-accent-soft px-2.5 py-1.5"
         >
           <span className="text-xs font-semibold whitespace-nowrap text-accent tabular-nums">
-            {text.selected(ids.length)}
+            {t`${count}건 선택`}
           </span>
           {busy && <Spinner size="sm" />}
           <SinglePick
-            label={text.status}
+            label={statusField}
             showValue={false}
             disabled={busy}
             options={BULK_STATUSES.map((s) => ({
               value: s,
               label: statusLabel(s, statusNames),
             }))}
-            onPick={(status) => apply({ status }, text.status)}
+            onPick={(status) => apply({ status }, statusField)}
           />
           <SinglePick
-            label={text.priority}
+            label={priorityField}
             showValue={false}
             disabled={busy}
             options={([4, 3, 2, 1, 0] as const).map((p) => ({
               value: p as number,
               label: priorityLabel(p),
             }))}
-            onPick={(priority) => apply({ priority }, text.priority)}
+            onPick={(priority) => apply({ priority }, priorityField)}
           />
           <SinglePick<string | null>
-            label={text.assignee}
+            label={assigneeField}
             showValue={false}
             disabled={busy}
             options={[
-              { value: null, label: text.noAssignee },
+              { value: null, label: t`담당자 없음` },
               ...users.map((u) => ({ value: u.id, label: u.name })),
             ]}
-            onPick={(assigneeId) => apply({ assigneeId }, text.assignee)}
+            onPick={(assigneeId) => apply({ assigneeId }, assigneeField)}
           />
           <SinglePick<string | null>
-            label={text.due}
+            label={dueField}
             showValue={false}
             disabled={busy}
-            options={[{ value: null, label: text.clearDue }]}
-            onPick={() => apply({ dueDate: null }, text.due)}
+            options={[{ value: null, label: t`기한 없애기` }]}
+            onPick={() => apply({ dueDate: null }, dueField)}
             footer={(close) => (
               <form
                 className="mt-2 flex items-center gap-1.5 border-t border-line pt-2"
@@ -199,12 +174,12 @@ export function BulkBar({
                   e.preventDefault();
                   if (!due) return;
                   close();
-                  void apply({ dueDate: due }, text.due);
+                  void apply({ dueDate: due }, dueField);
                 }}
               >
                 <input
                   type="date"
-                  aria-label={text.newDue}
+                  aria-label={t`새 기한`}
                   className={c.input({ class: "min-w-0 flex-1" })}
                   value={due}
                   onChange={(e) => setDue(e.currentTarget.value)}
@@ -214,30 +189,30 @@ export function BulkBar({
                   className={button({ size: "sm", variant: "primary" })}
                   disabled={!due}
                 >
-                  {text.apply}
+                  <Trans>적용</Trans>
                 </button>
               </form>
             )}
           />
           <SinglePick<string | null>
-            label={text.postType}
+            label={postTypeField}
             showValue={false}
             disabled={busy}
             options={[
               none,
-              ...postTypes.map((t) => ({ value: t.id, label: t.name })),
+              ...postTypes.map((pt) => ({ value: pt.id, label: pt.name })),
             ]}
-            onPick={(postTypeId) => apply({ postTypeId }, text.postType)}
+            onPick={(postTypeId) => apply({ postTypeId }, postTypeField)}
           />
           <SinglePick<string | null>
-            label={text.team}
+            label={teamField}
             showValue={false}
             disabled={busy}
             options={[
               none,
-              ...teams.map((t) => ({ value: t.id, label: t.name })),
+              ...teams.map((tm) => ({ value: tm.id, label: tm.name })),
             ]}
-            onPick={(teamId) => apply({ teamId }, text.team)}
+            onPick={(teamId) => apply({ teamId }, teamField)}
           />
           <button
             type="button"
@@ -245,7 +220,7 @@ export function BulkBar({
             onClick={() => onSelectedChange(new Set())}
           >
             <X size={12} aria-hidden="true" />
-            {text.clearSelection}
+            <Trans>선택 해제</Trans>
           </button>
         </div>
       )}
@@ -256,18 +231,14 @@ export function BulkBar({
         >
           <span className="flex items-center gap-1.5">
             <CircleCheck size={14} className="text-accent" aria-hidden="true" />
-            <span className="font-semibold">
-              {text.updated(summary.updated)}
-            </span>
+            <span className="font-semibold">{t`${updated}건 바꿈`}</span>
             {summary.failed.length > 0 && (
-              <span className="text-danger">
-                {text.failed(summary.failed.length)}
-              </span>
+              <span className="text-danger">{t`· ${failed}건 실패`}</span>
             )}
             <button
               type="button"
               className="ml-auto cursor-pointer text-fg-muted hover:text-fg"
-              aria-label={text.closeResult}
+              aria-label={t`결과 닫기`}
               onClick={() => setSummary(null)}
             >
               <X size={12} aria-hidden="true" />

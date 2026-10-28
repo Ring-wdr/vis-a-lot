@@ -2,12 +2,13 @@
 
 // 알림 읽음·안읽음·보관. 바꾼 뒤 알림함과 안읽음 배지(feedKeys.notifications 아래)를 다시 받는다.
 
+import { t } from "@lingui/core/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { errorMessage } from "@/entities/post/model/use-post-action";
 import { notificationsApi } from "@/shared/api/feed/notifications";
 import { feedKeys } from "@/shared/api/feed/queries";
-import { defineMessages, t } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import "../config/messages";
 
 export type InboxChange = "read" | "unread" | "archive";
 
@@ -17,22 +18,17 @@ const CALLS = {
   archive: notificationsApi.archive,
 } satisfies Record<InboxChange, unknown>;
 
-const messages = defineMessages<{ failures: Record<InboxChange, string> }>({
-  ko: {
-    failures: {
-      read: "읽음으로 바꾸지 못했습니다",
-      unread: "안읽음으로 바꾸지 못했습니다",
-      archive: "보관하지 못했습니다",
-    },
-  },
-  en: {
-    failures: {
-      read: "Couldn't mark as read",
-      unread: "Couldn't mark as unread",
-      archive: "Couldn't archive",
-    },
-  },
-});
+/** 지금 언어로 실패 문구를 만든다 */
+function failure(change: InboxChange): string {
+  switch (change) {
+    case "read":
+      return t`읽음으로 바꾸지 못했습니다`;
+    case "unread":
+      return t`안읽음으로 바꾸지 못했습니다`;
+    case "archive":
+      return t`보관하지 못했습니다`;
+  }
+}
 
 /** 한 번에 500개까지 받으므로 나눠 보낸다 */
 const CHUNK = 500;
@@ -56,6 +52,6 @@ export function useInboxAction() {
         client.invalidateQueries({ queryKey: feedKeys.unreadCount }),
       ]),
     onError: (err, { change }) =>
-      showAlert(`${t(messages).failures[change]}: ${errorMessage(err)}`),
+      showAlert(`${failure(change)}: ${errorMessage(err)}`),
   });
 }
