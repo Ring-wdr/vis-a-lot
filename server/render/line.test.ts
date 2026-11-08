@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createRandom } from "../data/random";
-import { m4, runsOf, seriesOrder, sortByValue } from "./line";
+import { m4, runsOf, seriesOrder, sortedByValue } from "./line";
 
 describe("seriesOrder", () => {
   it("legend 계열별로 나눠 x 순으로 정렬하고, x가 같으면 원래 순서를 지킨다", () => {
@@ -130,15 +130,13 @@ function randomPoints(n: number, seed: number) {
 
 const identity = (n: number) => Int32Array.from({ length: n }, (_, i) => i);
 
-describe("sortByValue", () => {
+describe("sortedByValue", () => {
   for (const n of [0, 1, 2, 3, 100, 20_000]) {
     it(`n=${n}: 비교 함수 정렬과 같다`, () => {
       const { xs } = randomPoints(n, n + 1);
       const expected = identity(n);
       compareSort(xs, expected);
-      const order = identity(n);
-      sortByValue(xs, order);
-      expect(order).toEqual(expected);
+      expect(sortedByValue(xs, identity(n))).toEqual(expected);
     });
   }
 
@@ -160,15 +158,23 @@ describe("sortByValue", () => {
     const order = Int32Array.of(0, 1, 2, 3, 5, 6, 7, 8, 9, 10);
     const expected = order.slice();
     compareSort(xs, expected);
-    sortByValue(xs, order);
-    expect(order).toEqual(expected);
+    expect(sortedByValue(xs, order)).toEqual(expected);
   });
 
   it("NaN은 맨 뒤로 보낸다", () => {
     const xs = Float64Array.of(2, Number.NaN, 1, -Number.NaN);
-    const order = identity(4);
-    sortByValue(xs, order);
-    expect([...order]).toEqual([2, 0, 1, 3]);
+    expect([...sortedByValue(xs, identity(4))]).toEqual([2, 0, 1, 3]);
+  });
+
+  it("넘긴 order는 바꾸지 않고 새 배열을 돌려준다", () => {
+    const xs = Float64Array.of(3, 1, 2);
+    for (const order of [identity(3), identity(1), identity(0)]) {
+      const before = order.slice();
+      const sorted = sortedByValue(xs, order);
+      expect(order).toEqual(before);
+      expect(sorted).not.toBe(order);
+    }
+    expect([...sortedByValue(xs, [0, 1, 2])]).toEqual([1, 2, 0]);
   });
 
   it("seriesOrder가 계열마다 같은 결과를 낸다", () => {
@@ -189,8 +195,7 @@ describe("m4 (바꾸기 전과 같은지)", () => {
   for (const n of [0, 1, 2, 7, 1000, 50_000]) {
     it(`n=${n}`, () => {
       const { xs, ys } = randomPoints(n, n + 3);
-      const order = identity(n);
-      sortByValue(xs, order);
+      const order = sortedByValue(xs, identity(n));
       // 800px 폭에 펴고, 일부는 그림 영역 밖으로
       const [x0, x1] = [Date.UTC(2026, 0, 1), Date.UTC(2027, 0, 1)];
       const sx = Float32Array.from(

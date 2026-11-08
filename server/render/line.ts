@@ -27,18 +27,18 @@ export function seriesOrder(
     if (off[g]) continue;
     out[g][fill[g]++] = i;
   }
-  for (const order of out) {
-    // 이미 정렬된 경우(시각 순으로 쌓인 데이터)가 많아 먼저 확인한다.
-    let sorted = true;
-    for (let k = 1; k < order.length; k++) {
-      if (xs[order[k]] < xs[order[k - 1]]) {
-        sorted = false;
-        break;
-      }
-    }
-    if (!sorted) sortByValue(xs, order);
+  // 이미 정렬된 경우(시각 순으로 쌓인 데이터)가 많아 먼저 확인하고, 아니면 정렬한 새 배열로 바꾼다.
+  return out.map((order) =>
+    isSortedBy(xs, order) ? order : sortedByValue(xs, order),
+  );
+}
+
+/** order 순서대로 xs 값이 줄지 않는지 */
+function isSortedBy(xs: ArrayLike<number>, order: ArrayLike<number>) {
+  for (let k = 1; k < order.length; k++) {
+    if (xs[order[k]] < xs[order[k - 1]]) return false;
   }
-  return out;
+  return true;
 }
 
 const RADIX_BITS = 11;
@@ -46,15 +46,19 @@ const RADIX = 1 << RADIX_BITS;
 const RADIX_MASK = RADIX - 1;
 
 /**
- * order(행 번호)를 xs 값 순으로 제자리 정렬한다. 값이 같으면 원래 순서를 지킨다 (안정).
- * seriesOrder처럼 order가 오름차순이면 `order.sort((a, b) => xs[a] - xs[b] || a - b)`와 같다.
+ * order(행 번호)를 xs 값 순으로 늘어놓은 새 배열. order는 바꾸지 않는다.
+ * 값이 같으면 order 안의 원래 순서를 지킨다 (안정).
+ * seriesOrder처럼 order가 오름차순이면 `[...order].sort((a, b) => xs[a] - xs[b] || a - b)`와 같다.
  * 비교 함수 정렬보다 7~8배 빠르다 (100만 행 518ms → 68ms, Chromium).
  * f64 비트를 크기 순서를 지키는 64비트 키로 바꿔 11비트씩 6번 LSD 기수 정렬한다.
  * -0은 0과 같게 본다. NaN은 맨 뒤로 간다 (비교 함수 정렬은 NaN이 섞이면 순서가 정해지지 않았다).
  */
-export function sortByValue(xs: ArrayLike<number>, order: Int32Array) {
+export function sortedByValue(
+  xs: ArrayLike<number>,
+  order: ArrayLike<number>,
+): Int32Array {
   const n = order.length;
-  if (n < 2) return;
+  if (n < 2) return Int32Array.from(order);
   const f = new Float64Array(1);
   const u = new Uint32Array(f.buffer);
   const hi = new Uint32Array(n);
@@ -101,8 +105,9 @@ export function sortByValue(xs: ArrayLike<number>, order: Int32Array) {
     pos = next;
     next = t;
   }
-  const original = order.slice();
-  for (let k = 0; k < n; k++) order[k] = original[pos[k]];
+  const sorted = new Int32Array(n);
+  for (let k = 0; k < n; k++) sorted[k] = order[pos[k]];
+  return sorted;
 }
 
 /**
