@@ -32,3 +32,9 @@ segment는 `ui`, `model`, `api`, `lib`, `config` 중 하나다.
 ## 계획·스펙 문서
 
 스펙이나 계획에 화면 코드 위치를 적을 때는 위 레이어 위치로 적는다. 병렬 작업이 편하다는 이유로 도메인 폴더를 만들지 않는다.
+
+## 상태 위임
+
+zustand store(`useWorkspace`, `useTabs`)는 컨테이너가 구독한다. 컨테이너는 views, widgets, features의 컴포넌트 중 상태를 모아 화면을 꾸리는 쪽이다 (`ChartGrid`, `DrawnItem`, `SettingsBody`). 표현만 하는 컴포넌트는 store를 부르지 않는다. `shared/ui`, `entities/*/ui`, 그리고 features 안의 표현 컴포넌트(설정 팝업의 구역, item 도구 줄)가 여기에 든다. 이런 컴포넌트는 값과 콜백을 props로 받는다. 그래야 다른 scope나 테스트에서 그대로 쓸 수 있고, 값이 어디서 오는지 컨테이너만 보면 알 수 있다.
+
+selector는 원자 단위로 고른다. 필요한 필드나 boolean을 고르고(`s.itemJobs[key] !== undefined`), 렌더에 쓰지 않는 값은 핸들러 안에서 `store.getState()`로 읽는다. selector가 `filter`·`map`·객체 리터럴로 새 참조를 만들면 `useShallow`(`zustand/react/shallow`)로 감싼다. action은 `useWorkspace((s) => s.setX)`로 꺼내면 참조가 바뀌지 않는다. 목록은 부모가 id(또는 react-query가 참조를 지켜 주는 item)만 넘기고, `memo`한 아이템이 자기 상태를 직접 고른다. 렌더 횟수 회귀는 `*.render.test.tsx`가 잡는다 ([state-subscriptions.md](state-subscriptions.md)).
