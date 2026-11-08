@@ -68,6 +68,10 @@ msgstr "{label}: none"
 msgid "{minutes, plural, other {#분 전}}"
 msgstr "{minutes, plural, other {#m ago}}"
 
+#: src/shared/ui/Loading.tsx
+msgid "{step}에 실패했습니다: {error}"
+msgstr "{step} failed: {error}"
+
 #: src/shared/lib/ai/mock.ts
 msgid "# {group} 활동 보고 ({from} ~ {to})"
 msgstr "# {group} activity report ({from} – {to})"
@@ -162,6 +166,10 @@ msgstr "Downloads, data table, copying links, posting to the feed"
 msgid "다음 게시물을 두 문장 이내로 요약하라."
 msgstr "Summarize the following post in at most two sentences."
 
+#: src/shared/ui/FeedPlaceholder.tsx
+msgid "다음 단계에서 만드는 화면입니다."
+msgstr "This screen is coming in a later step."
+
 #. name은 담당자 이름
 #. name은 담당자 이름
 #: src/shared/lib/ai/chrome.ts
@@ -193,6 +201,10 @@ msgstr "Upload data, draw and explore charts, revisit your history and share"
 #: src/shared/config/chart-kinds.ts
 msgid "도착 (y)"
 msgstr "Target (y)"
+
+#: src/shared/ui/Loading.tsx
+msgid "로그인 확인 중"
+msgstr "Checking sign-in"
 
 #: src/shared/config/help.ts
 msgid "로그인과 화면 구성"
@@ -250,6 +262,10 @@ msgstr "Body: {body}"
 msgid "분홍"
 msgstr "Pink"
 
+#: src/shared/ui/Loading.tsx
+msgid "브라우저 안의 서버를 띄우는 중"
+msgstr "Starting the in-browser server"
+
 #: src/shared/lib/palette.ts
 msgid "빨강"
 msgstr "Red"
@@ -266,6 +282,11 @@ msgstr "Deleted data"
 #: src/shared/lib/ai/chrome.ts
 msgid "새 게시물의 유형·우선순위(0 없음 ~ 4 긴급)·담당자를 추천하라. 모르면 빈 문자열이나 0을 쓴다."
 msgstr "Suggest the type, priority (0 none to 4 urgent) and assignee for a new post. If unsure, use an empty string or 0."
+
+#: src/shared/ui/Loading.tsx
+msgctxt "reload page"
+msgid "새로고침"
+msgstr "Reload"
 
 #: src/shared/config/help.ts
 msgid "샘플 데이터 등록, CSV·zip 올리기, 데이터스토어"
@@ -340,6 +361,10 @@ msgstr "Median"
 #: src/shared/config/help.ts
 msgid "차트 그리기"
 msgstr "Drawing charts"
+
+#: src/shared/ui/Loading.tsx
+msgid "차트 기본값을 받는 중"
+msgstr "Fetching chart defaults"
 
 #: src/shared/config/help.ts
 msgid "차트 살펴보기"
@@ -418,6 +443,11 @@ msgstr "Filters"
 #: src/shared/config/dataset.ts
 msgid "합계"
 msgstr "Sum"
+
+#: src/shared/ui/Loading.tsx
+msgctxt "boot step"
+msgid "화면을 불러오는 중"
+msgstr "Loading the app"
 
 #: src/shared/ui/AlertDialog.tsx
 msgctxt "dialog button"

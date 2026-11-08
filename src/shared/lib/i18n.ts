@@ -102,6 +102,7 @@ export function useApplyLocale() {
 export const INTL_LOCALE: Record<Locale, string> = {
   ko: "ko-KR",
   en: "en-US",
+  ja: "ja-JP",
 };
 
 /** 지금 언어의 Intl locale 태그. Intl.DateTimeFormat·toLocaleString에 넘긴다. */

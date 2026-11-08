@@ -1,0 +1,205 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. placeholder {0}: g.memberCount
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "group member count"
+msgid "{0, plural, other {#명}}"
+msgstr "{0, plural, other {#人}}"
+
+#. placeholder {0}: users.data.length
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "user count"
+msgid "{0, plural, other {#명}}"
+msgstr "{0, plural, other {#人}}"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "{name} 그룹 설정"
+msgstr "{name} グループ設定"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "{name} 비활성화"
+msgstr "{name}を無効化"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "{name} 시스템 관리자"
+msgstr "{name} システム管理者"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "{name}님을 비활성화할까요? 사용자 전환 목록과 담당자 선택에서 빠집니다."
+msgstr "{name}さんを無効化しますか？ユーザー切り替えリストと担当者の選択肢から外れます。"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "{name}님을 비활성화했습니다. 넘겨줄 열린 게시물은 없습니다."
+msgstr "{name}さんを無効化しました。引き継ぐオープンな投稿はありません。"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "{name}님을 비활성화했습니다. 담당·요청 중인 열린 게시물 {open}개를 다른 사람에게 넘겨 주세요."
+msgstr "{name}さんを無効化しました。担当・依頼中のオープンな投稿{open}件を他の人に引き継いでください。"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column: group visibility"
+msgid "공개"
+msgstr "公開"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "group visibility"
+msgid "공개"
+msgstr "公開"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin console page title"
+msgid "관리 콘솔"
+msgstr "管理コンソール"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column, narrow screen"
+msgid "관리자"
+msgstr "管理者"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin console section"
+msgid "그룹"
+msgstr "グループ"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "link to group settings"
+msgid "그룹 설정"
+msgstr "グループ設定"
+
+#. placeholder {0}: groups.error.message
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "그룹을 불러오지 못했습니다: {0}"
+msgstr "グループを読み込めませんでした: {0}"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "marks the current user in a list"
+msgid "나"
+msgstr "自分"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "내 시스템 관리자 권한을 해제할까요? 해제하면 이 화면을 더 볼 수 없습니다."
+msgstr "自分のシステム管理者権限を解除しますか？解除するとこの画面は表示できなくなります。"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "close deactivation notice"
+msgid "닫기"
+msgstr "閉じる"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "동작"
+msgstr "操作"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "멤버"
+msgstr "メンバー"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "group visibility"
+msgid "비공개"
+msgstr "非公開"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "user account state"
+msgid "비활성"
+msgstr "無効"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "deactivate user"
+msgid "비활성화"
+msgstr "無効化"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "비활성화하지 못했습니다: {error}"
+msgstr "無効化できませんでした: {error}"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin console section"
+msgid "사용자"
+msgstr "ユーザー"
+
+#. placeholder {0}: users.error.message
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "사용자를 불러오지 못했습니다: {0}"
+msgstr "ユーザーを読み込めませんでした: {0}"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "사용자를 비활성화하거나 시스템 관리자로 지정하고, 그룹을 살펴봅니다."
+msgstr "ユーザーの無効化やシステム管理者の指定を行い、グループを確認します。"
+
+#. placeholder {0}: me.error.message
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "사용자를 확인하지 못했습니다: {0}"
+msgstr "ユーザーを確認できませんでした: {0}"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "상단의 사용자 전환에서 시스템 관리자로 바꾸면 이 화면을 볼 수 있습니다."
+msgstr "上部のユーザー切り替えでシステム管理者に切り替えると、この画面を表示できます。"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "상태"
+msgstr "ステータス"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "설정"
+msgstr "設定"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "시스템 관리자"
+msgstr "システム管理者"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "시스템 관리자 지정을 바꾸지 못했습니다: {error}"
+msgstr "システム管理者の指定を変更できませんでした: {error}"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "시스템 관리자만 볼 수 있습니다"
+msgstr "システム管理者のみ表示できます"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "이름"
+msgstr "名前"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column"
+msgid "이메일"
+msgstr "メール"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "자기 자신은 비활성화할 수 없습니다"
+msgstr "自分自身は無効化できません"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "admin table column: group key prefix"
+msgid "키"
+msgstr "キー"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "remove own system admin role"
+msgid "해제"
+msgstr "解除"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgid "홈으로"
+msgstr "ホームへ"
+
+#: src/views/feed-admin/ui/AdminView.tsx
+msgctxt "user account state"
+msgid "활성"
+msgstr "有効"

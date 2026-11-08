@@ -45,10 +45,11 @@ import { ActivityControls } from "./ActivityControls";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { DraftPanel } from "./DraftPanel";
 
-/** 숫자 칸의 단위. 영어는 단위 없이 숫자만 쓴다 (번역할 문구가 없어 언어별로 둔다) */
+/** 숫자 칸의 단위. 영어는 단위 없이 숫자만 쓴다 (번역할 문구가 없는 언어가 있어 언어별로 둔다) */
 const COUNT_UNIT: Record<Locale, string | undefined> = {
   ko: "건",
   en: undefined,
+  ja: "件",
 };
 
 export function ActivityReportView() {

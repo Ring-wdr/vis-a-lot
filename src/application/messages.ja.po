@@ -1,0 +1,90 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/application/HelpShell.tsx
+msgid "vis-a-lot 도움말"
+msgstr "vis-a-lot ヘルプ"
+
+#: src/application/FeedTopBar.tsx
+msgid "검색·명령"
+msgstr "検索・コマンド"
+
+#: src/application/FeedBoot.tsx
+msgid "고를 수 있는 활성 사용자가 없습니다."
+msgstr "選択できるアクティブなユーザーがいません。"
+
+#: src/application/FeedBoot.tsx
+#: src/application/FeedBootScreen.tsx
+msgid "다시 시도"
+msgstr "再試行"
+
+#: src/application/FeedTopBar.tsx
+msgid "메뉴"
+msgstr "メニュー"
+
+#: src/application/FeedShell.tsx
+msgid "메뉴 닫기"
+msgstr "メニューを閉じる"
+
+#: src/application/HelpShell.tsx
+msgid "목차 닫기"
+msgstr "目次を閉じる"
+
+#: src/application/HelpShell.tsx
+msgid "목차 열기"
+msgstr "目次を開く"
+
+#: src/application/dev-client-app.tsx
+msgid "불러오는 중…"
+msgstr "読み込み中…"
+
+#: src/application/FeedBoot.tsx
+msgid "사용자 목록을 다시 불러오는 중"
+msgstr "ユーザー一覧を再読み込み中"
+
+#: src/application/FeedBoot.tsx
+msgid "사용자 목록을 불러오지 못했습니다: {reason}"
+msgstr "ユーザー一覧を読み込めませんでした: {reason}"
+
+#: src/application/FeedBoot.tsx
+msgid "사용자를 고르는 중"
+msgstr "ユーザーを選択中"
+
+#: src/application/FeedTopBar.tsx
+msgid "새 게시물"
+msgstr "新しい投稿"
+
+#: src/application/HelpShell.tsx
+msgid "서비스"
+msgstr "サービス"
+
+#: src/application/HelpShell.tsx
+msgid "시각화"
+msgstr "可視化"
+
+#: src/application/FeedBootScreen.tsx
+#: src/application/HelpShell.tsx
+msgid "피드"
+msgstr "フィード"
+
+#: src/application/FeedBoot.tsx
+msgid "피드 데이터 준비에 실패했습니다"
+msgstr "フィードデータの準備に失敗しました"
+
+#: src/application/FeedBoot.tsx
+msgid "피드 데이터를 준비하는 중"
+msgstr "フィードデータを準備中"
+
+#: src/application/PreferencesMenu.tsx
+msgid "화면 설정"
+msgstr "画面設定"
+
+#: src/application/feed-root.tsx
+msgid "화면을 불러오는 중"
+msgstr "画面を読み込み中"

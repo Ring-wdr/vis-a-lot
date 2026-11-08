@@ -68,6 +68,10 @@ msgstr "{label}: 없음"
 msgid "{minutes, plural, other {#분 전}}"
 msgstr "{minutes, plural, other {#분 전}}"
 
+#: src/shared/ui/Loading.tsx
+msgid "{step}에 실패했습니다: {error}"
+msgstr "{step}에 실패했습니다: {error}"
+
 #: src/shared/lib/ai/mock.ts
 msgid "# {group} 활동 보고 ({from} ~ {to})"
 msgstr "# {group} 활동 보고 ({from} ~ {to})"
@@ -162,6 +166,10 @@ msgstr "다운로드, 데이터 테이블, 링크 복사, 피드에 올리기"
 msgid "다음 게시물을 두 문장 이내로 요약하라."
 msgstr "다음 게시물을 두 문장 이내로 요약하라."
 
+#: src/shared/ui/FeedPlaceholder.tsx
+msgid "다음 단계에서 만드는 화면입니다."
+msgstr "다음 단계에서 만드는 화면입니다."
+
 #. name은 담당자 이름
 #. name은 담당자 이름
 #: src/shared/lib/ai/chrome.ts
@@ -193,6 +201,10 @@ msgstr "데이터를 올리고 차트를 그려 살펴보고, 기록을 다시 �
 #: src/shared/config/chart-kinds.ts
 msgid "도착 (y)"
 msgstr "도착 (y)"
+
+#: src/shared/ui/Loading.tsx
+msgid "로그인 확인 중"
+msgstr "로그인 확인 중"
 
 #: src/shared/config/help.ts
 msgid "로그인과 화면 구성"
@@ -250,6 +262,10 @@ msgstr "본문: {body}"
 msgid "분홍"
 msgstr "분홍"
 
+#: src/shared/ui/Loading.tsx
+msgid "브라우저 안의 서버를 띄우는 중"
+msgstr "브라우저 안의 서버를 띄우는 중"
+
 #: src/shared/lib/palette.ts
 msgid "빨강"
 msgstr "빨강"
@@ -266,6 +282,11 @@ msgstr "삭제된 데이터"
 #: src/shared/lib/ai/chrome.ts
 msgid "새 게시물의 유형·우선순위(0 없음 ~ 4 긴급)·담당자를 추천하라. 모르면 빈 문자열이나 0을 쓴다."
 msgstr "새 게시물의 유형·우선순위(0 없음 ~ 4 긴급)·담당자를 추천하라. 모르면 빈 문자열이나 0을 쓴다."
+
+#: src/shared/ui/Loading.tsx
+msgctxt "reload page"
+msgid "새로고침"
+msgstr "새로고침"
 
 #: src/shared/config/help.ts
 msgid "샘플 데이터 등록, CSV·zip 올리기, 데이터스토어"
@@ -340,6 +361,10 @@ msgstr "중앙값"
 #: src/shared/config/help.ts
 msgid "차트 그리기"
 msgstr "차트 그리기"
+
+#: src/shared/ui/Loading.tsx
+msgid "차트 기본값을 받는 중"
+msgstr "차트 기본값을 받는 중"
 
 #: src/shared/config/help.ts
 msgid "차트 살펴보기"
@@ -418,6 +443,11 @@ msgstr "필터"
 #: src/shared/config/dataset.ts
 msgid "합계"
 msgstr "합계"
+
+#: src/shared/ui/Loading.tsx
+msgctxt "boot step"
+msgid "화면을 불러오는 중"
+msgstr "화면을 불러오는 중"
 
 #: src/shared/ui/AlertDialog.tsx
 msgctxt "dialog button"

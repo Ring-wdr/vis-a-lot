@@ -1,0 +1,47 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. view: 화면 이름 gallery 또는 history (번역하지 않는다)
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "{view} 탭"
+msgstr "{view} タブ"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "뒤 탭 보기"
+msgstr "後ろのタブを表示"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#. name: 데이터셋 이름
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "새 차트 · {name}"
+msgstr "新しいチャート · {name}"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "새 탭"
+msgstr "新しいタブ"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "앞 탭 보기"
+msgstr "前のタブを表示"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "왼쪽 목록에서 고르면 탭으로 열립니다."
+msgstr "左のリストから選ぶとタブで開きます。"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgid "탭 닫기"
+msgstr "タブを閉じる"
+
+#: src/widgets/tab-bar/ui/TabBar.tsx
+msgctxt "filter panel button"
+msgid "필터"
+msgstr "フィルター"

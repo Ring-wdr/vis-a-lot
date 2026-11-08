@@ -3,8 +3,9 @@ import { LOCALES, type Locale } from "@/shared/config/locale";
 
 // 언어마다 <html lang>에 맞을 때만 보이는 클래스. 언어를 더하면 app/globals.css의 lang-* 변형과 함께 늘린다.
 const DISPLAY: Record<Locale, string> = {
-  ko: "contents lang-en:hidden",
+  ko: "contents lang-en:hidden lang-ja:hidden",
   en: "hidden lang-en:contents",
+  ja: "hidden lang-ja:contents",
 };
 
 /**

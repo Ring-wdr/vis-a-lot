@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgid "{label} 바꾸기"
+msgstr "{label}を変更"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "{label} 속성"
+msgstr "{label}のプロパティ"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "{value} 색 바꾸기"
+msgstr "{value} の色を変更"
+
+#: src/features/chart-settings/ui/LegendSettings.tsx
+msgid "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다."
+msgstr "legend を選ぶとこの位置に描画します。現在 legend はありません。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "x 값"
+msgstr "x 値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "X 값"
+msgstr "X 値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "X축"
+msgstr "X軸"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "y 값"
+msgstr "y 値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "Y 값"
+msgstr "Y 値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "Y축"
+msgstr "Y軸"
+
+#: src/features/chart-settings/ui/TooltipSettings.tsx
+msgid "가까운 점"
+msgstr "最寄りの点"
+
+#: src/features/chart-settings/ui/TooltipSettings.tsx
+msgid "가까운 점 표시"
+msgstr "最寄りの点を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "가운데"
+msgstr "中央"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "각도"
+msgstr "角度"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "감쇠"
+msgstr "減衰"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "값"
+msgstr "値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "값"
+msgstr "値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "강조"
+msgstr "強調"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "강조 쓰기"
+msgstr "強調を使う"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "계절 계수 γ (비우면 자동)"
+msgstr "季節係数 γ (空欄で自動)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "계절 길이"
+msgstr "季節の長さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "계절 방식"
+msgstr "季節の方式"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "고정 크기"
+msgstr "固定サイズ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "곱셈"
+msgstr "乗法"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split name example"
+msgid "공장"
+msgstr "工場"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "공정 능력 (Cpk)"
+msgstr "工程能力 (Cpk)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "굵게"
+msgstr "太字"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 내 확률 (z)"
+msgstr "規格内確率 (z)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "그라데이션"
+msgstr "グラデーション"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그라데이션 색 쓰기"
+msgstr "グラデーションの色を使う"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그리드 굵기"
+msgstr "グリッドの太さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그리드 보이기"
+msgstr "グリッドを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그리드 색"
+msgstr "グリッドの色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 색"
+msgstr "文字色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 크기"
+msgstr "文字サイズ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다."
+msgstr "文字サイズは サイズ › 文字サイズ自動 がオフのときのみ使います。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다. 로그 축은 양수 값 축에서만 적용됩니다."
+msgstr "文字サイズは サイズ › 文字サイズ自動 がオフのときのみ使います。対数軸は正の値の軸にのみ適用されます。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "기본 모양"
+msgstr "基本の形"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "기본 색"
+msgstr "基本色"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "기본 색으로 되돌리기"
+msgstr "デフォルトの色に戻す"
+
+#: src/features/chart-settings/ui/OptionSettings.tsx
+msgid "기본값으로 되돌리기"
+msgstr "デフォルトに戻す"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "기타 색 ('기타' 조각, 강조 시 나머지)"
+msgstr "その他の色 (「その他」スライス、強調時の残り)"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split separator"
+msgid "기호"
+msgstr "記号"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "끝 색"
+msgstr "終了色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "나머지는 한 가지 색"
+msgstr "残りは単色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "날짜 형식"
+msgstr "日付形式"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 개수"
+msgstr "目盛りの数"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 각도"
+msgstr "目盛りラベルの角度"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 보이기"
+msgstr "目盛りラベルを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 색"
+msgstr "目盛りラベルの色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 크기"
+msgstr "目盛りラベルのサイズ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 길이"
+msgstr "目盛りの長さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 보이기"
+msgstr "目盛りを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 색"
+msgstr "目盛りの色"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "다시 그리는 중에는 바꿀 수 없습니다"
+msgstr "再描画中は変更できません"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "다음 draw에 적용됩니다."
+msgstr "次の draw で適用されます。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "단계 수 (0이면 범례 값 수)"
+msgstr "段階数 (0 で凡例の値の数)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "단순 이동 평균"
+msgstr "単純移動平均"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "단순 지수 평활"
+msgstr "単純指数平滑"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "대상"
+msgstr "対象"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "덧셈"
+msgstr "加法"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "데이터가 준비되면 legend 값이 표시됩니다."
+msgstr "データの準備ができると legend の値が表示されます。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "둥근 모서리"
+msgstr "角丸"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "뒤 글자"
+msgstr "接尾辞"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split name example"
+msgid "라인"
+msgstr "ライン"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "로그 축"
+msgstr "対数軸"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "마름모"
+msgstr "ひし形"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "막대 모서리 둥글기"
+msgstr "棒の角丸"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "모두 공통 속성 따르기"
+msgstr "すべて共通プロパティに従う"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "모양"
+msgstr "形"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "모양"
+msgstr "形"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "방법"
+msgstr "方法"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "배경 색"
+msgstr "背景色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "범례"
+msgstr "凡例"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "범례 값별 색 · {column}"
+msgstr "凡例の値ごとの色 · {column}"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "범례 보이기"
+msgstr "凡例を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "변수 x, y와 + - * / ^, 함수 abs log ln sqrt exp round floor ceil min max pow를 씁니다. 예: log(y), x * 2 + 1. 비우면 원래 값입니다."
+msgstr "変数 x, y と + - * / ^、関数 abs log ln sqrt exp round floor ceil min max pow を使えます。例: log(y), x * 2 + 1。空欄なら元の値です。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "부제목"
+msgstr "サブタイトル"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "부제목 색"
+msgstr "サブタイトルの色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "분산분석 F"
+msgstr "分散分析 F"
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "clear color"
+msgid "비우기"
+msgstr "クリア"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "비우면 split 조합 이름"
+msgstr "空欄で split の組み合わせ名"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "비우면 제목 없음"
+msgstr "空欄でタイトルなし"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "비우면 컬럼 이름"
+msgstr "空欄でカラム名"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "빈 칸 값 (비우면 그리지 않음)"
+msgstr "空セルの値 (空欄なら描画しない)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "빈 칸 값은 그 조합에 데이터가 없는 칸에 씁니다."
+msgstr "空セルの値は、その組み合わせにデータがないセルに使います。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "사각형"
+msgstr "四角形"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "삼각형"
+msgstr "三角形"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상관계수 (r)"
+msgstr "相関係数 (r)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상관계수: x·y 상관계수, 분산분석 F: 범례 그룹 간 일원 분산분석 F, 규격 내 확률: 값이 하한~상한 안에 들 확률, 공정 능력: Cpk. 이 둘은 상한·하한이 있어야 계산합니다."
+msgstr "相関係数: x·y の相関係数、分散分析 F: 凡例グループ間の一元配置分散分析 F、規格内確率: 値が下限~上限に入る確率、工程能力: Cpk。この 2つは上限・下限があるときに計算します。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "상자"
+msgstr "ボックス"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 배경 색"
+msgstr "ボックスの背景色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 보이기"
+msgstr "ボックスを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 테두리 굵기"
+msgstr "ボックスの枠線の太さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 테두리 색"
+msgstr "ボックスの枠線の色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "상한"
+msgstr "上限"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "색"
+msgstr "色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "색 순서 뒤집기"
+msgstr "色の順序を反転"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "선"
+msgstr "線"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선 굵기"
+msgstr "線の太さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선택 밖 진하기"
+msgstr "選択外の濃さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "설명 보이기"
+msgstr "説明を表示"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split name example"
+msgid "설비"
+msgstr "設備"
+
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgid "설정 메뉴"
+msgstr "設定メニュー"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "소수 자리"
+msgstr "小数点以下の桁数"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "속성 메뉴"
+msgstr "プロパティメニュー"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "수준 계수 α (비우면 자동)"
+msgstr "水準係数 α (空欄で自動)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "순서 뒤집기"
+msgstr "順序を反転"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "시작 색"
+msgstr "開始色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "식"
+msgstr "式"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "신뢰 구간"
+msgstr "信頼区間"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "십자"
+msgstr "十字"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "아래"
+msgstr "下"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "앞 글자"
+msgstr "接頭辞"
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "no color"
+msgid "없음"
+msgstr "なし"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "여백"
+msgstr "余白"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "연결 문자"
+msgstr "区切り文字"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "예: {example}"
+msgstr "例: {example}"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "예: {example} (split by를 고르면 그 컬럼으로 보입니다)"
+msgstr "例: {example} (split by を選ぶとそのカラムで表示されます)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예: %m/%d %H:%M · 비우면 자동"
+msgstr "例: %m/%d %H:%M · 空欄で自動"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예: log(y)"
+msgstr "例: log(y)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예: x * 2"
+msgstr "例: x * 2"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "예측"
+msgstr "予測"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예측 개수"
+msgstr "予測数"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예측 보이기"
+msgstr "予測を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "오른쪽"
+msgstr "右"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "왼쪽"
+msgstr "左"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "요약 (오른쪽 점 수·범주 수)"
+msgstr "要約 (右側に点の数・カテゴリ数)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "요약 글자 색"
+msgstr "要約の文字色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "요약 보이기"
+msgstr "要約を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "원"
+msgstr "円"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "위"
+msgstr "上"
+
+#: src/features/chart-settings/model/option-fields.ts
+#: src/features/chart-settings/ui/LegendSettings.tsx
+msgctxt "chart option"
+msgid "위치"
+msgstr "位置"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "이 구역은 공통 속성 따르기"
+msgstr "このセクションは共通プロパティに従う"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이동 평균 길이"
+msgstr "移動平均の期間"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이상치 방식"
+msgstr "外れ値の方式"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이상치 빼기"
+msgstr "外れ値を除外"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이중 지수 평활"
+msgstr "二重指数平滑"
+
+#: src/features/chart-settings/model/option-fields.ts
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "chart option"
+msgid "자동"
+msgstr "自動"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "적용"
+msgstr "スタイル"
+
+#: src/features/chart-settings/ui/SettingsButton.tsx
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgid "전체 설정"
+msgstr "全体設定"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "점 라벨"
+msgstr "点ラベル"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점 라벨 보이기"
+msgstr "点ラベルを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점 크기"
+msgstr "点のサイズ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "점수"
+msgstr "スコア"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점수 목록"
+msgstr "スコア一覧"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점수 보이기"
+msgstr "スコアを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "정규분포 (평균 ± k·σ)"
+msgstr "正規分布 (平均 ± k·σ)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "정렬"
+msgstr "配置"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "제목"
+msgstr "タイトル"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "제목"
+msgstr "タイトル"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "제목 보이기"
+msgstr "タイトルを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "제목 색"
+msgstr "タイトルの色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "조건"
+msgstr "条件"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "조건에 맞는 점(막대)을 강조합니다."
+msgstr "条件に一致する点(棒)を強調します。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "중간 색"
+msgstr "中間色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "중앙값 선 색 (boxplot)"
+msgstr "中央値の線の色 (boxplot)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "채우기 + 테두리"
+msgstr "塗り + 枠線"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "채우기만"
+msgstr "塗りのみ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최대"
+msgstr "最大"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최댓값"
+msgstr "最大値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최소"
+msgstr "最小"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최솟값"
+msgstr "最小値"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "추세 계수 β (비우면 자동)"
+msgstr "トレンド係数 β (空欄で自動)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "추세 방식"
+msgstr "トレンドの方式"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "축"
+msgstr "軸"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 보이기"
+msgstr "軸を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 선 굵기"
+msgstr "軸線の太さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 선 보이기"
+msgstr "軸線を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 선 색"
+msgstr "軸線の色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 제목"
+msgstr "軸タイトル"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 제목 보이기"
+msgstr "軸タイトルを表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 제목 색 (비우면 눈금 글자 색)"
+msgstr "軸タイトルの色 (空欄で目盛りラベルの色)"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgctxt "dialog button"
+msgid "취소"
+msgstr "キャンセル"
+
+#: src/features/chart-settings/ui/TooltipSettings.tsx
+msgid "커서에서 가장 가까운 점의 x, y와 tooltip 컬럼을 보여줍니다. 점은 픽셀 하나에 하나씩 줄인 점 중에서 찾습니다. 끄면 커서 위치의 x, y만 보여주고, tooltip 컬럼도 가까운 점의 값이라 함께 숨겨집니다."
+msgstr "カーソルに最も近い点の x, y と tooltip カラムを表示します。点は 1ピクセルに 1つずつ間引いた点から探します。オフにするとカーソル位置の x, y のみ表示し、tooltip カラムも最寄りの点の値なので一緒に非表示になります。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "크기"
+msgstr "サイズ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "크기"
+msgstr "サイズ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "테두리"
+msgstr "枠線"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 굵기"
+msgstr "枠線の太さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 보이기"
+msgstr "枠線を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 색"
+msgstr "枠線の色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 색 (비우면 자동)"
+msgstr "枠線の色 (空欄で自動)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "테두리만"
+msgstr "枠線のみ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "투명도"
+msgstr "透明度"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "투명도 (0 = 불투명)"
+msgstr "透明度 (0 = 不透明)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "툴팁"
+msgstr "ツールチップ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "팔레트"
+msgstr "パレット"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "패널"
+msgstr "パネル"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "하한"
+msgstr "下限"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "홀트-윈터스 지수 평활"
+msgstr "ホルト・ウィンタース指数平滑"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgctxt "dialog button"
+msgid "확인"
+msgstr "OK"
+
+#: src/features/chart-settings/ui/OptionSettings.tsx
+msgid "확인을 누르면 다음 draw에 적용됩니다. 그리면 item별로 정한 속성은 모두 공통 속성으로 바뀝니다."
+msgstr "OK を押すと次の draw で適用されます。描画すると item ごとに設定したプロパティはすべて共通プロパティに置き換わります。"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "확인을 누르면 이 item만 다시 그립니다. 전체 설정에서 바꾼 공통 속성으로 다시 그리면 item별 속성은 모두 공통 속성으로 바뀝니다."
+msgstr "OK を押すとこの item だけ再描画します。全体設定で変更した共通プロパティで再描画すると、item ごとのプロパティはすべて共通プロパティに置き換わります。"

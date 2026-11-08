@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig } from "@lingui/cli";
 import { formatter } from "@lingui/format-po";
+import { LOCALES } from "./src/shared/config/locale";
 
 // 문구 카탈로그는 FSD slice마다 하나씩 둔다 (docs/i18n.md). 한국어가 원문(sourceLocale)이고 영어는 en.po에 번역한다.
 // 카탈로그는 config segment 안에 둬서 scripts/check-fsd.mjs의 위치 규칙을 지킨다.
@@ -25,7 +26,7 @@ const slices = ["views", "widgets", "features", "entities"].flatMap((layer) =>
 
 export default defineConfig({
   sourceLocale: "ko",
-  locales: ["ko", "en"],
+  locales: [...LOCALES],
   catalogs: [
     // application은 하위 폴더를 둘 수 없어 파일 이름에 언어를 넣는다.
     {

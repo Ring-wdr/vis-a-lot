@@ -1,0 +1,20 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/pin-post/ui/PinButton.tsx
+msgid "끌어올리기"
+msgstr "ピン留め"
+
+#: src/features/pin-post/ui/PinButton.tsx
+msgid "끌어올리지 못했습니다: {message}"
+msgstr "ピン留めできませんでした：{message}"
+
+#: src/features/pin-post/ui/PinButton.tsx
+msgid "끌어올림 해제"
+msgstr "ピン留め解除"

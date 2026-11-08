@@ -1,0 +1,259 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. 필드 이름 둘을 잇는다
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{a}·{b}"
+msgstr "{a}と{b}"
+
+#. 필드 이름 셋을 잇는다
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{a}·{b}·{c}"
+msgstr "{a}、{b}、{c}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{chartTitle} 차트"
+msgstr "{chartTitle} チャート"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "{shareId}: {reason}. 공유가 지워졌거나 다른 브라우저에서 만든 공유일 수 있습니다. 차트 없이 게시물을 쓸 수 있습니다."
+msgstr "{shareId}: {reason}。共有が削除されたか、別のブラウザで作成された共有の可能性があります。チャートなしで投稿を作成できます。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "AI 추천"
+msgstr "AI提案"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "AI 추천에 실패했습니다: {error}"
+msgstr "AI提案に失敗しました: {error}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "one field filled"
+msgid "AI가 {list}{josa, select, none {를} other {을}} 채웠습니다. 바꿔도 됩니다."
+msgstr "AIが{list}を入力しました。変更してもかまいません。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "several fields filled"
+msgid "AI가 {list}{josa, select, none {를} other {을}} 채웠습니다. 바꿔도 됩니다."
+msgstr "AIが{list}を入力しました。変更してもかまいません。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "AI가 추천할 값을 찾지 못했습니다."
+msgstr "AIが提案できる値が見つかりませんでした。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "https://… 또는 data:image/…"
+msgstr "https://… または data:image/…"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "vis-a-lot 공유에서 가져옴"
+msgstr "vis-a-lot の共有から取り込み"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "vis-a-lot 차트"
+msgstr "vis-a-lot チャート"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "vis-a-lot 차트 공유를 불러오는 중"
+msgstr "vis-a-lot のチャート共有を読み込み中"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "게시물 만들기"
+msgstr "投稿を作成"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "게시물 유형"
+msgstr "投稿タイプ"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "field name inside the AI suggestion sentence"
+msgid "게시물 유형"
+msgstr "投稿タイプ"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "group select label"
+msgid "그룹"
+msgstr "グループ"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "그룹 없음"
+msgstr "グループなし"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "그룹을 골라 주세요."
+msgstr "グループを選択してください。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "기한"
+msgstr "期限"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "담당자"
+msgstr "担当者"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "field name inside the AI suggestion sentence"
+msgid "담당자"
+msgstr "担当者"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "동영상 주소"
+msgstr "動画URL"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 {n} 빼기"
+msgstr "リンク{n}を削除"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 {n} 이름"
+msgstr "リンク{n}の名前"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 {n} 주소"
+msgstr "リンク{n}のURL"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 더하기"
+msgstr "リンクを追加"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "링크 첨부"
+msgstr "リンク添付"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "만들지 못했습니다: {error}"
+msgstr "作成できませんでした: {error}"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "loading groups placeholder"
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "비어 있으면 작성자(나)가 요청자 역할을 합니다."
+msgstr "空欄の場合は作成者(自分)が依頼者になります。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "상위 이슈"
+msgstr "親イシュー"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "상위 이슈 (선택)"
+msgstr "親イシュー (任意)"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "상위 이슈 빼기"
+msgstr "親イシューを外す"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "새 게시물"
+msgstr "新しい投稿"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "설명"
+msgstr "説明"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "썸네일로도 씁니다"
+msgstr "サムネイルにも使います"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "code language field label"
+msgid "언어"
+msgstr "言語"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "없는 공유"
+msgstr "存在しない共有"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "no stakeholders placeholder"
+msgid "없음"
+msgstr "なし"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "요청자"
+msgstr "依頼者"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "field name inside the AI suggestion sentence"
+msgid "우선순위"
+msgstr "優先度"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "link name placeholder"
+msgid "이름"
+msgstr "名前"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "이미지 주소"
+msgstr "画像URL"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "post field"
+msgid "이해관계자"
+msgstr "関係者"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목 (필수)"
+msgstr "タイトル (必須)"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목·설명으로 게시물 유형·우선순위·담당자를 추천합니다"
+msgstr "タイトル・説明から投稿タイプ・優先度・担当者を提案します"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목을 먼저 적어 주세요."
+msgstr "先にタイトルを入力してください。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "제목을 적어 주세요."
+msgstr "タイトルを入力してください。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "차트 게시물은 vis-a-lot의 탭 도구 줄이나 공유 페이지에서 \"피드에 올리기\"로 만들면 차트 이미지와 링크가 함께 들어옵니다."
+msgstr "チャート投稿は、vis-a-lot のタブのツールバーや共有ページの「フィードに投稿」から作成すると、チャート画像とリンクが一緒に入ります。"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "차트 공유를 가져오지 못했습니다"
+msgstr "チャート共有を取り込めませんでした"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "체크리스트"
+msgstr "チェックリスト"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "cancel creating a post"
+msgid "취소"
+msgstr "キャンセル"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgctxt "code post field label"
+msgid "코드"
+msgstr "コード"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "태그"
+msgstr "タグ"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "팀"
+msgstr "チーム"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "한 줄에 항목 하나"
+msgstr "1行に1項目"
+
+#: src/views/feed-new-post/ui/NewPostView.tsx
+msgid "형식"
+msgstr "形式"
