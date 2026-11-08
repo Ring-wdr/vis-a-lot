@@ -171,6 +171,19 @@ const GridItem = memo(function GridItem({
   );
 });
 
+/** grid가 진행률 응답에서 쓰는 값. 진행률(done·counts)은 빼서, 응답이 와도 이 값이 같으면 grid를 다시 그리지 않는다. */
+const gridProgress = (job: JobStateResponse) => ({
+  totalItems: job.totalItems,
+  status: job.status,
+  error: job.error,
+});
+
+/** 하단 job 상태 줄. 응답마다 바뀌는 진행률은 이 컴포넌트만 구독한다. */
+function JobProgressBar({ jobId }: { jobId: string }) {
+  const progress = useJobProgress(jobId);
+  return progress.data ? <JobStatusBar job={progress.data} /> : null;
+}
+
 export function ChartGrid() {
   const areaRef = useRef<HTMLDivElement>(null);
   const setGridArea = useWorkspace((s) => s.setGridArea);
@@ -195,7 +208,7 @@ export function ChartGrid() {
   const pageSize = grid.rows * grid.cols;
   const job = useJob(current?.jobId, deferredPage, pageSize);
   // 하단 진행률과 job 종료 여부는 job 전체 long polling으로 받는다.
-  const progress = useJobProgress(current?.jobId);
+  const progress = useJobProgress(current?.jobId, gridProgress);
   const totalItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;
   const totalPages =
     totalItems === null ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
@@ -366,7 +379,7 @@ export function ChartGrid() {
                   {job.error.message}
                 </span>
               ) : (
-                progress.data && <JobStatusBar job={progress.data} />
+                <JobProgressBar jobId={current.jobId} />
               )}
             </div>
             {!detailOpen && (

@@ -23,26 +23,28 @@ import { useDrawState } from "../model/draw-state";
  * draw → pending(비활성) → 서버에서 작업 상태를 받으면 cancel → job이 끝나면 다시 draw.
  */
 export function DrawButton() {
-  const draft = useWorkspace((s) => s.draft);
-  // grid 영역 크기는 누를 때 한 번 읽는다. 화면에는 잰 적이 있는지만 쓰므로 boolean으로 고른다
-  // (크기 객체를 구독하면 창 크기를 바꿀 때마다 다시 그린다).
+  // 화면에 쓰는 값(데이터셋, x·y를 골랐는지)만 구독한다. 그릴 설정 전체와 grid 영역 크기는 누를 때 getState로 읽는다.
+  // draft 전체를 구독하면 필터·grid·공통 속성을 바꿀 때마다 다시 그린다.
   const store = useWorkspaceStore();
+  const datasetId = useWorkspace((s) => s.draft.dataset);
+  const axesChosen = useWorkspace((s) => s.draft.x !== "" && s.draft.y !== "");
   const hasGridArea = useWorkspace((s) => s.gridArea !== undefined);
-  const current = useWorkspace((s) => s.current);
+  const jobId = useWorkspace((s) => s.current?.jobId);
   const setCurrent = useWorkspace((s) => s.setCurrent);
   const notify = useWorkspace((s) => s.notify);
   const cancel = useCancelJob();
-  const dataset = useDatasetStatus(draft.dataset);
+  const dataset = useDatasetStatus(datasetId);
 
   // 컬럼은 데이터셋 스키마에서 고르므로, 스키마를 받고 x·y가 정해져야 그릴 수 있다.
-  const schema = useDatasetSchema(draft.dataset);
-  const ready = schema.data !== undefined && draft.x !== "" && draft.y !== "";
-  const deleted = useSchemaState(draft.dataset) === "deleted";
+  const schema = useDatasetSchema(datasetId);
+  const ready = schema.data !== undefined && axesChosen;
+  const deleted = useSchemaState(datasetId) === "deleted";
 
   const draw = useMutation({
     mutationKey: useWorkspaceMutationKey("draw"),
     mutationFn: async () => {
-      const { gridArea } = store.getState();
+      // 누른 때의 설정으로 그린다. 그린 차트(current)의 spec도 이 값이다.
+      const { gridArea, draft } = store.getState();
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
       if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
@@ -59,12 +61,13 @@ export function DrawButton() {
           return undefined;
         }
       }
-      return api.createChart({
+      const res = await api.createChart({
         spec: draft,
         itemSize: itemSizeFor(gridArea, draft.grid),
       });
+      return { ...res, spec: draft };
     },
-    onSuccess: (res) => res && setCurrent({ ...res, spec: draft }),
+    onSuccess: (chart) => chart && setCurrent(chart),
   });
 
   // 탭을 오가 다시 마운트돼도 이 탭의 draw가 진행 중이면 다시 누를 수 없게 한다.
@@ -77,7 +80,7 @@ export function DrawButton() {
           type="button"
           className={button({ variant: "danger", size: "lg" })}
           disabled={cancel.isPending}
-          onClick={() => current && cancel.mutate(current.jobId)}
+          onClick={() => jobId && cancel.mutate(jobId)}
         >
           cancel
         </button>

@@ -337,11 +337,19 @@ export function useJobRange(
  * job 전체 진행 상태(상태, 단계, 하단 진행률)를 long polling으로 받는다.
  * 페이지 long polling은 그 페이지가 끝나면 멈추므로, job이 끝났는지는 이 요청으로 안다.
  */
-export function useJobProgress(jobId: string | undefined) {
+export function useJobProgress<T = JobStateResponse>(
+  jobId: string | undefined,
+  /**
+   * 응답에서 쓸 값만 고른다. 고른 값이 같으면(구조 공유) 응답이 와도 다시 그리지 않는다.
+   * 진행률은 응답마다 바뀌므로, 상태나 개수만 쓰는 곳은 그것만 고른다.
+   */
+  select?: (job: JobStateResponse) => T,
+) {
   const client = useQueryClient();
   const queryKey = queryKeys.jobProgress(jobId ?? "");
   return useQuery({
     queryKey,
+    select,
     queryFn: async ({ signal }) => {
       const prev = client.getQueryData<JobStateResponse>(queryKey);
       const next = await api.job(

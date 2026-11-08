@@ -5,7 +5,6 @@
 import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render } from "@testing-library/react";
-import { useSyncExternalStore } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceScope } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -14,6 +13,7 @@ import {
   defaultSpec,
   type WorkspaceStore,
 } from "@/entities/workspace/model/workspace-store";
+import { queryKeys } from "@/shared/api/queries";
 import type {
   ChartDefaults,
   ItemState,
@@ -22,20 +22,26 @@ import type {
 import { ChartGrid } from "./ChartGrid";
 
 const ITEMS = 9;
-const counts = { grid: 0, detail: 0, items: new Map<string, number>() };
+const counts = {
+  grid: 0,
+  detail: 0,
+  footer: 0,
+  items: new Map<string, number>(),
+};
 
-/** 진행률 long polling 응답. 바꾸면 useJobProgress를 쓰는 컴포넌트가 다시 그려진다. */
+let client: QueryClient;
+
+/**
+ * 진행률 long polling 응답이 온 것처럼 query cache를 바꾼다. useJobProgress는 mock하지 않고
+ * 실제 react-query(구조 공유·select)를 쓴다. 요청은 끝나지 않게 막아 두었다(api.job).
+ */
 const progress = {
-  value: undefined as JobStateResponse | undefined,
-  listeners: new Set<() => void>(),
-  set(next: JobStateResponse) {
-    progress.value = next;
-    for (const l of progress.listeners) l();
-  },
-  subscribe(l: () => void) {
-    progress.listeners.add(l);
-    return () => progress.listeners.delete(l);
-  },
+  set: (next: JobStateResponse) =>
+    act(async () => {
+      client.setQueryData(queryKeys.jobProgress("job"), next);
+      // react-query는 구독자에게 알리는 일을 timer로 미룬다.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }),
 };
 
 const item = (i: number): ItemState => ({
@@ -83,9 +89,6 @@ vi.mock("@/shared/api/queries", async (original) => ({
     counts.grid++;
     return { data: pageJob, error: null };
   },
-  useJobProgress: () => ({
-    data: useSyncExternalStore(progress.subscribe, () => progress.value),
-  }),
   // DrawnItem이 렌더마다 한 번 부른다. item 렌더 수를 여기서 센다.
   useJobItem: (_jobId: string | undefined, key: string) => {
     counts.items.set(key, (counts.items.get(key) ?? 0) + 1);
@@ -100,12 +103,27 @@ vi.mock("@/shared/api/queries", async (original) => ({
   useColumns: () => ({ label: (c: string) => c, info: () => undefined }),
 }));
 
+// long polling 요청은 끝나지 않는다. 응답은 progress.set으로 넣는다.
+vi.mock("@/shared/api/api", async (original) => {
+  const mod = await original<typeof import("@/shared/api/api")>();
+  return { ...mod, api: { ...mod.api, job: () => new Promise(() => {}) } };
+});
+
+// 하단 job 상태 줄은 렌더 횟수만 센다.
+vi.mock("./JobStatusBar", () => ({
+  JobStatusBar: () => {
+    counts.footer++;
+    return null;
+  },
+}));
+
 let store: WorkspaceStore;
 
 function renderGrid() {
-  const client = new QueryClient({
+  client = new QueryClient({
     defaultOptions: { queries: { retry: false, enabled: false } },
   });
+  client.setQueryData(queryKeys.jobProgress("job"), jobState(0));
   render(
     <QueryClientProvider client={client}>
       <WorkspaceScope store={store}>
@@ -118,6 +136,7 @@ function renderGrid() {
 function reset() {
   counts.grid = 0;
   counts.detail = 0;
+  counts.footer = 0;
   counts.items.clear();
 }
 
@@ -151,7 +170,6 @@ beforeEach(() => {
       spec: draft,
     } as DrawnChart,
   });
-  progress.value = jobState(0);
   renderGrid();
   reset();
 });
@@ -190,9 +208,16 @@ describe("ChartGrid 렌더 횟수", () => {
     expect(renders()).toEqual({ grid: 0, items: { k3: 1 } });
   });
 
-  it("진행률 응답이 와도 바뀌지 않은 item은 다시 그리지 않는다", () => {
-    act(() => progress.set(jobState(1)));
-    expect(renders()).toEqual({ grid: 1, items: {} });
+  it("진행률 응답이 오면 하단 상태 줄만 다시 그린다", async () => {
+    await progress.set(jobState(1));
+    expect(renders()).toEqual({ grid: 0, items: {} });
+    expect(counts.footer).toBe(1);
+  });
+
+  it("job이 끝나면 grid도 다시 그린다 (상태가 바뀌었다)", async () => {
+    await progress.set({ ...jobState(2), status: "success" });
+    expect(counts.grid).toBe(1);
+    expect(counts.footer).toBe(1);
   });
 
   it("grid와 상관없는 draft 값을 바꿔도 다시 그리지 않는다", () => {

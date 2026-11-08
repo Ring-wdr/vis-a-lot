@@ -12,7 +12,11 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
-import { type ChartSpec, isTerminal } from "@/shared/api/types";
+import {
+  type ChartSpec,
+  isTerminal,
+  type JobStateResponse,
+} from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
 import { selectStyles } from "@/shared/ui/select-styles";
@@ -28,6 +32,8 @@ const CELLS = Array.from({ length: MAX * MAX }, (_, i) => ({
 type Grid = ChartSpec["grid"];
 
 const sameGrid = (a: Grid, b: Grid) => a.rows === b.rows && a.cols === b.cols;
+const jobStatus = (job: JobStateResponse) => job.status;
+
 const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
 
 /**
@@ -46,7 +52,8 @@ export function GridPicker() {
   const [hover, setHover] = useState<Grid>();
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
-  const job = useJobProgress(current?.jobId);
+  // 렌더링 중인지만 쓰므로 상태만 고른다 (진행률 응답마다 다시 그리지 않는다).
+  const job = useJobProgress(current?.jobId, jobStatus);
 
   const change = useMutation({
     mutationKey: useWorkspaceMutationKey("grid"),
@@ -73,7 +80,7 @@ export function GridPicker() {
 
   const changing = useWorkspaceMutating("grid");
   const rendering =
-    current !== undefined && (!job.data || !isTerminal(job.data.status));
+    current !== undefined && (!job.data || !isTerminal(job.data));
   const preview = hover ?? selected;
 
   const pick = (next: Grid) => {
