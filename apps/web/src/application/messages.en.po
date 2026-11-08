@@ -1,0 +1,65 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:02+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/application/FeedTopBar.tsx
+msgid "검색·명령"
+msgstr "Search & commands"
+
+#: src/application/FeedBoot.tsx
+msgid "고를 수 있는 활성 사용자가 없습니다."
+msgstr "There are no active users to pick."
+
+#: src/application/FeedBoot.tsx
+#: src/application/FeedBootScreen.tsx
+msgid "다시 시도"
+msgstr "Retry"
+
+#: src/application/FeedTopBar.tsx
+msgid "메뉴"
+msgstr "Menu"
+
+#: src/application/FeedShell.tsx
+msgid "메뉴 닫기"
+msgstr "Close menu"
+
+#: src/application/dev-client-app.tsx
+msgid "불러오는 중…"
+msgstr "Loading…"
+
+#: src/application/FeedBoot.tsx
+msgid "사용자 목록을 다시 불러오는 중"
+msgstr "Reloading users"
+
+#: src/application/FeedBoot.tsx
+msgid "사용자 목록을 불러오지 못했습니다: {reason}"
+msgstr "Couldn't load users: {reason}"
+
+#: src/application/FeedBoot.tsx
+msgid "사용자를 고르는 중"
+msgstr "Picking a user"
+
+#: src/application/FeedTopBar.tsx
+msgid "새 게시물"
+msgstr "New post"
+
+#: src/application/FeedBootScreen.tsx
+msgid "피드"
+msgstr "Feed"
+
+#: src/application/FeedBoot.tsx
+msgid "피드 데이터 준비에 실패했습니다"
+msgstr "Couldn't prepare feed data"
+
+#: src/application/FeedBoot.tsx
+msgid "피드 데이터를 준비하는 중"
+msgstr "Preparing feed data"
+
+#: src/application/feed-root.tsx
+msgid "화면을 불러오는 중"
+msgstr "Loading the page"

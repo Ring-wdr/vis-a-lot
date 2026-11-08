@@ -1,0 +1,87 @@
+"use client";
+
+import { msg } from "@lingui/core/macro";
+import { linguiFor, useLocale } from "@vis-a-lot/shared/lib/i18n";
+import { useState } from "react";
+import type { ColumnName } from "@/shared/api/types";
+import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
+import "../config/messages";
+
+const MANY_OPTIONS: Option<string>[] = Array.from(
+  { length: 10_000 },
+  (_, i) => ({
+    value: `o${i + 1}`,
+    label: `옵션 ${String(i + 1).padStart(5, "0")}`,
+  }),
+);
+
+/** mock 서버 없이 쓰는 컬럼 예시 (실제 화면은 데이터셋 스키마에서 받는다) */
+const COLUMN_OPTIONS: Option<ColumnName>[] = [
+  ["ts", "측정 시각"],
+  ["factory", "공장"],
+  ["line", "라인"],
+  ["machine", "설비"],
+  ["sensor_type", "센서 종류"],
+  ["shift", "근무조"],
+  ["lot_id", "LOT"],
+  ["status", "상태"],
+  ["value", "측정값"],
+  ["temperature_env", "주변 온도"],
+  ["load_pct", "부하율(%)"],
+].map(([value, label]) => ({ value, label }));
+
+const MANY = msg({ message: "대량", context: "dev select demo" });
+const COLUMNS = msg({ message: "컬럼", context: "dev select demo" });
+
+/** mock 서버 없이 OrderedSelect만 띄워 드래그/키보드 동작을 확인하는 페이지 */
+const output = "mt-1.5 block break-all font-mono text-2xs text-fg-secondary";
+
+export function DevSelectPage() {
+  // 이 페이지는 Providers(LinguiProvider) 밖에서 그린다. useLocale로 고른 언어의 instance를 직접 읽는다
+  // (hydration 중에는 정적 HTML과 같은 기본 언어).
+  const i18n = linguiFor(useLocale());
+  const [many, setMany] = useState<string[]>([]);
+  const [columns, setColumns] = useState<ColumnName[]>([]);
+  const [fieldsetDisabled, setFieldsetDisabled] = useState(false);
+
+  return (
+    <main className="flex max-w-90 flex-col gap-4 p-6">
+      <h1 className="text-base font-bold">OrderedSelect</h1>
+      <label className="flex gap-1.5 text-ui">
+        <input
+          type="checkbox"
+          checked={fieldsetDisabled}
+          onChange={(e) => setFieldsetDisabled(e.target.checked)}
+        />
+        fieldset disabled
+      </label>
+      <fieldset
+        className="flex min-w-0 flex-col gap-6"
+        disabled={fieldsetDisabled}
+      >
+        <section>
+          <OrderedSelect
+            label={i18n._(MANY)}
+            options={MANY_OPTIONS}
+            value={many}
+            onChange={setMany}
+          />
+          <output className={output} data-testid="value-대량">
+            {JSON.stringify(many)}
+          </output>
+        </section>
+        <section>
+          <OrderedSelect
+            label={i18n._(COLUMNS)}
+            options={COLUMN_OPTIONS}
+            value={columns}
+            onChange={setColumns}
+          />
+          <output className={output} data-testid="value-컬럼">
+            {JSON.stringify(columns)}
+          </output>
+        </section>
+      </fieldset>
+    </main>
+  );
+}

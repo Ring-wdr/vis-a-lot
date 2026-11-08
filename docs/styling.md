@@ -1,6 +1,6 @@
 # 스타일 규칙
 
-화면 스타일은 Tailwind CSS v4 클래스로 쓴다. CSS 파일은 `app/globals.css` 하나뿐이고, 토큰(`@theme`)과 요소 기본값(`@layer base`)만 둔다. 규칙은 lint가 강제한다. 맨 아래 표에 어느 규칙을 무엇이 막는지 정리했다.
+화면 스타일은 Tailwind CSS v4 클래스로 쓴다. 토큰(`@theme`)과 요소 기본값(`@layer base`)은 두 앱이 함께 쓰는 `packages/shared/ui/globals.css` 하나에만 둔다. 각 앱의 `app/globals.css`는 그 파일을 import만 한다. 규칙은 lint가 강제한다. 맨 아래 표에 어느 규칙을 무엇이 막는지 정리했다.
 
 ## 왜 이렇게 바꿨나
 
@@ -23,7 +23,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 | 쌓임 순서 | 숫자(`z-10`) 대신 토큰을 쓴다. 한 컴포넌트 안: `z-raised` `z-sticky` `z-sticky-col` `z-sticky-corner` `z-overlay` `z-item-toolbar`. 화면 전체 층: `z-drawer`(10) `z-menu`(20) `z-popover`(50) `z-tooltip`(1000) |
 | px | 1px 테두리·hairline 보정(`border`, `align-[-1px]`)에만 쓴다. |
 | 임의 값 `[...]` | 축척으로 나타낼 수 없는 구조용 값에만 쓴다: grid 템플릿, `min()`/`calc()`, `ch`, `dvh`. 그 안의 길이도 rem으로 적는다(`w-[min(60rem,calc(100vw-2rem))]`). breakpoint도 rem으로 적는다. |
-| 다크 모드 | `<html data-theme>`을 따른다(시스템 설정 + 상단 바 사용자 메뉴·화면 설정 팝오버, `src/shared/lib/color-scheme.ts`). `:root[data-theme="dark"]`에서 같은 토큰 변수의 값을 바꾸고, `dark:` 변형도 이 속성을 본다. 서버가 그리는 PNG도 같은 테마로 그린다(`server/render/theme.ts`, 바탕·글자 색은 토큰과 같은 값). |
+| 다크 모드 | `<html data-theme>`을 따른다(시스템 설정 + 상단 바 사용자 메뉴·화면 설정 팝오버, `packages/shared/lib/color-scheme.ts`). `:root[data-theme="dark"]`에서 같은 토큰 변수의 값을 바꾸고, `dark:` 변형도 이 속성을 본다. 서버가 그리는 PNG도 같은 테마로 그린다(`apps/web/server/render/theme.ts`, 바탕·글자 색은 토큰과 같은 값). |
 
 ## 구조
 
@@ -31,7 +31,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 - 부모의 상태에 따라 자식이 바뀌어야 하면 `group/이름` + `group-hover/이름:`을 쓴다.
 - 상태는 `data-*`·`aria-*` 변형(`data-selected:`, `aria-pressed:`, `aria-current:`)으로 표시한다.
 - 같은 속성을 두 상태가 함께 바꾸면 Tailwind의 변형 순서에 기대지 않는다. `data-highlighted:not-data-selected:`처럼 서로 겹치지 않게 적는다.
-- 두 군데 이상에서 쓰는 모양은 `tv()` recipe로 묶고, 기능 간에 공유하면 `src/shared/ui`에 둔다.
+- 두 군데 이상에서 쓰는 모양은 `tv()` recipe로 묶고, 기능 간에 공유하면 그 앱의 `src/shared/ui`에, 두 앱이 함께 쓰면 `packages/shared/ui`에 둔다.
   - 공유 recipe: `button`(primary·secondary·danger × sm·md·lg), `toolButton`, `itemButton`, `linkButton`, `navButton`·`navLink`(상단 바 화면 버튼·링크), `selectStyles`, `segmented`, `settingsStyles`
 - 클래스를 합칠 때는 `cn()`을 쓴다(`@/shared/lib/tw`). tailwind-merge가 `text-ui`를 색이 아니라 글자 크기로 읽도록 설정되어 있다.
 - 클래스 이름은 완성된 문자열로 적는다. `` `grid-cols-${n}` ``처럼 조합하면 Tailwind가 찾지 못한다. 값이 몇 가지로 정해지면 표(`GRID_COLS`)나 `tv` variant로 고른다.
@@ -42,7 +42,7 @@ Tailwind에서는 스타일이 요소 자체에 붙으므로, 이 두 경로가 
 
 | 도구 | 막는 것 |
 |---|---|
-| Biome `tailwind` 규칙 (`app/globals.css`를 읽는다) | 클래스 순서(`useTailwindSortedClasses`), 축약 가능한 쌍(`w-4 h-4` → `size-4`), v3 이름, 기본 팔레트 색, 조합한 클래스 문자열 |
+| Biome `tailwind` 규칙 (`packages/shared/ui/globals.css`를 읽는다) | 클래스 순서(`useTailwindSortedClasses`), 축약 가능한 쌍(`w-4 h-4` → `size-4`), v3 이름, 기본 팔레트 색, 조합한 클래스 문자열 |
 | `biome-plugins/tailwind-classes.grit` | `[&_…]`·`*:` 변형, 토큰 밖 색(`bg-[#…]`), `!important` |
 | `biome-plugins/tailwind-scale.grit` | 0.25 단계 간격, `[...]` 안의 px(1px 제외), 임의 radius·글자 크기, 숫자 z-index |
 | Biome `noRestrictedImports` | `*.module.css` import |

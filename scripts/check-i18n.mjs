@@ -1,5 +1,7 @@
 // 화면 문구(Lingui) 검사. lingui CLI가 잡지 못하는 것을 본다. 규칙은 docs/i18n.md.
-// 사용법: node scripts/check-i18n.mjs   (pnpm lint와 pnpm build가 함께 돌린다)
+// 사용법: node scripts/check-i18n.mjs <앱 또는 패키지 폴더>   (기본은 지금 폴더)
+//   앱(apps/web, apps/help)과 공유 패키지(packages/shared)가 각자 자기 package.json의 lint·i18n 스크립트로 부른다.
+//   앱(src/가 있는 폴더)은 src를, 패키지는 폴더 전체를 본다.
 //
 // 1. 자리표시자: 번역(msgstr)의 {이름}은 원문(msgid)에 있어야 하고, 원문의 {이름}은 번역에도 있어야 한다.
 //    원문에서 select의 선택 값으로만 쓰는 이름(조사를 고르는 받침 등)은 번역에서 빠져도 된다.
@@ -10,8 +12,14 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const root = path.resolve(import.meta.dirname, "..");
-process.chdir(root);
+const target = path.resolve(process.argv[2] ?? ".");
+process.chdir(target);
+/** 앱이면 true. 앱은 src/<레이어>/…, 공유 패키지는 <segment>/… 로 나뉜다. */
+const isApp = fs.existsSync("src");
+// 앱이 쓰는 공유 패키지의 카탈로그도 실행 중에는 앱의 카탈로그와 한 표로 합쳐진다. 충돌 검사에만 넣는다.
+const SHARED = "node_modules/@vis-a-lot/shared";
+const sharedRoot =
+  isApp && fs.existsSync(SHARED) ? fs.realpathSync(SHARED) : undefined;
 
 const walk = (dir, out = []) => {
   if (!fs.existsSync(dir)) return out;
@@ -24,7 +32,7 @@ const walk = (dir, out = []) => {
   return out;
 };
 
-const files = walk("src");
+const files = walk(isApp ? "src" : ".");
 const errors = [];
 
 // ── .po 읽기 ────────────────────────────────────────────────
@@ -142,8 +150,16 @@ function placeholders(message) {
 
 // ── 1·2: 카탈로그 ───────────────────────────────────────────
 const poFiles = files.filter((f) => f.endsWith(".po"));
+const sharedPoFiles = sharedRoot
+  ? walk(sharedRoot)
+      .filter((f) => f.endsWith(".po"))
+      .map((f) => path.relative(target, f))
+  : [];
 const byLocale = new Map(); // locale → Map(key → { str, file })
-for (const file of poFiles) {
+// 공유 패키지의 카탈로그를 먼저 읽어 두고, 앱의 카탈로그가 그것과 다르게 번역하면 알린다.
+// 패키지 카탈로그 자체의 자리표시자는 패키지가 따로 검사한다.
+for (const file of [...sharedPoFiles, ...poFiles]) {
+  const own = !sharedPoFiles.includes(file);
   const locale = path.basename(file, ".po").split(".").pop();
   const table = byLocale.get(locale) ?? new Map();
   byLocale.set(locale, table);
@@ -157,7 +173,7 @@ for (const file of poFiles) {
       );
     }
     if (!prev?.str) table.set(key, { str, file });
-    if (!str || str === id) continue;
+    if (!own || !str || str === id) continue;
     const source = placeholders(id);
     const target = placeholders(str);
     for (const name of target.keys()) {
@@ -178,8 +194,10 @@ for (const file of poFiles) {
 const MACRO = /from\s+["']@lingui\/(?:react|core)\/macro["']/;
 const CODE = /\.(ts|tsx)$/;
 
-/** 그 파일이 import해야 하는 등록 모듈 (src 기준 경로, 확장자 없음) */
+/** 그 파일이 import해야 하는 등록 모듈 (앱·패키지 폴더 기준 경로, 확장자 없음) */
 function registration(file) {
+  // 공유 패키지는 카탈로그가 하나다.
+  if (!isApp) return "config/messages";
   const parts = file.split(path.sep);
   const layer = parts[1];
   if (layer === "application") return "src/application/messages";
@@ -188,7 +206,7 @@ function registration(file) {
 }
 
 function resolveImport(from, spec) {
-  if (spec.startsWith("@/")) return path.join("src", spec.slice(2));
+  if (isApp && spec.startsWith("@/")) return path.join("src", spec.slice(2));
   if (spec.startsWith(".")) return path.join(path.dirname(from), spec);
   return null;
 }
@@ -218,5 +236,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `i18n 검사 통과 (카탈로그 ${poFiles.length}개, 언어 ${[...byLocale.keys()].join(", ")})`,
+  `i18n 검사 통과: ${path.relative(path.resolve(import.meta.dirname, ".."), target) || "."} ` +
+    `(카탈로그 ${poFiles.length}개${sharedPoFiles.length ? ` + 공유 패키지 ${sharedPoFiles.length}개` : ""}, 언어 ${[...byLocale.keys()].join(", ")})`,
 );

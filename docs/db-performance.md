@@ -2,14 +2,14 @@
 
 배포판은 브라우저 Worker 안의 PGlite(WASM Postgres 18.6)를 쓴다. 이번 점검은 같은 PGlite를 Node에서 임베디드(파일 저장)로 띄워, 기본 시나리오보다 훨씬 큰 데이터로 DB 설계와 쿼리를 쟀다. 엔진·JS 드라이버가 브라우저와 같으므로 결과의 방향은 배포판에도 그대로 적용된다 (절대값은 기기마다 다르다).
 
-재현: `pnpm bench:db` (옵션은 `scripts/bench-db/run.mts` 머리 주석). 결과 비교: `tsx scripts/bench-db/compare.mts before.json after.json`.
+재현: `pnpm bench:db` (옵션은 `apps/web/scripts/bench-db/run.mts` 머리 주석). 결과 비교: `pnpm --filter @vis-a-lot/web exec tsx scripts/bench-db/compare.mts before.json after.json`.
 
 ## 측정 환경
 
 | 항목 | 값 |
 | --- | --- |
 | 엔진 | PGlite 0.5.10 (PostgreSQL 18.6, wasm32), Node 22, 파일 저장 + `relaxedDurability` (DB Worker와 같은 설정) |
-| 피드 데이터 | 사용자 1,000 · 그룹 20(비공개 5) · 게시물 50,000 · 댓글 201,085 · 반응 201,246 · 이력 550,383 · 알림 2,199,996 · 구독 205,690 · 체크리스트 100,002 (`scripts/bench-db/feed-fixture.ts`, 결정적 난수, 1년치) |
+| 피드 데이터 | 사용자 1,000 · 그룹 20(비공개 5) · 게시물 50,000 · 댓글 201,085 · 반응 201,246 · 이력 550,383 · 알림 2,199,996 · 구독 205,690 · 체크리스트 100,002 (`apps/web/scripts/bench-db/feed-fixture.ts`, 결정적 난수, 1년치) |
 | 차트 데이터 | 샘플 데이터셋 `iot-1m` (100만 행, 생성기 그대로) |
 | 측정 | 피드 op는 `runFeedOp`(트랜잭션 포함)로 warmup 2회 후 10회 중앙값, 차트 쿼리는 5회 중앙값. 느린 문장은 `EXPLAIN (ANALYZE, BUFFERS)`로 계획을 남긴다 |
 | 비교 | 바꾸기 전 코드(develop)와 바꾼 코드를 같은 스크립트로, 같은 시간에 나란히 돌렸다 |
@@ -42,7 +42,7 @@
 - `server/data/dataset-schema.ts`: `numericSql`의 시각 식을 `date_part` 기반으로 (값은 그대로).
 - `server/data/chart-data.ts`: `queryChartData`가 split 조합마다 한 행으로 묶어 받는다 (결과 모양은 그대로).
 - `server/feed/access.ts`, `views.ts`, `groups.ts`: `groupRoles`로 N+1 제거.
-- `scripts/bench-db/`: 벤치마크(`pnpm bench:db`), 대량 픽스처, 결과 비교.
+- `apps/web/scripts/bench-db/`: 벤치마크(`pnpm bench:db`), 대량 픽스처, 결과 비교.
 
 ## 결과 (중앙값, ms)
 

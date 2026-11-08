@@ -1,0 +1,37 @@
+{
+  "name": "@vis-a-lot/shared",
+  "version": "0.18.0",
+  "private": true,
+  "description": "두 앱(web, help)이 함께 쓰는 FSD shared 레이어: 언어·테마, Lingui, 디자인 토큰, 공통 UI",
+  "scripts": {
+    "lingui:extract": "lingui extract --clean",
+    "lingui:compile": "lingui compile",
+    "i18n": "lingui check sync && lingui compile --strict && node ../../scripts/check-i18n.mjs .",
+    "lint": "node ../../scripts/check-i18n.mjs .",
+    "test": "lingui compile && vitest run",
+    "typecheck": "lingui compile && tsc --noEmit"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.9.0",
+    "@lingui/core": "6.10.1",
+    "@lingui/react": "6.10.1",
+    "lucide-react": "1.59.0",
+    "tailwind-merge": "3.7.0",
+    "tailwind-variants": "3.3.1",
+    "tailwindcss": "4.3.3"
+  },
+  "peerDependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@lingui/cli": "6.10.1",
+    "@lingui/format-po": "6.10.1",
+    "@lingui/vite-plugin": "6.10.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "vitest": "5.0.5"
+  }
+}

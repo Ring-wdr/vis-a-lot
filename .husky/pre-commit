@@ -2,5 +2,5 @@
 # 충돌을 풀고 마치는 병합 커밋도 여기로 온다.
 sh scripts/check-git-flow.sh commit
 
-# src·app이 FSD 레이어 규칙을 지키는지 본다 (scripts/check-fsd.mjs, docs/architecture.md).
+# 앱(apps/*/src·app)과 공유 패키지(packages/shared)가 FSD 레이어 규칙을 지키는지 본다 (scripts/check-fsd.mjs, docs/architecture.md).
 node scripts/check-fsd.mjs

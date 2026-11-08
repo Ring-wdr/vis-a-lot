@@ -1,0 +1,101 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/shared/config/help.ts
+msgid "14가지 차트와 서브 차트, 차트마다 고르는 컬럼"
+msgstr "14種類のチャートとサブチャート、チャートごとに選ぶカラム"
+
+#: src/shared/config/help.ts
+msgid "그린 차트를 다시 보고 이어서 편집하기"
+msgstr "描いたチャートを見直して続きを編集する"
+
+#: src/shared/config/help.ts
+msgid "꾸미기"
+msgstr "装飾"
+
+#: src/shared/config/help.ts
+msgid "내보내기와 공유"
+msgstr "エクスポートと共有"
+
+#: src/shared/config/help.ts
+msgid "다운로드, 데이터 테이블, 링크 복사, 피드에 올리기"
+msgstr "ダウンロード、データテーブル、リンクをコピー、フィードに投稿"
+
+#: src/shared/config/help.ts
+msgid "데이터 보관 위치, 한도, 자주 묻는 질문"
+msgstr "データの保存場所、上限、よくある質問"
+
+#: src/shared/config/help.ts
+msgid "데이터 준비"
+msgstr "データの準備"
+
+#: src/shared/config/help.ts
+msgid "데이터를 올리고 차트를 그려 살펴보고, 기록을 다시 보고 공유하는 방법"
+msgstr "データをアップロードしてチャートを描いて調べ、履歴を見直して共有する方法"
+
+#: src/shared/config/help.ts
+msgid "로그인과 화면 구성"
+msgstr "ログインと画面構成"
+
+#: src/shared/config/help.ts
+msgid "샘플 데이터 등록, CSV·zip 올리기, 데이터스토어"
+msgstr "サンプルデータの登録、CSV・zip のアップロード、datastore"
+
+#: src/shared/config/help.ts
+msgctxt "help service name"
+msgid "시각화"
+msgstr "可視化"
+
+#: src/shared/config/help.ts
+msgid "시작하기"
+msgstr "はじめに"
+
+#: src/shared/config/help.ts
+msgid "알아 두기"
+msgstr "知っておくこと"
+
+#: src/shared/config/help.ts
+msgid "전체 설정, legend 색·위치, item 개별 속성"
+msgstr "全体設定、legend の色・位置、item ごとの属性"
+
+#: src/shared/config/help.ts
+msgid "차트 그리기"
+msgstr "チャートを描く"
+
+#: src/shared/config/help.ts
+msgid "차트 살펴보기"
+msgstr "チャートを調べる"
+
+#: src/shared/config/help.ts
+msgid "차트 종류"
+msgstr "チャートの種類"
+
+#: src/shared/config/help.ts
+msgid "차트·이미지·코드를 게시물로 올리고 이슈로 다루는 방법"
+msgstr "チャート・画像・コードを投稿してイシューとして扱う方法"
+
+#: src/shared/config/help.ts
+msgid "컬럼 고르기, split by와 grid, draw와 진행 상황"
+msgstr "カラムの選択、split by と grid、draw と進行状況"
+
+#: src/shared/config/help.ts
+msgid "컬럼별 범위·값 필터와 적용 시점"
+msgstr "カラムごとの範囲・値フィルターと適用のタイミング"
+
+#: src/shared/config/help.ts
+msgid "툴팁, 모드(이동·확대·선택·삭제·페인트), 크게 보기"
+msgstr "tooltip、モード(移動・拡大・選択・削除・ペイント)、拡大表示"
+
+#: src/shared/config/help.ts
+msgctxt "help service name"
+msgid "피드"
+msgstr "フィード"
+
+#: src/shared/config/help.ts
+msgid "필터"
+msgstr "フィルター"

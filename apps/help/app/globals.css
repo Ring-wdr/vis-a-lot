@@ -1,0 +1,2 @@
+/* 디자인 토큰·reset은 두 앱이 함께 쓰는 패키지에 있다 (packages/shared/ui/globals.css). 이 앱의 src·app은 Tailwind가 알아서 훑는다. */
+@import "@vis-a-lot/shared/ui/globals.css";

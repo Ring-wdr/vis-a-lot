@@ -54,7 +54,7 @@
 | MSA | auth · data · chart 서비스를 gateway 뒤에 분리. chart → data 호출은 서비스 토큰(client credentials) |
 | auth | 로그인, ES256 JWT access token(5분) + refresh token rotation, JWKS로 서비스별 검증, scope 확인 |
 | OAS | 서비스 코드(zod)가 OpenAPI 3.1 문서를 만들고(`public/openapi/*.json`), 화면과 서비스 간 client가 생성 타입으로 호출 |
-| 도움말 | `/help`: 서비스별 사용 방법. 본문은 `content/help/<서비스>/*.mdx`(`@next/mdx`), 로그인 없이 열린다. 지금은 시각화 도움말만 있고 피드는 준비 중 |
+| 도움말 | `/help`: 서비스별 사용 방법. 본문은 `apps/help/content/help/<서비스>/*.mdx`(`@next/mdx`), 도움말 앱(`apps/help`)이 따로 빌드한다. 로그인 없이 열린다. 지금은 시각화 도움말만 있고 피드는 준비 중 |
 
 ## 기술 스택
 
@@ -70,52 +70,68 @@
 
 ## 실행
 
+pnpm workspace 모노레포입니다. 루트에서 실행합니다.
+
 ```bash
 pnpm install
-pnpm dev        # http://localhost:3000
-pnpm build      # out/ 정적 사이트 (아무 정적 호스팅에 배포 가능)
-pnpm gen:api    # 서비스 코드 → OAS(public/openapi/*.json) → TS 타입 생성
+pnpm dev:web    # 시각화·피드·공유·dev (apps/web) http://localhost:3000
+pnpm dev:help   # 도움말 /help/** (apps/help)    http://localhost:3001/help
+pnpm build      # 앱마다 out/ 정적 사이트 (apps/web/out, apps/help/out)
+pnpm --filter @vis-a-lot/web build   # 앱 하나만 빌드
+pnpm gen:api    # 서비스 코드 → OAS(apps/web/public/openapi/*.json) → TS 타입 생성
 pnpm gen:api:check  # 생성물이 서비스 코드와 맞는지 확인 (CI용)
-pnpm test       # 단위 테스트
-pnpm lint       # Biome
+pnpm test       # 모든 앱·패키지의 단위 테스트
+pnpm lint       # FSD 구조, i18n, Biome, Stylelint
+pnpm typecheck  # 모든 앱·패키지의 tsc
 ```
+
+두 앱은 같은 사이트에서 경로로 나뉩니다 (`/help/**`는 help, 나머지는 web). 로컬에서는 포트가 달라 앱 사이 링크(상단 바의 help, 도움말의 시각화·피드)가 다른 앱으로 이어지지 않습니다.
 
 데모 계정은 `demo` / `demo1234`입니다.
 
 세션 만료를 확인하려면 토큰 수명을 줄여 빌드합니다. refresh token은 쓸 때마다 새로 받으므로, 이 시간 동안 요청이 없으면 세션이 끝납니다.
 
 ```bash
-NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm build
+NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm --filter @vis-a-lot/web build
 ```
 
 `/dev` 페이지에서 DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더 경로를 따로 확인할 수 있습니다.
 
 ## 디렉터리
 
+pnpm workspace 모노레포입니다. 규칙은 [`docs/architecture.md`](docs/architecture.md), 검사는 `scripts/check-fsd.mjs`입니다.
+
 ```
-app/                  Next.js 라우트만 둔다 (page, layout). 화면은 src/에서 불러온다
-src/                  FSD 레이어로 나눈 클라이언트 코드 (@/* = src/*). 규칙은 docs/architecture.md, 검사는 scripts/check-fsd.mjs
-  application/        provider, mock 서버 부팅, ssr: false 진입점 (FSD의 app 레이어)
-  views/              화면 단위 조립 (FSD의 pages 레이어. Next의 app/pages와 이름이 겹치지 않게)
-  widgets/            설정 패널, item grid, history 목록 같은 큰 블록
-  features/           draw, grid 변경, 공통 속성, item 조작, 툴팁, 공유, 데이터 등록 같은 사용자 동작
-  entities/           작업 상태 store, 차트 좌표·레이아웃·공유 링크
-  shared/             API 클라이언트(생성 타입), 세션, React Query 훅, 공통 UI, 유틸
-server/               브라우저 안의 "서버" (@server/*). 화면은 import할 수 없다 (lint)
-  gateway.ts          경로 prefix → 서비스 라우팅 (MSW handler)
-  services/           auth / data / chart 서비스. 서비스마다 schemas(zod) · routes(계약) · app(handler)
-  api/                서버 내부 도메인 타입 (OAS 스키마와 컴파일 타임에 맞춰진다)
-  jobs/               렌더 job 실행기 (순차 대기열, long polling, 취소)
-  data/               데이터 생성기, 데이터셋 적재, 차트 데이터 조회/집계 SQL
-  render/             scatter, bar/boxplot, 도형 렌더러 (Canvas 2D만 의존)
-  history/            history 기록과 PGlite 저장소
-  workers/            DB Worker, Render Worker
-content/help/         도움말 본문(MDX). 서비스마다 폴더, 쓰는 법은 content/help/README.md
-mdx-components.tsx    @next/mdx 필수 파일. 요소 모양은 src/shared/ui/mdx
-scripts/gen-api.mts   OAS·타입 생성기
-scripts/check-fsd.mjs FSD 레이어 위치·import 방향 검사 (pnpm lint, pre-commit)
-public/openapi/       서비스별 OpenAPI 3.1 문서 (생성물)
-docs/                 기획서
+apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/share), dev 화면
+  app/                  Next.js 라우트만 둔다 (page, layout). 화면은 src/에서 불러온다
+  src/                  FSD 레이어로 나눈 클라이언트 코드 (@/* = apps/web/src/*)
+    application/        provider, mock 서버 부팅, ssr: false 진입점 (FSD의 app 레이어)
+    views/              화면 단위 조립 (FSD의 pages 레이어. Next의 app/pages와 이름이 겹치지 않게)
+    widgets/            설정 패널, item grid, history 목록 같은 큰 블록
+    features/           draw, grid 변경, 공통 속성, item 조작, 툴팁, 공유, 데이터 등록 같은 사용자 동작
+    entities/           작업 상태 store, 차트 좌표·레이아웃·공유 링크
+    shared/             이 앱만 쓰는 API 클라이언트(생성 타입), 세션, React Query 훅, 공통 UI, 유틸
+  server/               브라우저 안의 "서버" (@server/*). 화면은 import할 수 없다 (lint)
+    gateway.ts          경로 prefix → 서비스 라우팅 (MSW handler)
+    services/           auth / data / chart 서비스. 서비스마다 schemas(zod) · routes(계약) · app(handler)
+    api/                서버 내부 도메인 타입 (OAS 스키마와 컴파일 타임에 맞춰진다)
+    jobs/               렌더 job 실행기 (순차 대기열, long polling, 취소)
+    data/               데이터 생성기, 데이터셋 적재, 차트 데이터 조회/집계 SQL
+    render/             scatter, bar/boxplot, 도형 렌더러 (Canvas 2D만 의존)
+    history/            history 기록과 PGlite 저장소
+    workers/            DB Worker, Render Worker
+  public/               MSW worker, 서비스별 OpenAPI 3.1 문서(openapi/, 생성물)
+  scripts/              gen-api.mts(OAS·타입 생성기), bench-db/(DB 벤치마크)
+apps/help/              @vis-a-lot/help: 도움말 /help/** (로그인 없이 열리는 정적 MDX 페이지)
+  app/help/             도움말 라우트. basePath 없이 /help 아래에 둔다
+  src/                  FSD 레이어 (application/HelpShell, views/help-*, widgets/help-sidebar, shared/config/help.ts 목차, shared/ui/mdx)
+  content/help/         도움말 본문(MDX). 서비스마다 폴더, 쓰는 법은 apps/help/content/help/README.md
+  mdx-components.tsx    @next/mdx 필수 파일. 요소 모양은 src/shared/ui/mdx
+packages/shared/        @vis-a-lot/shared: 두 앱이 함께 쓰는 FSD shared 레이어 (config, lib, ui)
+  ui/globals.css        디자인 토큰·reset (두 앱의 app/globals.css가 import한다)
+scripts/check-fsd.mjs   FSD 레이어 위치·import 방향·앱 경계 검사 (pnpm lint, pre-commit)
+scripts/check-i18n.mjs  Lingui 카탈로그 검사 (앱·패키지마다)
+docs/                   기획서
 ```
 
 ## 알려진 제약

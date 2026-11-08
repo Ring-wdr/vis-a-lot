@@ -1,8 +1,23 @@
-# 화면 구조 (FSD)
+# 화면 구조 (모노레포 + FSD)
 
-`src`는 [Feature-Sliced Design](https://feature-sliced.design) 레이어로만 나눈다. Next의 `app/`·`pages/`와 겹치지 않게 FSD의 `app`은 `application`, `pages`는 `views`로 이름만 바꿨다.
+저장소는 pnpm workspace 모노레포다. 앱 둘과 두 앱이 함께 쓰는 패키지 하나로 나뉜다.
 
-`scripts/check-fsd.mjs`가 아래 규칙을 검사한다. `pnpm lint`, husky `pre-commit`, Claude Code 훅(`.claude/hooks/check-fsd.mjs`)이 이 스크립트를 쓴다.
+| 위치 | 패키지 이름 | 두는 것 |
+| --- | --- | --- |
+| `apps/web` | `@vis-a-lot/web` | 시각화(`/`), 피드(`/feed/**`), 공유(`/share`), dev 화면, 브라우저 안의 서버(`server/`, MSW worker `public/`) |
+| `apps/help` | `@vis-a-lot/help` | 도움말(`/help/**`): 라우트, 화면, 본문(`content/help`), MDX 설정 |
+| `packages/shared` | `@vis-a-lot/shared` | 두 앱이 함께 쓰는 FSD `shared` 레이어: 언어·테마(`config`, `lib`), Lingui instance, `tw`, 공통 UI(`Localized`, `StableText`, `nav`, 화면 설정 `PreferencesMenu`), 디자인 토큰 `ui/globals.css`, 도움말 경로 `config/help-routes.ts` |
+
+두 앱은 같은 사이트의 경로로 나뉜다 (`/help/**`는 help, 나머지는 web). 그래서 도움말 앱도 `basePath` 없이 라우트를 `app/help/` 아래에 둔다.
+
+- 앱은 쓰는 내부 패키지를 자기 `package.json`에 `"@vis-a-lot/shared": "workspace:*"`로 선언하고 패키지 이름으로 import한다 (`@vis-a-lot/shared/ui/nav`). 배포는 package.json의 의존 그래프로 바뀐 앱만 다시 빌드하므로, 상대 경로(`../../packages/…`)나 tsconfig paths로 우회하면 바뀐 코드가 빌드에서 빠진다.
+- 앱은 다른 앱을 import하지 않는다. 두 앱이 함께 쓰는 코드는 `packages/shared`로 옮긴다. 한 앱만 쓰는 shared 코드는 그 앱의 `src/shared`에 둔다 (API client, MSW, 도움말 목차 등).
+- 다른 앱의 화면으로 가는 링크(도움말 ↔ 시각화·피드)는 `next/link`가 아닌 일반 `<a>`로 쓴다. 같은 앱 안의 링크만 `next/link`로 쓴다.
+- 의존성은 그 앱·패키지가 실제로 쓰는 것만 자기 `package.json`에 둔다. 공통 개발 도구(Biome, Stylelint, TypeScript, husky)는 루트에 둔다.
+
+각 앱의 `src`는 [Feature-Sliced Design](https://feature-sliced.design) 레이어로만 나눈다. Next의 `app/`·`pages/`와 겹치지 않게 FSD의 `app`은 `application`, `pages`는 `views`로 이름만 바꿨다. `@/*`는 그 앱의 `src/*`다.
+
+`scripts/check-fsd.mjs`가 모든 앱의 `src`·`app`과 `packages/shared`에 아래 규칙을 검사한다. `pnpm lint`, husky `pre-commit`, Claude Code 훅(`.claude/hooks/check-fsd.mjs`)이 이 스크립트를 쓴다.
 
 ## 레이어
 
@@ -21,17 +36,28 @@ segment는 `ui`, `model`, `api`, `lib`, `config` 중 하나다.
 
 `app/`(Next 라우트)은 얇게 둔다. `application`, `views`, `shared`만 import한다.
 
+### 공유 패키지 (`packages/shared`)
+
+`packages/shared`는 두 앱의 `shared` 레이어다. 앱에서 `@vis-a-lot/shared/<segment>/…`를 import하면 검사는 `shared` 레이어로 본다. 그래서 어느 레이어(와 `app/`)에서든 import할 수 있다.
+
+- 패키지 바로 아래 폴더가 segment다 (`packages/shared/ui/nav.ts`). 패키지 바로 아래에는 설정 파일(`package.json`, `lingui.config.ts` 등)만 둔다.
+- 패키지 안은 상대 경로로 import한다. 앱의 별칭 `@/`, 패키지 이름(`@vis-a-lot/…`), 패키지 밖을 가리키는 상대 경로는 쓰지 않는다. 패키지는 앱을 모른다.
+- 화면 설정(`PreferencesMenu`, `ThemeSelect`, `LocaleSelect`)은 업무와 무관하고 두 앱이 함께 쓰므로 feature가 아닌 `packages/shared/ui`에 둔다.
+- 문구는 패키지의 카탈로그 하나(`packages/shared/config/locales`)에 둔다 ([i18n.md](i18n.md)).
+
 ## 어디에 둘지
 
-- 도메인마다 `src/<도메인>/` 아래 자체 레이어를 만들지 않는다 (예: `src/feed/{views,ui,api}`). 역할별로 각 레이어의 slice에 나눠 넣는다. 피드는 `views/feed-*`, `widgets/post-detail`, `features/create-post`, `entities/post`, `shared/api/feed`처럼 흩어져 있다.
+- 도메인마다 `src/<도메인>/` 아래 자체 레이어를 만들지 않는다 (예: `apps/web/src/feed/{views,ui,api}`). 역할별로 각 레이어의 slice에 나눠 넣는다. 피드는 `apps/web/src`의 `views/feed-*`, `widgets/post-detail`, `features/create-post`, `entities/post`, `shared/api/feed`처럼 흩어져 있다.
+- 새 화면은 그 경로를 내보내는 앱에 둔다. `/help/**`는 `apps/help`, 그 밖은 `apps/web`이다. 앱을 새로 나누는 일은 이 문서와 배포 설정을 함께 바꾸는 별도 작업이다.
+- 두 앱이 함께 쓰게 된 shared 코드는 `packages/shared`로 옮긴다. shared보다 위 레이어(entities, features 등)를 두 앱이 함께 쓰게 되면 패키지로 올리기 전에 먼저 구조를 상의한다.
 - 한 페이지에서만 쓰는 코드는 그 view slice 안에 둔다 (`views/feed-new-post/model/payload.ts`).
-- 두 slice가 함께 쓰는 코드는 아래 레이어로 내린다. view 둘이 쓰는 skeleton은 entity·widget으로, entity 둘이 쓰는 정적 표는 `shared/config`로 간다 (`shared/config/chart-kinds.ts`).
+- 두 slice가 함께 쓰는 코드는 아래 레이어로 내린다. view 둘이 쓰는 skeleton은 entity·widget으로, entity 둘이 쓰는 정적 표는 `shared/config`로 간다 (`apps/web/src/shared/config/chart-kinds.ts`).
 - 서로 다른 slice를 엮는 일은 위 레이어가 한다. widget이 다른 widget을 넣어야 하면 `application`이나 view에서 조합한다.
 - API 요청과 query는 `shared/api`에 둔다 (`shared/api/queries.ts`, `shared/api/feed/*`).
 
 ## 계획·스펙 문서
 
-스펙이나 계획에 화면 코드 위치를 적을 때는 위 레이어 위치로 적는다. 병렬 작업이 편하다는 이유로 도메인 폴더를 만들지 않는다.
+스펙이나 계획에 화면 코드 위치를 적을 때는 앱과 위 레이어 위치로 적는다 (`apps/web/src/views/feed-board`). 병렬 작업이 편하다는 이유로 도메인 폴더를 만들지 않는다.
 
 ## 상태 위임
 
