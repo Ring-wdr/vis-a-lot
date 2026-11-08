@@ -28,6 +28,7 @@ import type { Comment, CommentThread } from "@/shared/api/feed/comments";
 import { commentsApi } from "@/shared/api/feed/comments";
 import { useUserMap } from "@/shared/api/feed/lookups";
 import { useFeedNow } from "@/shared/api/feed/queries";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { dateTime, relativeTime } from "@/shared/lib/time";
 import { showConfirm } from "@/shared/ui/AlertDialog";
 import { Avatar } from "@/shared/ui/Avatar";
@@ -37,9 +38,75 @@ import { RichEditor, RichView } from "@/shared/ui/rich-editor/RichEditor";
 import { docText, isEmptyDoc, toDoc } from "@/shared/ui/rich-editor/rich-text";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
 
+const messages = defineMessages({
+  ko: {
+    title: "댓글",
+    loading: "댓글을 불러오는 중",
+    loadFailed: (reason: string) => `댓글을 불러오지 못했습니다: ${reason}`,
+    empty: "아직 댓글이 없습니다. 첫 댓글을 남겨 보세요.",
+    threads: "댓글 스레드",
+    deletedPreview: "삭제된 댓글",
+    resolved: "해결됨",
+    replies: (n: number) => `답글 ${n}`,
+    collapse: "접기",
+    reply: "답글",
+    addReply: "답글 달기",
+    editFailed: "댓글을 고치지 못했습니다",
+    commentBy: (author: string) => `${author}의 댓글`,
+    edited: "(수정됨)",
+    pinned: "고정됨",
+    unpin: "고정 풀기",
+    pin: "스레드 고정",
+    pinFailed: "고정을 바꾸지 못했습니다",
+    reopen: "다시 열기",
+    resolve: "스레드 해결",
+    resolveFailed: "해결 상태를 바꾸지 못했습니다",
+    edit: "고치기",
+    delete: "지우기",
+    confirmDelete: "이 댓글을 지울까요?",
+    deleteFailed: "댓글을 지우지 못했습니다",
+    deleted: "삭제된 댓글입니다.",
+    editLabel: "댓글 고치기",
+    cancel: "취소",
+    save: "저장",
+  },
+  en: {
+    title: "Comments",
+    loading: "Loading comments",
+    loadFailed: (reason: string) => `Couldn't load comments: ${reason}`,
+    empty: "No comments yet. Be the first to comment.",
+    threads: "Comment threads",
+    deletedPreview: "Deleted comment",
+    resolved: "Resolved",
+    replies: (n: number) => `${n} ${n === 1 ? "reply" : "replies"}`,
+    collapse: "Collapse",
+    reply: "Reply",
+    addReply: "Reply",
+    editFailed: "Couldn't edit the comment",
+    commentBy: (author: string) => `Comment by ${author}`,
+    edited: "(edited)",
+    pinned: "Pinned",
+    unpin: "Unpin",
+    pin: "Pin thread",
+    pinFailed: "Couldn't change the pin",
+    reopen: "Reopen",
+    resolve: "Resolve thread",
+    resolveFailed: "Couldn't change the resolved state",
+    edit: "Edit",
+    delete: "Delete",
+    confirmDelete: "Delete this comment?",
+    deleteFailed: "Couldn't delete the comment",
+    deleted: "This comment was deleted.",
+    editLabel: "Edit comment",
+    cancel: "Cancel",
+    save: "Save",
+  },
+});
+
 const d = detail();
 
 export function PostComments({ post }: { post: PostDetail }) {
+  const text = useT(messages);
   const threads = useComments(post.key);
   const count = useMemo(
     () =>
@@ -54,7 +121,7 @@ export function PostComments({ post }: { post: PostDetail }) {
   return (
     <section className={d.section()} aria-labelledby="post-comments-title">
       <h2 id="post-comments-title" className={d.sectionTitle()}>
-        댓글
+        {text.title}
         {threads.data && (
           <span className="ml-1.5 font-normal text-fg-muted tabular-nums">
             {count}
@@ -63,21 +130,21 @@ export function PostComments({ post }: { post: PostDetail }) {
       </h2>
       {threads.isPending ? (
         <div className="flex flex-col gap-2" aria-busy="true">
-          <LoadingText>댓글을 불러오는 중</LoadingText>
+          <LoadingText>{text.loading}</LoadingText>
           <Skeleton width={70} />
           <Skeleton width={50} />
         </div>
       ) : threads.isError ? (
         <p role="alert" className={d.error()}>
-          댓글을 불러오지 못했습니다: {threads.error.message}
+          {text.loadFailed(threads.error.message)}
         </p>
       ) : threads.data.length === 0 ? (
         <p className="flex items-center gap-2 text-xs text-fg-muted">
           <MessageSquare size={14} aria-hidden="true" />
-          아직 댓글이 없습니다. 첫 댓글을 남겨 보세요.
+          {text.empty}
         </p>
       ) : (
-        <ol className="flex flex-col gap-2.5" aria-label="댓글 스레드">
+        <ol className="flex flex-col gap-2.5" aria-label={text.threads}>
           {threads.data.map((t) => (
             <Thread key={t.id} thread={t} postId={post.id} now={now} />
           ))}
@@ -97,13 +164,14 @@ function Thread({
   postId: string;
   now: number;
 }) {
+  const text = useT(messages);
   const [expanded, setExpanded] = useState(false);
   const [replying, setReplying] = useState(false);
   const users = useUserMap();
   const collapsed = thread.resolved && !expanded;
   const author = users.get(thread.authorId)?.name ?? thread.authorId;
   const preview = thread.deleted
-    ? "삭제된 댓글"
+    ? text.deletedPreview
     : docText(toDoc(thread.body)).replace(/\s+/g, " ").trim() ||
       thread.poll?.question ||
       "";
@@ -120,13 +188,13 @@ function Thread({
           <ChevronRight size={13} className="flex-none" aria-hidden="true" />
           <span className={chip({ tone: "accent" })}>
             <CircleCheck size={11} aria-hidden="true" />
-            해결됨
+            {text.resolved}
           </span>
           <span className="flex-none font-semibold text-fg">{author}</span>
           <span className="min-w-0 flex-1 truncate">{preview}</span>
           {thread.replies.length > 0 && (
             <span className="flex-none tabular-nums">
-              답글 {thread.replies.length}
+              {text.replies(thread.replies.length)}
             </span>
           )}
         </button>
@@ -148,9 +216,9 @@ function Thread({
           <ChevronDown size={12} aria-hidden="true" />
           <span className={chip({ tone: "accent" })}>
             <CircleCheck size={11} aria-hidden="true" />
-            해결됨
+            {text.resolved}
           </span>
-          접기
+          {text.collapse}
         </button>
       )}
       <CommentItem
@@ -161,7 +229,7 @@ function Thread({
       {thread.replies.length > 0 && (
         <ol
           className="ml-3 flex flex-col gap-2 border-l-2 border-line pl-3"
-          aria-label="답글"
+          aria-label={text.reply}
         >
           {thread.replies.map((r) => (
             <li key={r.id}>
@@ -179,8 +247,8 @@ function Thread({
           <CommentComposer
             postId={postId}
             parentId={thread.id}
-            label="답글"
-            submitLabel="답글 달기"
+            label={text.reply}
+            submitLabel={text.addReply}
             autoFocus
             onDone={() => setReplying(false)}
           />
@@ -193,7 +261,7 @@ function Thread({
             onClick={() => setReplying(true)}
           >
             <Reply size={12} aria-hidden="true" />
-            답글 달기
+            {text.addReply}
           </button>
         )
       )}
@@ -210,6 +278,7 @@ function CommentItem({
   now: number;
   onReply: () => void;
 }) {
+  const text = useT(messages);
   const users = useUserMap();
   const { run, pending } = useCommentAction();
   const [editing, setEditing] = useState(false);
@@ -222,7 +291,7 @@ function CommentItem({
   const save = async () => {
     if (!comment.poll && isEmptyDoc(draft)) return;
     if (
-      await run("edit", "댓글을 고치지 못했습니다", () =>
+      await run("edit", text.editFailed, () =>
         commentsApi.update(comment.id, isEmptyDoc(draft) ? null : draft),
       )
     )
@@ -232,7 +301,7 @@ function CommentItem({
   return (
     <article
       className="group/comment flex min-w-0 gap-2.5"
-      aria-label={`${author}의 댓글`}
+      aria-label={text.commentBy(author)}
     >
       <Avatar name={author} />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -241,22 +310,22 @@ function CommentItem({
           <time
             className="text-2xs text-fg-muted"
             dateTime={comment.createdAt}
-            title={dateTime.format(new Date(comment.createdAt))}
+            title={dateTime().format(new Date(comment.createdAt))}
           >
             {relativeTime(comment.createdAt, now)}
           </time>
           {comment.updatedAt && !comment.deleted && (
             <span
               className="text-2xs text-fg-muted"
-              title={dateTime.format(new Date(comment.updatedAt))}
+              title={dateTime().format(new Date(comment.updatedAt))}
             >
-              (수정됨)
+              {text.edited}
             </span>
           )}
           {comment.pinned && (
             <span className={chip({ tone: "accent" })}>
               <Pin size={11} aria-hidden="true" />
-              고정됨
+              {text.pinned}
             </span>
           )}
           {!comment.deleted && !editing && (
@@ -265,8 +334,8 @@ function CommentItem({
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label="답글"
-                  title="답글"
+                  aria-label={text.reply}
+                  title={text.reply}
                   onClick={onReply}
                 >
                   <Reply size={12} aria-hidden="true" />
@@ -276,11 +345,11 @@ function CommentItem({
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label={comment.pinned ? "고정 풀기" : "스레드 고정"}
-                  title={comment.pinned ? "고정 풀기" : "스레드 고정"}
+                  aria-label={comment.pinned ? text.unpin : text.pin}
+                  title={comment.pinned ? text.unpin : text.pin}
                   disabled={!!pending}
                   onClick={() =>
-                    run("pin", "고정을 바꾸지 못했습니다", () =>
+                    run("pin", text.pinFailed, () =>
                       commentsApi.pin(comment.id, !comment.pinned),
                     )
                   }
@@ -296,11 +365,11 @@ function CommentItem({
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label={comment.resolved ? "다시 열기" : "스레드 해결"}
-                  title={comment.resolved ? "다시 열기" : "스레드 해결"}
+                  aria-label={comment.resolved ? text.reopen : text.resolve}
+                  title={comment.resolved ? text.reopen : text.resolve}
                   disabled={!!pending}
                   onClick={() =>
-                    run("resolve", "해결 상태를 바꾸지 못했습니다", () =>
+                    run("resolve", text.resolveFailed, () =>
                       commentsApi.resolve(comment.id, !comment.resolved),
                     )
                   }
@@ -316,8 +385,8 @@ function CommentItem({
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label="고치기"
-                  title="고치기"
+                  aria-label={text.edit}
+                  title={text.edit}
                   onClick={() => {
                     setDraft(body);
                     setEditing(true);
@@ -330,16 +399,16 @@ function CommentItem({
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label="지우기"
-                  title="지우기"
+                  aria-label={text.delete}
+                  title={text.delete}
                   disabled={!!pending}
                   onClick={async () => {
                     if (
-                      await showConfirm("이 댓글을 지울까요?", {
-                        confirmLabel: "지우기",
+                      await showConfirm(text.confirmDelete, {
+                        confirmLabel: text.delete,
                       })
                     )
-                      void run("delete", "댓글을 지우지 못했습니다", () =>
+                      void run("delete", text.deleteFailed, () =>
                         commentsApi.remove(comment.id),
                       );
                   }}
@@ -351,13 +420,13 @@ function CommentItem({
           )}
         </header>
         {comment.deleted ? (
-          <p className="text-ui text-fg-muted italic">삭제된 댓글입니다.</p>
+          <p className="text-ui text-fg-muted italic">{text.deleted}</p>
         ) : editing ? (
           <div className="flex flex-col gap-1.5">
             <RichEditor
               initial={body}
               onChange={setDraft}
-              label="댓글 고치기"
+              label={text.editLabel}
               size="sm"
               toolbar={false}
               autoFocus
@@ -370,7 +439,7 @@ function CommentItem({
                 disabled={!!pending}
                 onClick={() => setEditing(false)}
               >
-                취소
+                {text.cancel}
               </button>
               <button
                 type="button"
@@ -379,7 +448,7 @@ function CommentItem({
                 onClick={save}
               >
                 {pending === "edit" && <Spinner size="sm" tone="inherit" />}
-                저장
+                {text.save}
               </button>
             </div>
           </div>

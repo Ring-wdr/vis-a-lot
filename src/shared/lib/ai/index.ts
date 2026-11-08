@@ -3,16 +3,17 @@
 
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
+import { getLocale, type Locale } from "@/shared/lib/i18n";
 import {
   draftPrompt,
   hasLanguageModel,
-  LANGUAGE_OPTIONS,
+  languageOptions,
   parseSuggestion,
   readStream,
-  SYSTEM_PROMPT,
   suggestPrompt,
   suggestSchema,
   summarizePrompt,
+  systemPrompt,
 } from "./chrome";
 import { mockAdapter } from "./mock";
 import type {
@@ -52,7 +53,9 @@ export function status(): Promise<AiStatus> {
       aiStore.setState({ adapter: "mock", availability: "unsupported" });
     } else {
       try {
-        const availability = await LanguageModel.availability(LANGUAGE_OPTIONS);
+        const availability = await LanguageModel.availability(
+          languageOptions(),
+        );
         aiStore.setState({
           availability,
           adapter: availability === "available" ? "chrome" : "mock",
@@ -75,11 +78,16 @@ const message = (err: unknown) =>
   err instanceof Error ? `${err.name}: ${err.message}` : String(err);
 
 let base: Promise<LanguageModel> | null = null;
+/** base 세션을 만든 화면 언어. 언어가 바뀌면 그 언어의 시스템 프롬프트로 다시 만든다. */
+let baseLocale: Locale | null = null;
 
 function createBase(monitor?: CreateMonitorCallback) {
+  const locale = getLocale();
+  if (baseLocale !== locale) base = null;
+  baseLocale = locale;
   base ??= LanguageModel.create({
-    ...LANGUAGE_OPTIONS,
-    initialPrompts: [{ role: "system", content: SYSTEM_PROMPT }],
+    ...languageOptions(locale),
+    initialPrompts: [{ role: "system", content: systemPrompt(locale) }],
     monitor,
   }).catch((err) => {
     base = null;

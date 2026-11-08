@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import {
-  FORMAT_LABELS,
+  formatLabels,
   priorityLabel,
   statusLabel,
 } from "@/entities/post/lib/labels";
@@ -23,7 +23,28 @@ import type {
   PostStatus,
   PostSummary,
 } from "@/shared/api/feed/types";
+import {
+  defineMessages,
+  localeCached,
+  useLocale,
+  useT,
+} from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
+
+const messages = defineMessages({
+  ko: {
+    priority: (label: string) => `우선순위 ${label}`,
+    noAssignee: "담당자 없음",
+    overdueTitle: (due: string) => `기한 지남 (${due})`,
+    overdue: " 기한 지남",
+  },
+  en: {
+    priority: (label: string) => `Priority ${label}`,
+    noAssignee: "Unassigned",
+    overdueTitle: (due: string) => `Overdue (${due})`,
+    overdue: " overdue",
+  },
+});
 
 /** 오늘 'YYYY-MM-DD'. 개발 장치의 시계 오프셋을 따른다 */
 export function useToday() {
@@ -39,13 +60,15 @@ export function useToday() {
 /** 그룹이 바꾼 상태 이름을 붙이는 함수 */
 export function useStatusName() {
   const groups = useGroupMap();
+  const locale = useLocale();
   return useMemo(
     () => (status: PostStatus, groupId?: string) =>
       statusLabel(
         status,
         groupId ? groups.get(groupId)?.statusNames : undefined,
+        locale,
       ),
-    [groups],
+    [groups, locale],
   );
 }
 
@@ -93,11 +116,12 @@ export function PriorityMark({
   priority: number;
   showLabel?: boolean;
 }) {
+  const text = useT(messages);
   const label = priorityLabel(priority);
   return (
     <span
       className="inline-flex flex-none items-center gap-1 text-xs text-fg-secondary"
-      title={`우선순위 ${label}`}
+      title={text.priority(label)}
     >
       <span className="inline-flex items-end gap-px" aria-hidden="true">
         {BARS.map((b, i) => (
@@ -115,7 +139,11 @@ export function PriorityMark({
           />
         ))}
       </span>
-      {showLabel ? label : <span className="sr-only">우선순위 {label}</span>}
+      {showLabel ? (
+        label
+      ) : (
+        <span className="sr-only">{text.priority(label)}</span>
+      )}
     </span>
   );
 }
@@ -124,16 +152,21 @@ export function PriorityMark({
 export function UserChip({
   userId,
   compact = false,
-  emptyLabel = "담당자 없음",
+  emptyLabel,
 }: {
   userId: string | null;
   /** 이름을 숨기고 동그라미만 (이름은 title·sr-only로) */
   compact?: boolean;
   emptyLabel?: string;
 }) {
+  const text = useT(messages);
   const users = useUserMap();
   if (!userId)
-    return <span className="text-xs text-fg-muted">{emptyLabel}</span>;
+    return (
+      <span className="text-xs text-fg-muted">
+        {emptyLabel ?? text.noAssignee}
+      </span>
+    );
   const name = users.get(userId)?.name ?? userId;
   return (
     <span
@@ -168,6 +201,7 @@ export function DueLabel({
   post: Pick<PostSummary, "dueDate" | "category">;
   today: string;
 }) {
+  const text = useT(messages);
   if (!post.dueDate) return <span className="text-xs text-fg-muted">—</span>;
   const overdue = isOverdue(post, today);
   return (
@@ -175,10 +209,10 @@ export function DueLabel({
       dateTime={post.dueDate}
       data-overdue={overdue || undefined}
       className="text-xs whitespace-nowrap text-fg-secondary tabular-nums data-overdue:font-semibold data-overdue:text-danger"
-      title={overdue ? `기한 지남 (${post.dueDate})` : post.dueDate}
+      title={overdue ? text.overdueTitle(post.dueDate) : post.dueDate}
     >
       {shortDay(post.dueDate)}
-      {overdue && <span className="sr-only"> 기한 지남</span>}
+      {overdue && <span className="sr-only">{text.overdue}</span>}
     </time>
   );
 }
@@ -198,6 +232,7 @@ export function Thumb({
   post: Pick<PostSummary, "thumbnail" | "format" | "title">;
   className?: string;
 }) {
+  useLocale(); // formatLabels가 지금 언어로 읽는다
   const Icon = FORMAT_ICONS[post.format];
   return (
     <span
@@ -206,7 +241,7 @@ export function Thumb({
         className,
       )}
     >
-      <Icon size={20} aria-label={FORMAT_LABELS[post.format]} />
+      <Icon size={20} aria-label={formatLabels()[post.format]} />
       {post.thumbnail && (
         // biome-ignore lint/performance/noImgElement: 정적 export라 next/image 최적화가 없고, 썸네일은 data URL이다
         <img
@@ -223,9 +258,13 @@ export function Thumb({
   );
 }
 
-export const dayTime = new Intl.DateTimeFormat("ko-KR", {
-  month: "numeric",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+/** 지금 언어의 "월/일 시:분" 포매터. `dayTime().format(at)` */
+export const dayTime = localeCached(
+  (locale) =>
+    new Intl.DateTimeFormat(locale, {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+);

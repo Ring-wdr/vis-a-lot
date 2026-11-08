@@ -3,7 +3,25 @@
 import { useMutation } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { login } from "@/shared/api/session";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { Spinner } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    username: "아이디",
+    password: "비밀번호",
+    loggingIn: "로그인 중",
+    login: "로그인",
+    demo: "데모 계정:",
+  },
+  en: {
+    username: "Username",
+    password: "Password",
+    loggingIn: "Logging in",
+    login: "Log in",
+    demo: "Demo account:",
+  },
+});
 
 /** mock 계정으로 로그인한다. 토큰은 auth 서비스가 발급하고 세션 store가 들고 있는다. */
 const field = "flex flex-col gap-1 text-xs text-fg-secondary";
@@ -12,6 +30,7 @@ const input =
 const code = "font-mono text-fg-secondary";
 
 export function LoginForm({ notice }: { notice?: string }) {
+  const text = useT(messages);
   const [username, setUsername] = useState("demo");
   const [password, setPassword] = useState("");
   const errorId = useId();
@@ -33,7 +52,7 @@ export function LoginForm({ notice }: { notice?: string }) {
         </p>
       )}
       <label className={field}>
-        <span>아이디</span>
+        <span>{text.username}</span>
         <input
           className={input}
           name="username"
@@ -44,7 +63,7 @@ export function LoginForm({ notice }: { notice?: string }) {
         />
       </label>
       <label className={field}>
-        <span>비밀번호</span>
+        <span>{text.password}</span>
         <input
           className={input}
           name="password"
@@ -69,14 +88,14 @@ export function LoginForm({ notice }: { notice?: string }) {
         {submit.isPending ? (
           <>
             <Spinner size="sm" tone="inherit" />
-            로그인 중
+            {text.loggingIn}
           </>
         ) : (
-          "로그인"
+          text.login
         )}
       </button>
       <p className="text-center text-xs text-fg-muted">
-        데모 계정: <code className={code}>demo</code> /{" "}
+        {text.demo} <code className={code}>demo</code> /{" "}
         <code className={code}>demo1234</code>
       </p>
     </form>

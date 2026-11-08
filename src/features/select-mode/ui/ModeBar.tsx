@@ -19,6 +19,7 @@ import {
   type Mode,
   modeSupported,
 } from "@/entities/workspace/model/workspace-store";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { toolButton } from "@/shared/ui/button";
 
 /** 자유형 삭제: lucide에 없어 올가미 오른쪽 아래에 x를 겹친다. */
@@ -35,19 +36,49 @@ function LassoX(props: LucideProps) {
   );
 }
 
-const MODE_UI: Record<
-  Mode,
-  { label: string; Icon: ComponentType<LucideProps> }
-> = {
-  normal: { label: "기본", Icon: MousePointer2 },
-  pan: { label: "이동", Icon: Move },
-  zoom: { label: "확대", Icon: ScanSearch },
-  rectSelect: { label: "사각형 선택", Icon: SquareDashed },
-  lassoSelect: { label: "자유형 선택", Icon: Lasso },
-  rectDelete: { label: "사각형 삭제", Icon: SquareDashedX },
-  lassoDelete: { label: "자유형 삭제", Icon: LassoX },
-  paint: { label: "페인트", Icon: Paintbrush },
+const MODE_ICONS: Record<Mode, ComponentType<LucideProps>> = {
+  normal: MousePointer2,
+  pan: Move,
+  zoom: ScanSearch,
+  rectSelect: SquareDashed,
+  lassoSelect: Lasso,
+  rectDelete: SquareDashedX,
+  lassoDelete: LassoX,
+  paint: Paintbrush,
 };
+
+const messages = defineMessages({
+  ko: {
+    modes: {
+      normal: "기본",
+      pan: "이동",
+      zoom: "확대",
+      rectSelect: "사각형 선택",
+      lassoSelect: "자유형 선택",
+      rectDelete: "사각형 삭제",
+      lassoDelete: "자유형 삭제",
+      paint: "페인트",
+    } as Record<Mode, string>,
+    unsupported: (name: string, chartType: string) =>
+      `${name} (${chartType}에서는 쓸 수 없음)`,
+    toolbar: "모드",
+  },
+  en: {
+    modes: {
+      normal: "Default",
+      pan: "Pan",
+      zoom: "Zoom",
+      rectSelect: "Box select",
+      lassoSelect: "Lasso select",
+      rectDelete: "Box delete",
+      lassoDelete: "Lasso delete",
+      paint: "Paint",
+    },
+    unsupported: (name: string, chartType: string) =>
+      `${name} (not available for ${chartType})`,
+    toolbar: "Mode",
+  },
+});
 
 /**
  * 기본 외의 모드는 그린 차트가 있고 편집할 수 있을 때만 고를 수 있다.
@@ -55,6 +86,7 @@ const MODE_UI: Record<
  * 그린 차트 종류가 지원하지 않는 모드(CHART_SUPPORT)도 막는다.
  */
 export function ModeBar() {
+  const text = useT(messages);
   const mode = useWorkspace((s) => s.mode);
   const setMode = useWorkspace((s) => s.setMode);
   const editable = useWorkspace((s) => !s.readOnly && s.current !== undefined);
@@ -63,14 +95,15 @@ export function ModeBar() {
   const spec = chartType && { chartType, subType };
 
   return (
-    <div className="flex gap-1" role="toolbar" aria-label="모드">
+    <div className="flex gap-1" role="toolbar" aria-label={text.toolbar}>
       {MODES.map((m) => {
-        const { label: name, Icon } = MODE_UI[m];
+        const name = text.modes[m];
+        const Icon = MODE_ICONS[m];
         const supported = modeSupported(m, spec);
         const label =
           supported || !spec
             ? name
-            : `${name} (${chartKindLabel(spec)}에서는 쓸 수 없음)`;
+            : text.unsupported(name, chartKindLabel(spec));
         return (
           <button
             key={m}

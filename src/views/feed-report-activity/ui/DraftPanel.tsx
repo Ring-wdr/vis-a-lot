@@ -6,19 +6,52 @@ import { Copy, RotateCcw, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ai, useAiStatus } from "@/shared/lib/ai";
 import type { ActivityData } from "@/shared/lib/ai/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { button, toolButton } from "@/shared/ui/button";
 
-const ADAPTER_LABEL = { chrome: "Chrome 내장 AI", mock: "흉내" } as const;
-
 type DraftState = "streaming" | "done" | "stopped" | "error";
 
-const STATE_LABEL: Record<DraftState, string> = {
-  streaming: "쓰는 중…",
-  done: "다 썼습니다",
-  stopped: "멈췄습니다",
-  error: "초안을 만들지 못했습니다",
-};
+const messages = defineMessages({
+  ko: {
+    adapter: { chrome: "Chrome 내장 AI", mock: "흉내" },
+    state: {
+      streaming: "쓰는 중…",
+      done: "다 썼습니다",
+      stopped: "멈췄습니다",
+      error: "초안을 만들지 못했습니다",
+    } as Record<DraftState, string>,
+    region: "보고 초안",
+    title: "보고 초안",
+    adapterTitle: "초안을 쓰는 AI 어댑터",
+    stop: "멈추기",
+    regenerate: "다시 만들기",
+    copied: "복사했습니다",
+    copy: "복사",
+    close: "초안 닫기",
+    content: "초안 내용 (고칠 수 있습니다)",
+    writing: "초안을 쓰는 중입니다",
+  },
+  en: {
+    adapter: { chrome: "Chrome built-in AI", mock: "Mock" },
+    state: {
+      streaming: "Writing…",
+      done: "Done",
+      stopped: "Stopped",
+      error: "Couldn't write the draft",
+    },
+    region: "Report draft",
+    title: "Report draft",
+    adapterTitle: "AI adapter writing the draft",
+    stop: "Stop",
+    regenerate: "Regenerate",
+    copied: "Copied",
+    copy: "Copy",
+    close: "Close draft",
+    content: "Draft content (editable)",
+    writing: "Writing the draft",
+  },
+});
 
 /** 초안을 흘려받는다. 중간에 멈추면(ctrl.abort) 받은 데까지 두고 끝낸다. */
 async function streamDraft(
@@ -49,6 +82,7 @@ export function DraftPanel({
   data: ActivityData;
   onClose: () => void;
 }) {
+  const msg = useT(messages);
   const { adapter } = useAiStatus();
   const [text, setText] = useState("");
   const [state, setState] = useState<DraftState>("streaming");
@@ -103,12 +137,12 @@ export function DraftPanel({
   return (
     <section
       className="flex flex-col gap-3 rounded-lg border border-accent-line bg-elevated p-4"
-      aria-label="보고 초안"
+      aria-label={msg.region}
     >
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold">
           <Sparkles size={15} aria-hidden="true" className="text-accent" />
-          보고 초안
+          {msg.title}
         </h2>
         <span
           className={cn(
@@ -116,50 +150,50 @@ export function DraftPanel({
             adapter === "chrome" &&
               "border-accent-line bg-accent-soft text-accent",
           )}
-          title="초안을 쓰는 AI 어댑터"
+          title={msg.adapterTitle}
         >
-          {ADAPTER_LABEL[adapter]}
+          {msg.adapter[adapter]}
         </span>
         <span
           data-state={state}
           className="text-xs text-fg-muted data-[state=error]:text-danger"
           aria-live="polite"
         >
-          {STATE_LABEL[state]}
+          {msg.state[state]}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
           {streaming ? (
             <button
               type="button"
-              className={button({ size: "sm" })}
+              className={button({ size: "sm", class: "whitespace-nowrap" })}
               onClick={stop}
             >
               <Square size={13} aria-hidden="true" />
-              멈추기
+              {msg.stop}
             </button>
           ) : (
             <button
               type="button"
-              className={button({ size: "sm" })}
+              className={button({ size: "sm", class: "whitespace-nowrap" })}
               onClick={() => start(data)}
             >
               <RotateCcw size={13} aria-hidden="true" />
-              다시 만들기
+              {msg.regenerate}
             </button>
           )}
           <button
             type="button"
-            className={button({ size: "sm" })}
+            className={button({ size: "sm", class: "whitespace-nowrap" })}
             disabled={!text || streaming}
             onClick={copy}
           >
             <Copy size={13} aria-hidden="true" />
-            {copied ? "복사했습니다" : "복사"}
+            {copied ? msg.copied : msg.copy}
           </button>
           <button
             type="button"
             className={toolButton()}
-            aria-label="초안 닫기"
+            aria-label={msg.close}
             onClick={onClose}
           >
             <X size={14} aria-hidden="true" />
@@ -172,8 +206,8 @@ export function DraftPanel({
         value={text}
         readOnly={streaming}
         aria-busy={streaming}
-        aria-label="초안 내용 (고칠 수 있습니다)"
-        placeholder={streaming ? "초안을 쓰는 중입니다" : ""}
+        aria-label={msg.content}
+        placeholder={streaming ? msg.writing : ""}
         onChange={(e) => setText(e.currentTarget.value)}
       />
     </section>

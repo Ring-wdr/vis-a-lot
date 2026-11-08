@@ -4,9 +4,39 @@
 
 import { overlay } from "overlay-kit";
 import { useState } from "react";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { segmented } from "@/shared/ui/segmented";
+
+const messages = defineMessages({
+  ko: {
+    title: "뷰로 저장",
+    name: "이름",
+    sharing: "공유",
+    personal: "개인",
+    groupShare: (group: string) => `${group} 공유`,
+    groupShareFallback: "그룹 공유",
+    sharedHint:
+      "그룹 멤버 모두가 이 뷰를 봅니다. 고치기는 만든 사람과 그룹 관리자만 합니다.",
+    personalHint: "나만 봅니다.",
+    cancel: "취소",
+    save: "저장",
+  },
+  en: {
+    title: "Save as view",
+    name: "Name",
+    sharing: "Sharing",
+    personal: "Personal",
+    groupShare: (group: string) => `Share with ${group}`,
+    groupShareFallback: "Group",
+    sharedHint:
+      "All group members can see this view. Only its creator and group admins can edit it.",
+    personalHint: "Only you can see it.",
+    cancel: "Cancel",
+    save: "Save",
+  },
+});
 
 const seg = segmented();
 
@@ -24,6 +54,7 @@ function SaveViewForm({
   groupName?: string;
   close: (v: SaveViewAnswer | null) => void;
 }) {
+  const text = useT(messages);
   const [name, setName] = useState(defaultName);
   const [shared, setShared] = useState(defaultShared && !!groupName);
   return (
@@ -34,9 +65,9 @@ function SaveViewForm({
         if (name.trim()) close({ name: name.trim(), shared });
       }}
     >
-      <p className="font-semibold">뷰로 저장</p>
+      <p className="font-semibold">{text.title}</p>
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-fg-secondary">이름</span>
+        <span className="text-xs text-fg-secondary">{text.name}</span>
         <input
           className="rounded-md border border-line bg-elevated px-2 py-1.5"
           value={name}
@@ -49,7 +80,9 @@ function SaveViewForm({
         />
       </label>
       <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-xs text-fg-secondary">공유</legend>
+        <legend className="mb-1 text-xs text-fg-secondary">
+          {text.sharing}
+        </legend>
         <div className={seg.root()}>
           <button
             type="button"
@@ -57,7 +90,7 @@ function SaveViewForm({
             aria-pressed={!shared}
             onClick={() => setShared(false)}
           >
-            개인
+            {text.personal}
           </button>
           <button
             type="button"
@@ -66,25 +99,23 @@ function SaveViewForm({
             disabled={!groupName}
             onClick={() => setShared(true)}
           >
-            {groupName ? `${groupName} 공유` : "그룹 공유"}
+            {groupName ? text.groupShare(groupName) : text.groupShareFallback}
           </button>
         </div>
         <p className="text-2xs text-fg-muted">
-          {shared
-            ? "그룹 멤버 모두가 이 뷰를 봅니다. 고치기는 만든 사람과 그룹 관리자만 합니다."
-            : "나만 봅니다."}
+          {shared ? text.sharedHint : text.personalHint}
         </p>
       </fieldset>
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={() => close(null)}>
-          취소
+          {text.cancel}
         </button>
         <button
           type="submit"
           className={button({ variant: "primary" })}
           disabled={!name.trim()}
         >
-          저장
+          {text.save}
         </button>
       </div>
     </form>

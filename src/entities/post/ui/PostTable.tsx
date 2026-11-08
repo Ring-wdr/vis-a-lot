@@ -24,7 +24,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { priorityLabel } from "@/entities/post/lib/labels";
 import {
-  COLUMN_LABELS,
+  columnLabels,
   DEFAULT_COLUMNS,
   groupPosts,
   POST_COLUMNS,
@@ -36,6 +36,7 @@ import type {
   PostSummary,
   ViewGroupBy,
 } from "@/shared/api/feed/types";
+import { defineMessages, type Locale, t, useLocale } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import {
   DueLabel,
@@ -60,6 +61,19 @@ export type PostTableProps = {
   onSelectedChange?: (ids: Set<string>) => void;
   onOpen?: (key: string) => void;
 };
+
+const messages = defineMessages({
+  ko: {
+    blocked: "막힘",
+    selectAll: "모두 선택",
+    select: (key: string) => `${key} 선택`,
+  },
+  en: {
+    blocked: "Blocked",
+    selectAll: "Select all",
+    select: (key: string) => `Select ${key}`,
+  },
+});
 
 const features = tableFeatures({
   rowSortingFeature,
@@ -94,21 +108,25 @@ type Ctx = {
   userName: (id: string) => string;
   today: string;
   onOpen?: (key: string) => void;
+  /** 열 이름의 언어. 바뀌면 열을 다시 만든다 */
+  locale: Locale;
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: 열마다 값 타입이 달라 목록으로 모을 때는 any로 둔다
 type PostColumnDef = ColumnDef<typeof features, PostSummary, any>;
 
 function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
+  const labels = columnLabels(ctx.locale);
+  const text = messages[ctx.locale];
   const defs: Record<PostColumn, PostColumnDef> = {
     key: helper.accessor("key", {
       id: "key",
-      header: COLUMN_LABELS.key,
+      header: labels.key,
       sortFn: "alphanumeric",
     }),
     title: helper.accessor("title", {
       id: "title",
-      header: COLUMN_LABELS.title,
+      header: labels.title,
       sortFn: "alphanumeric",
       cell: ({ row }) => (
         <span className="flex min-w-0 items-center gap-1.5">
@@ -127,7 +145,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
             <Ban
               size={12}
               className="flex-none text-danger"
-              aria-label="막힘"
+              aria-label={text.blocked}
             />
           )}
         </span>
@@ -135,7 +153,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
     }),
     status: helper.accessor((p) => statusOrder(p.status), {
       id: "status",
-      header: COLUMN_LABELS.status,
+      header: labels.status,
       sortFn: "basic",
       cell: ({ row }) => (
         <StatusBadge
@@ -146,7 +164,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
     }),
     priority: helper.accessor("priority", {
       id: "priority",
-      header: COLUMN_LABELS.priority,
+      header: labels.priority,
       sortFn: "basic",
       sortDescFirst: true,
       cell: ({ row }) => (
@@ -157,7 +175,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
       (p) => (p.assigneeId ? ctx.userName(p.assigneeId) : undefined),
       {
         id: "assignee",
-        header: COLUMN_LABELS.assignee,
+        header: labels.assignee,
         sortFn: "alphanumeric",
         sortUndefined: "last",
         cell: ({ row }) => <UserChip userId={row.original.assigneeId} />,
@@ -165,25 +183,25 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
     ),
     dueDate: helper.accessor((p) => p.dueDate ?? undefined, {
       id: "dueDate",
-      header: COLUMN_LABELS.dueDate,
+      header: labels.dueDate,
       sortFn: "basic",
       sortUndefined: "last",
       cell: ({ row }) => <DueLabel post={row.original} today={ctx.today} />,
     }),
     updatedAt: helper.accessor("updatedAt", {
       id: "updatedAt",
-      header: COLUMN_LABELS.updatedAt,
+      header: labels.updatedAt,
       sortFn: "basic",
       sortDescFirst: true,
       cell: ({ row }) => (
         <time dateTime={row.original.updatedAt}>
-          {dayTime.format(new Date(row.original.updatedAt))}
+          {dayTime(ctx.locale).format(new Date(row.original.updatedAt))}
         </time>
       ),
     }),
     thumbnail: helper.display({
       id: "thumbnail",
-      header: COLUMN_LABELS.thumbnail,
+      header: labels.thumbnail,
       enableSorting: false,
       cell: ({ row }) => (
         <Thumb
@@ -216,7 +234,7 @@ function SelectAll({
       type="checkbox"
       className="size-3.5 cursor-pointer accent-accent"
       checked={checked}
-      aria-label="모두 선택"
+      aria-label={t(messages).selectAll}
       onChange={(e) => onChange(e.currentTarget.checked)}
     />
   );
@@ -230,6 +248,7 @@ export function PostTable({
   onSelectedChange,
   onOpen,
 }: PostTableProps) {
+  const locale = useLocale();
   const userName = useUserName();
   const statusName = useStatusName();
   const today = useToday();
@@ -238,8 +257,8 @@ export function PostTable({
   const selectable = !!selected && !!onSelectedChange;
 
   const defs = useMemo(
-    () => buildColumns(columns, { userName, today, onOpen }),
-    [columns, userName, today, onOpen],
+    () => buildColumns(columns, { userName, today, onOpen, locale }),
+    [columns, userName, today, onOpen, locale],
   );
 
   const table = useTable({
@@ -263,13 +282,14 @@ export function PostTable({
       {
         status: (s: PostStatus) => statusName(s, groupOf.get(s)),
         user: userName,
-        priority: priorityLabel,
+        priority: (p: number) => priorityLabel(p, locale),
       },
+      locale,
     ).map((g) => ({
       ...g,
       rows: g.posts.flatMap((p) => byId.get(p.id) ?? []),
     }));
-  }, [rows, groupBy, posts, statusName, userName]);
+  }, [rows, groupBy, posts, statusName, userName, locale]);
 
   const ids = posts.map((p) => p.id);
   const selectedCount = selectable
@@ -298,7 +318,7 @@ export function PostTable({
             type="checkbox"
             className="size-3.5 cursor-pointer accent-accent"
             checked={selected.has(row.id)}
-            aria-label={`${row.original.key} 선택`}
+            aria-label={t(messages).select(row.original.key)}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => toggle(row.id, e.currentTarget.checked)}
           />

@@ -9,8 +9,30 @@ import { useMemo } from "react";
 import { useGroup, useGroups, useUsers } from "@/shared/api/feed/queries";
 import type { FeedUser } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    loadFailed: "그룹을 불러오지 못했습니다",
+    retry: "다시 시도",
+    notFound: (key: string) => `‘${key}’ 그룹을 찾을 수 없습니다`,
+    choose: "그룹을 고르세요",
+    notFoundHint: "없는 그룹이거나, 비공개 그룹이라 볼 수 없습니다.",
+    chooseHint: "사이드바에서 그룹의 리스트나 보드를 고르세요.",
+    home: "홈으로",
+  },
+  en: {
+    loadFailed: "Couldn't load groups",
+    retry: "Retry",
+    notFound: (key: string) => `Group ‘${key}’ not found`,
+    choose: "Choose a group",
+    notFoundHint: "The group doesn't exist, or it's private.",
+    chooseHint: "Pick a group's list or board in the sidebar.",
+    home: "Go home",
+  },
+});
 
 export function useRouteGroup() {
   const key = useSearchParams().get("g");
@@ -35,6 +57,7 @@ export function RouteGroupFallback({
 }: {
   state: ReturnType<typeof useRouteGroup>;
 }) {
+  const text = useT(messages);
   const { key, groups, group } = state;
   if (group) return null;
   if (groups.isPending)
@@ -47,35 +70,28 @@ export function RouteGroupFallback({
     );
   if (groups.isError)
     return (
-      <EmptyState
-        icon={<FolderX size={20} />}
-        title="그룹을 불러오지 못했습니다"
-      >
+      <EmptyState icon={<FolderX size={20} />} title={text.loadFailed}>
         <p>{groups.error.message}</p>
         <button
           type="button"
           className={button({ size: "sm", class: "mt-2" })}
           onClick={() => groups.refetch()}
         >
-          다시 시도
+          {text.retry}
         </button>
       </EmptyState>
     );
   return (
     <EmptyState
       icon={<FolderX size={20} />}
-      title={key ? `‘${key}’ 그룹을 찾을 수 없습니다` : "그룹을 고르세요"}
+      title={key ? text.notFound(key) : text.choose}
     >
-      <p>
-        {key
-          ? "없는 그룹이거나, 비공개 그룹이라 볼 수 없습니다."
-          : "사이드바에서 그룹의 리스트나 보드를 고르세요."}
-      </p>
+      <p>{key ? text.notFoundHint : text.chooseHint}</p>
       <Link
         href={FEED.home}
         className={button({ size: "sm", class: "mt-2 no-underline" })}
       >
-        홈으로
+        {text.home}
       </Link>
     </EmptyState>
   );

@@ -39,6 +39,7 @@ import { useSwitchUser } from "@/features/switch-user/ui/UserSwitcher";
 import { useGroups, useMe, useUsers } from "@/shared/api/feed/queries";
 import { useSearchPosts } from "@/shared/api/feed/search";
 import { FEED } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { Dialog } from "@/shared/ui/Dialog";
 import { Spinner } from "@/shared/ui/Loading";
@@ -58,13 +59,58 @@ import {
   saveRecent,
 } from "@/widgets/command-palette/model/recent";
 
-const SECTION_LABELS: Record<PaletteSection, string> = {
-  recent: "최근",
-  posts: "게시물",
-  screens: "화면",
-  commands: "명령",
-  users: "사용자",
-};
+const messages = defineMessages({
+  ko: {
+    sections: {
+      recent: "최근",
+      posts: "게시물",
+      screens: "화면",
+      commands: "명령",
+      users: "사용자",
+    } satisfies Record<PaletteSection, string>,
+    systemAdmin: "시스템 관리자",
+    title: "커맨드 팔레트",
+    backFromUsers: "사용자 전환에서 돌아가기",
+    switchUser: "사용자 전환",
+    userPlaceholder: "사용자 이름",
+    placeholder: "게시물(FD-12, 제목), 화면, 명령 찾기",
+    findUser: "사용자 찾기",
+    searchCommand: "검색·명령",
+    results: "결과",
+    searching: "찾는 중",
+    noMatch: "맞는 항목이 없습니다",
+    currentUser: "지금 사용자",
+    pick: "고르기",
+    run: "실행",
+    back: "돌아가기",
+    close: "닫기",
+  },
+  en: {
+    sections: {
+      recent: "Recent",
+      posts: "Posts",
+      screens: "Screens",
+      commands: "Commands",
+      users: "Users",
+    },
+    systemAdmin: "System admin",
+    title: "Command palette",
+    backFromUsers: "Back from switch user",
+    switchUser: "Switch user",
+    userPlaceholder: "User name",
+    placeholder: "Find posts (FD-12, title), screens, commands",
+    findUser: "Find user",
+    searchCommand: "Search & commands",
+    results: "Results",
+    searching: "Searching",
+    noMatch: "No matches",
+    currentUser: "Current user",
+    pick: "select",
+    run: "run",
+    back: "back",
+    close: "close",
+  },
+});
 
 const SCREEN_ICONS: Record<ScreenIcon, LucideIcon> = {
   home: Home,
@@ -111,6 +157,7 @@ const POST_LIMIT = 8;
 const SCREEN_LIMIT_WITH_QUERY = 12;
 
 export function CommandPalette({ onClose }: { onClose: () => void }) {
+  const text = useT(messages);
   const baseId = useId();
   const router = useRouter();
   const pathname = usePathname();
@@ -133,6 +180,8 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   const presenting = search.get("present") === "1";
   const reportPage = pathname.startsWith("/feed/report/");
 
+  // 이름·키워드를 지금 언어로 만들므로 언어(text)가 바뀌면 다시 만든다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: text는 언어가 바뀌었음을 알리는 값이다
   const base = useMemo(
     () => ({
       screens: screenItems({
@@ -141,7 +190,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       }),
       commands: commandItems({ groupKey, reportPage, presenting }),
     }),
-    [groups.data, me.data?.isAdmin, groupKey, reportPage, presenting],
+    [groups.data, me.data?.isAdmin, groupKey, reportPage, presenting, text],
   );
 
   const sections = useMemo<Section[]>(() => {
@@ -156,7 +205,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             id: `user:${u.id}`,
             userId: u.id,
             label: u.name,
-            hint: u.isAdmin ? "시스템 관리자" : (u.email ?? undefined),
+            hint: u.isAdmin ? text.systemAdmin : (u.email ?? undefined),
             current: u.id === me.data?.id,
           };
           return [{ item, score }];
@@ -200,7 +249,17 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
     else parts.push(posts_);
     out.push(...parts.filter((p) => p.items.length > 0));
     return out;
-  }, [mode, users.data, me.data?.id, q, base, recent, posts.data, groups.data]);
+  }, [
+    mode,
+    users.data,
+    me.data?.id,
+    q,
+    base,
+    recent,
+    posts.data,
+    groups.data,
+    text,
+  ]);
 
   const flat = sections.flatMap((s) => s.items);
   const current = Math.min(active, Math.max(0, flat.length - 1));
@@ -331,7 +390,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       className="w-[min(40rem,calc(100vw-2rem))] max-w-none bg-elevated p-0 text-ui text-fg"
     >
       <h2 id={`${baseId}-title`} className="sr-only">
-        커맨드 팔레트
+        {text.title}
       </h2>
       <div className="flex min-w-0 items-center gap-2 border-b border-line px-3">
         {mode === "users" ? (
@@ -339,10 +398,10 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             type="button"
             className="inline-flex h-6 flex-none cursor-pointer items-center gap-1 rounded-sm bg-accent-soft px-1.5 text-2xs font-semibold text-accent"
             onClick={back}
-            aria-label="사용자 전환에서 돌아가기"
+            aria-label={text.backFromUsers}
           >
             <ArrowLeft size={12} aria-hidden="true" />
-            사용자 전환
+            {text.switchUser}
           </button>
         ) : (
           <Search
@@ -356,16 +415,14 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
           className="h-12 min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-muted"
           value={q}
           placeholder={
-            mode === "users"
-              ? "사용자 이름"
-              : "게시물(FD-12, 제목), 화면, 명령 찾기"
+            mode === "users" ? text.userPlaceholder : text.placeholder
           }
           role="combobox"
           aria-expanded="true"
           aria-controls={`${baseId}-list`}
           aria-activedescendant={flat.length ? optionId(current) : undefined}
           aria-autocomplete="list"
-          aria-label={mode === "users" ? "사용자 찾기" : "검색·명령"}
+          aria-label={mode === "users" ? text.findUser : text.searchCommand}
           autoComplete="off"
           spellCheck={false}
           autoFocus
@@ -380,12 +437,12 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       <div
         id={`${baseId}-list`}
         role="listbox"
-        aria-label="결과"
+        aria-label={text.results}
         className="max-h-[min(26rem,calc(100dvh-16rem))] overflow-y-auto p-1.5"
       >
         {flat.length === 0 && (
           <p className="px-2.5 py-6 text-center text-fg-muted">
-            {searching ? "찾는 중" : "맞는 항목이 없습니다"}
+            {searching ? text.searching : text.noMatch}
           </p>
         )}
         {sections.map((s) => (
@@ -400,7 +457,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
               id={`${baseId}-sec-${s.section}`}
               className="px-2.5 pt-1.5 pb-1 text-2xs font-semibold text-fg-muted"
             >
-              {SECTION_LABELS[s.section]}
+              {text.sections[s.section]}
             </p>
             {s.items.map((item) => {
               index += 1;
@@ -442,7 +499,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
                     <Check
                       size={14}
                       className="flex-none text-accent"
-                      aria-label="지금 사용자"
+                      aria-label={text.currentUser}
                     />
                   )}
                   {item.hint && (
@@ -458,14 +515,14 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       </div>
       <div className="hidden items-center gap-3 border-t border-line px-3 py-1.5 text-2xs text-fg-muted sm:flex">
         <span>
-          <kbd className="font-sans">↑↓</kbd> 고르기
+          <kbd className="font-sans">↑↓</kbd> {text.pick}
         </span>
         <span>
-          <kbd className="font-sans">Enter</kbd> 실행
+          <kbd className="font-sans">Enter</kbd> {text.run}
         </span>
         <span>
           <kbd className="font-sans">Esc</kbd>{" "}
-          {mode === "users" ? "돌아가기" : "닫기"}
+          {mode === "users" ? text.back : text.close}
         </span>
       </div>
     </Dialog>

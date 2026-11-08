@@ -2,11 +2,11 @@ import type { ChartSpec, ChartType } from "@/shared/api/types";
 import {
   CHART_FIELDS,
   isDistributionLine,
-  SUB_TYPE_LABELS,
   SUB_TYPES,
+  subTypeLabel,
   subTypeOf,
 } from "@/shared/config/chart-kinds";
-import { AGG_LABELS } from "@/shared/config/dataset";
+import { aggLabel } from "@/shared/config/dataset";
 import type { ColumnLookup } from "@/shared/lib/format";
 
 export const CHART_LABELS: Record<ChartType, string> = {
@@ -31,7 +31,7 @@ export function chartKindLabel(spec: Pick<ChartSpec, "chartType" | "subType">) {
   const sub = subTypeOf(spec);
   const label = CHART_LABELS[spec.chartType];
   return sub && sub !== SUB_TYPES[spec.chartType]?.[0]
-    ? `${label} ${SUB_TYPE_LABELS[sub]}`
+    ? `${label} ${subTypeLabel(sub)}`
     : label;
 }
 
@@ -46,7 +46,7 @@ export function chartTitle(spec: ChartSpec, columns: ColumnLookup) {
   const measure =
     value &&
     (fields.agg
-      ? `${AGG_LABELS[spec.agg]}(${columns.label(value)})`
+      ? `${aggLabel(spec.agg)}(${columns.label(value)})`
       : columns.label(value));
   // 분포 line은 y 컬럼 하나의 분포다.
   if (isDistributionLine(spec))

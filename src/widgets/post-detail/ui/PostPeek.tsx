@@ -7,10 +7,26 @@ import { Maximize2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { postPageHref } from "@/entities/post/ui/PostLink";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek, usePeekKey } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { button, toolButton } from "@/shared/ui/button";
 import { PostDetail } from "./PostDetail";
+
+const messages = defineMessages({
+  ko: {
+    panel: (key: string) => `게시물 ${key}`,
+    fullPage: "전체 페이지로",
+    close: "옆 패널 닫기",
+    closeTitle: "닫기 (Esc)",
+  },
+  en: {
+    panel: (key: string) => `Post ${key}`,
+    fullPage: "Full page",
+    close: "Close side panel",
+    closeTitle: "Close (Esc)",
+  },
+});
 
 /** 다른 팝업(dialog·popover·메뉴·멘션 목록 등)이 떠 있어 Esc를 그쪽이 받아야 할 때. 보이는 것만 센다 */
 const OVERLAYS =
@@ -26,6 +42,7 @@ const isEditable = (el: Element | null) =>
   (el.isContentEditable || !!el.closest("input, textarea, select"));
 
 export function PostPeek() {
+  const text = useT(messages);
   const key = usePeekKey();
   const openPeek = useOpenPeek();
   const ref = useRef<HTMLElement>(null);
@@ -60,7 +77,7 @@ export function PostPeek() {
     <aside
       ref={ref}
       tabIndex={-1}
-      aria-label={`게시물 ${key}`}
+      aria-label={text.panel(key)}
       className="z-drawer fixed inset-y-0 right-0 flex w-full flex-col overflow-y-auto border-l border-line bg-surface text-ui shadow-drawer outline-none md:w-160"
     >
       <div className="p-5">
@@ -73,13 +90,13 @@ export function PostPeek() {
             <div className="flex items-center justify-between gap-2">
               <Link href={postPageHref(key)} className={button({ size: "sm" })}>
                 <Maximize2 size={13} aria-hidden="true" />
-                전체 페이지로
+                {text.fullPage}
               </Link>
               <button
                 type="button"
                 className={cn(toolButton())}
-                aria-label="옆 패널 닫기"
-                title="닫기 (Esc)"
+                aria-label={text.close}
+                title={text.closeTitle}
                 onClick={() => openPeek(null)}
               >
                 <X size={15} aria-hidden="true" />

@@ -7,6 +7,7 @@
 import { createStore } from "zustand/vanilla";
 import { api } from "@/shared/api/api";
 import type { ChartDefaults, ChartSpec } from "@/shared/api/types";
+import { defineMessages, t } from "@/shared/lib/i18n";
 import {
   createWorkspaceStore,
   defaultSpec,
@@ -24,9 +25,21 @@ export type WorkspaceTab = {
   historyId?: string;
 };
 
-/** 탭을 잠갔을 때 탭·화면 전환 버튼에 보여주는 안내 */
-export const TABS_LOCKED_HINT =
-  "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.";
+const messages = defineMessages({
+  ko: {
+    lockedHint:
+      "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.",
+  },
+  en: {
+    lockedHint:
+      "Tabs can't be switched while drawing. Press cancel or wait until it finishes.",
+  },
+});
+
+/** 탭을 잠갔을 때 탭·화면 전환 버튼에 보여주는 안내. 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다. */
+export function tabsLockedHint() {
+  return t(messages).lockedHint;
+}
 
 export type TabsState = {
   /** 고른 화면. 처음 들어오면 아무 화면도 고르지 않은 시작 화면(null)이다. */

@@ -17,11 +17,116 @@ import type {
   TreemapMeta,
   WaterfallMeta,
 } from "@/shared/api/types";
-import { AGG_LABELS } from "@/shared/config/dataset";
+import { aggLabel } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
+import { defineMessages, intlLocale, t } from "@/shared/lib/i18n";
 import { groupSlot } from "./group-slot";
 import { PointIndex } from "./point-index";
 import { hitSankey, linkOutline } from "./sankey-hit";
+
+const messages = defineMessages({
+  ko: {
+    cursorX: "커서 x",
+    cursorY: "커서 y",
+    nearestX: "가까운 점 x",
+    nearestY: "가까운 점 y",
+    category: "범주",
+    ratio: "비율",
+    count: "개수",
+    whiskerHigh: "최댓값(수염)",
+    median: "중앙값",
+    whiskerLow: "최솟값(수염)",
+    mean: "평균",
+    outliers: "이상치",
+    source: "출발",
+    target: "도착",
+    inflow: "들어오는 합",
+    outflow: "나가는 합",
+    name: "이름",
+    groupRatio: "묶음 안 비율",
+    range: "구간",
+    open: "시가",
+    high: "고가",
+    low: "저가",
+    close: "종가",
+    start: "시작",
+    end: "끝",
+    duration: "길이",
+    merged: "합친 구간",
+    child: "나눈 값",
+    cumulative: "누적",
+    stage: "단계",
+    prevRate: "이전 단계 대비",
+    firstRate: "첫 단계 대비",
+    value: "값",
+    sourceNode: "출발 노드",
+    targetNode: "도착 노드",
+    slice: "조각",
+    sliceRatio: "조각 안 비율",
+    series: "계열",
+    total: "합계",
+    items: (n: string) => `${n}개`,
+    /** 구간 [from, to) */
+    openRange: (from: string, to: string) => `${from} ~ ${to} 미만`,
+    /** 마지막 구간 [from, to] */
+    closedRange: (from: string, to: string) => `${from} ~ ${to}`,
+    day: "일",
+    hour: "시간",
+    minute: "분",
+    second: "초",
+  },
+  en: {
+    cursorX: "cursor x",
+    cursorY: "cursor y",
+    nearestX: "nearest x",
+    nearestY: "nearest y",
+    category: "Category",
+    ratio: "Ratio",
+    count: "Count",
+    whiskerHigh: "Max (whisker)",
+    median: "Median",
+    whiskerLow: "Min (whisker)",
+    mean: "Mean",
+    outliers: "Outliers",
+    source: "From",
+    target: "To",
+    inflow: "Inflow",
+    outflow: "Outflow",
+    name: "Name",
+    groupRatio: "Ratio in group",
+    range: "Range",
+    open: "Open",
+    high: "High",
+    low: "Low",
+    close: "Close",
+    start: "Start",
+    end: "End",
+    duration: "Duration",
+    merged: "Merged",
+    child: "Subdivision",
+    cumulative: "Cumulative",
+    stage: "Stage",
+    prevRate: "vs. previous",
+    firstRate: "vs. first",
+    value: "Value",
+    sourceNode: "Source node",
+    targetNode: "Target node",
+    slice: "Slice",
+    sliceRatio: "Ratio in slice",
+    series: "Series",
+    total: "Total",
+    items: (n: string) => n,
+    openRange: (from: string, to: string) => `${from} ~ <${to}`,
+    closedRange: (from: string, to: string) => `${from} ~ ${to}`,
+    day: "d",
+    hour: "h",
+    minute: "m",
+    second: "s",
+  },
+});
+
+/** 지금 언어의 툴팁 문구. 툴팁을 그리는 컴포넌트가 언어 변경을 구독한다. */
+const msg = () => t(messages);
 
 /** 툴팁 한 줄. id는 그 차트 툴팁 안에서 줄의 역할(커서 x, 합계 등)이라 label이 겹쳐도 줄을 구분한다. */
 export type TooltipRow = {
@@ -80,8 +185,16 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
     const x = invertAxis(meta.x, plot.left, plot.width, px, false);
     const y = invertAxis(meta.y, plot.top, plot.height, py, true);
     const rows: TooltipRow[] = [
-      { id: "cursorX", label: "커서 x", value: formatValue(x, meta.x.kind) },
-      { id: "cursorY", label: "커서 y", value: formatValue(y, meta.y.kind) },
+      {
+        id: "cursorX",
+        label: msg().cursorX,
+        value: formatValue(x, meta.x.kind),
+      },
+      {
+        id: "cursorY",
+        label: msg().cursorY,
+        value: formatValue(y, meta.y.kind),
+      },
     ];
     // 가까운 점을 끄면 tooltip 컬럼도 가져오지 않는다 (가까운 점의 행에서 읽는 값이다).
     if (!nearest) return { rows };
@@ -91,13 +204,13 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
     rows.push(
       {
         id: "nearestX",
-        label: "가까운 점 x",
+        label: msg().nearestX,
         value: formatValue(points.x[index], meta.x.kind),
         emphasis: true,
       },
       {
         id: "nearestY",
-        label: "가까운 점 y",
+        label: msg().nearestY,
         value: formatValue(points.y[index], meta.y.kind),
         emphasis: true,
       },
@@ -192,7 +305,7 @@ function yToPx(meta: ItemMeta, v: number) {
 /** 범주 줄과, legend가 있으면 legend 값 줄 */
 function categoryRows(meta: CategoryMeta, index: number, g: number) {
   const rows: TooltipRow[] = [
-    { id: "category", label: "범주", value: meta.categories[index] },
+    { id: "category", label: msg().category, value: meta.categories[index] },
   ];
   if (meta.legend) {
     rows.push({
@@ -252,7 +365,7 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
         ...categoryRows(meta, hit.index, hit.g),
         {
           id: "value",
-          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          label: meta.agg ? aggLabel(meta.agg) : msg().value,
           value: formatValue(value, "number"),
           emphasis: meta.stack !== "stack100",
         },
@@ -260,7 +373,7 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
           ? [
               {
                 id: "ratio",
-                label: "비율",
+                label: msg().ratio,
                 value: `${(seg[1] - seg[0]).toFixed(1)}%`,
                 emphasis: true,
               },
@@ -283,22 +396,22 @@ export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
       highlight: highlightRect(meta, hit.cx, hit.width, box.lo, box.hi),
       rows: [
         ...categoryRows(meta, hit.index, hit.g),
-        { id: "count", label: "개수", value: num(box.n) },
-        { id: "whiskerHigh", label: "최댓값(수염)", value: num(box.hi) },
+        { id: "count", label: msg().count, value: num(box.n) },
+        { id: "whiskerHigh", label: msg().whiskerHigh, value: num(box.hi) },
         { id: "q3", label: "Q3", value: num(box.q3) },
         {
           id: "median",
-          label: "중앙값",
+          label: msg().median,
           value: num(box.median),
           emphasis: true,
         },
         { id: "q1", label: "Q1", value: num(box.q1) },
-        { id: "whiskerLow", label: "최솟값(수염)", value: num(box.lo) },
-        { id: "mean", label: "평균", value: num(box.mean) },
+        { id: "whiskerLow", label: msg().whiskerLow, value: num(box.lo) },
+        { id: "mean", label: msg().mean, value: num(box.mean) },
         {
           id: "outliers",
-          label: "이상치",
-          value: `${num(box.outlierCount)}개`,
+          label: msg().outliers,
+          value: msg().items(num(box.outlierCount)),
         },
       ],
     };
@@ -313,14 +426,22 @@ export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
     const hit = hitSankey(meta, px, py);
     if (!hit) return null;
     const num = (v: number) => formatValue(v, "number");
-    const valueLabel = AGG_LABELS[meta.agg];
+    const valueLabel = aggLabel(meta.agg);
     if (hit.kind === "link") {
       const link = meta.links[hit.index];
       return {
         outline: linkOutline(meta, link),
         rows: [
-          { id: "source", label: "출발", value: meta.nodes[link.source].name },
-          { id: "target", label: "도착", value: meta.nodes[link.target].name },
+          {
+            id: "source",
+            label: msg().source,
+            value: meta.nodes[link.source].name,
+          },
+          {
+            id: "target",
+            label: msg().target,
+            value: meta.nodes[link.target].name,
+          },
           {
             id: "value",
             label: valueLabel,
@@ -341,18 +462,18 @@ export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
       rows: [
         {
           id: "node",
-          label: node.side === "source" ? "출발 노드" : "도착 노드",
+          label: node.side === "source" ? msg().sourceNode : msg().targetNode,
           value: node.name,
         },
         {
           id: "inflow",
-          label: "들어오는 합",
+          label: msg().inflow,
           value: num(node.in),
           emphasis: node.side === "target",
         },
         {
           id: "outflow",
-          label: "나가는 합",
+          label: msg().outflow,
           value: num(node.out),
           emphasis: node.side === "source",
         },
@@ -427,7 +548,7 @@ export const heatmapStrategy: TooltipStrategy<HeatmapMeta> = {
         { id: "y", label: meta.yTitle, value: meta.yCategories[j] },
         {
           id: "value",
-          label: AGG_LABELS[meta.agg],
+          label: aggLabel(meta.agg),
           value: formatValue(value, "number"),
           emphasis: true,
         },
@@ -461,7 +582,7 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
     const percent = (v: number, of: number) =>
       of > 0 ? `${((v / of) * 100).toFixed(1)}%` : "—";
     const rows: TooltipRow[] = [
-      { id: "name", label: "이름", value: leaf.name },
+      { id: "name", label: msg().name, value: leaf.name },
     ];
     const parent = meta.legend
       ? meta.parents.find((p) => p.g === leaf.g)
@@ -476,13 +597,13 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
     rows.push(
       {
         id: "value",
-        label: AGG_LABELS[meta.agg],
+        label: aggLabel(meta.agg),
         value: formatValue(leaf.value, "number"),
         emphasis: true,
       },
       {
         id: "ratio",
-        label: "비율",
+        label: msg().ratio,
         value: percent(leaf.value, meta.total),
         emphasis: true,
       },
@@ -490,7 +611,7 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
     if (parent) {
       rows.push({
         id: "groupRatio",
-        label: "묶음 안 비율",
+        label: msg().groupRatio,
         value: percent(leaf.value, parent.value),
       });
     }
@@ -553,7 +674,7 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
       rows: [
         {
           id: "range",
-          label: "구간",
+          label: msg().range,
           value: `${formatValue(candles.t[i], "time")} ~ ${formatValue(candles.t[i] + interval, "time")}`,
         },
         ...(meta.legend
@@ -565,16 +686,16 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
               },
             ]
           : []),
-        { id: "open", label: "시가", value: num(candles.open[i]) },
-        { id: "high", label: "고가", value: num(candles.high[i]) },
-        { id: "low", label: "저가", value: num(candles.low[i]) },
+        { id: "open", label: msg().open, value: num(candles.open[i]) },
+        { id: "high", label: msg().high, value: num(candles.high[i]) },
+        { id: "low", label: msg().low, value: num(candles.low[i]) },
         {
           id: "close",
-          label: "종가",
+          label: msg().close,
           value: num(candles.close[i]),
           emphasis: true,
         },
-        { id: "count", label: "개수", value: num(candles.count[i]) },
+        { id: "count", label: msg().count, value: num(candles.count[i]) },
       ],
     };
   },
@@ -583,10 +704,10 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
 /** 기간을 '2시간 5분', '35초'처럼 가장 큰 단위와 그다음 단위로 */
 export function formatDuration(ms: number) {
   const units: [number, string][] = [
-    [86_400_000, "일"],
-    [3_600_000, "시간"],
-    [60_000, "분"],
-    [1000, "초"],
+    [86_400_000, msg().day],
+    [3_600_000, msg().hour],
+    [60_000, msg().minute],
+    [1000, msg().second],
   ];
   const i = units.findIndex(([size]) => ms >= size);
   if (i === -1) return `${Math.round(ms)}ms`;
@@ -671,27 +792,31 @@ export const ganttStrategy: TooltipStrategy<GanttMeta> = {
           : []),
         {
           id: "start",
-          label: "시작",
+          label: msg().start,
           value: formatValue(bars.s[found], "time"),
         },
-        { id: "end", label: "끝", value: formatValue(bars.e[found], "time") },
+        {
+          id: "end",
+          label: msg().end,
+          value: formatValue(bars.e[found], "time"),
+        },
         {
           id: "duration",
-          label: "길이",
+          label: msg().duration,
           value: formatDuration(bars.e[found] - bars.s[found]),
           emphasis: true,
         },
         {
           id: "count",
-          label: "개수",
+          label: msg().count,
           value: formatValue(bars.n[found], "number"),
         },
         ...(merged > 1
           ? [
               {
                 id: "merged",
-                label: "합친 구간",
-                value: `${merged.toLocaleString()}개`,
+                label: msg().merged,
+                value: msg().items(merged.toLocaleString(intlLocale())),
               },
             ]
           : []),
@@ -793,20 +918,20 @@ export const pieStrategy: TooltipStrategy<PieMeta> = {
       rows: [
         {
           id: "slice",
-          label: meta.legend?.title ?? "조각",
+          label: meta.legend?.title ?? msg().slice,
           value: slice.category,
         },
         ...(child
-          ? [{ id: "child", label: "나눈 값", value: child.category }]
+          ? [{ id: "child", label: msg().child, value: child.category }]
           : []),
         {
           id: "value",
-          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          label: meta.agg ? aggLabel(meta.agg) : msg().value,
           value: formatValue((child ?? slice).value, "number"),
         },
         {
           id: "ratio",
-          label: child ? "조각 안 비율" : "비율",
+          label: child ? msg().sliceRatio : msg().ratio,
           value: `${((child ?? slice).ratio * 100).toFixed(1)}%`,
           emphasis: true,
         },
@@ -847,12 +972,12 @@ export const radarStrategy: TooltipStrategy<RadarMeta> = {
         { id: "axis", label: meta.axisTitle, value: meta.axes[i] },
         {
           id: "series",
-          label: meta.legend?.title ?? "계열",
+          label: meta.legend?.title ?? msg().series,
           value: series.name,
         },
         {
           id: "value",
-          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          label: meta.agg ? aggLabel(meta.agg) : msg().value,
           value: formatValue(series.values[i], "number"),
           emphasis: true,
         },
@@ -901,10 +1026,15 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
     const to = from + bins.step;
     const num = (n: number) => formatValue(n, "number");
     // 마지막 구간만 끝값을 포함한다.
-    const range = `${num(from)} ~ ${num(to)}${i === bins.count - 1 ? "" : " 미만"}`;
+    const range =
+      i === bins.count - 1
+        ? msg().closedRange(num(from), num(to))
+        : msg().openRange(num(from), num(to));
     const left = xToPx(meta, from + (bins.step * g) / meta.groupCount);
     const right = xToPx(meta, from + (bins.step * (g + 1)) / meta.groupCount);
-    const rows: TooltipRow[] = [{ id: "range", label: "구간", value: range }];
+    const rows: TooltipRow[] = [
+      { id: "range", label: msg().range, value: range },
+    ];
     if (meta.legend)
       rows.push({
         id: "legend",
@@ -913,7 +1043,7 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
       });
     rows.push({
       id: "count",
-      label: "개수",
+      label: msg().count,
       value: num(count),
       emphasis: true,
     });
@@ -951,7 +1081,7 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
     if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX) return null;
     if (legendHidden(meta, step.kind)) return null;
     const num = (n: number) => formatValue(n, "number");
-    const label = meta.agg ? AGG_LABELS[meta.agg] : "값";
+    const label = meta.agg ? aggLabel(meta.agg) : msg().value;
     return {
       highlight: highlightRect(
         meta,
@@ -963,23 +1093,31 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
       rows:
         step.kind === 2
           ? [
-              { id: "category", label: "범주", value: "합계" },
+              { id: "category", label: msg().category, value: msg().total },
               {
                 id: "cumulative",
-                label: "누적",
+                label: msg().cumulative,
                 value: num(step.end),
                 emphasis: true,
               },
             ]
           : [
-              { id: "category", label: "범주", value: meta.categories[i] },
+              {
+                id: "category",
+                label: msg().category,
+                value: meta.categories[i],
+              },
               {
                 id: "change",
                 label,
                 value: num(step.end - step.start),
                 emphasis: true,
               },
-              { id: "cumulative", label: "누적", value: num(step.end) },
+              {
+                id: "cumulative",
+                label: msg().cumulative,
+                value: num(step.end),
+              },
             ],
     };
   },
@@ -1003,7 +1141,7 @@ export const funnelStrategy: TooltipStrategy<FunnelMeta> = {
     const pct = (r: number | null) =>
       r === null
         ? "–"
-        : `${(r * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+        : `${(r * 100).toLocaleString(intlLocale(), { maximumFractionDigits: 1 })}%`;
     const { rect } = stage;
     return {
       highlight: {
@@ -1013,15 +1151,15 @@ export const funnelStrategy: TooltipStrategy<FunnelMeta> = {
         height: rect.height + HIGHLIGHT_PAD * 2,
       },
       rows: [
-        { id: "stage", label: "단계", value: stage.label },
+        { id: "stage", label: msg().stage, value: stage.label },
         {
           id: "value",
-          label: meta.agg ? AGG_LABELS[meta.agg] : "값",
+          label: meta.agg ? aggLabel(meta.agg) : msg().value,
           value: formatValue(stage.value, "number"),
           emphasis: true,
         },
-        { id: "prevRate", label: "이전 단계 대비", value: pct(stage.rate) },
-        { id: "firstRate", label: "첫 단계 대비", value: pct(stage.share) },
+        { id: "prevRate", label: msg().prevRate, value: pct(stage.rate) },
+        { id: "firstRate", label: msg().firstRate, value: pct(stage.share) },
       ],
     };
   },

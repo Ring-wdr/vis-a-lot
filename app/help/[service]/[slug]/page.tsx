@@ -21,8 +21,8 @@ export async function generateMetadata({
   const found = isHelpService(service) && findHelpArticle(service, slug);
   if (!found) return {};
   return {
-    title: `${found.article.title} · ${HELP[service].label} 도움말 · vis-a-lot`,
-    description: found.article.summary,
+    title: `${found.article.title.ko} · ${HELP[service].label.ko} 도움말 · vis-a-lot`,
+    description: found.article.summary.ko,
   };
 }
 

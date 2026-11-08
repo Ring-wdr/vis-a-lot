@@ -1,14 +1,42 @@
 "use client";
 
 import { useEffect } from "react";
-import { COLUMN_TYPE_LABELS } from "@/entities/dataset/lib/labels";
+import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import {
   useDatasetSchema,
   useDatasets,
   useGenerateDataset,
 } from "@/shared/api/queries";
 import type { DatasetId } from "@/shared/api/types";
+import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
 import { Select } from "@/shared/ui/Select";
+
+const messages = defineMessages({
+  ko: {
+    scale: "데이터 규모",
+    ready: " · 준비됨",
+    analyzing: "컬럼 통계 계산 중…",
+    generating: (done: string, total: string) =>
+      `데이터 생성 중 ${done} / ${total}`,
+    generated: (rows: string, seconds: string) =>
+      `${rows}행 · 생성 ${seconds}초`,
+    column: "컬럼",
+    type: "타입",
+    distinct: "고유값",
+  },
+  en: {
+    scale: "Data size",
+    ready: " · ready",
+    analyzing: "Computing column stats…",
+    generating: (done: string, total: string) =>
+      `Generating data ${done} / ${total}`,
+    generated: (rows: string, seconds: string) =>
+      `${rows} rows · generated in ${seconds}s`,
+    column: "Column",
+    type: "Type",
+    distinct: "Distinct",
+  },
+});
 
 const cell = "border-line border-b px-2 py-1 text-left last:text-right";
 
@@ -23,6 +51,9 @@ export function DatasetPanel({
   /** 컬럼 타입과 고유값 표를 함께 보여준다. */
   showColumns?: boolean;
 }) {
+  const text = useT(messages);
+  const labels = useDatasetLabels();
+  const locale = intlLocale();
   const datasets = useDatasets();
   const generate = useGenerateDataset();
   const samples = datasets.data?.datasets.filter((d) => d.kind === "sample");
@@ -38,11 +69,11 @@ export function DatasetPanel({
   return (
     <section className="flex max-w-90 flex-col gap-2">
       <Select
-        label="데이터 규모"
+        label={text.scale}
         value={dataset}
         options={(samples ?? []).map((s) => ({
           value: s.id,
-          label: `${s.name}${s.state === "ready" ? " · 준비됨" : ""}`,
+          label: `${s.name}${s.state === "ready" ? text.ready : ""}`,
         }))}
         onChange={onChange}
       />
@@ -52,16 +83,21 @@ export function DatasetPanel({
           <progress className="w-full" value={status.done} max={status.total} />
           <span>
             {status.phase === "analyze"
-              ? "컬럼 통계 계산 중…"
-              : `데이터 생성 중 ${status.done.toLocaleString()} / ${status.total.toLocaleString()}`}
+              ? text.analyzing
+              : text.generating(
+                  status.done.toLocaleString(locale),
+                  status.total.toLocaleString(locale),
+                )}
           </span>
         </div>
       )}
 
       {status?.state === "ready" && status.generateMs !== undefined && (
         <p className="text-xs text-fg-muted">
-          {status.total.toLocaleString()}행 · 생성{" "}
-          {(status.generateMs / 1000).toFixed(1)}초
+          {text.generated(
+            status.total.toLocaleString(locale),
+            (status.generateMs / 1000).toFixed(1),
+          )}
         </p>
       )}
 
@@ -72,9 +108,9 @@ export function DatasetPanel({
         <table className="border-collapse text-xs">
           <thead>
             <tr>
-              <th className={cell}>컬럼</th>
-              <th className={cell}>타입</th>
-              <th className={cell}>고유값</th>
+              <th className={cell}>{text.column}</th>
+              <th className={cell}>{text.type}</th>
+              <th className={cell}>{text.distinct}</th>
             </tr>
           </thead>
           <tbody>
@@ -83,8 +119,10 @@ export function DatasetPanel({
                 <td className={cell} title={c.name}>
                   {c.label}
                 </td>
-                <td className={cell}>{COLUMN_TYPE_LABELS[c.type]}</td>
-                <td className={cell}>{c.distinct?.toLocaleString() ?? "–"}</td>
+                <td className={cell}>{labels.columnTypes[c.type]}</td>
+                <td className={cell}>
+                  {c.distinct?.toLocaleString(locale) ?? "–"}
+                </td>
               </tr>
             ))}
           </tbody>

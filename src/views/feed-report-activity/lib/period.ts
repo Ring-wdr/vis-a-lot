@@ -1,5 +1,7 @@
 // 활동 보고 기간. 날짜는 로컬 'YYYY-MM-DD'이고, 한 주는 월요일에 시작한다.
 
+import { defineMessages, t } from "@/shared/lib/i18n";
+
 export const PERIOD_PRESETS = [
   "this-week",
   "last-week",
@@ -9,13 +11,56 @@ export const PERIOD_PRESETS = [
 ] as const;
 export type PeriodPreset = (typeof PERIOD_PRESETS)[number];
 
-export const PERIOD_LABELS: Record<PeriodPreset, string> = {
-  "this-week": "이번 주",
-  "last-week": "지난주",
-  "7d": "최근 7일",
-  month: "이번 달",
-  custom: "직접 선택",
-};
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const messages = defineMessages({
+  ko: {
+    preset: {
+      "this-week": "이번 주",
+      "last-week": "지난주",
+      "7d": "최근 7일",
+      month: "이번 달",
+      custom: "직접 선택",
+    } as Record<PeriodPreset, string>,
+    weekdays: ["일", "월", "화", "수", "목", "금", "토"],
+    dayHeading: (month: number, date: number, weekday: string) =>
+      `${month}월 ${date}일 (${weekday})`,
+    shortDay: (month: number, date: number, weekday: string) =>
+      `${month}/${date}(${weekday})`,
+  },
+  en: {
+    preset: {
+      "this-week": "This week",
+      "last-week": "Last week",
+      "7d": "Last 7 days",
+      month: "This month",
+      custom: "Custom",
+    },
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    dayHeading: (month: number, date: number, weekday: string) =>
+      `${weekday}, ${MONTHS[month - 1]} ${date}`,
+    shortDay: (month: number, date: number, weekday: string) =>
+      `${month}/${date} (${weekday})`,
+  },
+});
+
+/** 기간 프리셋의 화면 이름 (지금 언어) */
+export function periodLabel(preset: PeriodPreset) {
+  return t(messages).preset[preset];
+}
 
 export const isPreset = (v: string | null): v is PeriodPreset =>
   !!v && (PERIOD_PRESETS as readonly string[]).includes(v);
@@ -61,16 +106,24 @@ export function presetRange(preset: PeriodPreset, today: string) {
   }
 }
 
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-
 /** '2026-10-22' → '10월 22일 (목)' */
 export function dayHeading(day: string) {
+  const text = t(messages);
   const d = toDate(day);
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
+  return text.dayHeading(
+    d.getMonth() + 1,
+    d.getDate(),
+    text.weekdays[d.getDay()],
+  );
 }
 
 /** '2026-10-22' → '10/22(목)' (기간 표시용) */
 export function shortDay(day: string) {
+  const text = t(messages);
   const d = toDate(day);
-  return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+  return text.shortDay(
+    d.getMonth() + 1,
+    d.getDate(),
+    text.weekdays[d.getDay()],
+  );
 }

@@ -7,11 +7,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useUsers } from "@/shared/api/feed/queries";
 import type { FeedUser } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { Avatar } from "@/shared/ui/Avatar";
 import type { MentionSuggestion } from "./extensions";
 
 type RenderHooks = ReturnType<NonNullable<MentionSuggestion["render"]>>;
 type SuggestionProps = Parameters<NonNullable<RenderHooks["onStart"]>>[0];
+
+const messages = defineMessages({
+  ko: { noMatch: "맞는 사람이 없습니다", list: "멘션할 사람" },
+  en: { noMatch: "No matching people", list: "People to mention" },
+});
 
 const MAX_ITEMS = 8;
 /** 목록이 들어갈 높이 (사람 8명) */
@@ -117,6 +123,7 @@ function MentionList({
   open: Open;
   onHover: (index: number) => void;
 }) {
+  const text = useT(messages);
   const rect = open.rect;
   // 아래 자리가 모자라면 커서 위로 띄운다
   const left = rect
@@ -133,11 +140,9 @@ function MentionList({
       style={style}
     >
       {open.items.length === 0 ? (
-        <p className="px-2 py-1.5 text-xs text-fg-muted">
-          맞는 사람이 없습니다
-        </p>
+        <p className="px-2 py-1.5 text-xs text-fg-muted">{text.noMatch}</p>
       ) : (
-        <div role="listbox" aria-label="멘션할 사람">
+        <div role="listbox" aria-label={text.list}>
           {open.items.map((u, i) => (
             <div
               key={u.id}

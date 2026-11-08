@@ -3,9 +3,35 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { ColumnSummary, ExcludeFilter } from "@/shared/api/types";
+import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
 import { useDragSelect } from "@/shared/lib/use-drag-select";
 
 type ValuesSummary = Extract<ColumnSummary, { kind: "values" }>;
+
+const messages = defineMessages({
+  ko: {
+    searchPlaceholder: (n: string) => `${n}개 값에서 검색`,
+    search: "값 검색",
+    selectShown: "보이는 값 선택",
+    selectAll: "전체 선택",
+    clearShown: "보이는 값 해제",
+    clearAll: "전체 해제",
+    excluded: (n: string) => `${n}개 제외`,
+    allIncluded: "전부 포함",
+    noMatch: "일치하는 값이 없습니다.",
+  },
+  en: {
+    searchPlaceholder: (n: string) => `Search ${n} values`,
+    search: "Search values",
+    selectShown: "Select shown",
+    selectAll: "Select all",
+    clearShown: "Clear shown",
+    clearAll: "Clear all",
+    excluded: (n: string) => `${n} excluded`,
+    allIncluded: "All included",
+    noMatch: "No matching values.",
+  },
+});
 
 const ROW_HEIGHT = 26;
 
@@ -31,6 +57,8 @@ export function ValuesFilterBody({
   disabled: boolean;
   onChange: (next: ExcludeFilter | undefined) => void;
 }) {
+  const text = useT(messages);
+  const locale = intlLocale();
   const [keyword, setKeyword] = useState("");
   /** 드래그 중 미리 보기(제외할 값). 확정 전까지 onChange를 부르지 않는다. */
   const [preview, setPreview] = useState<string[] | null>(null);
@@ -91,8 +119,10 @@ export function ValuesFilterBody({
       <input
         type="search"
         className="rounded-md border border-line bg-elevated px-2 py-1 text-xs text-fg"
-        placeholder={`${summary.values.length.toLocaleString()}개 값에서 검색`}
-        aria-label="값 검색"
+        placeholder={text.searchPlaceholder(
+          summary.values.length.toLocaleString(locale),
+        )}
+        aria-label={text.search}
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
@@ -103,7 +133,7 @@ export function ValuesFilterBody({
           disabled={disabled}
           onClick={() => setShown(true)}
         >
-          {keyword ? "보이는 값 선택" : "전체 선택"}
+          {keyword ? text.selectShown : text.selectAll}
         </button>
         <button
           type="button"
@@ -111,16 +141,16 @@ export function ValuesFilterBody({
           disabled={disabled}
           onClick={() => setShown(false)}
         >
-          {keyword ? "보이는 값 해제" : "전체 해제"}
+          {keyword ? text.clearShown : text.clearAll}
         </button>
         <span className="ml-auto text-fg-muted">
           {excluded.size > 0
-            ? `${excluded.size.toLocaleString()}개 제외`
-            : "전부 포함"}
+            ? text.excluded(excluded.size.toLocaleString(locale))
+            : text.allIncluded}
         </span>
       </div>
       {shown.length === 0 ? (
-        <p className="text-fg-muted">일치하는 값이 없습니다.</p>
+        <p className="text-fg-muted">{text.noMatch}</p>
       ) : (
         <div
           ref={listRef}
@@ -164,7 +194,7 @@ export function ValuesFilterBody({
                     {value}
                   </span>
                   <span className="text-fg-muted">
-                    {count.toLocaleString()}
+                    {count.toLocaleString(locale)}
                   </span>
                 </label>
               );

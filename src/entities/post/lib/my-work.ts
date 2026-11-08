@@ -3,20 +3,42 @@
 
 import type { PostFilter, StatusCategory } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
+import { defineMessages, t } from "@/shared/lib/i18n";
 
 export type MyTab = NonNullable<PostFilter["mine"]>;
 
-export const MY_TABS: readonly { id: MyTab; label: string }[] = [
-  { id: "assigned", label: "담당" },
-  { id: "requested", label: "내가 요청" },
-  { id: "review", label: "승인 대기" },
-  { id: "stakeholder", label: "이해관계자" },
+export const MY_TAB_IDS: readonly MyTab[] = [
+  "assigned",
+  "requested",
+  "review",
+  "stakeholder",
 ];
+
+const messages = defineMessages<Record<MyTab, string>>({
+  ko: {
+    assigned: "담당",
+    requested: "내가 요청",
+    review: "승인 대기",
+    stakeholder: "이해관계자",
+  },
+  en: {
+    assigned: "Assigned",
+    requested: "Requested",
+    review: "To approve",
+    stakeholder: "Stakeholder",
+  },
+});
+
+/** 탭 목록 (지금 언어). 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다 */
+export const myTabs = (): readonly { id: MyTab; label: string }[] => {
+  const labels = t(messages);
+  return MY_TAB_IDS.map((id) => ({ id, label: labels[id] }));
+};
 
 export const DUE_SOON_DAYS = 3;
 
 export function parseTab(value: string | null): MyTab {
-  return MY_TABS.find((t) => t.id === value)?.id ?? "assigned";
+  return MY_TAB_IDS.find((id) => id === value) ?? "assigned";
 }
 
 /** /feed/my?tab=…(&due=soon)(&closed=1) */

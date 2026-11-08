@@ -7,6 +7,7 @@ import { useId, useState } from "react";
 import { groupsApi } from "@/shared/api/feed/groups";
 import { useUsers } from "@/shared/api/feed/queries";
 import type { FeedUser, GroupDetail, GroupRole } from "@/shared/api/feed/types";
+import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
 import { showConfirm } from "@/shared/ui/AlertDialog";
 import { Avatar } from "@/shared/ui/Avatar";
 import { button } from "@/shared/ui/button";
@@ -18,11 +19,52 @@ import type { useGroupEdit } from "@/views/feed-settings-group/model/use-group-e
 const s = settings();
 const seg = segmented();
 
-export const ROLE_LABELS: Record<GroupRole, string> = {
-  admin: "관리자",
-  member: "멤버",
-};
-const ROLES = Object.keys(ROLE_LABELS) as GroupRole[];
+const ROLES: GroupRole[] = ["admin", "member"];
+
+const messages = defineMessages({
+  ko: {
+    roles: { admin: "관리자", member: "멤버" } as Record<GroupRole, string>,
+    roleFailed: "역할을 바꾸지 못했습니다",
+    removeConfirm: (name: string) => `${name}님을 그룹에서 뺄까요?`,
+    removeConfirmLabel: "빼기",
+    removeFailed: "멤버를 빼지 못했습니다",
+    addFailed: "멤버를 추가하지 못했습니다",
+    title: "멤버",
+    count: (n: number) => `${n}명`,
+    hint: "관리자는 그룹 설정과 모든 전이·승인을 합니다.",
+    inactive: "비활성",
+    roleOf: (name: string) => `${name} 역할`,
+    removeOf: (name: string) => `${name} 빼기`,
+    removeTitle: "그룹에서 빼기",
+    addMember: "멤버 추가",
+    loading: "불러오는 중",
+    pickUser: "사용자 고르기",
+    noCandidates: "더할 사용자가 없습니다",
+    addRole: "추가할 역할",
+    add: "추가",
+  },
+  en: {
+    roles: { admin: "Admin", member: "Member" },
+    roleFailed: "Couldn't change the role",
+    removeConfirm: (name: string) => `Remove ${name} from the group?`,
+    removeConfirmLabel: "Remove",
+    removeFailed: "Couldn't remove the member",
+    addFailed: "Couldn't add the member",
+    title: "Members",
+    count: (n: number) => `${n}`,
+    hint: "Admins manage group settings and every transition and approval.",
+    inactive: "Inactive",
+    roleOf: (name: string) => `${name} role`,
+    removeOf: (name: string) => `Remove ${name}`,
+    removeTitle: "Remove from group",
+    addMember: "Add member",
+    loading: "Loading",
+    pickUser: "Choose a user",
+    noCandidates: "No users to add",
+    addRole: "Role to add",
+    add: "Add",
+  },
+});
 
 /** 관리자 먼저, 같으면 이름순 */
 export function sortMembers(
@@ -34,7 +76,7 @@ export function sortMembers(
       (a.role === "admin" ? 0 : 1) - (b.role === "admin" ? 0 : 1) ||
       (users.get(a.userId)?.name ?? a.userId).localeCompare(
         users.get(b.userId)?.name ?? b.userId,
-        "ko",
+        intlLocale(),
       ),
   );
 }
@@ -50,6 +92,7 @@ function RolePicker({
   disabled?: boolean;
   onChange: (role: GroupRole) => void;
 }) {
+  const text = useT(messages);
   return (
     <fieldset className={seg.root({ class: "w-36 flex-none self-auto" })}>
       <legend className="sr-only">{label}</legend>
@@ -62,7 +105,7 @@ function RolePicker({
           disabled={disabled}
           onClick={() => value !== r && onChange(r)}
         >
-          {ROLE_LABELS[r]}
+          {text.roles[r]}
         </button>
       ))}
     </fieldset>
@@ -76,6 +119,7 @@ export function MembersSection({
   group: GroupDetail;
   edit: ReturnType<typeof useGroupEdit>;
 }) {
+  const text = useT(messages);
   const id = useId();
   const users = useUsers();
   const byId = new Map((users.data ?? []).map((u) => [u.id, u]));
@@ -89,24 +133,24 @@ export function MembersSection({
   const picked = pick && !memberIds.has(pick) ? pick : null;
 
   const setMember = (userId: string, r: GroupRole) =>
-    edit.run(`member-${userId}`, "역할을 바꾸지 못했습니다", () =>
+    edit.run(`member-${userId}`, text.roleFailed, () =>
       groupsApi.setMember(group.id, userId, r),
     );
 
   const remove = async (userId: string) => {
     const name = byId.get(userId)?.name ?? userId;
-    const ok = await showConfirm(`${name}님을 그룹에서 뺄까요?`, {
-      confirmLabel: "빼기",
+    const ok = await showConfirm(text.removeConfirm(name), {
+      confirmLabel: text.removeConfirmLabel,
     });
     if (ok)
-      await edit.run(`member-${userId}`, "멤버를 빼지 못했습니다", () =>
+      await edit.run(`member-${userId}`, text.removeFailed, () =>
         groupsApi.removeMember(group.id, userId),
       );
   };
 
   const add = async () => {
     if (!picked) return;
-    const ok = await edit.run("member-add", "멤버를 추가하지 못했습니다", () =>
+    const ok = await edit.run("member-add", text.addFailed, () =>
       groupsApi.setMember(group.id, picked, role),
     );
     if (ok) setPick(null);
@@ -116,14 +160,12 @@ export function MembersSection({
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <div className={s.sectionHead()}>
         <h2 id={`${id}-title`} className={s.sectionTitle()}>
-          멤버{" "}
+          {text.title}{" "}
           <span className="font-normal text-fg-muted">
-            {group.members.length}명
+            {text.count(group.members.length)}
           </span>
         </h2>
-        <p className={s.hint()}>
-          관리자는 그룹 설정과 모든 전이·승인을 합니다.
-        </p>
+        <p className={s.hint()}>{text.hint}</p>
       </div>
       <ul className={s.list()}>
         {sortMembers(group.members, byId).map((m) => {
@@ -137,7 +179,7 @@ export function MembersSection({
                   {name}
                   {u && !u.active && (
                     <span className="ml-1.5 text-2xs text-fg-muted">
-                      비활성
+                      {text.inactive}
                     </span>
                   )}
                 </span>
@@ -150,15 +192,15 @@ export function MembersSection({
               <span className={s.actions()}>
                 <RolePicker
                   value={m.role}
-                  label={`${name} 역할`}
+                  label={text.roleOf(name)}
                   disabled={busy}
                   onChange={(r) => setMember(m.userId, r)}
                 />
                 <button
                   type="button"
                   className={iconButton({ tone: "danger" })}
-                  aria-label={`${name} 빼기`}
-                  title="그룹에서 빼기"
+                  aria-label={text.removeOf(name)}
+                  title={text.removeTitle}
                   disabled={busy}
                   onClick={() => remove(m.userId)}
                 >
@@ -178,28 +220,28 @@ export function MembersSection({
       >
         <div className="w-full max-w-60 flex-1">
           <Select
-            label="멤버 추가"
+            label={text.addMember}
             value={picked}
             placeholder={
               users.isPending
-                ? "불러오는 중"
+                ? text.loading
                 : candidates.length
-                  ? "사용자 고르기"
-                  : "더할 사용자가 없습니다"
+                  ? text.pickUser
+                  : text.noCandidates
             }
             options={candidates.map((u) => ({ value: u.id, label: u.name }))}
             onChange={setPick}
             disabled={candidates.length === 0}
           />
         </div>
-        <RolePicker value={role} label="추가할 역할" onChange={setRole} />
+        <RolePicker value={role} label={text.addRole} onChange={setRole} />
         <button
           type="submit"
           className={button({ size: "sm" })}
           disabled={busy || !picked}
         >
           <Plus size={14} aria-hidden="true" />
-          추가
+          {text.add}
         </button>
       </form>
     </section>

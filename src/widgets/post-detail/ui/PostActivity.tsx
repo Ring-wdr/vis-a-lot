@@ -9,10 +9,28 @@ import { useUserMap } from "@/shared/api/feed/lookups";
 import { usePostEvents } from "@/shared/api/feed/post-queries";
 import { useFeedNow } from "@/shared/api/feed/queries";
 import type { Group } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { dateTime, relativeTime } from "@/shared/lib/time";
 import { Avatar } from "@/shared/ui/Avatar";
 import { LoadingText, Skeleton } from "@/shared/ui/Loading";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
+
+const messages = defineMessages({
+  ko: {
+    unknownUser: "알 수 없음",
+    title: "활동 로그",
+    loading: "활동을 불러오는 중",
+    loadFailed: (reason: string) => `활동을 불러오지 못했습니다: ${reason}`,
+    empty: "아직 활동이 없습니다.",
+  },
+  en: {
+    unknownUser: "Unknown",
+    title: "Activity",
+    loading: "Loading activity",
+    loadFailed: (reason: string) => `Couldn't load activity: ${reason}`,
+    empty: "No activity yet.",
+  },
+});
 
 const d = detail();
 
@@ -23,10 +41,11 @@ export function PostActivity({
   post: PostDetail;
   group: Group | undefined;
 }) {
+  const text = useT(messages);
   const events = usePostEvents(post.key);
   const users = useUserMap();
   const userName = (id: string | null) =>
-    id ? (users.get(id)?.name ?? id) : "알 수 없음";
+    id ? (users.get(id)?.name ?? id) : text.unknownUser;
   const now = useFeedNow();
   // 최근 것이 위로
   const rows = [...(events.data ?? [])].reverse();
@@ -34,22 +53,22 @@ export function PostActivity({
   return (
     <section className={d.section()} aria-labelledby="post-activity-title">
       <h2 id="post-activity-title" className={d.sectionTitle()}>
-        활동 로그
+        {text.title}
       </h2>
       {events.isPending ? (
         <div className="flex flex-col gap-2" aria-busy="true">
-          <LoadingText>활동을 불러오는 중</LoadingText>
+          <LoadingText>{text.loading}</LoadingText>
           <Skeleton width={70} />
           <Skeleton width={50} />
         </div>
       ) : events.isError ? (
         <p role="alert" className={d.error()}>
-          활동을 불러오지 못했습니다: {events.error.message}
+          {text.loadFailed(events.error.message)}
         </p>
       ) : rows.length === 0 ? (
-        <p className={d.hint()}>아직 활동이 없습니다.</p>
+        <p className={d.hint()}>{text.empty}</p>
       ) : (
-        <ol className="flex flex-col" aria-label="활동 로그">
+        <ol className="flex flex-col" aria-label={text.title}>
           {rows.map((e) => (
             <li key={e.id} className="relative flex gap-2.5 pb-3 last:pb-0">
               {/* 세로 줄 */}
@@ -75,7 +94,7 @@ export function PostActivity({
                 <time
                   className="ml-1.5 text-2xs whitespace-nowrap text-fg-muted"
                   dateTime={e.createdAt}
-                  title={dateTime.format(new Date(e.createdAt))}
+                  title={dateTime().format(new Date(e.createdAt))}
                 >
                   {relativeTime(e.createdAt, now)}
                 </time>

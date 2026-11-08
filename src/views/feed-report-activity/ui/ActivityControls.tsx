@@ -10,14 +10,15 @@ import {
 } from "@/shared/api/feed/report-queries";
 import type { ReportTemplate } from "@/shared/api/feed/reports";
 import type { FeedUser, PostType, Team } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showAlert, showConfirm, showPrompt } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { Select } from "@/shared/ui/Select";
 import { segmented } from "@/shared/ui/segmented";
 import {
-  PERIOD_LABELS,
   PERIOD_PRESETS,
   type PeriodPreset,
+  periodLabel,
   presetRange,
   spanDays,
 } from "@/views/feed-report-activity/lib/period";
@@ -31,6 +32,64 @@ const ALL = "_all";
 
 const dateInput =
   "h-7.5 rounded-md border border-line bg-elevated px-2 text-ui text-fg tabular-nums";
+
+const messages = defineMessages({
+  ko: {
+    period: "기간",
+    from: "시작",
+    to: "끝",
+    team: "팀",
+    allTeams: "모든 팀",
+    assignee: "담당자",
+    everyone: "모든 사람",
+    postType: "게시물 유형",
+    allTypes: "(모두)",
+    all: "모두",
+    template: "템플릿",
+    loading: "불러오는 중",
+    pickTemplate: "템플릿 고르기",
+    reapply: "다시 적용",
+    saveAs: "새 템플릿으로 저장",
+    overwrite: "덮어쓰기",
+    delete: "지우기",
+    loadFailed: "템플릿을 불러오지 못했습니다",
+    newName: "새 템플릿 이름",
+    copyName: (name: string) => `${name} 사본`,
+    save: "저장",
+    saveFailed: (err: string) => `템플릿을 저장하지 못했습니다: ${err}`,
+    confirmOverwrite: (name: string) => `‘${name}’를 지금 조건으로 덮어쓸까요?`,
+    confirmDelete: (name: string) => `‘${name}’ 템플릿을 지울까요?`,
+    deleteFailed: (err: string) => `템플릿을 지우지 못했습니다: ${err}`,
+  },
+  en: {
+    period: "Period",
+    from: "From",
+    to: "To",
+    team: "Team",
+    allTeams: "All teams",
+    assignee: "Assignee",
+    everyone: "Everyone",
+    postType: "Post type",
+    allTypes: "(all)",
+    all: "All",
+    template: "Template",
+    loading: "Loading",
+    pickTemplate: "Choose template",
+    reapply: "Reapply",
+    saveAs: "Save as template",
+    overwrite: "Overwrite",
+    delete: "Delete",
+    loadFailed: "Couldn't load templates",
+    newName: "New template name",
+    copyName: (name: string) => `${name} copy`,
+    save: "Save",
+    saveFailed: (err: string) => `Couldn't save the template: ${err}`,
+    confirmOverwrite: (name: string) =>
+      `Overwrite ‘${name}’ with the current filters?`,
+    confirmDelete: (name: string) => `Delete the ‘${name}’ template?`,
+    deleteFailed: (err: string) => `Couldn't delete the template: ${err}`,
+  },
+});
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -51,6 +110,7 @@ export function ActivityControls({
   members: readonly FeedUser[];
   postTypes: readonly PostType[];
 }) {
+  const text = useT(messages);
   const update = (patch: Partial<ActivityParams>) =>
     onChange({ ...params, ...patch });
 
@@ -76,7 +136,7 @@ export function ActivityControls({
       <div className="flex flex-wrap items-end gap-3">
         <fieldset className="min-w-0">
           <legend className="float-left mb-1.5 w-full text-xs text-fg-secondary">
-            기간
+            {text.period}
           </legend>
           <div className={seg.root({ class: "clear-left self-start" })}>
             {PERIOD_PRESETS.map((p) => (
@@ -87,7 +147,7 @@ export function ActivityControls({
                 aria-pressed={params.preset === p}
                 onClick={() => choosePreset(p)}
               >
-                {PERIOD_LABELS[p]}
+                {periodLabel(p)}
               </button>
             ))}
           </div>
@@ -95,7 +155,7 @@ export function ActivityControls({
         {params.preset === "custom" && (
           <div className="flex items-end gap-1.5">
             <label className="flex flex-col gap-1 text-xs text-fg-secondary">
-              시작
+              {text.from}
               <input
                 type="date"
                 className={dateInput}
@@ -109,7 +169,7 @@ export function ActivityControls({
             </label>
             <span className="pb-1.5 text-fg-muted">~</span>
             <label className="flex flex-col gap-1 text-xs text-fg-secondary">
-              끝
+              {text.to}
               <input
                 type="date"
                 className={dateInput}
@@ -124,10 +184,10 @@ export function ActivityControls({
         )}
         <div className="w-36">
           <Select
-            label="팀"
+            label={text.team}
             value={params.teamId ?? ALL}
             options={[
-              { value: ALL, label: "모든 팀" },
+              { value: ALL, label: text.allTeams },
               ...teams.map((t) => ({ value: t.id, label: t.name })),
             ]}
             onChange={(v) => update({ teamId: v === ALL ? undefined : v })}
@@ -135,10 +195,10 @@ export function ActivityControls({
         </div>
         <div className="w-36">
           <Select
-            label="담당자"
+            label={text.assignee}
             value={params.assigneeId ?? ALL}
             options={[
-              { value: ALL, label: "모든 사람" },
+              { value: ALL, label: text.everyone },
               ...members.map((u) => ({ value: u.id, label: u.name })),
             ]}
             onChange={(v) => update({ assigneeId: v === ALL ? undefined : v })}
@@ -149,9 +209,9 @@ export function ActivityControls({
       {postTypes.length > 0 && (
         <fieldset className="min-w-0">
           <legend className="float-left mb-1.5 w-full text-xs text-fg-secondary">
-            게시물 유형{" "}
+            {text.postType}{" "}
             <span className="text-fg-muted">
-              {params.postTypeIds.length ? "" : "(모두)"}
+              {params.postTypeIds.length ? "" : text.allTypes}
             </span>
           </legend>
           <div className="clear-left flex flex-wrap gap-1.5">
@@ -177,7 +237,7 @@ export function ActivityControls({
                 className="h-7 cursor-pointer px-1.5 text-xs text-accent"
                 onClick={() => update({ postTypeIds: [] })}
               >
-                모두
+                {text.all}
               </button>
             )}
           </div>
@@ -206,6 +266,7 @@ function TemplateBar({
   today: string;
   onApply: (next: ActivityParams) => void;
 }) {
+  const text = useT(messages);
   const templates = useReportTemplates(groupId);
   const save = useSaveReportTemplate();
   const remove = useDeleteReportTemplate(groupId);
@@ -227,9 +288,9 @@ function TemplateBar({
   });
 
   async function saveAs() {
-    const name = await showPrompt("새 템플릿 이름", {
-      defaultValue: current ? `${current.name} 사본` : "",
-      confirmLabel: "저장",
+    const name = await showPrompt(text.newName, {
+      defaultValue: current ? text.copyName(current.name) : "",
+      confirmLabel: text.save,
       maxLength: 60,
     });
     if (!name) return;
@@ -237,28 +298,28 @@ function TemplateBar({
       const saved = await save.mutateAsync(body(name));
       onApply({ ...params, templateId: saved.id });
     } catch (e) {
-      showAlert(`템플릿을 저장하지 못했습니다: ${errorText(e)}`);
+      showAlert(text.saveFailed(errorText(e)));
     }
   }
 
   async function overwrite(t: ReportTemplate) {
     if (
-      !(await showConfirm(`‘${t.name}’를 지금 조건으로 덮어쓸까요?`, {
-        confirmLabel: "덮어쓰기",
+      !(await showConfirm(text.confirmOverwrite(t.name), {
+        confirmLabel: text.overwrite,
       }))
     )
       return;
     try {
       await save.mutateAsync(body(t.name, t.id));
     } catch (e) {
-      showAlert(`템플릿을 저장하지 못했습니다: ${errorText(e)}`);
+      showAlert(text.saveFailed(errorText(e)));
     }
   }
 
   async function del(t: ReportTemplate) {
     if (
-      !(await showConfirm(`‘${t.name}’ 템플릿을 지울까요?`, {
-        confirmLabel: "지우기",
+      !(await showConfirm(text.confirmDelete(t.name), {
+        confirmLabel: text.delete,
       }))
     )
       return;
@@ -266,7 +327,7 @@ function TemplateBar({
       await remove.mutateAsync(t.id);
       onApply({ ...params, templateId: undefined });
     } catch (e) {
-      showAlert(`템플릿을 지우지 못했습니다: ${errorText(e)}`);
+      showAlert(text.deleteFailed(errorText(e)));
     }
   }
 
@@ -274,9 +335,9 @@ function TemplateBar({
     <div className="flex flex-wrap items-end gap-2 border-t border-line pt-3">
       <div className="w-52">
         <Select
-          label="템플릿"
+          label={text.template}
           value={current?.id ?? null}
-          placeholder={templates.isPending ? "불러오는 중" : "템플릿 고르기"}
+          placeholder={templates.isPending ? text.loading : text.pickTemplate}
           disabled={list.length === 0}
           options={list.map((t) => ({ value: t.id, label: t.name }))}
           onChange={(id) => {
@@ -291,7 +352,7 @@ function TemplateBar({
           className={button({ size: "sm" })}
           onClick={() => onApply(paramsFromTemplate(current, today))}
         >
-          다시 적용
+          {text.reapply}
         </button>
       )}
       <button
@@ -300,7 +361,8 @@ function TemplateBar({
         disabled={busy}
         onClick={saveAs}
       >
-        <Save size={14} aria-hidden="true" />새 템플릿으로 저장
+        <Save size={14} aria-hidden="true" />
+        {text.saveAs}
       </button>
       {current?.editable && (
         <>
@@ -310,7 +372,7 @@ function TemplateBar({
             disabled={busy}
             onClick={() => overwrite(current)}
           >
-            덮어쓰기
+            {text.overwrite}
           </button>
           <button
             type="button"
@@ -319,14 +381,12 @@ function TemplateBar({
             onClick={() => del(current)}
           >
             <Trash2 size={14} aria-hidden="true" />
-            지우기
+            {text.delete}
           </button>
         </>
       )}
       {templates.isError && (
-        <span className="text-xs text-danger">
-          템플릿을 불러오지 못했습니다
-        </span>
+        <span className="text-xs text-danger">{text.loadFailed}</span>
       )}
     </div>
   );

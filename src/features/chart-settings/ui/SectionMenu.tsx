@@ -1,7 +1,8 @@
 "use client";
 
 import type { OptionSection } from "@/entities/chart/model/chart-options";
-import { SECTION_LABELS, SECTION_PARTS } from "../model/option-fields";
+import { useLocale } from "@/shared/lib/i18n";
+import { sectionLabels, sectionParts } from "../model/option-fields";
 import { SECTION_ICONS } from "./OptionSettings";
 import { settingsDialog } from "./settings-dialog-styles";
 
@@ -37,11 +38,14 @@ export function SectionMenu({
   /** 구역 이름 뒤에 •를 붙일지 (item에 따로 정한 구역) */
   marked?: (section: OptionSection) => boolean;
 }) {
+  useLocale();
+  const labels = sectionLabels();
+  const allParts = sectionParts();
   return (
     <nav className={sd.menu()} aria-label={label}>
       {sections.map((id) => {
         const Icon = SECTION_ICONS[id];
-        const parts = SECTION_PARTS[id];
+        const parts = allParts[id];
         const current = active?.section === id;
         return (
           <div key={id} className="flex flex-col gap-0.5">
@@ -54,7 +58,7 @@ export function SectionMenu({
               onClick={() => onSelect({ section: id, part: parts?.[0].id })}
             >
               <Icon size={14} aria-hidden="true" />
-              {SECTION_LABELS[id]}
+              {labels[id]}
               {marked?.(id) && " •"}
             </button>
             {current &&

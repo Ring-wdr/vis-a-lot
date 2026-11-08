@@ -6,6 +6,12 @@ import { useWorkspaceStore } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemRestore } from "@/shared/api/types";
+import { defineMessages, t } from "@/shared/lib/i18n";
+
+const messages = defineMessages({
+  ko: { noGridArea: "grid 영역 크기를 아직 모릅니다." },
+  en: { noGridArea: "The grid area size isn't known yet." },
+});
 
 export type OpenChartInput = {
   spec: ChartSpec;
@@ -29,7 +35,7 @@ export async function openChartIn(
 ) {
   const { gridArea, readOnly } = store.getState();
   const area = gridArea ?? fallbackArea;
-  if (!area) throw new Error("grid 영역 크기를 아직 모릅니다.");
+  if (!area) throw new Error(t(messages).noGridArea);
   // 여는 동안 그 탭에서 따로 draw하면 늦게 온 쪽이 앞의 차트를 덮으므로 막는다.
   store.setState({ opening: true });
   try {

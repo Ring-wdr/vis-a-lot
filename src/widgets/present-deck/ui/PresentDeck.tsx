@@ -23,10 +23,52 @@ import {
 import { usePresentNav } from "@/features/present-mode/model/present-nav";
 import { useGroupMap } from "@/shared/api/feed/lookups";
 import { usePost, usePostEvents } from "@/shared/api/feed/post-queries";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek, usePeekKey } from "@/shared/lib/peek";
 import { relativeTime } from "@/shared/lib/time";
 import { button } from "@/shared/ui/button";
 import { EmptyState, LoadingText, Skeleton } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    back: "보고서로 돌아가기",
+    prev: "이전",
+    next: "다음",
+    emptyTitle: "넘겨 볼 게시물이 없습니다",
+    emptyHint: "보고서 조건을 넓혀 보세요.",
+    loadingPost: (key: string) => `${key} 불러오는 중`,
+    loadFailed: (key: string) => `${key}를 불러오지 못했습니다`,
+    assignee: "담당자",
+    due: "기한",
+    none: "없음",
+    priority: "우선순위",
+    progress: "진행률",
+    latest: "최근 활동",
+    someone: "누군가",
+    loading: "불러오는 중",
+    noActivity: "활동이 없습니다",
+    details: "자세히 보기",
+  },
+  en: {
+    back: "Back to report",
+    prev: "Prev",
+    next: "Next",
+    emptyTitle: "No posts to page through",
+    emptyHint: "Try widening the report filters.",
+    loadingPost: (key: string) => `Loading ${key}`,
+    loadFailed: (key: string) => `Couldn't load ${key}`,
+    assignee: "Assignee",
+    due: "Due",
+    none: "None",
+    priority: "Priority",
+    progress: "Progress",
+    latest: "Latest activity",
+    someone: "Someone",
+    loading: "Loading",
+    noActivity: "No activity",
+    details: "View details",
+  },
+});
 
 export type DeckItem = {
   key: string;
@@ -47,6 +89,7 @@ export function PresentDeck({
   /** 보고서 이름 (머리 줄에 작게) */
   title: string;
 }) {
+  const text = useT(messages);
   const { slide, openSlide, closeSlides } = usePresentNav();
   const peek = usePeekKey();
   const index = Math.min(slide ?? 0, Math.max(items.length - 1, 0));
@@ -78,7 +121,7 @@ export function PresentDeck({
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className={button()} onClick={closeSlides}>
           <ArrowLeft size={16} aria-hidden="true" />
-          보고서로 돌아가기
+          {text.back}
         </button>
         <span className="truncate text-sm text-fg-muted">{title}</span>
         <div className="ml-auto flex items-center gap-2">
@@ -90,7 +133,7 @@ export function PresentDeck({
             onClick={() => openSlide(index - 1)}
           >
             <ChevronLeft size={16} aria-hidden="true" />
-            이전
+            {text.prev}
           </button>
           <span
             className="min-w-16 text-center font-semibold tabular-nums"
@@ -105,7 +148,7 @@ export function PresentDeck({
             aria-keyshortcuts="ArrowRight"
             onClick={() => openSlide(index + 1)}
           >
-            다음
+            {text.next}
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
@@ -113,11 +156,8 @@ export function PresentDeck({
       {item ? (
         <SlideCard key={item.key} item={item} />
       ) : (
-        <EmptyState
-          icon={<FileQuestion size={20} />}
-          title="넘겨 볼 게시물이 없습니다"
-        >
-          <p>보고서 조건을 넓혀 보세요.</p>
+        <EmptyState icon={<FileQuestion size={20} />} title={text.emptyTitle}>
+          <p>{text.emptyHint}</p>
         </EmptyState>
       )}
     </div>
@@ -126,6 +166,7 @@ export function PresentDeck({
 
 /** 큰 요약 카드: 썸네일, 키·제목, 상태, 담당자, 기한, 진행률, 최근 활동 */
 function SlideCard({ item }: { item: DeckItem }) {
+  const text = useT(messages);
   const post = usePost(item.key);
   const events = usePostEvents(item.key);
   const groups = useGroupMap();
@@ -139,7 +180,7 @@ function SlideCard({ item }: { item: DeckItem }) {
         className="flex flex-col gap-4 rounded-xl border border-line bg-elevated p-6"
         aria-busy="true"
       >
-        <LoadingText>{item.key} 불러오는 중</LoadingText>
+        <LoadingText>{text.loadingPost(item.key)}</LoadingText>
         <Skeleton width={70} className="h-6" />
         <Skeleton width={90} />
         <Skeleton width={50} />
@@ -149,7 +190,7 @@ function SlideCard({ item }: { item: DeckItem }) {
     return (
       <EmptyState
         icon={<FileQuestion size={20} />}
-        title={`${item.key}를 불러오지 못했습니다`}
+        title={text.loadFailed(item.key)}
       >
         <p>{post.error.message}</p>
       </EmptyState>
@@ -180,11 +221,11 @@ function SlideCard({ item }: { item: DeckItem }) {
         </div>
         <h2 className="text-xl font-bold break-keep">{p.title}</h2>
         <dl className="grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-3 text-base">
-          <dt className="text-fg-muted">담당자</dt>
+          <dt className="text-fg-muted">{text.assignee}</dt>
           <dd>
             <UserChip userId={p.assigneeId} />
           </dd>
-          <dt className="text-fg-muted">기한</dt>
+          <dt className="text-fg-muted">{text.due}</dt>
           <dd>
             {p.dueDate ? (
               <span className="inline-flex items-center gap-2">
@@ -192,14 +233,14 @@ function SlideCard({ item }: { item: DeckItem }) {
                 <span className="text-xs text-fg-muted">{p.dueDate}</span>
               </span>
             ) : (
-              <span className="text-fg-muted">없음</span>
+              <span className="text-fg-muted">{text.none}</span>
             )}
           </dd>
-          <dt className="text-fg-muted">우선순위</dt>
+          <dt className="text-fg-muted">{text.priority}</dt>
           <dd>
             <PriorityMark priority={p.priority} showLabel />
           </dd>
-          <dt className="text-fg-muted">진행률</dt>
+          <dt className="text-fg-muted">{text.progress}</dt>
           <dd className="flex items-center gap-3">
             <span
               className="h-2.5 w-full max-w-60 overflow-hidden rounded-full bg-panel-strong"
@@ -207,7 +248,7 @@ function SlideCard({ item }: { item: DeckItem }) {
               aria-valuenow={p.progress}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="진행률"
+              aria-label={text.progress}
             >
               <span
                 className="block h-full rounded-full bg-accent"
@@ -218,11 +259,11 @@ function SlideCard({ item }: { item: DeckItem }) {
           </dd>
         </dl>
         <div className="rounded-lg bg-panel p-3">
-          <p className="text-xs font-semibold text-fg-muted">최근 활동</p>
+          <p className="text-xs font-semibold text-fg-muted">{text.latest}</p>
           {latest ? (
             <p className="mt-1 text-base">
               {eventSentence(latest, {
-                userName: (id) => (id ? userName(id) : "누군가"),
+                userName: (id) => (id ? userName(id) : text.someone),
                 statusNames,
               })}
               <span className="ml-2 text-xs text-fg-muted">
@@ -231,7 +272,7 @@ function SlideCard({ item }: { item: DeckItem }) {
             </p>
           ) : (
             <p className="mt-1 text-fg-muted">
-              {events.isPending ? "불러오는 중" : "활동이 없습니다"}
+              {events.isPending ? text.loading : text.noActivity}
             </p>
           )}
         </div>
@@ -241,7 +282,7 @@ function SlideCard({ item }: { item: DeckItem }) {
           onClick={() => openPeek(p.key)}
         >
           <PanelRightOpen size={14} aria-hidden="true" />
-          자세히 보기
+          {text.details}
         </button>
       </div>
     </article>

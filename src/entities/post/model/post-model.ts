@@ -5,6 +5,12 @@ import type {
   PostSummary,
   ViewGroupBy,
 } from "@/shared/api/feed/types";
+import {
+  defineMessages,
+  getLocale,
+  intlLocale,
+  type Locale,
+} from "@/shared/lib/i18n";
 
 export const POST_COLUMNS = [
   "key",
@@ -18,16 +24,41 @@ export const POST_COLUMNS = [
 ] as const;
 export type PostColumn = (typeof POST_COLUMNS)[number];
 
-export const COLUMN_LABELS: Record<PostColumn, string> = {
-  key: "키",
-  title: "제목",
-  status: "상태",
-  priority: "우선순위",
-  assignee: "담당자",
-  dueDate: "기한",
-  updatedAt: "수정",
-  thumbnail: "썸네일",
-};
+const messages = defineMessages({
+  ko: {
+    columns: {
+      key: "키",
+      title: "제목",
+      status: "상태",
+      priority: "우선순위",
+      assignee: "담당자",
+      dueDate: "기한",
+      updatedAt: "수정",
+      thumbnail: "썸네일",
+    } satisfies Record<PostColumn, string>,
+    noAssignee: "담당자 없음",
+    noTeam: "팀 없음",
+  },
+  en: {
+    columns: {
+      key: "Key",
+      title: "Title",
+      status: "Status",
+      priority: "Priority",
+      assignee: "Assignee",
+      dueDate: "Due",
+      updatedAt: "Updated",
+      thumbnail: "Thumbnail",
+    },
+    noAssignee: "Unassigned",
+    noTeam: "No team",
+  },
+});
+
+/** 열 이름 (지금 언어) */
+export const columnLabels = (
+  locale: Locale = getLocale(),
+): Record<PostColumn, string> => messages[locale].columns;
 
 /** 리스트 기본 열 (썸네일은 끈다) */
 export const DEFAULT_COLUMNS: readonly PostColumn[] = POST_COLUMNS.filter(
@@ -63,6 +94,8 @@ export function groupPosts(
     user: (id: string) => string;
     priority: (p: number) => string;
   },
+  /** "담당자 없음"의 언어 (기본: 지금 언어) */
+  locale: Locale = getLocale(),
 ): PostGroup[] {
   const buckets = new Map<string, PostSummary[]>();
   const idOf = (p: PostSummary) =>
@@ -86,7 +119,7 @@ export function groupPosts(
           ? names.priority(Number(id))
           : id
             ? names.user(id)
-            : "담당자 없음",
+            : messages[locale].noAssignee,
     posts: list,
   }));
   if (groupBy === "status")
@@ -98,7 +131,7 @@ export function groupPosts(
     return groups.sort((a, b) => Number(b.id) - Number(a.id));
   // 담당자: 이름순, 담당자 없음은 맨 끝
   return groups.sort((a, b) =>
-    !a.id ? 1 : !b.id ? -1 : a.label.localeCompare(b.label, "ko"),
+    !a.id ? 1 : !b.id ? -1 : a.label.localeCompare(b.label, intlLocale(locale)),
   );
 }
 
@@ -110,6 +143,8 @@ export const NO_TEAM = "none";
 export function teamLanes(
   posts: readonly PostSummary[],
   teams: readonly { id: string; name: string }[],
+  /** "팀 없음"의 언어 (기본: 지금 언어) */
+  locale: Locale = getLocale(),
 ): Lane[] {
   const known = new Set(teams.map((t) => t.id));
   const lanes: Lane[] = teams.map((t) => ({
@@ -118,7 +153,8 @@ export function teamLanes(
     posts: posts.filter((p) => p.teamId === t.id),
   }));
   const rest = posts.filter((p) => !p.teamId || !known.has(p.teamId));
-  if (rest.length) lanes.push({ id: NO_TEAM, label: "팀 없음", posts: rest });
+  if (rest.length)
+    lanes.push({ id: NO_TEAM, label: messages[locale].noTeam, posts: rest });
   return lanes;
 }
 

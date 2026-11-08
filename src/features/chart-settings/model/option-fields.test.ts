@@ -12,8 +12,8 @@ import {
   getPath,
   hasSection,
   removeSection,
-  SECTION_FIELDS,
-  SECTION_PARTS,
+  sectionFields,
+  sectionParts,
   setPath,
 } from "./option-fields";
 
@@ -23,7 +23,7 @@ const DEFAULT_OPTIONS: ChartOptions = CHART_DEFAULTS.options;
 describe("option fields", () => {
   it("모든 필드 경로가 ChartOptions에 있다", () => {
     for (const section of OPTION_SECTIONS) {
-      for (const field of SECTION_FIELDS[section]) {
+      for (const field of sectionFields()[section]) {
         if (field.kind === "heading") continue;
         expect(field.path.startsWith(`${section}.`)).toBe(true);
         expect(getPath(DEFAULT_OPTIONS, field.path)).not.toBeUndefined();
@@ -32,10 +32,10 @@ describe("option fields", () => {
   });
 
   it("하위 항목은 구역 필드를 나눠 갖고, 각자 자기 경로만 쓴다", () => {
-    for (const [section, parts] of Object.entries(SECTION_PARTS)) {
+    for (const [section, parts] of Object.entries(sectionParts())) {
       const all = parts.flatMap((p) => p.fields);
       expect(all).toEqual(
-        SECTION_FIELDS[section as keyof typeof SECTION_PARTS],
+        sectionFields()[section as keyof ReturnType<typeof sectionParts>],
       );
       for (const part of parts) {
         for (const field of fieldsOf(section as never, part.id)) {
@@ -44,8 +44,8 @@ describe("option fields", () => {
         }
       }
     }
-    expect(fieldsOf("axes")).toBe(SECTION_PARTS.axes?.[0].fields);
-    expect(fieldsOf("title")).toBe(SECTION_FIELDS.title);
+    expect(fieldsOf("axes")).toBe(sectionParts().axes?.[0].fields);
+    expect(fieldsOf("title")).toBe(sectionFields().title);
   });
 
   it("setPath는 원본을 바꾸지 않고 깊은 경로에 값을 넣는다", () => {
@@ -176,10 +176,10 @@ describe("설정 창 필드", () => {
   it("서버 기본값의 모든 칸을 설정 창에서 바꿀 수 있다", () => {
     const paths = new Set<string>();
     for (const section of OPTION_SECTIONS) {
-      const parts = SECTION_PARTS[section];
+      const parts = sectionParts()[section];
       const fields = parts
         ? parts.flatMap((p) => p.fields)
-        : SECTION_FIELDS[section];
+        : sectionFields()[section];
       for (const f of fields) if ("path" in f) paths.add(f.path);
     }
     expect(leafPaths(DEFAULT_OPTIONS).filter((p) => !paths.has(p))).toEqual([]);

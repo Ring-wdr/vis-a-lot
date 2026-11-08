@@ -14,6 +14,7 @@ import { useId, useState } from "react";
 import { field } from "@/entities/post/ui/styles";
 import { groupsApi } from "@/shared/api/feed/groups";
 import type { GroupDetail, PostType } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showConfirm, showPrompt } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { iconButton, settings } from "@/shared/ui/feed-settings-styles";
@@ -21,23 +22,112 @@ import type { useGroupEdit } from "@/views/feed-settings-group/model/use-group-e
 
 const s = settings();
 
-/** 게시물 유형 색. 시드의 기본 유형 색 + 몇 가지 */
+/** 게시물 유형 색. 시드의 기본 유형 색 + 몇 가지. 이름은 messages.colors */
 export const TYPE_COLORS = [
-  { name: "빨강", hex: "#e5484d" },
-  { name: "주황", hex: "#f76b15" },
-  { name: "노랑", hex: "#f5a524" },
-  { name: "초록", hex: "#30a46c" },
-  { name: "청록", hex: "#12a594" },
-  { name: "파랑", hex: "#3e63dd" },
-  { name: "보라", hex: "#8e4ec6" },
-  { name: "분홍", hex: "#d6409f" },
-  { name: "회색", hex: "#8b8d98" },
+  { key: "red", hex: "#e5484d" },
+  { key: "orange", hex: "#f76b15" },
+  { key: "yellow", hex: "#f5a524" },
+  { key: "green", hex: "#30a46c" },
+  { key: "teal", hex: "#12a594" },
+  { key: "blue", hex: "#3e63dd" },
+  { key: "purple", hex: "#8e4ec6" },
+  { key: "pink", hex: "#d6409f" },
+  { key: "gray", hex: "#8b8d98" },
 ] as const;
 
-const colorName = (hex: string | null) =>
-  TYPE_COLORS.find((c) => c.hex === hex?.toLowerCase())?.name ??
-  hex ??
-  "색 없음";
+type ColorKey = (typeof TYPE_COLORS)[number]["key"];
+
+const messages = defineMessages({
+  ko: {
+    colors: {
+      red: "빨강",
+      orange: "주황",
+      yellow: "노랑",
+      green: "초록",
+      teal: "청록",
+      blue: "파랑",
+      purple: "보라",
+      pink: "분홍",
+      gray: "회색",
+    } as Record<ColorKey, string>,
+    noColor: "색 없음",
+    saveFailed: "게시물 유형을 저장하지 못했습니다",
+    createFailed: "게시물 유형을 만들지 못했습니다",
+    renamePrompt: "게시물 유형 이름",
+    renameConfirm: "바꾸기",
+    sortFailed: "순서를 바꾸지 못했습니다",
+    removeConfirm: (name: string) =>
+      `게시물 유형 '${name}'을(를) 지울까요? 이 유형의 게시물은 유형 없음이 됩니다.`,
+    remove: "지우기",
+    removeFailed: "게시물 유형을 지우지 못했습니다",
+    title: "게시물 유형",
+    hint: "게시물마다 하나를 고르는 라벨입니다.",
+    empty: "아직 게시물 유형이 없습니다.",
+    colorOf: (color: string) => `색: ${color}`,
+    up: "위로",
+    upOf: (name: string) => `${name} 위로`,
+    down: "아래로",
+    downOf: (name: string) => `${name} 아래로`,
+    recolor: "색 바꾸기",
+    recolorOf: (name: string) => `${name} 색 바꾸기`,
+    rename: "이름 바꾸기",
+    renameOf: (name: string) => `${name} 이름 바꾸기`,
+    removeOf: (name: string) => `${name} 지우기`,
+    colorLabel: (name: string) => `${name} 색`,
+    newType: "새 유형",
+    newTypePlaceholder: "예: 개선",
+    newTypeColor: "새 유형 색",
+    add: "추가",
+  },
+  en: {
+    colors: {
+      red: "Red",
+      orange: "Orange",
+      yellow: "Yellow",
+      green: "Green",
+      teal: "Teal",
+      blue: "Blue",
+      purple: "Purple",
+      pink: "Pink",
+      gray: "Gray",
+    },
+    noColor: "No color",
+    saveFailed: "Couldn't save the post type",
+    createFailed: "Couldn't create the post type",
+    renamePrompt: "Post type name",
+    renameConfirm: "Rename",
+    sortFailed: "Couldn't reorder",
+    removeConfirm: (name: string) =>
+      `Delete post type '${name}'? Posts of this type will have no type.`,
+    remove: "Delete",
+    removeFailed: "Couldn't delete the post type",
+    title: "Post types",
+    hint: "A label each post picks one of.",
+    empty: "No post types yet.",
+    colorOf: (color: string) => `Color: ${color}`,
+    up: "Move up",
+    upOf: (name: string) => `Move ${name} up`,
+    down: "Move down",
+    downOf: (name: string) => `Move ${name} down`,
+    recolor: "Change color",
+    recolorOf: (name: string) => `Change ${name} color`,
+    rename: "Rename",
+    renameOf: (name: string) => `Rename ${name}`,
+    removeOf: (name: string) => `Delete ${name}`,
+    colorLabel: (name: string) => `${name} color`,
+    newType: "New type",
+    newTypePlaceholder: "e.g. Improvement",
+    newTypeColor: "New type color",
+    add: "Add",
+  },
+});
+
+type Text = (typeof messages)["ko"];
+
+const colorName = (text: Text, hex: string | null) => {
+  const c = TYPE_COLORS.find((c) => c.hex === hex?.toLowerCase());
+  return c ? text.colors[c.key] : (hex ?? text.noColor);
+};
 
 export function Swatch({ color }: { color: string | null }) {
   return (
@@ -58,6 +148,7 @@ function ColorPicker({
   onSelect: (hex: string) => void;
   label: string;
 }) {
+  const text = useT(messages);
   return (
     <fieldset className="flex flex-wrap items-center gap-1.5">
       <legend className="sr-only">{label}</legend>
@@ -67,8 +158,8 @@ function ColorPicker({
           type="button"
           className="size-6 cursor-pointer rounded-full border-2 border-elevated ring-1 ring-line disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:ring-2 aria-pressed:ring-fg"
           style={{ background: c.hex }}
-          aria-label={c.name}
-          title={c.name}
+          aria-label={text.colors[c.key]}
+          title={text.colors[c.key]}
           aria-pressed={c.hex === value?.toLowerCase()}
           onClick={() => onSelect(c.hex)}
         />
@@ -94,6 +185,7 @@ export function PostTypesSection({
   group: GroupDetail;
   edit: ReturnType<typeof useGroupEdit>;
 }) {
+  const text = useT(messages);
   const id = useId();
   const types = [...group.postTypes].sort(
     (a, b) => a.sort - b.sort || a.name.localeCompare(b.name),
@@ -104,7 +196,7 @@ export function PostTypesSection({
   const busy = !!edit.pending;
 
   const save = (t: PostType, patch: Partial<PostType>) =>
-    edit.run(`type-${t.id}`, "게시물 유형을 저장하지 못했습니다", () =>
+    edit.run(`type-${t.id}`, text.saveFailed, () =>
       groupsApi.savePostType(group.id, {
         id: t.id,
         name: patch.name ?? t.name,
@@ -116,25 +208,23 @@ export function PostTypesSection({
   const add = async () => {
     const n = name.trim();
     if (!n) return;
-    const ok = await edit.run(
-      "type-add",
-      "게시물 유형을 만들지 못했습니다",
-      () => groupsApi.savePostType(group.id, { name: n, color }),
+    const ok = await edit.run("type-add", text.createFailed, () =>
+      groupsApi.savePostType(group.id, { name: n, color }),
     );
     if (ok) setName("");
   };
 
   const rename = async (t: PostType) => {
-    const next = await showPrompt("게시물 유형 이름", {
+    const next = await showPrompt(text.renamePrompt, {
       defaultValue: t.name,
-      confirmLabel: "바꾸기",
+      confirmLabel: text.renameConfirm,
       maxLength: 30,
     });
     if (next && next !== t.name) await save(t, { name: next });
   };
 
   const move = (from: number, to: number) =>
-    edit.run("type-sort", "순서를 바꾸지 못했습니다", async () => {
+    edit.run("type-sort", text.sortFailed, async () => {
       let last: GroupDetail | undefined;
       for (const t of reorder(types, from, to))
         last = await groupsApi.savePostType(group.id, {
@@ -147,14 +237,13 @@ export function PostTypesSection({
     });
 
   const remove = async (t: PostType) => {
-    const ok = await showConfirm(
-      `게시물 유형 '${t.name}'을(를) 지울까요? 이 유형의 게시물은 유형 없음이 됩니다.`,
-      { confirmLabel: "지우기" },
-    );
+    const ok = await showConfirm(text.removeConfirm(t.name), {
+      confirmLabel: text.remove,
+    });
     if (ok)
       await edit.run(
         `type-${t.id}`,
-        "게시물 유형을 지우지 못했습니다",
+        text.removeFailed,
         () => groupsApi.deletePostType(group.id, t.id),
         { posts: true },
       );
@@ -164,25 +253,27 @@ export function PostTypesSection({
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <div className={s.sectionHead()}>
         <h2 id={`${id}-title`} className={s.sectionTitle()}>
-          게시물 유형
+          {text.title}
         </h2>
-        <p className={s.hint()}>게시물마다 하나를 고르는 라벨입니다.</p>
+        <p className={s.hint()}>{text.hint}</p>
       </div>
       {types.length === 0 ? (
-        <p className={s.hint()}>아직 게시물 유형이 없습니다.</p>
+        <p className={s.hint()}>{text.empty}</p>
       ) : (
         <ul className={s.list()}>
           {types.map((t, i) => (
             <li key={t.id} className={s.item()}>
               <Swatch color={t.color} />
               <span className={s.itemName()}>{t.name}</span>
-              <span className="sr-only">색: {colorName(t.color)}</span>
+              <span className="sr-only">
+                {text.colorOf(colorName(text, t.color))}
+              </span>
               <span className={s.actions()}>
                 <button
                   type="button"
                   className={iconButton()}
-                  aria-label={`${t.name} 위로`}
-                  title="위로"
+                  aria-label={text.upOf(t.name)}
+                  title={text.up}
                   disabled={busy || i === 0}
                   onClick={() => move(i, i - 1)}
                 >
@@ -191,8 +282,8 @@ export function PostTypesSection({
                 <button
                   type="button"
                   className={iconButton()}
-                  aria-label={`${t.name} 아래로`}
-                  title="아래로"
+                  aria-label={text.downOf(t.name)}
+                  title={text.down}
                   disabled={busy || i === types.length - 1}
                   onClick={() => move(i, i + 1)}
                 >
@@ -201,8 +292,8 @@ export function PostTypesSection({
                 <button
                   type="button"
                   className={iconButton()}
-                  aria-label={`${t.name} 색 바꾸기`}
-                  title="색 바꾸기"
+                  aria-label={text.recolorOf(t.name)}
+                  title={text.recolor}
                   aria-expanded={coloring === t.id}
                   disabled={busy}
                   onClick={() => setColoring((c) => (c === t.id ? null : t.id))}
@@ -212,8 +303,8 @@ export function PostTypesSection({
                 <button
                   type="button"
                   className={iconButton()}
-                  aria-label={`${t.name} 이름 바꾸기`}
-                  title="이름 바꾸기"
+                  aria-label={text.renameOf(t.name)}
+                  title={text.rename}
                   disabled={busy}
                   onClick={() => rename(t)}
                 >
@@ -222,8 +313,8 @@ export function PostTypesSection({
                 <button
                   type="button"
                   className={iconButton({ tone: "danger" })}
-                  aria-label={`${t.name} 지우기`}
-                  title="지우기"
+                  aria-label={text.removeOf(t.name)}
+                  title={text.remove}
                   disabled={busy}
                   onClick={() => remove(t)}
                 >
@@ -233,7 +324,7 @@ export function PostTypesSection({
               {coloring === t.id && (
                 <div className="basis-full pl-5.5">
                   <ColorPicker
-                    label={`${t.name} 색`}
+                    label={text.colorLabel(t.name)}
                     value={t.color}
                     onSelect={async (hex) => {
                       if (await save(t, { color: hex })) setColoring(null);
@@ -253,23 +344,27 @@ export function PostTypesSection({
         }}
       >
         <label className={s.label({ class: "w-full max-w-60 flex-1" })}>
-          새 유형
+          {text.newType}
           <input
             className={field()}
             value={name}
             maxLength={30}
-            placeholder="예: 개선"
+            placeholder={text.newTypePlaceholder}
             onChange={(e) => setName(e.currentTarget.value)}
           />
         </label>
-        <ColorPicker label="새 유형 색" value={color} onSelect={setColor} />
+        <ColorPicker
+          label={text.newTypeColor}
+          value={color}
+          onSelect={setColor}
+        />
         <button
           type="submit"
           className={button({ size: "sm" })}
           disabled={busy || !name.trim()}
         >
           <Plus size={14} aria-hidden="true" />
-          추가
+          {text.add}
         </button>
       </form>
     </section>

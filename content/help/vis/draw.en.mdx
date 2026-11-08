@@ -1,0 +1,62 @@
+In a gallery tab, pick data and columns in the left panel and press **draw** to draw charts. Changing settings doesn't redraw automatically, so press draw after you change something.
+
+## Left panel
+
+| Field | Details |
+| --- | --- |
+| Data | Pick one of your registered datasets. When you change data, column settings that don't fit the new data switch to defaults that match their type |
+| Chart | Pick the chart type. → [Chart types](/help/vis/chart-types) |
+| Sub chart | A variant available only for line, bar, boxplot and pie |
+| grid | Rows × columns of items on one page |
+| x · y · z | Columns used by the chart. Which column types you can pick depends on the chart type |
+| legend | A categorical column to split colors by. Only categorical columns with 8 or fewer unique values can be picked |
+| Aggregate | How to combine y values: mean, sum, count, min, max, median. Only shown for charts that aggregate values |
+| split by | Columns to split charts by. You can pick several |
+| tooltip | Columns to also show in the tooltip. You can pick several |
+
+## split by and grid
+
+When you pick columns for **split by**, a separate chart (item) is drawn for each value of those columns. With several columns, there is an item for every combination of values.
+
+- The order you pick them in becomes the order in the item name. Picking factory → shift gives item names like `Ulsan-Day`. The joining character is changed in the title menu of Settings.
+- Press and drag over the list to pick items in the order you pass over them.
+- Up to **30,000 items** are drawn. If there would be more, you are told before drawing and nothing is drawn. With filters on, the count is after filtering.
+
+**grid** picks rows × columns on a 10 × 10 board (1 × 1 to 10 × 10). When there are more items than fit on one page, they are split into pages. For example, 20 items on a 3 × 3 grid make 3 pages.
+
+<Callout>
+  Changing the grid size changes the item size, so everything is redrawn right away without pressing draw. You can't change the grid size while drawing.
+</Callout>
+
+## draw and cancel
+
+The draw button changes state while drawing.
+
+1. When you press **draw**, it is briefly disabled while the request is sent.
+2. Once drawing starts, the button turns into **cancel**. Pressing it cancels the items not drawn yet.
+3. When everything is drawn, it is **draw** again.
+
+Items appear as soon as they are drawn, and you can use tooltips, zoom and so on right away. Items that failed to draw keep an error mark.
+
+If the data is still loading, drawing waits until loading finishes.
+
+## Bottom bar
+
+The bottom bar under the grid shows progress.
+
+- The current stage and progress (%)
+- Item counts by state: done · drawing · waiting · failed · canceled
+- Elapsed time, throughput (item/s), estimated time left
+
+## Turning pages
+
+Turn pages with the page scrollbar to the right of the grid. You can turn pages while drawing, and drawing doesn't stop when you do.
+
+- Up/down arrows: one page at a time (hold to keep going)
+- Track: moves toward where you press
+- Thumb: drag to move
+- Mouse wheel, keyboard <Kbd>↑</Kbd> <Kbd>↓</Kbd> <Kbd>PageUp</Kbd> <Kbd>PageDown</Kbd> <Kbd>Home</Kbd> <Kbd>End</Kbd>
+
+## Resizing the window
+
+If you resize the window and wait a moment, only the items on the current page are redrawn at the new size. While redrawing, the previous image is shown stretched or shrunk.

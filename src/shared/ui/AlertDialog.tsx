@@ -2,19 +2,26 @@
 
 import { overlay } from "overlay-kit";
 import type { ReactNode } from "react";
+import { defineMessages, t } from "@/shared/lib/i18n";
 import { button } from "./button";
 import { Dialog, dialogActions } from "./Dialog";
+
+const messages = defineMessages({
+  ko: { ok: "확인", cancel: "취소" },
+  en: { ok: "OK", cancel: "Cancel" },
+});
 
 /**
  * 화면 어디서든 띄우는 알림 팝업. 팝업 상태는 overlay-kit이 들고 있어 본문 상태와 섞이지 않는다.
  */
 export function showAlert(message: string) {
+  const text = t(messages);
   overlay.open(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={close} onExited={unmount}>
       <p>{message}</p>
       <form method="dialog" className={dialogActions}>
         <button type="submit" className={button({ variant: "primary" })}>
-          확인
+          {text.ok}
         </button>
       </form>
     </Dialog>
@@ -29,7 +36,7 @@ export function showAlert(message: string) {
 export function showConfirm(
   message: string,
   {
-    confirmLabel = "확인",
+    confirmLabel = t(messages).ok,
     title,
     danger = false,
     children,
@@ -40,6 +47,7 @@ export function showConfirm(
     children?: ReactNode;
   } = {},
 ) {
+  const text = t(messages);
   return overlay.openAsync<boolean>(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={() => close(false)} onExited={unmount}>
       {title && <h2 className="mb-2 text-base font-semibold">{title}</h2>}
@@ -47,7 +55,7 @@ export function showConfirm(
       {children}
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={() => close(false)}>
-          취소
+          {text.cancel}
         </button>
         <button
           type="button"
@@ -66,10 +74,11 @@ export function showPrompt(
   message: string,
   {
     defaultValue = "",
-    confirmLabel = "확인",
+    confirmLabel = t(messages).ok,
     maxLength = 40,
   }: { defaultValue?: string; confirmLabel?: string; maxLength?: number } = {},
 ) {
+  const text = t(messages);
   return overlay.openAsync<string | null>(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={() => close(null)} onExited={unmount}>
       <form
@@ -97,7 +106,7 @@ export function showPrompt(
             className={button()}
             onClick={() => close(null)}
           >
-            취소
+            {text.cancel}
           </button>
           <button type="submit" className={button({ variant: "primary" })}>
             {confirmLabel}

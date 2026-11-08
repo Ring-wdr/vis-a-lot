@@ -18,6 +18,7 @@ import {
 import type { DeactivateResponse, FeedUser } from "@/shared/api/feed/types";
 import { usersApi } from "@/shared/api/feed/users";
 import { FEED, groupHref } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
@@ -25,6 +26,108 @@ import { Avatar } from "@/shared/ui/Avatar";
 import { button } from "@/shared/ui/button";
 import { settings } from "@/shared/ui/feed-settings-styles";
 import { EmptyState, LoadingText } from "@/shared/ui/Loading";
+
+const messages = defineMessages({
+  ko: {
+    deactivated: (name: string, open: number) =>
+      open > 0
+        ? `${name}님을 비활성화했습니다. 담당·요청 중인 열린 게시물 ${open}개를 다른 사람에게 넘겨 주세요.`
+        : `${name}님을 비활성화했습니다. 넘겨줄 열린 게시물은 없습니다.`,
+    close: "닫기",
+    unsetSelfConfirm:
+      "내 시스템 관리자 권한을 해제할까요? 해제하면 이 화면을 더 볼 수 없습니다.",
+    unset: "해제",
+    setAdminFailed: (error: string) =>
+      `시스템 관리자 지정을 바꾸지 못했습니다: ${error}`,
+    deactivateConfirm: (name: string) =>
+      `${name}님을 비활성화할까요? 사용자 전환 목록과 담당자 선택에서 빠집니다.`,
+    deactivate: "비활성화",
+    deactivateFailed: (error: string) => `비활성화하지 못했습니다: ${error}`,
+    users: "사용자",
+    people: (n: number) => `${n}명`,
+    loading: "불러오는 중",
+    loadUsersFailed: (error: string) =>
+      `사용자를 불러오지 못했습니다: ${error}`,
+    name: "이름",
+    email: "이메일",
+    adminShort: "관리자",
+    admin: "시스템 관리자",
+    status: "상태",
+    actions: "동작",
+    me: "나",
+    adminOf: (name: string) => `${name} 시스템 관리자`,
+    active: "활성",
+    inactive: "비활성",
+    cannotDeactivateSelf: "자기 자신은 비활성화할 수 없습니다",
+    deactivateOf: (name: string) => `${name} 비활성화`,
+    groups: "그룹",
+    loadGroupsFailed: (error: string) => `그룹을 불러오지 못했습니다: ${error}`,
+    key: "키",
+    visibility: "공개",
+    members: "멤버",
+    settings: "설정",
+    private: "비공개",
+    public: "공개",
+    groupSettingsOf: (name: string) => `${name} 그룹 설정`,
+    groupSettings: "그룹 설정",
+    adminOnly: "시스템 관리자만 볼 수 있습니다",
+    meFailed: (error: string) => `사용자를 확인하지 못했습니다: ${error}`,
+    adminOnlyHint:
+      "상단의 사용자 전환에서 시스템 관리자로 바꾸면 이 화면을 볼 수 있습니다.",
+    home: "홈으로",
+    title: "관리 콘솔",
+    lead: "사용자를 비활성화하거나 시스템 관리자로 지정하고, 그룹을 살펴봅니다.",
+  },
+  en: {
+    deactivated: (name: string, open: number) =>
+      open > 0
+        ? `Deactivated ${name}. Hand off ${open} open ${open === 1 ? "post" : "posts"} they own or requested to someone else.`
+        : `Deactivated ${name}. No open posts to hand off.`,
+    close: "Close",
+    unsetSelfConfirm:
+      "Remove your own system admin role? You won't be able to see this page anymore.",
+    unset: "Remove",
+    setAdminFailed: (error: string) =>
+      `Couldn't change system admin role: ${error}`,
+    deactivateConfirm: (name: string) =>
+      `Deactivate ${name}? They'll be removed from the user switcher and assignee choices.`,
+    deactivate: "Deactivate",
+    deactivateFailed: (error: string) => `Couldn't deactivate: ${error}`,
+    users: "Users",
+    people: (n: number) => `${n}`,
+    loading: "Loading",
+    loadUsersFailed: (error: string) => `Couldn't load users: ${error}`,
+    name: "Name",
+    email: "Email",
+    adminShort: "Admin",
+    admin: "System admin",
+    status: "Status",
+    actions: "Actions",
+    me: "me",
+    adminOf: (name: string) => `${name} system admin`,
+    active: "Active",
+    inactive: "Inactive",
+    cannotDeactivateSelf: "You can't deactivate yourself",
+    deactivateOf: (name: string) => `Deactivate ${name}`,
+    groups: "Groups",
+    loadGroupsFailed: (error: string) => `Couldn't load groups: ${error}`,
+    key: "Key",
+    visibility: "Visibility",
+    members: "Members",
+    settings: "Settings",
+    private: "Private",
+    public: "Public",
+    groupSettingsOf: (name: string) => `${name} group settings`,
+    groupSettings: "Settings",
+    adminOnly: "Only system admins can view this",
+    meFailed: (error: string) => `Couldn't verify the user: ${error}`,
+    adminOnlyHint:
+      "Switch to a system admin with the user switcher at the top to see this page.",
+    home: "Go home",
+    title: "Admin console",
+    lead: "Deactivate users or make them system admins, and review groups.",
+  },
+});
 
 const s = settings();
 
@@ -66,6 +169,7 @@ function DeactivatedNotice({
   result: DeactivateResponse;
   onClose: () => void;
 }) {
+  const text = useT(messages);
   const openPeek = useOpenPeek();
   const statusName = useStatusName();
   const { user, openPosts } = result;
@@ -76,17 +180,14 @@ function DeactivatedNotice({
     >
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">
-          {user.name}님을 비활성화했습니다.
-          {openPosts.length > 0
-            ? ` 담당·요청 중인 열린 게시물 ${openPosts.length}개를 다른 사람에게 넘겨 주세요.`
-            : " 넘겨줄 열린 게시물은 없습니다."}
+          {text.deactivated(user.name, openPosts.length)}
         </p>
         <button
           type="button"
           className={button({ size: "sm" })}
           onClick={onClose}
         >
-          닫기
+          {text.close}
         </button>
       </div>
       {openPosts.length > 0 && (
@@ -117,6 +218,7 @@ function DeactivatedNotice({
 }
 
 function UsersTable({ me }: { me: FeedUser }) {
+  const text = useT(messages);
   const id = useId();
   const client = useQueryClient();
   const users = useUsers();
@@ -134,10 +236,9 @@ function UsersTable({ me }: { me: FeedUser }) {
     if (
       !on &&
       u.id === me.id &&
-      !(await showConfirm(
-        "내 시스템 관리자 권한을 해제할까요? 해제하면 이 화면을 더 볼 수 없습니다.",
-        { confirmLabel: "해제" },
-      ))
+      !(await showConfirm(text.unsetSelfConfirm, {
+        confirmLabel: text.unset,
+      }))
     )
       return;
     setPending(u.id);
@@ -145,24 +246,23 @@ function UsersTable({ me }: { me: FeedUser }) {
       await usersApi.setAdmin(u.id, on);
       await refresh();
     } catch (err) {
-      showAlert(`시스템 관리자 지정을 바꾸지 못했습니다: ${errorMessage(err)}`);
+      showAlert(text.setAdminFailed(errorMessage(err)));
     } finally {
       setPending(null);
     }
   };
 
   const deactivate = async (u: FeedUser) => {
-    const ok = await showConfirm(
-      `${u.name}님을 비활성화할까요? 사용자 전환 목록과 담당자 선택에서 빠집니다.`,
-      { confirmLabel: "비활성화" },
-    );
+    const ok = await showConfirm(text.deactivateConfirm(u.name), {
+      confirmLabel: text.deactivate,
+    });
     if (!ok) return;
     setPending(u.id);
     try {
       setResult(await usersApi.deactivate(u.id));
       await refresh();
     } catch (err) {
-      showAlert(`비활성화하지 못했습니다: ${errorMessage(err)}`);
+      showAlert(text.deactivateFailed(errorMessage(err)));
     } finally {
       setPending(null);
     }
@@ -172,10 +272,10 @@ function UsersTable({ me }: { me: FeedUser }) {
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <div className={s.sectionHead()}>
         <h2 id={`${id}-title`} className={s.sectionTitle()}>
-          사용자{" "}
+          {text.users}{" "}
           {users.data && (
             <span className="font-normal text-fg-muted">
-              {users.data.length}명
+              {text.people(users.data.length)}
             </span>
           )}
         </h2>
@@ -183,10 +283,10 @@ function UsersTable({ me }: { me: FeedUser }) {
       {result && (
         <DeactivatedNotice result={result} onClose={() => setResult(null)} />
       )}
-      {users.isPending && <LoadingText>불러오는 중</LoadingText>}
+      {users.isPending && <LoadingText>{text.loading}</LoadingText>}
       {users.isError && (
         <p role="alert" className="text-danger">
-          사용자를 불러오지 못했습니다: {users.error.message}
+          {text.loadUsersFailed(users.error.message)}
         </p>
       )}
       {users.data && (
@@ -195,20 +295,20 @@ function UsersTable({ me }: { me: FeedUser }) {
             <thead className="bg-panel">
               <tr>
                 <th scope="col" className={th}>
-                  이름
+                  {text.name}
                 </th>
                 <th scope="col" className={cn(th, "hidden sm:table-cell")}>
-                  이메일
+                  {text.email}
                 </th>
                 <th scope="col" className={th}>
-                  <span className="sm:hidden">관리자</span>
-                  <span className="hidden sm:inline">시스템 관리자</span>
+                  <span className="sm:hidden">{text.adminShort}</span>
+                  <span className="hidden sm:inline">{text.admin}</span>
                 </th>
                 <th scope="col" className={th}>
-                  상태
+                  {text.status}
                 </th>
                 <th scope="col" className={th}>
-                  <span className="sr-only">동작</span>
+                  <span className="sr-only">{text.actions}</span>
                 </th>
               </tr>
             </thead>
@@ -230,7 +330,7 @@ function UsersTable({ me }: { me: FeedUser }) {
                           {u.name}
                           {u.id === me.id && (
                             <span className="ml-1 text-2xs text-fg-muted">
-                              나
+                              {text.me}
                             </span>
                           )}
                         </span>
@@ -251,18 +351,18 @@ function UsersTable({ me }: { me: FeedUser }) {
                   <td className={td}>
                     <Switch
                       checked={u.isAdmin}
-                      label={`${u.name} 시스템 관리자`}
+                      label={text.adminOf(u.name)}
                       disabled={!!pending || !u.active}
                       onChange={(on) => setAdmin(u, on)}
                     />
                   </td>
                   <td className={td}>
                     {u.active ? (
-                      <span className="text-fg-secondary">활성</span>
+                      <span className="text-fg-secondary">{text.active}</span>
                     ) : (
                       <span className="inline-flex items-center gap-1">
                         <ShieldOff size={12} aria-hidden="true" />
-                        비활성
+                        {text.inactive}
                       </span>
                     )}
                   </td>
@@ -277,15 +377,15 @@ function UsersTable({ me }: { me: FeedUser }) {
                         })}
                         disabled={!!pending || u.id === me.id}
                         title={
-                          u.id === me.id
-                            ? "자기 자신은 비활성화할 수 없습니다"
-                            : undefined
+                          u.id === me.id ? text.cannotDeactivateSelf : undefined
                         }
-                        aria-label={`${u.name} 비활성화`}
+                        aria-label={text.deactivateOf(u.name)}
                         onClick={() => deactivate(u)}
                       >
                         <UserX size={14} aria-hidden="true" />
-                        <span className="hidden sm:inline">비활성화</span>
+                        <span className="hidden sm:inline">
+                          {text.deactivate}
+                        </span>
                       </button>
                     )}
                   </td>
@@ -300,17 +400,18 @@ function UsersTable({ me }: { me: FeedUser }) {
 }
 
 function GroupsTable() {
+  const text = useT(messages);
   const id = useId();
   const groups = useGroups();
   return (
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`} className={s.sectionTitle()}>
-        그룹
+        {text.groups}
       </h2>
-      {groups.isPending && <LoadingText>불러오는 중</LoadingText>}
+      {groups.isPending && <LoadingText>{text.loading}</LoadingText>}
       {groups.isError && (
         <p role="alert" className="text-danger">
-          그룹을 불러오지 못했습니다: {groups.error.message}
+          {text.loadGroupsFailed(groups.error.message)}
         </p>
       )}
       {groups.data && (
@@ -319,19 +420,19 @@ function GroupsTable() {
             <thead className="bg-panel">
               <tr>
                 <th scope="col" className={th}>
-                  이름
+                  {text.name}
                 </th>
                 <th scope="col" className={th}>
-                  키
+                  {text.key}
                 </th>
                 <th scope="col" className={th}>
-                  공개
+                  {text.visibility}
                 </th>
                 <th scope="col" className={cn(th, "text-right")}>
-                  멤버
+                  {text.members}
                 </th>
                 <th scope="col" className={th}>
-                  <span className="sr-only">설정</span>
+                  <span className="sr-only">{text.settings}</span>
                 </th>
               </tr>
             </thead>
@@ -344,26 +445,28 @@ function GroupsTable() {
                     {g.isPrivate ? (
                       <span className="inline-flex items-center gap-1">
                         <Lock size={12} aria-hidden="true" />
-                        비공개
+                        {text.private}
                       </span>
                     ) : (
-                      "공개"
+                      text.public
                     )}
                   </td>
                   <td className={cn(td, "text-right tabular-nums")}>
-                    {g.memberCount}명
+                    {text.people(g.memberCount)}
                   </td>
                   <td className={cn(td, "text-right")}>
                     <Link
                       href={groupHref(FEED.settingsGroup, g.keyPrefix)}
-                      aria-label={`${g.name} 그룹 설정`}
+                      aria-label={text.groupSettingsOf(g.name)}
                       className={button({
                         size: "sm",
                         class: "whitespace-nowrap no-underline",
                       })}
                     >
                       <Settings size={14} aria-hidden="true" />
-                      <span className="hidden sm:inline">그룹 설정</span>
+                      <span className="hidden sm:inline">
+                        {text.groupSettings}
+                      </span>
                     </Link>
                   </td>
                 </tr>
@@ -378,39 +481,33 @@ function GroupsTable() {
 
 /** 관리 콘솔 (/feed/admin) */
 export function AdminView() {
+  const text = useT(messages);
   const me = useMe();
   if (me.isPending)
     return (
       <div className={s.root()}>
-        <LoadingText>불러오는 중</LoadingText>
+        <LoadingText>{text.loading}</LoadingText>
       </div>
     );
   if (me.isError || !me.data.isAdmin)
     return (
-      <EmptyState
-        icon={<Lock size={20} />}
-        title="시스템 관리자만 볼 수 있습니다"
-      >
+      <EmptyState icon={<Lock size={20} />} title={text.adminOnly}>
         <p>
-          {me.isError
-            ? `사용자를 확인하지 못했습니다: ${me.error.message}`
-            : "상단의 사용자 전환에서 시스템 관리자로 바꾸면 이 화면을 볼 수 있습니다."}
+          {me.isError ? text.meFailed(me.error.message) : text.adminOnlyHint}
         </p>
         <Link
           href={FEED.home}
           className={button({ size: "sm", class: "mt-2 no-underline" })}
         >
-          홈으로
+          {text.home}
         </Link>
       </EmptyState>
     );
   return (
     <div className={s.root()}>
       <div className={s.head()}>
-        <h1 className={s.title()}>관리 콘솔</h1>
-        <p className={s.lead()}>
-          사용자를 비활성화하거나 시스템 관리자로 지정하고, 그룹을 살펴봅니다.
-        </p>
+        <h1 className={s.title()}>{text.title}</h1>
+        <p className={s.lead()}>{text.lead}</p>
       </div>
       <UsersTable me={me.data} />
       <GroupsTable />

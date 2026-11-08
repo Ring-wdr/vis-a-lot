@@ -4,27 +4,39 @@ import { FileQuestion } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FEED, groupHref } from "@/shared/config/feed-routes";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/Loading";
 import { PostDetail } from "@/widgets/post-detail/ui/PostDetail";
+
+const messages = defineMessages({
+  ko: {
+    noKey: "게시물 키가 없습니다",
+    noKeyHint: "주소에 ?key=FD-12처럼 이슈 키를 붙여 엽니다.",
+    toHome: "홈 피드로",
+  },
+  en: {
+    noKey: "No post key",
+    noKeyHint: "Add an issue key to the address, like ?key=FD-12.",
+    toHome: "Go to home feed",
+  },
+});
 
 /** 게시물 상세 (/feed/post?key=FD-12) */
 export function PostView() {
   const key = useSearchParams().get("key");
   const router = useRouter();
+  const text = useT(messages);
 
   if (!key)
     return (
-      <EmptyState
-        icon={<FileQuestion size={20} />}
-        title="게시물 키가 없습니다"
-      >
-        <p>주소에 ?key=FD-12처럼 이슈 키를 붙여 엽니다.</p>
+      <EmptyState icon={<FileQuestion size={20} />} title={text.noKey}>
+        <p>{text.noKeyHint}</p>
         <Link
           href={FEED.home}
           className={button({ size: "sm", class: "mt-2" })}
         >
-          홈 피드로
+          {text.toHome}
         </Link>
       </EmptyState>
     );

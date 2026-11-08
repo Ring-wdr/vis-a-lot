@@ -6,6 +6,7 @@
 import createClient from "openapi-fetch";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
+import { defineMessages, t } from "@/shared/lib/i18n";
 import type { paths as AuthPaths } from "./generated/auth";
 import type { TokenResponse, User } from "./types";
 
@@ -58,6 +59,17 @@ function accept(tokens: TokenResponse) {
   });
 }
 
+const messages = defineMessages({
+  ko: {
+    loginFailed: "로그인하지 못했습니다.",
+    expired: "세션이 만료되었습니다. 다시 로그인해 주세요.",
+  },
+  en: {
+    loginFailed: "Could not sign in.",
+    expired: "Your session has expired. Please sign in again.",
+  },
+});
+
 function signOut(reason?: string) {
   writeRefreshToken(null);
   sessionStore.setState({ status: "anonymous", reason });
@@ -67,7 +79,7 @@ export async function login(username: string, password: string) {
   const { data, error } = await auth.POST("/login", {
     body: { username, password },
   });
-  if (!data) throw new Error(error?.error ?? "로그인하지 못했습니다.");
+  if (!data) throw new Error(error?.error ?? t(messages).loginFailed);
   accept(data);
 }
 
@@ -89,7 +101,7 @@ export function refreshSession() {
       .POST("/refresh", { body: { refreshToken } })
       .catch(() => ({ data: undefined, error: undefined }));
     if (!data) {
-      signOut(error?.error ?? "세션이 만료되었습니다. 다시 로그인해 주세요.");
+      signOut(error?.error ?? t(messages).expired);
       return false;
     }
     accept(data);

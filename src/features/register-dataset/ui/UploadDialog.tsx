@@ -23,6 +23,7 @@ import type {
   UploadTask,
 } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
+import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
@@ -31,6 +32,79 @@ import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, LoadingText, Spinner } from "@/shared/ui/Loading";
 import { type GridColumn, PreviewGrid } from "./PreviewGrid";
 import { DEFAULT_CSV_OPTIONS, UploadOptions } from "./UploadOptions";
+
+const messages = defineMessages({
+  ko: {
+    task: {
+      parse: (percent: number) => `검사·변환 중 ${percent}%`,
+      queued: "다른 적재가 끝나기를 기다리는 중",
+      copy: (done: string, total: string) => `적재 중 ${done} / ${total}행`,
+      analyze: "컬럼 통계 계산 중",
+      done: "완료",
+      rejected: "거절됨",
+      failed: "실패",
+    },
+    editTitle: "데이터 수정",
+    openTitle: "파일 열기",
+    cannotChangeFile: "수정에서는 원본 파일을 바꿀 수 없습니다",
+    pickFile: "파일 선택",
+    checkTitle: "적재하지 않고 파일 전체를 검사합니다",
+    check: "검사",
+    files: "파일",
+    number: "번호",
+    name: "이름",
+    merge: (n: number) => ` · CSV ${n}개를 하나로 합칩니다`,
+    raw: "원본",
+    loading: "불러오는 중",
+    emptyTitle: "파일을 선택하세요",
+    emptyBody: "CSV 또는 CSV를 묶은 zip. 여기로 끌어다 놓아도 됩니다.",
+    options: "전처리 옵션",
+    preview: "미리보기",
+    checkPassed: (rows: string) => `검사 통과 · ${rows}행`,
+    skipped: (n: string) => ` · 건너뛴 행 ${n}개`,
+    invalidToNull: " · 변환 불가 값은 null로 넣습니다",
+    previewHint: (n: number) =>
+      `앞 ${n}행 미리보기입니다. 검사를 누르면 파일 전체를 확인합니다.`,
+    cancel: "취소",
+    reload: "다시 적재",
+    confirm: "확인",
+  },
+  en: {
+    task: {
+      parse: (percent: number) => `Checking ${percent}%`,
+      queued: "Waiting for another load to finish",
+      copy: (done: string, total: string) => `Loading ${done} / ${total} rows`,
+      analyze: "Computing column stats",
+      done: "Done",
+      rejected: "Rejected",
+      failed: "Failed",
+    },
+    editTitle: "Edit data",
+    openTitle: "Open file",
+    cannotChangeFile: "The source file can't be changed when editing",
+    pickFile: "Choose file",
+    checkTitle: "Check the whole file without loading it",
+    check: "Check",
+    files: "Files",
+    number: "No.",
+    name: "Name",
+    merge: (n: number) => ` · merges ${n} CSV files into one`,
+    raw: "Source",
+    loading: "Loading",
+    emptyTitle: "Choose a file",
+    emptyBody: "A CSV, or a zip of CSVs. You can also drop it here.",
+    options: "Preprocessing options",
+    preview: "Preview",
+    checkPassed: (rows: string) => `Check passed · ${rows} rows`,
+    skipped: (n: string) => ` · ${n} rows skipped`,
+    invalidToNull: " · invalid values load as null",
+    previewHint: (n: number) =>
+      `Previewing the first ${n} rows. Check to validate the whole file.`,
+    cancel: "Cancel",
+    reload: "Reload",
+    confirm: "OK",
+  },
+});
 
 const ACCEPT = ".csv,.tsv,.txt,.zip";
 const PREVIEW_DEBOUNCE_MS = 300;
@@ -48,15 +122,20 @@ const fileCell = "border-line border-b px-2 py-1 text-left";
 
 /** 적재 진행 한 줄 */
 function TaskProgress({ task }: { task: UploadTask }) {
+  const t = useT(messages).task;
+  const locale = intlLocale();
   const ratio = task.total > 0 ? task.done / task.total : 0;
   const label = {
-    parse: `검사·변환 중 ${Math.round(ratio * 100)}%`,
-    queued: "다른 적재가 끝나기를 기다리는 중",
-    copy: `적재 중 ${task.done.toLocaleString()} / ${task.total.toLocaleString()}행`,
-    analyze: "컬럼 통계 계산 중",
-    done: "완료",
-    rejected: "거절됨",
-    failed: "실패",
+    parse: t.parse(Math.round(ratio * 100)),
+    queued: t.queued,
+    copy: t.copy(
+      task.done.toLocaleString(locale),
+      task.total.toLocaleString(locale),
+    ),
+    analyze: t.analyze,
+    done: t.done,
+    rejected: t.rejected,
+    failed: t.failed,
   }[task.state];
   return (
     <output className="flex items-center gap-2.5 text-ui text-fg-secondary">
@@ -83,6 +162,8 @@ function UploadBody({
   onDone: (id: DatasetId) => void;
   onCancel: () => void;
 }) {
+  const text = useT(messages);
+  const locale = intlLocale();
   const titleId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [staged, setStaged] = useState<StagedUpload>();
@@ -220,7 +301,7 @@ function UploadBody({
     >
       <header className="flex items-center justify-between gap-3">
         <h2 id={titleId} className="text-base font-bold">
-          {dataset ? "데이터 수정" : "파일 열기"}
+          {dataset ? text.editTitle : text.openTitle}
         </h2>
         <div className="flex gap-2">
           <input
@@ -237,9 +318,7 @@ function UploadBody({
             type="button"
             className={button({ variant: "primary" })}
             disabled={Boolean(dataset) || staging || running}
-            title={
-              dataset ? "수정에서는 원본 파일을 바꿀 수 없습니다" : undefined
-            }
+            title={dataset ? text.cannotChangeFile : undefined}
             onClick={() => fileInput.current?.click()}
           >
             {stage.isPending ? (
@@ -247,13 +326,13 @@ function UploadBody({
             ) : (
               <FolderOpen size={14} aria-hidden="true" />
             )}
-            파일 선택
+            {text.pickFile}
           </button>
           <button
             type="button"
             className={button()}
             disabled={!stageId || check.isPending || running}
-            title="적재하지 않고 파일 전체를 검사합니다"
+            title={text.checkTitle}
             onClick={() => check.mutate(options)}
           >
             {check.isPending ? (
@@ -261,7 +340,7 @@ function UploadBody({
             ) : (
               <CheckCheck size={14} aria-hidden="true" />
             )}
-            검사
+            {text.check}
           </button>
         </div>
       </header>
@@ -269,7 +348,7 @@ function UploadBody({
       <div className="grid min-h-0 flex-1 grid-cols-[12.5rem_minmax(0,1fr)_16.25rem] grid-rows-[minmax(8.75rem,38%)_minmax(0,1fr)] gap-2.5 [grid-template-areas:'files_raw_options'_'preview_preview_options'] max-[53.75rem]:grid-cols-[minmax(0,1fr)] max-[53.75rem]:grid-rows-[auto_10rem_auto_minmax(15rem,1fr)] max-[53.75rem]:overflow-auto max-[53.75rem]:[grid-template-areas:'files'_'raw'_'options'_'preview']">
         <section
           className={cn(pane, "overflow-auto [grid-area:files]")}
-          aria-label="파일"
+          aria-label={text.files}
         >
           <table className="w-full border-collapse text-xs">
             <thead>
@@ -280,7 +359,7 @@ function UploadBody({
                     "sticky top-0 w-10 bg-panel font-semibold text-fg-muted",
                   )}
                 >
-                  번호
+                  {text.number}
                 </th>
                 <th
                   className={cn(
@@ -288,7 +367,7 @@ function UploadBody({
                     "sticky top-0 bg-panel font-semibold text-fg-secondary",
                   )}
                 >
-                  이름
+                  {text.name}
                 </th>
               </tr>
             </thead>
@@ -330,8 +409,7 @@ function UploadBody({
           {staged && (
             <p className={cn(hint, "px-2 py-1.5")}>
               {staged.fileName} · {formatBytes(staged.size)}
-              {staged.files.length > 1 &&
-                ` · CSV ${staged.files.length}개를 하나로 합칩니다`}
+              {staged.files.length > 1 && text.merge(staged.files.length)}
             </p>
           )}
         </section>
@@ -339,7 +417,7 @@ function UploadBody({
         {/* 원본 앞부분. 파일을 끌어다 놓아도 올린다. */}
         <section
           className={cn(pane, "overflow-auto [grid-area:raw]")}
-          aria-label="원본"
+          aria-label={text.raw}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
@@ -351,21 +429,21 @@ function UploadBody({
               {preview.data.raw.join("\n")}
             </pre>
           ) : staging || preview.isFetching ? (
-            <LoadingText>불러오는 중</LoadingText>
+            <LoadingText>{text.loading}</LoadingText>
           ) : (
             <EmptyState
               size="sm"
               icon={<FileUp size={20} />}
-              title="파일을 선택하세요"
+              title={text.emptyTitle}
             >
-              CSV 또는 CSV를 묶은 zip. 여기로 끌어다 놓아도 됩니다.
+              {text.emptyBody}
             </EmptyState>
           )}
         </section>
 
         <aside
           className={cn(pane, "overflow-auto p-3 [grid-area:options]")}
-          aria-label="전처리 옵션"
+          aria-label={text.options}
         >
           <fieldset disabled={running} className={plainFieldset}>
             <UploadOptions
@@ -382,7 +460,7 @@ function UploadBody({
             pane,
             "flex flex-col overflow-hidden [grid-area:preview]",
           )}
-          aria-label="미리보기"
+          aria-label={text.preview}
         >
           {preview.data?.error ? (
             <p role="alert" className={cn(error, "p-3")}>
@@ -419,22 +497,19 @@ function UploadBody({
             </p>
           ) : checkResult ? (
             <output className="m-0 block text-ui text-fg-secondary">
-              검사 통과 · {checkResult.rows.toLocaleString()}행
+              {text.checkPassed(checkResult.rows.toLocaleString(locale))}
               {checkResult.skipped > 0 &&
-                ` · 건너뛴 행 ${checkResult.skipped.toLocaleString()}개`}
+                text.skipped(checkResult.skipped.toLocaleString(locale))}
               {checkResult.columns.some((c) => c.invalid > 0) &&
-                " · 변환 불가 값은 null로 넣습니다"}
+                text.invalidToNull}
             </output>
           ) : preview.data && !preview.data.error ? (
-            <p className={hint}>
-              앞 {preview.data.rows.length}행 미리보기입니다. 검사를 누르면 파일
-              전체를 확인합니다.
-            </p>
+            <p className={hint}>{text.previewHint(preview.data.rows.length)}</p>
           ) : null}
         </div>
         <div className={cn(dialogActions, "mt-0")}>
           <button type="button" className={button()} onClick={onCancel}>
-            취소
+            {text.cancel}
           </button>
           <button
             type="button"
@@ -449,7 +524,7 @@ function UploadBody({
             onClick={() => commit.mutate()}
           >
             {running && <Spinner size="sm" tone="inherit" />}
-            {dataset ? "다시 적재" : "확인"}
+            {dataset ? text.reload : text.confirm}
           </button>
         </div>
       </footer>

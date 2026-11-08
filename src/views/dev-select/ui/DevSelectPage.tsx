@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ColumnName } from "@/shared/api/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
 
 const MANY_OPTIONS: Option<string>[] = Array.from(
@@ -27,10 +28,16 @@ const COLUMN_OPTIONS: Option<ColumnName>[] = [
   ["load_pct", "부하율(%)"],
 ].map(([value, label]) => ({ value, label }));
 
+const messages = defineMessages({
+  ko: { many: "대량", columns: "컬럼" },
+  en: { many: "Many", columns: "Columns" },
+});
+
 /** mock 서버 없이 OrderedSelect만 띄워 드래그/키보드 동작을 확인하는 페이지 */
 const output = "mt-1.5 block break-all font-mono text-2xs text-fg-secondary";
 
 export function DevSelectPage() {
+  const text = useT(messages);
   const [many, setMany] = useState<string[]>([]);
   const [columns, setColumns] = useState<ColumnName[]>([]);
   const [fieldsetDisabled, setFieldsetDisabled] = useState(false);
@@ -52,7 +59,7 @@ export function DevSelectPage() {
       >
         <section>
           <OrderedSelect
-            label="대량"
+            label={text.many}
             options={MANY_OPTIONS}
             value={many}
             onChange={setMany}
@@ -63,7 +70,7 @@ export function DevSelectPage() {
         </section>
         <section>
           <OrderedSelect
-            label="컬럼"
+            label={text.columns}
             options={COLUMN_OPTIONS}
             value={columns}
             onChange={setColumns}

@@ -1,4 +1,10 @@
 import type { ChartImage, LegendMeta } from "@/shared/api/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
+
+const messages = defineMessages({
+  ko: { legend: (title: string) => `${title} 범례`, hidden: " (숨김)" },
+  en: { legend: (title: string) => `${title} legend`, hidden: " (hidden)" },
+});
 
 type Layout = NonNullable<LegendMeta["layout"]>;
 type Entry = LegendMeta["entries"][number];
@@ -41,6 +47,7 @@ export function ChartLegend({
   image: ChartImage;
   display: { width: number; height: number };
 }) {
+  const msg = useT(messages);
   const { layout, box } = legend;
   if (!layout || legend.entries.length === 0) return null;
   const sx = display.width / image.width;
@@ -82,7 +89,7 @@ export function ChartLegend({
       >
         {legend.title}
       </span>
-      <ul aria-label={`${legend.title} 범례`}>
+      <ul aria-label={msg.legend(legend.title)}>
         {legend.entries.map((entry) => {
           const labelX = entry.marker.x + layout.marker + 4;
           return (
@@ -98,7 +105,9 @@ export function ChartLegend({
                 }}
               >
                 {entry.value}
-                {!entry.visible && <span className="sr-only"> (숨김)</span>}
+                {!entry.visible && (
+                  <span className="sr-only">{msg.hidden}</span>
+                )}
               </span>
             </li>
           );

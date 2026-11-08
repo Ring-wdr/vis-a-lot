@@ -5,13 +5,47 @@
 import { overlay } from "overlay-kit";
 import { type ReactNode, useId, useState } from "react";
 import {
-  CANCEL_REASON_LABELS,
-  HOLD_REASON_LABELS,
+  cancelReasonLabels,
+  holdReasonLabels,
 } from "@/entities/post/lib/labels";
 import { field } from "@/entities/post/ui/styles";
 import type { CancelReason, HoldReason } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+
+const messages = defineMessages({
+  ko: {
+    close: "닫기",
+    reject: "반려",
+    rejectRequired: "반려 사유를 적어 주세요.",
+    rejectHint: "무엇을 더 해야 하는지 댓글로 남깁니다 (필수)",
+    hold: "보류",
+    holdReasonRequired: "보류 사유를 골라 주세요.",
+    resumeRequired: "재개일을 정해 주세요.",
+    resumeFuture: "재개일은 오늘 이후여야 합니다.",
+    reason: "사유",
+    resumeOn: "재개일 (이날 미해결로 돌아옵니다)",
+    cancel: "취소",
+    cancelPost: "게시물 취소",
+    cancelReasonRequired: "취소 사유를 골라 주세요.",
+  },
+  en: {
+    close: "Close",
+    reject: "Reject",
+    rejectRequired: "Please give a reason for rejecting.",
+    rejectHint: "Leave a comment on what still needs to be done (required)",
+    hold: "Hold",
+    holdReasonRequired: "Please choose a reason for the hold.",
+    resumeRequired: "Please set a resume date.",
+    resumeFuture: "The resume date must be today or later.",
+    reason: "Reason",
+    resumeOn: "Resume on (returns to unresolved that day)",
+    cancel: "Cancel",
+    cancelPost: "Cancel post",
+    cancelReasonRequired: "Please choose a reason for canceling.",
+  },
+});
 
 /** 로컬 날짜 YYYY-MM-DD */
 export const localDay = (d = new Date()) =>
@@ -36,6 +70,7 @@ function FormDialog({
   onSubmit: () => void;
   children: ReactNode;
 }) {
+  const msg = useT(messages);
   const titleId = useId();
   return (
     <Dialog
@@ -59,7 +94,7 @@ function FormDialog({
         {children}
         <div className={dialogActions}>
           <button type="button" className={button()} onClick={onCancel}>
-            닫기
+            {msg.close}
           </button>
           <button
             type="submit"
@@ -116,6 +151,7 @@ function RejectForm({
   close: (v: string | null) => void;
   unmount: () => void;
 }) {
+  const msg = useT(messages);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
@@ -124,19 +160,17 @@ function RejectForm({
       isOpen={isOpen}
       onCancel={() => close(null)}
       onExited={unmount}
-      title="반려"
-      submitLabel="반려"
+      title={msg.reject}
+      submitLabel={msg.reject}
       danger
       onSubmit={() => {
         const text = comment.trim();
-        if (!text) return setError("반려 사유를 적어 주세요.");
+        if (!text) return setError(msg.rejectRequired);
         close(text);
       }}
     >
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-fg-secondary">
-          무엇을 더 해야 하는지 댓글로 남깁니다 (필수)
-        </span>
+        <span className="text-xs text-fg-secondary">{msg.rejectHint}</span>
         <textarea
           className={field({ multiline: true, class: "font-sans text-ui" })}
           rows={4}
@@ -177,6 +211,7 @@ function HoldForm({
   close: (v: HoldInput | null) => void;
   unmount: () => void;
 }) {
+  const msg = useT(messages);
   const [reason, setReason] = useState<HoldReason | null>(null);
   const [until, setUntil] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -186,19 +221,19 @@ function HoldForm({
       isOpen={isOpen}
       onCancel={() => close(null)}
       onExited={unmount}
-      title="보류"
-      submitLabel="보류"
+      title={msg.hold}
+      submitLabel={msg.hold}
       onSubmit={() => {
-        if (!reason) return setError("보류 사유를 골라 주세요.");
-        if (!until) return setError("재개일을 정해 주세요.");
-        if (until < today) return setError("재개일은 오늘 이후여야 합니다.");
+        if (!reason) return setError(msg.holdReasonRequired);
+        if (!until) return setError(msg.resumeRequired);
+        if (until < today) return setError(msg.resumeFuture);
         close({ reason, holdUntil: until });
       }}
     >
       <ReasonPicker
         name="hold-reason"
-        legend="사유"
-        labels={HOLD_REASON_LABELS}
+        legend={msg.reason}
+        labels={holdReasonLabels()}
         value={reason}
         onChange={(v) => {
           setReason(v);
@@ -206,9 +241,7 @@ function HoldForm({
         }}
       />
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-fg-secondary">
-          재개일 (이날 미해결로 돌아옵니다)
-        </span>
+        <span className="text-xs text-fg-secondary">{msg.resumeOn}</span>
         <input
           type="date"
           className={field()}
@@ -243,6 +276,7 @@ function CancelForm({
   close: (v: CancelReason | null) => void;
   unmount: () => void;
 }) {
+  const msg = useT(messages);
   const [reason, setReason] = useState<CancelReason | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -250,18 +284,18 @@ function CancelForm({
       isOpen={isOpen}
       onCancel={() => close(null)}
       onExited={unmount}
-      title="취소"
-      submitLabel="게시물 취소"
+      title={msg.cancel}
+      submitLabel={msg.cancelPost}
       danger
       onSubmit={() => {
-        if (!reason) return setError("취소 사유를 골라 주세요.");
+        if (!reason) return setError(msg.cancelReasonRequired);
         close(reason);
       }}
     >
       <ReasonPicker
         name="cancel-reason"
-        legend="사유"
-        labels={CANCEL_REASON_LABELS}
+        legend={msg.reason}
+        labels={cancelReasonLabels()}
         value={reason}
         onChange={(v) => {
           setReason(v);

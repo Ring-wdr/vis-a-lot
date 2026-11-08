@@ -15,8 +15,8 @@ export async function generateMetadata({
   const { service } = await params;
   if (!isHelpService(service)) return {};
   return {
-    title: `${HELP[service].label} 도움말 · vis-a-lot`,
-    description: HELP[service].summary,
+    title: `${HELP[service].label.ko} 도움말 · vis-a-lot`,
+    description: HELP[service].summary.ko,
   };
 }
 

@@ -5,6 +5,7 @@
 import { Ban, MessageSquare } from "lucide-react";
 import type { ReactNode } from "react";
 import type { PostSummary } from "@/shared/api/feed/types";
+import { defineMessages, useT } from "@/shared/lib/i18n";
 import {
   DueLabel,
   PriorityMark,
@@ -13,6 +14,23 @@ import {
   UserChip,
   useToday,
 } from "./post-meta";
+
+const messages = defineMessages({
+  ko: {
+    blockedTitle: "막힘: 열린 게시물이 이 게시물을 막고 있습니다",
+    blocked: "막힘",
+    progress: "진행률",
+    comments: (n: number) => `댓글 ${n}개`,
+    commentsSuffix: "개 댓글",
+  },
+  en: {
+    blockedTitle: "Blocked: an open post is blocking this one",
+    blocked: "Blocked",
+    progress: "Progress",
+    comments: (n: number) => `${n} ${n === 1 ? "comment" : "comments"}`,
+    commentsSuffix: " comments",
+  },
+});
 
 export type PostCardProps = {
   post: PostSummary;
@@ -23,6 +41,7 @@ export type PostCardProps = {
 };
 
 export function PostCard({ post, onOpen, actions }: PostCardProps) {
+  const text = useT(messages);
   const today = useToday();
   return (
     <article className="group/card relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-elevated shadow-xs hover:border-line-strong has-focus-visible:outline-2 has-focus-visible:outline-accent">
@@ -43,10 +62,10 @@ export function PostCard({ post, onOpen, actions }: PostCardProps) {
             {post.blocked && (
               <span
                 className="inline-flex items-center gap-0.5 text-2xs font-semibold text-danger"
-                title="막힘: 열린 게시물이 이 게시물을 막고 있습니다"
+                title={text.blockedTitle}
               >
                 <Ban size={12} aria-hidden="true" />
-                막힘
+                {text.blocked}
               </span>
             )}
             <span className="ml-auto">
@@ -63,7 +82,7 @@ export function PostCard({ post, onOpen, actions }: PostCardProps) {
               aria-valuenow={post.progress}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="진행률"
+              aria-label={text.progress}
             >
               <span
                 className="block h-full rounded-full bg-accent"
@@ -77,11 +96,11 @@ export function PostCard({ post, onOpen, actions }: PostCardProps) {
               {post.commentCount > 0 && (
                 <span
                   className="inline-flex items-center gap-0.5 text-xs text-fg-muted tabular-nums"
-                  title={`댓글 ${post.commentCount}개`}
+                  title={text.comments(post.commentCount)}
                 >
                   <MessageSquare size={12} aria-hidden="true" />
                   {post.commentCount}
-                  <span className="sr-only">개 댓글</span>
+                  <span className="sr-only">{text.commentsSuffix}</span>
                 </span>
               )}
               <DueLabel post={post} today={today} />
