@@ -30,7 +30,9 @@
 | `LegendCheckboxes` | features | `showLegendCheckboxes && supports(...)` | 원시값 | **예** (item 도구) | `shown` prop |
 | `GridPicker` | features | **`draft` 전체**, `current`, **`page`**, **`gridArea`**, action | 참조 | 아니요 | `draft.grid`만 구독, `page`·`gridArea`는 누를 때 getState |
 | `DrawButton` | features | **`draft` 전체**, **`gridArea`**, `current`, action | 참조 | 아니요 | 데이터셋·x/y 선택 여부·job id만 구독, 그릴 설정과 크기는 누를 때 getState |
-| `useDrawState`, `GridPicker`, `ChartGrid`의 `useJobProgress` | features·widgets | 진행률 응답 전체 | 참조(응답마다 새 값) | — | `select`로 쓰는 값(상태·개수·오류)만 고른다 |
+| `useDrawState`, `GridPicker`, `ChartGrid`의 `useJobProgress` | features·widgets | 진행률 응답 전체 | 참조(응답마다 새 값) | — | `select`로 쓰는 값(상태·개수·오류)만 고르고, 조건 앞에서 늘 읽는다 |
+| `useDatasetStatus` → `useDatasetState` (`DrawButton`, `ColorSettings`, `useDatasetSchema`, `useSchemaState`) | shared | 목록에서 이 데이터셋 항목 전체 | 참조 | — | 상태(state)만 `select`. `DrawButton`은 핸들러에서만 읽어 목록을 다시 받을 때마다 다시 그렸다 |
+| `GallerySidebar` | views | 공유 링크 열기(mutation 상태, `gridArea`) | 참조 | 아니요 | `OpenSharedLink`(아무것도 그리지 않음)로 떼어 설정 패널·draw 버튼으로 번지지 않게 |
 | `ModeBar`, `ChartActionBar`, `ShareButton`, `FeedPostButton`, `EditInGalleryButton`, `ColumnFilter`, `DatastoreDialog` | features | 원자 단위 값, `current`, action | 원시값·참조·함수 | 아니요 (동작 하나) | 그대로 |
 | `ItemTooltip` | features | 데이터셋, `showNearest`, `current?.spec` | 원시값·참조 | 아니요 | 그대로 |
 | `useItemAction`, `useItemDetail`, `useDrawState`, `useOpenChart`, `useWorkspaceMutationKey` | features·entities model | action, `current`, `opening`, `id` | 함수·참조·원시값 | — | 그대로 |
@@ -70,20 +72,32 @@
 
 위 테스트는 query layer를 mock한다. 실제 long polling 타이밍에서도 같은지 `next dev`로 띄운 앱을 Playwright로 조작해 쟀다. React DevTools hook 자리에 stub을 넣어 커밋마다 실제로 렌더 함수가 돈 컴포넌트(fiber의 PerformedWork)를 이름별로 센다. 처음 마운트는 세지 않고 **다시 그린 횟수**만 센다. 시나리오: 로그인 → IoT 10만 행 등록 → 적재가 끝난 뒤 hash 공유 링크로 scatter를 공장×라인 split(12개, 3×3 grid 첫 페이지 item 9개)으로 연다. 전은 develop, 후는 이 브랜치이고 각각 두세 번 돌렸다 (범위로 적는다).
 
-| 구간 | 컴포넌트 | 전 | 후 |
-| --- | --- | --- | --- |
-| 차트를 열어 다 그릴 때까지 (약 5초) | item 본문 `DrawnItem` | 37–42 | **0** |
-| | item 툴팁 `ItemTooltip` | 40–42 | **0** |
-| | `ChartItemCard` (자리 표시 포함) | 135–144 | 39–72 |
-| | memo 감싸개 `GridItem` (item 상태가 바뀔 때만) | — | 21–28 |
-| | `ChartGrid` | 19–20 | 12–16 |
-| | `GridPicker` | 15 | 9–13 |
-| | 하단 상태 줄 `JobStatusBar` | 16–17 | 17–27 (진행률을 여기서만 구독) |
-| 필터 패널 열기 | `DrawnItem` / `ItemTooltip` | 9 / 9–11 | 0 / 1 |
-| | `ChartGrid`, `ControlPanel`, `GridPicker`, `TabBar` | 1씩 | 0 |
-| 다른 탭을 열었다가 돌아오기 | `DrawnItem` / `ItemTooltip` | 18 / 18 | 0 / 0 |
-| | `ChartGrid` | 2 | 1 |
-| item 하나 선택 / 다른 item 선택 | `DrawnItem` | 1 / 2 | 1 / 2 |
+| 구간 | 컴포넌트 | 전 (develop) | 1차 (구독 정리) | 후 (react-query까지) |
+| --- | --- | --- | --- | --- |
+| 차트를 열어 다 그릴 때까지 (약 5초) | item 본문 `DrawnItem` | 37–42 | 0 | 0 |
+| | item 툴팁 `ItemTooltip` | 40–42 | 0 | 0 |
+| | `ChartItemCard` (자리 표시 포함) | 135–144 | 39–72 | 39–46 |
+| | memo 감싸개 `GridItem` (item 상태가 바뀔 때만) | — | 21–28 | 19–21 |
+| | `ChartGrid` | 19–20 | 12–16 | 11–13 |
+| | `DrawButton` | 21 | 16–21 | **8** |
+| | `ControlPanel` | 5–6 | 6–10 | **3** |
+| | `GridPicker` | 15 | 9–13 | **6** |
+| | `DatasetSelect` | — | 6–7 | **3** |
+| | 커밋 수 | 67–68 | 69–87 | **53–58** |
+| 필터 패널 열기 | `DrawnItem` / `ItemTooltip` | 9 / 9–11 | 0 / 1 | 0 / 1 |
+| | `ChartGrid`, `ControlPanel`, `GridPicker`, `TabBar` | 1씩 | 0 | 0 |
+| | `DrawButton` | 3 | 2 | **0** |
+| 다른 탭을 열었다가 돌아오기 | `DrawnItem` / `ItemTooltip` | 18 / 18 | 0 / 0 | 0 / 0 |
+| item 하나 선택 / 다른 item 선택 | `DrawnItem` | 1 / 2 | 1 / 2 | 1 / 2 |
+
+"후"의 `DrawButton` 8회는 모두 실제로 바뀐 값 때문이다: 차트를 여는 중(`opening`) 켜고 끔, 그린 차트(`current`)가 정해짐, mutation 시작과 끝, 스키마를 받음. `ChartGrid`는 페이지 item 상태(`useJob`)가 바뀔 때 다시 그린다.
+
+### react-query에서 찾은 것
+
+stub hook을 넓혀 다시 그린 까닭을 나눴다. props 객체가 그대로면 부모 때문이 아니라 자기 구독 때문이고, 그때 hook 목록에서 값이 바뀐 자리를 적는다. 두 가지가 나왔다.
+
+- **렌더 중에 읽지 않은 query는 다시 받을 때마다 다시 그린다.** react-query는 렌더 중에 읽은 필드(`data`, `isError` 등)만 지켜보고, 하나도 읽지 않은 observer는 모든 변경을 알린다. 이때 `fetchStatus`(idle ↔ fetching)도 변경이다. `DrawButton`은 데이터셋 상태를 누를 때(`mutationFn`)만 읽었고, `useDrawState`·`GridPicker`는 진행률을 `opening ||`, `current &&` 뒤에서만 읽었다. 그래서 데이터셋 목록이나 진행률을 다시 받을 때마다 다시 그렸다. 데이터셋 목록은 그것을 쓰는 컴포넌트(item 툴팁 등)가 마운트될 때마다 다시 받는다. 지금은 고른 값을 조건 앞에서 늘 읽는다. `src/features/draw-chart/model/draw-state.render.test.tsx`가 이를 잡는다: 차트를 여는 동안 200ms에 진행률을 열 번 넘게 다시 받을 때, 고치기 전 57회 → 0회.
+- **사이드바가 mutation을 들고 있었다.** `GallerySidebar`가 공유 링크 열기(`useOpenChart`의 mutation 상태, `gridArea`)를 직접 불러, 그 상태가 바뀔 때마다 설정 패널·draw 버튼·grid 고르기가 함께 다시 그려졌다.
 
 hash 링크로 연 차트를 draw 버튼으로 다시 그려도 item 9개가 그대로 그려지고, 페이지 오류는 없었다.
 
@@ -117,8 +131,8 @@ TabBar (widgets: 이 view의 탭 id[]를 useShallow로)
 
 ## 남은 이슈
 
-처음 점검에서 남긴 네 가지는 모두 처리했다: `ControlPanel`의 `draft` 전체 구독, 진행률 응답마다 `ChartGrid`가 다시 그려지던 것, `DrawnItem`의 구독 11개, 실제 long polling에서의 측정. 실제 앱에서 재다가 찾은 `Workspace`의 필터 패널 구독과 `DrawButton`의 `draft` 전체 구독도 고쳤다.
+처음 점검에서 남긴 네 가지와 react-query 재렌더를 모두 처리했다.
 
-- `ControlPanel`(5–10회)과 `DrawButton`(16–21회)은 차트를 여는 동안 여전히 여러 번 다시 그려진다. zustand가 아니라 react-query다. 데이터셋 목록·스키마 query가 다시 받을 때(job이 데이터 준비 단계에 들고 날 때 무효화) 그 결과를 쓰는 hook(`useDatasetStatus`, `useDatasetSchema`, `useSchemaState`)이 다시 그린다. `select`로 쓰는 값만 고르면 더 줄일 수 있다.
+- 데이터셋 목록 query는 `staleTime`이 0이라, 그것을 쓰는 컴포넌트가 새로 마운트될 때마다 다시 받는다 (그리는 동안 item이 그려질 때 등). 이제 다시 받아도 다시 그리지는 않지만 요청은 나간다. 목록은 바뀔 때 mutation이 무효화하고 적재 중에는 따로 polling하므로 `staleTime`을 늘려도 될 것 같다. 다만 동작(언제 새로 받는지)이 바뀌는 일이라 이번에는 하지 않았다.
 - 모드·페인트 도구처럼 모든 item이 함께 쓰는 값이 바뀌면 item이 전부 다시 그려진다. 모든 item이 그 값을 보여야 하므로 맞는 동작이다.
 - 실제 앱 측정은 저장소에 스크립트로 넣지 않았다 (Playwright가 의존성이 아니다). 방법은 위에 적었다.
