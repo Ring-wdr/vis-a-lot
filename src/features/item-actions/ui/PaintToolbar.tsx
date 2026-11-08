@@ -9,7 +9,6 @@ import {
   Type,
   Undo2,
 } from "lucide-react";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   PAINT_TOOLS,
   type PaintTool,
@@ -33,17 +32,19 @@ export function PaintToolbar({
   item,
   busy,
   undoCount,
+  tool,
+  onToolChange,
   onAction,
 }: {
   item: ItemState;
   busy: boolean;
   /** 이 세션에서 그린 도형 수 */
   undoCount: number;
+  /** 고른 그리기 도구 */
+  tool: PaintTool;
+  onToolChange: (tool: PaintTool) => void;
   onAction: (action: ItemAction) => void;
 }) {
-  const tool = useWorkspace((s) => s.paintTool);
-  const setTool = useWorkspace((s) => s.setPaintTool);
-
   return (
     <div
       className="flex gap-0.5"
@@ -60,7 +61,7 @@ export function PaintToolbar({
             title={label}
             aria-label={label}
             aria-pressed={tool === t}
-            onClick={() => setTool(t)}
+            onClick={() => onToolChange(t)}
           >
             <Icon size={13} aria-hidden="true" />
           </button>

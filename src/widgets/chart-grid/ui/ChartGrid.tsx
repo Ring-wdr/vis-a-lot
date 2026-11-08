@@ -1,12 +1,25 @@
 "use client";
 
 import { History, LayoutGrid, TriangleAlert } from "lucide-react";
-import { useDeferredValue, useEffect, useId, useRef } from "react";
+import {
+  memo,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+} from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
-import { isTerminal } from "@/shared/api/types";
+import {
+  type ColumnName,
+  type ItemSize,
+  type ItemState,
+  isTerminal,
+  type JobStateResponse,
+} from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
@@ -100,6 +113,64 @@ function Pager({
   );
 }
 
+/**
+ * 화면 크기에 맞춰 item을 다시 그린다. 다시 그리는 중인 item 목록(itemJobs)을 구독하므로
+ * grid 본문과 떼어 둔다. 본문이 구독하면 item 하나를 다시 그릴 때마다 grid 전체가 다시 그려진다.
+ */
+function AutoResize({
+  chartId,
+  job,
+  jobStatus,
+  desired,
+}: {
+  chartId: string | undefined;
+  job: JobStateResponse | undefined;
+  jobStatus: JobStateResponse["status"] | undefined;
+  desired: ItemSize | undefined;
+}) {
+  useAutoResize(chartId, job, jobStatus, desired);
+  return null;
+}
+
+/**
+ * grid 칸 하나. props가 같으면 다시 그리지 않는다. item은 react-query가 바뀌지 않은 것의 참조를
+ * 그대로 두므로(구조 공유) 진행률 응답이 와도 바뀐 item만 다시 그려진다.
+ * item 자신의 상태(선택, 다시 그리기, 도형 수)는 안에서 item 키로 골라 구독한다.
+ */
+const GridItem = memo(function GridItem({
+  item,
+  index,
+  chartId,
+  primaryJobId,
+  hasLegend,
+  displaySize,
+  tooltipColumns,
+  onOpen,
+}: {
+  item: ItemState;
+  /** 전체 item 중 순번 */
+  index: number;
+  chartId: string;
+  primaryJobId: string;
+  hasLegend: boolean;
+  displaySize: ItemSize | undefined;
+  tooltipColumns: readonly ColumnName[];
+  /** 크게 보기를 연다 (store action이라 참조가 바뀌지 않는다). */
+  onOpen: (index: number) => void;
+}) {
+  return (
+    <ChartItemCard
+      item={item}
+      onDoubleClick={() => onOpen(index)}
+      chartId={chartId}
+      primaryJobId={primaryJobId}
+      hasLegend={hasLegend}
+      displaySize={displaySize}
+      tooltipColumns={tooltipColumns}
+    />
+  );
+});
+
 export function ChartGrid() {
   const areaRef = useRef<HTMLDivElement>(null);
   const setGridArea = useWorkspace((s) => s.setGridArea);
@@ -134,17 +205,17 @@ export function ChartGrid() {
   // 화면 배율이 바뀌거나(다른 모니터로 옮김) 테마가 바뀌면 그 배율·테마로 다시 그린다.
   const pixelRatio = usePixelRatio();
   const theme = useColorScheme();
-  const displaySize = gridArea
-    ? itemSizeFor(gridArea, grid, { pixelRatio, theme })
-    : undefined;
+  // 값이 같으면 같은 참조를 넘겨 memo한 item이 다시 그려지지 않게 한다.
+  const { rows, cols } = grid;
+  const displaySize = useMemo(
+    () =>
+      gridArea
+        ? itemSizeFor(gridArea, { rows, cols }, { pixelRatio, theme })
+        : undefined,
+    [gridArea, rows, cols, pixelRatio, theme],
+  );
   const detailOpen = focus !== null && totalItems !== null;
   // 크게 보는 동안에는 grid가 보이지 않으니 grid item을 새 크기로 다시 그리지 않는다. 돌아오면 맞춘다.
-  useAutoResize(
-    current?.chartId,
-    job.data,
-    progress.data?.status,
-    detailOpen ? undefined : displaySize,
-  );
 
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.
   useEffect(() => {
@@ -178,6 +249,12 @@ export function ChartGrid() {
     // grid와 하단 바를 세로로 쌓는다. 하단 바 높이(32px + 위 여백 12px)는
     // grid-layout.ts의 GRID_FOOTER_HEIGHT와 같아야 PNG 크기 계산이 맞는다.
     <div ref={areaRef} className="relative flex size-full flex-col">
+      <AutoResize
+        chartId={current?.chartId}
+        job={job.data}
+        jobStatus={progress.data?.status}
+        desired={detailOpen ? undefined : displaySize}
+      />
       {!current &&
         (opening ? (
           // history·공유 링크의 차트를 여는 중: 그 grid 모양대로 자리를 잡아 둔다.
@@ -219,12 +296,11 @@ export function ChartGrid() {
                 onWheel={(e) => scroller.current?.wheel(e.deltaY)}
               >
                 {job.data?.items.map((item, i) => (
-                  <ChartItemCard
+                  <GridItem
                     key={item.key}
                     item={item}
-                    onDoubleClick={() =>
-                      setFocus(job.data.page * job.data.pageSize + i)
-                    }
+                    index={job.data.page * job.data.pageSize + i}
+                    onOpen={setFocus}
                     chartId={current.chartId}
                     primaryJobId={current.jobId}
                     hasLegend={drawsLegend(current.spec)}

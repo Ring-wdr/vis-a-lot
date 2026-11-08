@@ -6,6 +6,7 @@ import { DELETED_DATASET_HINT } from "@/entities/dataset/lib/labels";
 import {
   useWorkspace,
   useWorkspaceMutationKey,
+  useWorkspaceStore,
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import {
@@ -23,7 +24,10 @@ import { useDrawState } from "../model/draw-state";
  */
 export function DrawButton() {
   const draft = useWorkspace((s) => s.draft);
-  const gridArea = useWorkspace((s) => s.gridArea);
+  // grid 영역 크기는 누를 때 한 번 읽는다. 화면에는 잰 적이 있는지만 쓰므로 boolean으로 고른다
+  // (크기 객체를 구독하면 창 크기를 바꿀 때마다 다시 그린다).
+  const store = useWorkspaceStore();
+  const hasGridArea = useWorkspace((s) => s.gridArea !== undefined);
   const current = useWorkspace((s) => s.current);
   const setCurrent = useWorkspace((s) => s.setCurrent);
   const notify = useWorkspace((s) => s.notify);
@@ -38,6 +42,7 @@ export function DrawButton() {
   const draw = useMutation({
     mutationKey: useWorkspaceMutationKey("draw"),
     mutationFn: async () => {
+      const { gridArea } = store.getState();
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
       if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
@@ -80,7 +85,7 @@ export function DrawButton() {
         <button
           type="button"
           className={button({ variant: "primary", size: "lg" })}
-          disabled={state === "pending" || !gridArea || !ready || deleted}
+          disabled={state === "pending" || !hasGridArea || !ready || deleted}
           title={
             deleted
               ? DELETED_DATASET_HINT

@@ -1,12 +1,12 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useColumns,
   useDatasetStatus,
   useLegendValues,
 } from "@/shared/api/queries";
+import type { ChartSpec } from "@/shared/api/types";
 import { legendColumnOf } from "@/shared/config/chart-kinds";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { linkButton } from "@/shared/ui/button";
@@ -22,8 +22,14 @@ const s = settingsStyles();
  * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
  * 팝업의 폼 값만 바꾸고, 확인을 누르면 다음 draw에 쓸 설정이 된다.
  */
-export function ColorSettings({ readOnly }: { readOnly: boolean }) {
-  const draft = useWorkspace((s) => s.draft);
+export function ColorSettings({
+  draft,
+  readOnly,
+}: {
+  /** 다음 draw에 쓸 설정. 이 구역은 store를 읽지 않고 여는 쪽(SettingsDialog)이 넘긴다. */
+  draft: ChartSpec;
+  readOnly: boolean;
+}) {
   const { control, setValue } = useFormContext<CommonSettingsForm>();
   const [color, legendColors] = useWatch({
     control,

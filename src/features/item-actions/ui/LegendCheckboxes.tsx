@@ -1,32 +1,29 @@
 "use client";
 
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ChartImage } from "@/shared/api/types";
-import { supports } from "@/shared/config/chart-kinds";
 
 /**
  * PNG legend 항목의 색 표시(●) 자리에 체크박스를 겹친다. 위치는 metadata에서 읽는다.
  * 체크를 풀면 그 item에서 그 값을 숨기고 다시 그린다. 상단 도구 줄의 '체크박스 표시'로 켜고 끈다.
  */
 export function LegendCheckboxes({
+  shown,
   image,
   display,
   alt,
   disabled,
   onAction,
 }: {
+  /** 체크박스를 띄울지. 켜 두었고 차트가 지원할 때만 true다 (여는 쪽이 정한다). */
+  shown: boolean;
   image: ChartImage;
   display: { width: number; height: number };
   alt: string;
   disabled: boolean;
   onAction: (action: ItemAction) => void;
 }) {
-  // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
-  const shown = useWorkspace(
-    (s) => s.showLegendCheckboxes && supports(s.current?.spec, "checkbox"),
-  );
   const meta = useItemMeta(image.url, shown);
   const legend = meta.data?.legend;
   if (!shown || !legend) return null;

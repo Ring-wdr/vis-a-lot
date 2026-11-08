@@ -31,6 +31,7 @@ import {
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
+import { supports } from "@/shared/config/chart-kinds";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";
@@ -180,9 +181,15 @@ function DrawnItem({
   expanded?: boolean;
   onDoubleClick?: () => void;
 }) {
+  // item 안의 도구(PaintToolbar, LegendCheckboxes 등)는 store를 읽지 않는다. 여기서 원자 단위로 골라 넘긴다.
   const mode = useWorkspace((s) => s.mode);
   const paintTool = useWorkspace((s) => s.paintTool);
+  const setPaintTool = useWorkspace((s) => s.setPaintTool);
   const readOnly = useWorkspace((s) => s.readOnly);
+  // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
+  const checkboxesShown = useWorkspace(
+    (s) => s.showLegendCheckboxes && supports(s.current?.spec, "checkbox"),
+  );
   // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
   const [settingsOpen, setSettingsOpen] = useState(false);
   const defaultPosition = useDefaultLegendPosition(
@@ -237,6 +244,7 @@ function DrawnItem({
     <>
       <SelectedLegend image={image} display={displaySize} selected={selected} />
       <LegendCheckboxes
+        shown={checkboxesShown}
         image={image}
         display={displaySize}
         alt={item.label}
@@ -309,6 +317,8 @@ function DrawnItem({
             item={item}
             busy={busy}
             undoCount={undoCount}
+            tool={paintTool}
+            onToolChange={setPaintTool}
             onAction={action.mutate}
           />
         </div>

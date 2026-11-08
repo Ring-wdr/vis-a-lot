@@ -1,10 +1,11 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Filter, Plus, X } from "lucide-react";
-import type { MouseEvent, PointerEvent } from "react";
+import { type MouseEvent, memo, type PointerEvent } from "react";
 import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import { chartTitle } from "@/entities/chart/lib/title";
-import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
+import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import {
   TABS_LOCKED_HINT,
   type View,
@@ -22,8 +23,11 @@ const iconButton = tv({
   base: "inline-grid flex-none cursor-pointer place-items-center rounded-sm text-fg-muted enabled:hover:bg-panel-strong enabled:hover:text-fg disabled:cursor-not-allowed disabled:opacity-45",
 });
 
-/** 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터. history 탭은 다시 그리기 전까지 불러오는 중이다. */
-function TabLabel({ tab }: { tab: WorkspaceTab }) {
+/**
+ * 탭 이름: 그린 차트가 있으면 차트 이름, 아직이면 고른 데이터. history 탭은 다시 그리기 전까지 불러오는 중이다.
+ * 그 탭의 작업 store만 구독하므로 다른 탭이 바뀌거나 탭을 오가도 다시 그리지 않는다.
+ */
+const TabLabel = memo(function TabLabel({ tab }: { tab: WorkspaceTab }) {
   const spec = useStore(tab.store, (s) => s.current?.spec);
   const dataset = useStore(tab.store, (s) => s.draft.dataset);
   const columns = useColumns(spec?.dataset ?? dataset);
@@ -39,15 +43,70 @@ function TabLabel({ tab }: { tab: WorkspaceTab }) {
       {loading ? <LoadingText>{label}</LoadingText> : label}
     </span>
   );
-}
+});
+
+/** 탭 하나. 자기 탭은 id로 직접 고른다. 탭을 오가면 전에 보던 탭과 새 탭만 다시 그린다. */
+const TabItem = memo(function TabItem({
+  id,
+  active,
+  closable,
+  locked,
+}: {
+  id: string;
+  active: boolean;
+  closable: boolean;
+  locked: boolean;
+}) {
+  const tab = useTabs((s) => s.tabs.find((t) => t.id === id));
+  // action은 store를 만들 때 정해져 참조가 바뀌지 않는다.
+  const activate = useTabs((s) => s.activate);
+  const close = useTabs((s) => s.close);
+  if (!tab) return null;
+  const lockedHint = locked ? TABS_LOCKED_HINT : undefined;
+  return (
+    <div
+      // 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다.
+      // 자리가 모자라면 7rem까지 줄고, 그보다 많으면 스크롤한다.
+      data-tab={id}
+      className="group/tab flex h-7.5 w-50 min-w-28 items-center rounded-t-md border border-b-0 border-transparent text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
+      data-active={active || undefined}
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={active}
+        className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-xs group-data-active/tab:font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+        disabled={locked && !active}
+        onClick={() => activate(id)}
+      >
+        <TabLabel tab={tab} />
+      </button>
+      {closable && (
+        <button
+          type="button"
+          className={iconButton({ class: "mr-1.5 size-5" })}
+          aria-label="탭 닫기"
+          title={lockedHint ?? "탭 닫기"}
+          disabled={locked}
+          onClick={() => close(id)}
+        >
+          <X size={12} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+});
 
 /** 지금 view(gallery / history)의 탭들. gallery는 + 로 새 작업 공간을 연다. */
 export function TabBar({ view }: { view: View }) {
-  const tabs = useTabs((s) => s.tabs);
+  // 이 view의 탭 id만 고른다. filter·map은 매번 새 배열을 만들므로 useShallow로 내용이 같으면 같은 값으로 본다.
+  // (useShallow가 없으면 store가 바뀔 때마다 다시 그리고, React가 무한 렌더로 본다.)
+  const ids = useTabs(
+    useShallow((s) => s.tabs.filter((t) => t.view === view).map((t) => t.id)),
+  );
   const active = useTabs((s) => s.active[view]);
-  const mine = tabs.filter((t) => t.view === view);
-  const { activate, close, openGallery } = useTabsStore().getState();
-  const closable = view === "history" || mine.length > 1;
+  const openGallery = useTabs((s) => s.openGallery);
+  const closable = view === "history" || ids.length > 1;
   // 그리는 중에는 지금 탭에 머문다. 막힌 버튼에는 이유를 title로 보여준다.
   const locked = useTabs((s) => s.locked);
   const lockedHint = locked ? TABS_LOCKED_HINT : undefined;
@@ -99,40 +158,16 @@ export function TabBar({ view }: { view: View }) {
         className="-mb-px flex min-w-0 [scrollbar-width:none] items-end gap-0.5 overflow-x-auto overflow-y-hidden"
         title={lockedHint}
       >
-        {mine.map((tab) => (
-          <div
-            key={tab.id}
-            // 이름(새 차트 → 차트 이름)이 바뀌어도 폭이 그대로이도록 폭을 정해 두고 말줄임한다.
-            // 자리가 모자라면 7rem까지 줄고, 그보다 많으면 스크롤한다.
-            data-tab={tab.id}
-            className="group/tab flex h-7.5 w-50 min-w-28 items-center rounded-t-md border border-b-0 border-transparent text-fg-secondary not-data-active:hover:bg-panel-hover data-active:border-line data-active:bg-surface data-active:text-fg"
-            data-active={tab.id === active || undefined}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab.id === active}
-              className="flex h-full min-w-0 flex-1 cursor-pointer items-center pr-1 pl-3 text-xs group-data-active/tab:font-semibold disabled:cursor-not-allowed disabled:opacity-45"
-              disabled={locked && tab.id !== active}
-              onClick={() => activate(tab.id)}
-            >
-              <TabLabel tab={tab} />
-            </button>
-            {closable && (
-              <button
-                type="button"
-                className={iconButton({ class: "mr-1.5 size-5" })}
-                aria-label="탭 닫기"
-                title={lockedHint ?? "탭 닫기"}
-                disabled={locked}
-                onClick={() => close(tab.id)}
-              >
-                <X size={12} aria-hidden="true" />
-              </button>
-            )}
-          </div>
+        {ids.map((id) => (
+          <TabItem
+            key={id}
+            id={id}
+            active={id === active}
+            closable={closable}
+            locked={locked}
+          />
         ))}
-        {view === "history" && mine.length === 0 && (
+        {view === "history" && ids.length === 0 && (
           <span className="self-center px-1 pb-1.5 text-xs text-fg-muted">
             왼쪽 목록에서 고르면 탭으로 열립니다.
           </span>

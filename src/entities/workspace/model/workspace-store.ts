@@ -172,7 +172,14 @@ export function createWorkspaceStore({
     setShowNearest: (showNearest) => set({ showNearest }),
     toggleLegendCheckboxes: () =>
       set((s) => ({ showLegendCheckboxes: !s.showLegendCheckboxes })),
-    setGridArea: (gridArea) => set({ gridArea }),
+    // ResizeObserver는 같은 크기로도 알린다. 크기가 같으면 참조를 그대로 두어 구독자가 다시 그리지 않게 한다.
+    setGridArea: (gridArea) =>
+      set((s) =>
+        s.gridArea?.width === gridArea.width &&
+        s.gridArea.height === gridArea.height
+          ? s
+          : { gridArea },
+      ),
     setItemJob: (key, jobId) =>
       set((s) => {
         const itemJobs = { ...s.itemJobs };
