@@ -53,7 +53,8 @@ export function GridPicker() {
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
   // 렌더링 중인지만 쓰므로 상태만 고른다 (진행률 응답마다 다시 그리지 않는다).
-  const job = useJobProgress(current?.jobId, jobStatus);
+  // 고른 값은 조건 앞에서 읽는다 (렌더 중에 읽어야 react-query가 이 값만 바뀔 때 다시 그린다).
+  const status = useJobProgress(current?.jobId, jobStatus).data;
 
   const change = useMutation({
     mutationKey: useWorkspaceMutationKey("grid"),
@@ -79,8 +80,7 @@ export function GridPicker() {
   });
 
   const changing = useWorkspaceMutating("grid");
-  const rendering =
-    current !== undefined && (!job.data || !isTerminal(job.data));
+  const rendering = current !== undefined && (!status || !isTerminal(status));
   const preview = hover ?? selected;
 
   const pick = (next: Grid) => {

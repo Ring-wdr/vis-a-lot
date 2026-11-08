@@ -92,10 +92,19 @@ const panelFooter =
 const panelSection = "flex flex-col gap-2";
 const sectionTitle = "font-semibold text-xs text-fg-secondary";
 
-function GallerySidebar() {
+/**
+ * 공유 링크를 여는 일은 grid 크기와 mutation 상태를 구독한다. 사이드바가 직접 부르면 그 상태가 바뀔 때마다
+ * 설정 패널·draw 버튼까지 다시 그려지므로 아무것도 그리지 않는 컴포넌트로 떼어 둔다.
+ */
+function OpenSharedLink() {
   useOpenSharedLink();
+  return null;
+}
+
+function GallerySidebar() {
   return (
     <>
+      <OpenSharedLink />
       <div className={panelBody}>
         <ControlPanel />
       </div>

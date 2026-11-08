@@ -12,7 +12,7 @@ import { api } from "@/shared/api/api";
 import {
   useCancelJob,
   useDatasetSchema,
-  useDatasetStatus,
+  useDatasetState,
   useSchemaState,
 } from "@/shared/api/queries";
 import { button } from "@/shared/ui/button";
@@ -33,7 +33,8 @@ export function DrawButton() {
   const setCurrent = useWorkspace((s) => s.setCurrent);
   const notify = useWorkspace((s) => s.notify);
   const cancel = useCancelJob();
-  const dataset = useDatasetStatus(datasetId);
+  // 렌더 중에 읽어 둔다. 누를 때만 읽으면 react-query가 쓰는 필드를 몰라 목록을 다시 받을 때마다 다시 그린다.
+  const datasetState = useDatasetState(datasetId).data;
 
   // 컬럼은 데이터셋 스키마에서 고르므로, 스키마를 받고 x·y가 정해져야 그릴 수 있다.
   const schema = useDatasetSchema(datasetId);
@@ -47,7 +48,7 @@ export function DrawButton() {
       const { gridArea, draft } = store.getState();
       if (!gridArea) throw new Error("grid 영역 크기를 아직 모릅니다.");
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
-      if (draft.splitBy.length > 0 && dataset.data?.state === "ready") {
+      if (draft.splitBy.length > 0 && datasetState === "ready") {
         // 최대 개수는 서버가 정해 응답에 담아 준다.
         const { count, limit } = await api.splitCount(
           draft.dataset,

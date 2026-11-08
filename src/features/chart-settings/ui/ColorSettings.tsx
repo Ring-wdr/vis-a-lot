@@ -3,7 +3,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   useColumns,
-  useDatasetStatus,
+  useDatasetState,
   useLegendValues,
 } from "@/shared/api/queries";
 import type { ChartSpec } from "@/shared/api/types";
@@ -40,14 +40,14 @@ export function ColorSettings({
     setValue("color", next.color, { shouldDirty: true });
     setValue("legendColors", next.legendColors, { shouldDirty: true });
   };
-  const dataset = useDatasetStatus(draft.dataset);
+  const datasetState = useDatasetState(draft.dataset).data;
   const columns = useColumns(draft.dataset);
   // legend 컬럼을 쓰지 않는 차트(sankey)는 남아 있는 legend 값을 보이지 않는다.
   const legend = legendColumnOf(draft);
   const legendValues = useLegendValues(
     draft.dataset,
     legend,
-    dataset.data?.state === "ready",
+    datasetState === "ready",
   );
 
   const legendColorOf = (value: string, index: number) =>
@@ -71,7 +71,7 @@ export function ColorSettings({
             범례 값별 색 · {columns.label(legend)}
           </h4>
           {legendValues.isPending &&
-            (dataset.data?.state === "ready" ? (
+            (datasetState === "ready" ? (
               <LegendListSkeleton />
             ) : (
               <p className="text-xs text-fg-muted">
