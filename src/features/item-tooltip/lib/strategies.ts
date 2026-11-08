@@ -1,6 +1,8 @@
 // 차트 종류별 툴팁 전략. 각 전략은 metadata만으로 커서 위치를 해석하고(hitTest),
 // 툴팁에 보여줄 줄(rows)을 만든다. 서버 호출이 필요한 추가 컬럼은 rowId로 넘긴다.
 
+import { i18n } from "@lingui/core";
+import { msg, t } from "@lingui/core/macro";
 import { invertAxis } from "@/entities/chart/lib/coords";
 import type {
   CandleMeta,
@@ -19,114 +21,65 @@ import type {
 } from "@/shared/api/types";
 import { aggLabel } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
-import { defineMessages, intlLocale, t } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
+import "../config/messages";
 import { groupSlot } from "./group-slot";
 import { PointIndex } from "./point-index";
 import { hitSankey, linkOutline } from "./sankey-hit";
 
-const messages = defineMessages({
-  ko: {
-    cursorX: "커서 x",
-    cursorY: "커서 y",
-    nearestX: "가까운 점 x",
-    nearestY: "가까운 점 y",
-    category: "범주",
-    ratio: "비율",
-    count: "개수",
-    whiskerHigh: "최댓값(수염)",
-    median: "중앙값",
-    whiskerLow: "최솟값(수염)",
-    mean: "평균",
-    outliers: "이상치",
-    source: "출발",
-    target: "도착",
-    inflow: "들어오는 합",
-    outflow: "나가는 합",
-    name: "이름",
-    groupRatio: "묶음 안 비율",
-    range: "구간",
-    open: "시가",
-    high: "고가",
-    low: "저가",
-    close: "종가",
-    start: "시작",
-    end: "끝",
-    duration: "길이",
-    merged: "합친 구간",
-    child: "나눈 값",
-    cumulative: "누적",
-    stage: "단계",
-    prevRate: "이전 단계 대비",
-    firstRate: "첫 단계 대비",
-    value: "값",
-    sourceNode: "출발 노드",
-    targetNode: "도착 노드",
-    slice: "조각",
-    sliceRatio: "조각 안 비율",
-    series: "계열",
-    total: "합계",
-    items: (n: string) => `${n}개`,
-    /** 구간 [from, to) */
-    openRange: (from: string, to: string) => `${from} ~ ${to} 미만`,
-    /** 마지막 구간 [from, to] */
-    closedRange: (from: string, to: string) => `${from} ~ ${to}`,
-    day: "일",
-    hour: "시간",
-    minute: "분",
-    second: "초",
-  },
-  en: {
-    cursorX: "cursor x",
-    cursorY: "cursor y",
-    nearestX: "nearest x",
-    nearestY: "nearest y",
-    category: "Category",
-    ratio: "Ratio",
-    count: "Count",
-    whiskerHigh: "Max (whisker)",
-    median: "Median",
-    whiskerLow: "Min (whisker)",
-    mean: "Mean",
-    outliers: "Outliers",
-    source: "From",
-    target: "To",
-    inflow: "Inflow",
-    outflow: "Outflow",
-    name: "Name",
-    groupRatio: "Ratio in group",
-    range: "Range",
-    open: "Open",
-    high: "High",
-    low: "Low",
-    close: "Close",
-    start: "Start",
-    end: "End",
-    duration: "Duration",
-    merged: "Merged",
-    child: "Subdivision",
-    cumulative: "Cumulative",
-    stage: "Stage",
-    prevRate: "vs. previous",
-    firstRate: "vs. first",
-    value: "Value",
-    sourceNode: "Source node",
-    targetNode: "Target node",
-    slice: "Slice",
-    sliceRatio: "Ratio in slice",
-    series: "Series",
-    total: "Total",
-    items: (n: string) => n,
-    openRange: (from: string, to: string) => `${from} ~ <${to}`,
-    closedRange: (from: string, to: string) => `${from} ~ ${to}`,
-    day: "d",
-    hour: "h",
-    minute: "m",
-    second: "s",
-  },
-});
+const TEXT = {
+  cursorX: msg`커서 x`,
+  cursorY: msg`커서 y`,
+  nearestX: msg`가까운 점 x`,
+  nearestY: msg`가까운 점 y`,
+  category: msg({ message: "범주", context: "chart tooltip" }),
+  ratio: msg({ message: "비율", context: "chart tooltip" }),
+  count: msg({ message: "개수", context: "chart tooltip" }),
+  whiskerHigh: msg({ message: "최댓값(수염)", context: "chart tooltip" }),
+  median: msg({ message: "중앙값", context: "chart tooltip" }),
+  whiskerLow: msg({ message: "최솟값(수염)", context: "chart tooltip" }),
+  mean: msg({ message: "평균", context: "chart tooltip" }),
+  outliers: msg({ message: "이상치", context: "chart tooltip" }),
+  source: msg({ message: "출발", context: "chart tooltip" }),
+  target: msg({ message: "도착", context: "chart tooltip" }),
+  inflow: msg`들어오는 합`,
+  outflow: msg`나가는 합`,
+  name: msg({ message: "이름", context: "chart tooltip" }),
+  groupRatio: msg`묶음 안 비율`,
+  range: msg({ message: "구간", context: "chart tooltip" }),
+  open: msg({ message: "시가", context: "chart tooltip" }),
+  high: msg({ message: "고가", context: "chart tooltip" }),
+  low: msg({ message: "저가", context: "chart tooltip" }),
+  close: msg({ message: "종가", context: "chart tooltip" }),
+  start: msg({ message: "시작", context: "chart tooltip" }),
+  end: msg({ message: "끝", context: "chart tooltip" }),
+  duration: msg({ message: "길이", context: "chart tooltip" }),
+  merged: msg`합친 구간`,
+  child: msg`나눈 값`,
+  cumulative: msg({ message: "누적", context: "chart tooltip" }),
+  stage: msg({ message: "단계", context: "chart tooltip" }),
+  prevRate: msg`이전 단계 대비`,
+  firstRate: msg`첫 단계 대비`,
+  value: msg({ message: "값", context: "chart tooltip" }),
+  sourceNode: msg`출발 노드`,
+  targetNode: msg`도착 노드`,
+  slice: msg({ message: "조각", context: "chart tooltip" }),
+  sliceRatio: msg`조각 안 비율`,
+  series: msg({ message: "계열", context: "chart tooltip" }),
+  total: msg({ message: "합계", context: "chart tooltip" }),
+};
 
 /** 지금 언어의 툴팁 문구. 툴팁을 그리는 컴포넌트가 언어 변경을 구독한다. */
-const msg = () => t(messages);
+const text = (key: keyof typeof TEXT) => i18n._(TEXT[key]);
+
+/** 개수 값 ("2개") */
+const items = (n: string) => t({ message: `${n}개`, comment: "n: 개수" });
+
+/** 구간 [from, to) */
+const openRange = (from: string, to: string) => t`${from} ~ ${to} 미만`;
+
+/** 마지막 구간 [from, to] */
+const closedRange = (from: string, to: string) => `${from} ~ ${to}`;
 
 /** 툴팁 한 줄. id는 그 차트 툴팁 안에서 줄의 역할(커서 x, 합계 등)이라 label이 겹쳐도 줄을 구분한다. */
 export type TooltipRow = {
@@ -187,12 +140,12 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
     const rows: TooltipRow[] = [
       {
         id: "cursorX",
-        label: msg().cursorX,
+        label: text("cursorX"),
         value: formatValue(x, meta.x.kind),
       },
       {
         id: "cursorY",
-        label: msg().cursorY,
+        label: text("cursorY"),
         value: formatValue(y, meta.y.kind),
       },
     ];
@@ -204,13 +157,13 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
     rows.push(
       {
         id: "nearestX",
-        label: msg().nearestX,
+        label: text("nearestX"),
         value: formatValue(points.x[index], meta.x.kind),
         emphasis: true,
       },
       {
         id: "nearestY",
-        label: msg().nearestY,
+        label: text("nearestY"),
         value: formatValue(points.y[index], meta.y.kind),
         emphasis: true,
       },
@@ -305,7 +258,7 @@ function yToPx(meta: ItemMeta, v: number) {
 /** 범주 줄과, legend가 있으면 legend 값 줄 */
 function categoryRows(meta: CategoryMeta, index: number, g: number) {
   const rows: TooltipRow[] = [
-    { id: "category", label: msg().category, value: meta.categories[index] },
+    { id: "category", label: text("category"), value: meta.categories[index] },
   ];
   if (meta.legend) {
     rows.push({
@@ -365,7 +318,7 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
         ...categoryRows(meta, hit.index, hit.g),
         {
           id: "value",
-          label: meta.agg ? aggLabel(meta.agg) : msg().value,
+          label: meta.agg ? aggLabel(meta.agg) : text("value"),
           value: formatValue(value, "number"),
           emphasis: meta.stack !== "stack100",
         },
@@ -373,7 +326,7 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
           ? [
               {
                 id: "ratio",
-                label: msg().ratio,
+                label: text("ratio"),
                 value: `${(seg[1] - seg[0]).toFixed(1)}%`,
                 emphasis: true,
               },
@@ -396,22 +349,22 @@ export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
       highlight: highlightRect(meta, hit.cx, hit.width, box.lo, box.hi),
       rows: [
         ...categoryRows(meta, hit.index, hit.g),
-        { id: "count", label: msg().count, value: num(box.n) },
-        { id: "whiskerHigh", label: msg().whiskerHigh, value: num(box.hi) },
+        { id: "count", label: text("count"), value: num(box.n) },
+        { id: "whiskerHigh", label: text("whiskerHigh"), value: num(box.hi) },
         { id: "q3", label: "Q3", value: num(box.q3) },
         {
           id: "median",
-          label: msg().median,
+          label: text("median"),
           value: num(box.median),
           emphasis: true,
         },
         { id: "q1", label: "Q1", value: num(box.q1) },
-        { id: "whiskerLow", label: msg().whiskerLow, value: num(box.lo) },
-        { id: "mean", label: msg().mean, value: num(box.mean) },
+        { id: "whiskerLow", label: text("whiskerLow"), value: num(box.lo) },
+        { id: "mean", label: text("mean"), value: num(box.mean) },
         {
           id: "outliers",
-          label: msg().outliers,
-          value: msg().items(num(box.outlierCount)),
+          label: text("outliers"),
+          value: items(num(box.outlierCount)),
         },
       ],
     };
@@ -434,12 +387,12 @@ export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
         rows: [
           {
             id: "source",
-            label: msg().source,
+            label: text("source"),
             value: meta.nodes[link.source].name,
           },
           {
             id: "target",
-            label: msg().target,
+            label: text("target"),
             value: meta.nodes[link.target].name,
           },
           {
@@ -462,18 +415,19 @@ export const sankeyStrategy: TooltipStrategy<SankeyMeta> = {
       rows: [
         {
           id: "node",
-          label: node.side === "source" ? msg().sourceNode : msg().targetNode,
+          label:
+            node.side === "source" ? text("sourceNode") : text("targetNode"),
           value: node.name,
         },
         {
           id: "inflow",
-          label: msg().inflow,
+          label: text("inflow"),
           value: num(node.in),
           emphasis: node.side === "target",
         },
         {
           id: "outflow",
-          label: msg().outflow,
+          label: text("outflow"),
           value: num(node.out),
           emphasis: node.side === "source",
         },
@@ -582,7 +536,7 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
     const percent = (v: number, of: number) =>
       of > 0 ? `${((v / of) * 100).toFixed(1)}%` : "—";
     const rows: TooltipRow[] = [
-      { id: "name", label: msg().name, value: leaf.name },
+      { id: "name", label: text("name"), value: leaf.name },
     ];
     const parent = meta.legend
       ? meta.parents.find((p) => p.g === leaf.g)
@@ -603,7 +557,7 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
       },
       {
         id: "ratio",
-        label: msg().ratio,
+        label: text("ratio"),
         value: percent(leaf.value, meta.total),
         emphasis: true,
       },
@@ -611,7 +565,7 @@ export const treemapStrategy: TooltipStrategy<TreemapMeta> = {
     if (parent) {
       rows.push({
         id: "groupRatio",
-        label: msg().groupRatio,
+        label: text("groupRatio"),
         value: percent(leaf.value, parent.value),
       });
     }
@@ -674,7 +628,7 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
       rows: [
         {
           id: "range",
-          label: msg().range,
+          label: text("range"),
           value: `${formatValue(candles.t[i], "time")} ~ ${formatValue(candles.t[i] + interval, "time")}`,
         },
         ...(meta.legend
@@ -686,16 +640,16 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
               },
             ]
           : []),
-        { id: "open", label: msg().open, value: num(candles.open[i]) },
-        { id: "high", label: msg().high, value: num(candles.high[i]) },
-        { id: "low", label: msg().low, value: num(candles.low[i]) },
+        { id: "open", label: text("open"), value: num(candles.open[i]) },
+        { id: "high", label: text("high"), value: num(candles.high[i]) },
+        { id: "low", label: text("low"), value: num(candles.low[i]) },
         {
           id: "close",
-          label: msg().close,
+          label: text("close"),
           value: num(candles.close[i]),
           emphasis: true,
         },
-        { id: "count", label: msg().count, value: num(candles.count[i]) },
+        { id: "count", label: text("count"), value: num(candles.count[i]) },
       ],
     };
   },
@@ -703,19 +657,22 @@ export const candleStrategy: TooltipStrategy<CandleMeta> = {
 
 /** 기간을 '2시간 5분', '35초'처럼 가장 큰 단위와 그다음 단위로 */
 export function formatDuration(ms: number) {
-  const units: [number, string][] = [
-    [86_400_000, msg().day],
-    [3_600_000, msg().hour],
-    [60_000, msg().minute],
-    [1000, msg().second],
+  const units: [number, (n: string) => string][] = [
+    [
+      86_400_000,
+      (n) => t({ message: `${n}일`, comment: "기간의 일 단위 (2일)" }),
+    ],
+    [3_600_000, (n) => t({ message: `${n}시간`, comment: "기간의 시간 단위" })],
+    [60_000, (n) => t({ message: `${n}분`, comment: "기간의 분 단위" })],
+    [1000, (n) => t({ message: `${n}초`, comment: "기간의 초 단위" })],
   ];
   const i = units.findIndex(([size]) => ms >= size);
   if (i === -1) return `${Math.round(ms)}ms`;
-  const [size, name] = units[i];
-  const head = `${Math.floor(ms / size)}${name}`;
+  const [size, unit] = units[i];
+  const head = unit(String(Math.floor(ms / size)));
   const next = units[i + 1];
   const rest = next && Math.floor((ms % size) / next[0]);
-  return rest ? `${head} ${rest}${next[1]}` : head;
+  return rest ? `${head} ${next[1](String(rest))}` : head;
 }
 
 /** 행마다 막대 인덱스 범위 [시작, 끝). 막대는 행 → 시작 순으로 온다. */
@@ -792,31 +749,31 @@ export const ganttStrategy: TooltipStrategy<GanttMeta> = {
           : []),
         {
           id: "start",
-          label: msg().start,
+          label: text("start"),
           value: formatValue(bars.s[found], "time"),
         },
         {
           id: "end",
-          label: msg().end,
+          label: text("end"),
           value: formatValue(bars.e[found], "time"),
         },
         {
           id: "duration",
-          label: msg().duration,
+          label: text("duration"),
           value: formatDuration(bars.e[found] - bars.s[found]),
           emphasis: true,
         },
         {
           id: "count",
-          label: msg().count,
+          label: text("count"),
           value: formatValue(bars.n[found], "number"),
         },
         ...(merged > 1
           ? [
               {
                 id: "merged",
-                label: msg().merged,
-                value: msg().items(merged.toLocaleString(intlLocale())),
+                label: text("merged"),
+                value: items(merged.toLocaleString(intlLocale())),
               },
             ]
           : []),
@@ -918,20 +875,20 @@ export const pieStrategy: TooltipStrategy<PieMeta> = {
       rows: [
         {
           id: "slice",
-          label: meta.legend?.title ?? msg().slice,
+          label: meta.legend?.title ?? text("slice"),
           value: slice.category,
         },
         ...(child
-          ? [{ id: "child", label: msg().child, value: child.category }]
+          ? [{ id: "child", label: text("child"), value: child.category }]
           : []),
         {
           id: "value",
-          label: meta.agg ? aggLabel(meta.agg) : msg().value,
+          label: meta.agg ? aggLabel(meta.agg) : text("value"),
           value: formatValue((child ?? slice).value, "number"),
         },
         {
           id: "ratio",
-          label: child ? msg().sliceRatio : msg().ratio,
+          label: child ? text("sliceRatio") : text("ratio"),
           value: `${((child ?? slice).ratio * 100).toFixed(1)}%`,
           emphasis: true,
         },
@@ -972,12 +929,12 @@ export const radarStrategy: TooltipStrategy<RadarMeta> = {
         { id: "axis", label: meta.axisTitle, value: meta.axes[i] },
         {
           id: "series",
-          label: meta.legend?.title ?? msg().series,
+          label: meta.legend?.title ?? text("series"),
           value: series.name,
         },
         {
           id: "value",
-          label: meta.agg ? aggLabel(meta.agg) : msg().value,
+          label: meta.agg ? aggLabel(meta.agg) : text("value"),
           value: formatValue(series.values[i], "number"),
           emphasis: true,
         },
@@ -1028,12 +985,12 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
     // 마지막 구간만 끝값을 포함한다.
     const range =
       i === bins.count - 1
-        ? msg().closedRange(num(from), num(to))
-        : msg().openRange(num(from), num(to));
+        ? closedRange(num(from), num(to))
+        : openRange(num(from), num(to));
     const left = xToPx(meta, from + (bins.step * g) / meta.groupCount);
     const right = xToPx(meta, from + (bins.step * (g + 1)) / meta.groupCount);
     const rows: TooltipRow[] = [
-      { id: "range", label: msg().range, value: range },
+      { id: "range", label: text("range"), value: range },
     ];
     if (meta.legend)
       rows.push({
@@ -1043,7 +1000,7 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
       });
     rows.push({
       id: "count",
-      label: msg().count,
+      label: text("count"),
       value: num(count),
       emphasis: true,
     });
@@ -1081,7 +1038,7 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
     if (Math.abs(px - center) > meta.markWidth / 2 + HIT_SLOP_PX) return null;
     if (legendHidden(meta, step.kind)) return null;
     const num = (n: number) => formatValue(n, "number");
-    const label = meta.agg ? aggLabel(meta.agg) : msg().value;
+    const label = meta.agg ? aggLabel(meta.agg) : text("value");
     return {
       highlight: highlightRect(
         meta,
@@ -1093,10 +1050,10 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
       rows:
         step.kind === 2
           ? [
-              { id: "category", label: msg().category, value: msg().total },
+              { id: "category", label: text("category"), value: text("total") },
               {
                 id: "cumulative",
-                label: msg().cumulative,
+                label: text("cumulative"),
                 value: num(step.end),
                 emphasis: true,
               },
@@ -1104,7 +1061,7 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
           : [
               {
                 id: "category",
-                label: msg().category,
+                label: text("category"),
                 value: meta.categories[i],
               },
               {
@@ -1115,7 +1072,7 @@ export const waterfallStrategy: TooltipStrategy<WaterfallMeta> = {
               },
               {
                 id: "cumulative",
-                label: msg().cumulative,
+                label: text("cumulative"),
                 value: num(step.end),
               },
             ],
@@ -1151,15 +1108,15 @@ export const funnelStrategy: TooltipStrategy<FunnelMeta> = {
         height: rect.height + HIGHLIGHT_PAD * 2,
       },
       rows: [
-        { id: "stage", label: msg().stage, value: stage.label },
+        { id: "stage", label: text("stage"), value: stage.label },
         {
           id: "value",
-          label: meta.agg ? aggLabel(meta.agg) : msg().value,
+          label: meta.agg ? aggLabel(meta.agg) : text("value"),
           value: formatValue(stage.value, "number"),
           emphasis: true,
         },
-        { id: "prevRate", label: msg().prevRate, value: pct(stage.rate) },
-        { id: "firstRate", label: msg().firstRate, value: pct(stage.share) },
+        { id: "prevRate", label: text("prevRate"), value: pct(stage.rate) },
+        { id: "firstRate", label: text("firstRate"), value: pct(stage.share) },
       ],
     };
   },

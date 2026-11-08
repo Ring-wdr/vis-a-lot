@@ -2,25 +2,11 @@
 
 // 태그 입력: Enter나 쉼표로 더하고 x로 뺀다.
 
+import { useLingui } from "@lingui/react/macro";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import "../config/messages";
 import { field } from "./styles";
-
-const messages = defineMessages({
-  ko: {
-    tags: "태그",
-    remove: (tag: string) => `태그 ${tag} 빼기`,
-    placeholder: "태그 입력 후 Enter",
-    add: (label: string) => `${label} 더하기`,
-  },
-  en: {
-    tags: "Tags",
-    remove: (tag: string) => `Remove tag ${tag}`,
-    placeholder: "Type a tag, press Enter",
-    add: (label: string) => `Add ${label.toLowerCase()}`,
-  },
-});
 
 export function TagInput({
   value,
@@ -33,8 +19,10 @@ export function TagInput({
   disabled?: boolean;
   label?: string;
 }) {
-  const msg = useT(messages);
-  const label = labelProp ?? msg.tags;
+  const { t: tr } = useLingui();
+  const label = labelProp ?? tr`태그`;
+  // 기본 이름은 문장 전체를 한 메시지로 둔다 (영어는 소문자 "Add tags")
+  const addLabel = labelProp ? tr`${labelProp} 더하기` : tr`태그 더하기`;
   const [text, setText] = useState("");
   const add = () => {
     const tags = text
@@ -58,7 +46,7 @@ export function TagInput({
                 <button
                   type="button"
                   className="inline-grid size-5 cursor-pointer place-items-center rounded-full hover:bg-panel-strong"
-                  aria-label={msg.remove(t)}
+                  aria-label={tr`태그 ${t} 빼기`}
                   onClick={() => onChange(value.filter((v) => v !== t))}
                 >
                   <X size={11} aria-hidden="true" />
@@ -72,8 +60,8 @@ export function TagInput({
         <input
           className={field()}
           value={text}
-          placeholder={msg.placeholder}
-          aria-label={msg.add(label)}
+          placeholder={tr`태그 입력 후 Enter`}
+          aria-label={addLabel}
           onChange={(e) => setText(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;

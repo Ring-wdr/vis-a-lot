@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Lingui 컴파일 결과 (pnpm dev/build/test가 lingui compile로 만든다). .po는 커밋한다.
+src/**/config/locales/*.ts
+src/application/messages.*.ts

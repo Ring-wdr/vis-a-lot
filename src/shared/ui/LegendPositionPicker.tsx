@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   type LucideIcon,
   PanelBottom,
@@ -8,30 +11,36 @@ import {
   PanelTop,
 } from "lucide-react";
 import type { LegendPosition } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { segmented } from "./segmented";
+import "@/shared/config/messages";
 
 const s = segmented();
 
-const messages = defineMessages({
-  ko: {
-    group: "legend 위치",
-    position: { top: "위", bottom: "아래", left: "왼쪽", right: "오른쪽" },
-  },
-  en: {
-    group: "legend position",
-    position: { top: "Top", bottom: "Bottom", left: "Left", right: "Right" },
-  },
-});
-
 const POSITIONS = [
-  { value: "top", Icon: PanelTop },
-  { value: "bottom", Icon: PanelBottom },
-  { value: "left", Icon: PanelLeft },
-  { value: "right", Icon: PanelRight },
+  {
+    value: "top",
+    Icon: PanelTop,
+    label: msg({ message: "위", context: "legend position" }),
+  },
+  {
+    value: "bottom",
+    Icon: PanelBottom,
+    label: msg({ message: "아래", context: "legend position" }),
+  },
+  {
+    value: "left",
+    Icon: PanelLeft,
+    label: msg({ message: "왼쪽", context: "legend position" }),
+  },
+  {
+    value: "right",
+    Icon: PanelRight,
+    label: msg({ message: "오른쪽", context: "legend position" }),
+  },
 ] as const satisfies readonly {
   value: LegendPosition;
   Icon: LucideIcon;
+  label: MessageDescriptor;
 }[];
 
 /** legend 위치(위·아래·왼쪽·오른쪽) 고르기. 고른 위치는 aria-pressed로 표시한다. */
@@ -44,10 +53,10 @@ export function LegendPositionPicker({
   onSelect: (position: LegendPosition) => void;
   disabled?: boolean;
 }) {
-  const text = useT(messages);
+  const { t, i18n } = useLingui();
   return (
-    <fieldset className={s.root()} aria-label={text.group}>
-      {POSITIONS.map(({ value: position, Icon }) => (
+    <fieldset className={s.root()} aria-label={t`legend 위치`}>
+      {POSITIONS.map(({ value: position, Icon, label }) => (
         <button
           key={position}
           type="button"
@@ -57,7 +66,7 @@ export function LegendPositionPicker({
           onClick={() => position !== value && onSelect(position)}
         >
           <Icon size={14} aria-hidden="true" />
-          {text.position[position]}
+          {i18n._(label)}
         </button>
       ))}
     </fieldset>

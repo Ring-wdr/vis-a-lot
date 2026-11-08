@@ -3,6 +3,8 @@
 // 데이터스토어 팝업: 등록된 데이터를 가상 스크롤 표로 보여주고, 고른 데이터로 gallery 탭을 연다.
 // 업로드한 데이터가 위(최근 순), 샘플이 맨 아래다. 샘플은 등록을 눌러야 쓸 수 있다.
 
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Database, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
@@ -17,79 +19,13 @@ import {
 } from "@/shared/api/queries";
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
-import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
-
-const messages = defineMessages({
-  ko: {
-    sample: "샘플",
-    missing: "미등록",
-    register: "등록",
-    failed: "실패",
-    analyzing: "통계",
-    ready: "준비됨",
-    confirmDelete: (name: string) =>
-      `'${name}'을 삭제할까요? 이 데이터로 그린 탭은 다시 그릴 수 없게 됩니다.`,
-    delete: "삭제",
-    title: "데이터 스토어",
-    search: "이름 검색",
-    edit: "수정",
-    sampleNoEdit: "샘플은 수정할 수 없습니다",
-    editHint: "이름·전처리 옵션·컬럼 타입 수정",
-    sampleNoDelete: "샘플은 삭제할 수 없습니다",
-    refresh: "새로고침",
-    number: "번호",
-    name: "이름",
-    registeredAt: "등록 시간",
-    rows: "행 수",
-    size: "크기",
-    status: "상태",
-    noMatch: "찾는 데이터가 없습니다",
-    noData: "데이터가 없습니다",
-    storageUsage: "내 저장소 사용량",
-    storageUsageLabel: "저장소 사용량",
-    count: (n: number) => `데이터 ${n}개`,
-    close: "닫기",
-    pickReady: "준비된 데이터를 선택하세요",
-    openInGallery: "gallery에서 열기",
-  },
-  en: {
-    sample: "Sample",
-    missing: "Not added",
-    register: "Add",
-    failed: "Failed",
-    analyzing: "Stats",
-    ready: "Ready",
-    confirmDelete: (name: string) =>
-      `Delete '${name}'? Tabs drawn from this data can no longer be redrawn.`,
-    delete: "Delete",
-    title: "Data store",
-    search: "Search by name",
-    edit: "Edit",
-    sampleNoEdit: "Samples can't be edited",
-    editHint: "Edit name, preprocessing options, column types",
-    sampleNoDelete: "Samples can't be deleted",
-    refresh: "Refresh",
-    number: "No.",
-    name: "Name",
-    registeredAt: "Added",
-    rows: "Rows",
-    size: "Size",
-    status: "Status",
-    noMatch: "No matching data",
-    noData: "No data",
-    storageUsage: "My storage",
-    storageUsageLabel: "Storage usage",
-    count: (n: number) => `${n} ${n === 1 ? "dataset" : "datasets"}`,
-    close: "Close",
-    pickReady: "Select ready data",
-    openInGallery: "Open in gallery",
-  },
-});
+import "../config/messages";
 
 /** 업로드·수정 팝업은 처음 열 때 불러온다. */
 const loadUploadDialog = () => import("./UploadDialog");
@@ -146,11 +82,13 @@ function StatusCell({
   onGenerate: () => void;
   generating: boolean;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   if (status.state === "missing") {
     return (
       <>
-        <span className="text-fg-muted">{text.missing}</span>
+        <span className="text-fg-muted">
+          <Trans context="dataset status">미등록</Trans>
+        </span>
         <button
           type="button"
           className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-xs text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
@@ -160,7 +98,7 @@ function StatusCell({
             onGenerate();
           }}
         >
-          {text.register}
+          <Trans context="register sample button">등록</Trans>
         </button>
       </>
     );
@@ -168,7 +106,7 @@ function StatusCell({
   if (status.state === "failed") {
     return (
       <span className="text-danger" title={status.error}>
-        {text.failed}
+        <Trans context="dataset status">실패</Trans>
       </span>
     );
   }
@@ -181,12 +119,16 @@ function StatusCell({
           value={status.phase === "analyze" ? undefined : ratio}
         />
         {status.phase === "analyze"
-          ? text.analyzing
+          ? t({ message: "통계", context: "dataset status" })
           : `${Math.round(ratio * 100)}%`}
       </span>
     );
   }
-  return <span>{text.ready}</span>;
+  return (
+    <span>
+      <Trans context="dataset status">준비됨</Trans>
+    </span>
+  );
 }
 
 /** 브라우저 저장소(IndexedDB 등) 사용량. 지원하지 않으면 null */
@@ -208,7 +150,7 @@ function DatastoreBody({
   initial?: DatasetId;
   onClose: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const titleId = useId();
   const searchId = useId();
   const openGallery = useTabs((s) => s.openGallery);
@@ -222,7 +164,11 @@ function DatastoreBody({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const list = datasets.data?.datasets ?? [];
-  const rows = rowsOf(list, query, text.sample);
+  const rows = rowsOf(
+    list,
+    query,
+    t({ message: "샘플", context: "dataset kind" }),
+  );
   const pickedStatus = list.find((d) => d.id === picked);
   const pickedReady = pickedStatus?.state === "ready";
   const editable =
@@ -255,10 +201,16 @@ function DatastoreBody({
     }
   };
 
+  const confirmDelete = (name: string) =>
+    t({
+      message: `''${name}''을 삭제할까요? 이 데이터로 그린 탭은 다시 그릴 수 없게 됩니다.`,
+      comment: "name: 데이터 이름",
+    });
+
   const deletePicked = async () => {
     if (!pickedStatus || !editable) return;
-    const ok = await showConfirm(text.confirmDelete(pickedStatus.name), {
-      confirmLabel: text.delete,
+    const ok = await showConfirm(confirmDelete(pickedStatus.name), {
+      confirmLabel: t({ message: "삭제", context: "delete dataset" }),
     });
     if (!ok) return;
     remove.mutate(pickedStatus.id, {
@@ -268,11 +220,13 @@ function DatastoreBody({
   };
 
   const usage = storage.data;
+  const datasetCount = (count: number) =>
+    t`${plural(count, { other: "데이터 #개" })}`;
 
   return (
     <div className="flex flex-col gap-2.5">
       <h2 id={titleId} className="text-base font-bold">
-        {text.title}
+        <Trans>데이터 스토어</Trans>
       </h2>
 
       <div className="flex items-center justify-between gap-3">
@@ -285,7 +239,7 @@ function DatastoreBody({
             id={searchId}
             type="search"
             className="min-w-0 flex-1 bg-transparent text-ui text-fg outline-none"
-            placeholder={text.search}
+            placeholder={t`이름 검색`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -294,11 +248,11 @@ function DatastoreBody({
           <button
             type="button"
             className={iconButton}
-            aria-label={text.edit}
+            aria-label={t({ message: "수정", context: "edit dataset" })}
             title={
               pickedStatus?.kind === "sample"
-                ? text.sampleNoEdit
-                : text.editHint
+                ? t`샘플은 수정할 수 없습니다`
+                : t`이름·전처리 옵션·컬럼 타입 수정`
             }
             disabled={!editable || opening}
             onClick={editPicked}
@@ -308,11 +262,11 @@ function DatastoreBody({
           <button
             type="button"
             className={iconButton}
-            aria-label={text.delete}
+            aria-label={t({ message: "삭제", context: "delete dataset" })}
             title={
               pickedStatus?.kind === "sample"
-                ? text.sampleNoDelete
-                : text.delete
+                ? t`샘플은 삭제할 수 없습니다`
+                : t({ message: "삭제", context: "delete dataset" })
             }
             disabled={!editable || remove.isPending}
             onClick={deletePicked}
@@ -322,8 +276,8 @@ function DatastoreBody({
           <button
             type="button"
             className={iconButton}
-            aria-label={text.refresh}
-            title={text.refresh}
+            aria-label={t`새로고침`}
+            title={t`새로고침`}
             disabled={datasets.isFetching}
             onClick={() => datasets.refetch()}
           >
@@ -346,12 +300,24 @@ function DatastoreBody({
         >
           <thead className="z-sticky sticky top-0 grid bg-panel">
             <tr className={row}>
-              <th className={head}>{text.number}</th>
-              <th className={head}>{text.name}</th>
-              <th className={head}>{text.registeredAt}</th>
-              <th className={cn(head, number)}>{text.rows}</th>
-              <th className={cn(head, number)}>{text.size}</th>
-              <th className={head}>{text.status}</th>
+              <th className={head}>
+                <Trans context="datastore table header">번호</Trans>
+              </th>
+              <th className={head}>
+                <Trans context="datastore table header">이름</Trans>
+              </th>
+              <th className={head}>
+                <Trans context="datastore table header">등록 시간</Trans>
+              </th>
+              <th className={cn(head, number)}>
+                <Trans context="datastore table header">행 수</Trans>
+              </th>
+              <th className={cn(head, number)}>
+                <Trans context="datastore table header">크기</Trans>
+              </th>
+              <th className={head}>
+                <Trans context="datastore table header">상태</Trans>
+              </th>
             </tr>
           </thead>
           <tbody
@@ -439,7 +405,7 @@ function DatastoreBody({
           <EmptyState
             size="sm"
             icon={<Database size={20} />}
-            title={query ? text.noMatch : text.noData}
+            title={query ? t`찾는 데이터가 없습니다` : t`데이터가 없습니다`}
           />
         ) : null}
       </div>
@@ -462,7 +428,7 @@ function DatastoreBody({
 
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-xs text-fg-secondary">
         <span>
-          {text.storageUsage}{" "}
+          <Trans>내 저장소 사용량</Trans>{" "}
           {usage?.usage !== undefined ? formatBytes(usage.usage) : "–"}
           {usage?.quota ? ` / ${formatBytes(usage.quota)}` : ""}
         </span>
@@ -470,25 +436,29 @@ function DatastoreBody({
           className="w-full"
           value={usage?.usage ?? 0}
           max={usage?.quota || 1}
-          aria-label={text.storageUsageLabel}
+          aria-label={t`저장소 사용량`}
         />
-        <span className="text-fg-muted">{text.count(rows.length)}</span>
+        <span className="text-fg-muted">{datasetCount(rows.length)}</span>
       </div>
 
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={onClose}>
-          {text.close}
+          <Trans context="datastore dialog">닫기</Trans>
         </button>
         <button
           type="button"
           className={button({ variant: "primary" })}
           disabled={!pickedReady || locked}
           title={
-            locked ? tabsLockedHint() : pickedReady ? undefined : text.pickReady
+            locked
+              ? tabsLockedHint()
+              : pickedReady
+                ? undefined
+                : t`준비된 데이터를 선택하세요`
           }
           onClick={open}
         >
-          {text.openInGallery}
+          <Trans>gallery에서 열기</Trans>
         </button>
       </div>
     </div>

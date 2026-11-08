@@ -3,30 +3,16 @@
 // 옆 패널: ?peek=<키>가 있으면 화면 오른쪽에 게시물 상세를 띄운다. FeedShell이 한 번 붙인다.
 // 모달이 아니라 뒤의 목록을 그대로 쓸 수 있고, Esc나 닫기 버튼으로 peek만 지운다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Maximize2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { postPageHref } from "@/entities/post/ui/PostLink";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek, usePeekKey } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { button, toolButton } from "@/shared/ui/button";
 import { PostDetail } from "./PostDetail";
-
-const messages = defineMessages({
-  ko: {
-    panel: (key: string) => `게시물 ${key}`,
-    fullPage: "전체 페이지로",
-    close: "옆 패널 닫기",
-    closeTitle: "닫기 (Esc)",
-  },
-  en: {
-    panel: (key: string) => `Post ${key}`,
-    fullPage: "Full page",
-    close: "Close side panel",
-    closeTitle: "Close (Esc)",
-  },
-});
+import "../config/messages";
 
 /** 다른 팝업(dialog·popover·메뉴·멘션 목록 등)이 떠 있어 Esc를 그쪽이 받아야 할 때. 보이는 것만 센다 */
 const OVERLAYS =
@@ -42,7 +28,7 @@ const isEditable = (el: Element | null) =>
   (el.isContentEditable || !!el.closest("input, textarea, select"));
 
 export function PostPeek() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const key = usePeekKey();
   const openPeek = useOpenPeek();
   const ref = useRef<HTMLElement>(null);
@@ -77,7 +63,7 @@ export function PostPeek() {
     <aside
       ref={ref}
       tabIndex={-1}
-      aria-label={text.panel(key)}
+      aria-label={t`게시물 ${key}`}
       className="z-drawer fixed inset-y-0 right-0 flex w-full flex-col overflow-y-auto border-l border-line bg-surface text-ui shadow-drawer outline-none md:w-160"
     >
       <div className="p-5">
@@ -90,13 +76,13 @@ export function PostPeek() {
             <div className="flex items-center justify-between gap-2">
               <Link href={postPageHref(key)} className={button({ size: "sm" })}>
                 <Maximize2 size={13} aria-hidden="true" />
-                {text.fullPage}
+                <Trans>전체 페이지로</Trans>
               </Link>
               <button
                 type="button"
                 className={cn(toolButton())}
-                aria-label={text.close}
-                title={text.closeTitle}
+                aria-label={t`옆 패널 닫기`}
+                title={t`닫기 (Esc)`}
                 onClick={() => openPeek(null)}
               >
                 <X size={15} aria-hidden="true" />

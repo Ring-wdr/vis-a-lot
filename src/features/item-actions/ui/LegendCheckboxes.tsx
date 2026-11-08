@@ -1,14 +1,11 @@
 "use client";
 
+import { ph } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ChartImage } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
-
-const messages = defineMessages({
-  ko: { show: (alt: string, value: string) => `${alt} · ${value} 보이기` },
-  en: { show: (alt: string, value: string) => `Show ${value} · ${alt}` },
-});
+import "../config/messages";
 
 /**
  * PNG legend 항목의 색 표시(●) 자리에 체크박스를 겹친다. 위치는 metadata에서 읽는다.
@@ -30,7 +27,7 @@ export function LegendCheckboxes({
   disabled: boolean;
   onAction: (action: ItemAction) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const meta = useItemMeta(image.url, shown);
   const legend = meta.data?.legend;
   if (!shown || !legend) return null;
@@ -46,7 +43,7 @@ export function LegendCheckboxes({
           type="checkbox"
           className="pointer-events-auto absolute m-0 size-3 -translate-1/2 cursor-pointer accent-accent"
           style={{ left: entry.marker.x * sx, top: entry.marker.y * sy }}
-          aria-label={text.show(alt, entry.value)}
+          aria-label={t`${alt} · ${ph({ value: entry.value })} 보이기`}
           checked={entry.visible}
           disabled={disabled}
           // 확대·그리기 레이어가 누름을 드래그로 받지 않게 한다.

@@ -1,0 +1,139 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "{actor}님이 담당자로 배정했습니다"
+msgstr "{actor}님이 담당자로 배정했습니다"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "{actor}님이 댓글에서 멘션했습니다"
+msgstr "{actor}님이 댓글에서 멘션했습니다"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "{actor}님이 댓글을 남겼습니다"
+msgstr "{actor}님이 댓글을 남겼습니다"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "{actor}님이 설명에서 멘션했습니다"
+msgstr "{actor}님이 설명에서 멘션했습니다"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "{actor}님이 완료 승인을 요청했습니다"
+msgstr "{actor}님이 완료 승인을 요청했습니다"
+
+#. {key}는 게시물 키(FD-12), {title}은 게시물 제목
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "{key} {title} 열기{unreadCount, plural, =0 {} other {, 안읽음 #개}}"
+msgstr "{key} {title} 열기{unreadCount, plural, =0 {} other {, 안읽음 #개}}"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "다시 시도"
+msgstr "다시 시도"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "모두 읽음"
+msgstr "모두 읽음"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "묶음 보관"
+msgstr "묶음 보관"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "묶음 안읽음으로"
+msgstr "묶음 안읽음으로"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "묶음 읽음으로"
+msgstr "묶음 읽음으로"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "받은 알림"
+msgstr "받은 알림"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "받은 알림이 없습니다"
+msgstr "받은 알림이 없습니다"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "배정·멘션·댓글·상태 변경 등이 생기면 여기에 게시물별로 모입니다."
+msgstr "배정·멘션·댓글·상태 변경 등이 생기면 여기에 게시물별로 모입니다."
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgctxt "archive a notification"
+msgid "보관"
+msgstr "보관"
+
+#: src/views/feed-inbox/model/use-inbox-actions.ts
+msgid "보관하지 못했습니다"
+msgstr "보관하지 못했습니다"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "보관한 알림이 없습니다"
+msgstr "보관한 알림이 없습니다"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "보관함"
+msgstr "보관함"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "보류 재개일이 되어 미해결로 돌아왔습니다"
+msgstr "보류 재개일이 되어 미해결로 돌아왔습니다"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "안읽은 알림이 없습니다"
+msgstr "안읽은 알림이 없습니다"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "안읽음"
+msgstr "안읽음"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "안읽음 {unreadTotal}개"
+msgstr "안읽음 {unreadTotal}개"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "안읽음으로"
+msgstr "안읽음으로"
+
+#: src/views/feed-inbox/model/use-inbox-actions.ts
+msgid "안읽음으로 바꾸지 못했습니다"
+msgstr "안읽음으로 바꾸지 못했습니다"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgctxt "unknown user"
+msgid "알 수 없음"
+msgstr "알 수 없음"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "알림을 불러오는 중"
+msgstr "알림을 불러오는 중"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "알림을 불러오지 못했습니다 ({reason})"
+msgstr "알림을 불러오지 못했습니다 ({reason})"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "알림함"
+msgstr "알림함"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "알림함 탭"
+msgstr "알림함 탭"
+
+#: src/views/feed-inbox/ui/InboxView.tsx
+msgid "읽음으로"
+msgstr "읽음으로"
+
+#: src/views/feed-inbox/model/use-inbox-actions.ts
+msgid "읽음으로 바꾸지 못했습니다"
+msgstr "읽음으로 바꾸지 못했습니다"
+
+#: src/views/feed-inbox/lib/notification-text.ts
+msgid "하위 이슈가 모두 해결되어 검토 중이 되었습니다"
+msgstr "하위 이슈가 모두 해결되어 검토 중이 되었습니다"

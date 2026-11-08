@@ -1,0 +1,274 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#. group: 그룹 이름
+#: src/widgets/command-palette/model/items.ts
+msgid "{group} 그룹 설정"
+msgstr "{group} 그룹 설정"
+
+#. group: 그룹 이름
+#: src/widgets/command-palette/model/items.ts
+msgid "{group} 리스트"
+msgstr "{group} 리스트"
+
+#. group: 그룹 이름
+#: src/widgets/command-palette/model/items.ts
+msgid "{group} 보드"
+msgstr "{group} 보드"
+
+#. group: 그룹 이름
+#: src/widgets/command-palette/model/items.ts
+msgid "{group} 현황 보고"
+msgstr "{group} 현황 보고"
+
+#. group: 그룹 이름
+#: src/widgets/command-palette/model/items.ts
+msgid "{group} 활동 보고"
+msgstr "{group} 활동 보고"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette hint: dev-only screen"
+msgid "개발"
+msgstr "개발"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "검색·명령"
+msgstr "검색·명령"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette section"
+msgid "게시물"
+msgstr "게시물"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "게시물(FD-12, 제목), 화면, 명령 찾기"
+msgstr "게시물(FD-12, 제목), 화면, 명령 찾기"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette results list"
+msgid "결과"
+msgstr "결과"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette key hint"
+msgid "고르기"
+msgstr "고르기"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "관리 콘솔"
+msgstr "관리 콘솔"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "내 작업"
+msgstr "내 작업"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette key hint"
+msgid "닫기"
+msgstr "닫기"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "담당, 승인 대기, my"
+msgstr "담당, 승인 대기, my"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette key hint"
+msgid "돌아가기"
+msgstr "돌아가기"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "로그인, user"
+msgstr "로그인, user"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "리셋, 데이터, dev"
+msgstr "리셋, 데이터, dev"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "만들기, 새 게시물, create"
+msgstr "만들기, 새 게시물, create"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "만들기, 이슈, create, c"
+msgstr "만들기, 이슈, create, c"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "맞는 항목이 없습니다"
+msgstr "맞는 항목이 없습니다"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "멤버, 게시물 유형, 상태 이름"
+msgstr "멤버, 게시물 유형, 상태 이름"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette section"
+msgid "명령"
+msgstr "명령"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "목록, list"
+msgstr "목록, list"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "발송 로그"
+msgstr "발송 로그"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "발표 모드 끄기"
+msgstr "발표 모드 끄기"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "발표 모드 켜기"
+msgstr "발표 모드 켜기"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "발표, present"
+msgstr "발표, present"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "보고서, report"
+msgstr "보고서, report"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "빠른 생성"
+msgstr "빠른 생성"
+
+#. groupKey: 그룹 키 접두사 (FD)
+#: src/widgets/command-palette/model/items.ts
+msgid "빠른 생성 · {groupKey}"
+msgstr "빠른 생성 · {groupKey}"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette section"
+msgid "사용자"
+msgstr "사용자"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "사용자 목록"
+msgstr "사용자 목록"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "사용자 이름"
+msgstr "사용자 이름"
+
+#: src/widgets/command-palette/model/items.ts
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "사용자 전환"
+msgstr "사용자 전환"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "사용자 전환에서 돌아가기"
+msgstr "사용자 전환에서 돌아가기"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "사용자 찾기"
+msgstr "사용자 찾기"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "사용자, 관리자, admin"
+msgstr "사용자, 관리자, admin"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "새 게시물"
+msgstr "새 게시물"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "설정"
+msgstr "설정"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "슬랙, 이메일, dev"
+msgstr "슬랙, 이메일, dev"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "시계"
+msgstr "시계"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "시드"
+msgstr "시드"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "시스템 관리자"
+msgstr "시스템 관리자"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette key hint"
+msgid "실행"
+msgstr "실행"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "알림 설정"
+msgstr "알림 설정"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "알림, inbox"
+msgstr "알림, inbox"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "알림함"
+msgstr "알림함"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "오늘, 시간, dev"
+msgstr "오늘, 시간, dev"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "전체 폼으로 새 게시물"
+msgstr "전체 폼으로 새 게시물"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "지금 사용자"
+msgstr "지금 사용자"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "찾는 중"
+msgstr "찾는 중"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette section"
+msgid "최근"
+msgstr "최근"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "칸반, board"
+msgstr "칸반, board"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgid "커맨드 팔레트"
+msgstr "커맨드 팔레트"
+
+#: src/widgets/command-palette/model/items.ts
+msgctxt "palette keywords"
+msgid "피드, home"
+msgstr "피드, home"
+
+#: src/widgets/command-palette/model/items.ts
+msgid "홈"
+msgstr "홈"
+
+#: src/widgets/command-palette/ui/CommandPalette.tsx
+msgctxt "palette section"
+msgid "화면"
+msgstr "화면"

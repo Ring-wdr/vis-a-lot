@@ -1,29 +1,12 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useMemo } from "react";
 import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import type { ColumnType, CsvPreview } from "@/shared/api/types";
-import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
-
-const messages = defineMessages({
-  ko: {
-    includeAll: "모든 컬럼 적재",
-    rowNumber: "행 번호",
-    columnType: (name: string) => `${name} 타입`,
-    auto: (type: string) => `자동 (${type})`,
-    invalid: (n: string) => `변환 불가 ${n}개`,
-    badValue: "이 타입으로 바꿀 수 없는 값",
-  },
-  en: {
-    includeAll: "Load all columns",
-    rowNumber: "Row number",
-    columnType: (name: string) => `${name} type`,
-    auto: (type: string) => `Auto (${type})`,
-    invalid: (n: string) => `${n} invalid`,
-    badValue: "Can't convert to this type",
-  },
-});
+import "../config/messages";
 
 const AUTO = "auto";
 
@@ -68,8 +51,21 @@ export function PreviewGrid({
   onIncludeAll: (included: boolean) => void;
   onType: (name: string, type: ColumnType | undefined) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const labels = useDatasetLabels();
+  const columnTypeLabel = (name: string) =>
+    t({ message: `${name} 타입`, comment: "name: 컬럼 이름" });
+  const autoLabel = (inferred: ColumnType) => {
+    const type = labels.columnTypes[inferred];
+    return t({
+      message: `자동 (${type})`,
+      comment: "type: 자동으로 고른 컬럼 타입 이름",
+    });
+  };
+  const invalidLabel = (n: number) => {
+    const count = n.toLocaleString(intlLocale());
+    return t`변환 불가 ${count}개`;
+  };
   const invalid = useMemo(
     () => new Set(preview.invalid.map(([r, c]) => `${r}:${c}`)),
     [preview.invalid],
@@ -85,7 +81,7 @@ export function PreviewGrid({
             <th className={cn(headRowHead, firstRow)}>
               <input
                 type="checkbox"
-                aria-label={text.includeAll}
+                aria-label={t`모든 컬럼 적재`}
                 checked={allIncluded}
                 ref={(el) => {
                   if (el) el.indeterminate = !allIncluded && !noneIncluded;
@@ -118,7 +114,7 @@ export function PreviewGrid({
           <tr>
             <th
               className={cn(headRowHead, secondRow)}
-              aria-label={text.rowNumber}
+              aria-label={t`행 번호`}
             />
             {columns.map((c) => (
               <th
@@ -127,7 +123,7 @@ export function PreviewGrid({
                 data-excluded={!c.included || undefined}
               >
                 <select
-                  aria-label={text.columnType(c.name)}
+                  aria-label={columnTypeLabel(c.name)}
                   className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-xs"
                   value={c.chosen ?? AUTO}
                   disabled={!c.included}
@@ -140,9 +136,7 @@ export function PreviewGrid({
                     )
                   }
                 >
-                  <option value={AUTO}>
-                    {text.auto(labels.columnTypes[c.inferred])}
-                  </option>
+                  <option value={AUTO}>{autoLabel(c.inferred)}</option>
                   {(
                     Object.entries(labels.columnTypes) as [ColumnType, string][]
                   ).map(([type, label]) => (
@@ -153,7 +147,7 @@ export function PreviewGrid({
                 </select>
                 {c.included && c.invalid ? (
                   <span className="mt-0.5 block text-2xs font-normal text-danger">
-                    {text.invalid(c.invalid.toLocaleString(intlLocale()))}
+                    {invalidLabel(c.invalid)}
                   </span>
                 ) : null}
               </th>
@@ -180,7 +174,7 @@ export function PreviewGrid({
                     data-excluded={!column?.included || undefined}
                     data-invalid={bad || undefined}
                     data-null={value === null || undefined}
-                    title={bad ? text.badValue : undefined}
+                    title={bad ? t`이 타입으로 바꿀 수 없는 값` : undefined}
                   >
                     {value ?? "null"}
                   </td>

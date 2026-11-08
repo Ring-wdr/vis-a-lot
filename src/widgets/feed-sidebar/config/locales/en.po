@@ -1,0 +1,106 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "{groupKey} 공유"
+msgstr "shared in {groupKey}"
+
+#. 숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgctxt "unit after the unread count"
+msgid "개 안읽음"
+msgstr " unread"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "개발 장치"
+msgstr "Dev tools"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "관리 콘솔"
+msgstr "Admin console"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgctxt "sidebar tooltip: view shared with a group"
+msgid "그룹 공유"
+msgstr "shared with group"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "그룹 설정"
+msgstr "Group settings"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "그룹을 불러오는 중"
+msgstr "Loading groups"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "그룹을 불러오지 못했습니다 ({reason})"
+msgstr "Couldn't load groups ({reason})"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "내 작업"
+msgstr "My work"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgctxt "sidebar: group list page"
+msgid "리스트"
+msgstr "List"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "모든 뷰 ({restCount})"
+msgstr "All views ({restCount})"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "발송 로그"
+msgstr "Outbox log"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgctxt "sidebar: group board page"
+msgid "보드"
+msgstr "Board"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "뷰를 불러오는 중"
+msgstr "Loading views"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgctxt "sidebar: saved views list"
+msgid "뷰를 불러오지 못했습니다"
+msgstr "Couldn't load views"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "시계"
+msgstr "Clock"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "시드"
+msgstr "Seed"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "알림함"
+msgstr "Inbox"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "저장된 뷰"
+msgstr "Saved views"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "피드"
+msgstr "Feed"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "현황 보고"
+msgstr "Status report"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "홈"
+msgstr "Home"
+
+#: src/widgets/feed-sidebar/ui/FeedSidebar.tsx
+msgid "활동 보고"
+msgstr "Activity report"

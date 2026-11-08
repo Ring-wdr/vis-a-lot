@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   useColumns,
@@ -8,33 +9,16 @@ import {
 } from "@/shared/api/queries";
 import type { ChartSpec } from "@/shared/api/types";
 import { legendColumnOf } from "@/shared/config/chart-kinds";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import type { CommonSettingsForm } from "../model/common-settings-form";
 
 const s = settingsStyles();
-
-const messages = defineMessages({
-  ko: {
-    baseColor: "기본 색",
-    legendColors: (column: string) => `범례 값별 색 · ${column}`,
-    waiting: "데이터가 준비되면 legend 값이 표시됩니다.",
-    changeColor: (value: string) => `${value} 색 바꾸기`,
-    reset: "기본 색으로 되돌리기",
-  },
-  en: {
-    baseColor: "Base color",
-    legendColors: (column: string) => `Colors by legend value · ${column}`,
-    waiting: "Legend values appear when the data is ready.",
-    changeColor: (value: string) => `Change ${value} color`,
-    reset: "Reset to default colors",
-  },
-});
 
 /**
  * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
@@ -48,7 +32,7 @@ export function ColorSettings({
   draft: ChartSpec;
   readOnly: boolean;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { control, setValue } = useFormContext<CommonSettingsForm>();
   const [color, legendColors] = useWatch({
     control,
@@ -69,6 +53,7 @@ export function ColorSettings({
     datasetState === "ready",
   );
 
+  const column = legend === null ? "" : columns.label(legend);
   const legendColorOf = (value: string, index: number) =>
     common.legendColors?.[value] ?? defaultLegendColor(index);
 
@@ -76,7 +61,9 @@ export function ColorSettings({
     <div className={s.section()}>
       {legend === null ? (
         <>
-          <h4 className={s.heading()}>{text.baseColor}</h4>
+          <h4 className={s.heading()}>
+            <Trans>기본 색</Trans>
+          </h4>
           <ColorSwatches
             value={common.color}
             disabled={readOnly}
@@ -87,13 +74,15 @@ export function ColorSettings({
       ) : (
         <>
           <h4 className={s.heading()}>
-            {text.legendColors(columns.label(legend))}
+            <Trans>범례 값별 색 · {column}</Trans>
           </h4>
           {legendValues.isPending &&
             (datasetState === "ready" ? (
               <LegendListSkeleton />
             ) : (
-              <p className="text-xs text-fg-muted">{text.waiting}</p>
+              <p className="text-xs text-fg-muted">
+                <Trans>데이터가 준비되면 legend 값이 표시됩니다.</Trans>
+              </p>
             ))}
           <ul className={s.legendList()}>
             {legendValues.data?.values.map((value, i) => {
@@ -104,7 +93,7 @@ export function ColorSettings({
                     className={s.legendSwatch()}
                     style={{ background: color }}
                     color={color}
-                    label={text.changeColor(value)}
+                    label={t`${value} 색 바꾸기`}
                     disabled={readOnly}
                     onCommit={(next) =>
                       change({
@@ -127,7 +116,7 @@ export function ColorSettings({
               className={linkButton()}
               onClick={() => change({ ...common, legendColors: undefined })}
             >
-              {text.reset}
+              <Trans>기본 색으로 되돌리기</Trans>
             </button>
           )}
         </>

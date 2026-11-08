@@ -1,0 +1,66 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:56+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "Enter로 만들고 옆 패널에서 나머지를 채웁니다."
+msgstr "Press Enter to create, then fill in the rest in the side panel."
+
+#: src/features/create-post/ui/quick-create.tsx
+msgctxt "group select label"
+msgid "그룹"
+msgstr "Group"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "그룹 없음"
+msgstr "No groups"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "그룹을 골라 주세요."
+msgstr "Please choose a group."
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "그룹을 불러오지 못했습니다: {err}"
+msgstr "Couldn't load groups: {err}"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgctxt "close dialog"
+msgid "닫기"
+msgstr "Close"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "만들기"
+msgstr "Create"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "만들지 못했습니다: {err}"
+msgstr "Couldn't create: {err}"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "불러오는 중"
+msgstr "Loading"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "빠른 생성"
+msgstr "Quick create"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "전체 폼으로"
+msgstr "Full form"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "제목"
+msgstr "Title"
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "제목을 적어 주세요."
+msgstr "Please enter a title."
+
+#: src/features/create-post/ui/quick-create.tsx
+msgid "형식"
+msgstr "Format"

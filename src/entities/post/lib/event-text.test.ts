@@ -1,3 +1,4 @@
+import { i18n } from "@lingui/core";
 import { describe, expect, it } from "vitest";
 import type { FeedEvent } from "@/shared/api/feed/types";
 import { relativeTime } from "@/shared/lib/time";
@@ -93,5 +94,27 @@ describe("활동 로그 문장", () => {
     expect(relativeTime("2026-10-23T11:55:00Z", now)).toBe("5분 전");
     expect(relativeTime("2026-10-23T09:00:00Z", now)).toBe("3시간 전");
     expect(relativeTime("2026-10-21T12:00:00Z", now)).toBe("2일 전");
+  });
+
+  it("영어 문장 (en 카탈로그)", () => {
+    i18n.activate("en");
+    try {
+      expect(
+        eventSentence(
+          ev({ kind: "checklist", field: "로그 확인", newValue: "done" }),
+          ctx,
+        ),
+      ).toBe("김지훈 checked off checklist item '로그 확인'");
+      expect(eventSentence(ev({ kind: "mention", newValue: "u2" }), ctx)).toBe(
+        "김지훈 mentioned 이서연 in the description",
+      );
+      expect(eventSentence(ev({ kind: "unblocked" }), ctx)).toBe(
+        "Unblocked: the blocking post was closed",
+      );
+      const now = Date.parse("2026-10-23T12:00:00Z");
+      expect(relativeTime("2026-10-23T11:55:00Z", now)).toBe("5m ago");
+    } finally {
+      i18n.activate("ko");
+    }
   });
 });

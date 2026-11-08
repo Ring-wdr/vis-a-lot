@@ -4,10 +4,11 @@
 // 탭마다 작업 store를 하나씩 가지므로 탭을 오가도 그리던 차트와 진행 상태가 그대로 남는다.
 // 탭은 로그인한 세션의 것이라 store를 모듈 전역에 두지 않고 세션마다 TabsScope가 새로 만든다.
 
+import { t } from "@lingui/core/macro";
 import { createStore } from "zustand/vanilla";
 import { api } from "@/shared/api/api";
 import type { ChartDefaults, ChartSpec } from "@/shared/api/types";
-import { defineMessages, t } from "@/shared/lib/i18n";
+import "../config/messages";
 import {
   createWorkspaceStore,
   defaultSpec,
@@ -25,20 +26,13 @@ export type WorkspaceTab = {
   historyId?: string;
 };
 
-const messages = defineMessages({
-  ko: {
-    lockedHint:
-      "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.",
-  },
-  en: {
-    lockedHint:
-      "Tabs can't be switched while drawing. Press cancel or wait until it finishes.",
-  },
-});
-
 /** 탭을 잠갔을 때 탭·화면 전환 버튼에 보여주는 안내. 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다. */
 export function tabsLockedHint() {
-  return t(messages).lockedHint;
+  return t({
+    message:
+      "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.",
+    comment: "cancel은 그리기를 멈추는 버튼 이름이다 (영어로 적힌 버튼)",
+  });
 }
 
 export type TabsState = {

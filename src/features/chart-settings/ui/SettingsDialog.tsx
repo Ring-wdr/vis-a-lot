@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { overlay } from "overlay-kit";
 import { type ReactNode, useId, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -19,9 +20,9 @@ import {
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import type { ChartSpec } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+import "../config/messages";
 import {
   type CommonSettingsForm,
   commonFormValues,
@@ -36,11 +37,6 @@ import { settingsDialog } from "./settings-dialog-styles";
 import { TooltipSettings } from "./TooltipSettings";
 
 const sd = settingsDialog();
-
-const messages = defineMessages({
-  ko: { title: "전체 설정", menu: "설정 메뉴", cancel: "취소", ok: "확인" },
-  en: { title: "Settings", menu: "Settings menu", cancel: "Cancel", ok: "OK" },
-});
 
 /**
  * 속성 모델(common.options) 밖에 저장하지만 원본에서 같은 구역에 있는 설정. 그 구역의 필드 표 위에 붙인다.
@@ -66,7 +62,7 @@ const SECTION_EXTRAS: Partial<
 const ALWAYS_SHOWN: readonly OptionSection[] = ["legend"];
 
 function SettingsBody({ onClose }: { onClose: () => void }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const titleId = useId();
   const store = useWorkspaceStore();
   // 구역 폼들은 store를 읽지 않는다. 이 팝업이 고른 값을 props로 내려 준다.
@@ -126,11 +122,11 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
     <FormProvider {...form}>
       <form className={sd.body()} onSubmit={confirm}>
         <h2 id={titleId} className={sd.title()}>
-          {text.title}
+          <Trans>전체 설정</Trans>
         </h2>
         <div className={sd.layout()}>
           <SectionMenu
-            label={text.menu}
+            label={t`설정 메뉴`}
             sections={sections}
             active={active}
             onSelect={setMenu}
@@ -151,14 +147,14 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
         </div>
         <div className={dialogActions}>
           <button type="button" className={button()} onClick={onClose}>
-            {text.cancel}
+            <Trans context="dialog button">취소</Trans>
           </button>
           <button
             type="submit"
             className={button({ variant: "primary" })}
             disabled={!isDirty}
           >
-            {text.ok}
+            <Trans context="dialog button">확인</Trans>
           </button>
         </div>
       </form>

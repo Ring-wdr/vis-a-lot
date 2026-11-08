@@ -3,7 +3,7 @@
 // 탭 하나를 바꿨을 때 다른 탭 이름이 다시 그려지면 fine-grained 구독이 깨진 것이다.
 
 import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   TabsScope,
@@ -16,6 +16,7 @@ import type {
 } from "@/entities/workspace/model/tabs-store";
 import { WorkspaceScope } from "@/entities/workspace/model/workspace-scope";
 import type { ChartDefaults } from "@/shared/api/types";
+import { renderWithI18n } from "@/shared/lib/render-with-i18n";
 import { TabBar } from "./TabBar";
 
 /** 탭 이름(TabLabel)이 렌더마다 한 번 부르는 useColumns를 데이터셋별로 센다. 탭마다 데이터셋을 다르게 둔다. */
@@ -54,7 +55,7 @@ beforeEach(() => {
   globalThis.CSS ??= { escape: (s: string) => s } as unknown as typeof CSS;
   Element.prototype.scrollIntoView ??= () => {};
 
-  render(
+  renderWithI18n(
     <TabsScope
       defaults={CHART_DEFAULTS as ChartDefaults}
       initialView={() => "gallery"}

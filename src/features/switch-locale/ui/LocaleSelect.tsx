@@ -1,14 +1,11 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { LOCALE_NAMES, LOCALES } from "@/shared/config/locale";
-import { defineMessages, setLocale, useLocale, useT } from "@/shared/lib/i18n";
+import { setLocale, useLocale } from "@/shared/lib/i18n";
 import { preferencesPopover } from "@/shared/ui/preferences-popover";
 import { segmented } from "@/shared/ui/segmented";
-
-const messages = defineMessages({
-  ko: { label: "언어" },
-  en: { label: "Language" },
-});
+import "../config/messages";
 
 const p = preferencesPopover();
 const s = segmented();
@@ -18,11 +15,12 @@ const s = segmented();
  * 버튼 폭은 같게 나눠 언어가 바뀌어도 그대로다.
  */
 export function LocaleSelect() {
-  const text = useT(messages);
   const locale = useLocale();
   return (
     <fieldset className={p.section()}>
-      <legend className={p.label()}>{text.label}</legend>
+      <legend className={p.label()}>
+        <Trans>언어</Trans>
+      </legend>
       <div className={s.root()}>
         {LOCALES.map((value) => (
           <button

@@ -1,27 +1,17 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useDefaultLegendPosition } from "@/entities/chart/model/chart-options";
 import { useColumns } from "@/shared/api/queries";
 import type { ChartSpec } from "@/shared/api/types";
 import { drawsLegend, legendColumnOf } from "@/shared/config/chart-kinds";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import type { CommonSettingsForm } from "../model/common-settings-form";
 
 const s = settingsStyles();
-
-const messages = defineMessages({
-  ko: {
-    position: "위치",
-    noLegend: "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다.",
-  },
-  en: {
-    position: "Position",
-    noLegend: "Pick a legend to draw it here. There is no legend now.",
-  },
-});
 
 /**
  * 전체 설정 · 범례 위치. 모든 item에 적용되고 item에 따로 정한 위치는 덮어쓴다.
@@ -35,7 +25,6 @@ export function LegendSettings({
   draft: ChartSpec;
   readOnly: boolean;
 }) {
-  const text = useT(messages);
   const columns = useColumns(draft.dataset);
   const { control, setValue } = useFormContext<CommonSettingsForm>();
   const legendPosition = useWatch({ control, name: "legendPosition" });
@@ -45,7 +34,7 @@ export function LegendSettings({
   return (
     <div className={s.section()}>
       <h4 className={s.heading()}>
-        {text.position}
+        <Trans context="chart option">위치</Trans>
         {legend !== null && ` · ${columns.label(legend)}`}
       </h4>
       <LegendPositionPicker
@@ -56,7 +45,11 @@ export function LegendSettings({
         }
       />
       {!drawsLegend(draft) && (
-        <p className="text-xs text-fg-muted">{text.noLegend}</p>
+        <p className="text-xs text-fg-muted">
+          <Trans>
+            legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다.
+          </Trans>
+        </p>
       )}
     </div>
   );
