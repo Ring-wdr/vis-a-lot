@@ -14,7 +14,11 @@
     "gen:api:check": "tsx scripts/gen-api.mts --check",
     "bench:db": "tsx scripts/bench-db/run.mts",
     "prepare": "husky",
-    "lint:css": "stylelint \"**/*.css\""
+    "lint:css": "stylelint \"**/*.css\"",
+    "wasm:build": "cargo build --release --manifest-path crates/Cargo.toml -p vis-compute --target wasm32-unknown-unknown && cp crates/target/wasm32-unknown-unknown/release/vis_compute.wasm server/compute/vis-compute.wasm",
+    "napi:build": "cargo build --release --manifest-path crates/Cargo.toml -p vis-compute-napi && cp crates/target/release/libvis_compute_napi.so crates/target/vis-compute-napi.node",
+    "bench:compute": "tsx scripts/bench-compute/node.mts",
+    "bench:compute:browser": "tsx scripts/bench-compute/browser.mts"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

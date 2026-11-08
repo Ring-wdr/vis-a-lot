@@ -1,0 +1,11 @@
+[package]
+name = "vis-compute"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+# cdylib: wasm32 모듈, rlib: napi 애드온이 같은 커널을 가져다 쓴다.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
