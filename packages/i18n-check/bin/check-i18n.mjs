@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 화면 문구(Lingui) 검사. lingui CLI가 잡지 못하는 것을 본다. 규칙은 docs/i18n.md.
-// 사용법: vis-a-lot-i18n-check <앱 또는 패키지 폴더>   (기본은 지금 폴더)
-//   @vis-a-lot/i18n-check 패키지의 bin이다. 앱(apps/web, apps/help)과 공유 패키지(packages/shared)가
+// 사용법: vis-a-lot-i18n-check <앱 또는 패키지 폴더> [--compiled]   (폴더 기본은 지금 폴더)
+//   @vis-a-lot/i18n-check 패키지의 bin이다. 앱(apps/web, apps/help)과 FSD 패키지(packages/shared)가
 //   devDependencies에 "workspace:*"로 선언하고 자기 package.json의 lint·build 스크립트로 부른다.
 //   그래서 이 파일이 바뀌면 turbo·Vercel이 의존 그래프로 그 앱·패키지를 다시 검사한다.
 //   앱(src/가 있는 폴더)은 src를, 패키지는 폴더 전체를 본다.
@@ -12,17 +12,30 @@
 //    두 카탈로그가 다르게 번역하면 나중에 등록한 쪽이 이긴다. msg({ message, context })로 나눈다.
 // 3. 등록: Lingui 매크로를 쓰는 파일은 그 slice의 카탈로그 등록 모듈(config/messages)을 import한다.
 //    빠뜨리면 그 화면을 먼저 열 때 번역 대신 해시 id가 보인다.
+// 4. --compiled(앱 build에서만): 앱과 앱이 쓰는 FSD 패키지의 .po마다 컴파일한 카탈로그(.ts)가 있어야 한다.
+//    카탈로그는 turbo의 i18n:compile 태스크가 만든다. 앱 스크립트를 turbo 없이 부르면 없어서 여기서 멈춘다.
 import fs from "node:fs";
 import path from "node:path";
 
-const target = path.resolve(process.argv[2] ?? ".");
+const args = process.argv.slice(2);
+const requireCompiled = args.includes("--compiled");
+const target = path.resolve(args.find((a) => !a.startsWith("--")) ?? ".");
 process.chdir(target);
-/** 앱이면 true. 앱은 src/<레이어>/…, 공유 패키지는 <segment>/… 로 나뉜다. */
+/** 앱이면 true. 앱은 src/<레이어>/…, FSD 패키지는 <segment>/… 로 나뉜다. */
 const isApp = fs.existsSync("src");
-// 앱이 쓰는 공유 패키지의 카탈로그도 실행 중에는 앱의 카탈로그와 한 표로 합쳐진다. 충돌 검사에만 넣는다.
-const SHARED = "node_modules/@vis-a-lot/shared";
-const sharedRoot =
-  isApp && fs.existsSync(SHARED) ? fs.realpathSync(SHARED) : undefined;
+const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
+const ownPkg = fs.existsSync("package.json") ? readJson("package.json") : {};
+// 앱이 쓰는 FSD 패키지(package.json에 "vis-a-lot": { "fsd": true })의 카탈로그도 실행 중에는 앱의 카탈로그와
+// 한 표로 합쳐진다. 충돌 검사에만 넣는다. 패키지 이름이나 경로를 여기 적지 않고 앱이 선언한 의존에서 찾는다.
+const fsdPackageRoots = isApp
+  ? Object.keys({ ...ownPkg.dependencies, ...ownPkg.devDependencies })
+      .map((name) => path.join("node_modules", name))
+      .filter((dir) => {
+        const file = path.join(dir, "package.json");
+        return fs.existsSync(file) && readJson(file)["vis-a-lot"]?.fsd === true;
+      })
+      .map((dir) => fs.realpathSync(dir))
+  : [];
 
 const walk = (dir, out = []) => {
   if (!fs.existsSync(dir)) return out;
@@ -153,13 +166,13 @@ function placeholders(message) {
 
 // ── 1·2: 카탈로그 ───────────────────────────────────────────
 const poFiles = files.filter((f) => f.endsWith(".po"));
-const sharedPoFiles = sharedRoot
-  ? walk(sharedRoot)
-      .filter((f) => f.endsWith(".po"))
-      .map((f) => path.relative(target, f))
-  : [];
+const sharedPoFiles = fsdPackageRoots.flatMap((root) =>
+  walk(root)
+    .filter((f) => f.endsWith(".po"))
+    .map((f) => path.relative(target, f)),
+);
 const byLocale = new Map(); // locale → Map(key → { str, file })
-// 공유 패키지의 카탈로그를 먼저 읽어 두고, 앱의 카탈로그가 그것과 다르게 번역하면 알린다.
+// FSD 패키지의 카탈로그를 먼저 읽어 두고, 앱의 카탈로그가 그것과 다르게 번역하면 알린다.
 // 패키지 카탈로그 자체의 자리표시자는 패키지가 따로 검사한다.
 for (const file of [...sharedPoFiles, ...poFiles]) {
   const own = !sharedPoFiles.includes(file);
@@ -233,6 +246,24 @@ for (const file of files) {
     errors.push(`${file}: 등록 모듈 ${target}.ts가 없다.`);
 }
 
+// ── 4: 컴파일한 카탈로그 ────────────────────────────────────
+if (requireCompiled) {
+  const missing = [...poFiles, ...sharedPoFiles].filter(
+    (f) => !fs.existsSync(f.replace(/\.po$/, ".ts")),
+  );
+  if (missing.length > 0) {
+    errors.push(
+      `컴파일한 카탈로그 ${missing.length}개가 없다 (${missing
+        .slice(0, 3)
+        .map((f) => f.replace(/\.po$/, ".ts"))
+        .join(", ")}${missing.length > 3 ? " 등" : ""}).\n` +
+        "  카탈로그는 turbo 태스크 i18n:compile이 만든다. 앱 스크립트(pnpm run build, pnpm --filter … build)를 바로 부르지 말고 " +
+        "저장소 루트에서 pnpm build(= turbo run build)나 pnpm exec turbo run build --filter=<앱>으로 돌린다. " +
+        "Vercel의 Build Command도 turbo run build여야 한다 (docs/deploy.md).",
+    );
+  }
+}
+
 if (errors.length > 0) {
   console.error(errors.join("\n"));
   console.error(`\ni18n 검사: ${errors.length}건. 규칙은 docs/i18n.md.`);
@@ -244,5 +275,5 @@ const label = fs.existsSync("package.json")
   : target;
 console.log(
   `i18n 검사 통과: ${label} ` +
-    `(카탈로그 ${poFiles.length}개${sharedPoFiles.length ? ` + 공유 패키지 ${sharedPoFiles.length}개` : ""}, 언어 ${[...byLocale.keys()].join(", ")})`,
+    `(카탈로그 ${poFiles.length}개${sharedPoFiles.length ? ` + FSD 패키지 ${sharedPoFiles.length}개` : ""}, 언어 ${[...byLocale.keys()].join(", ")})`,
 );

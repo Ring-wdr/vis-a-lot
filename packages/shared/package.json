@@ -4,7 +4,8 @@
   "private": true,
   "description": "두 앱(web, help)이 함께 쓰는 FSD shared 레이어: 언어·테마, Lingui, 디자인 토큰, 공통 UI",
   "scripts": {
-    "build": "lingui check sync && lingui compile --strict && vis-a-lot-i18n-check .",
+    "build": "lingui check sync && lingui check missing && vis-a-lot-i18n-check .",
+    "i18n:compile": "lingui compile",
     "lint": "vis-a-lot-i18n-check .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -36,5 +37,8 @@
     "react-dom": "19.3.0",
     "typescript": "5.9.3",
     "vitest": "5.0.5"
+  },
+  "vis-a-lot": {
+    "fsd": true
   }
 }

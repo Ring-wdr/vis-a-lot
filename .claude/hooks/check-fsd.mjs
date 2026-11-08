@@ -1,5 +1,5 @@
 // Write·Edit 훅: 앱(apps/<앱>/src·app)과 패키지(packages/*) 파일을 FSD 규칙(scripts/check-fsd.mjs)으로 검사한다.
-// 어떤 패키지가 FSD 대상(packages/shared)이고 어떤 패키지가 도구 패키지(packages/tsconfig 등, 검사 안 함)인지는 check-fsd.mjs가 정한다.
+// 어떤 패키지가 FSD 패키지(package.json에 "vis-a-lot": { "fsd": true })이고 어떤 패키지가 도구 패키지(packages/tsconfig 등, 앱 import만 검사)인지는 check-fsd.mjs가 정한다.
 // PreToolUse: 아직 없는 파일이면 위치만 본다. 레이어 밖에 새 파일을 만드는 Write를 막는다.
 // PostToolUse: 고친 파일의 위치와 import 방향을 본다. 어기면 사유를 Claude에게 돌려준다.
 // 둘 다 exit 2로 알리고 stderr의 사유가 Claude에게 전달된다.

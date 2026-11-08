@@ -1,3 +1,4 @@
+import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 import type { NextConfig } from "next";
 
 // feed·시각화·공유·dev 화면. 도움말(/help/**)은 다른 앱(apps/help)이 내보낸다.
@@ -13,4 +14,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Vercel Microfrontends의 기본 앱이다 (microfrontends.json, docs/deploy.md). /help/**를 뺀 모든 경로를 맡는다.
+// 기본 앱은 asset prefix를 쓰지 않는다. rewrites 변환은 기본 앱에 아무것도 더하지 않는데(자식 앱의
+// /<prefix>/_next만 다룬다) rewrites 함수가 있으면 정적 export가 경고하므로 뺀다.
+// 로컬 proxy(turbo dev)가 돌 때 앱 포트로 바로 온 요청을 proxy로 돌려보내는 redirects 변환은 dev에서만 붙는다.
+export default withMicrofrontends(nextConfig, { skipTransforms: ["rewrites"] });

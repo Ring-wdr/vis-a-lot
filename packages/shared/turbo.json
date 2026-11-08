@@ -2,15 +2,19 @@
   "$schema": "../../node_modules/turbo/schema.json",
   "extends": ["//"],
   "tasks": {
+    "i18n:compile": {
+      "inputs": [
+        "package.json",
+        "lingui.config.ts",
+        "config/locale.ts",
+        "config/locales/*.po"
+      ],
+      "outputs": ["config/locales/*.ts"]
+    },
     "build": {
-      "outputs": ["config/locales/*.ts"],
+      "dependsOn": ["^build"],
+      "outputs": [],
       "env": []
-    },
-    "test": {
-      "dependsOn": ["build"]
-    },
-    "typecheck": {
-      "dependsOn": ["build"]
     }
   }
 }

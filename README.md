@@ -74,16 +74,17 @@ pnpm workspace + [Turborepo](https://turborepo.com) 모노레포입니다. 루�
 
 ```bash
 pnpm install
-pnpm dev        # 두 앱을 함께 띄운다 (web :3000, help :3001)
-pnpm dev:web    # 시각화·피드·공유·dev (apps/web) http://localhost:3000
-pnpm dev:help   # 도움말 /help/** (apps/help)    http://localhost:3001/help
-pnpm build      # 앱마다 out/ 정적 사이트 (apps/web/out, apps/help/out)
+pnpm dev        # 두 앱(web :3000, help :3001)과 Microfrontends proxy를 함께 띄운다 → http://localhost:3024
+pnpm dev:web    # 시각화·피드·공유·dev (apps/web)만. proxy의 /help/**는 Production fallback으로 간다
+pnpm dev:help   # 도움말 /help/** (apps/help)만. 나머지 경로는 Production fallback으로 간다
+pnpm build      # 앱마다 out/ 정적 사이트 (apps/web/out, apps/help/out — help 자산은 out/help-assets/_next)
 pnpm build:web  # 앱 하나만 빌드 (= turbo run build --filter=@vis-a-lot/web). build:help도 있다
 pnpm gen:api    # 서비스 코드 → OAS(apps/web/public/openapi/*.json) → TS 타입 생성
 pnpm gen:api:check  # 생성물이 서비스 코드와 맞는지 확인 (CI용)
 pnpm test       # 모든 앱·패키지의 단위 테스트
-pnpm lint       # FSD 구조, i18n, Biome, Stylelint
+pnpm lint       # FSD 구조, i18n, Biome, Stylelint (늘 저장소 전체. 바뀐 것이 없으면 캐시로 끝난다)
 pnpm typecheck  # 모든 앱·패키지의 tsc (next typegen으로 라우트 타입을 먼저 만든다. build 없이 돈다)
+pnpm check:affected  # 루트 검사 전체 + develop 대비 바뀐 패키지의 lint·test·typecheck·build (아래 --affected)
 ```
 
 ### Turborepo
@@ -92,31 +93,41 @@ pnpm typecheck  # 모든 앱·패키지의 tsc (next typegen으로 라우트 타
 
 | 태스크 | 하는 일 | 먼저 도는 것 |
 |---|---|---|
-| `build` | shared: Lingui 카탈로그 검사·컴파일(`--strict`). 앱: 추출 누락·i18n 검사 뒤 `next build` → `out/` | `^build`(의존 패키지의 build), 앱은 `i18n:compile` |
-| `i18n:compile` | 앱의 Lingui 카탈로그 컴파일(`--strict`) → `src/**/config/locales/*.ts` | `^build` |
-| `lint` | 앱·패키지마다 i18n 검사(`vis-a-lot-i18n-check`) | `^build` |
-| `test`·`typecheck` | vitest / `next typegen && tsc --noEmit` | `^build`, `i18n:compile` (shared는 자기 `build`) |
-| `dev` | `next dev` (캐시하지 않는다) | `^build` |
+| `i18n:compile` | Lingui 카탈로그 컴파일(엄격하지 않게: 번역이 비어도 원문으로 채운다). 앱 → `src/**/config/locales/*.ts`, shared → `config/locales/*.ts`. 카탈로그를 쓰는 태스크는 이것 하나다 | `^i18n:compile` |
+| `build` | 엄격한 i18n 검사: 추출 누락(`lingui check sync`), 번역 누락(`lingui check missing`), `vis-a-lot-i18n-check`. shared는 검사만 하고, 앱은 그 뒤 `next build` → `out/` (help는 자산을 `out/help-assets`로 옮긴다) | `^build`, `i18n:compile`, 같은 패키지의 `typecheck` |
+| `lint` | 앱·패키지마다 i18n 검사(`vis-a-lot-i18n-check`, `.po`만 읽는다) | |
+| `test`·`typecheck` | vitest / `next typegen && tsc --noEmit` | `^i18n:compile`, `i18n:compile` |
+| `dev` | `next dev` (캐시하지 않는다) | `^i18n:compile`, `i18n:compile` |
 | `//#lint:fsd`·`//#lint:biome`·`//#lint:css` | 저장소 전체를 보는 루트 검사. `pnpm lint`가 앱·패키지의 `lint`와 함께 돌린다 | |
 
-- 입력이 같으면 다시 돌지 않고 캐시(`.turbo/`, 커밋하지 않음)에서 결과와 로그를 되살립니다. 같은 명령을 두 번 돌리면 `FULL TURBO`가 보입니다. 캐시를 무시하려면 `--force`.
-- 앱·패키지 디렉터리 안에서 `pnpm exec turbo run build`처럼 돌려도 그 패키지와 의존 패키지만 순서대로 돕니다. 앱 디렉터리에서 `pnpm run build`처럼 패키지 스크립트를 바로 부르면 공유 패키지 카탈로그를 만들지 않으니 turbo로 돌립니다.
-- `NEXT_PUBLIC_*` 환경 변수와 앱 폴더의 `.env*`는 `build`·`test`·`dev`의 캐시 키에 들어갑니다. 빌드 결과에 영향을 주는 환경 변수를 새로 쓰면 `turbo.json`의 `env`에 더합니다. 선언하지 않은 변수는 태스크에 전달되지 않습니다(strict env mode).
-- 원격 캐시는 쓰지 않습니다 (로컬 캐시만).
+- 번역 누락은 `build`에서만 멈춘다. 문구를 추출하고 번역을 채우기 전에도 `pnpm dev`·`pnpm test`·`pnpm typecheck`는 돈다 (빈 번역은 한국어 원문으로 보인다).
+- `build`는 같은 패키지의 `typecheck`가 끝난 뒤 돈다. `next build`는 시작할 때 `.next`를 지우고 `.next/types`·`next-env.d.ts`를 다시 쓰는데, `typecheck`(`next typegen`)도 같은 파일을 쓰기 때문이다. 순서를 `dependsOn`으로 정해 두 태스크가 한 패키지에서 동시에 돌 수 없게 했다. `typecheck`의 출력(`.next/types/**`, `next-env.d.ts`, `tsconfig.tsbuildinfo`)도 캐시에 넣는다.
 
-바뀐 패키지와 그 패키지에 의존하는 패키지만 돌리려면 `--affected`를 씁니다. 기준은 로컬 `main` 브랜치와 현재 작업 트리(커밋하지 않은 변경 포함)의 차이입니다. 기준을 바꾸려면 `TURBO_SCM_BASE`(와 `TURBO_SCM_HEAD`)를 줍니다. 로컬 `main`이 없는 clone(CI 등)에서는 기준을 찾지 못해 모든 패키지를 돌리므로 `TURBO_SCM_BASE=origin/main`처럼 적고, 얕은 clone이면 그 커밋까지 fetch합니다.
+- 입력이 같으면 다시 돌지 않고 캐시(`.turbo/`, 커밋하지 않음)에서 결과와 로그를 되살립니다. 같은 명령을 두 번 돌리면 `FULL TURBO`가 보입니다. 캐시를 무시하려면 `--force`.
+- 앱·패키지 디렉터리 안에서 `pnpm exec turbo run build`처럼 돌려도 그 패키지와 의존 패키지만 순서대로 돕니다. 앱 디렉터리에서 `pnpm run build`처럼 패키지 스크립트를 바로 부르면 카탈로그(`i18n:compile`)를 만들지 않아 "컴파일한 카탈로그가 없다"로 멈추니 turbo로 돌립니다.
+- `NEXT_PUBLIC_*` 환경 변수와 앱 폴더의 `.env*`는 `build`·`test`·`dev`의 캐시 키에 들어갑니다. 빌드 결과에 영향을 주는 환경 변수를 새로 쓰면 `turbo.json`의 `env`에 더합니다. 선언하지 않은 변수는 태스크에 전달되지 않습니다(strict env mode). 빌드에서 `VERCEL_*` 시스템 변수나 `NEXT_PUBLIC_`이 아닌 변수를 읽게 되면 반드시 `env`(캐시에 영향이 없으면 `passThroughEnv`)에 더합니다 ([docs/deploy.md](docs/deploy.md)).
+- 캐시: 로컬은 `.turbo/` 로컬 캐시만 씁니다 (`turbo login`·`turbo link`를 하지 않았습니다). Vercel 빌드의 turbo는 Vercel Remote Cache를 자동으로 써서, 한 프로젝트 빌드의 결과(예: shared 태스크)를 다른 프로젝트 빌드가 되살립니다.
+
+#### 바뀐 것만 돌리기 (`--affected`)
+
+`--affected`는 바뀐 **패키지**와 그 패키지에 의존하는 패키지의 태스크만 돌립니다. 루트 태스크(`//#lint:fsd`·`//#lint:biome`·`//#lint:css`)는 루트 패키지 파일이 바뀔 때만 affected로 잡혀, 앱 파일의 FSD·Biome 위반을 놓칩니다. 그래서 **루트 검사는 `--affected` 없이 돌리고(입력이 그대로면 캐시로 끝난다), 패키지 태스크만 `--affected`로 돌립니다.** `pnpm check:affected`가 이 순서로 돕니다 (`pnpm run lint:root` → `turbo run lint test typecheck build --affected`).
+
+기준은 `TURBO_SCM_BASE`와 현재 작업 트리(커밋하지 않은 변경 포함)의 차이입니다. 작업 브랜치의 PR은 develop으로 가므로 기준은 `origin/develop`이고(`check:affected`의 기본값), `release/<버전>` 브랜치의 PR은 main으로 가므로 `origin/main`입니다 ([docs/git-flow.md](docs/git-flow.md)). `TURBO_SCM_BASE`를 주지 않은 `--affected`는 로컬 `main`을 기준으로 삼는데, 로컬 main은 develop보다 크게 뒤처져 있어 거의 모든 패키지가 잡히니 쓰지 않습니다. 얕은 clone(CI 등)이면 기준 커밋까지 fetch합니다.
 
 ```bash
-pnpm exec turbo run build lint test typecheck --affected
+pnpm check:affected                                    # 작업 브랜치: 루트 검사 + develop 대비 바뀐 패키지
+TURBO_SCM_BASE=origin/main pnpm check:affected         # release 브랜치
 TURBO_SCM_BASE=origin/develop pnpm exec turbo run test --affected
 TURBO_SCM_BASE=HEAD pnpm exec turbo run test --affected   # 커밋하지 않은 변경만
-pnpm exec turbo run build --affected --dry   # 무엇이 돌지 보기만 한다
-pnpm exec turbo query affected               # 바뀐 패키지 목록
+TURBO_SCM_BASE=origin/develop pnpm exec turbo run build --affected --dry   # 무엇이 돌지 보기만 한다
+TURBO_SCM_BASE=origin/develop pnpm exec turbo query affected               # 바뀐 패키지 목록
 ```
 
 `apps/help/content/help/**`만 바꾸면 help만, `packages/shared`를 바꾸면 shared·web·help가, 도구 패키지(`packages/tsconfig`, `packages/i18n-check`)를 바꾸면 그것을 선언한 모든 앱·패키지가 잡힙니다.
 
-두 앱은 같은 사이트에서 경로로 나뉩니다 (`/help/**`는 help, 나머지는 web). 로컬에서는 포트가 달라 앱 사이 링크(상단 바의 help, 도움말의 시각화·피드)가 다른 앱으로 이어지지 않습니다.
+### 배포
+
+두 앱은 Vercel 프로젝트 둘(`vis-a-lot-web`, `vis-a-lot-help`)로 따로 배포하고 Vercel Microfrontends로 한 도메인에 묶습니다 (`/help/**`는 help, 나머지는 web). 커밋마다 바뀐 앱만 빌드합니다. 프로젝트 설정, Build Command(`turbo run build`), pnpm 12(Corepack), 환경 변수, 무엇이 언제 배포되는지는 [`docs/deploy.md`](docs/deploy.md)에 있습니다. 로컬에서는 `pnpm dev`의 proxy(http://localhost:3024)가 같은 방식으로 두 앱을 한 포트에 묶어 앱 사이 링크(상단 바의 help, 도움말의 시각화·피드)도 이어집니다.
 
 데모 계정은 `demo` / `demo1234`입니다.
 
@@ -133,7 +144,9 @@ NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm build:web
 pnpm workspace + Turborepo 모노레포입니다. 규칙은 [`docs/architecture.md`](docs/architecture.md), 검사는 `scripts/check-fsd.mjs`입니다.
 
 ```
-apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/share), dev 화면
+apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/share), dev 화면. Microfrontends 기본 앱
+  microfrontends.json   Vercel Microfrontends 그룹 구성·경로 (docs/deploy.md)
+  vercel.json           Vercel 프로젝트 설정 (Build Command turbo run build, out/). apps/help에도 있다
   app/                  Next.js 라우트만 둔다 (page, layout). 화면은 src/에서 불러온다
   src/                  FSD 레이어로 나눈 클라이언트 코드 (@/* = apps/web/src/*)
     application/        provider, mock 서버 부팅, ssr: false 진입점 (FSD의 app 레이어)
@@ -153,18 +166,19 @@ apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/sha
     workers/            DB Worker, Render Worker
   public/               MSW worker, 서비스별 OpenAPI 3.1 문서(openapi/, 생성물)
   scripts/              gen-api.mts(OAS·타입 생성기), bench-db/(DB 벤치마크)
-apps/help/              @vis-a-lot/help: 도움말 /help/** (로그인 없이 열리는 정적 MDX 페이지)
+apps/help/              @vis-a-lot/help: 도움말 /help/** (로그인 없이 열리는 정적 MDX 페이지). Microfrontends 자식 앱
   app/help/             도움말 라우트. basePath 없이 /help 아래에 둔다
+  scripts/              prefix-assets.mjs: build 뒤 out/_next를 out/help-assets/_next로 옮긴다
   src/                  FSD 레이어 (application/HelpShell, views/help-*, widgets/help-sidebar, shared/config/help.ts 목차, shared/ui/mdx)
   content/help/         도움말 본문(MDX). 서비스마다 폴더, 쓰는 법은 apps/help/content/help/README.md
   mdx-components.tsx    @next/mdx 필수 파일. 요소 모양은 src/shared/ui/mdx
-packages/shared/        @vis-a-lot/shared: 두 앱이 함께 쓰는 FSD shared 레이어 (config, lib, ui)
+packages/shared/        @vis-a-lot/shared: 두 앱이 함께 쓰는 FSD shared 레이어 (config, lib, ui). package.json의 "vis-a-lot": { "fsd": true }가 FSD 패키지 표식
   ui/globals.css        디자인 토큰·reset (두 앱의 app/globals.css가 import한다)
 packages/tsconfig/      @vis-a-lot/tsconfig: 공통 TypeScript 설정 (base.json). 도구 패키지라 FSD 검사 밖
 packages/i18n-check/    @vis-a-lot/i18n-check: Lingui 카탈로그 검사 bin(vis-a-lot-i18n-check). 도구 패키지
 scripts/check-fsd.mjs   FSD 레이어 위치·import 방향·앱 경계 검사 (pnpm lint, pre-commit)
 turbo.json              Turborepo 태스크 (build·i18n:compile·lint·test·typecheck·dev, 루트 검사)
-docs/                   기획서
+docs/                   기획서, 구조(architecture.md), 배포(deploy.md)
 ```
 
 ## 알려진 제약

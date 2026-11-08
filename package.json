@@ -10,6 +10,8 @@
     "build:web": "turbo run build --filter=@vis-a-lot/web",
     "build:help": "turbo run build --filter=@vis-a-lot/help",
     "lint": "turbo run lint lint:fsd lint:biome lint:css",
+    "lint:root": "turbo run lint:fsd lint:biome lint:css",
+    "check:affected": "pnpm run lint:root && TURBO_SCM_BASE=${TURBO_SCM_BASE:-origin/develop} turbo run lint test typecheck build --affected",
     "lint:fsd": "node scripts/check-fsd.mjs",
     "lint:biome": "biome check",
     "lint:css": "stylelint \"**/*.css\"",

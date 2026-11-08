@@ -82,7 +82,11 @@
     {
       "includes": [
         "apps/*/src/**",
-        "packages/shared/**",
+        "packages/*/config/**",
+        "packages/*/lib/**",
+        "packages/*/ui/**",
+        "packages/*/model/**",
+        "packages/*/api/**",
         "!apps/web/src/application/MockServerProvider.tsx",
         "!**/*.test.ts",
         "!**/*.test.tsx"
