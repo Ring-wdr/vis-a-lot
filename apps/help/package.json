@@ -4,16 +4,15 @@
   "private": true,
   "description": "vis-a-lot 도움말 문서(/help/**). 로그인 없이 열리는 정적 MDX 페이지",
   "scripts": {
-    "dev": "pnpm run lingui:compile && next dev --port 3001",
-    "build": "pnpm run i18n && next build",
+    "dev": "lingui compile && next dev --port 3001",
+    "build": "lingui check sync && vis-a-lot-i18n-check . && next build",
     "start": "next start --port 3001",
-    "i18n": "pnpm --filter @vis-a-lot/shared run i18n && lingui check sync && lingui compile --strict && node ../../scripts/check-i18n.mjs .",
-    "lint": "node ../../scripts/check-i18n.mjs .",
-    "test": "pnpm run lingui:compile && vitest run",
-    "typecheck": "pnpm run lingui:compile && tsc --noEmit",
+    "i18n:compile": "lingui compile --strict",
+    "lint": "vis-a-lot-i18n-check .",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
     "lingui:extract": "lingui extract --clean",
-    "lingui:compile": "pnpm --filter @vis-a-lot/shared run lingui:compile && lingui compile",
-    "lingui:check": "lingui check sync && lingui check missing && node ../../scripts/check-i18n.mjs ."
+    "lingui:check": "lingui check sync && lingui check missing && vis-a-lot-i18n-check ."
   },
   "dependencies": {
     "@lingui/core": "6.10.1",
@@ -39,6 +38,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vis-a-lot/i18n-check": "workspace:*",
+    "@vis-a-lot/tsconfig": "workspace:*",
+    "typescript": "5.9.3",
     "vitest": "5.0.5"
   }
 }

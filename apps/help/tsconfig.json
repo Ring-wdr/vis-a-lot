@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@vis-a-lot/tsconfig/base.json",
   "compilerOptions": {
     "plugins": [
       {

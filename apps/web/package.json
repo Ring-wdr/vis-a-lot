@@ -4,19 +4,18 @@
   "private": true,
   "description": "vis-a-lot의 시각화·피드·공유·dev 화면과 브라우저 안의 서버(MSW). /help/**는 @vis-a-lot/help가 맡는다",
   "scripts": {
-    "dev": "pnpm run lingui:compile && next dev",
-    "build": "pnpm run i18n && next build",
+    "dev": "lingui compile && next dev",
+    "build": "lingui check sync && vis-a-lot-i18n-check . && next build",
     "start": "next start",
-    "i18n": "pnpm --filter @vis-a-lot/shared run i18n && lingui check sync && lingui compile --strict && node ../../scripts/check-i18n.mjs .",
-    "lint": "node ../../scripts/check-i18n.mjs .",
-    "test": "pnpm run lingui:compile && vitest run",
-    "typecheck": "pnpm run lingui:compile && tsc --noEmit",
+    "i18n:compile": "lingui compile --strict",
+    "lint": "vis-a-lot-i18n-check .",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
     "gen:api": "tsx scripts/gen-api.mts",
     "gen:api:check": "tsx scripts/gen-api.mts --check",
     "bench:db": "tsx scripts/bench-db/run.mts",
     "lingui:extract": "lingui extract --clean",
-    "lingui:compile": "pnpm --filter @vis-a-lot/shared run lingui:compile && lingui compile",
-    "lingui:check": "lingui check sync && lingui check missing && node ../../scripts/check-i18n.mjs ."
+    "lingui:check": "lingui check sync && lingui check missing && vis-a-lot-i18n-check ."
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
@@ -74,9 +73,12 @@
     "@types/papaparse": "5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vis-a-lot/i18n-check": "workspace:*",
+    "@vis-a-lot/tsconfig": "workspace:*",
     "jsdom": "26.1.0",
     "openapi-typescript": "7.13.0",
     "tsx": "4.23.15",
+    "typescript": "5.9.3",
     "vitest": "5.0.5"
   },
   "msw": {

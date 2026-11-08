@@ -43,7 +43,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Lingui 컴파일 결과 (pnpm dev/build/test가 lingui compile로 만든다). .po는 커밋한다.
+# Lingui 컴파일 결과. 앱은 i18n:compile·dev, 패키지는 build 태스크가 lingui compile로 만든다 (turbo.json outputs). .po는 커밋한다.
 apps/*/src/**/config/locales/*.ts
 apps/*/src/application/messages.*.ts
-packages/shared/config/locales/*.ts
+packages/*/config/locales/*.ts
+
+# turbo 로컬 캐시·로그 (루트와 각 앱·패키지의 .turbo)
+.turbo/

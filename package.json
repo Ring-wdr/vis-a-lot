@@ -3,17 +3,19 @@
   "version": "0.18.0",
   "private": true,
   "scripts": {
-    "dev:web": "pnpm --filter @vis-a-lot/web dev",
-    "dev:help": "pnpm --filter @vis-a-lot/help dev",
-    "build": "pnpm -r --workspace-concurrency=1 --filter \"./apps/*\" build",
-    "build:web": "pnpm --filter @vis-a-lot/web build",
-    "build:help": "pnpm --filter @vis-a-lot/help build",
-    "lint": "node scripts/check-fsd.mjs && pnpm -r --workspace-concurrency=1 lint && biome check && stylelint \"**/*.css\"",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@vis-a-lot/web",
+    "dev:help": "turbo run dev --filter=@vis-a-lot/help",
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=@vis-a-lot/web",
+    "build:help": "turbo run build --filter=@vis-a-lot/help",
+    "lint": "turbo run lint lint:fsd lint:biome lint:css",
     "lint:fsd": "node scripts/check-fsd.mjs",
+    "lint:biome": "biome check",
     "lint:css": "stylelint \"**/*.css\"",
     "format": "biome format --write",
-    "test": "pnpm -r --workspace-concurrency=1 test",
-    "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
     "gen:api": "pnpm --filter @vis-a-lot/web gen:api",
     "gen:api:check": "pnpm --filter @vis-a-lot/web gen:api:check",
     "prepare": "husky",
@@ -23,7 +25,8 @@
     "@biomejs/biome": "2.6.2",
     "husky": "9.1.7",
     "stylelint": "17.16.0",
-    "typescript": "^5"
+    "turbo": "2.11.10",
+    "typescript": "5.9.3"
   },
   "packageManager": "pnpm@12.14.0"
 }

@@ -1,0 +1,9 @@
+{
+  "name": "@vis-a-lot/tsconfig",
+  "version": "0.18.0",
+  "private": true,
+  "description": "앱·패키지가 함께 쓰는 TypeScript 설정. tsconfig.json에서 \"extends\": \"@vis-a-lot/tsconfig/base.json\"으로 쓴다",
+  "files": [
+    "base.json"
+  ]
+}

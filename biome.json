@@ -70,6 +70,16 @@
   },
   "overrides": [
     {
+      "includes": [".claude/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUndeclaredEnvVars": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": [
         "apps/*/src/**",
         "packages/shared/**",

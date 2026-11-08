@@ -5,7 +5,11 @@
 // 검사 대상
 //   apps/<앱>/src, apps/<앱>/app   앱마다 따로 FSD 레이어를 둔다 (@/* = 그 앱의 src/*).
 //   packages/shared                 두 앱이 함께 쓰는 shared 레이어. 폴더가 곧 segment다.
+// 검사하지 않는 것
+//   packages/<도구>                 FSD 밖의 개발 도구 패키지(@vis-a-lot/tsconfig, @vis-a-lot/i18n-check 등).
+//                                   SHARED_DIR이 아닌 packages/* 는 모두 도구 패키지로 본다.
 // 앱이 import하는 @vis-a-lot/shared/<segment>/… 는 shared 레이어로 본다.
+// 도구 패키지 import는 외부 라이브러리처럼 레이어 검사에서 빼되, package.json에 선언했는지만 본다.
 // 앱과 패키지 사이는 package.json의 workspace 의존과 패키지 이름으로만 잇는다. 상대 경로로 앱 밖을 가리키거나
 // 다른 앱을 import하면 Vercel이 바뀐 앱을 고르는 의존 그래프에 드러나지 않으므로 막는다.
 import fs from "node:fs";
@@ -45,12 +49,30 @@ const walk = (dir, out = []) => {
   return out;
 };
 
-const appDirs = fs.existsSync("apps")
-  ? fs
-      .readdirSync("apps", { withFileTypes: true })
-      .filter((e) => e.isDirectory())
-      .map((e) => `apps/${e.name}`)
-  : [];
+/** <parent>/* 중 package.json이 있는 폴더 */
+const workspaceDirs = (parent) =>
+  fs.existsSync(parent)
+    ? fs
+        .readdirSync(parent, { withFileTypes: true })
+        .filter(
+          (e) =>
+            e.isDirectory() &&
+            fs.existsSync(path.join(parent, e.name, "package.json")),
+        )
+        .map((e) => `${parent}/${e.name}`)
+    : [];
+const packageName = (dir) =>
+  JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).name;
+
+const appDirs = workspaceDirs("apps");
+/** 앱 패키지 이름 (@vis-a-lot/web 등). 다른 앱 import를 막는 데 쓴다. */
+const APP_PACKAGES = new Set(appDirs.map(packageName));
+/** FSD 밖의 도구 패키지 이름 (@vis-a-lot/tsconfig, @vis-a-lot/i18n-check 등) */
+const TOOL_PACKAGES = new Set(
+  workspaceDirs("packages")
+    .filter((d) => d !== SHARED_DIR)
+    .map(packageName),
+);
 
 /** 파일이 속한 단위: 앱({ kind: "app", dir }) 또는 공유 패키지({ kind: "package", dir }) */
 function unitOf(file) {
@@ -61,7 +83,7 @@ function unitOf(file) {
 }
 
 const pkgCache = new Map();
-/** 앱 package.json에 선언한 의존 이름 */
+/** 앱·패키지 package.json에 선언한 의존 이름 */
 function declaredDeps(dir) {
   if (!pkgCache.has(dir)) {
     const file = path.join(dir, "package.json");
@@ -157,14 +179,27 @@ const IMPORT_RE = /(?:from\s+|import\s*\(\s*|import\s+)["']([^"']+)["']/g;
 function resolveImport(spec, from, unit) {
   if (spec.startsWith(SCOPE)) {
     const name = spec.split("/").slice(0, 2).join("/");
+    if (TOOL_PACKAGES.has(name)) {
+      // FSD 레이어가 없는 도구 패키지다. 외부 라이브러리처럼 보되 선언은 해야 의존 그래프에 드러난다.
+      return declaredDeps(unit.dir).has(name)
+        ? null
+        : {
+            error: `${unit.dir}/package.json에 ${name}("workspace:*")를 선언하지 않고 import했다 ("${spec}").`,
+          };
+    }
     if (unit.kind === "package") {
       return {
         error: `공유 패키지는 패키지 이름("${spec}")으로 import하지 않는다. 패키지 안은 상대 경로로, 앱은 import하지 않는다.`,
       };
     }
-    if (name !== SHARED_PACKAGE) {
+    if (APP_PACKAGES.has(name)) {
       return {
         error: `앱은 다른 앱(${name})을 import하지 않는다 ("${spec}"). 함께 쓰는 코드는 ${SHARED_DIR}로 옮긴다.`,
+      };
+    }
+    if (name !== SHARED_PACKAGE) {
+      return {
+        error: `workspace에 없는 패키지(${name})를 import했다 ("${spec}").`,
       };
     }
     if (!declaredDeps(unit.dir).has(SHARED_PACKAGE)) {
@@ -260,7 +295,7 @@ function importErrors(file) {
   return errors;
 }
 
-/** 검사할 파일인가: 앱의 src·app, 공유 패키지(node_modules 제외) */
+/** 검사할 파일인가: 앱의 src·app, 공유 패키지(node_modules 제외). 도구 패키지(packages/<도구>)는 보지 않는다. */
 function inScope(file) {
   if (file.split("/").includes("node_modules")) return false;
   const unit = unitOf(file);

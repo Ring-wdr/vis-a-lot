@@ -70,20 +70,51 @@
 
 ## 실행
 
-pnpm workspace 모노레포입니다. 루트에서 실행합니다.
+pnpm workspace + [Turborepo](https://turborepo.com) 모노레포입니다. 루트에서 실행합니다. 루트 스크립트는 `turbo run …`이라 작업 순서(공유 패키지 카탈로그 → 앱)와 캐시를 turbo가 맡습니다.
 
 ```bash
 pnpm install
+pnpm dev        # 두 앱을 함께 띄운다 (web :3000, help :3001)
 pnpm dev:web    # 시각화·피드·공유·dev (apps/web) http://localhost:3000
 pnpm dev:help   # 도움말 /help/** (apps/help)    http://localhost:3001/help
 pnpm build      # 앱마다 out/ 정적 사이트 (apps/web/out, apps/help/out)
-pnpm --filter @vis-a-lot/web build   # 앱 하나만 빌드
+pnpm build:web  # 앱 하나만 빌드 (= turbo run build --filter=@vis-a-lot/web). build:help도 있다
 pnpm gen:api    # 서비스 코드 → OAS(apps/web/public/openapi/*.json) → TS 타입 생성
 pnpm gen:api:check  # 생성물이 서비스 코드와 맞는지 확인 (CI용)
 pnpm test       # 모든 앱·패키지의 단위 테스트
 pnpm lint       # FSD 구조, i18n, Biome, Stylelint
-pnpm typecheck  # 모든 앱·패키지의 tsc
+pnpm typecheck  # 모든 앱·패키지의 tsc (next typegen으로 라우트 타입을 먼저 만든다. build 없이 돈다)
 ```
+
+### Turborepo
+
+태스크는 [`turbo.json`](turbo.json)에 있습니다 (`packages/shared/turbo.json`이 공유 패키지 몫을 덮어씁니다).
+
+| 태스크 | 하는 일 | 먼저 도는 것 |
+|---|---|---|
+| `build` | shared: Lingui 카탈로그 검사·컴파일(`--strict`). 앱: 추출 누락·i18n 검사 뒤 `next build` → `out/` | `^build`(의존 패키지의 build), 앱은 `i18n:compile` |
+| `i18n:compile` | 앱의 Lingui 카탈로그 컴파일(`--strict`) → `src/**/config/locales/*.ts` | `^build` |
+| `lint` | 앱·패키지마다 i18n 검사(`vis-a-lot-i18n-check`) | `^build` |
+| `test`·`typecheck` | vitest / `next typegen && tsc --noEmit` | `^build`, `i18n:compile` (shared는 자기 `build`) |
+| `dev` | `next dev` (캐시하지 않는다) | `^build` |
+| `//#lint:fsd`·`//#lint:biome`·`//#lint:css` | 저장소 전체를 보는 루트 검사. `pnpm lint`가 앱·패키지의 `lint`와 함께 돌린다 | |
+
+- 입력이 같으면 다시 돌지 않고 캐시(`.turbo/`, 커밋하지 않음)에서 결과와 로그를 되살립니다. 같은 명령을 두 번 돌리면 `FULL TURBO`가 보입니다. 캐시를 무시하려면 `--force`.
+- 앱·패키지 디렉터리 안에서 `pnpm exec turbo run build`처럼 돌려도 그 패키지와 의존 패키지만 순서대로 돕니다. 앱 디렉터리에서 `pnpm run build`처럼 패키지 스크립트를 바로 부르면 공유 패키지 카탈로그를 만들지 않으니 turbo로 돌립니다.
+- `NEXT_PUBLIC_*` 환경 변수와 앱 폴더의 `.env*`는 `build`·`test`·`dev`의 캐시 키에 들어갑니다. 빌드 결과에 영향을 주는 환경 변수를 새로 쓰면 `turbo.json`의 `env`에 더합니다. 선언하지 않은 변수는 태스크에 전달되지 않습니다(strict env mode).
+- 원격 캐시는 쓰지 않습니다 (로컬 캐시만).
+
+바뀐 패키지와 그 패키지에 의존하는 패키지만 돌리려면 `--affected`를 씁니다. 기준은 로컬 `main` 브랜치와 현재 작업 트리(커밋하지 않은 변경 포함)의 차이입니다. 기준을 바꾸려면 `TURBO_SCM_BASE`(와 `TURBO_SCM_HEAD`)를 줍니다. 로컬 `main`이 없는 clone(CI 등)에서는 기준을 찾지 못해 모든 패키지를 돌리므로 `TURBO_SCM_BASE=origin/main`처럼 적고, 얕은 clone이면 그 커밋까지 fetch합니다.
+
+```bash
+pnpm exec turbo run build lint test typecheck --affected
+TURBO_SCM_BASE=origin/develop pnpm exec turbo run test --affected
+TURBO_SCM_BASE=HEAD pnpm exec turbo run test --affected   # 커밋하지 않은 변경만
+pnpm exec turbo run build --affected --dry   # 무엇이 돌지 보기만 한다
+pnpm exec turbo query affected               # 바뀐 패키지 목록
+```
+
+`apps/help/content/help/**`만 바꾸면 help만, `packages/shared`를 바꾸면 shared·web·help가, 도구 패키지(`packages/tsconfig`, `packages/i18n-check`)를 바꾸면 그것을 선언한 모든 앱·패키지가 잡힙니다.
 
 두 앱은 같은 사이트에서 경로로 나뉩니다 (`/help/**`는 help, 나머지는 web). 로컬에서는 포트가 달라 앱 사이 링크(상단 바의 help, 도움말의 시각화·피드)가 다른 앱으로 이어지지 않습니다.
 
@@ -92,14 +123,14 @@ pnpm typecheck  # 모든 앱·패키지의 tsc
 세션 만료를 확인하려면 토큰 수명을 줄여 빌드합니다. refresh token은 쓸 때마다 새로 받으므로, 이 시간 동안 요청이 없으면 세션이 끝납니다.
 
 ```bash
-NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm --filter @vis-a-lot/web build
+NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm build:web
 ```
 
 `/dev` 페이지에서 DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더 경로를 따로 확인할 수 있습니다.
 
 ## 디렉터리
 
-pnpm workspace 모노레포입니다. 규칙은 [`docs/architecture.md`](docs/architecture.md), 검사는 `scripts/check-fsd.mjs`입니다.
+pnpm workspace + Turborepo 모노레포입니다. 규칙은 [`docs/architecture.md`](docs/architecture.md), 검사는 `scripts/check-fsd.mjs`입니다.
 
 ```
 apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/share), dev 화면
@@ -129,8 +160,10 @@ apps/help/              @vis-a-lot/help: 도움말 /help/** (로그인 없이 �
   mdx-components.tsx    @next/mdx 필수 파일. 요소 모양은 src/shared/ui/mdx
 packages/shared/        @vis-a-lot/shared: 두 앱이 함께 쓰는 FSD shared 레이어 (config, lib, ui)
   ui/globals.css        디자인 토큰·reset (두 앱의 app/globals.css가 import한다)
+packages/tsconfig/      @vis-a-lot/tsconfig: 공통 TypeScript 설정 (base.json). 도구 패키지라 FSD 검사 밖
+packages/i18n-check/    @vis-a-lot/i18n-check: Lingui 카탈로그 검사 bin(vis-a-lot-i18n-check). 도구 패키지
 scripts/check-fsd.mjs   FSD 레이어 위치·import 방향·앱 경계 검사 (pnpm lint, pre-commit)
-scripts/check-i18n.mjs  Lingui 카탈로그 검사 (앱·패키지마다)
+turbo.json              Turborepo 태스크 (build·i18n:compile·lint·test·typecheck·dev, 루트 검사)
 docs/                   기획서
 ```
 

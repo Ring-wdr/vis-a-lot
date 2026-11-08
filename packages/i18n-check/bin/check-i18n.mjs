@@ -1,6 +1,9 @@
+#!/usr/bin/env node
 // 화면 문구(Lingui) 검사. lingui CLI가 잡지 못하는 것을 본다. 규칙은 docs/i18n.md.
-// 사용법: node scripts/check-i18n.mjs <앱 또는 패키지 폴더>   (기본은 지금 폴더)
-//   앱(apps/web, apps/help)과 공유 패키지(packages/shared)가 각자 자기 package.json의 lint·i18n 스크립트로 부른다.
+// 사용법: vis-a-lot-i18n-check <앱 또는 패키지 폴더>   (기본은 지금 폴더)
+//   @vis-a-lot/i18n-check 패키지의 bin이다. 앱(apps/web, apps/help)과 공유 패키지(packages/shared)가
+//   devDependencies에 "workspace:*"로 선언하고 자기 package.json의 lint·build 스크립트로 부른다.
+//   그래서 이 파일이 바뀌면 turbo·Vercel이 의존 그래프로 그 앱·패키지를 다시 검사한다.
 //   앱(src/가 있는 폴더)은 src를, 패키지는 폴더 전체를 본다.
 //
 // 1. 자리표시자: 번역(msgstr)의 {이름}은 원문(msgid)에 있어야 하고, 원문의 {이름}은 번역에도 있어야 한다.
@@ -235,7 +238,11 @@ if (errors.length > 0) {
   console.error(`\ni18n 검사: ${errors.length}건. 규칙은 docs/i18n.md.`);
   process.exit(1);
 }
+/** 결과에 적을 이름: 그 폴더의 package.json 이름 (없으면 폴더 경로) */
+const label = fs.existsSync("package.json")
+  ? (JSON.parse(fs.readFileSync("package.json", "utf8")).name ?? target)
+  : target;
 console.log(
-  `i18n 검사 통과: ${path.relative(path.resolve(import.meta.dirname, ".."), target) || "."} ` +
+  `i18n 검사 통과: ${label} ` +
     `(카탈로그 ${poFiles.length}개${sharedPoFiles.length ? ` + 공유 패키지 ${sharedPoFiles.length}개` : ""}, 언어 ${[...byLocale.keys()].join(", ")})`,
 );

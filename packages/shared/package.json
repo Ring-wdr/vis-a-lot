@@ -4,12 +4,12 @@
   "private": true,
   "description": "두 앱(web, help)이 함께 쓰는 FSD shared 레이어: 언어·테마, Lingui, 디자인 토큰, 공통 UI",
   "scripts": {
+    "build": "lingui check sync && lingui compile --strict && vis-a-lot-i18n-check .",
+    "lint": "vis-a-lot-i18n-check .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "lingui:extract": "lingui extract --clean",
-    "lingui:compile": "lingui compile",
-    "i18n": "lingui check sync && lingui compile --strict && node ../../scripts/check-i18n.mjs .",
-    "lint": "node ../../scripts/check-i18n.mjs .",
-    "test": "lingui compile && vitest run",
-    "typecheck": "lingui compile && tsc --noEmit"
+    "lingui:check": "lingui check sync && lingui check missing && vis-a-lot-i18n-check ."
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
@@ -30,8 +30,11 @@
     "@lingui/vite-plugin": "6.10.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vis-a-lot/i18n-check": "workspace:*",
+    "@vis-a-lot/tsconfig": "workspace:*",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "typescript": "5.9.3",
     "vitest": "5.0.5"
   }
 }

@@ -1,23 +1,27 @@
 # 화면 구조 (모노레포 + FSD)
 
-저장소는 pnpm workspace 모노레포다. 앱 둘과 두 앱이 함께 쓰는 패키지 하나로 나뉜다.
+저장소는 pnpm workspace 모노레포다. 앱 둘, 두 앱이 함께 쓰는 FSD 패키지 하나, 개발 도구 패키지로 나뉜다. 작업 순서와 캐시는 Turborepo(`turbo.json`)가 맡는다.
 
 | 위치 | 패키지 이름 | 두는 것 |
 | --- | --- | --- |
 | `apps/web` | `@vis-a-lot/web` | 시각화(`/`), 피드(`/feed/**`), 공유(`/share`), dev 화면, 브라우저 안의 서버(`server/`, MSW worker `public/`) |
 | `apps/help` | `@vis-a-lot/help` | 도움말(`/help/**`): 라우트, 화면, 본문(`content/help`), MDX 설정 |
 | `packages/shared` | `@vis-a-lot/shared` | 두 앱이 함께 쓰는 FSD `shared` 레이어: 언어·테마(`config`, `lib`), Lingui instance, `tw`, 공통 UI(`Localized`, `StableText`, `nav`, 화면 설정 `PreferencesMenu`), 디자인 토큰 `ui/globals.css`, 도움말 경로 `config/help-routes.ts` |
+| `packages/tsconfig` | `@vis-a-lot/tsconfig` | 도구 패키지. 공통 TypeScript 설정 `base.json` (`"extends": "@vis-a-lot/tsconfig/base.json"`) |
+| `packages/i18n-check` | `@vis-a-lot/i18n-check` | 도구 패키지. Lingui 카탈로그 검사 bin `vis-a-lot-i18n-check` ([i18n.md](i18n.md)) |
 
 두 앱은 같은 사이트의 경로로 나뉜다 (`/help/**`는 help, 나머지는 web). 그래서 도움말 앱도 `basePath` 없이 라우트를 `app/help/` 아래에 둔다.
 
 - 앱은 쓰는 내부 패키지를 자기 `package.json`에 `"@vis-a-lot/shared": "workspace:*"`로 선언하고 패키지 이름으로 import한다 (`@vis-a-lot/shared/ui/nav`). 배포는 package.json의 의존 그래프로 바뀐 앱만 다시 빌드하므로, 상대 경로(`../../packages/…`)나 tsconfig paths로 우회하면 바뀐 코드가 빌드에서 빠진다.
 - 앱은 다른 앱을 import하지 않는다. 두 앱이 함께 쓰는 코드는 `packages/shared`로 옮긴다. 한 앱만 쓰는 shared 코드는 그 앱의 `src/shared`에 둔다 (API client, MSW, 도움말 목차 등).
 - 다른 앱의 화면으로 가는 링크(도움말 ↔ 시각화·피드)는 `next/link`가 아닌 일반 `<a>`로 쓴다. 같은 앱 안의 링크만 `next/link`로 쓴다.
-- 의존성은 그 앱·패키지가 실제로 쓰는 것만 자기 `package.json`에 둔다. 공통 개발 도구(Biome, Stylelint, TypeScript, husky)는 루트에 둔다.
+- 의존성은 그 앱·패키지가 실제로 쓰는 것만 자기 `package.json`에 둔다. TypeScript도 `tsc`·`next`를 돌리는 앱·패키지마다 같은 버전으로 선언한다. 저장소 전체를 보는 개발 도구(Biome, Stylelint, turbo, husky)만 루트에 둔다.
+- 앱·패키지가 함께 쓰는 설정·스크립트도 루트 파일을 상대 경로(`../../…`)로 가리키지 않고 도구 패키지(`packages/<도구>`)로 만들어 `devDependencies`에 `"workspace:*"`로 선언한다. 그래야 turbo 캐시와 배포의 의존 그래프가 그 파일이 바뀐 것을 안다. 도구 패키지에는 FSD 레이어가 없고 `scripts/check-fsd.mjs`도 보지 않는다. 앱·패키지가 도구 패키지를 import해도 레이어 검사는 하지 않고 선언했는지만 본다.
+- 앱·패키지 사이 순서는 turbo 태스크의 `dependsOn`으로만 적는다. 패키지 스크립트에서 `pnpm --filter <다른 패키지>`를 부르거나 다른 패키지 폴더에 파일을 쓰지 않는다. 공유 패키지의 컴파일 카탈로그는 `@vis-a-lot/shared`의 `build`가 만들고, 앱의 태스크는 `^build`로 그것을 먼저 돌린다.
 
 각 앱의 `src`는 [Feature-Sliced Design](https://feature-sliced.design) 레이어로만 나눈다. Next의 `app/`·`pages/`와 겹치지 않게 FSD의 `app`은 `application`, `pages`는 `views`로 이름만 바꿨다. `@/*`는 그 앱의 `src/*`다.
 
-`scripts/check-fsd.mjs`가 모든 앱의 `src`·`app`과 `packages/shared`에 아래 규칙을 검사한다. `pnpm lint`, husky `pre-commit`, Claude Code 훅(`.claude/hooks/check-fsd.mjs`)이 이 스크립트를 쓴다.
+`scripts/check-fsd.mjs`가 모든 앱의 `src`·`app`과 `packages/shared`에 아래 규칙을 검사한다(도구 패키지는 보지 않는다). `pnpm lint`(turbo 루트 태스크 `//#lint:fsd`), husky `pre-commit`, Claude Code 훅(`.claude/hooks/check-fsd.mjs`)이 이 스크립트를 쓴다.
 
 ## 레이어
 

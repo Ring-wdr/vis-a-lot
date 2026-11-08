@@ -1,0 +1,73 @@
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["out/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
+      "env": ["NEXT_PUBLIC_*"]
+    },
+    "i18n:compile": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "package.json",
+        "lingui.config.ts",
+        "src/**/*.po",
+        "src/**/config/messages.ts"
+      ],
+      "outputs": ["src/**/config/locales/*.ts", "src/application/messages.*.ts"]
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [],
+      "env": ["NEXT_PUBLIC_*"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "outputs": []
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "env": ["NEXT_PUBLIC_*"],
+      "cache": false,
+      "persistent": true
+    },
+    "//#lint:fsd": {
+      "inputs": [
+        "scripts/check-fsd.mjs",
+        "apps/*/package.json",
+        "apps/*/src/**",
+        "apps/*/app/**",
+        "packages/*/package.json",
+        "packages/shared/**",
+        "!**/node_modules/**",
+        "!**/.turbo/**",
+        "!**/*.tsbuildinfo",
+        "!apps/*/src/**/config/locales/*.ts",
+        "!apps/*/src/application/messages.*.ts",
+        "!packages/shared/config/locales/*.ts"
+      ],
+      "outputs": []
+    },
+    "//#lint:biome": {
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    },
+    "//#lint:css": {
+      "inputs": [
+        "stylelint.config.mjs",
+        "**/*.css",
+        "!**/node_modules/**",
+        "!**/.next/**",
+        "!**/out/**"
+      ],
+      "outputs": []
+    }
+  }
+}
