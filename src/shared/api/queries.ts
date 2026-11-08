@@ -113,10 +113,16 @@ export function useDatasetNames() {
   }, [datasets]);
 }
 
-export function useDatasetStatus(id: DatasetId) {
+/**
+ * 목록에서 이 데이터셋의 상태(state)만 고른다. 목록에 없으면(지운 데이터) null이다.
+ * 목록은 화면 곳곳에서 마운트할 때마다 다시 받는다. 상태만 고르면 다시 받아도 상태가 같을 때 다시 그리지 않는다.
+ * 결과의 data를 렌더 중에 읽어야 한다. 핸들러에서만 읽으면 react-query가 쓰는 필드를 몰라
+ * fetchStatus가 바뀔 때마다(다시 받을 때마다) 다시 그린다.
+ */
+export function useDatasetState(id: DatasetId) {
   return useQuery({
     ...datasetsQuery,
-    select: (data) => data.datasets.find((d) => d.id === id),
+    select: (data) => data.datasets.find((d) => d.id === id)?.state ?? null,
   });
 }
 
@@ -213,8 +219,8 @@ export function datasetSchemaQuery(
 
 /** 데이터셋 스키마(컬럼과 타입). 등록한 데이터셋만 받을 수 있다. */
 export function useDatasetSchema(id: DatasetId) {
-  const status = useDatasetStatus(id);
-  return useQuery(datasetSchemaQuery(id, status.data?.state));
+  const state = useDatasetState(id).data;
+  return useQuery(datasetSchemaQuery(id, state ?? undefined));
 }
 
 /**
@@ -229,16 +235,17 @@ export type SchemaState =
   | "deleted";
 
 export function useSchemaState(id: DatasetId): SchemaState {
-  const status = useDatasetStatus(id);
-  const schema = useDatasetSchema(id);
+  // 쓰는 값은 조건 앞에서 모두 읽는다. 렌더 중에 읽지 않은 query는 react-query가 쓰는 필드를 몰라
+  // 다시 받을 때마다 다시 그린다.
+  const { data: state, isError } = useDatasetState(id);
+  const schema = useDatasetSchema(id).data;
   // 목록을 받았는데 없으면 지운 데이터다. 남아 있는 스키마 캐시보다 먼저 본다.
-  if (status.isSuccess && !status.data) return "deleted";
-  if (schema.data) return "ready";
-  const state = status.data?.state;
+  if (state === null) return "deleted";
+  if (schema) return "ready";
   if (state === "missing") return "missing";
   if (state === "generating") return "generating";
   // 목록을 받는 중이거나, 준비됐는데 스키마를 받는 중이다.
-  return status.isError ? "missing" : "loading";
+  return isError ? "missing" : "loading";
 }
 
 /** 이 데이터셋의 컬럼 라벨·타입. 같은 이름의 컬럼이라도 데이터셋마다 다를 수 있어 데이터셋별로 찾는다. */
@@ -337,11 +344,19 @@ export function useJobRange(
  * job 전체 진행 상태(상태, 단계, 하단 진행률)를 long polling으로 받는다.
  * 페이지 long polling은 그 페이지가 끝나면 멈추므로, job이 끝났는지는 이 요청으로 안다.
  */
-export function useJobProgress(jobId: string | undefined) {
+export function useJobProgress<T = JobStateResponse>(
+  jobId: string | undefined,
+  /**
+   * 응답에서 쓸 값만 고른다. 고른 값이 같으면(구조 공유) 응답이 와도 다시 그리지 않는다.
+   * 진행률은 응답마다 바뀌므로, 상태나 개수만 쓰는 곳은 그것만 고른다.
+   */
+  select?: (job: JobStateResponse) => T,
+) {
   const client = useQueryClient();
   const queryKey = queryKeys.jobProgress(jobId ?? "");
   return useQuery({
     queryKey,
+    select,
     queryFn: async ({ signal }) => {
       const prev = client.getQueryData<JobStateResponse>(queryKey);
       const next = await api.job(

@@ -18,12 +18,11 @@ import {
   Type,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import {
-  type ChartOptionsPatch,
-  type OptionSection,
-  useDefaultOptions,
+import type {
+  ChartOptions,
+  ChartOptionsPatch,
+  OptionSection,
 } from "@/entities/chart/model/chart-options";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import { OptionSectionForm } from "./OptionSectionForm";
 
@@ -55,6 +54,7 @@ export function CommonOptionSettings({
   part,
   supported,
   original,
+  defaults,
   readOnly,
   children,
 }: {
@@ -65,11 +65,11 @@ export function CommonOptionSettings({
   supported: boolean;
   /** 저장돼 있던 공통 속성의 차트 속성 */
   original: ChartOptionsPatch | undefined;
+  /** 서버 draw와 같은 기본값 (되돌리기 기준) */
+  defaults: ChartOptions;
   readOnly: boolean;
   children?: ReactNode;
 }) {
-  const chartType = useWorkspace((w) => w.draft.chartType);
-  const defaults = useDefaultOptions(chartType);
   return (
     <div className={s.popoverBody()}>
       <OptionSectionForm
