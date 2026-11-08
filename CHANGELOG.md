@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.18.0] - 2026-11-08
+
+화면을 한국어·영어·일본어로 볼 수 있게 했다. 문구는 Lingui로 관리하고, 상단 바의 사용자 정보를 팝오버로 묶어 그 안에서 테마와 언어를 고른다. 피드 DB와 차트 렌더를 대량 데이터로 재서 빠르게 했고, 상태 구독과 effect를 정리해 다시 그리는 횟수를 줄였다.
+
+### 화면 언어
+- 한국어·English·日本語 선택. 고른 언어는 localStorage에 두고 첫 페인트 전에 `<html lang>`을 정한다. URL은 바뀌지 않는다
+- 사용자 메뉴 팝오버: 트리거는 아바타와 이름만 두고, 팝오버에 테마·언어·로그아웃. 피드·도움말 상단 바는 화면 설정 아이콘 팝오버(테마·언어). `ThemeToggle` 제거
+- 문구는 Lingui(`@lingui/core·react` 6.10, Next는 `@lingui/swc-plugin`) 매크로로 쓰고, 원문은 한국어, 번역은 FSD slice마다 `config/locales/{ko,en,ja}.po`에 둔다. 규칙은 `docs/i18n.md`, 라이브러리 비교는 `docs/i18n-library-comparison.md`
+- 도움말 본문 영어·일본어판(`content/help/vis/*.{en,ja}.mdx`). 정적 HTML은 모든 언어를 함께 그리고 `lang-*` 변형으로 하나만 보여 깜빡이지 않는다
+- 언어를 바꿔도 상단 바·사이드바 자리가 움직이지 않는다(`StableText`, 팝오버 폭 고정)
+- `scripts/check-i18n.mjs`(lint·build)가 자리표시자 빠짐과 카탈로그 사이 다른 번역을 검사하고, `pnpm build`는 추출·번역 누락에서 멈춘다
+- 번역하지 않는 것: 제품 이름, 사용자·서버 데이터, 브라우저 안 mock 서버 문구, 페이지 메타데이터(탭 제목). 일본어는 AI 번역이다
+
+### 성능
+- 피드 DB(스키마 v2): 외래 키·정렬·검색(pg_trgm GIN) 인덱스, ANALYZE(시드·가져오기·적재 뒤, 통계 없는 DB를 처음 열 때), 플래너 설정(`random_page_cost 1.1`, `work_mem 64MB`), `views.list`·`groups.list` N+1 제거. v1 DB는 데이터를 지우지 않고 인덱스만 더한다
+- 차트 데이터: 시각 epoch 식을 `date_part`로, 점 차트 데이터는 split 조합마다 묶어 받는다. scatter 100만 행 12.0초 → 3.2초
+- 렌더 Worker: line 정렬을 기수 정렬로, M4와 scatter 선형 좌표 변환을 typed array 루프로(결과는 그대로). line 100만 행 788ms → 308ms
+- zustand 구독을 원자 단위로 나누고 표현 컴포넌트는 props로 받는다. react-query 결과는 `select`로 좁힌다. 차트를 열어 다 그리는 동안 `DrawnItem` 다시 그리기 약 40회 → 0회. 기준은 `docs/state-subscriptions.md`·`docs/architecture.md`
+- 측정 도구: `pnpm bench:db`(Node 임베디드 PGlite), 컴포넌트 렌더 테스트(`*.render.test.tsx`). 보고서는 `docs/db-performance.md`
+
+### 고친 것
+- 진행률 슬라이더가 저장할 때마다 포커스를 잃던 문제
+- 다른 그룹 설정으로 옮겨도 입력하던 유형·팀 이름과 고른 멤버가 남아 다른 그룹에 들어가던 문제. 그룹 기본 정보를 고치는 중 다른 설정을 저장하면 입력이 사라지던 문제
+- heatmap에서 x와 y가 같은 컬럼이면 툴팁 줄 key가 겹치던 문제
+- 도형 그리기에서 좌표 정보를 받지 못하거나 첨부 파일을 읽지 못하면 아무 알림 없이 끝나던 문제
+- 활동 보고는 조건을 바꾸기 전에는 URL에 `?range=…`를 붙이지 않는다
+
+### 내부
+- effect로 props를 베끼던 상태를 보류 값(`usePendingValue`)과 `useOptimistic`으로, 렌더 중 `Date.now()`·ref 접근을 훅과 이벤트로 옮겼다
+- effect 트리거 우회(`attempt`·`retryTick` 등)를 query·mutation·관찰(ResizeObserver·MutationObserver)로 바꿨다
+- biome `noReactObjectTypeAsDefaultProp`·`noFloatingPromises`를 켰다
+- devDependency에 `@testing-library/react`·`jsdom`
+
 ## [0.17.0] - 2026-10-27
 
 도움말 페이지를 더했다. 로그인 없이 열리는 `/help`에 시각화 도움말 10편을 두고, 상단 바에서 바로 간다. 탭 줄과 상단 바가 좁은 창에서 깨지던 문제도 함께 고쳤다.
