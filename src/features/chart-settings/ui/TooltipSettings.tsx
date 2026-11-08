@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import type { ChartSpec } from "@/shared/api/types";
 import { defineMessages, useT } from "@/shared/lib/i18n";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import type { CommonSettingsForm } from "../model/common-settings-form";
@@ -27,10 +27,10 @@ const messages = defineMessages({
  * 전체 설정 · 툴팁의 가까운 점 표시 (scatter, line). 화면 표시만 바꾸므로 확인을 누르면 다시 그리지 않고 적용된다.
  * 다시 보기(history)에서도 바꿀 수 있다.
  */
-export function TooltipSettings() {
+export function TooltipSettings({ draft }: { draft: ChartSpec }) {
   const text = useT(messages);
   const { register } = useFormContext<CommonSettingsForm>();
-  const chartType = useWorkspace((s) => s.draft.chartType);
+  const { chartType } = draft;
   // 가까운 점은 점을 그리는 차트(scatter, line)의 툴팁에만 있다.
   if (chartType !== "scatter" && chartType !== "line") return null;
 

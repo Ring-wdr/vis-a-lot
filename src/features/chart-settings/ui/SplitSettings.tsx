@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns } from "@/shared/api/queries";
+import type { ChartSpec } from "@/shared/api/types";
 import { defineMessages, useT } from "@/shared/lib/i18n";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import type { CommonSettingsForm } from "../model/common-settings-form";
@@ -31,9 +31,15 @@ const messages = defineMessages({
 });
 
 /** 전체 설정 · 제목의 연결 문자: split 조합 이름을 이을 기호. 확인을 누르면 다음 draw에 적용된다. */
-export function SplitSettings({ readOnly }: { readOnly: boolean }) {
+export function SplitSettings({
+  draft,
+  readOnly,
+}: {
+  /** 다음 draw에 쓸 설정. 이 구역은 store를 읽지 않고 여는 쪽(SettingsDialog)이 넘긴다. */
+  draft: ChartSpec;
+  readOnly: boolean;
+}) {
   const text = useT(messages);
-  const draft = useWorkspace((s) => s.draft);
   const columns = useColumns(draft.dataset);
   const { control, register } = useFormContext<CommonSettingsForm>();
   const separator = useWatch({ control, name: "splitSeparator" });

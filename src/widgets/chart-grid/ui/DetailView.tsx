@@ -95,7 +95,6 @@ export function DetailView({
 }) {
   const text = useT(messages);
   const setFocus = useWorkspace((s) => s.setFocus);
-  const itemJobs = useWorkspace((s) => s.itemJobs);
   const [mainRef, mainArea] = useElementSize<HTMLDivElement>();
   const [listRef, listArea] = useElementSize<HTMLOListElement>();
 
@@ -117,7 +116,10 @@ export function DetailView({
   // 크기를 바꾸는 동안에는 지금 PNG를 늘려 보여주고, 멈추면 그 크기로 한 장만 받는다.
   const requestSize =
     useDebounced(displaySize, RESIZE_DEBOUNCE_MS) ?? displaySize;
-  const busy = item !== undefined && itemJobs[item.key] !== undefined;
+  // 보고 있는 item만 고른다. 다른 item을 다시 그려도(itemJobs가 바뀌어도) 크게 보기는 다시 그리지 않는다.
+  const busy = useWorkspace(
+    (s) => item !== undefined && s.itemJobs[item.key] !== undefined,
+  );
   const detail = useItemDetail(current.chartId, item, requestSize, !busy);
 
   const last = Math.max(0, totalItems - 1);

@@ -8,7 +8,7 @@ import {
   type OptionSection,
   supportsOption,
 } from "@/entities/chart/model/chart-options";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import type { ChartType } from "@/shared/api/types";
 import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button, linkButton } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
@@ -48,8 +48,13 @@ const messages = defineMessages({
 });
 
 type ItemOptionsProps = OptionsBase & {
-  itemKey: string;
   label: string;
+  /** 그린 차트의 종류. 이 차트가 쓰는 구역만 메뉴에 둔다. */
+  chartType: ChartType | undefined;
+  /** 다시 보기 전용이면 보기만 한다. */
+  readOnly: boolean;
+  /** item을 다시 그리는 동안에는 다음 변경을 보내지 않는다 (서버가 거절한다). */
+  busy: boolean;
   /**
    * 속성 모델 밖에 저장하는 같은 구역의 item 설정(legend 위치는 범례, 색은 팔레트). 그 구역의 필드 표 위에 붙는다.
    * 차트가 쓰지 않는 구역이어도 내용이 있으면 메뉴에 둔다.
@@ -91,8 +96,10 @@ export function ItemOptionsDialog(props: ItemOptionsProps) {
 const NO_EXTRAS: NonNullable<ItemOptionsProps["extras"]> = {};
 
 function ItemOptionsBody({
-  itemKey,
   label,
+  chartType,
+  readOnly,
+  busy,
   original,
   base,
   extras = NO_EXTRAS,
@@ -101,10 +108,6 @@ function ItemOptionsBody({
 }: ItemOptionsProps) {
   const text = useT(messages);
   const titleId = useId();
-  const chartType = useWorkspace((s) => s.current?.spec.chartType);
-  const readOnly = useWorkspace((s) => s.readOnly);
-  // item을 다시 그리는 동안에는 다음 변경을 보내지 않는다 (서버가 거절한다).
-  const busy = useWorkspace((s) => s.itemJobs[itemKey] !== undefined);
   const { formState, setValue } = useFormContext<OptionsFormValues>();
   const patch = useOptionsPatch({ original, base });
   const sections = OPTION_SECTIONS.filter(

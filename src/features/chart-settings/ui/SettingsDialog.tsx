@@ -18,6 +18,7 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
+import type { ChartSpec } from "@/shared/api/types";
 import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
@@ -46,7 +47,10 @@ const messages = defineMessages({
  * 저장 위치는 예전 history·공유 링크와 맞추려고 그대로 둔다.
  */
 const SECTION_EXTRAS: Partial<
-  Record<OptionSection, (props: { readOnly: boolean }) => ReactNode>
+  Record<
+    OptionSection,
+    (props: { draft: ChartSpec; readOnly: boolean }) => ReactNode
+  >
 > = {
   // Title · Concat String: split 조합 이름을 잇는 문자 (spec.splitSeparator)
   title: SplitSettings,
@@ -65,7 +69,9 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
   const text = useT(messages);
   const titleId = useId();
   const store = useWorkspaceStore();
-  const chartType = useWorkspace((s) => s.draft.chartType);
+  // 구역 폼들은 store를 읽지 않는다. 이 팝업이 고른 값을 props로 내려 준다.
+  const draft = useWorkspace((s) => s.draft);
+  const chartType = draft.chartType;
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const setShowNearest = useWorkspace((s) => s.setShowNearest);
@@ -136,9 +142,10 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
               part={active.part}
               supported={supportsOption(chartType, active.section)}
               original={opened.common.options as ChartOptionsPatch | undefined}
+              defaults={defaults}
               readOnly={readOnly}
             >
-              {Extra && <Extra readOnly={readOnly} />}
+              {Extra && <Extra draft={draft} readOnly={readOnly} />}
             </CommonOptionSettings>
           </div>
         </div>

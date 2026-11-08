@@ -1,12 +1,12 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useColumns,
-  useDatasetStatus,
+  useDatasetState,
   useLegendValues,
 } from "@/shared/api/queries";
+import type { ChartSpec } from "@/shared/api/types";
 import { legendColumnOf } from "@/shared/config/chart-kinds";
 import { defineMessages, useT } from "@/shared/lib/i18n";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
@@ -40,9 +40,15 @@ const messages = defineMessages({
  * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
  * 팝업의 폼 값만 바꾸고, 확인을 누르면 다음 draw에 쓸 설정이 된다.
  */
-export function ColorSettings({ readOnly }: { readOnly: boolean }) {
+export function ColorSettings({
+  draft,
+  readOnly,
+}: {
+  /** 다음 draw에 쓸 설정. 이 구역은 store를 읽지 않고 여는 쪽(SettingsDialog)이 넘긴다. */
+  draft: ChartSpec;
+  readOnly: boolean;
+}) {
   const text = useT(messages);
-  const draft = useWorkspace((s) => s.draft);
   const { control, setValue } = useFormContext<CommonSettingsForm>();
   const [color, legendColors] = useWatch({
     control,
@@ -53,14 +59,14 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
     setValue("color", next.color, { shouldDirty: true });
     setValue("legendColors", next.legendColors, { shouldDirty: true });
   };
-  const dataset = useDatasetStatus(draft.dataset);
+  const datasetState = useDatasetState(draft.dataset).data;
   const columns = useColumns(draft.dataset);
   // legend 컬럼을 쓰지 않는 차트(sankey)는 남아 있는 legend 값을 보이지 않는다.
   const legend = legendColumnOf(draft);
   const legendValues = useLegendValues(
     draft.dataset,
     legend,
-    dataset.data?.state === "ready",
+    datasetState === "ready",
   );
 
   const legendColorOf = (value: string, index: number) =>
@@ -84,7 +90,7 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
             {text.legendColors(columns.label(legend))}
           </h4>
           {legendValues.isPending &&
-            (dataset.data?.state === "ready" ? (
+            (datasetState === "ready" ? (
               <LegendListSkeleton />
             ) : (
               <p className="text-xs text-fg-muted">{text.waiting}</p>

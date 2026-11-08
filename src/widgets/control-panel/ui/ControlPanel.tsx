@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
 import { ChartIcon } from "@/entities/chart/ui/ChartIcon";
 import {
@@ -8,13 +9,18 @@ import {
   fitSpecToSchema,
   legendColumns,
 } from "@/entities/dataset/model/column-roles";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceStore,
+} from "@/entities/workspace/model/workspace-scope";
+import type { WorkspaceState } from "@/entities/workspace/model/workspace-store";
 import { GridPicker } from "@/features/change-grid/ui/GridPicker";
 import { DatasetSelect } from "@/features/register-dataset/ui/DatasetSelect";
 import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
 import {
   type AggFn,
   CHART_TYPES,
+  type ChartSpec,
   type ChartType,
   type ColumnInfo,
   type ColumnName,
@@ -81,13 +87,52 @@ function toOptions(columns: readonly ColumnInfo[]): Option<ColumnName>[] {
 }
 
 /**
+ * 이 패널이 보여주고 고치는 draft 필드. grid·필터·공통 속성·연결 문자는 다른 곳(GridPicker, 필터 패널, 전체 설정)이
+ * 고치므로 구독하지 않는다. 매번 새 객체를 만들므로 useShallow로 필드가 같으면 같은 값으로 본다.
+ */
+const controlFields = ({ draft: d }: WorkspaceState) => ({
+  dataset: d.dataset,
+  chartType: d.chartType,
+  subType: d.subType,
+  x: d.x,
+  y: d.y,
+  z: d.z,
+  legend: d.legend,
+  agg: d.agg,
+  splitBy: d.splitBy,
+  tooltip: d.tooltip,
+});
+
+/**
+ * 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
+ * 필터도 바로잡으므로 draft 전체를 구독한다. 패널 본문과 떼어 두어 필터를 고쳐도 패널은 다시 그리지 않는다.
+ */
+function FitDraftToSchema({
+  columns,
+  readOnly,
+}: {
+  columns: readonly ColumnInfo[] | undefined;
+  readOnly: boolean;
+}) {
+  const draft = useWorkspace((s) => s.draft);
+  const updateDraft = useWorkspace((s) => s.updateDraft);
+  useEffect(() => {
+    if (readOnly || !columns) return;
+    const patch = fitSpecToSchema(draft, columns);
+    if (patch) updateDraft(patch);
+  }, [readOnly, columns, draft, updateDraft]);
+  return null;
+}
+
+/**
  * 차트 설정. draw를 눌러야 반영된다. 다시 보기 전용 화면(history)에서는 그 차트의 설정을 보여주기만 하고
  * fieldset disabled로 안의 입력을 모두 막는다.
  */
 export function ControlPanel() {
   // 통계 함수·축·하위 차트 이름(aggLabel 등)도 지금 언어로 읽으므로 useT가 언어 변경을 구독한다.
   const text = useT(messages);
-  const draft = useWorkspace((s) => s.draft);
+  const store = useWorkspaceStore();
+  const draft = useWorkspace(useShallow(controlFields));
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const readOnly = useWorkspace((s) => s.readOnly);
   // 컬럼은 데이터마다 달라 고른 데이터셋의 스키마에서 후보를 고른다.
@@ -105,13 +150,6 @@ export function ControlPanel() {
       text.deleted
     ) : undefined;
 
-  // 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
-  useEffect(() => {
-    if (readOnly || !columns) return;
-    const patch = fitSpecToSchema(draft, columns);
-    if (patch) updateDraft(patch);
-  }, [readOnly, columns, draft, updateDraft]);
-
   const allOptions = toOptions(columns ?? []);
   const fields = CHART_FIELDS[draft.chartType];
   const subTypes = SUB_TYPES[draft.chartType];
@@ -127,6 +165,7 @@ export function ControlPanel() {
       className="group/controls flex min-w-0 flex-col gap-3.5"
       disabled={readOnly}
     >
+      <FitDraftToSchema columns={columns} readOnly={readOnly} />
       <DatasetSelect
         dataset={draft.dataset}
         onChange={(dataset) => updateDraft({ dataset })}
@@ -141,7 +180,11 @@ export function ControlPanel() {
           onChange={(type) => {
             if (type === draft.chartType) return;
             // 차트 종류마다 x축에 쓸 수 있는 타입이 달라 그에 맞게 바로잡는다. 하위 차트는 기본으로 돌린다.
-            const next = { ...draft, chartType: type, subType: null };
+            const next: ChartSpec = {
+              ...store.getState().draft,
+              chartType: type,
+              subType: null,
+            };
             updateDraft({
               chartType: type,
               subType: null,

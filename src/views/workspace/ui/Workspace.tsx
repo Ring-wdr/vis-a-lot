@@ -98,10 +98,19 @@ const panelFooter =
 const panelSection = "flex flex-col gap-2";
 const sectionTitle = "font-semibold text-xs text-fg-secondary";
 
-function GallerySidebar() {
+/**
+ * 공유 링크를 여는 일은 grid 크기와 mutation 상태를 구독한다. 사이드바가 직접 부르면 그 상태가 바뀔 때마다
+ * 설정 패널·draw 버튼까지 다시 그려지므로 아무것도 그리지 않는 컴포넌트로 떼어 둔다.
+ */
+function OpenSharedLink() {
   useOpenSharedLink();
+  return null;
+}
+
+function GallerySidebar() {
   return (
     <>
+      <OpenSharedLink />
       <div className={panelBody}>
         <ControlPanel />
       </div>
@@ -140,6 +149,22 @@ function HistorySidebar() {
 }
 
 /**
+ * 오른쪽 필터 패널. 열고 닫는 상태는 여기서만 구독한다. Workspace가 구독하면 패널을 열 때마다
+ * 헤더·탭 줄·설정 패널·차트 grid까지 모두 다시 그려진다.
+ */
+function FilterDrawer() {
+  const open = useTabs((s) => s.filterPanelOpen);
+  if (!open) return null;
+  return (
+    // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
+    // 모든 item을 새 크기로 다시 그리게 된다.
+    <div className="z-drawer col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
+      <FilterPanel />
+    </div>
+  );
+}
+
+/**
  * 작업 화면. gallery는 그리고 편집하는 곳, history는 그린 차트를 다시 보기만 하는 곳이다.
  * view마다 탭이 있고, 탭마다 작업 상태(store)를 따로 들고 있어 오가도 각자 보던 차트가 남는다.
  */
@@ -151,7 +176,6 @@ export function Workspace() {
   // history 탭이 하나도 없으면 빈 보기 전용 상태로 목록만 보여준다.
   const emptyHistory = useTabs((s) => s.emptyHistory);
   const store = tab?.store ?? emptyHistory;
-  const filterOpen = useTabs((s) => s.filterPanelOpen);
 
   // 처음 들어오면 연 차트가 없으므로 작업 화면 대신 시작 화면을 보여준다.
   if (view === null) {
@@ -183,13 +207,7 @@ export function Workspace() {
           <main className="col-2 row-4 min-h-0 min-w-0 p-4">
             <ChartGrid />
           </main>
-          {filterOpen && (
-            // 필터 패널은 차트 영역 위에 겹쳐 연다. 옆으로 밀면 차트 영역이 좁아져 레이아웃이 밀리고
-            // 모든 item을 새 크기로 다시 그리게 된다.
-            <div className="z-drawer col-[-2/-1] row-4 flex min-h-0 w-[min(18.75rem,100%)] justify-self-end shadow-drawer">
-              <FilterPanel />
-            </div>
-          )}
+          <FilterDrawer />
         </Fragment>
       </div>
     </WorkspaceScope>

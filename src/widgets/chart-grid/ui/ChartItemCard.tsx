@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   type ChartOptionsPatch,
   useDefaultLegendPosition,
@@ -31,6 +32,7 @@ import {
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
+import { supports } from "@/shared/config/chart-kinds";
 import { defineMessages, t, useT } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
@@ -212,22 +214,41 @@ function DrawnItem({
   onDoubleClick?: () => void;
 }) {
   const text = useT(messages);
-  const mode = useWorkspace((s) => s.mode);
-  const paintTool = useWorkspace((s) => s.paintTool);
-  const readOnly = useWorkspace((s) => s.readOnly);
+  // item 안의 도구(PaintToolbar, LegendCheckboxes 등)는 store를 읽지 않는다. 여기서 골라 넘긴다.
+  // 이 item이 쓰는 값을 selector 하나로 고른다. item마다 store 구독이 하나라 item이 많아도 store를 바꿀 때 드는 일이 적고,
+  // 고른 값이 모두 원시값이라 useShallow로 비교하면 이 item과 상관없는 변경에는 다시 그리지 않는다.
+  const {
+    mode,
+    paintTool,
+    readOnly,
+    checkboxesShown,
+    chartType,
+    legendPosition,
+    itemJobId,
+    selected,
+    undoCount,
+  } = useWorkspace(
+    useShallow((s) => ({
+      mode: s.mode,
+      paintTool: s.paintTool,
+      readOnly: s.readOnly,
+      // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
+      checkboxesShown:
+        s.showLegendCheckboxes && supports(s.current?.spec, "checkbox"),
+      chartType: s.current?.spec.chartType,
+      legendPosition: s.current?.spec.common.legendPosition,
+      itemJobId: s.itemJobs[item.key],
+      selected: s.selectedItem === item.key,
+      undoCount: s.undoCounts[item.key] ?? 0,
+    })),
+  );
+  // action은 store를 만들 때 정해져 바뀌지 않는다.
+  const store = useWorkspaceStore();
+  const { setPaintTool, setSelectedItem } = store.getState();
   // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const defaultPosition = useDefaultLegendPosition(
-    useWorkspace((s) => s.current?.spec.chartType),
-  );
-  const commonPosition =
-    useWorkspace((s) => s.current?.spec.common.legendPosition) ??
-    defaultPosition;
-  const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
-  const selected = useWorkspace((s) => s.selectedItem === item.key);
-  const setSelectedItem = useWorkspace((s) => s.setSelectedItem);
-  const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
-  const store = useWorkspaceStore();
+  const defaultPosition = useDefaultLegendPosition(chartType);
+  const commonPosition = legendPosition ?? defaultPosition;
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
@@ -269,6 +290,7 @@ function DrawnItem({
     <>
       <SelectedLegend image={image} display={displaySize} selected={selected} />
       <LegendCheckboxes
+        shown={checkboxesShown}
         image={image}
         display={displaySize}
         alt={item.label}
@@ -341,6 +363,8 @@ function DrawnItem({
             item={item}
             busy={busy}
             undoCount={undoCount}
+            tool={paintTool}
+            onToolChange={setPaintTool}
             onAction={action.mutate}
           />
         </div>

@@ -8,10 +8,15 @@ import {
   useWorkspace,
   useWorkspaceMutating,
   useWorkspaceMutationKey,
+  useWorkspaceStore,
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
-import { type ChartSpec, isTerminal } from "@/shared/api/types";
+import {
+  type ChartSpec,
+  isTerminal,
+  type JobStateResponse,
+} from "@/shared/api/types";
 import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
@@ -45,6 +50,8 @@ const CELLS = Array.from({ length: MAX * MAX }, (_, i) => ({
 type Grid = ChartSpec["grid"];
 
 const sameGrid = (a: Grid, b: Grid) => a.rows === b.rows && a.cols === b.cols;
+const jobStatus = (job: JobStateResponse) => job.status;
+
 const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
 
 /**
@@ -53,10 +60,10 @@ const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
  */
 export function GridPicker() {
   const text = useT(messages);
-  const draft = useWorkspace((s) => s.draft);
+  // 화면에 쓰는 값만 구독한다. 페이지·grid 영역은 누를 때 한 번 읽으면 되므로 getState로 꺼낸다.
+  const store = useWorkspaceStore();
+  const selected = useWorkspace((s) => s.draft.grid);
   const current = useWorkspace((s) => s.current);
-  const page = useWorkspace((s) => s.page);
-  const gridArea = useWorkspace((s) => s.gridArea);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
@@ -64,18 +71,21 @@ export function GridPicker() {
   const [hover, setHover] = useState<Grid>();
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
-  const job = useJobProgress(current?.jobId);
+  // 렌더링 중인지만 쓰므로 상태만 고른다 (진행률 응답마다 다시 그리지 않는다).
+  // 고른 값은 조건 앞에서 읽는다 (렌더 중에 읽어야 react-query가 이 값만 바뀔 때 다시 그린다).
+  const status = useJobProgress(current?.jobId, jobStatus).data;
 
   const change = useMutation({
     mutationKey: useWorkspaceMutationKey("grid"),
     mutationFn: (next: Grid) => {
+      const { gridArea } = store.getState();
       if (!current || !gridArea) throw new Error("no chart");
       return api.changeGrid(current.chartId, next, itemSizeFor(gridArea, next));
     },
     onSuccess: ({ jobId }, next) => {
       if (!current) return;
       // 보던 첫 item이 새 페이지 크기에서도 보이도록 페이지를 맞춘다.
-      const firstItem = page * pageSize;
+      const firstItem = store.getState().page * pageSize;
       replaceJob(
         jobId,
         { ...current.spec, grid: next },
@@ -89,9 +99,7 @@ export function GridPicker() {
   });
 
   const changing = useWorkspaceMutating("grid");
-  const rendering =
-    current !== undefined && (!job.data || !isTerminal(job.data.status));
-  const selected = draft.grid;
+  const rendering = current !== undefined && (!status || !isTerminal(status));
   const preview = hover ?? selected;
 
   const pick = (next: Grid) => {
