@@ -52,6 +52,8 @@ export function ItemSettingsDialog({
   const readOnly = useWorkspace((s) => s.readOnly);
   const common = useWorkspace((s) => s.current?.spec.common);
   const chartType = useWorkspace((s) => s.current?.spec.chartType);
+  // item을 다시 그리는 중인지. 팝업(ItemOptionsDialog)은 store를 읽지 않으므로 여기서 골라 넘긴다.
+  const busy = useWorkspace((s) => s.itemJobs[item.key] !== undefined);
   const defaults = useDefaultOptions(chartType);
   const chartDefaults = useChartDefaults();
   // 따르기 기준(공통 속성)과 열 때의 값. 팝업이 열린 동안에는 고정한다.
@@ -97,7 +99,9 @@ export function ItemSettingsDialog({
   return (
     <FormProvider {...form}>
       <ItemOptionsDialog
-        itemKey={item.key}
+        chartType={chartType}
+        readOnly={readOnly}
+        busy={busy}
         label={item.label}
         original={opened.original}
         base={opened.base}

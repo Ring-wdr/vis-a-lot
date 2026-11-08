@@ -72,7 +72,8 @@
       "includes": [
         "src/**",
         "!src/application/MockServerProvider.tsx",
-        "!src/**/*.test.ts"
+        "!src/**/*.test.ts",
+        "!src/**/*.test.tsx"
       ],
       "linter": {
         "rules": {
