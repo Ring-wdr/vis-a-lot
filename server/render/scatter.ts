@@ -264,6 +264,53 @@ export function withoutOutliers(
 /** x축 눈금 개수를 폭에서 정하는 기본값. tick.count를 바꾸면 그 값을 쓴다. */
 const DEFAULT_TICK_COUNT = DEFAULT_OPTIONS.axes.x.tick.count;
 
+/** d3 scaleLinear를 풀어 쓴 계수. t = (v - d0) / span, r0 · (1 − t) + r1 · t */
+export type LinearMap = {
+  d0: number;
+  span: number;
+  /** span이 0일 때의 t (d3와 같게 0.5, span이 NaN이면 NaN) */
+  flat: number;
+  r0: number;
+  r1: number;
+};
+
+type LinearLike = {
+  domain(): number[];
+  range(): number[];
+  /** d3 scale에는 있다. 타입이 좁혀져 없을 수도 있어 선택으로 둔다 */
+  clamp?(): boolean;
+};
+
+/**
+ * 도메인·범위가 두 칸이고 clamp가 없는 d3 선형 scale의 계수. 그 밖이면 undefined.
+ * d3(continuous.js bimap)처럼 내림차순 도메인은 도메인과 범위를 함께 뒤집어 계산한다.
+ * 기본 보간(interpolateNumber)을 쓰는 scale에만 쓴다 (축 함수는 보간을 바꾸지 않는다).
+ */
+export function linearOf(scale: LinearLike): LinearMap | undefined {
+  const d = scale.domain();
+  const r = scale.range();
+  if (d.length !== 2 || r.length !== 2 || scale.clamp?.()) return undefined;
+  let [d0, d1] = [+d[0], +d[1]];
+  let [r0, r1] = [+r[0], +r[1]];
+  if (d1 < d0) {
+    [d0, d1] = [d1, d0];
+    [r0, r1] = [r1, r0];
+  }
+  const span = d1 - d0;
+  return { d0, span, flat: Number.isNaN(span) ? Number.NaN : 0.5, r0, r1 };
+}
+
+/** linearOf 계수로 값 하나를 픽셀로. d3 scale(v)와 비트 단위로 같다 (v가 NaN이면 NaN). */
+export function atLinear(m: LinearMap, v: number) {
+  // span이 0이면 d3는 상수 t를 쓰지만 NaN 입력은 그대로 NaN(unknown)이다.
+  const t = m.span
+    ? (v - m.d0) / m.span
+    : Number.isNaN(v)
+      ? Number.NaN
+      : m.flat;
+  return m.r0 * (1 - t) + m.r1 * t;
+}
+
 /**
  * x축: 위치는 시계열도 숫자(epoch ms) 선형 축으로 계산한다. scaleUtc는 범위를 Date로 바꾸며
  * 밀리초 아래를 버려서, 1ms보다 좁게 확대하면 점이 한쪽 끝으로 밀려 보였다.
@@ -596,6 +643,10 @@ export function renderScatter(
   const focus = o.focus.enabled ? focusTest(o.focus) : undefined;
   const focused = focus ? new Uint8Array(n) : undefined;
 
+  // 점마다 d3 scale을 부르면 함수 몇 겹을 거쳐 느리다. 선형 축이면 같은 식을 풀어 쓴다 (결과는 같다).
+  const xLinear = xLog ? undefined : linearOf(x);
+  const yLinear = yAxis.log ? undefined : linearOf(y);
+
   // 픽셀 단위로 점을 줄인다. 툴팁의 "가장 가까운 점"은 이 점들 안에서 찾는다.
   const cell = new Int32Array(plot.width * plot.height).fill(-1);
   const px: number[] = [];
@@ -613,8 +664,8 @@ export function renderScatter(
   let focusedCount = 0;
   for (let i = 0; i < n; i++) {
     if (inSelection?.(xs[i], ys[i])) selectedCount++;
-    const cx = x(xs[i]);
-    const cy = y(ys[i]);
+    const cx = xLinear ? atLinear(xLinear, xs[i]) : x(xs[i]);
+    const cy = yLinear ? atLinear(yLinear, ys[i]) : y(ys[i]);
     sx[i] = cx;
     sy[i] = cy;
     if (groupIndex && off[groupIndex[i]]) continue;

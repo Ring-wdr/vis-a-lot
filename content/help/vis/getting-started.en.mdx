@@ -1,0 +1,73 @@
+vis-a-lot is a visualization tool that shows server-rendered PNG charts in your browser. You register data, pick columns to draw charts, then explore and share the charts you drew.
+
+<Callout title="It runs inside your browser, without a server">
+  This prototype runs the "server" inside your browser. Registered data and history are stored only in the browser you are using now. See [Good to know](/help/vis/faq) for details.
+</Callout>
+
+## Signing in
+
+Enter your ID and password on the first screen. The demo account is ID `demo`, password `demo1234`.
+
+If there are no requests for a while, the session ends and you need to sign in again. Log out from the user menu on the right of the top bar.
+
+## Start screen
+
+Right after signing in no chart is open yet, so the start screen appears. Pick one of the four cards to move to the workspace.
+
+| Card | What it does |
+| --- | --- |
+| Draw a new chart | Opens gallery to draw a chart |
+| Revisit history | Opens history to see charts you drew before |
+| Upload data | Uploads a CSV or zip file |
+| Manage data | Opens the list of registered data (datastore) |
+
+## Screen layout
+
+```
+┌ Top bar: upload · datastore · gallery · history · shares · feed · help     theme · user ┐
+├ Tab bar: [chart tab] [chart tab] [+]                                          [Filter] ┤
+├ Tab toolbar: mode bar │ chart tools                       Copy link · Post to feed ┤
+├ Left panel ─┬ Chart grid ─────────────────────────┬ Page scrollbar ┬ Filter panel ┤
+│ Data        │  [item] [item] [item]               │                │              │
+│ Chart·cols  │  [item] [item] [item]               │                │              │
+│ Settings    ├ Bottom bar: progress ───────────────┤                │              │
+│ draw        │                                     │                │              │
+└─────────────┴─────────────────────────────────────┴────────────────┴──────────────┘
+```
+
+### Top bar
+
+Menus for the whole app.
+
+- **upload**: Upload a file and register it as data. → [Preparing data](/help/vis/data)
+- **datastore**: The list of registered data. Sample data is registered here too.
+- **gallery**: Where you draw and edit charts.
+- **history**: Where you revisit charts you drew before. → [history](/help/vis/history)
+- **shares**: The list of shares you created. → [Export and share](/help/vis/export-share)
+- **feed**: Goes to the data sharing feed.
+- **help**: Opens this help.
+- The theme button on the right cycles system → light → dark each time you press it. Chart PNGs are redrawn in the new theme too.
+
+### Tabs
+
+Both gallery and history keep several charts open in tabs. Each tab has its own data, settings, charts and progress, so your work stays as it was when you switch tabs.
+
+- `+` opens a new gallery tab. You cannot close the last remaining tab.
+- You cannot switch tabs while a chart is being drawn. Press cancel or wait until it finishes.
+
+### Tab toolbar
+
+Tools for the charts in that tab. From the left: the **mode bar** (default, pan, zoom, select, delete, paint), the **chart tools** (show checkboxes, download, data table), and at the right end **Copy link** and **Post to feed**.
+
+### Left panel
+
+Pick the data, chart type, grid size, columns such as x and y, split by and tooltip. The **Settings** and **draw** buttons pinned at the bottom stay visible while you scroll the settings.
+
+### Chart grid and bottom bar
+
+Drawn charts are placed on the grid as items. Turn pages with the page scrollbar on the right, and watch progress and throughput in the bottom bar.
+
+## Next steps
+
+1. Register sample data in [Preparing data](/help/vis/data).
+2. Follow [Drawing charts](/help/vis/draw) to draw your first chart.

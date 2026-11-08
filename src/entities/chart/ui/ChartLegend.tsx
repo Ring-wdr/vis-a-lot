@@ -1,4 +1,6 @@
+import { useLingui } from "@lingui/react/macro";
 import type { ChartImage, LegendMeta } from "@/shared/api/types";
+import "../config/messages";
 
 type Layout = NonNullable<LegendMeta["layout"]>;
 type Entry = LegendMeta["entries"][number];
@@ -41,7 +43,8 @@ export function ChartLegend({
   image: ChartImage;
   display: { width: number; height: number };
 }) {
-  const { layout, box } = legend;
+  const { t } = useLingui();
+  const { layout, box, title } = legend;
   if (!layout || legend.entries.length === 0) return null;
   const sx = display.width / image.width;
   const sy = display.height / image.height;
@@ -82,7 +85,7 @@ export function ChartLegend({
       >
         {legend.title}
       </span>
-      <ul aria-label={`${legend.title} 범례`}>
+      <ul aria-label={t`${title} 범례`}>
         {legend.entries.map((entry) => {
           const labelX = entry.marker.x + layout.marker + 4;
           return (
@@ -98,7 +101,9 @@ export function ChartLegend({
                 }}
               >
                 {entry.value}
-                {!entry.visible && <span className="sr-only"> (숨김)</span>}
+                {!entry.visible && (
+                  <span className="sr-only">{` ${t`(숨김)`}`}</span>
+                )}
               </span>
             </li>
           );

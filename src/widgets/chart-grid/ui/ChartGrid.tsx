@@ -1,18 +1,35 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { History, LayoutGrid, TriangleAlert } from "lucide-react";
-import { useDeferredValue, useEffect, useId, useRef, useState } from "react";
+import {
+  memo,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+} from "react";
 import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
-import { isTerminal } from "@/shared/api/types";
+import {
+  type ColumnName,
+  type ItemSize,
+  type ItemState,
+  isTerminal,
+  type JobStateResponse,
+} from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
+import { intlLocale } from "@/shared/lib/i18n";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { cn } from "@/shared/lib/tw";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { ChartItemCard } from "./ChartItemCard";
 import { DetailView } from "./DetailView";
 import { JobStatusBar } from "./JobStatusBar";
@@ -67,16 +84,17 @@ function Pager({
   totalPages: number;
   onPage: (page: number) => void;
 }) {
+  const { t } = useLingui();
   if (totalPages <= 1) return null;
   return (
     <nav
       className="ml-auto flex h-full flex-none items-center gap-1.5 border-l border-line px-2"
-      aria-label="페이지"
+      aria-label={t({ message: "페이지", context: "grid pages" })}
     >
       <button
         type="button"
         className={pagerButton}
-        aria-label="이전 페이지"
+        aria-label={t`이전 페이지`}
         disabled={page === 0}
         onClick={() => onPage(page - 1)}
       >
@@ -89,7 +107,7 @@ function Pager({
       <button
         type="button"
         className={pagerButton}
-        aria-label="다음 페이지"
+        aria-label={t`다음 페이지`}
         disabled={page >= totalPages - 1}
         onClick={() => onPage(page + 1)}
       >
@@ -99,7 +117,79 @@ function Pager({
   );
 }
 
+/**
+ * 화면 크기에 맞춰 item을 다시 그린다. 다시 그리는 중인 item 목록(itemJobs)을 구독하므로
+ * grid 본문과 떼어 둔다. 본문이 구독하면 item 하나를 다시 그릴 때마다 grid 전체가 다시 그려진다.
+ */
+function AutoResize({
+  chartId,
+  job,
+  jobStatus,
+  desired,
+}: {
+  chartId: string | undefined;
+  job: JobStateResponse | undefined;
+  jobStatus: JobStateResponse["status"] | undefined;
+  desired: ItemSize | undefined;
+}) {
+  useAutoResize(chartId, job, jobStatus, desired);
+  return null;
+}
+
+/**
+ * grid 칸 하나. props가 같으면 다시 그리지 않는다. item은 react-query가 바뀌지 않은 것의 참조를
+ * 그대로 두므로(구조 공유) 진행률 응답이 와도 바뀐 item만 다시 그려진다.
+ * item 자신의 상태(선택, 다시 그리기, 도형 수)는 안에서 item 키로 골라 구독한다.
+ */
+const GridItem = memo(function GridItem({
+  item,
+  index,
+  chartId,
+  primaryJobId,
+  hasLegend,
+  displaySize,
+  tooltipColumns,
+  onOpen,
+}: {
+  item: ItemState;
+  /** 전체 item 중 순번 */
+  index: number;
+  chartId: string;
+  primaryJobId: string;
+  hasLegend: boolean;
+  displaySize: ItemSize | undefined;
+  tooltipColumns: readonly ColumnName[];
+  /** 크게 보기를 연다 (store action이라 참조가 바뀌지 않는다). */
+  onOpen: (index: number) => void;
+}) {
+  return (
+    <ChartItemCard
+      item={item}
+      onDoubleClick={() => onOpen(index)}
+      chartId={chartId}
+      primaryJobId={primaryJobId}
+      hasLegend={hasLegend}
+      displaySize={displaySize}
+      tooltipColumns={tooltipColumns}
+    />
+  );
+});
+
+/** grid가 진행률 응답에서 쓰는 값. 진행률(done·counts)은 빼서, 응답이 와도 이 값이 같으면 grid를 다시 그리지 않는다. */
+const gridProgress = (job: JobStateResponse) => ({
+  totalItems: job.totalItems,
+  status: job.status,
+  error: job.error,
+});
+
+/** 하단 job 상태 줄. 응답마다 바뀌는 진행률은 이 컴포넌트만 구독한다. */
+function JobProgressBar({ jobId }: { jobId: string }) {
+  const progress = useJobProgress(jobId);
+  return progress.data ? <JobStatusBar job={progress.data} /> : null;
+}
+
 export function ChartGrid() {
+  const { t } = useLingui();
   const areaRef = useRef<HTMLDivElement>(null);
   const setGridArea = useWorkspace((s) => s.setGridArea);
   const current = useWorkspace((s) => s.current);
@@ -112,8 +202,9 @@ export function ChartGrid() {
   const setFocus = useWorkspace((s) => s.setFocus);
   const scroller = useRef<PageScrollerHandle>(null);
   const gridId = useId();
-  // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라온다.
-  const [viewPage, setViewPage] = useState(page);
+  // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라오고,
+  // 따라잡으면 다시 page를 그대로 보여 준다.
+  const [viewPage, scrolling] = usePendingValue(page);
   // page는 zustand store 값이라 transition으로 감쌀 수 없어(외부 store 갱신은 항상 동기),
   // 조회와 item 렌더는 deferred 값으로 해 스크롤바 조작보다 뒤로 미룬다.
   const deferredPage = useDeferredValue(page);
@@ -122,27 +213,29 @@ export function ChartGrid() {
   const pageSize = grid.rows * grid.cols;
   const job = useJob(current?.jobId, deferredPage, pageSize);
   // 하단 진행률과 job 종료 여부는 job 전체 long polling으로 받는다.
-  const progress = useJobProgress(current?.jobId);
+  const progress = useJobProgress(current?.jobId, gridProgress);
   const totalItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;
   const totalPages =
     totalItems === null ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
+  const pageText = (viewPage + 1).toLocaleString(intlLocale());
+  const totalText = totalPages.toLocaleString(intlLocale());
   const jobError = progress.data?.error;
   const gridArea = useWorkspace((s) => s.gridArea);
   // PNG를 띄울 크기. resize 중에는 이 크기로 기존 PNG를 늘리거나 줄여 보여준다.
   // 화면 배율이 바뀌거나(다른 모니터로 옮김) 테마가 바뀌면 그 배율·테마로 다시 그린다.
   const pixelRatio = usePixelRatio();
   const theme = useColorScheme();
-  const displaySize = gridArea
-    ? itemSizeFor(gridArea, grid, { pixelRatio, theme })
-    : undefined;
+  // 값이 같으면 같은 참조를 넘겨 memo한 item이 다시 그려지지 않게 한다.
+  const { rows, cols } = grid;
+  const displaySize = useMemo(
+    () =>
+      gridArea
+        ? itemSizeFor(gridArea, { rows, cols }, { pixelRatio, theme })
+        : undefined,
+    [gridArea, rows, cols, pixelRatio, theme],
+  );
   const detailOpen = focus !== null && totalItems !== null;
   // 크게 보는 동안에는 grid가 보이지 않으니 grid item을 새 크기로 다시 그리지 않는다. 돌아오면 맞춘다.
-  useAutoResize(
-    current?.chartId,
-    job.data,
-    progress.data?.status,
-    detailOpen ? undefined : displaySize,
-  );
 
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.
   useEffect(() => {
@@ -151,8 +244,8 @@ export function ChartGrid() {
 
   const goToPage = (next: number) => {
     const p = Math.min(totalPages - 1, Math.max(0, next));
-    setViewPage(p);
-    setPage(p);
+    scrolling.change(p);
+    scrolling.commit(() => setPage(p));
   };
 
   // grid로 돌아오면 크게 보던 item이 있는 페이지를 보여준다.
@@ -160,9 +253,6 @@ export function ChartGrid() {
     if (focus !== null) goToPage(Math.floor(focus / pageSize));
     setFocus(null);
   };
-
-  // 페이지가 밖에서 바뀌면(grid 변경 등) 보이는 페이지도 맞춘다.
-  useEffect(() => setViewPage(page), [page]);
 
   useEffect(() => {
     const el = areaRef.current;
@@ -179,27 +269,40 @@ export function ChartGrid() {
     // grid와 하단 바를 세로로 쌓는다. 하단 바 높이(32px + 위 여백 12px)는
     // grid-layout.ts의 GRID_FOOTER_HEIGHT와 같아야 PNG 크기 계산이 맞는다.
     <div ref={areaRef} className="relative flex size-full flex-col">
+      <AutoResize
+        chartId={current?.chartId}
+        job={job.data}
+        jobStatus={progress.data?.status}
+        desired={detailOpen ? undefined : displaySize}
+      />
       {!current &&
         (opening ? (
           // history·공유 링크의 차트를 여는 중: 그 grid 모양대로 자리를 잡아 둔다.
           <div className={gridClass(draftGrid)} aria-busy="true">
             {Array.from({ length: draftGrid.rows * draftGrid.cols }, (_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: 여는 동안의 자리 표시용
-              <ChartItemCard key={i} placeholder="차트 여는 중" />
+              <ChartItemCard key={i} placeholder={t`차트 여는 중`} />
             ))}
           </div>
         ) : readOnly ? (
-          <EmptyState icon={<History size={20} />} title="다시 볼 차트 고르기">
-            왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시
-            그립니다.
+          <EmptyState
+            icon={<History size={20} />}
+            title={t`다시 볼 차트 고르기`}
+          >
+            <Trans>
+              왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시
+              그립니다.
+            </Trans>
           </EmptyState>
         ) : (
           <EmptyState
             icon={<LayoutGrid size={20} />}
-            title="아직 그린 차트가 없습니다"
+            title={t`아직 그린 차트가 없습니다`}
           >
-            왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면
-            조합마다 item 하나씩 grid로 그립니다.
+            <Trans>
+              왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면
+              조합마다 item 하나씩 grid로 그립니다.
+            </Trans>
           </EmptyState>
         ))}
       {current && (
@@ -220,12 +323,11 @@ export function ChartGrid() {
                 onWheel={(e) => scroller.current?.wheel(e.deltaY)}
               >
                 {job.data?.items.map((item, i) => (
-                  <ChartItemCard
+                  <GridItem
                     key={item.key}
                     item={item}
-                    onDoubleClick={() =>
-                      setFocus(job.data.page * job.data.pageSize + i)
-                    }
+                    index={job.data.page * job.data.pageSize + i}
+                    onOpen={setFocus}
                     chartId={current.chartId}
                     primaryJobId={current.jobId}
                     hasLegend={drawsLegend(current.spec)}
@@ -243,8 +345,8 @@ export function ChartGrid() {
                       key={i}
                       placeholder={
                         job.data?.phase === "dataset"
-                          ? "데이터 준비 중"
-                          : "데이터 조회"
+                          ? t`데이터 준비 중`
+                          : t`데이터 조회`
                       }
                     />
                   ))}
@@ -254,9 +356,9 @@ export function ChartGrid() {
                     <div className="col-span-full row-span-full self-center">
                       <EmptyState
                         icon={<TriangleAlert size={20} />}
-                        title="그리지 못했습니다"
+                        title={t`그리지 못했습니다`}
                       >
-                        {jobError ?? "다시 draw를 눌러 보세요."}
+                        {jobError ?? <Trans>다시 draw를 눌러 보세요.</Trans>}
                       </EmptyState>
                     </div>
                   )}
@@ -267,8 +369,11 @@ export function ChartGrid() {
                     aria-live="polite"
                   >
                     <Spinner />
-                    {(viewPage + 1).toLocaleString()} /{" "}
-                    {totalPages.toLocaleString()} 페이지로 이동 중…
+                    {t({
+                      message: `${pageText} / ${totalText} 페이지로 이동 중…`,
+                      comment:
+                        "pageText: 지금 페이지 번호, totalText: 전체 페이지 수",
+                    })}
                   </div>
                 )}
               </div>
@@ -277,8 +382,8 @@ export function ChartGrid() {
                 controls={gridId}
                 viewPage={viewPage}
                 totalPages={totalPages}
-                onPage={setPage}
-                onViewPage={setViewPage}
+                onPage={(p) => scrolling.commit(() => setPage(p))}
+                onViewPage={scrolling.change}
               />
             </div>
           )}
@@ -291,7 +396,7 @@ export function ChartGrid() {
                   {job.error.message}
                 </span>
               ) : (
-                progress.data && <JobStatusBar job={progress.data} />
+                <JobProgressBar jobId={current.jobId} />
               )}
             </div>
             {!detailOpen && (

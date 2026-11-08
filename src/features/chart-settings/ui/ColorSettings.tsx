@@ -1,12 +1,13 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import {
   useColumns,
-  useDatasetStatus,
+  useDatasetState,
   useLegendValues,
 } from "@/shared/api/queries";
+import type { ChartSpec } from "@/shared/api/types";
 import { legendColumnOf } from "@/shared/config/chart-kinds";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { linkButton } from "@/shared/ui/button";
@@ -14,6 +15,7 @@ import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import type { CommonSettingsForm } from "../model/common-settings-form";
 
 const s = settingsStyles();
@@ -22,8 +24,15 @@ const s = settingsStyles();
  * 전체 설정 · 팔레트의 기본 색. legend가 없으면 한 가지 색, 있으면 legend 값별 기본 색을 바꾼다.
  * 팝업의 폼 값만 바꾸고, 확인을 누르면 다음 draw에 쓸 설정이 된다.
  */
-export function ColorSettings({ readOnly }: { readOnly: boolean }) {
-  const draft = useWorkspace((s) => s.draft);
+export function ColorSettings({
+  draft,
+  readOnly,
+}: {
+  /** 다음 draw에 쓸 설정. 이 구역은 store를 읽지 않고 여는 쪽(SettingsDialog)이 넘긴다. */
+  draft: ChartSpec;
+  readOnly: boolean;
+}) {
+  const { t } = useLingui();
   const { control, setValue } = useFormContext<CommonSettingsForm>();
   const [color, legendColors] = useWatch({
     control,
@@ -34,16 +43,17 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
     setValue("color", next.color, { shouldDirty: true });
     setValue("legendColors", next.legendColors, { shouldDirty: true });
   };
-  const dataset = useDatasetStatus(draft.dataset);
+  const datasetState = useDatasetState(draft.dataset).data;
   const columns = useColumns(draft.dataset);
   // legend 컬럼을 쓰지 않는 차트(sankey)는 남아 있는 legend 값을 보이지 않는다.
   const legend = legendColumnOf(draft);
   const legendValues = useLegendValues(
     draft.dataset,
     legend,
-    dataset.data?.state === "ready",
+    datasetState === "ready",
   );
 
+  const column = legend === null ? "" : columns.label(legend);
   const legendColorOf = (value: string, index: number) =>
     common.legendColors?.[value] ?? defaultLegendColor(index);
 
@@ -51,7 +61,9 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
     <div className={s.section()}>
       {legend === null ? (
         <>
-          <h4 className={s.heading()}>기본 색</h4>
+          <h4 className={s.heading()}>
+            <Trans>기본 색</Trans>
+          </h4>
           <ColorSwatches
             value={common.color}
             disabled={readOnly}
@@ -62,14 +74,14 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
       ) : (
         <>
           <h4 className={s.heading()}>
-            범례 값별 색 · {columns.label(legend)}
+            <Trans>범례 값별 색 · {column}</Trans>
           </h4>
           {legendValues.isPending &&
-            (dataset.data?.state === "ready" ? (
+            (datasetState === "ready" ? (
               <LegendListSkeleton />
             ) : (
               <p className="text-xs text-fg-muted">
-                데이터가 준비되면 legend 값이 표시됩니다.
+                <Trans>데이터가 준비되면 legend 값이 표시됩니다.</Trans>
               </p>
             ))}
           <ul className={s.legendList()}>
@@ -81,7 +93,7 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
                     className={s.legendSwatch()}
                     style={{ background: color }}
                     color={color}
-                    label={`${value} 색 바꾸기`}
+                    label={t`${value} 색 바꾸기`}
                     disabled={readOnly}
                     onCommit={(next) =>
                       change({
@@ -104,7 +116,7 @@ export function ColorSettings({ readOnly }: { readOnly: boolean }) {
               className={linkButton()}
               onClick={() => change({ ...common, legendColors: undefined })}
             >
-              기본 색으로 되돌리기
+              <Trans>기본 색으로 되돌리기</Trans>
             </button>
           )}
         </>

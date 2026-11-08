@@ -1,9 +1,12 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useMemo } from "react";
-import { COLUMN_TYPE_LABELS } from "@/entities/dataset/lib/labels";
+import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import type { ColumnType, CsvPreview } from "@/shared/api/types";
+import { intlLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
+import "../config/messages";
 
 const AUTO = "auto";
 
@@ -48,6 +51,21 @@ export function PreviewGrid({
   onIncludeAll: (included: boolean) => void;
   onType: (name: string, type: ColumnType | undefined) => void;
 }) {
+  const { t } = useLingui();
+  const labels = useDatasetLabels();
+  const columnTypeLabel = (name: string) =>
+    t({ message: `${name} 타입`, comment: "name: 컬럼 이름" });
+  const autoLabel = (inferred: ColumnType) => {
+    const type = labels.columnTypes[inferred];
+    return t({
+      message: `자동 (${type})`,
+      comment: "type: 자동으로 고른 컬럼 타입 이름",
+    });
+  };
+  const invalidLabel = (n: number) => {
+    const count = n.toLocaleString(intlLocale());
+    return t`변환 불가 ${count}개`;
+  };
   const invalid = useMemo(
     () => new Set(preview.invalid.map(([r, c]) => `${r}:${c}`)),
     [preview.invalid],
@@ -63,7 +81,7 @@ export function PreviewGrid({
             <th className={cn(headRowHead, firstRow)}>
               <input
                 type="checkbox"
-                aria-label="모든 컬럼 적재"
+                aria-label={t`모든 컬럼 적재`}
                 checked={allIncluded}
                 ref={(el) => {
                   if (el) el.indeterminate = !allIncluded && !noneIncluded;
@@ -94,7 +112,10 @@ export function PreviewGrid({
             ))}
           </tr>
           <tr>
-            <th className={cn(headRowHead, secondRow)} aria-label="행 번호" />
+            <th
+              className={cn(headRowHead, secondRow)}
+              aria-label={t`행 번호`}
+            />
             {columns.map((c) => (
               <th
                 key={c.name}
@@ -102,7 +123,7 @@ export function PreviewGrid({
                 data-excluded={!c.included || undefined}
               >
                 <select
-                  aria-label={`${c.name} 타입`}
+                  aria-label={columnTypeLabel(c.name)}
                   className="w-full rounded-sm border border-line bg-elevated px-1 py-0.5 text-xs"
                   value={c.chosen ?? AUTO}
                   disabled={!c.included}
@@ -115,11 +136,9 @@ export function PreviewGrid({
                     )
                   }
                 >
-                  <option value={AUTO}>
-                    자동 ({COLUMN_TYPE_LABELS[c.inferred]})
-                  </option>
+                  <option value={AUTO}>{autoLabel(c.inferred)}</option>
                   {(
-                    Object.entries(COLUMN_TYPE_LABELS) as [ColumnType, string][]
+                    Object.entries(labels.columnTypes) as [ColumnType, string][]
                   ).map(([type, label]) => (
                     <option key={type} value={type}>
                       {label}
@@ -128,7 +147,7 @@ export function PreviewGrid({
                 </select>
                 {c.included && c.invalid ? (
                   <span className="mt-0.5 block text-2xs font-normal text-danger">
-                    변환 불가 {c.invalid.toLocaleString()}개
+                    {invalidLabel(c.invalid)}
                   </span>
                 ) : null}
               </th>
@@ -155,7 +174,7 @@ export function PreviewGrid({
                     data-excluded={!column?.included || undefined}
                     data-invalid={bad || undefined}
                     data-null={value === null || undefined}
-                    title={bad ? "이 타입으로 바꿀 수 없는 값" : undefined}
+                    title={bad ? t`이 타입으로 바꿀 수 없는 값` : undefined}
                   >
                     {value ?? "null"}
                   </td>

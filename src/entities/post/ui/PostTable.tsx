@@ -3,6 +3,8 @@
 // 리스트 표: 열 선택·정렬·그룹핑·다중 선택. 리스트, 내 작업, 저장된 뷰(리스트 표시)가 쓴다.
 // 정렬은 받은 행 안에서 화면이 한다 (서버 정렬은 화면의 정렬 고르기가 맡는다).
 
+import { t } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   type ColumnDef,
   createColumnHelper,
@@ -24,7 +26,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { priorityLabel } from "@/entities/post/lib/labels";
 import {
-  COLUMN_LABELS,
+  columnLabels,
   DEFAULT_COLUMNS,
   groupPosts,
   POST_COLUMNS,
@@ -36,6 +38,7 @@ import type {
   PostSummary,
   ViewGroupBy,
 } from "@/shared/api/feed/types";
+import { type Locale, linguiFor, useLocale } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import {
   DueLabel,
@@ -48,6 +51,7 @@ import {
   useToday,
   useUserName,
 } from "./post-meta";
+import "../config/messages";
 
 export { POST_COLUMNS, type PostColumn };
 
@@ -94,21 +98,25 @@ type Ctx = {
   userName: (id: string) => string;
   today: string;
   onOpen?: (key: string) => void;
+  /** 열 이름의 언어. 바뀌면 열을 다시 만든다 */
+  locale: Locale;
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: 열마다 값 타입이 달라 목록으로 모을 때는 any로 둔다
 type PostColumnDef = ColumnDef<typeof features, PostSummary, any>;
 
 function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
+  const labels = columnLabels(ctx.locale);
+  const blocked = t(linguiFor(ctx.locale))`막힘`;
   const defs: Record<PostColumn, PostColumnDef> = {
     key: helper.accessor("key", {
       id: "key",
-      header: COLUMN_LABELS.key,
+      header: labels.key,
       sortFn: "alphanumeric",
     }),
     title: helper.accessor("title", {
       id: "title",
-      header: COLUMN_LABELS.title,
+      header: labels.title,
       sortFn: "alphanumeric",
       cell: ({ row }) => (
         <span className="flex min-w-0 items-center gap-1.5">
@@ -127,7 +135,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
             <Ban
               size={12}
               className="flex-none text-danger"
-              aria-label="막힘"
+              aria-label={blocked}
             />
           )}
         </span>
@@ -135,7 +143,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
     }),
     status: helper.accessor((p) => statusOrder(p.status), {
       id: "status",
-      header: COLUMN_LABELS.status,
+      header: labels.status,
       sortFn: "basic",
       cell: ({ row }) => (
         <StatusBadge
@@ -146,7 +154,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
     }),
     priority: helper.accessor("priority", {
       id: "priority",
-      header: COLUMN_LABELS.priority,
+      header: labels.priority,
       sortFn: "basic",
       sortDescFirst: true,
       cell: ({ row }) => (
@@ -157,7 +165,7 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
       (p) => (p.assigneeId ? ctx.userName(p.assigneeId) : undefined),
       {
         id: "assignee",
-        header: COLUMN_LABELS.assignee,
+        header: labels.assignee,
         sortFn: "alphanumeric",
         sortUndefined: "last",
         cell: ({ row }) => <UserChip userId={row.original.assigneeId} />,
@@ -165,25 +173,25 @@ function buildColumns(cols: readonly PostColumn[], ctx: Ctx): PostColumnDef[] {
     ),
     dueDate: helper.accessor((p) => p.dueDate ?? undefined, {
       id: "dueDate",
-      header: COLUMN_LABELS.dueDate,
+      header: labels.dueDate,
       sortFn: "basic",
       sortUndefined: "last",
       cell: ({ row }) => <DueLabel post={row.original} today={ctx.today} />,
     }),
     updatedAt: helper.accessor("updatedAt", {
       id: "updatedAt",
-      header: COLUMN_LABELS.updatedAt,
+      header: labels.updatedAt,
       sortFn: "basic",
       sortDescFirst: true,
       cell: ({ row }) => (
         <time dateTime={row.original.updatedAt}>
-          {dayTime.format(new Date(row.original.updatedAt))}
+          {dayTime(ctx.locale).format(new Date(row.original.updatedAt))}
         </time>
       ),
     }),
     thumbnail: helper.display({
       id: "thumbnail",
-      header: COLUMN_LABELS.thumbnail,
+      header: labels.thumbnail,
       enableSorting: false,
       cell: ({ row }) => (
         <Thumb
@@ -206,6 +214,7 @@ function SelectAll({
   partial: boolean;
   onChange: (on: boolean) => void;
 }) {
+  const { t } = useLingui();
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (ref.current) ref.current.indeterminate = partial;
@@ -216,7 +225,7 @@ function SelectAll({
       type="checkbox"
       className="size-3.5 cursor-pointer accent-accent"
       checked={checked}
-      aria-label="모두 선택"
+      aria-label={t`모두 선택`}
       onChange={(e) => onChange(e.currentTarget.checked)}
     />
   );
@@ -230,6 +239,8 @@ export function PostTable({
   onSelectedChange,
   onOpen,
 }: PostTableProps) {
+  const locale = useLocale();
+  const { t } = useLingui();
   const userName = useUserName();
   const statusName = useStatusName();
   const today = useToday();
@@ -237,11 +248,9 @@ export function PostTable({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const selectable = !!selected && !!onSelectedChange;
 
-  const colKey = columns.join(",");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 열은 이름 목록(colKey)이 바뀔 때만 다시 만든다
   const defs = useMemo(
-    () => buildColumns(columns, { userName, today, onOpen }),
-    [colKey, userName, today, onOpen],
+    () => buildColumns(columns, { userName, today, onOpen, locale }),
+    [columns, userName, today, onOpen, locale],
   );
 
   const table = useTable({
@@ -265,13 +274,14 @@ export function PostTable({
       {
         status: (s: PostStatus) => statusName(s, groupOf.get(s)),
         user: userName,
-        priority: priorityLabel,
+        priority: (p: number) => priorityLabel(p, locale),
       },
+      locale,
     ).map((g) => ({
       ...g,
       rows: g.posts.flatMap((p) => byId.get(p.id) ?? []),
     }));
-  }, [rows, groupBy, posts, statusName, userName]);
+  }, [rows, groupBy, posts, statusName, userName, locale]);
 
   const ids = posts.map((p) => p.id);
   const selectedCount = selectable
@@ -287,35 +297,38 @@ export function PostTable({
     onSelectedChange(next);
   };
 
-  const renderRow = (row: (typeof rows)[number]) => (
-    <tr
-      key={row.id}
-      data-selected={(selectable && selected.has(row.id)) || undefined}
-      className="cursor-pointer hover:bg-panel-hover data-selected:bg-accent-soft"
-      onClick={() => onOpen?.(row.original.key)}
-    >
-      {selectable && (
-        <td className={cell({ class: "w-8" })}>
-          <input
-            type="checkbox"
-            className="size-3.5 cursor-pointer accent-accent"
-            checked={selected.has(row.id)}
-            aria-label={`${row.original.key} 선택`}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => toggle(row.id, e.currentTarget.checked)}
-          />
-        </td>
-      )}
-      {row.getAllCells().map((c) => (
-        <td
-          key={c.id}
-          className={cell({ class: COLUMN_CLASS[c.column.id as PostColumn] })}
-        >
-          <table.FlexRender cell={c} />
-        </td>
-      ))}
-    </tr>
-  );
+  const renderRow = (row: (typeof rows)[number]) => {
+    const { key } = row.original;
+    return (
+      <tr
+        key={row.id}
+        data-selected={(selectable && selected.has(row.id)) || undefined}
+        className="cursor-pointer hover:bg-panel-hover data-selected:bg-accent-soft"
+        onClick={() => onOpen?.(row.original.key)}
+      >
+        {selectable && (
+          <td className={cell({ class: "w-8" })}>
+            <input
+              type="checkbox"
+              className="size-3.5 cursor-pointer accent-accent"
+              checked={selected.has(row.id)}
+              aria-label={t`${key} 선택`}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => toggle(row.id, e.currentTarget.checked)}
+            />
+          </td>
+        )}
+        {row.getAllCells().map((c) => (
+          <td
+            key={c.id}
+            className={cell({ class: COLUMN_CLASS[c.column.id as PostColumn] })}
+          >
+            <table.FlexRender cell={c} />
+          </td>
+        ))}
+      </tr>
+    );
+  };
 
   return (
     // relative: 칸 안의 sr-only 글자(absolute)가 스크롤 상자 밖으로 나가 페이지를 넓히지 않게 한다

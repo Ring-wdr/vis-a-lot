@@ -1,19 +1,21 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { RefreshCw } from "lucide-react";
-import { CHANNEL_LABELS } from "@/entities/post/lib/labels";
+import { channelLabels } from "@/entities/post/lib/labels";
 import { useOutbox } from "@/shared/api/feed/queries";
+import { localeCached } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { page } from "@/shared/ui/feed-styles";
 import { EmptyState, LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 
 const p = page();
 
-const dateTime = new Intl.DateTimeFormat("ko-KR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
+const dateTime = localeCached(
+  (l) => new Intl.DateTimeFormat(l, { dateStyle: "short", timeStyle: "short" }),
+);
 
 /** 표 칸 */
 const cell = tv({
@@ -22,15 +24,18 @@ const cell = tv({
 
 /** /feed/dev/outbox: 슬랙·이메일로 나갔을 메시지 (최근 순). 실제로는 보내지 않는다. */
 export function OutboxView() {
+  const { t } = useLingui();
   const outbox = useOutbox();
-  const messages = [...(outbox.data ?? [])].sort((a, b) =>
+  const sent = [...(outbox.data ?? [])].sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),
   );
 
   return (
     <div className={p.root()}>
       <div className="flex items-center gap-2">
-        <h1 className={p.title()}>발송 로그</h1>
+        <h1 className={p.title()}>
+          <Trans>발송 로그</Trans>
+        </h1>
         <button
           type="button"
           className={button({ size: "sm", class: "ml-auto" })}
@@ -38,26 +43,30 @@ export function OutboxView() {
           onClick={() => outbox.refetch()}
         >
           <RefreshCw size={14} aria-hidden="true" />
-          새로 고침
+          <Trans>새로 고침</Trans>
         </button>
       </div>
       <p className={p.lead()}>
-        알림 설정에서 슬랙·이메일을 켠 알림이 실제로 나가는 대신 여기에
-        남습니다.
+        <Trans>
+          알림 설정에서 슬랙·이메일을 켠 알림이 실제로 나가는 대신 여기에
+          남습니다.
+        </Trans>
       </p>
 
       {outbox.isPending ? (
-        <LoadingText>발송 로그를 불러오는 중</LoadingText>
+        <LoadingText>
+          <Trans>발송 로그를 불러오는 중</Trans>
+        </LoadingText>
       ) : outbox.isError ? (
         <p role="alert" className="text-danger">
-          발송 로그를 불러오지 못했습니다: {outbox.error.message}
+          <Trans>발송 로그를 불러오지 못했습니다: {outbox.error.message}</Trans>
         </p>
-      ) : messages.length === 0 ? (
+      ) : sent.length === 0 ? (
         <EmptyState
           icon={<RefreshCw size={18} />}
-          title="보낸 메시지가 없습니다"
+          title={t`보낸 메시지가 없습니다`}
         >
-          배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다.
+          <Trans>배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다.</Trans>
         </EmptyState>
       ) : (
         <div className="relative overflow-x-auto rounded-lg border border-line bg-elevated">
@@ -65,25 +74,35 @@ export function OutboxView() {
           <table className="w-full min-w-160 border-collapse text-ui">
             <thead className="bg-panel text-xs text-fg-muted">
               <tr>
-                <th className={cell()}>시각</th>
-                <th className={cell()}>채널</th>
-                <th className={cell()}>받는 사람</th>
-                <th className={cell()}>제목</th>
-                <th className={cell()}>내용</th>
+                <th className={cell({ class: "whitespace-nowrap" })}>
+                  <Trans context="sent time column">시각</Trans>
+                </th>
+                <th className={cell({ class: "whitespace-nowrap" })}>
+                  <Trans>채널</Trans>
+                </th>
+                <th className={cell({ class: "whitespace-nowrap" })}>
+                  <Trans>받는 사람</Trans>
+                </th>
+                <th className={cell({ class: "whitespace-nowrap" })}>
+                  <Trans context="message subject column">제목</Trans>
+                </th>
+                <th className={cell({ class: "whitespace-nowrap" })}>
+                  <Trans context="message body column">내용</Trans>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {messages.map((m) => (
+              {sent.map((m) => (
                 <tr key={m.id}>
                   <td
                     className={cell({
                       class: "whitespace-nowrap tabular-nums",
                     })}
                   >
-                    {dateTime.format(new Date(m.createdAt))}
+                    {dateTime().format(new Date(m.createdAt))}
                   </td>
                   <td className={cell({ class: "whitespace-nowrap" })}>
-                    {CHANNEL_LABELS[m.channel]}
+                    {channelLabels()[m.channel]}
                   </td>
                   <td className={cell({ class: "whitespace-nowrap" })}>
                     {m.recipient}

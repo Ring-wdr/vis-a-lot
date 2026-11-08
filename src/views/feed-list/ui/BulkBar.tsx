@@ -2,10 +2,11 @@
 
 // 고른 게시물 일괄 변경 줄: 상태·우선순위·담당자·기한·유형·팀. 끝나면 바뀐 수와 실패 이유를 보인다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, CircleCheck, X } from "lucide-react";
 import { useState } from "react";
-import { PRIORITY_LABELS, statusLabel } from "@/entities/post/lib/labels";
+import { priorityLabel, statusLabel } from "@/entities/post/lib/labels";
 import { filterChip } from "@/features/filter-posts/ui/FilterBar";
 import { SinglePick } from "@/features/filter-posts/ui/SinglePick";
 import { invalidatePosts } from "@/shared/api/feed/post-queries";
@@ -21,6 +22,7 @@ import type {
 } from "@/shared/api/feed/types";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 
 type Patch = BulkUpdateRequest["patch"];
 
@@ -56,6 +58,7 @@ export function BulkBar({
   postTypes: readonly PostType[];
   statusNames?: StatusNames;
 }) {
+  const { t } = useLingui();
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<BulkSummary | null>(null);
@@ -97,58 +100,79 @@ export function BulkBar({
     }
   }
 
-  const none = { value: null, label: "없음" } as const;
+  const none = {
+    value: null,
+    label: t({ message: "없음", context: "bulk edit: clear the field" }),
+  } as const;
+  const count = ids.length;
+  const statusField = t`상태`;
+  const priorityField = t`우선순위`;
+  const assigneeField = t`담당자`;
+  const dueField = t({ message: "기한", context: "bulk edit field: due date" });
+  const postTypeField = t({
+    message: "유형",
+    context: "bulk edit field: post type",
+  });
+  const teamField = t`팀`;
 
   if (!ids.length && !summary) return null;
+  const updated = summary?.updated ?? 0;
+  const failed = summary?.failed.length ?? 0;
 
   return (
     <div className="flex flex-col gap-2">
       {ids.length > 0 && (
         <div
           role="toolbar"
-          aria-label="일괄 변경"
+          aria-label={t`일괄 변경`}
           className="flex flex-wrap items-center gap-1.5 rounded-lg border border-accent-line bg-accent-soft px-2.5 py-1.5"
         >
-          <span className="text-xs font-semibold text-accent tabular-nums">
-            {ids.length}건 선택
+          <span className="text-xs font-semibold whitespace-nowrap text-accent tabular-nums">
+            {t`${count}건 선택`}
           </span>
           {busy && <Spinner size="sm" />}
           <SinglePick
-            label="상태"
+            label={statusField}
             showValue={false}
             disabled={busy}
             options={BULK_STATUSES.map((s) => ({
               value: s,
               label: statusLabel(s, statusNames),
             }))}
-            onPick={(status) => apply({ status }, "상태")}
+            onPick={(status) => apply({ status }, statusField)}
           />
           <SinglePick
-            label="우선순위"
+            label={priorityField}
             showValue={false}
             disabled={busy}
             options={([4, 3, 2, 1, 0] as const).map((p) => ({
               value: p as number,
-              label: PRIORITY_LABELS[p],
+              label: priorityLabel(p),
             }))}
-            onPick={(priority) => apply({ priority }, "우선순위")}
+            onPick={(priority) => apply({ priority }, priorityField)}
           />
           <SinglePick<string | null>
-            label="담당자"
+            label={assigneeField}
             showValue={false}
             disabled={busy}
             options={[
-              { value: null, label: "담당자 없음" },
+              {
+                value: null,
+                label: t({
+                  message: "담당자 없음",
+                  context: "bulk edit: unassign",
+                }),
+              },
               ...users.map((u) => ({ value: u.id, label: u.name })),
             ]}
-            onPick={(assigneeId) => apply({ assigneeId }, "담당자")}
+            onPick={(assigneeId) => apply({ assigneeId }, assigneeField)}
           />
           <SinglePick<string | null>
-            label="기한"
+            label={dueField}
             showValue={false}
             disabled={busy}
-            options={[{ value: null, label: "기한 없애기" }]}
-            onPick={() => apply({ dueDate: null }, "기한")}
+            options={[{ value: null, label: t`기한 없애기` }]}
+            onPick={() => apply({ dueDate: null }, dueField)}
             footer={(close) => (
               <form
                 className="mt-2 flex items-center gap-1.5 border-t border-line pt-2"
@@ -156,12 +180,12 @@ export function BulkBar({
                   e.preventDefault();
                   if (!due) return;
                   close();
-                  void apply({ dueDate: due }, "기한");
+                  void apply({ dueDate: due }, dueField);
                 }}
               >
                 <input
                   type="date"
-                  aria-label="새 기한"
+                  aria-label={t`새 기한`}
                   className={c.input({ class: "min-w-0 flex-1" })}
                   value={due}
                   onChange={(e) => setDue(e.currentTarget.value)}
@@ -171,38 +195,38 @@ export function BulkBar({
                   className={button({ size: "sm", variant: "primary" })}
                   disabled={!due}
                 >
-                  적용
+                  <Trans>적용</Trans>
                 </button>
               </form>
             )}
           />
           <SinglePick<string | null>
-            label="유형"
+            label={postTypeField}
             showValue={false}
             disabled={busy}
             options={[
               none,
-              ...postTypes.map((t) => ({ value: t.id, label: t.name })),
+              ...postTypes.map((pt) => ({ value: pt.id, label: pt.name })),
             ]}
-            onPick={(postTypeId) => apply({ postTypeId }, "유형")}
+            onPick={(postTypeId) => apply({ postTypeId }, postTypeField)}
           />
           <SinglePick<string | null>
-            label="팀"
+            label={teamField}
             showValue={false}
             disabled={busy}
             options={[
               none,
-              ...teams.map((t) => ({ value: t.id, label: t.name })),
+              ...teams.map((tm) => ({ value: tm.id, label: tm.name })),
             ]}
-            onPick={(teamId) => apply({ teamId }, "팀")}
+            onPick={(teamId) => apply({ teamId }, teamField)}
           />
           <button
             type="button"
-            className="ml-auto inline-flex h-7 cursor-pointer items-center gap-1 px-1.5 text-xs text-fg-secondary hover:text-fg"
+            className="ml-auto inline-flex h-7 cursor-pointer items-center gap-1 px-1.5 text-xs whitespace-nowrap text-fg-secondary hover:text-fg"
             onClick={() => onSelectedChange(new Set())}
           >
             <X size={12} aria-hidden="true" />
-            선택 해제
+            <Trans context="bulk edit bar">선택 해제</Trans>
           </button>
         </div>
       )}
@@ -213,16 +237,14 @@ export function BulkBar({
         >
           <span className="flex items-center gap-1.5">
             <CircleCheck size={14} className="text-accent" aria-hidden="true" />
-            <span className="font-semibold">{summary.updated}건 바꿈</span>
+            <span className="font-semibold">{t`${updated}건 바꿈`}</span>
             {summary.failed.length > 0 && (
-              <span className="text-danger">
-                · {summary.failed.length}건 실패
-              </span>
+              <span className="text-danger">{t`· ${failed}건 실패`}</span>
             )}
             <button
               type="button"
               className="ml-auto cursor-pointer text-fg-muted hover:text-fg"
-              aria-label="결과 닫기"
+              aria-label={t`결과 닫기`}
               onClick={() => setSummary(null)}
             >
               <X size={12} aria-hidden="true" />

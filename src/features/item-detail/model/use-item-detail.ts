@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@lingui/core/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
@@ -11,6 +12,7 @@ import {
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
+import "../config/messages";
 
 /**
  * 크게 보기용 PNG. 서버가 같은 내용(revision)·같은 크기로 그려 둔 게 있으면 바로 받고,
@@ -53,7 +55,7 @@ export function useItemDetail(
   const failure = state?.error;
 
   useEffect(() => {
-    if (failed) notify(failure ?? "크게 보기 PNG를 그리지 못했습니다.");
+    if (failed) notify(failure ?? t`크게 보기 PNG를 그리지 못했습니다.`);
   }, [failed, failure, notify]);
 
   const image =

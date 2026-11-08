@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { restoreOf } from "@/entities/chart/lib/share";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
@@ -7,6 +8,7 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { useOpenChart } from "../model/open-chart";
 
 /**
@@ -36,7 +38,11 @@ export function EditInGalleryButton() {
   return (
     <button
       type="button"
-      className={button({ variant: "primary", size: "lg" })}
+      className={button({
+        variant: "primary",
+        size: "lg",
+        class: "whitespace-nowrap",
+      })}
       disabled={!historyId || load.isPending || open.isPending}
       aria-busy={load.isPending || open.isPending}
       onClick={() => historyId && load.mutate(historyId)}
@@ -44,7 +50,7 @@ export function EditInGalleryButton() {
       {(load.isPending || open.isPending) && (
         <Spinner size="sm" tone="inherit" />
       )}
-      gallery에서 편집
+      <Trans>gallery에서 편집</Trans>
     </button>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumnSummary } from "@/shared/api/queries";
 import type { ColumnName } from "@/shared/api/types";
 import { LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 import { filterOf, withFilter } from "../model/filters";
 import { RangeFilterBody } from "./RangeFilterBody";
 import { ValuesFilterBody } from "./ValuesFilterBody";
@@ -26,16 +28,20 @@ export function ColumnFilter({ column }: { column: ColumnName }) {
         className="flex items-center gap-2 text-xs text-fg-muted"
         aria-busy="true"
       >
-        <LoadingText>값 범위를 불러오는 중</LoadingText>
+        <LoadingText>
+          <Trans>값 범위를 불러오는 중</Trans>
+        </LoadingText>
       </div>
     );
   }
   if (summary.error) {
     return (
       <p role="alert" className="text-xs text-danger">
-        {summary.error.message === "dataset is not ready"
-          ? "데이터가 준비되면 필터를 쓸 수 있습니다."
-          : summary.error.message}
+        {summary.error.message === "dataset is not ready" ? (
+          <Trans>데이터가 준비되면 필터를 쓸 수 있습니다.</Trans>
+        ) : (
+          summary.error.message
+        )}
       </p>
     );
   }

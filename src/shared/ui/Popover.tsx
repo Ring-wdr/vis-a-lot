@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useId, useRef, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { cn } from "@/shared/lib/tw";
 
 /**
@@ -27,8 +27,9 @@ export function Popover({
   children: (close: () => void) => ReactNode;
 }) {
   const id = useId();
-  const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  // children은 렌더 중에 받으므로 ref 대신 id로 패널을 찾아 닫는다.
+  const close = () => document.getElementById(id)?.hidePopover();
 
   return (
     <>
@@ -51,7 +52,6 @@ export function Popover({
         {trigger}
       </button>
       <div
-        ref={ref}
         id={id}
         popover="auto"
         className={cn(
@@ -60,7 +60,7 @@ export function Popover({
         )}
         style={{ top: position.top, left: position.left, width }}
       >
-        {children(() => ref.current?.hidePopover())}
+        {children(close)}
       </div>
     </>
   );

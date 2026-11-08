@@ -1,5 +1,7 @@
 "use client";
 
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { DatasetPanel } from "@/features/register-dataset/ui/DatasetPanel";
@@ -8,6 +10,7 @@ import { useHealth } from "@/shared/api/queries";
 import type { DatasetId, DebugRenderResponse } from "@/shared/api/types";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
 import { button } from "@/shared/ui/button";
+import "../config/messages";
 
 const heading = "mb-2 font-bold text-base";
 
@@ -20,11 +23,20 @@ type Item = { key: string; result?: DebugRenderResponse; error?: string };
 
 /** 구조 검증 페이지: DB Worker 부팅, 데이터 생성, Render Worker 병렬 렌더, `<img>` → MSW → Cache API 경로. */
 export function BootCheck() {
+  const { t } = useLingui();
   const { data: health, error: healthError } = useHealth();
   const [dataset, setDataset] = useState<DatasetId>(DEFAULT_DATASET);
   const [items, setItems] = useState<Item[]>([]);
   const [points, setPoints] = useState(50_000);
   const [totalMs, setTotalMs] = useState<number>();
+
+  const healthMessage = healthError?.message;
+  const count = ITEM_COUNT;
+  const bootLine = (bootMs: number, bootCount: number) =>
+    t`부팅 ${bootMs}ms · 누적 부팅 ${bootCount}회 (새로고침하면 늘어나야 IndexedDB 유지)`;
+  const workersLine = (workers: number) =>
+    t`${plural(workers, { other: "Render Worker #개" })}`;
+  const totalLine = (totalMs: number) => t`전체 ${totalMs}ms`;
 
   async function renderAll() {
     const keys = Array.from({ length: ITEM_COUNT }, (_, i) => `item-${i + 1}`);
@@ -58,26 +70,37 @@ export function BootCheck() {
 
   return (
     <main className="flex flex-col gap-6 p-6">
-      <h1 className="text-xl font-bold">구조 확인</h1>
+      <h1 className="text-xl font-bold">
+        <Trans>구조 확인</Trans>
+      </h1>
 
       <section>
         <h2 className={heading}>DB Worker (PGlite)</h2>
-        {healthError && <p role="alert">실패: {healthError.message}</p>}
-        {!health && !healthError && <p>PGlite 부팅 중…</p>}
+        {healthError && (
+          <p role="alert">
+            <Trans>실패: {healthMessage}</Trans>
+          </p>
+        )}
+        {!health && !healthError && (
+          <p>
+            <Trans>PGlite 부팅 중…</Trans>
+          </p>
+        )}
         {health && (
           <ul className="list-disc pl-5 leading-relaxed">
             <li>{health.db.version}</li>
             <li>
-              부팅 {Math.round(health.db.bootMs)}ms · 누적 부팅{" "}
-              {health.db.bootCount}회 (새로고침하면 늘어나야 IndexedDB 유지)
+              {bootLine(Math.round(health.db.bootMs), health.db.bootCount)}
             </li>
-            <li>Render Worker {health.renderWorkers}개</li>
+            <li>{workersLine(health.renderWorkers)}</li>
           </ul>
         )}
       </section>
 
       <section>
-        <h2 className={heading}>데이터셋 (절차적 생성 → COPY 적재)</h2>
+        <h2 className={heading}>
+          <Trans>데이터셋 (절차적 생성 → COPY 적재)</Trans>
+        </h2>
         <DatasetPanel dataset={dataset} onChange={setDataset} showColumns />
       </section>
 
@@ -87,7 +110,7 @@ export function BootCheck() {
         </h2>
         <div className="mb-3 flex items-center gap-3">
           <label>
-            item당 점 개수{" "}
+            <Trans>item당 점 개수</Trans>{" "}
             <input
               type="number"
               className="w-24 rounded-sm border border-line bg-elevated px-1"
@@ -102,9 +125,11 @@ export function BootCheck() {
             className={button({ size: "sm" })}
             onClick={renderAll}
           >
-            {ITEM_COUNT}개 동시 렌더
+            {t`${count}개 동시 렌더`}
           </button>
-          {totalMs !== undefined && <span>전체 {Math.round(totalMs)}ms</span>}
+          {totalMs !== undefined && (
+            <span>{totalLine(Math.round(totalMs))}</span>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -116,7 +141,9 @@ export function BootCheck() {
                 ) : it.result ? (
                   <ChartImage data={it.result} alt={it.key} />
                 ) : (
-                  <span>렌더 중…</span>
+                  <span>
+                    <Trans>렌더 중…</Trans>
+                  </span>
                 )}
               </div>
               {it.result && (

@@ -3,6 +3,9 @@
 // 커맨드 팔레트 (Cmd/Ctrl+K, 상단 바의 "검색·명령"): 게시물 찾기, 화면 이동, 명령, 사용자 전환.
 // ↑/↓로 고르고 Enter로 실행, Esc로 닫는다(사용자 전환 목록에서는 처음으로 돌아간다).
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -39,6 +42,7 @@ import { useSwitchUser } from "@/features/switch-user/ui/UserSwitcher";
 import { useGroups, useMe, useUsers } from "@/shared/api/feed/queries";
 import { useSearchPosts } from "@/shared/api/feed/search";
 import { FEED } from "@/shared/config/feed-routes";
+import { useLocale } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { Dialog } from "@/shared/ui/Dialog";
 import { Spinner } from "@/shared/ui/Loading";
@@ -57,13 +61,14 @@ import {
   type RecentEntry,
   saveRecent,
 } from "@/widgets/command-palette/model/recent";
+import "../config/messages";
 
-const SECTION_LABELS: Record<PaletteSection, string> = {
-  recent: "최근",
-  posts: "게시물",
-  screens: "화면",
-  commands: "명령",
-  users: "사용자",
+const SECTIONS: Record<PaletteSection, MessageDescriptor> = {
+  recent: msg({ message: "최근", context: "palette section" }),
+  posts: msg({ message: "게시물", context: "palette section" }),
+  screens: msg({ message: "화면", context: "palette section" }),
+  commands: msg({ message: "명령", context: "palette section" }),
+  users: msg({ message: "사용자", context: "palette section" }),
 };
 
 const SCREEN_ICONS: Record<ScreenIcon, LucideIcon> = {
@@ -111,6 +116,8 @@ const POST_LIMIT = 8;
 const SCREEN_LIMIT_WITH_QUERY = 12;
 
 export function CommandPalette({ onClose }: { onClose: () => void }) {
+  const { t, i18n } = useLingui();
+  const locale = useLocale();
   const baseId = useId();
   const router = useRouter();
   const pathname = usePathname();
@@ -133,6 +140,8 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   const presenting = search.get("present") === "1";
   const reportPage = pathname.startsWith("/feed/report/");
 
+  // 이름·키워드를 지금 언어로 만들므로 언어(locale)가 바뀌면 다시 만든다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: locale은 언어가 바뀌었음을 알리는 값이다
   const base = useMemo(
     () => ({
       screens: screenItems({
@@ -141,7 +150,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       }),
       commands: commandItems({ groupKey, reportPage, presenting }),
     }),
-    [groups.data, me.data?.isAdmin, groupKey, reportPage, presenting],
+    [groups.data, me.data?.isAdmin, groupKey, reportPage, presenting, locale],
   );
 
   const sections = useMemo<Section[]>(() => {
@@ -156,7 +165,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             id: `user:${u.id}`,
             userId: u.id,
             label: u.name,
-            hint: u.isAdmin ? "시스템 관리자" : (u.email ?? undefined),
+            hint: u.isAdmin ? t`시스템 관리자` : (u.email ?? undefined),
             current: u.id === me.data?.id,
           };
           return [{ item, score }];
@@ -200,7 +209,17 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
     else parts.push(posts_);
     out.push(...parts.filter((p) => p.items.length > 0));
     return out;
-  }, [mode, users.data, me.data?.id, q, base, recent, posts.data, groups.data]);
+  }, [
+    mode,
+    users.data,
+    me.data?.id,
+    q,
+    base,
+    recent,
+    posts.data,
+    groups.data,
+    t,
+  ]);
 
   const flat = sections.flatMap((s) => s.items);
   const current = Math.min(active, Math.max(0, flat.length - 1));
@@ -331,7 +350,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       className="w-[min(40rem,calc(100vw-2rem))] max-w-none bg-elevated p-0 text-ui text-fg"
     >
       <h2 id={`${baseId}-title`} className="sr-only">
-        커맨드 팔레트
+        <Trans>커맨드 팔레트</Trans>
       </h2>
       <div className="flex min-w-0 items-center gap-2 border-b border-line px-3">
         {mode === "users" ? (
@@ -339,10 +358,10 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             type="button"
             className="inline-flex h-6 flex-none cursor-pointer items-center gap-1 rounded-sm bg-accent-soft px-1.5 text-2xs font-semibold text-accent"
             onClick={back}
-            aria-label="사용자 전환에서 돌아가기"
+            aria-label={t`사용자 전환에서 돌아가기`}
           >
             <ArrowLeft size={12} aria-hidden="true" />
-            사용자 전환
+            <Trans>사용자 전환</Trans>
           </button>
         ) : (
           <Search
@@ -357,15 +376,15 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
           value={q}
           placeholder={
             mode === "users"
-              ? "사용자 이름"
-              : "게시물(FD-12, 제목), 화면, 명령 찾기"
+              ? t`사용자 이름`
+              : t`게시물(FD-12, 제목), 화면, 명령 찾기`
           }
           role="combobox"
           aria-expanded="true"
           aria-controls={`${baseId}-list`}
           aria-activedescendant={flat.length ? optionId(current) : undefined}
           aria-autocomplete="list"
-          aria-label={mode === "users" ? "사용자 찾기" : "검색·명령"}
+          aria-label={mode === "users" ? t`사용자 찾기` : t`검색·명령`}
           autoComplete="off"
           spellCheck={false}
           autoFocus
@@ -380,12 +399,12 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       <div
         id={`${baseId}-list`}
         role="listbox"
-        aria-label="결과"
+        aria-label={t({ message: "결과", context: "palette results list" })}
         className="max-h-[min(26rem,calc(100dvh-16rem))] overflow-y-auto p-1.5"
       >
         {flat.length === 0 && (
           <p className="px-2.5 py-6 text-center text-fg-muted">
-            {searching ? "찾는 중" : "맞는 항목이 없습니다"}
+            {searching ? t`찾는 중` : t`맞는 항목이 없습니다`}
           </p>
         )}
         {sections.map((s) => (
@@ -400,7 +419,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
               id={`${baseId}-sec-${s.section}`}
               className="px-2.5 pt-1.5 pb-1 text-2xs font-semibold text-fg-muted"
             >
-              {SECTION_LABELS[s.section]}
+              {i18n._(SECTIONS[s.section])}
             </p>
             {s.items.map((item) => {
               index += 1;
@@ -442,7 +461,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
                     <Check
                       size={14}
                       className="flex-none text-accent"
-                      aria-label="지금 사용자"
+                      aria-label={t`지금 사용자`}
                     />
                   )}
                   {item.hint && (
@@ -458,14 +477,20 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       </div>
       <div className="hidden items-center gap-3 border-t border-line px-3 py-1.5 text-2xs text-fg-muted sm:flex">
         <span>
-          <kbd className="font-sans">↑↓</kbd> 고르기
+          <kbd className="font-sans">↑↓</kbd>{" "}
+          <Trans context="palette key hint">고르기</Trans>
         </span>
         <span>
-          <kbd className="font-sans">Enter</kbd> 실행
+          <kbd className="font-sans">Enter</kbd>{" "}
+          <Trans context="palette key hint">실행</Trans>
         </span>
         <span>
           <kbd className="font-sans">Esc</kbd>{" "}
-          {mode === "users" ? "돌아가기" : "닫기"}
+          {mode === "users" ? (
+            <Trans context="palette key hint">돌아가기</Trans>
+          ) : (
+            <Trans context="palette key hint">닫기</Trans>
+          )}
         </span>
       </div>
     </Dialog>

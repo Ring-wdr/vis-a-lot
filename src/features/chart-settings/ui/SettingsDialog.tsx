@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { overlay } from "overlay-kit";
 import { type ReactNode, useId, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -18,8 +19,10 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
+import type { ChartSpec } from "@/shared/api/types";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+import "../config/messages";
 import {
   type CommonSettingsForm,
   commonFormValues,
@@ -40,7 +43,10 @@ const sd = settingsDialog();
  * 저장 위치는 예전 history·공유 링크와 맞추려고 그대로 둔다.
  */
 const SECTION_EXTRAS: Partial<
-  Record<OptionSection, (props: { readOnly: boolean }) => ReactNode>
+  Record<
+    OptionSection,
+    (props: { draft: ChartSpec; readOnly: boolean }) => ReactNode
+  >
 > = {
   // Title · Concat String: split 조합 이름을 잇는 문자 (spec.splitSeparator)
   title: SplitSettings,
@@ -56,9 +62,12 @@ const SECTION_EXTRAS: Partial<
 const ALWAYS_SHOWN: readonly OptionSection[] = ["legend"];
 
 function SettingsBody({ onClose }: { onClose: () => void }) {
+  const { t } = useLingui();
   const titleId = useId();
   const store = useWorkspaceStore();
-  const chartType = useWorkspace((s) => s.draft.chartType);
+  // 구역 폼들은 store를 읽지 않는다. 이 팝업이 고른 값을 props로 내려 준다.
+  const draft = useWorkspace((s) => s.draft);
+  const chartType = draft.chartType;
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const setShowNearest = useWorkspace((s) => s.setShowNearest);
@@ -113,11 +122,11 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
     <FormProvider {...form}>
       <form className={sd.body()} onSubmit={confirm}>
         <h2 id={titleId} className={sd.title()}>
-          전체 설정
+          <Trans>전체 설정</Trans>
         </h2>
         <div className={sd.layout()}>
           <SectionMenu
-            label="설정 메뉴"
+            label={t`설정 메뉴`}
             sections={sections}
             active={active}
             onSelect={setMenu}
@@ -129,22 +138,23 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
               part={active.part}
               supported={supportsOption(chartType, active.section)}
               original={opened.common.options as ChartOptionsPatch | undefined}
+              defaults={defaults}
               readOnly={readOnly}
             >
-              {Extra && <Extra readOnly={readOnly} />}
+              {Extra && <Extra draft={draft} readOnly={readOnly} />}
             </CommonOptionSettings>
           </div>
         </div>
         <div className={dialogActions}>
           <button type="button" className={button()} onClick={onClose}>
-            취소
+            <Trans context="dialog button">취소</Trans>
           </button>
           <button
             type="submit"
             className={button({ variant: "primary" })}
             disabled={!isDirty}
           >
-            확인
+            <Trans context="dialog button">확인</Trans>
           </button>
         </div>
       </form>

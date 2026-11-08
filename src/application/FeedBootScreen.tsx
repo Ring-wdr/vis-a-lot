@@ -1,7 +1,12 @@
+import { Trans } from "@lingui/react/macro";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "./messages";
 
-/** 피드가 뜨기 전 화면. 실패하면 이유와 다시 시도 버튼을 보여준다. */
+/**
+ * 피드가 뜨기 전 화면. 실패하면 이유와 다시 시도 버튼을 보여준다.
+ * message는 받는 중이면 "…하는 중", 실패하면 "…하지 못했습니다" 같은 온전한 문장이다.
+ */
 export function FeedBootScreen({
   message,
   error,
@@ -17,11 +22,13 @@ export function FeedBootScreen({
       aria-busy={!error}
     >
       <div className="flex w-[min(20rem,calc(100vw-2rem))] flex-col items-center gap-3.5 text-center">
-        <span className="text-xl font-bold">피드</span>
+        <span className="text-xl font-bold">
+          <Trans>피드</Trans>
+        </span>
         {error ? (
           <>
             <p role="alert" className="text-ui text-danger">
-              {message}에 실패했습니다: {error}
+              {message}: {error}
             </p>
             {onRetry && (
               <button
@@ -29,7 +36,7 @@ export function FeedBootScreen({
                 className={button({ size: "sm" })}
                 onClick={onRetry}
               >
-                다시 시도
+                <Trans>다시 시도</Trans>
               </button>
             )}
           </>

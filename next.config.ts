@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   output: "export",
   experimental: {
     agentFeedback: true,
+    // Lingui 매크로(t``, <Trans>, msg``)를 빌드 때 풀어 쓴다. 이름만 적으면 조용히 꺼지므로 [이름, 옵션] 쌍으로 적는다.
+    // @lingui/swc-plugin은 Next에 묶인 swc_core와 맞아야 해서 정확한 버전으로 고정한다.
+    swcPlugins: [["@lingui/swc-plugin", {}]],
   },
 };
 

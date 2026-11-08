@@ -1,5 +1,6 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { openQuickCreate } from "@/features/create-post/ui/quick-create";
@@ -9,6 +10,7 @@ import { cn } from "@/shared/lib/tw";
 import { FeedSidebar } from "@/widgets/feed-sidebar/ui/FeedSidebar";
 import { PostPeek } from "@/widgets/post-detail/ui/PostPeek";
 import { FeedTopBar } from "./FeedTopBar";
+import "./messages";
 import { useSchedulerTick } from "./use-scheduler-tick";
 
 /** 발표 모드(?present=1): 사이드바를 숨기고, 상단 바를 "발표 끝내기"만 남기고, 글씨를 키운다. */
@@ -44,6 +46,7 @@ export function FeedShell({
   notice?: ReactNode;
   children: ReactNode;
 }) {
+  const { t } = useLingui();
   const present = usePresentMode();
   const [open, setOpen] = useState(false);
   useSchedulerTick();
@@ -57,7 +60,7 @@ export function FeedShell({
             <button
               type="button"
               className="z-drawer fixed inset-0 cursor-default bg-backdrop md:hidden"
-              aria-label="메뉴 닫기"
+              aria-label={t`메뉴 닫기`}
               onClick={() => setOpen(false)}
             />
           )}

@@ -18,7 +18,8 @@ export function SessionGate({ children }: { children: ReactNode }) {
   const client = useQueryClient();
 
   useEffect(() => {
-    restoreSession();
+    // 실패하면 안에서 로그아웃 상태로 둔다.
+    void restoreSession();
   }, []);
 
   useEffect(() => {

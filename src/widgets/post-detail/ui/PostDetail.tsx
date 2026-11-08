@@ -2,6 +2,7 @@
 
 // 게시물 상세. 전체 페이지(/feed/post?key=)와 옆 패널(?peek=)이 같이 쓴다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { FileQuestion } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -23,6 +24,7 @@ import { PostContent } from "./PostContent";
 import { PostFields } from "./PostFields";
 import { PostHeader } from "./PostHeader";
 import { PostRelations } from "./PostRelations";
+import "../config/messages";
 
 const d = detail();
 
@@ -39,6 +41,7 @@ export function PostDetail({
   /** 머리 위 줄 (패널의 닫기·전체 페이지 링크) */
   toolbar?: ReactNode;
 }) {
+  const { t } = useLingui();
   const post = usePost(postKey);
   const groups = useGroupMap();
 
@@ -46,7 +49,7 @@ export function PostDetail({
     return (
       <div className="flex flex-col gap-3" aria-busy="true">
         {toolbar}
-        <LoadingText>{postKey} 불러오는 중</LoadingText>
+        <LoadingText>{t`${postKey} 불러오는 중`}</LoadingText>
         <Skeleton width={70} className="h-5" />
         <Skeleton width={90} />
         <Skeleton width={50} />
@@ -64,14 +67,15 @@ export function PostDetail({
           icon={<FileQuestion size={20} />}
           title={
             missing
-              ? "없거나 볼 수 없는 게시물입니다"
-              : "게시물을 불러오지 못했습니다"
+              ? t`없거나 볼 수 없는 게시물입니다`
+              : t({
+                  message: "게시물을 불러오지 못했습니다",
+                  context: "single post",
+                })
           }
         >
           {missing ? (
-            <p>
-              {postKey}는 지워졌거나, 키가 틀렸거나, 비공개 그룹의 게시물입니다.
-            </p>
+            <p>{t`${postKey}는 지워졌거나, 키가 틀렸거나, 비공개 그룹의 게시물입니다.`}</p>
           ) : (
             <>
               <p>{post.error.message}</p>
@@ -80,7 +84,7 @@ export function PostDetail({
                 className={button({ size: "sm", class: "mt-2" })}
                 onClick={() => post.refetch()}
               >
-                다시 시도
+                <Trans>다시 시도</Trans>
               </button>
             </>
           )}

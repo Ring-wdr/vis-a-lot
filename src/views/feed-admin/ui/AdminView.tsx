@@ -2,6 +2,7 @@
 
 // 관리 콘솔 (/feed/admin): 사용자 목록(시스템 관리자 지정·비활성화), 그룹 목록. 시스템 관리자만 본다.
 
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lock, Settings, ShieldOff, UserX } from "lucide-react";
 import Link from "next/link";
@@ -25,6 +26,7 @@ import { Avatar } from "@/shared/ui/Avatar";
 import { button } from "@/shared/ui/button";
 import { settings } from "@/shared/ui/feed-settings-styles";
 import { EmptyState, LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 
 const s = settings();
 
@@ -66,9 +68,12 @@ function DeactivatedNotice({
   result: DeactivateResponse;
   onClose: () => void;
 }) {
+  const { t } = useLingui();
   const openPeek = useOpenPeek();
   const statusName = useStatusName();
   const { user, openPosts } = result;
+  const name = user.name;
+  const open = openPosts.length;
   return (
     <div
       role="status"
@@ -76,17 +81,16 @@ function DeactivatedNotice({
     >
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">
-          {user.name}님을 비활성화했습니다.
-          {openPosts.length > 0
-            ? ` 담당·요청 중인 열린 게시물 ${openPosts.length}개를 다른 사람에게 넘겨 주세요.`
-            : " 넘겨줄 열린 게시물은 없습니다."}
+          {open > 0
+            ? t`${name}님을 비활성화했습니다. 담당·요청 중인 열린 게시물 ${open}개를 다른 사람에게 넘겨 주세요.`
+            : t`${name}님을 비활성화했습니다. 넘겨줄 열린 게시물은 없습니다.`}
         </p>
         <button
           type="button"
           className={button({ size: "sm" })}
           onClick={onClose}
         >
-          닫기
+          <Trans context="close deactivation notice">닫기</Trans>
         </button>
       </div>
       {openPosts.length > 0 && (
@@ -117,11 +121,15 @@ function DeactivatedNotice({
 }
 
 function UsersTable({ me }: { me: FeedUser }) {
+  const { t } = useLingui();
   const id = useId();
   const client = useQueryClient();
   const users = useUsers();
   const [pending, setPending] = useState<string | null>(null);
   const [result, setResult] = useState<DeactivateResponse | null>(null);
+
+  const adminOf = (name: string) => t`${name} 시스템 관리자`;
+  const deactivateOf = (name: string) => t`${name} 비활성화`;
 
   const refresh = () =>
     Promise.all([
@@ -135,8 +143,13 @@ function UsersTable({ me }: { me: FeedUser }) {
       !on &&
       u.id === me.id &&
       !(await showConfirm(
-        "내 시스템 관리자 권한을 해제할까요? 해제하면 이 화면을 더 볼 수 없습니다.",
-        { confirmLabel: "해제" },
+        t`내 시스템 관리자 권한을 해제할까요? 해제하면 이 화면을 더 볼 수 없습니다.`,
+        {
+          confirmLabel: t({
+            message: "해제",
+            context: "remove own system admin role",
+          }),
+        },
       ))
     )
       return;
@@ -145,16 +158,20 @@ function UsersTable({ me }: { me: FeedUser }) {
       await usersApi.setAdmin(u.id, on);
       await refresh();
     } catch (err) {
-      showAlert(`시스템 관리자 지정을 바꾸지 못했습니다: ${errorMessage(err)}`);
+      const error = errorMessage(err);
+      showAlert(t`시스템 관리자 지정을 바꾸지 못했습니다: ${error}`);
     } finally {
       setPending(null);
     }
   };
 
   const deactivate = async (u: FeedUser) => {
+    const name = u.name;
     const ok = await showConfirm(
-      `${u.name}님을 비활성화할까요? 사용자 전환 목록과 담당자 선택에서 빠집니다.`,
-      { confirmLabel: "비활성화" },
+      t`${name}님을 비활성화할까요? 사용자 전환 목록과 담당자 선택에서 빠집니다.`,
+      {
+        confirmLabel: t({ message: "비활성화", context: "deactivate user" }),
+      },
     );
     if (!ok) return;
     setPending(u.id);
@@ -162,7 +179,8 @@ function UsersTable({ me }: { me: FeedUser }) {
       setResult(await usersApi.deactivate(u.id));
       await refresh();
     } catch (err) {
-      showAlert(`비활성화하지 못했습니다: ${errorMessage(err)}`);
+      const error = errorMessage(err);
+      showAlert(t`비활성화하지 못했습니다: ${error}`);
     } finally {
       setPending(null);
     }
@@ -172,10 +190,14 @@ function UsersTable({ me }: { me: FeedUser }) {
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <div className={s.sectionHead()}>
         <h2 id={`${id}-title`} className={s.sectionTitle()}>
-          사용자{" "}
+          {t({ message: "사용자", context: "admin console section" })}{" "}
           {users.data && (
             <span className="font-normal text-fg-muted">
-              {users.data.length}명
+              <Plural
+                value={users.data.length}
+                other="#명"
+                context="user count"
+              />
             </span>
           )}
         </h2>
@@ -183,10 +205,14 @@ function UsersTable({ me }: { me: FeedUser }) {
       {result && (
         <DeactivatedNotice result={result} onClose={() => setResult(null)} />
       )}
-      {users.isPending && <LoadingText>불러오는 중</LoadingText>}
+      {users.isPending && (
+        <LoadingText>
+          <Trans>불러오는 중</Trans>
+        </LoadingText>
+      )}
       {users.isError && (
         <p role="alert" className="text-danger">
-          사용자를 불러오지 못했습니다: {users.error.message}
+          <Trans>사용자를 불러오지 못했습니다: {users.error.message}</Trans>
         </p>
       )}
       {users.data && (
@@ -195,20 +221,28 @@ function UsersTable({ me }: { me: FeedUser }) {
             <thead className="bg-panel">
               <tr>
                 <th scope="col" className={th}>
-                  이름
+                  <Trans context="admin table column">이름</Trans>
                 </th>
                 <th scope="col" className={cn(th, "hidden sm:table-cell")}>
-                  이메일
+                  <Trans context="admin table column">이메일</Trans>
                 </th>
                 <th scope="col" className={th}>
-                  <span className="sm:hidden">관리자</span>
-                  <span className="hidden sm:inline">시스템 관리자</span>
+                  <span className="sm:hidden">
+                    <Trans context="admin table column, narrow screen">
+                      관리자
+                    </Trans>
+                  </span>
+                  <span className="hidden sm:inline">
+                    <Trans context="admin table column">시스템 관리자</Trans>
+                  </span>
                 </th>
                 <th scope="col" className={th}>
-                  상태
+                  <Trans context="admin table column">상태</Trans>
                 </th>
                 <th scope="col" className={th}>
-                  <span className="sr-only">동작</span>
+                  <span className="sr-only">
+                    <Trans context="admin table column">동작</Trans>
+                  </span>
                 </th>
               </tr>
             </thead>
@@ -230,7 +264,9 @@ function UsersTable({ me }: { me: FeedUser }) {
                           {u.name}
                           {u.id === me.id && (
                             <span className="ml-1 text-2xs text-fg-muted">
-                              나
+                              <Trans context="marks the current user in a list">
+                                나
+                              </Trans>
                             </span>
                           )}
                         </span>
@@ -251,18 +287,20 @@ function UsersTable({ me }: { me: FeedUser }) {
                   <td className={td}>
                     <Switch
                       checked={u.isAdmin}
-                      label={`${u.name} 시스템 관리자`}
+                      label={adminOf(u.name)}
                       disabled={!!pending || !u.active}
                       onChange={(on) => setAdmin(u, on)}
                     />
                   </td>
                   <td className={td}>
                     {u.active ? (
-                      <span className="text-fg-secondary">활성</span>
+                      <span className="text-fg-secondary">
+                        <Trans context="user account state">활성</Trans>
+                      </span>
                     ) : (
                       <span className="inline-flex items-center gap-1">
                         <ShieldOff size={12} aria-hidden="true" />
-                        비활성
+                        <Trans context="user account state">비활성</Trans>
                       </span>
                     )}
                   </td>
@@ -278,14 +316,16 @@ function UsersTable({ me }: { me: FeedUser }) {
                         disabled={!!pending || u.id === me.id}
                         title={
                           u.id === me.id
-                            ? "자기 자신은 비활성화할 수 없습니다"
+                            ? t`자기 자신은 비활성화할 수 없습니다`
                             : undefined
                         }
-                        aria-label={`${u.name} 비활성화`}
+                        aria-label={deactivateOf(u.name)}
                         onClick={() => deactivate(u)}
                       >
                         <UserX size={14} aria-hidden="true" />
-                        <span className="hidden sm:inline">비활성화</span>
+                        <span className="hidden sm:inline">
+                          <Trans context="deactivate user">비활성화</Trans>
+                        </span>
                       </button>
                     )}
                   </td>
@@ -300,17 +340,23 @@ function UsersTable({ me }: { me: FeedUser }) {
 }
 
 function GroupsTable() {
+  const { t } = useLingui();
   const id = useId();
   const groups = useGroups();
+  const groupSettingsOf = (name: string) => t`${name} 그룹 설정`;
   return (
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`} className={s.sectionTitle()}>
-        그룹
+        <Trans context="admin console section">그룹</Trans>
       </h2>
-      {groups.isPending && <LoadingText>불러오는 중</LoadingText>}
+      {groups.isPending && (
+        <LoadingText>
+          <Trans>불러오는 중</Trans>
+        </LoadingText>
+      )}
       {groups.isError && (
         <p role="alert" className="text-danger">
-          그룹을 불러오지 못했습니다: {groups.error.message}
+          <Trans>그룹을 불러오지 못했습니다: {groups.error.message}</Trans>
         </p>
       )}
       {groups.data && (
@@ -319,19 +365,25 @@ function GroupsTable() {
             <thead className="bg-panel">
               <tr>
                 <th scope="col" className={th}>
-                  이름
+                  <Trans context="admin table column">이름</Trans>
                 </th>
                 <th scope="col" className={th}>
-                  키
+                  <Trans context="admin table column: group key prefix">
+                    키
+                  </Trans>
                 </th>
                 <th scope="col" className={th}>
-                  공개
+                  <Trans context="admin table column: group visibility">
+                    공개
+                  </Trans>
                 </th>
                 <th scope="col" className={cn(th, "text-right")}>
-                  멤버
+                  <Trans context="admin table column">멤버</Trans>
                 </th>
                 <th scope="col" className={th}>
-                  <span className="sr-only">설정</span>
+                  <span className="sr-only">
+                    <Trans context="admin table column">설정</Trans>
+                  </span>
                 </th>
               </tr>
             </thead>
@@ -344,26 +396,34 @@ function GroupsTable() {
                     {g.isPrivate ? (
                       <span className="inline-flex items-center gap-1">
                         <Lock size={12} aria-hidden="true" />
-                        비공개
+                        <Trans context="group visibility">비공개</Trans>
                       </span>
                     ) : (
-                      "공개"
+                      t({ message: "공개", context: "group visibility" })
                     )}
                   </td>
                   <td className={cn(td, "text-right tabular-nums")}>
-                    {g.memberCount}명
+                    <Plural
+                      value={g.memberCount}
+                      other="#명"
+                      context="group member count"
+                    />
                   </td>
                   <td className={cn(td, "text-right")}>
                     <Link
                       href={groupHref(FEED.settingsGroup, g.keyPrefix)}
-                      aria-label={`${g.name} 그룹 설정`}
+                      aria-label={groupSettingsOf(g.name)}
                       className={button({
                         size: "sm",
                         class: "whitespace-nowrap no-underline",
                       })}
                     >
                       <Settings size={14} aria-hidden="true" />
-                      <span className="hidden sm:inline">그룹 설정</span>
+                      <span className="hidden sm:inline">
+                        <Trans context="link to group settings">
+                          그룹 설정
+                        </Trans>
+                      </span>
                     </Link>
                   </td>
                 </tr>
@@ -378,38 +438,47 @@ function GroupsTable() {
 
 /** 관리 콘솔 (/feed/admin) */
 export function AdminView() {
+  const { t } = useLingui();
   const me = useMe();
   if (me.isPending)
     return (
       <div className={s.root()}>
-        <LoadingText>불러오는 중</LoadingText>
+        <LoadingText>
+          <Trans>불러오는 중</Trans>
+        </LoadingText>
       </div>
     );
   if (me.isError || !me.data.isAdmin)
     return (
       <EmptyState
         icon={<Lock size={20} />}
-        title="시스템 관리자만 볼 수 있습니다"
+        title={t`시스템 관리자만 볼 수 있습니다`}
       >
         <p>
-          {me.isError
-            ? `사용자를 확인하지 못했습니다: ${me.error.message}`
-            : "상단의 사용자 전환에서 시스템 관리자로 바꾸면 이 화면을 볼 수 있습니다."}
+          {me.isError ? (
+            <Trans>사용자를 확인하지 못했습니다: {me.error.message}</Trans>
+          ) : (
+            t`상단의 사용자 전환에서 시스템 관리자로 바꾸면 이 화면을 볼 수 있습니다.`
+          )}
         </p>
         <Link
           href={FEED.home}
           className={button({ size: "sm", class: "mt-2 no-underline" })}
         >
-          홈으로
+          <Trans>홈으로</Trans>
         </Link>
       </EmptyState>
     );
   return (
     <div className={s.root()}>
       <div className={s.head()}>
-        <h1 className={s.title()}>관리 콘솔</h1>
+        <h1 className={s.title()}>
+          <Trans context="admin console page title">관리 콘솔</Trans>
+        </h1>
         <p className={s.lead()}>
-          사용자를 비활성화하거나 시스템 관리자로 지정하고, 그룹을 살펴봅니다.
+          <Trans>
+            사용자를 비활성화하거나 시스템 관리자로 지정하고, 그룹을 살펴봅니다.
+          </Trans>
         </p>
       </div>
       <UsersTable me={me.data} />

@@ -1,14 +1,21 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, t as tGlobal } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   type ChartOptionsPatch,
   useDefaultLegendPosition,
 } from "@/entities/chart/model/chart-options";
 import { ChartLegend } from "@/entities/chart/ui/ChartLegend";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceStore,
+} from "@/entities/workspace/model/workspace-scope";
 import {
   useItemAction,
   useItemActionPending,
@@ -28,17 +35,19 @@ import {
   type ItemState,
   isTerminal,
 } from "@/shared/api/types";
+import { supports } from "@/shared/config/chart-kinds";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { ItemSettingsDialog } from "./ItemSettingsDialog";
 
-const STAGE_LABELS: Record<ItemStage, string> = {
-  query: "데이터 조회",
-  aggregate: "집계",
-  render: "렌더링",
-  encode: "PNG 변환",
+const STAGES: Record<ItemStage, MessageDescriptor> = {
+  query: msg`데이터 조회`,
+  aggregate: msg({ message: "집계", context: "item render stage" }),
+  render: msg({ message: "렌더링", context: "item render stage" }),
+  encode: msg`PNG 변환`,
 };
 
 // 누른 item(selected)은 다운로드·데이터 표의 대상이다. 크게 보기에서는 남은 자리를 채운다.
@@ -66,13 +75,14 @@ function Pending({
   item?: ItemState;
   placeholder?: string;
 }) {
+  const { t, i18n } = useLingui();
   const stage = item?.stage;
   const label =
     item?.status === "queued"
-      ? "대기 중"
+      ? t({ message: "대기 중", context: "item status" })
       : stage
-        ? STAGE_LABELS[stage]
-        : (placeholder ?? "준비 중");
+        ? i18n._(STAGES[stage])
+        : (placeholder ?? t({ message: "준비 중", context: "item status" }));
   return (
     <div className="flex w-[min(8.75rem,90%)] flex-col items-center gap-2 text-center text-xs text-fg-muted">
       <Spinner size="lg" />
@@ -125,8 +135,11 @@ function ExpandButton({
   expanded: boolean;
   onClick?: () => void;
 }) {
+  const { t } = useLingui();
   if (!onClick) return null;
-  const label = expanded ? "grid로 돌아가기" : "크게 보기";
+  const label = expanded
+    ? t`grid로 돌아가기`
+    : t({ message: "크게 보기", context: "item expand button" });
   return (
     <div className="flex gap-0.5">
       <button
@@ -167,7 +180,7 @@ function DrawnItem({
   hasLegend: boolean;
   chartId: string;
   primaryJobId: string;
-  tooltipColumns: ColumnName[];
+  tooltipColumns: readonly ColumnName[];
   displaySize: ItemSize;
   /** 띄울 PNG. 크게 보기에서는 grid PNG 대신 그 크기로 그린 PNG를 준다. */
   image?: ChartImage;
@@ -177,22 +190,42 @@ function DrawnItem({
   expanded?: boolean;
   onDoubleClick?: () => void;
 }) {
-  const mode = useWorkspace((s) => s.mode);
-  const paintTool = useWorkspace((s) => s.paintTool);
-  const readOnly = useWorkspace((s) => s.readOnly);
+  const { t } = useLingui();
+  // item 안의 도구(PaintToolbar, LegendCheckboxes 등)는 store를 읽지 않는다. 여기서 골라 넘긴다.
+  // 이 item이 쓰는 값을 selector 하나로 고른다. item마다 store 구독이 하나라 item이 많아도 store를 바꿀 때 드는 일이 적고,
+  // 고른 값이 모두 원시값이라 useShallow로 비교하면 이 item과 상관없는 변경에는 다시 그리지 않는다.
+  const {
+    mode,
+    paintTool,
+    readOnly,
+    checkboxesShown,
+    chartType,
+    legendPosition,
+    itemJobId,
+    selected,
+    undoCount,
+  } = useWorkspace(
+    useShallow((s) => ({
+      mode: s.mode,
+      paintTool: s.paintTool,
+      readOnly: s.readOnly,
+      // 체크박스 표시를 지원하지 않는 차트(heatmap 등)는 켜 둔 채로 바꿔 그려도 띄우지 않는다.
+      checkboxesShown:
+        s.showLegendCheckboxes && supports(s.current?.spec, "checkbox"),
+      chartType: s.current?.spec.chartType,
+      legendPosition: s.current?.spec.common.legendPosition,
+      itemJobId: s.itemJobs[item.key],
+      selected: s.selectedItem === item.key,
+      undoCount: s.undoCounts[item.key] ?? 0,
+    })),
+  );
+  // action은 store를 만들 때 정해져 바뀌지 않는다.
+  const store = useWorkspaceStore();
+  const { setPaintTool, setSelectedItem } = store.getState();
   // item 속성 팝업. 열린 동안만 그려 열 때마다 지금 item 값에서 시작한다.
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const defaultPosition = useDefaultLegendPosition(
-    useWorkspace((s) => s.current?.spec.chartType),
-  );
-  const commonPosition =
-    useWorkspace((s) => s.current?.spec.common.legendPosition) ??
-    defaultPosition;
-  const itemJobId = useWorkspace((s) => s.itemJobs[item.key]);
-  const selected = useWorkspace((s) => s.selectedItem === item.key);
-  const setSelectedItem = useWorkspace((s) => s.setSelectedItem);
-  const undoCount = useWorkspace((s) => s.undoCounts[item.key] ?? 0);
-  const setItemJob = useWorkspace((s) => s.setItemJob);
+  const defaultPosition = useDefaultLegendPosition(chartType);
+  const commonPosition = legendPosition ?? defaultPosition;
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
@@ -204,13 +237,15 @@ function DrawnItem({
   const jobStatus = redrawing?.status;
   const redrawnUrl = redrawing?.image?.url;
   const redrawError = redrawing?.error;
+  // 다시 그리기 job이 끝나면 PNG를 다시 받고, 작업 store의 item 조작 차단을 푼다.
   useEffect(() => {
     if (!jobStatus || !isTerminal(jobStatus)) return;
+    const { setItemJob } = store.getState();
     // draw job의 item 상태를 다시 받아 새 PNG로 바꾼다.
-    client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
+    void client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
     if (jobStatus === "failed") {
       // 서버가 준 사유(지운 데이터 등)가 있으면 그대로 보여준다.
-      showAlert(redrawError ?? "다시 그리기에 실패했습니다.");
+      showAlert(redrawError ?? tGlobal`다시 그리기에 실패했습니다.`);
       setItemJob(item.key, undefined);
     } else if (jobStatus !== "success" || item.image.url === redrawnUrl) {
       // 새 PNG가 grid에 반영된 뒤에 조작 차단을 푼다.
@@ -224,7 +259,7 @@ function DrawnItem({
     item.key,
     primaryJobId,
     client,
-    setItemJob,
+    store,
   ]);
 
   // PNG 위에 겹치는 층: DOM legend 위에 legend 체크박스를 둔다.
@@ -232,6 +267,7 @@ function DrawnItem({
     <>
       <SelectedLegend image={image} display={displaySize} selected={selected} />
       <LegendCheckboxes
+        shown={checkboxesShown}
         image={image}
         display={displaySize}
         alt={item.label}
@@ -287,7 +323,7 @@ function DrawnItem({
         )}
         {busy ? (
           <div className={busyOverlay} aria-busy="true">
-            <Pending item={redrawing} placeholder="다시 그리는 중" />
+            <Pending item={redrawing} placeholder={t`다시 그리는 중`} />
           </div>
         ) : (
           rendering && (
@@ -304,6 +340,8 @@ function DrawnItem({
             item={item}
             busy={busy}
             undoCount={undoCount}
+            tool={paintTool}
+            onToolChange={setPaintTool}
             onAction={action.mutate}
           />
         </div>
@@ -334,13 +372,16 @@ function DrawnItem({
   );
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_COLUMNS: readonly ColumnName[] = [];
+
 /** item 하나. PNG가 있어야만 이미지를 띄우고, 없으면 spinner + progress bar를 보여준다. */
 export function ChartItemCard({
   item,
   placeholder,
   chartId,
   primaryJobId,
-  tooltipColumns = [],
+  tooltipColumns = NO_COLUMNS,
   displaySize,
   hasLegend = false,
   image,
@@ -354,7 +395,7 @@ export function ChartItemCard({
   primaryJobId?: string;
   /** 칸 크기. 없으면 PNG 원래 크기로 보여준다. */
   displaySize?: ItemSize;
-  tooltipColumns?: ColumnName[];
+  tooltipColumns?: readonly ColumnName[];
   /** item 목록이 정해지기 전 자리 표시 문구 */
   placeholder?: string;
   /** 띄울 PNG. 없으면 grid PNG를 띄운다. */
@@ -366,6 +407,7 @@ export function ChartItemCard({
   /** 더블 클릭이나 toolbar 버튼으로 크게 보기를 열고 닫는다. */
   onDoubleClick?: () => void;
 }) {
+  const { t } = useLingui();
   if (item?.status === "success" && item.image && chartId && primaryJobId) {
     return (
       <DrawnItem
@@ -382,6 +424,7 @@ export function ChartItemCard({
       />
     );
   }
+  const error = item?.error ?? "";
   return (
     <article
       className={itemCard}
@@ -398,10 +441,15 @@ export function ChartItemCard({
         </span>
         {item?.status === "failed" ? (
           <p role="alert" className="text-xs text-danger">
-            렌더 실패: {item.error}
+            {t({
+              message: `렌더 실패: ${error}`,
+              comment: "error: 서버가 준 실패 사유",
+            })}
           </p>
         ) : item?.status === "cancelled" ? (
-          <p className="text-xs text-fg-muted">취소됨</p>
+          <p className="text-xs text-fg-muted">
+            {t({ message: "취소됨", context: "item status" })}
+          </p>
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}

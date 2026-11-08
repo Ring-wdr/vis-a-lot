@@ -1,0 +1,199 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/item-actions/ui/LegendCheckboxes.tsx
+msgid "{alt} · {value} 보이기"
+msgstr "{alt} · {value} を表示"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "{alt} 위에 {toolLabel}"
+msgstr "{alt} 上の {toolLabel}"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgid "{label} 그리기 도구"
+msgstr "{label} 描画ツール"
+
+#: src/features/item-actions/ui/ItemToolbar.tsx
+msgid "{label} 도구"
+msgstr "{label} ツール"
+
+#: src/features/item-actions/ui/ItemSettings.tsx
+msgid "{value} 색 바꾸기"
+msgstr "{value} の色を変更"
+
+#: src/features/item-actions/ui/ItemToolbar.tsx
+msgid "item 속성"
+msgstr "item のプロパティ"
+
+#: src/features/item-actions/ui/ItemSettings.tsx
+msgid "공통 색 따르기"
+msgstr "共通の色に従う"
+
+#: src/features/item-actions/ui/ItemSettings.tsx
+msgid "공통 위치 따르기 ({commonPosition, select, top {위} bottom {아래} left {왼쪽} other {오른쪽}})"
+msgstr "共通の位置に従う ({commonPosition, select, top {上} bottom {下} left {左} other {右}})"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "도형 그리기"
+msgstr "図形を描画"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgid "도형 되돌리기"
+msgstr "図形を元に戻す"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgid "도형 전체 삭제"
+msgstr "図形をすべて削除"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgctxt "create legend button"
+msgid "만들기"
+msgstr "作成"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "메모 입력 후 Enter"
+msgstr "メモを入力して Enter"
+
+#: src/features/item-actions/ui/ItemSettings.tsx
+msgid "범례 값별 색"
+msgstr "凡例の値ごとの色"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgctxt "paint tool"
+msgid "사각형"
+msgstr "矩形"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "사각형으로 선택"
+msgstr "矩形で選択"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "사각형으로 지우기"
+msgstr "矩形で消去"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "새 범례 삭제"
+msgstr "新しい凡例を削除"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "새 범례 이름"
+msgstr "新しい凡例の名前"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "새 범례…"
+msgstr "新しい凡例…"
+
+#: src/features/item-actions/ui/ItemSettings.tsx
+msgctxt "item color"
+msgid "색"
+msgstr "色"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgctxt "paint tool"
+msgid "선"
+msgstr "線"
+
+#. 새 범례 이름의 앞부분 (뒤에 번호가 붙는다)
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgctxt "default legend group name"
+msgid "선택"
+msgstr "選択"
+
+#. count: 선택한 점 수
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "선택 {count}개"
+msgstr "{count}件選択"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "선택 해제"
+msgstr "選択を解除"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "선택한 영역 없음"
+msgstr "選択範囲なし"
+
+#: src/features/item-actions/ui/ItemSettings.tsx
+msgctxt "legend position"
+msgid "위치"
+msgstr "位置"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgctxt "draw tool"
+msgid "이동"
+msgstr "移動"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgctxt "paint tool"
+msgid "자유곡선"
+msgstr "フリーハンド"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "자유형으로 선택"
+msgstr "自由形で選択"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "자유형으로 지우기"
+msgstr "自由形で消去"
+
+#. 새 즐겨찾기 이름의 앞부분 (뒤에 번호가 붙는다)
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgctxt "default favorite name"
+msgid "즐겨찾기"
+msgstr "お気に入り"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "즐겨찾기 삭제"
+msgstr "お気に入りを削除"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "즐겨찾기 선택"
+msgstr "お気に入りを選択"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "즐겨찾기 이름"
+msgstr "お気に入りの名前"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "즐겨찾기에 추가…"
+msgstr "お気に入りに追加…"
+
+#: src/features/item-actions/ui/ItemToolbar.tsx
+msgid "지운 점 되돌리기"
+msgstr "消した点を元に戻す"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "지운 점 모두 되돌리기"
+msgstr "消した点をすべて元に戻す"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "차트 정보를 읽지 못했습니다: {message}"
+msgstr "チャート情報を読み込めませんでした: {message}"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgctxt "add favorite button"
+msgid "추가"
+msgstr "追加"
+
+#: src/features/item-actions/ui/ItemToolbar.tsx
+msgctxt "zoom out"
+msgid "축소"
+msgstr "縮小"
+
+#: src/features/item-actions/ui/PaintToolbar.tsx
+msgctxt "paint tool"
+msgid "텍스트"
+msgstr "テキスト"
+
+#: src/features/item-actions/ui/DrawLayer.tsx
+msgid "확대 영역 선택"
+msgstr "拡大範囲を選択"
+
+#: src/features/item-actions/ui/ItemToolbar.tsx
+msgid "확대 초기화"
+msgstr "拡大をリセット"

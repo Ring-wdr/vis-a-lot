@@ -1,24 +1,32 @@
 "use client";
 
 import { Slider } from "@base-ui/react/slider";
-import { useEffect, useState } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { ColumnSummary, RangeFilter } from "@/shared/api/types";
+import { localeCached } from "@/shared/lib/i18n";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
+import "../config/messages";
 import { rangeFilter } from "../model/filters";
 
 type RangeSummary = Extract<ColumnSummary, { kind: "range" }>;
 
-const timeFormat = new Intl.DateTimeFormat("ko", {
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-const numberFormat = new Intl.NumberFormat("ko", { maximumFractionDigits: 2 });
+const timeFormat = localeCached(
+  (locale) =>
+    new Intl.DateTimeFormat(locale, {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+);
+const numberFormat = localeCached(
+  (locale) => new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }),
+);
 
 function format(type: RangeSummary["type"], value: number) {
   return type === "datetime"
-    ? timeFormat.format(value)
-    : numberFormat.format(value);
+    ? timeFormat().format(value)
+    : numberFormat().format(value);
 }
 
 /** 슬라이더 칸 수. 시계열은 1분보다 잘게 나누지 않는다. */
@@ -45,23 +53,27 @@ export function RangeFilterBody({
   disabled: boolean;
   onChange: (next: RangeFilter | undefined) => void;
 }) {
+  // format도 지금 언어로 만들므로 useLingui가 언어 변경을 구독한다.
+  const { t } = useLingui();
   const { min, max } = summary;
   const committed: [number, number] = [
     filter?.min ?? min ?? 0,
     filter?.max ?? max ?? 0,
   ];
-  const [range, setRange] = useState(committed);
+  // 끄는 동안은 슬라이더에만 보여 주고, 놓으면 필터로 확정한다.
+  const [range, drag] = usePendingValue(committed);
   const inverse = filter?.inverse ?? false;
   const includeNull = filter?.includeNull ?? true;
 
-  // 밖에서 필터가 바뀌면(전체 해제 등) 슬라이더도 맞춘다.
-  const [lo, hi] = committed;
-  useEffect(() => setRange([lo, hi]), [lo, hi]);
-
   if (min === null || max === null) {
-    return <p className="text-fg-muted">값이 없는 컬럼입니다.</p>;
+    return (
+      <p className="text-fg-muted">
+        <Trans>값이 없는 컬럼입니다.</Trans>
+      </p>
+    );
   }
   const bounded = { ...summary, min, max };
+  const nullRows = numberFormat().format(summary.nullCount);
   const commit = (next: [number, number], inv = inverse, nulls = includeNull) =>
     onChange(rangeFilter(summary, next, inv, nulls));
 
@@ -83,8 +95,10 @@ export function RangeFilterBody({
         value={range}
         disabled={disabled || min === max}
         data-inverse={inverse || undefined}
-        onValueChange={(v) => setRange(v as [number, number])}
-        onValueCommitted={(v) => commit(v as [number, number])}
+        onValueChange={(v) => drag.change(v as [number, number])}
+        onValueCommitted={(v) =>
+          drag.commit(() => commit(v as [number, number]))
+        }
       >
         <Slider.Control className="flex h-4 touch-none items-center">
           <Slider.Track className="relative h-1 w-full rounded-xs bg-line group-data-inverse/slider:bg-accent">
@@ -92,12 +106,16 @@ export function RangeFilterBody({
             <Slider.Thumb
               index={0}
               className="size-3.5 rounded-full border-2 border-accent bg-elevated shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-disabled:border-fg-muted"
-              getAriaLabel={() => "최솟값"}
+              getAriaLabel={() =>
+                t({ message: "최솟값", context: "range filter thumb" })
+              }
             />
             <Slider.Thumb
               index={1}
               className="size-3.5 rounded-full border-2 border-accent bg-elevated shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-disabled:border-fg-muted"
-              getAriaLabel={() => "최댓값"}
+              getAriaLabel={() =>
+                t({ message: "최댓값", context: "range filter thumb" })
+              }
             />
           </Slider.Track>
         </Slider.Control>
@@ -114,7 +132,7 @@ export function RangeFilterBody({
           disabled={disabled}
           onChange={(e) => commit(range, e.target.checked, includeNull)}
         />
-        범위 반전 (범위 밖만 남기기)
+        <Trans>범위 반전 (범위 밖만 남기기)</Trans>
       </label>
       <label className="flex items-center gap-1.5 text-fg-secondary">
         <input
@@ -124,9 +142,12 @@ export function RangeFilterBody({
           disabled={disabled}
           onChange={(e) => commit(range, inverse, e.target.checked)}
         />
-        값 없음(null) 포함
+        <Trans>값 없음(null) 포함</Trans>
         <span className="text-fg-muted">
-          {summary.nullCount.toLocaleString()}행
+          {t({
+            message: `${nullRows}행`,
+            comment: "nullRows: 값이 없는 행 수 (자릿수 구분을 넣은 숫자)",
+          })}
         </span>
       </label>
     </div>

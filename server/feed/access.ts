@@ -44,6 +44,25 @@ export async function groupRole(
   return row?.role ?? null;
 }
 
+/**
+ * 여러 그룹의 역할을 한 번에 읽는다 (목록에서 그룹마다 groupRole을 부르지 않게).
+ * 돌려준 함수는 groupRole과 같은 값을 낸다.
+ */
+export async function groupRoles(
+  ctx: OpCtx,
+  actor: Actor | null = ctx.actor,
+): Promise<(groupId: string) => GroupRole | null> {
+  if (!actor) return () => null;
+  if (actor.isAdmin) return () => "admin";
+  const rows = await ctx.db
+    .selectFrom("group_members")
+    .select(["group_id", "role"])
+    .where("user_id", "=", actor.id)
+    .execute();
+  const roles = new Map(rows.map((r) => [r.group_id, r.role]));
+  return (groupId) => roles.get(groupId) ?? null;
+}
+
 export async function canSeeGroup(
   ctx: OpCtx,
   group: Pick<GroupRow, "id" | "is_private">,

@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   Calculator,
   Crosshair,
@@ -18,13 +19,13 @@ import {
   Type,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import {
-  type ChartOptionsPatch,
-  type OptionSection,
-  useDefaultOptions,
+import type {
+  ChartOptions,
+  ChartOptionsPatch,
+  OptionSection,
 } from "@/entities/chart/model/chart-options";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import { OptionSectionForm } from "./OptionSectionForm";
 
 const s = settingsStyles();
@@ -55,6 +56,7 @@ export function CommonOptionSettings({
   part,
   supported,
   original,
+  defaults,
   readOnly,
   children,
 }: {
@@ -65,11 +67,12 @@ export function CommonOptionSettings({
   supported: boolean;
   /** 저장돼 있던 공통 속성의 차트 속성 */
   original: ChartOptionsPatch | undefined;
+  /** 서버 draw와 같은 기본값 (되돌리기 기준) */
+  defaults: ChartOptions;
   readOnly: boolean;
   children?: ReactNode;
 }) {
-  const chartType = useWorkspace((w) => w.draft.chartType);
-  const defaults = useDefaultOptions(chartType);
+  const { t } = useLingui();
   return (
     <div className={s.popoverBody()}>
       <OptionSectionForm
@@ -78,14 +81,16 @@ export function CommonOptionSettings({
         original={original}
         base={defaults}
         disabled={readOnly}
-        resetLabel="기본값으로 되돌리기"
+        resetLabel={t`기본값으로 되돌리기`}
         showFields={supported}
       >
         {children}
       </OptionSectionForm>
       <p className="text-xs text-fg-muted">
-        확인을 누르면 다음 draw에 적용됩니다. 그리면 item별로 정한 속성은 모두
-        공통 속성으로 바뀝니다.
+        <Trans>
+          확인을 누르면 다음 draw에 적용됩니다. 그리면 item별로 정한 속성은 모두
+          공통 속성으로 바뀝니다.
+        </Trans>
       </p>
     </div>
   );

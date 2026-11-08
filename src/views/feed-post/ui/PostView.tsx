@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { FileQuestion } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -7,24 +8,28 @@ import { FEED, groupHref } from "@/shared/config/feed-routes";
 import { button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/Loading";
 import { PostDetail } from "@/widgets/post-detail/ui/PostDetail";
+import "../config/messages";
 
 /** 게시물 상세 (/feed/post?key=FD-12) */
 export function PostView() {
   const key = useSearchParams().get("key");
   const router = useRouter();
+  const { t } = useLingui();
 
   if (!key)
     return (
       <EmptyState
         icon={<FileQuestion size={20} />}
-        title="게시물 키가 없습니다"
+        title={t`게시물 키가 없습니다`}
       >
-        <p>주소에 ?key=FD-12처럼 이슈 키를 붙여 엽니다.</p>
+        <p>
+          <Trans>주소에 ?key=FD-12처럼 이슈 키를 붙여 엽니다.</Trans>
+        </p>
         <Link
           href={FEED.home}
           className={button({ size: "sm", class: "mt-2" })}
         >
-          홈 피드로
+          <Trans>홈 피드로</Trans>
         </Link>
       </EmptyState>
     );

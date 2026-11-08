@@ -1,14 +1,15 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useId } from "react";
 import {
   DATETIME_FORMATS,
-  DELIMITER_LABELS,
-  ENCODING_LABELS,
+  useDatasetLabels,
 } from "@/entities/dataset/lib/labels";
 import type { CsvEncoding, CsvOptions } from "@/shared/api/types";
 import { Select } from "@/shared/ui/Select";
 import { segmented } from "@/shared/ui/segmented";
+import "../config/messages";
 
 const option = "flex min-w-0 flex-col gap-1 text-ui";
 const optionLabel = "p-0 font-medium text-xs text-fg-secondary";
@@ -50,7 +51,7 @@ function YesNo({
           aria-pressed={value}
           onClick={() => onChange(true)}
         >
-          예
+          <Trans context="yes/no toggle">예</Trans>
         </button>
         <button
           type="button"
@@ -58,7 +59,7 @@ function YesNo({
           aria-pressed={!value}
           onClick={() => onChange(false)}
         >
-          아니오
+          <Trans context="yes/no toggle">아니오</Trans>
         </button>
       </div>
     </fieldset>
@@ -81,7 +82,9 @@ export function UploadOptions({
   onChange: (next: CsvOptions) => void;
 }) {
   const id = useId();
-  const knownDelimiter = value.delimiter in DELIMITER_LABELS;
+  const { t } = useLingui();
+  const labels = useDatasetLabels();
+  const knownDelimiter = value.delimiter in labels.delimiters;
   const format = value.datetimeFormat;
   const knownFormat =
     format === null || (DATETIME_FORMATS as readonly string[]).includes(format);
@@ -91,45 +94,48 @@ export function UploadOptions({
     <div className="flex flex-col gap-3">
       <div className={option}>
         <label className={optionLabel} htmlFor={`${id}-name`}>
-          이름
+          <Trans context="dataset name field">이름</Trans>
         </label>
         <input
           id={`${id}-name`}
           className={input}
           value={name}
           maxLength={100}
-          placeholder="파일 이름"
+          placeholder={t`파일 이름`}
           onChange={(e) => onNameChange(e.target.value)}
         />
       </div>
 
       <div className={option}>
         <Select
-          label="구분 기호"
+          label={t`구분 기호`}
           value={knownDelimiter ? value.delimiter : CUSTOM}
           options={[
-            ...Object.entries(DELIMITER_LABELS).map(([d, label]) => ({
+            ...Object.entries(labels.delimiters).map(([d, label]) => ({
               value: d,
               label,
             })),
-            { value: CUSTOM, label: "직접 입력" },
+            {
+              value: CUSTOM,
+              label: t({ message: "직접 입력", context: "custom option" }),
+            },
           ]}
           onChange={(next) => set({ delimiter: next === CUSTOM ? "" : next })}
         />
         {!knownDelimiter && (
           <input
-            aria-label="구분 기호 직접 입력"
+            aria-label={t`구분 기호 직접 입력`}
             className={input}
             value={value.delimiter}
             maxLength={1}
-            placeholder="한 글자"
+            placeholder={t`한 글자`}
             onChange={(e) => set({ delimiter: e.target.value })}
           />
         )}
       </div>
 
       <YesNo
-        label="첫 번째 행 헤더"
+        label={t`첫 번째 행 헤더`}
         value={value.header}
         onChange={(header) => set({ header })}
       />
@@ -137,27 +143,27 @@ export function UploadOptions({
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
         <div className={option}>
           <label className={optionLabel} htmlFor={`${id}-null`}>
-            Null 값
+            <Trans>Null 값</Trans>
           </label>
           <input
             id={`${id}-null`}
             className={input}
             value={value.nullValue}
             maxLength={20}
-            placeholder="(빈 값)"
+            placeholder={t`(빈 값)`}
             onChange={(e) => set({ nullValue: e.target.value })}
           />
         </div>
         <div className={option}>
           <label className={optionLabel} htmlFor={`${id}-quote`}>
-            따옴표
+            <Trans>따옴표</Trans>
           </label>
           <input
             id={`${id}-quote`}
             className={input}
             value={value.quote}
             maxLength={1}
-            placeholder="한 글자"
+            placeholder={t`한 글자`}
             onChange={(e) => set({ quote: e.target.value })}
           />
         </div>
@@ -165,12 +171,15 @@ export function UploadOptions({
 
       <div className={option}>
         <Select
-          label="날짜 시간 형식"
+          label={t`날짜 시간 형식`}
           value={format === null ? ISO : knownFormat ? format : CUSTOM}
           options={[
-            { value: ISO, label: "자동 (ISO 8601)" },
+            { value: ISO, label: t`자동 (ISO 8601)` },
             ...DATETIME_FORMATS.map((f) => ({ value: f, label: f })),
-            { value: CUSTOM, label: "직접 입력" },
+            {
+              value: CUSTOM,
+              label: t({ message: "직접 입력", context: "custom option" }),
+            },
           ]}
           onChange={(next) =>
             set({
@@ -181,7 +190,7 @@ export function UploadOptions({
         />
         {!knownFormat && (
           <input
-            aria-label="날짜 시간 형식 직접 입력"
+            aria-label={t`날짜 시간 형식 직접 입력`}
             className={input}
             value={format ?? ""}
             maxLength={40}
@@ -190,26 +199,30 @@ export function UploadOptions({
           />
         )}
         <p className={hint}>
-          yyyy·MM·dd·HH·mm·ss·SSS. 이 형식으로 읽히는 컬럼을 시계열로 봅니다.
+          <Trans>
+            yyyy·MM·dd·HH·mm·ss·SSS. 이 형식으로 읽히는 컬럼을 시계열로 봅니다.
+          </Trans>
         </p>
       </div>
 
       <YesNo
-        label="데이터 오류 무시"
+        label={t`데이터 오류 무시`}
         value={value.ignoreErrors}
         onChange={(ignoreErrors) => set({ ignoreErrors })}
       />
       <p className={hint}>
-        켜면 타입으로 바꿀 수 없는 값은 null로, 필드 수가 맞지 않는 행은
-        건너뜁니다.
+        <Trans>
+          켜면 타입으로 바꿀 수 없는 값은 null로, 필드 수가 맞지 않는 행은
+          건너뜁니다.
+        </Trans>
       </p>
 
       <div className={option}>
         <Select
-          label="인코딩"
+          label={t`인코딩`}
           value={value.encoding}
           options={(
-            Object.entries(ENCODING_LABELS) as [CsvEncoding, string][]
+            Object.entries(labels.encodings) as [CsvEncoding, string][]
           ).map(([v, label]) => ({ value: v, label }))}
           onChange={(encoding) => set({ encoding })}
         />

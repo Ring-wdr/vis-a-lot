@@ -10,6 +10,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useNow } from "@/shared/lib/use-now";
 import { groupsApi } from "./groups";
 import { type InboxParams, notificationsApi } from "./notifications";
 import { postsApi } from "./posts";
@@ -97,6 +98,12 @@ export const useOutbox = () =>
 
 export const useClock = () =>
   useQuery({ queryKey: feedKeys.clock, queryFn: systemApi.clock });
+
+/** 피드의 "지금" (/feed/dev/clock 오프셋 반영). "5분 전" 같은 표시가 흐르도록 1분마다 다시 그린다. */
+export function useFeedNow() {
+  const offset = useClock().data?.offsetMs ?? 0;
+  return useNow(60_000) + offset;
+}
 
 export const useFeedStatus = () =>
   useQuery({ queryKey: feedKeys.status, queryFn: systemApi.status });

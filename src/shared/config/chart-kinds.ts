@@ -1,12 +1,16 @@
 // 차트 종류별 컬럼 역할과 상단 도구 줄에서 쓸 수 있는 기능. 새 차트는 여기에 한 줄씩 더한다.
 // 서버의 같은 표(server/charts/chart-fields.ts)와 컬럼 타입이 맞아야 한다.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, t } from "@lingui/core/macro";
 import type {
   ChartSpec,
   ChartSubType,
   ChartType,
   ColumnType,
 } from "@/shared/api/types";
+import { linguiFor } from "@/shared/lib/i18n";
+import "@/shared/config/messages";
 
 export type ChartFields = {
   x: readonly ColumnType[];
@@ -14,13 +18,26 @@ export type ChartFields = {
   y: readonly ColumnType[] | null;
   /** 세 번째 값 컬럼. 없으면 고르지 않는다 */
   z?: readonly ColumnType[];
-  /** 왼쪽 패널의 컬럼 라벨. 없으면 x, y, z */
-  labels?: Partial<Record<"x" | "y" | "z", string>>;
   /** 통계 함수(spec.agg)를 고르는지 */
   agg: boolean;
   /** false면 legend 컬럼을 고르지 않는다. 차트가 정한 값(예: sankey 출발 노드)으로 legend를 그린다. */
   legend?: false;
 };
+
+type FieldRole = "x" | "y" | "z";
+
+const FIELD_LABELS: Partial<
+  Record<ChartType, Partial<Record<FieldRole, MessageDescriptor>>>
+> = {
+  sankey: { x: msg`출발 (x)`, y: msg`도착 (y)`, z: msg`흐름 값 (z)` },
+  gantt: { y: msg`y (작업 행)` },
+};
+
+/** 왼쪽 패널의 컬럼 라벨(지금 언어). 차트가 따로 정하지 않았으면 x, y, z */
+export function fieldLabel(chartType: ChartType, role: FieldRole) {
+  const label = FIELD_LABELS[chartType]?.[role];
+  return label ? linguiFor()._(label) : role;
+}
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   scatter: { x: ["datetime", "numeric"], y: ["numeric"], agg: false },
@@ -31,7 +48,6 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
     x: ["categorical"],
     y: ["categorical"],
     z: ["numeric"],
-    labels: { x: "출발 (x)", y: "도착 (y)", z: "흐름 값 (z)" },
     agg: true,
     legend: false,
   },
@@ -47,7 +63,6 @@ export const CHART_FIELDS: Record<ChartType, ChartFields> = {
   gantt: {
     x: ["datetime"],
     y: ["categorical"],
-    labels: { y: "y (작업 행)" },
     agg: false,
   },
   pie: { x: ["categorical"], y: ["numeric"], agg: true, legend: false },
@@ -116,8 +131,7 @@ export const SUB_TYPES: Partial<Record<ChartType, readonly ChartSubType[]>> = {
   pie: ["none", "doughnut", "pie3d", "sunburst"],
 };
 
-export const SUB_TYPE_LABELS: Record<ChartSubType, string> = {
-  none: "기본",
+const SUB_TYPE_NAMES: Record<Exclude<ChartSubType, "none">, string> = {
   ecdf: "ECDF",
   ncdf: "NCDF",
   probability: "Probability",
@@ -129,6 +143,13 @@ export const SUB_TYPE_LABELS: Record<ChartSubType, string> = {
   pie3d: "Pie 3D",
   sunburst: "Sunburst",
 };
+
+/** 하위 차트 이름. 기본(none)만 언어마다 다르다. 그리는 컴포넌트는 useLocale로 구독한다. */
+export function subTypeLabel(sub: ChartSubType) {
+  return sub === "none"
+    ? t({ message: "기본", context: "chart sub type" })
+    : SUB_TYPE_NAMES[sub];
+}
 
 type SubTypeSpec = Pick<ChartSpec, "chartType" | "subType">;
 

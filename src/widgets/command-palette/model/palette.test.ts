@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { Group } from "@/shared/api/feed/types";
+import { DEFAULT_LOCALE } from "@/shared/config/locale";
+import { activateGlobal } from "@/shared/lib/lingui";
 import { matchScore, toChoseong } from "@/widgets/command-palette/lib/match";
 import { commandItems, looksLikeKey, rankItems, screenItems } from "./items";
 import { pushRecent } from "./recent";
@@ -92,5 +94,28 @@ describe("palette items", () => {
     expect(looksLikeKey("12", prefixes)).toBe(true);
     expect(looksLikeKey("board", prefixes)).toBe(false);
     expect(looksLikeKey("보드", prefixes)).toBe(false);
+  });
+});
+
+describe("palette items (en)", () => {
+  afterEach(() => activateGlobal(DEFAULT_LOCALE));
+  const groups = [group("FD", "Feed", true)];
+
+  it("이름과 키워드를 지금 언어로 만들어 그 언어로 찾는다", () => {
+    activateGlobal("en");
+    const items = [
+      ...screenItems({ groups, isAdmin: true }),
+      ...commandItems({ groupKey: "FD", reportPage: true, presenting: false }),
+    ];
+    const byId = new Map(items.map((i) => [i.id, i]));
+    expect(byId.get("screen:board:FD")?.label).toBe("Feed board");
+    expect(byId.get("screen:outbox")?.hint).toBe("Dev");
+    expect(byId.get("cmd:new")?.hint).toBe("Quick create · FD");
+    expect(byId.get("cmd:present")?.label).toBe("Turn on presentation mode");
+    expect(rankItems("kanban", items, []).rest[0]?.id).toBe("screen:board:FD");
+    expect(rankItems("pending approval", items, []).rest[0]?.id).toBe(
+      "screen:my",
+    );
+    expect(rankItems("칸반", items, []).rest).toEqual([]);
   });
 });

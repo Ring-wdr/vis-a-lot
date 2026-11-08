@@ -2,11 +2,13 @@
 
 // 빠른 생성 모달 (C 키, 팔레트): 제목 + 그룹 + 형식, 나머지는 기본값. 만든 뒤 옆 패널로 연다.
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { overlay } from "overlay-kit";
 import { useId, useState } from "react";
-import { FORMAT_LABELS } from "@/entities/post/lib/labels";
+import { formatLabels } from "@/entities/post/lib/labels";
 import { errorMessage } from "@/entities/post/model/use-post-action";
 import { field } from "@/entities/post/ui/styles";
 import { invalidatePosts } from "@/shared/api/feed/post-queries";
@@ -18,6 +20,7 @@ import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { Spinner } from "@/shared/ui/Loading";
 import { Select } from "@/shared/ui/Select";
+import "../config/messages";
 
 export type QuickCreateOptions = {
   /** 기본 그룹 (키 접두사 또는 id). 지금 보고 있는 그룹 */
@@ -26,9 +29,11 @@ export type QuickCreateOptions = {
   onCreated?: (key: string) => void;
 };
 
-export const FORMAT_OPTIONS = (
-  Object.entries(FORMAT_LABELS) as [PostFormat, string][]
-).map(([value, label]) => ({ value, label }));
+/** 형식 고르기 목록 (지금 언어) */
+export const formatOptions = () =>
+  (Object.entries(formatLabels()) as [PostFormat, string][]).map(
+    ([value, label]) => ({ value, label }),
+  );
 
 /** 기본 그룹: 키 접두사나 id가 맞는 그룹, 없으면 첫 그룹 */
 export function defaultGroup(groups: Group[], hint?: string | null) {
@@ -52,6 +57,7 @@ function QuickCreateDialog({
   unmount: () => void;
   options: QuickCreateOptions;
 }) {
+  const { t } = useLingui();
   const titleId = useId();
   const client = useQueryClient();
   const groups = useGroups();
@@ -65,15 +71,15 @@ function QuickCreateDialog({
   const group = groupId ?? defaultGroup(list, options.groupId)?.id ?? null;
 
   const submit = async () => {
-    const t = title.trim();
-    if (!t) return setError("제목을 적어 주세요.");
-    if (!group) return setError("그룹을 골라 주세요.");
+    const trimmed = title.trim();
+    if (!trimmed) return setError(t`제목을 적어 주세요.`);
+    if (!group) return setError(t`그룹을 골라 주세요.`);
     setSaving(true);
     setError(null);
     try {
       const created = await postsApi.create({
         groupId: group,
-        title: t,
+        title: trimmed,
         format,
         priority: 2,
         stakeholderIds: [],
@@ -85,7 +91,7 @@ function QuickCreateDialog({
       close();
       options.onCreated?.(created.key);
     } catch (err) {
-      setError(`만들지 못했습니다: ${errorMessage(err)}`);
+      setError(t`만들지 못했습니다: ${ph({ err: errorMessage(err) })}`);
     } finally {
       setSaving(false);
     }
@@ -104,18 +110,18 @@ function QuickCreateDialog({
         className="flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          submit();
+          void submit();
         }}
       >
         <h2 id={titleId} className="text-base font-semibold">
-          빠른 생성
+          <Trans>빠른 생성</Trans>
         </h2>
         <input
           className={field({ class: "h-9 text-sm" })}
           value={title}
           maxLength={200}
-          placeholder="제목"
-          aria-label="제목"
+          placeholder={t`제목`}
+          aria-label={t`제목`}
           aria-invalid={!!error && !title.trim()}
           autoFocus
           onChange={(e) => {
@@ -125,9 +131,9 @@ function QuickCreateDialog({
         />
         <div className="grid grid-cols-2 gap-2">
           <Select
-            label="그룹"
+            label={t({ message: "그룹", context: "group select label" })}
             value={group}
-            placeholder={groups.isPending ? "불러오는 중" : "그룹 없음"}
+            placeholder={groups.isPending ? t`불러오는 중` : t`그룹 없음`}
             options={list.map((g) => ({
               value: g.id,
               label: `${g.name} (${g.keyPrefix})`,
@@ -135,15 +141,15 @@ function QuickCreateDialog({
             onChange={setGroupId}
           />
           <Select
-            label="형식"
+            label={t`형식`}
             value={format}
-            options={FORMAT_OPTIONS}
+            options={formatOptions()}
             onChange={setFormat}
           />
         </div>
         {groups.isError && (
           <p role="alert" className="text-xs text-danger">
-            그룹을 불러오지 못했습니다: {groups.error.message}
+            {t`그룹을 불러오지 못했습니다: ${ph({ err: groups.error.message })}`}
           </p>
         )}
         {error && (
@@ -154,13 +160,13 @@ function QuickCreateDialog({
         <div className={dialogActions}>
           <Link
             href={FEED.new}
-            className={button({ class: "mr-auto" })}
+            className={button({ class: "mr-auto whitespace-nowrap" })}
             onClick={close}
           >
-            전체 폼으로
+            <Trans>전체 폼으로</Trans>
           </Link>
           <button type="button" className={button()} onClick={close}>
-            닫기
+            <Trans context="close dialog">닫기</Trans>
           </button>
           <button
             type="submit"
@@ -168,11 +174,11 @@ function QuickCreateDialog({
             disabled={saving}
           >
             {saving && <Spinner size="sm" tone="inherit" />}
-            만들기
+            <Trans>만들기</Trans>
           </button>
         </div>
         <p className="text-2xs text-fg-muted">
-          Enter로 만들고 옆 패널에서 나머지를 채웁니다.
+          <Trans>Enter로 만들고 옆 패널에서 나머지를 채웁니다.</Trans>
         </p>
       </form>
     </Dialog>

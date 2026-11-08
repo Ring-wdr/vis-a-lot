@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,22 +22,25 @@ import { useJobRange } from "@/shared/api/queries";
 import { type ItemState, isTerminal } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { useColorScheme } from "@/shared/lib/color-scheme";
+import { intlLocale } from "@/shared/lib/i18n";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { useElementSize } from "@/shared/lib/use-element-size";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { windowStart } from "../lib/thumbnail-window";
 import { ChartItemCard } from "./ChartItemCard";
 
 const RESIZE_DEBOUNCE_MS = 300;
 
-const THUMB_STATUS: Record<ItemState["status"], string> = {
-  queued: "대기 중",
-  running: "그리는 중",
-  success: "",
-  failed: "실패",
-  cancelled: "취소됨",
+/** 섬네일이 아직 없을 때 자리에 적는 상태. 다 그렸으면 적지 않는다. */
+const THUMB_STATUS: Record<ItemState["status"], MessageDescriptor | null> = {
+  queued: msg({ message: "대기 중", context: "item status" }),
+  running: msg({ message: "그리는 중", context: "item status" }),
+  success: null,
+  failed: msg({ message: "실패", context: "item status" }),
+  cancelled: msg({ message: "취소됨", context: "item status" }),
 };
 
 /** 다른 입력이 키를 쓰는 중이면(입력창, 팝업, 대화상자) 크게 보기 단축키를 쓰지 않는다. */
@@ -67,8 +73,12 @@ export function DetailView({
   totalItems: number;
   onClose: () => void;
 }) {
+  const { t, i18n } = useLingui();
+  const first = t`처음 item`;
+  const prev = t`이전 item`;
+  const next = t`다음 item`;
+  const lastLabel = t`마지막 item`;
   const setFocus = useWorkspace((s) => s.setFocus);
-  const itemJobs = useWorkspace((s) => s.itemJobs);
   const [mainRef, mainArea] = useElementSize<HTMLDivElement>();
   const [listRef, listArea] = useElementSize<HTMLOListElement>();
 
@@ -90,10 +100,17 @@ export function DetailView({
   // 크기를 바꾸는 동안에는 지금 PNG를 늘려 보여주고, 멈추면 그 크기로 한 장만 받는다.
   const requestSize =
     useDebounced(displaySize, RESIZE_DEBOUNCE_MS) ?? displaySize;
-  const busy = item !== undefined && itemJobs[item.key] !== undefined;
+  // 보고 있는 item만 고른다. 다른 item을 다시 그려도(itemJobs가 바뀌어도) 크게 보기는 다시 그리지 않는다.
+  const busy = useWorkspace(
+    (s) => item !== undefined && s.itemJobs[item.key] !== undefined,
+  );
   const detail = useItemDetail(current.chartId, item, requestSize, !busy);
 
   const last = Math.max(0, totalItems - 1);
+  const thumbStatus = (status: ItemState["status"]) => {
+    const label = THUMB_STATUS[status];
+    return label ? i18n._(label) : "";
+  };
   const go = (index: number) => setFocus(Math.min(last, Math.max(0, index)));
 
   // ←/→로 한 item씩, Home/End로 처음·끝, Esc로 grid로 돌아간다.
@@ -132,18 +149,20 @@ export function DetailView({
             onDoubleClick={onClose}
           />
         ) : (
-          <ChartItemCard placeholder="불러오는 중" />
+          <ChartItemCard
+            placeholder={t({ message: "불러오는 중", context: "item detail" })}
+          />
         )}
       </div>
       <nav
         className="flex flex-none items-center gap-1.5"
-        aria-label="item 이동"
+        aria-label={t`item 이동`}
       >
         <button
           type="button"
           className={navButton}
-          title="처음 item"
-          aria-label="처음 item"
+          title={first}
+          aria-label={first}
           disabled={focus === 0}
           onClick={() => go(0)}
         >
@@ -152,8 +171,8 @@ export function DetailView({
         <button
           type="button"
           className={navButton}
-          title="이전 item"
-          aria-label="이전 item"
+          title={prev}
+          aria-label={prev}
           disabled={focus === 0}
           onClick={() => go(focus - 1)}
         >
@@ -179,7 +198,7 @@ export function DetailView({
                     // 섬네일이 아직 없을 때 같은 비율로 자리를 잡아 목록 높이가 바뀌지 않게 한다.
                     <span className="flex aspect-[128/80] w-full items-center justify-center gap-1.5 bg-panel text-2xs text-fg-muted">
                       {!isTerminal(thumb.status) && <Spinner size="sm" />}
-                      {THUMB_STATUS[thumb.status]}
+                      {thumbStatus(thumb.status)}
                     </span>
                   )}
                   <span className="truncate px-1.5 py-0.5 text-left text-2xs">
@@ -193,8 +212,8 @@ export function DetailView({
         <button
           type="button"
           className={navButton}
-          title="다음 item"
-          aria-label="다음 item"
+          title={next}
+          aria-label={next}
           disabled={focus >= last}
           onClick={() => go(focus + 1)}
         >
@@ -203,15 +222,16 @@ export function DetailView({
         <button
           type="button"
           className={navButton}
-          title="마지막 item"
-          aria-label="마지막 item"
+          title={lastLabel}
+          aria-label={lastLabel}
           disabled={focus >= last}
           onClick={() => go(last)}
         >
           <ChevronsRight size={14} aria-hidden="true" />
         </button>
         <span className="min-w-[13ch] flex-none text-right text-xs text-fg-secondary tabular-nums">
-          {(focus + 1).toLocaleString()} / {totalItems.toLocaleString()}
+          {(focus + 1).toLocaleString(intlLocale())} /{" "}
+          {totalItems.toLocaleString(intlLocale())}
         </span>
       </nav>
     </div>

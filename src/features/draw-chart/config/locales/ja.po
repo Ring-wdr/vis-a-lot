@@ -1,0 +1,21 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/draw-chart/ui/DrawButton.tsx
+msgid "grid 영역 크기를 아직 모릅니다."
+msgstr "grid 領域のサイズがまだわかりません。"
+
+#. countText, limitText: 자릿수 구분을 넣은 숫자
+#: src/features/draw-chart/ui/DrawButton.tsx
+msgid "split 조합이 {countText}개입니다. 최대 {limitText}개까지 그릴 수 있습니다."
+msgstr "split の組み合わせが {countText} 件あります。最大 {limitText} 件まで描画できます。"
+
+#: src/features/draw-chart/ui/DrawButton.tsx
+msgid "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
+msgstr "データを登録して x, y を選ぶと描画できます"

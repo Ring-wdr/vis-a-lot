@@ -1,0 +1,75 @@
+Before drawing a chart you need to register data. Only registered data can be picked under **Data** in the left panel.
+
+## Registering sample data
+
+Manufacturing/IoT sensor data is provided as a sample, in three sizes: 100K, 500K and 1M rows.
+
+1. Open **datastore** from the top bar.
+2. Press **Register** on one of the samples at the bottom of the list.
+3. Once the status turns **Ready** you can use it. Data you built once stays in the browser, so it is not built again next time.
+
+The sample data has these columns.
+
+| Column | Type | Description |
+| --- | --- | --- |
+| Measured at (`ts`) | Datetime | Measurement times over 30 days |
+| Factory (`factory`) | Categorical | 3 values |
+| Line (`line`) | Categorical | 4 per factory |
+| Machine (`machine`) | Categorical | About 120 |
+| Sensor type (`sensor_type`) | Categorical | Temperature, vibration, pressure, current |
+| Shift (`shift`) | Categorical | Day, night, overnight |
+| LOT (`lot_id`) | Categorical | About 5,000 |
+| Status (`status`) | Categorical | Normal, warning, anomaly |
+| Value (`value`) | Numeric | Mixes a daily cycle, per-machine drift and anomaly ranges |
+| Ambient temperature (`temperature_env`) | Numeric | Correlated with the measured value |
+| Load (%) (`load_pct`) | Numeric | Machine load |
+
+## Uploading your own file
+
+Use **upload** in the top bar (or Upload data on the start screen) to upload one CSV file or a zip of CSV files.
+
+1. Pick a file with **Choose file**. For a zip, the CSV files inside are listed on the left.
+2. Adjust the **preprocessing options** on the right. The preview below updates shortly after you change an option.
+3. In the preview table header, choose which columns to include (check) and their types.
+4. If needed, use **Check** to inspect the whole file first.
+5. Press **OK** to start loading; progress shows in the line below. When it finishes, you move to the datastore popup.
+
+### Preprocessing options
+
+| Option | Details |
+| --- | --- |
+| Delimiter | Comma, tab, semicolon, vertical bar, or any single character you type |
+| First row is header | When off, columns are named `column_1`, `column_2`… |
+| Null value | Cells equal to this value are read as empty (null). Empty cells by default |
+| Quote | The single quote character around values. `"` by default |
+| Date-time format | `Auto (ISO 8601)` or a pattern such as `yyyy-MM-dd HH:mm:ss`. Columns that parse with this format are treated as datetime |
+| Ignore data errors | When on, values that don't fit the type become null and rows with the wrong number of cells are skipped. When off, such values make the upload fail with the reason |
+| Encoding | Auto (UTF-8, or EUC-KR if garbled), UTF-8, EUC-KR |
+
+### Column types
+
+Types are chosen automatically from the values. All numbers means **Numeric**, all parseable as the date-time format means **Datetime**, and anything else is **Categorical**. You can change each column in the second row of the preview table header; cells that can't convert to the chosen type are shown in red.
+
+A column's type decides where it can be used in a chart. For example, bar's x only takes categorical columns and y only numeric ones. → [Chart types](/help/vis/chart-types)
+
+### Check
+
+**Check** reads the whole file without loading it, and reports the row count and how many values in each column can't be converted. For large files, it is a good idea to check before loading.
+
+### zip files
+
+The CSV files in a zip (including subfolders) are **merged into one dataset** in name order. Files that aren't CSV are skipped. If any CSV differs in column count, names or types, the whole upload is rejected, and you are told which column of which file differs.
+
+<Callout tone="warn" title="Limits">
+  You can upload up to 300MB uncompressed, 500 CSV files and 200 columns.
+</Callout>
+
+## datastore
+
+The list of registered data. Uploaded data is at the top (most recent first), samples at the bottom.
+
+- Search by name.
+- Select data and press **Open in gallery** (or double-click) to open a new gallery tab with that data.
+- **Edit**: Opens the same upload popup in edit mode. Change the name, options, types or included columns and **reload**. The original file can't be changed, and if the reload is rejected the existing data is kept as it was.
+- **Delete**: Removes uploaded data. Samples can't be edited or deleted, and data that is still loading can't be deleted.
+- Browser storage usage is shown at the bottom.

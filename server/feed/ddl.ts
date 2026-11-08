@@ -1,7 +1,40 @@
 // 피드 DDL. vis-a-lot과 같은 PGlite에 `feed` 스키마로 따로 둔다 (테이블 이름이 vis-a-lot과 겹치지 않게).
-// 실제 Postgres로 옮겨도 그대로 실행된다. 스키마를 바꾸면 FEED_SCHEMA_VERSION을 올린다.
+// 실제 Postgres로 옮겨도 그대로 실행된다(pg_trgm은 Postgres 기본 contrib). 스키마를 바꾸면 FEED_SCHEMA_VERSION을 올린다.
+// 인덱스 근거와 측정값은 docs/db-performance.md에 있다.
 
-export const FEED_SCHEMA_VERSION = 1;
+export const FEED_SCHEMA_VERSION = 2;
+
+/**
+ * v2에서 더한 인덱스. Postgres는 외래 키 컬럼에 인덱스를 만들지 않으므로, 게시물 하나·사용자 하나로
+ * 자식 행을 찾는 곳(댓글·하위 이슈·관계·체크리스트 …)마다 둔다. v1 DB는 지우지 않고 이것만 더한다(migrate.ts).
+ */
+export const FEED_INDEXES_V2 = /* sql */ `
+set search_path to feed;
+-- 글자 검색(ilike '%…%')용 trigram. 세 글자 이상이면 인덱스를 쓴다
+create extension if not exists pg_trgm with schema feed;
+
+-- 게시물 상세·목록 요약이 게시물 id로 모으는 자식 행
+create index if not exists comments_post_id_created_at_idx on comments (post_id, created_at);
+create index if not exists posts_parent_id_idx on posts (parent_id);
+create index if not exists post_relations_to_id_idx on post_relations (to_id);
+create index if not exists checklist_items_post_id_idx on checklist_items (post_id);
+create index if not exists attachments_post_id_idx on attachments (post_id);
+create index if not exists polls_comment_id_idx on polls (comment_id);
+-- 사람 기준 필터: 이해관계자(mine=stakeholder), 관심(followedAuthors), 내 뷰
+create index if not exists post_stakeholders_user_id_idx on post_stakeholders (user_id);
+create index if not exists posts_author_id_idx on posts (author_id);
+create index if not exists saved_views_owner_id_idx on saved_views (owner_id);
+-- 기본 정렬(최근 수정순)은 앞 몇 건만 읽고 멈춘다
+create index if not exists posts_updated_at_idx on posts (updated_at);
+-- scheduler가 오늘 만든 기한 알림을 찾는다
+create index if not exists events_kind_created_at_idx on events (kind, created_at);
+-- 검색(search.posts)과 목록 글자 필터(posts.query q)
+create index if not exists posts_key_trgm_idx on posts using gin (key gin_trgm_ops);
+create index if not exists posts_title_trgm_idx on posts using gin (title gin_trgm_ops);
+create index if not exists posts_body_trgm_idx on posts using gin ((body::text) gin_trgm_ops);
+create index if not exists comments_body_trgm_idx on comments using gin ((body::text) gin_trgm_ops);
+reset search_path;
+`;
 
 export const FEED_DDL = /* sql */ `
 create schema if not exists feed;
@@ -211,4 +244,4 @@ create index on events (post_id, created_at);
 create index on notifications (user_id, read_at);
 
 reset search_path;
-`;
+${FEED_INDEXES_V2}`;

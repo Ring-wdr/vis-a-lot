@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useState } from "react";
+import { useLingui } from "@lingui/react/macro";
+import { type ReactNode, useId, useState } from "react";
 import {
   Controller,
   type FieldPath,
@@ -8,6 +9,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import type { OptionSection } from "@/entities/chart/model/chart-options";
+import { useLocale } from "@/shared/lib/i18n";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import {
@@ -15,11 +17,12 @@ import {
   getPath,
   hasSection,
   type OptionField,
-  SECTION_HINTS,
-  SECTION_LABELS,
-  SECTION_PARTS,
+  sectionHints,
+  sectionLabels,
+  sectionParts,
   sectionPaths,
 } from "../model/option-fields";
+import "../config/messages";
 import {
   type OptionsBase,
   type OptionsFormValues,
@@ -33,7 +36,7 @@ const control =
   "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg";
 
 /**
- * 속성 구역 하나의 편집 폼(react-hook-form). 필드 표(SECTION_FIELDS, 하위 항목이 있으면 그 항목의 필드)대로
+ * 속성 구역 하나의 편집 폼(react-hook-form). 필드 표(sectionFields(), 하위 항목이 있으면 그 항목의 필드)대로
  * options.<경로> 필드를 그린다. 값은 팝업의 폼에만 쓰고, 서버나 draft로 보내는 것은 팝업의 확인 버튼이다.
  */
 export function OptionSectionForm({
@@ -64,8 +67,10 @@ export function OptionSectionForm({
   } = useFormContext<OptionsFormValues>();
   const values = useWatch({ control: form, name: "options" });
   const patch = useOptionsPatch({ original, base });
-  const hint = SECTION_HINTS[section];
-  const parts = SECTION_PARTS[section];
+  // 필드 표(라벨)는 지금 언어로 읽으므로 언어가 바뀌면 다시 그린다.
+  useLocale();
+  const hint = sectionHints()[section];
+  const parts = sectionParts()[section];
   const partLabel = (parts?.find((p) => p.id === part) ?? parts?.[0])?.label;
 
   // 구역을 따르는 값으로 돌리고, 저장할 때 그 구역을 부분 값에서 지우도록 표시한다.
@@ -85,7 +90,7 @@ export function OptionSectionForm({
   return (
     <div className="flex flex-col gap-2.5 text-ui">
       <h3 className="text-ui font-semibold">
-        {SECTION_LABELS[section]}
+        {sectionLabels()[section]}
         {partLabel && ` · ${partLabel}`}
       </h3>
       {children}
@@ -144,6 +149,7 @@ function FieldInput({
   disabled: boolean;
   onCommit: (value: unknown) => void;
 }) {
+  const { t } = useLingui();
   const id = useId();
   switch (field.kind) {
     case "boolean":
@@ -209,6 +215,7 @@ function FieldInput({
     }
     case "color": {
       const color = typeof value === "string" ? value : "";
+      const label = field.label;
       return (
         <div className={row}>
           <span id={id}>{field.label}</span>
@@ -217,11 +224,13 @@ function FieldInput({
               className="size-5.5 flex-none rounded-sm border border-line"
               style={{ background: color || "transparent" }}
               color={color || "#ffffff"}
-              label={`${field.label} 바꾸기`}
+              label={t`${label} 바꾸기`}
               disabled={disabled}
               onCommit={onCommit}
             />
-            <code className="text-2xs text-fg-muted">{color || "없음"}</code>
+            <code className="text-2xs text-fg-muted">
+              {color || t({ message: "없음", context: "no color" })}
+            </code>
             {field.optional && color && (
               <button
                 type="button"
@@ -229,7 +238,7 @@ function FieldInput({
                 disabled={disabled}
                 onClick={() => onCommit("")}
               >
-                비우기
+                {t({ message: "비우기", context: "clear color" })}
               </button>
             )}
           </span>
@@ -244,7 +253,11 @@ function FieldInput({
             id={id}
             type="number"
             value={value === null || value === undefined ? "" : String(value)}
-            placeholder={field.nullable ? "자동" : undefined}
+            placeholder={
+              field.nullable
+                ? t({ message: "자동", context: "chart option" })
+                : undefined
+            }
             min={field.min}
             max={field.max}
             step={field.step ?? 1}
@@ -304,13 +317,14 @@ function DraftInput({
   "value" | "onChange" | "onBlur"
 >) {
   const [text, setText] = useState(value);
-  const parsed = parse(text);
-  const shown = parsed === INVALID ? undefined : String(parsed ?? "");
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 글자가 바뀔 때가 아니라 폼 값이 바뀔 때만 맞춘다.
-  useEffect(() => {
-    if (value !== shown) setText(value);
-  }, [value]);
+  const [prevValue, setPrevValue] = useState(value);
+  // 글자가 바뀔 때가 아니라 폼 값이 바뀔 때만 맞춘다.
+  if (value !== prevValue) {
+    setPrevValue(value);
+    const parsed = parse(text);
+    if (value !== (parsed === INVALID ? undefined : String(parsed ?? "")))
+      setText(value);
+  }
 
   return (
     <input

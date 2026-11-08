@@ -3,12 +3,19 @@
 // 목록 필터 줄: 검색, 다중 선택(상태·카테고리·우선순위·사람·유형·팀·형식), 태그, 기한 범위, 기한 지남.
 // 상태는 화면이 URL에 들고 있고, 여기서는 바뀐 필터를 onChange로 돌려줄 뿐이다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronDown, Search, X } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
 import {
-  CATEGORY_LABELS,
-  FORMAT_LABELS,
-  PRIORITY_LABELS,
+  type ReactNode,
+  startTransition,
+  useEffect,
+  useOptimistic,
+  useRef,
+} from "react";
+import {
+  categoryLabels,
+  formatLabels,
+  priorityLabels,
   statusLabel,
 } from "@/entities/post/lib/labels";
 import { BOARD_STATUSES } from "@/entities/post/model/post-model";
@@ -24,9 +31,10 @@ import type {
   Team,
 } from "@/shared/api/feed/types";
 import { tv } from "@/shared/lib/tw";
-import { useDebounced } from "@/shared/lib/use-debounced";
+import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { button } from "@/shared/ui/button";
 import { Popover } from "@/shared/ui/Popover";
+import "../config/messages";
 
 export const filterChip = tv({
   slots: {
@@ -74,15 +82,13 @@ export function MultiPick<T extends string | number>({
   /** 고른 것이 있을 때 버튼을 강조한다 (필터). 열 고르기처럼 늘 고른 것이 있으면 끈다 */
   highlight?: boolean;
 }) {
-  // URL이 바뀌어 값이 돌아오기 전에도 체크가 바로 보이게 고른 값을 먼저 들고 있는다
-  const [value, setValue] = useState<readonly T[]>(given);
-  const givenKey = given.join(",");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 값 목록(givenKey)이 바뀔 때만 따라간다
-  useEffect(() => setValue(given), [givenKey]);
-  const onChange = (next: T[]) => {
-    setValue(next);
-    emit(next);
-  };
+  // URL이 바뀌어 값이 돌아오기 전에도 체크가 바로 보이게, 반영하는 동안만 고른 값을 먼저 보여 준다
+  const [value, setOptimistic] = useOptimistic(given);
+  const onChange = (next: T[]) =>
+    startTransition(() => {
+      setOptimistic(next);
+      emit(next);
+    });
   const chosen = options.filter((o) => value.includes(o.value));
   const summary =
     chosen.length === 1
@@ -110,7 +116,7 @@ export function MultiPick<T extends string | number>({
           </legend>
           {options.length === 0 ? (
             <p className="px-1.5 py-1 text-xs text-fg-muted">
-              고를 항목이 없습니다
+              <Trans>고를 항목이 없습니다</Trans>
             </p>
           ) : (
             <div className={c.list()}>
@@ -141,14 +147,14 @@ export function MultiPick<T extends string | number>({
               disabled={!value.length}
               onClick={() => onChange([])}
             >
-              모두 해제
+              <Trans>모두 해제</Trans>
             </button>
             <button
               type="button"
               className={button({ size: "sm", variant: "primary" })}
               onClick={close}
             >
-              닫기
+              <Trans context="close filter popover">닫기</Trans>
             </button>
           </div>
         </fieldset>
@@ -195,31 +201,34 @@ function TagForm({
   onChange: (tags: string[]) => void;
   close: () => void;
 }) {
-  const [text, setText] = useState(tags.join(", "));
-  useEffect(() => setText(tags.join(", ")), [tags]);
+  // 치는 동안은 칸에만 두고, 적용하면 태그로 반영한다.
+  const { t } = useLingui();
+  const [text, typing] = usePendingValue(tags.join(", "));
   return (
     <form
       className="flex flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault();
-        onChange([
-          ...new Set(
-            text
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-          ),
-        ]);
+        typing.commit(() =>
+          onChange([
+            ...new Set(
+              text
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+            ),
+          ]),
+        );
         close();
       }}
     >
       <label className={c.field()}>
-        태그 (쉼표로 여럿)
+        <Trans>태그 (쉼표로 여럿)</Trans>
         <input
           className={c.input()}
           value={text}
-          placeholder="예: 매출, 대시보드"
-          onChange={(e) => setText(e.currentTarget.value)}
+          placeholder={t`예: 매출, 대시보드`}
+          onChange={(e) => typing.change(e.currentTarget.value)}
         />
       </label>
       <div className="flex justify-end gap-2">
@@ -227,17 +236,17 @@ function TagForm({
           type="button"
           className={button({ size: "sm" })}
           onClick={() => {
-            onChange([]);
+            typing.commit(() => onChange([]));
             close();
           }}
         >
-          지우기
+          <Trans context="clear a filter field">지우기</Trans>
         </button>
         <button
           type="submit"
           className={button({ size: "sm", variant: "primary" })}
         >
-          적용
+          <Trans>적용</Trans>
         </button>
       </div>
     </form>
@@ -269,7 +278,7 @@ function DueForm({
       }}
     >
       <label className={c.field()}>
-        부터
+        <Trans context="due date range start">부터</Trans>
         <input
           name="from"
           type="date"
@@ -278,7 +287,7 @@ function DueForm({
         />
       </label>
       <label className={c.field()}>
-        까지
+        <Trans context="due date range end">까지</Trans>
         <input
           name="to"
           type="date"
@@ -295,13 +304,13 @@ function DueForm({
             close();
           }}
         >
-          지우기
+          <Trans context="clear a filter field">지우기</Trans>
         </button>
         <button
           type="submit"
           className={button({ size: "sm", variant: "primary" })}
         >
-          적용
+          <Trans>적용</Trans>
         </button>
       </div>
     </form>
@@ -310,7 +319,10 @@ function DueForm({
 
 const shortDay = (d?: string | null) => (d ? d.slice(5).replace("-", "/") : "");
 
-/** 검색어: 치는 동안은 화면에 두고, 멈추면 onChange */
+/**
+ * 검색어: 치는 동안은 칸에만 두고, 멈추면 onChange.
+ * URL에는 앞뒤 공백을 지운 값이 가므로, 칸에 있는 동안은 친 글자를 그대로 두고 칸을 떠나면 URL 값을 따른다.
+ */
 function SearchBox({
   value,
   onChange,
@@ -318,14 +330,25 @@ function SearchBox({
   value: string;
   onChange: (q: string) => void;
 }) {
-  const [text, setText] = useState(value);
-  const debounced = useDebounced(text, 300);
-  // URL이 바깥에서 바뀌면(뒤로 가기, 지우기) 따라간다
-  useEffect(() => setText(value), [value]);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 멈춘 값이 바뀔 때만 보낸다 (onChange·value는 매번 바뀐다)
-  useEffect(() => {
-    if (debounced.trim() !== value) onChange(debounced.trim());
-  }, [debounced]);
+  const { t } = useLingui();
+  const [text, typing] = usePendingValue(value);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const type = (next: string) => {
+    typing.change(next);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const q = next.trim();
+      if (q !== value) typing.commit(() => onChange(q), { hold: true });
+    }, 300);
+  };
+  // 칸을 떠나면 기다리던 검색어를 바로 보내고 URL 값을 따른다.
+  const leave = () => {
+    clearTimeout(timer.current);
+    const q = text.trim();
+    if (q !== value) typing.commit(() => onChange(q));
+    else typing.release();
+  };
   return (
     <label className="relative flex h-7 w-48 min-w-0 items-center">
       <Search
@@ -336,10 +359,11 @@ function SearchBox({
       <input
         type="search"
         className="size-full rounded-md border border-line bg-elevated pr-2 pl-7 text-xs text-fg"
-        placeholder="제목·본문 검색"
-        aria-label="검색"
+        placeholder={t`제목·본문 검색`}
+        aria-label={t`검색`}
         value={text}
-        onChange={(e) => setText(e.currentTarget.value)}
+        onChange={(e) => type(e.currentTarget.value)}
+        onBlur={leave}
       />
     </label>
   );
@@ -357,16 +381,28 @@ export type FilterBarProps = {
   compact?: boolean;
 };
 
-const PRIORITY_OPTIONS = ([4, 3, 2, 1, 0] as const).map((p) => ({
-  value: p as number,
-  label: PRIORITY_LABELS[p],
-}));
-const CATEGORY_OPTIONS = (Object.keys(CATEGORY_LABELS) as StatusCategory[]).map(
-  (value) => ({ value, label: CATEGORY_LABELS[value] }),
-);
-const FORMAT_OPTIONS = (Object.keys(FORMAT_LABELS) as PostFormat[]).map(
-  (value) => ({ value, label: FORMAT_LABELS[value] }),
-);
+/** 라벨은 지금 언어로 읽는다. 그리는 FilterBar가 useLingui로 언어 변경을 구독한다 */
+function priorityOptions() {
+  const labels = priorityLabels();
+  return ([4, 3, 2, 1, 0] as const).map((p) => ({
+    value: p as number,
+    label: labels[p],
+  }));
+}
+function categoryOptions() {
+  const labels = categoryLabels();
+  return (Object.keys(labels) as StatusCategory[]).map((value) => ({
+    value,
+    label: labels[value],
+  }));
+}
+function formatOptions() {
+  const labels = formatLabels();
+  return (Object.keys(labels) as PostFormat[]).map((value) => ({
+    value,
+    label: labels[value],
+  }));
+}
 
 /** 값이 비면 키를 지워서 URL이 깨끗하게 남게 한다 */
 function patch<K extends keyof PostFilter>(
@@ -389,11 +425,12 @@ export function FilterBar({
   filter,
   onChange,
   users,
-  teams = [],
-  postTypes = [],
+  teams = NONE,
+  postTypes = NONE,
   statusNames,
   compact = false,
 }: FilterBarProps) {
+  const { t } = useLingui();
   const set = <K extends keyof PostFilter>(key: K, value: PostFilter[K]) =>
     onChange(patch(filter, key, value));
   const people = users.map((u) => ({ value: u.id, label: u.name }));
@@ -404,62 +441,65 @@ export function FilterBar({
   const active = countFilters(filter) + (filter.q ? 1 : 0);
 
   return (
-    <search className="flex flex-wrap items-center gap-1.5" aria-label="필터">
+    <search
+      className="flex flex-wrap items-center gap-1.5"
+      aria-label={t`필터`}
+    >
       <SearchBox value={filter.q ?? ""} onChange={(q) => set("q", q)} />
       {!compact && (
         <>
           <MultiPick
-            label="상태"
+            label={t({ message: "상태", context: "filter field" })}
             options={statusOptions}
             value={filter.statuses}
             onChange={(v) => set("statuses", v)}
           />
           <MultiPick
-            label="카테고리"
-            options={CATEGORY_OPTIONS}
+            label={t({ message: "카테고리", context: "filter field" })}
+            options={categoryOptions()}
             value={filter.categories}
             onChange={(v) => set("categories", v)}
           />
         </>
       )}
       <MultiPick
-        label="우선순위"
-        options={PRIORITY_OPTIONS}
+        label={t({ message: "우선순위", context: "filter field" })}
+        options={priorityOptions()}
         value={filter.priorities}
         onChange={(v) => set("priorities", v)}
       />
       <MultiPick
-        label="담당자"
+        label={t({ message: "담당자", context: "filter field" })}
         options={people}
         value={filter.assigneeIds}
         onChange={(v) => set("assigneeIds", v)}
       />
       <MultiPick
-        label="요청자"
+        label={t({ message: "요청자", context: "filter field" })}
         options={people}
         value={filter.requesterIds}
         onChange={(v) => set("requesterIds", v)}
       />
       <MultiPick
-        label="유형"
-        options={postTypes.map((t) => ({ value: t.id, label: t.name }))}
+        label={t({ message: "유형", context: "filter field: post type" })}
+        options={postTypes.map((pt) => ({ value: pt.id, label: pt.name }))}
         value={filter.postTypeIds}
         onChange={(v) => set("postTypeIds", v)}
       />
       <MultiPick
-        label="팀"
-        options={teams.map((t) => ({ value: t.id, label: t.name }))}
+        label={t({ message: "팀", context: "filter field" })}
+        options={teams.map((tm) => ({ value: tm.id, label: tm.name }))}
         value={filter.teamIds}
         onChange={(v) => set("teamIds", v)}
       />
       <MultiPick
-        label="형식"
-        options={FORMAT_OPTIONS}
+        label={t({ message: "형식", context: "filter field: post format" })}
+        options={formatOptions()}
         value={filter.formats}
         onChange={(v) => set("formats", v)}
       />
       <PopoverForm
-        label="태그"
+        label={t({ message: "태그", context: "filter field" })}
         summary={
           filter.tags?.length === 1
             ? filter.tags[0]
@@ -477,7 +517,7 @@ export function FilterBar({
         )}
       </PopoverForm>
       <PopoverForm
-        label="기한"
+        label={t({ message: "기한", context: "filter field: due date" })}
         width={200}
         summary={
           filter.dueFrom || filter.dueTo
@@ -502,16 +542,16 @@ export function FilterBar({
         aria-pressed={!!filter.overdue}
         onClick={() => set("overdue", !filter.overdue)}
       >
-        기한 지남
+        <Trans>기한 지남</Trans>
       </button>
       {active > 0 && (
         <button
           type="button"
-          className="inline-flex h-7 cursor-pointer items-center gap-1 px-1.5 text-xs text-fg-muted hover:text-fg"
+          className="inline-flex h-7 cursor-pointer items-center gap-1 px-1.5 text-xs whitespace-nowrap text-fg-muted hover:text-fg"
           onClick={() => onChange({})}
         >
           <X size={12} aria-hidden="true" />
-          필터 지우기
+          <Trans>필터 지우기</Trans>
         </button>
       )}
     </search>

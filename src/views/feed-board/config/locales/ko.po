@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:03+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#. {groupName}은 그룹 이름
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "{groupName} 보드"
+msgstr "{groupName} 보드"
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "{total, plural, other {#건}}"
+msgstr "{total, plural, other {#건}}"
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "게시물을 불러오지 못했습니다"
+msgstr "게시물을 불러오지 못했습니다"
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "다시 시도"
+msgstr "다시 시도"
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "스윔레인"
+msgstr "스윔레인"
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgctxt "board swimlane: no lanes"
+msgid "없음"
+msgstr "없음"
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "조건에 맞는 게시물이 없습니다. 필터를 줄여 보세요."
+msgstr "조건에 맞는 게시물이 없습니다. 필터를 줄여 보세요."
+
+#: src/views/feed-board/ui/BoardView.tsx
+msgid "팀"
+msgstr "팀"

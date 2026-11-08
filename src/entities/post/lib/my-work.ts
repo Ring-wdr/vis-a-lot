@@ -1,22 +1,35 @@
 // 내 작업 탭과 필터. 홈의 요약 띠도 여기서 링크를 만든다.
 // 기한 임박은 서버의 요약(posts.mySummary)과 같게: 담당 · 열림 · 기한이 오늘+3일까지(지난 것 포함).
 
+import { t } from "@lingui/core/macro";
 import type { PostFilter, StatusCategory } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
+import "../config/messages";
 
 export type MyTab = NonNullable<PostFilter["mine"]>;
 
-export const MY_TABS: readonly { id: MyTab; label: string }[] = [
-  { id: "assigned", label: "담당" },
-  { id: "requested", label: "내가 요청" },
-  { id: "review", label: "승인 대기" },
-  { id: "stakeholder", label: "이해관계자" },
+export const MY_TAB_IDS: readonly MyTab[] = [
+  "assigned",
+  "requested",
+  "review",
+  "stakeholder",
 ];
+
+/** 탭 목록 (지금 언어). 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다 */
+export const myTabs = (): readonly { id: MyTab; label: string }[] => {
+  const labels: Record<MyTab, string> = {
+    assigned: t({ message: "담당", context: "my work tab" }),
+    requested: t`내가 요청`,
+    review: t`승인 대기`,
+    stakeholder: t`이해관계자`,
+  };
+  return MY_TAB_IDS.map((id) => ({ id, label: labels[id] }));
+};
 
 export const DUE_SOON_DAYS = 3;
 
 export function parseTab(value: string | null): MyTab {
-  return MY_TABS.find((t) => t.id === value)?.id ?? "assigned";
+  return MY_TAB_IDS.find((id) => id === value) ?? "assigned";
 }
 
 /** /feed/my?tab=…(&due=soon)(&closed=1) */

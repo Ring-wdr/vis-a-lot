@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useRef, useState } from "react";
 import {
@@ -17,6 +20,8 @@ import type {
   ItemMeta,
 } from "@/shared/api/types";
 import { tv } from "@/shared/lib/tw";
+import { showAlert } from "@/shared/ui/AlertDialog";
+import "../config/messages";
 
 const drawLayer = tv({
   base: "relative cursor-crosshair touch-none select-none",
@@ -53,18 +58,19 @@ type Draft =
   | { kind: "freehand"; points: Point[] }
   | { kind: "text"; at: Point };
 
-const TOOL_LABELS: Record<DrawTool, string> = {
-  pan: "이동",
-  zoom: "확대 영역 선택",
-  rectSelect: "사각형으로 선택",
-  lassoSelect: "자유형으로 선택",
-  rectDelete: "사각형으로 지우기",
-  lassoDelete: "자유형으로 지우기",
-  rect: "도형 그리기",
-  line: "도형 그리기",
-  freehand: "도형 그리기",
-  text: "도형 그리기",
-};
+/** 레이어 이름에 넣는 도구 이름. 페인트 도구는 모두 "도형 그리기"다. */
+const TOOL_LABELS = {
+  pan: msg({ message: "이동", context: "draw tool" }),
+  zoom: msg`확대 영역 선택`,
+  rectSelect: msg`사각형으로 선택`,
+  lassoSelect: msg`자유형으로 선택`,
+  rectDelete: msg`사각형으로 지우기`,
+  lassoDelete: msg`자유형으로 지우기`,
+  rect: msg`도형 그리기`,
+  line: msg`도형 그리기`,
+  freehand: msg`도형 그리기`,
+  text: msg`도형 그리기`,
+} satisfies Record<DrawTool, MessageDescriptor>;
 
 const MIN_DRAG_PX = 4;
 const FREEHAND_STEP_PX = 2;
@@ -124,6 +130,8 @@ export function DrawLayer({
   alt: string;
   onAction: (action: ItemAction) => void;
 }) {
+  const { t, i18n } = useLingui();
+  const toolLabel = i18n._(TOOL_LABELS[tool]);
   const ref = useRef<HTMLDivElement>(null);
   const client = useQueryClient();
   // 그리기 모드에서는 metadata를 미리 받아 둔다 (좌표 변환에 필요).
@@ -131,10 +139,17 @@ export function DrawLayer({
   const [draft, setDraft] = useState<Draft>();
   const [text, setText] = useState("");
 
-  const getMeta = (): Promise<ItemMeta> =>
-    meta.data
-      ? Promise.resolve(meta.data)
-      : client.fetchQuery(itemMetaQuery(image.url));
+  /** 좌표를 바꿀 metadata. 받지 못하면(지운 데이터 등) 알리고 undefined를 준다. */
+  const getMeta = async (): Promise<ItemMeta | undefined> => {
+    if (meta.data) return meta.data;
+    try {
+      return await client.fetchQuery(itemMetaQuery(image.url));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showAlert(t`차트 정보를 읽지 못했습니다: ${message}`);
+      return undefined;
+    }
+  };
 
   // 선택하는 동안 고르는 영역(PNG 좌표 path). 그림 영역에서 이 밖을 덮는다.
   const selecting =
@@ -192,6 +207,7 @@ export function DrawLayer({
     const finished = draft;
     setDraft(undefined);
     const m = await getMeta();
+    if (!m) return;
     const clearSelection = () => {
       if (hasSelection) onAction({ type: "select", region: null });
     };
@@ -261,7 +277,9 @@ export function DrawLayer({
     const at = draft.at;
     setDraft(undefined);
     if (!value) return;
-    const [x, y] = pxToData(await getMeta(), at);
+    const m = await getMeta();
+    if (!m) return;
+    const [x, y] = pxToData(m, at);
     onAction({ type: "addShape", shape: { type: "text", x, y, text: value } });
   };
 
@@ -276,7 +294,7 @@ export function DrawLayer({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="application"
-      aria-label={`${alt} 위에 ${TOOL_LABELS[tool]}`}
+      aria-label={t`${alt} 위에 ${toolLabel}`}
     >
       {/* 이동하는 동안 그림은 그대로 두고 커서(grab)만 바꾼다. 놓으면 서버가 옮긴 범위로 다시 그린다. */}
       {/* resize 대기 중에는 기존 PNG를 칸 크기에 맞게 늘리거나 줄여 보여준다. */}
@@ -352,11 +370,12 @@ export function DrawLayer({
           autoFocus
           value={text}
           maxLength={200}
-          placeholder="메모 입력 후 Enter"
+          placeholder={t`메모 입력 후 Enter`}
           onChange={(e) => setText(e.target.value)}
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
-            if (e.key === "Enter") submitText();
+            // 실패는 getMeta가 알린다.
+            if (e.key === "Enter") void submitText();
             if (e.key === "Escape") setDraft(undefined);
           }}
           onBlur={() => setDraft(undefined)}

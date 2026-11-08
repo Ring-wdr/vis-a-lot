@@ -116,10 +116,15 @@ export function columnOf(
   return column;
 }
 
-/** 숫자로 비교·축에 쓸 식. 시각은 epoch ms 숫자로 바꾼다. */
+/**
+ * 숫자로 비교·축에 쓸 식. 시각은 epoch ms 숫자(float8)로 바꾼다.
+ * extract(epoch)는 numeric이라 행마다 계산이 무거워(PGlite에서 약 5배) float8인 date_part를 쓴다.
+ * date_part는 초 단위라 ×1000만 하면 끝자리가 어긋나므로, 마이크로초 정수로 반올림한 뒤 1000으로 나눠
+ * extract(epoch) * 1000을 float8로 바꾼 값과 똑같이 만든다.
+ */
 export function numericSql(column: ColumnSchema): Sql {
   if (column.type === "datetime")
-    return sql`(extract(epoch from ${ident(column.name)}) * 1000)`;
+    return sql`(round(date_part('epoch', ${ident(column.name)}) * 1000000) / 1000)`;
   if (column.type === "numeric") return ident(column.name);
   throw new SchemaError(`'${column.label}'은 숫자로 쓸 수 없습니다.`);
 }

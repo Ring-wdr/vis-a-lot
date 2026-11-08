@@ -18,9 +18,9 @@ import { exportItemRows, queryItemRows } from "../data/item-rows";
 import { attachSunburst, toPieData, toRadarData } from "../data/polar-data";
 import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
-import { createDb } from "../db/database";
+import { createDb, PGLITE_EXTENSIONS, PLANNER_SETTINGS } from "../db/database";
 import { createFeedDb } from "../feed/db";
-import { migrateFeed, resetFeed } from "../feed/migrate";
+import { analyzeFeed, migrateFeed, resetFeed } from "../feed/migrate";
 import { runFeedOp } from "../feed/runner";
 import {
   deleteHistory,
@@ -55,7 +55,9 @@ self.addEventListener("unhandledrejection", (e) => {
 // IndexedDB에 저장해서 새로고침해도 데이터가 남는다.
 const ready = PGlite.create("idb://vis-a-lot", {
   relaxedDurability: true,
+  extensions: PGLITE_EXTENSIONS,
 }).then(async (pglite) => {
+  await pglite.exec(PLANNER_SETTINGS);
   const db = createDb(pglite);
   await db.schema
     .createTable("boot_log")
@@ -254,6 +256,8 @@ serveRpc<DbMethods>({
 
   async feedFlush() {
     const { pglite } = await ready;
+    // 행이 통째로 바뀌었으니 플래너 통계도 다시 모은다
+    await analyzeFeed(pglite);
     // relaxedDurability에서는 공개 syncToFs()가 저장을 기다리지 않고 돌아온다.
     // 데이터가 통째로 바뀐 직후(시드·리셋·가져오기)만 IndexedDB 파일시스템의 저장을 직접 기다린다.
     const fs = (pglite as unknown as { fs?: { syncToFs(): Promise<void> } }).fs;

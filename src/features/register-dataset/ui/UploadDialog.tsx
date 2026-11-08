@@ -4,6 +4,7 @@
 // 포함·타입을 정한 뒤 확인을 누르면 적재한다. 적재 진행은 long polling으로 받고, 끝나면 새 데이터셋 id로 닫는다.
 // 데이터스토어의 '수정'도 같은 팝업을 쓴다 (보관해 둔 원본을 다시 올려 둔다).
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCheck, FileUp, FolderOpen } from "lucide-react";
 import { overlay } from "overlay-kit";
@@ -23,12 +24,14 @@ import type {
   UploadTask,
 } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
+import { intlLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
 import { useDebounced } from "@/shared/lib/use-debounced";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, LoadingText, Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { type GridColumn, PreviewGrid } from "./PreviewGrid";
 import { DEFAULT_CSV_OPTIONS, UploadOptions } from "./UploadOptions";
 
@@ -48,15 +51,20 @@ const fileCell = "border-line border-b px-2 py-1 text-left";
 
 /** 적재 진행 한 줄 */
 function TaskProgress({ task }: { task: UploadTask }) {
+  const { t } = useLingui();
+  const locale = intlLocale();
   const ratio = task.total > 0 ? task.done / task.total : 0;
+  const percent = Math.round(ratio * 100);
+  const done = task.done.toLocaleString(locale);
+  const total = task.total.toLocaleString(locale);
   const label = {
-    parse: `검사·변환 중 ${Math.round(ratio * 100)}%`,
-    queued: "다른 적재가 끝나기를 기다리는 중",
-    copy: `적재 중 ${task.done.toLocaleString()} / ${task.total.toLocaleString()}행`,
-    analyze: "컬럼 통계 계산 중",
-    done: "완료",
-    rejected: "거절됨",
-    failed: "실패",
+    parse: t`검사·변환 중 ${percent}%`,
+    queued: t`다른 적재가 끝나기를 기다리는 중`,
+    copy: t`적재 중 ${done} / ${total}행`,
+    analyze: t`컬럼 통계 계산 중`,
+    done: t({ message: "완료", context: "upload task" }),
+    rejected: t({ message: "거절됨", context: "upload task" }),
+    failed: t({ message: "실패", context: "upload task" }),
   }[task.state];
   return (
     <output className="flex items-center gap-2.5 text-ui text-fg-secondary">
@@ -83,6 +91,26 @@ function UploadBody({
   onDone: (id: DatasetId) => void;
   onCancel: () => void;
 }) {
+  const { t } = useLingui();
+  const locale = intlLocale();
+  const mergeNote = (n: number) =>
+    t({
+      message: `CSV ${n}개를 하나로 합칩니다`,
+      comment: "n: zip 안의 CSV 수",
+    });
+  const checkPassed = (count: number) => {
+    const rows = count.toLocaleString(locale);
+    return t`검사 통과 · ${rows}행`;
+  };
+  const skippedNote = (count: number) => {
+    const skipped = count.toLocaleString(locale);
+    return t`건너뛴 행 ${skipped}개`;
+  };
+  const previewHint = (n: number) =>
+    t({
+      message: `앞 ${n}행 미리보기입니다. 검사를 누르면 파일 전체를 확인합니다.`,
+      comment: "n: 미리보기 행 수",
+    });
   const titleId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [staged, setStaged] = useState<StagedUpload>();
@@ -152,7 +180,7 @@ function UploadBody({
   // 적재가 끝나면 목록을 다시 받고 새 데이터셋으로 닫는다.
   const finished = task?.state === "done" ? task.datasetId : undefined;
   const finish = useCallbackRef((id: DatasetId) => {
-    changed(id);
+    void changed(id);
     onDone(id);
   });
   useEffect(() => {
@@ -220,7 +248,7 @@ function UploadBody({
     >
       <header className="flex items-center justify-between gap-3">
         <h2 id={titleId} className="text-base font-bold">
-          {dataset ? "데이터 수정" : "파일 열기"}
+          {dataset ? <Trans>데이터 수정</Trans> : <Trans>파일 열기</Trans>}
         </h2>
         <div className="flex gap-2">
           <input
@@ -238,7 +266,7 @@ function UploadBody({
             className={button({ variant: "primary" })}
             disabled={Boolean(dataset) || staging || running}
             title={
-              dataset ? "수정에서는 원본 파일을 바꿀 수 없습니다" : undefined
+              dataset ? t`수정에서는 원본 파일을 바꿀 수 없습니다` : undefined
             }
             onClick={() => fileInput.current?.click()}
           >
@@ -247,13 +275,13 @@ function UploadBody({
             ) : (
               <FolderOpen size={14} aria-hidden="true" />
             )}
-            파일 선택
+            <Trans>파일 선택</Trans>
           </button>
           <button
             type="button"
             className={button()}
             disabled={!stageId || check.isPending || running}
-            title="적재하지 않고 파일 전체를 검사합니다"
+            title={t`적재하지 않고 파일 전체를 검사합니다`}
             onClick={() => check.mutate(options)}
           >
             {check.isPending ? (
@@ -261,7 +289,7 @@ function UploadBody({
             ) : (
               <CheckCheck size={14} aria-hidden="true" />
             )}
-            검사
+            <Trans context="check whole file button">검사</Trans>
           </button>
         </div>
       </header>
@@ -269,7 +297,7 @@ function UploadBody({
       <div className="grid min-h-0 flex-1 grid-cols-[12.5rem_minmax(0,1fr)_16.25rem] grid-rows-[minmax(8.75rem,38%)_minmax(0,1fr)] gap-2.5 [grid-template-areas:'files_raw_options'_'preview_preview_options'] max-[53.75rem]:grid-cols-[minmax(0,1fr)] max-[53.75rem]:grid-rows-[auto_10rem_auto_minmax(15rem,1fr)] max-[53.75rem]:overflow-auto max-[53.75rem]:[grid-template-areas:'files'_'raw'_'options'_'preview']">
         <section
           className={cn(pane, "overflow-auto [grid-area:files]")}
-          aria-label="파일"
+          aria-label={t({ message: "파일", context: "uploaded files list" })}
         >
           <table className="w-full border-collapse text-xs">
             <thead>
@@ -280,7 +308,7 @@ function UploadBody({
                     "sticky top-0 w-10 bg-panel font-semibold text-fg-muted",
                   )}
                 >
-                  번호
+                  <Trans context="file list header">번호</Trans>
                 </th>
                 <th
                   className={cn(
@@ -288,7 +316,7 @@ function UploadBody({
                     "sticky top-0 bg-panel font-semibold text-fg-secondary",
                   )}
                 >
-                  이름
+                  <Trans context="file list header">이름</Trans>
                 </th>
               </tr>
             </thead>
@@ -331,7 +359,7 @@ function UploadBody({
             <p className={cn(hint, "px-2 py-1.5")}>
               {staged.fileName} · {formatBytes(staged.size)}
               {staged.files.length > 1 &&
-                ` · CSV ${staged.files.length}개를 하나로 합칩니다`}
+                ` · ${mergeNote(staged.files.length)}`}
             </p>
           )}
         </section>
@@ -339,7 +367,7 @@ function UploadBody({
         {/* 원본 앞부분. 파일을 끌어다 놓아도 올린다. */}
         <section
           className={cn(pane, "overflow-auto [grid-area:raw]")}
-          aria-label="원본"
+          aria-label={t({ message: "원본", context: "raw file preview" })}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
@@ -351,21 +379,25 @@ function UploadBody({
               {preview.data.raw.join("\n")}
             </pre>
           ) : staging || preview.isFetching ? (
-            <LoadingText>불러오는 중</LoadingText>
+            <LoadingText>
+              <Trans context="raw file preview">불러오는 중</Trans>
+            </LoadingText>
           ) : (
             <EmptyState
               size="sm"
               icon={<FileUp size={20} />}
-              title="파일을 선택하세요"
+              title={t`파일을 선택하세요`}
             >
-              CSV 또는 CSV를 묶은 zip. 여기로 끌어다 놓아도 됩니다.
+              <Trans>
+                CSV 또는 CSV를 묶은 zip. 여기로 끌어다 놓아도 됩니다.
+              </Trans>
             </EmptyState>
           )}
         </section>
 
         <aside
           className={cn(pane, "overflow-auto p-3 [grid-area:options]")}
-          aria-label="전처리 옵션"
+          aria-label={t`전처리 옵션`}
         >
           <fieldset disabled={running} className={plainFieldset}>
             <UploadOptions
@@ -382,7 +414,7 @@ function UploadBody({
             pane,
             "flex flex-col overflow-hidden [grid-area:preview]",
           )}
-          aria-label="미리보기"
+          aria-label={t`미리보기`}
         >
           {preview.data?.error ? (
             <p role="alert" className={cn(error, "p-3")}>
@@ -419,22 +451,19 @@ function UploadBody({
             </p>
           ) : checkResult ? (
             <output className="m-0 block text-ui text-fg-secondary">
-              검사 통과 · {checkResult.rows.toLocaleString()}행
+              {checkPassed(checkResult.rows)}
               {checkResult.skipped > 0 &&
-                ` · 건너뛴 행 ${checkResult.skipped.toLocaleString()}개`}
+                ` · ${skippedNote(checkResult.skipped)}`}
               {checkResult.columns.some((c) => c.invalid > 0) &&
-                " · 변환 불가 값은 null로 넣습니다"}
+                ` · ${t`변환 불가 값은 null로 넣습니다`}`}
             </output>
           ) : preview.data && !preview.data.error ? (
-            <p className={hint}>
-              앞 {preview.data.rows.length}행 미리보기입니다. 검사를 누르면 파일
-              전체를 확인합니다.
-            </p>
+            <p className={hint}>{previewHint(preview.data.rows.length)}</p>
           ) : null}
         </div>
         <div className={cn(dialogActions, "mt-0")}>
           <button type="button" className={button()} onClick={onCancel}>
-            취소
+            <Trans context="upload dialog">취소</Trans>
           </button>
           <button
             type="button"
@@ -449,7 +478,11 @@ function UploadBody({
             onClick={() => commit.mutate()}
           >
             {running && <Spinner size="sm" tone="inherit" />}
-            {dataset ? "다시 적재" : "확인"}
+            {dataset ? (
+              <Trans>다시 적재</Trans>
+            ) : (
+              <Trans context="upload dialog">확인</Trans>
+            )}
           </button>
         </div>
       </footer>

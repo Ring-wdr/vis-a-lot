@@ -21,6 +21,15 @@ const EDGE = 24;
 /** 자동 스크롤 최고 속도(px/frame). 가장자리 밖으로 멀어질수록 이 값에 가까워진다. */
 const MAX_SCROLL_SPEED = 24;
 
+/** step이 true를 돌려주는 동안 프레임마다 부른다. 예약한 프레임 id는 raf에 두고, 멈추면 0으로 비운다. */
+function everyFrame(raf: { current: number }, step: () => boolean) {
+  const tick = () => {
+    raf.current = 0;
+    if (step()) raf.current = requestAnimationFrame(tick);
+  };
+  raf.current = requestAnimationFrame(tick);
+}
+
 /**
  * 목록에 붙이는 드래그 선택 처리. 누른 채 훑으면 지나간 항목을 순서대로 고르거나 빼고,
  * 누르고 그대로 떼면 그 항목 하나를 토글한다. split by·tooltip 선택(OrderedSelect)과
@@ -117,16 +126,21 @@ export function useDragSelect<T>({
     return Math.sign(depth) * speed;
   }, [listRef]);
 
-  const tick = useCallback(() => {
-    raf.current = 0;
-    const el = listRef.current;
-    const speed = scrollSpeed();
-    if (!el || state.current.phase !== "dragging" || speed === 0) return;
-    el.scrollTop += speed;
-    // 스크롤로 포인터 아래를 지나간 항목도 같은 규칙으로 채운다.
-    moveTo();
-    raf.current = requestAnimationFrame(tick);
-  }, [listRef, moveTo, scrollSpeed]);
+  /** 포인터가 가장자리 근처에 있는 동안 프레임마다 목록을 스크롤한다. */
+  const startAutoScroll = useCallback(
+    () =>
+      everyFrame(raf, () => {
+        const el = listRef.current;
+        const speed = scrollSpeed();
+        if (!el || state.current.phase !== "dragging" || speed === 0)
+          return false;
+        el.scrollTop += speed;
+        // 스크롤로 포인터 아래를 지나간 항목도 같은 규칙으로 채운다.
+        moveTo();
+        return true;
+      }),
+    [listRef, moveTo, scrollSpeed],
+  );
 
   const finish = useCallback(
     (commit: boolean) => {
@@ -201,7 +215,7 @@ export function useDragSelect<T>({
       pointer.current.y = e.clientY;
       moveTo();
       if (state.current.phase === "dragging" && !raf.current && scrollSpeed()) {
-        raf.current = requestAnimationFrame(tick);
+        startAutoScroll();
       }
     },
     onPointerUp(e: ReactPointerEvent<HTMLElement>) {

@@ -61,6 +61,21 @@ function Anchor({ href = "", className, ...props }: ComponentProps<"a">) {
   );
 }
 
+function H2(props: ComponentProps<"h2">) {
+  return (
+    <h2
+      className="mt-10 mb-3 scroll-mt-6 border-b border-line pb-2 text-base font-semibold"
+      {...props}
+    />
+  );
+}
+
+function H3(props: ComponentProps<"h3">) {
+  return (
+    <h3 className="mt-7 mb-2 scroll-mt-6 text-sm font-semibold" {...props} />
+  );
+}
+
 /**
  * MDX가 만드는 HTML 요소의 모양. 루트의 mdx-components.tsx가 이 표를 넘긴다.
  * 자손 선택자를 쓰지 않도록 요소마다 클래스를 직접 단다 (docs/styling.md).
@@ -69,15 +84,8 @@ export const MDX_COMPONENTS: MDXComponents = {
   h1: (props) => (
     <h1 className="mb-2 text-xl font-bold tracking-tight" {...props} />
   ),
-  h2: (props) => (
-    <h2
-      className="mt-10 mb-3 scroll-mt-6 border-b border-line pb-2 text-base font-semibold"
-      {...props}
-    />
-  ),
-  h3: (props) => (
-    <h3 className="mt-7 mb-2 scroll-mt-6 text-sm font-semibold" {...props} />
-  ),
+  h2: H2,
+  h3: H3,
   p: (props) => <p className="my-3 text-sm/6" {...props} />,
   ul: (props) => (
     <ul
@@ -132,3 +140,14 @@ export const MDX_COMPONENTS: MDXComponents = {
   Callout,
   Kbd,
 };
+
+/**
+ * 제목 id 앞에 prefix를 붙인 h2·h3. 한 페이지에 두 언어 본문을 함께 그릴 때(도움말) 같은 글자의 제목
+ * ('## history' 등)이 같은 id를 갖지 않도록 영어 본문에 쓴다. 본문 안 링크도 `#en-…`로 적는다.
+ */
+export function prefixedHeadings(prefix: string): MDXComponents {
+  return {
+    h2: ({ id, ...props }) => <H2 {...props} id={id && `${prefix}${id}`} />,
+    h3: ({ id, ...props }) => <H3 {...props} id={id && `${prefix}${id}`} />,
+  };
+}

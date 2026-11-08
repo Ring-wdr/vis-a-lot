@@ -3,6 +3,7 @@
 
 import { PGlite } from "@electric-sql/pglite";
 import type { Kysely } from "kysely";
+import { PGLITE_EXTENSIONS } from "../db/database";
 import { createFeedDb, type FeedDatabase } from "./db";
 import { resetFeed } from "./migrate";
 import type { FeedArgs, FeedOpName, FeedResult } from "./ops";
@@ -33,7 +34,7 @@ export class TestFeedError extends Error {
 let shared: PGlite | undefined;
 
 export async function createTestFeed(): Promise<TestFeed> {
-  shared ??= new PGlite();
+  shared ??= new PGlite({ extensions: PGLITE_EXTENSIONS });
   const pglite = shared;
   await resetFeed(pglite);
   const db = createFeedDb(pglite);

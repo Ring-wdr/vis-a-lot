@@ -1,9 +1,11 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { login } from "@/shared/api/session";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 
 /** mock 계정으로 로그인한다. 토큰은 auth 서비스가 발급하고 세션 store가 들고 있는다. */
 const field = "flex flex-col gap-1 text-xs text-fg-secondary";
@@ -33,7 +35,9 @@ export function LoginForm({ notice }: { notice?: string }) {
         </p>
       )}
       <label className={field}>
-        <span>아이디</span>
+        <span>
+          <Trans>아이디</Trans>
+        </span>
         <input
           className={input}
           name="username"
@@ -44,7 +48,9 @@ export function LoginForm({ notice }: { notice?: string }) {
         />
       </label>
       <label className={field}>
-        <span>비밀번호</span>
+        <span>
+          <Trans>비밀번호</Trans>
+        </span>
         <input
           className={input}
           name="password"
@@ -69,14 +75,14 @@ export function LoginForm({ notice }: { notice?: string }) {
         {submit.isPending ? (
           <>
             <Spinner size="sm" tone="inherit" />
-            로그인 중
+            <Trans>로그인 중</Trans>
           </>
         ) : (
-          "로그인"
+          <Trans context="login button">로그인</Trans>
         )}
       </button>
       <p className="text-center text-xs text-fg-muted">
-        데모 계정: <code className={code}>demo</code> /{" "}
+        <Trans>데모 계정:</Trans> <code className={code}>demo</code> /{" "}
         <code className={code}>demo1234</code>
       </p>
     </form>

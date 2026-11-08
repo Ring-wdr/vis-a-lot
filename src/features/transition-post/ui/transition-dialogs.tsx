@@ -2,16 +2,18 @@
 
 // 전이에 입력이 필요한 팝업: 반려(댓글 필수), 보류(사유 + 재개일), 취소(사유). 취소·Esc면 null로 끝난다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { overlay } from "overlay-kit";
 import { type ReactNode, useId, useState } from "react";
 import {
-  CANCEL_REASON_LABELS,
-  HOLD_REASON_LABELS,
+  cancelReasonLabels,
+  holdReasonLabels,
 } from "@/entities/post/lib/labels";
 import { field } from "@/entities/post/ui/styles";
 import type { CancelReason, HoldReason } from "@/shared/api/feed/types";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+import "../config/messages";
 
 /** 로컬 날짜 YYYY-MM-DD */
 export const localDay = (d = new Date()) =>
@@ -59,7 +61,7 @@ function FormDialog({
         {children}
         <div className={dialogActions}>
           <button type="button" className={button()} onClick={onCancel}>
-            닫기
+            <Trans context="close dialog">닫기</Trans>
           </button>
           <button
             type="submit"
@@ -116,6 +118,7 @@ function RejectForm({
   close: (v: string | null) => void;
   unmount: () => void;
 }) {
+  const { t } = useLingui();
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
@@ -124,18 +127,18 @@ function RejectForm({
       isOpen={isOpen}
       onCancel={() => close(null)}
       onExited={unmount}
-      title="반려"
-      submitLabel="반려"
+      title={t({ message: "반려", context: "post transition button" })}
+      submitLabel={t({ message: "반려", context: "post transition button" })}
       danger
       onSubmit={() => {
         const text = comment.trim();
-        if (!text) return setError("반려 사유를 적어 주세요.");
+        if (!text) return setError(t`반려 사유를 적어 주세요.`);
         close(text);
       }}
     >
       <label className="flex flex-col gap-1">
         <span className="text-xs text-fg-secondary">
-          무엇을 더 해야 하는지 댓글로 남깁니다 (필수)
+          <Trans>무엇을 더 해야 하는지 댓글로 남깁니다 (필수)</Trans>
         </span>
         <textarea
           className={field({ multiline: true, class: "font-sans text-ui" })}
@@ -177,6 +180,7 @@ function HoldForm({
   close: (v: HoldInput | null) => void;
   unmount: () => void;
 }) {
+  const { t } = useLingui();
   const [reason, setReason] = useState<HoldReason | null>(null);
   const [until, setUntil] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -186,19 +190,19 @@ function HoldForm({
       isOpen={isOpen}
       onCancel={() => close(null)}
       onExited={unmount}
-      title="보류"
-      submitLabel="보류"
+      title={t({ message: "보류", context: "post transition button" })}
+      submitLabel={t({ message: "보류", context: "post transition button" })}
       onSubmit={() => {
-        if (!reason) return setError("보류 사유를 골라 주세요.");
-        if (!until) return setError("재개일을 정해 주세요.");
-        if (until < today) return setError("재개일은 오늘 이후여야 합니다.");
+        if (!reason) return setError(t`보류 사유를 골라 주세요.`);
+        if (!until) return setError(t`재개일을 정해 주세요.`);
+        if (until < today) return setError(t`재개일은 오늘 이후여야 합니다.`);
         close({ reason, holdUntil: until });
       }}
     >
       <ReasonPicker
         name="hold-reason"
-        legend="사유"
-        labels={HOLD_REASON_LABELS}
+        legend={t`사유`}
+        labels={holdReasonLabels()}
         value={reason}
         onChange={(v) => {
           setReason(v);
@@ -207,7 +211,7 @@ function HoldForm({
       />
       <label className="flex flex-col gap-1">
         <span className="text-xs text-fg-secondary">
-          재개일 (이날 미해결로 돌아옵니다)
+          <Trans>재개일 (이날 미해결로 돌아옵니다)</Trans>
         </span>
         <input
           type="date"
@@ -243,6 +247,7 @@ function CancelForm({
   close: (v: CancelReason | null) => void;
   unmount: () => void;
 }) {
+  const { t } = useLingui();
   const [reason, setReason] = useState<CancelReason | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -250,18 +255,18 @@ function CancelForm({
       isOpen={isOpen}
       onCancel={() => close(null)}
       onExited={unmount}
-      title="취소"
-      submitLabel="게시물 취소"
+      title={t({ message: "취소", context: "post transition button" })}
+      submitLabel={t`게시물 취소`}
       danger
       onSubmit={() => {
-        if (!reason) return setError("취소 사유를 골라 주세요.");
+        if (!reason) return setError(t`취소 사유를 골라 주세요.`);
         close(reason);
       }}
     >
       <ReasonPicker
         name="cancel-reason"
-        legend="사유"
-        labels={CANCEL_REASON_LABELS}
+        legend={t`사유`}
+        labels={cancelReasonLabels()}
         value={reason}
         onChange={(v) => {
           setReason(v);

@@ -1,0 +1,40 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/share-chart/ui/FeedPostButton.tsx
+msgid "그린 차트가 없습니다."
+msgstr "描画したチャートがありません。"
+
+#: src/features/share-chart/ui/ShareButton.tsx
+msgid "링크 복사"
+msgstr "リンクをコピー"
+
+#: src/features/share-chart/ui/ShareButton.tsx
+msgid "링크를 복사하지 못했습니다: {reason}"
+msgstr "リンクをコピーできませんでした: {reason}"
+
+#: src/features/share-chart/ui/ShareButton.tsx
+msgid "복사됨"
+msgstr "コピーしました"
+
+#: src/features/share-chart/ui/FeedPostButton.tsx
+msgid "이 차트로 데이터 공유 피드에 게시물을 쓰는 화면을 새 탭에서 엽니다"
+msgstr "このチャートでデータ共有フィードに投稿する画面を新しいタブで開きます"
+
+#: src/features/share-chart/ui/ShareButton.tsx
+msgid "지금 차트를 공유로 고정하고 공유 페이지 링크를 복사합니다"
+msgstr "今のチャートを共有として固定し、共有ページのリンクをコピーします"
+
+#: src/features/share-chart/ui/FeedPostButton.tsx
+msgid "피드에 올리기"
+msgstr "フィードに投稿"
+
+#: src/features/share-chart/ui/FeedPostButton.tsx
+msgid "피드에 올리지 못했습니다: {reason}"
+msgstr "フィードに投稿できませんでした: {reason}"

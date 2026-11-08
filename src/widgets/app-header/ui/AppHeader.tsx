@@ -1,5 +1,6 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import {
   CircleHelp,
   Database,
@@ -12,15 +13,17 @@ import {
 import Link from "next/link";
 import { SHARE_PAGE } from "@/entities/chart/lib/share";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
-import { TABS_LOCKED_HINT, VIEWS } from "@/entities/workspace/model/tabs-store";
+import { tabsLockedHint, VIEWS } from "@/entities/workspace/model/tabs-store";
 import { UserMenu } from "@/features/auth/ui/UserMenu";
 import {
   openDatastoreDialog,
   openUploadThenDatastore,
 } from "@/features/register-dataset/ui/DatastoreDialog";
-import { ThemeToggle } from "@/features/switch-theme/ui/ThemeToggle";
+import { LocaleSelect } from "@/features/switch-locale/ui/LocaleSelect";
+import { ThemeSelect } from "@/features/switch-theme/ui/ThemeSelect";
 import { helpServicePath } from "@/shared/config/help";
 import { navButton, navLink } from "@/shared/ui/nav";
+import "../config/messages";
 
 const TAB_UI = {
   gallery: { label: "gallery", Icon: LayoutGrid },
@@ -43,12 +46,18 @@ export function AppHeader() {
   const view = useTabs((s) => s.view);
   const tabs = useTabsStore();
   const locked = useTabs((s) => s.locked);
+  // tabsLockedHint는 지금 언어로 읽으므로 useLingui로 언어 변경을 구독한다.
+  const { t } = useLingui();
+  const lockedHint = locked ? tabsLockedHint() : undefined;
   return (
     <header className="col-span-full flex items-center gap-6 border-b border-line px-4">
       <span className="w-57 flex-none text-base font-bold whitespace-nowrap">
         vis-a-lot
       </span>
-      <nav className="flex min-w-0 items-center gap-1" aria-label="화면">
+      <nav
+        className="flex min-w-0 items-center gap-1"
+        aria-label={t({ message: "화면", context: "app header nav" })}
+      >
         <button
           type="button"
           className={navButton()}
@@ -69,23 +78,19 @@ export function AppHeader() {
           <Database size={14} aria-hidden="true" />
           <NavLabel>datastore</NavLabel>
         </button>
-        <div
-          role="tablist"
-          className="flex gap-1"
-          title={locked ? TABS_LOCKED_HINT : undefined}
-        >
-          {VIEWS.map((t) => {
-            const { label, Icon } = TAB_UI[t];
+        <div role="tablist" className="flex gap-1" title={lockedHint}>
+          {VIEWS.map((v) => {
+            const { label, Icon } = TAB_UI[v];
             return (
               <button
-                key={t}
+                key={v}
                 type="button"
                 role="tab"
                 className={navButton()}
-                aria-selected={view === t}
-                title={locked ? TABS_LOCKED_HINT : label}
-                disabled={locked && view !== t}
-                onClick={() => tabs.getState().setView(t)}
+                aria-selected={view === v}
+                title={lockedHint ?? label}
+                disabled={locked && view !== v}
+                onClick={() => tabs.getState().setView(v)}
               >
                 <Icon size={14} aria-hidden="true" />
                 <NavLabel>{label}</NavLabel>
@@ -107,8 +112,10 @@ export function AppHeader() {
         </Link>
       </nav>
       <div className="ml-auto flex flex-none items-center gap-2">
-        <ThemeToggle />
-        <UserMenu />
+        <UserMenu>
+          <ThemeSelect />
+          <LocaleSelect />
+        </UserMenu>
       </div>
     </header>
   );

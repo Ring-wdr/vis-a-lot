@@ -3,6 +3,8 @@
 // 현황 보고 (/feed/report/status?g=FD): 상단 숫자(열림·멈춤·닫힘, 기한 초과, 검토 대기, 30일 리드타임),
 // 상태 분포 막대, 담당자별 부하 막대, 하단에 열린·멈춘 게시물 목록. 팀으로 거른다(?team=).
 
+import { plural } from "@lingui/core/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import { ListX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
@@ -17,6 +19,7 @@ import { usePresentNav } from "@/features/present-mode/model/present-nav";
 import { useStatusReport } from "@/shared/api/feed/report-queries";
 import type { StatusReport } from "@/shared/api/feed/reports";
 import type { PostStatus, StatusNames } from "@/shared/api/feed/types";
+import { type Locale, useLocale } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { EmptyState } from "@/shared/ui/Loading";
@@ -34,6 +37,7 @@ import {
   report,
   StatTile,
 } from "@/widgets/report-layout/ui/report-ui";
+import "../config/messages";
 
 const ALL = "_all";
 
@@ -47,12 +51,15 @@ const STATUS_FILL: Record<PostStatus, string> = {
   cancelled: "bg-line-strong",
 };
 
-const LOAD_LEGEND = [
-  { label: "검토 중", className: "bg-accent" },
-  { label: "그 밖의 열림", className: "bg-accent/40" },
-];
+/** 숫자 칸의 단위. 영어는 단위 없이 숫자만 쓴다 (번역할 문구가 없는 언어가 있어 언어별로 둔다) */
+const COUNT_UNIT: Record<Locale, string | undefined> = {
+  ko: "건",
+  en: undefined,
+  ja: "件",
+};
 
 export function StatusReportView() {
+  const { t } = useLingui();
   const route = useRouteGroup();
   const { group, detail } = route;
   const search = useSearchParams();
@@ -73,8 +80,9 @@ export function StatusReportView() {
   if (!group) return <RouteGroupFallback state={route} />;
   const r = report({ present });
   const teams = detail?.teams ?? [];
-  const teamName = teams.find((t) => t.id === teamId)?.name;
-  const title = `${group.name} 현황 보고`;
+  const teamName = teams.find((x) => x.id === teamId)?.name;
+  const groupName = group.name;
+  const title = t`${groupName} 현황 보고`;
 
   function setTeam(next: string) {
     const q = new URLSearchParams(search);
@@ -90,17 +98,19 @@ export function StatusReportView() {
     <div className={r.root()}>
       <ReportHeader
         title={title}
-        subtitle={teamName ? `${teamName} · 지금 기준` : "모든 팀 · 지금 기준"}
+        subtitle={
+          teamName ? t`${teamName} · 지금 기준` : t`모든 팀 · 지금 기준`
+        }
         slideCount={deck.length}
       >
         {!present && teams.length > 0 && (
           <div className="w-36">
             <Select
-              label="팀"
+              label={t`팀`}
               value={teamId ?? ALL}
               options={[
-                { value: ALL, label: "모든 팀" },
-                ...teams.map((t) => ({ value: t.id, label: t.name })),
+                { value: ALL, label: t`모든 팀` },
+                ...teams.map((x) => ({ value: x.id, label: x.name })),
               ]}
               onChange={setTeam}
             />
@@ -117,28 +127,36 @@ export function StatusReportView() {
           <StatTiles data={data} />
           <div className="grid min-w-0 gap-4 lg:grid-cols-2">
             <section className={r.section()}>
-              <h2 className={r.sectionTitle()}>상태 분포</h2>
+              <h2 className={r.sectionTitle()}>
+                <Trans>상태 분포</Trans>
+              </h2>
               <StatusBar
                 byStatus={data.byStatus}
                 statusNames={group.statusNames}
               />
             </section>
             <section className={r.section()}>
-              <h2 className={r.sectionTitle()}>담당자별 부하 (열린 게시물)</h2>
+              <h2 className={r.sectionTitle()}>
+                <Trans>담당자별 부하 (열린 게시물)</Trans>
+              </h2>
               <LoadBars load={data.assigneeLoad} name={name} />
             </section>
           </div>
           <section className={r.section()}>
             <h2 className={r.sectionTitle()}>
-              열린·멈춘 게시물{" "}
+              <Trans>열린·멈춘 게시물</Trans>{" "}
               <span className="font-normal text-fg-muted tabular-nums">
-                {data.posts.length}건
+                <Plural
+                  value={data.posts.length}
+                  other="#건"
+                  context="open post count"
+                />
               </span>
             </h2>
             {data.posts.length === 0 ? (
               <EmptyState
                 icon={<ListX size={20} />}
-                title="열린 게시물이 없습니다"
+                title={t`열린 게시물이 없습니다`}
                 size="sm"
               />
             ) : (
@@ -146,7 +164,9 @@ export function StatusReportView() {
             )}
           </section>
           {query.isFetching && (
-            <span className="text-2xs text-fg-muted">새로 받는 중…</span>
+            <span className="text-2xs text-fg-muted">
+              <Trans>새로 받는 중…</Trans>
+            </span>
           )}
         </>
       )}
@@ -157,53 +177,72 @@ export function StatusReportView() {
 const count = (by: StatusReport["byStatus"], s: PostStatus) => by[s] ?? 0;
 
 function StatTiles({ data }: { data: StatusReport }) {
+  const { t } = useLingui();
+  const unit = COUNT_UNIT[useLocale()];
   const by = data.byStatus;
   const open =
     count(by, "unresolved") + count(by, "in_progress") + count(by, "in_review");
   const paused = count(by, "on_hold");
   const closed = count(by, "resolved") + count(by, "cancelled");
   const { reviewWait: wait, leadTime30d: lead } = data;
+  const inReview = count(by, "in_review");
+  const resolved = count(by, "resolved");
+  const cancelled = count(by, "cancelled");
+  const { maxHours, count: waitCount } = wait;
+  const { medianDays, count: leadCount } = lead;
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <StatTile
-        label="열림"
+        label={t({ message: "열림", context: "status report tile" })}
         value={open}
-        unit="건"
+        unit={unit}
         tone="accent"
-        hint={`검토 중 ${count(by, "in_review")}`}
+        hint={t`검토 중 ${inReview}`}
       />
-      <StatTile label="멈춤" value={paused} unit="건" />
       <StatTile
-        label="닫힘"
+        label={t({ message: "멈춤", context: "status report tile" })}
+        value={paused}
+        unit={unit}
+      />
+      <StatTile
+        label={t({ message: "닫힘", context: "status report tile" })}
         value={closed}
-        unit="건"
-        hint={`해결 ${count(by, "resolved")} · 취소 ${count(by, "cancelled")}`}
+        unit={unit}
+        hint={t`해결 ${resolved} · 취소 ${cancelled}`}
       />
       <StatTile
-        label="기한 초과"
+        label={t`기한 초과`}
         value={data.overdue}
-        unit="건"
+        unit={unit}
         tone={data.overdue > 0 ? "danger" : "default"}
-        hint="열린 게시물 중"
+        hint={t`열린 게시물 중`}
       />
       <StatTile
-        label="검토 대기 평균"
+        label={t`검토 대기 평균`}
         value={wait.count ? wait.avgHours : "—"}
-        unit={wait.count ? "시간" : undefined}
+        unit={
+          wait.count
+            ? t({ message: "시간", context: "hours unit after a number" })
+            : undefined
+        }
         hint={
           wait.count
-            ? `최대 ${wait.maxHours}시간 · ${wait.count}건`
-            : "검토 중 없음"
+            ? t`최대 ${maxHours}시간 · ${plural(waitCount, { other: "#건" })}`
+            : t`검토 중 없음`
         }
       />
       <StatTile
-        label="30일 리드타임 평균"
+        label={t`30일 리드타임 평균`}
         value={lead.count ? lead.avgDays : "—"}
-        unit={lead.count ? "일" : undefined}
+        unit={
+          lead.count
+            ? t({ message: "일", context: "days unit after a number" })
+            : undefined
+        }
         hint={
           lead.count
-            ? `중앙값 ${lead.medianDays}일 · ${lead.count}건`
-            : "해결 없음"
+            ? t`중앙값 ${medianDays}일 · ${plural(leadCount, { other: "#건" })}`
+            : t`해결 없음`
         }
       />
     </div>
@@ -218,9 +257,16 @@ function StatusBar({
   byStatus: StatusReport["byStatus"];
   statusNames?: StatusNames;
 }) {
+  // statusLabel은 컴포넌트 밖 표라 언어 변경을 구독한다.
+  useLocale();
   const ordered = Object.keys(STATUS_FILL) as PostStatus[];
   const total = ordered.reduce((n, s) => n + count(byStatus, s), 0);
-  if (total === 0) return <p className="text-fg-muted">게시물이 없습니다.</p>;
+  if (total === 0)
+    return (
+      <p className="text-fg-muted">
+        <Trans>게시물이 없습니다.</Trans>
+      </p>
+    );
   return (
     <div className="flex flex-col gap-3">
       <div
@@ -271,12 +317,22 @@ function LoadBars({
   load: StatusReport["assigneeLoad"];
   name: (id: string) => string;
 }) {
+  const { t } = useLingui();
   if (load.length === 0)
-    return <p className="text-fg-muted">열린 게시물이 없습니다.</p>;
+    return (
+      <p className="text-fg-muted">
+        <Trans>열린 게시물이 없습니다.</Trans>
+      </p>
+    );
   const max = Math.max(...load.map((l) => l.open));
   return (
     <div className="flex flex-col gap-3">
-      <Legend items={LOAD_LEGEND} />
+      <Legend
+        items={[
+          { label: t`검토 중`, className: "bg-accent" },
+          { label: t`그 밖의 열림`, className: "bg-accent/40" },
+        ]}
+      />
       <ul className="flex flex-col gap-2">
         {load.map((l) => (
           <BarRow
@@ -285,14 +341,20 @@ function LoadBars({
               l.userId ? (
                 name(l.userId)
               ) : (
-                <span className="text-fg-muted">담당자 없음</span>
+                <span className="text-fg-muted">
+                  <Trans>담당자 없음</Trans>
+                </span>
               )
             }
             max={max}
             segments={[
-              { label: "검토 중", value: l.inReview, className: "bg-accent" },
               {
-                label: "그 밖의 열림",
+                label: t`검토 중`,
+                value: l.inReview,
+                className: "bg-accent",
+              },
+              {
+                label: t`그 밖의 열림`,
                 value: l.open - l.inReview,
                 className: "bg-accent/40",
               },
@@ -301,7 +363,7 @@ function LoadBars({
             aside={
               l.overdue > 0 ? (
                 <span className="rounded-sm bg-danger/12 px-1 text-danger">
-                  기한 초과 {l.overdue}
+                  <Trans>기한 초과 {l.overdue}</Trans>
                 </span>
               ) : undefined
             }

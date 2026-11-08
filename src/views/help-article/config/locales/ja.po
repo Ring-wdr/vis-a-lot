@@ -1,0 +1,26 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/help-article/ui/HelpArticleView.tsx
+msgctxt "next help article"
+msgid "다음"
+msgstr "次へ"
+
+#: src/views/help-article/ui/HelpArticleView.tsx
+msgid "위치"
+msgstr "現在地"
+
+#: src/views/help-article/ui/HelpArticleView.tsx
+msgctxt "previous help article"
+msgid "이전"
+msgstr "前へ"
+
+#: src/views/help-article/ui/HelpArticleView.tsx
+msgid "이전·다음 문서"
+msgstr "前・次のドキュメント"

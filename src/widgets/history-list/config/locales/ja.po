@@ -1,0 +1,112 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "''{title}'' 기록을 지울까요? 지우면 이 기록으로 다시 볼 수 없고, 열려 있는 탭도 닫힙니다."
+msgstr "「{title}」の履歴を削除しますか？削除するとこの履歴から再表示できなくなり、開いているタブも閉じます。"
+
+#. title: 차트 이름
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "{title} 기록 삭제"
+msgstr "{title}の履歴を削除"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "gallery에서 draw하면 여기에 쌓입니다."
+msgstr "galleryでdrawするとここに追加されます。"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "grid"
+msgstr "grid"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "history 삭제"
+msgstr "historyを削除"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "legend"
+msgstr "legend"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "split 없음"
+msgstr "splitなし"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "개별 색"
+msgstr "個別色"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "개별 속성"
+msgstr "個別属性"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "공통 속성"
+msgstr "共通属性"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "기록 삭제"
+msgstr "履歴を削除"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgid "기록 없음"
+msgstr "履歴なし"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "도형"
+msgstr "図形"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "도형 삭제"
+msgstr "図形削除"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "되돌리기"
+msgstr "元に戻す"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "confirm button"
+msgid "삭제"
+msgstr "削除"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "선택"
+msgstr "選択"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history item status count"
+msgid "실패"
+msgstr "失敗"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "점 삭제"
+msgstr "点削除"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "즐겨찾기"
+msgstr "お気に入り"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history item status count"
+msgid "취소"
+msgstr "キャンセル"
+
+#: src/widgets/history-list/ui/HistoryList.tsx
+msgctxt "history event count"
+msgid "확대"
+msgstr "拡大"

@@ -2,6 +2,8 @@
 
 // 댓글 입력: @멘션 편집기, Ctrl/Cmd+Enter로 보내기, 첫 댓글에는 "투표 만들기"(질문 + 선택지 2~6개 + 마감).
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { JSONContent } from "@tiptap/react";
 import { ChartBar, Plus, X } from "lucide-react";
 import { useState } from "react";
@@ -12,6 +14,7 @@ import { button, itemButton, linkButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import { RichEditor } from "@/shared/ui/rich-editor/RichEditor";
 import { isEmptyDoc } from "@/shared/ui/rich-editor/rich-text";
+import "../config/messages";
 
 type PollDraft = { question: string; options: string[]; closesAt: string };
 
@@ -24,8 +27,8 @@ const emptyPoll = (): PollDraft => ({
 export function CommentComposer({
   postId,
   parentId,
-  label = "댓글",
-  submitLabel = "댓글 달기",
+  label,
+  submitLabel,
   autoFocus = false,
   onDone,
 }: {
@@ -38,6 +41,7 @@ export function CommentComposer({
   /** 보낸 뒤나 취소 (대댓글 칸 닫기) */
   onDone?: () => void;
 }) {
+  const { t } = useLingui();
   const { run, pending } = useCommentAction();
   const [doc, setDoc] = useState<JSONContent | null>(null);
   // 보낸 뒤 편집기를 새로 만든다
@@ -55,7 +59,7 @@ export function CommentComposer({
 
   const submit = async () => {
     if (!canSubmit) return;
-    const ok = await run("comment", "댓글을 달지 못했습니다", () =>
+    const ok = await run("comment", t`댓글을 달지 못했습니다`, () =>
       commentsApi.create(postId, {
         body: hasText ? doc : null,
         parentId,
@@ -90,7 +94,7 @@ export function CommentComposer({
         key={round}
         initial={null}
         onChange={setDoc}
-        label={label}
+        label={label ?? t`댓글`}
         size="sm"
         toolbar={false}
         autoFocus={autoFocus}
@@ -98,7 +102,9 @@ export function CommentComposer({
       />
       {poll && (
         <fieldset className="flex flex-col gap-2 rounded-lg border border-line bg-panel-subtle p-3">
-          <legend className="sr-only">투표 만들기</legend>
+          <legend className="sr-only">
+            <Trans>투표 만들기</Trans>
+          </legend>
           <div className="flex items-center gap-2">
             <ChartBar
               size={14}
@@ -109,8 +115,8 @@ export function CommentComposer({
               className={field()}
               value={poll.question}
               maxLength={200}
-              placeholder="질문"
-              aria-label="투표 질문"
+              placeholder={t`질문`}
+              aria-label={t`투표 질문`}
               onChange={(e) =>
                 setPoll({ ...poll, question: e.currentTarget.value })
               }
@@ -118,7 +124,7 @@ export function CommentComposer({
             <button
               type="button"
               className={itemButton()}
-              aria-label="투표 빼기"
+              aria-label={t`투표 빼기`}
               onClick={() => setPoll(null)}
             >
               <X size={12} aria-hidden="true" />
@@ -132,14 +138,14 @@ export function CommentComposer({
                   className={field()}
                   value={option}
                   maxLength={80}
-                  placeholder={`선택지 ${i + 1}`}
-                  aria-label={`선택지 ${i + 1}`}
+                  placeholder={t`선택지 ${ph({ n: i + 1 })}`}
+                  aria-label={t`선택지 ${ph({ n: i + 1 })}`}
                   onChange={(e) => setOption(i, e.currentTarget.value)}
                 />
                 <button
                   type="button"
                   className={itemButton()}
-                  aria-label={`선택지 ${i + 1} 빼기`}
+                  aria-label={t`선택지 ${ph({ n: i + 1 })} 빼기`}
                   disabled={poll.options.length <= 2}
                   onClick={() =>
                     setPoll({
@@ -163,11 +169,11 @@ export function CommentComposer({
                 }
               >
                 <Plus size={12} aria-hidden="true" />
-                선택지 더하기
+                <Trans>선택지 더하기</Trans>
               </button>
             )}
             <label className="flex items-center gap-1.5 text-xs text-fg-secondary">
-              마감
+              <Trans context="poll deadline">마감</Trans>
               <input
                 type="datetime-local"
                 className={field({ class: "w-auto" })}
@@ -188,11 +194,11 @@ export function CommentComposer({
             onClick={() => setPoll(emptyPoll())}
           >
             <ChartBar size={13} aria-hidden="true" />
-            투표 만들기
+            <Trans>투표 만들기</Trans>
           </button>
         )}
         <span className="text-2xs text-fg-muted max-sm:hidden">
-          @로 멘션 · Ctrl/⌘+Enter로 보내기
+          <Trans>@로 멘션 · Ctrl/⌘+Enter로 보내기</Trans>
         </span>
         <span className="ml-auto flex gap-1.5">
           {onDone && (
@@ -202,7 +208,7 @@ export function CommentComposer({
               disabled={!!pending}
               onClick={onDone}
             >
-              취소
+              <Trans context="cancel comment">취소</Trans>
             </button>
           )}
           <button
@@ -212,7 +218,7 @@ export function CommentComposer({
             onClick={submit}
           >
             {pending && <Spinner size="sm" tone="inherit" />}
-            {submitLabel}
+            {submitLabel ?? t`댓글 달기`}
           </button>
         </span>
       </div>

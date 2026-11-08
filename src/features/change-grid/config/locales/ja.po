@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "(현재 {selectedGrid})"
+msgstr "(現在 {selectedGrid})"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "{rows}행 {cols}열"
+msgstr "{rows}行 {cols}列"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "{rows}행 × {cols}열"
+msgstr "{rows}行 × {cols}列"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요."
+msgstr "レンダリング中は grid サイズを変更できません。完了するかキャンセルしてから変更してください。"

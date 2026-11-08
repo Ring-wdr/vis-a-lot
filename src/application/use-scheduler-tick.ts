@@ -10,7 +10,7 @@ const INTERVAL_MS = 60_000;
 export function useSchedulerTick() {
   const client = useQueryClient();
   useEffect(() => {
-    runSchedulerOnce(client);
+    void runSchedulerOnce(client);
     const timer = setInterval(() => runSchedulerOnce(client), INTERVAL_MS);
     return () => clearInterval(timer);
   }, [client]);

@@ -4,9 +4,11 @@
 // 탭마다 작업 store를 하나씩 가지므로 탭을 오가도 그리던 차트와 진행 상태가 그대로 남는다.
 // 탭은 로그인한 세션의 것이라 store를 모듈 전역에 두지 않고 세션마다 TabsScope가 새로 만든다.
 
+import { t } from "@lingui/core/macro";
 import { createStore } from "zustand/vanilla";
 import { api } from "@/shared/api/api";
 import type { ChartDefaults, ChartSpec } from "@/shared/api/types";
+import "../config/messages";
 import {
   createWorkspaceStore,
   defaultSpec,
@@ -24,9 +26,14 @@ export type WorkspaceTab = {
   historyId?: string;
 };
 
-/** 탭을 잠갔을 때 탭·화면 전환 버튼에 보여주는 안내 */
-export const TABS_LOCKED_HINT =
-  "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.";
+/** 탭을 잠갔을 때 탭·화면 전환 버튼에 보여주는 안내. 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다. */
+export function tabsLockedHint() {
+  return t({
+    message:
+      "그리는 중에는 탭을 바꿀 수 없습니다. cancel을 누르거나 끝날 때까지 기다려 주세요.",
+    comment: "cancel은 그리기를 멈추는 버튼 이름이다 (영어로 적힌 버튼)",
+  });
+}
 
 export type TabsState = {
   /** 고른 화면. 처음 들어오면 아무 화면도 고르지 않은 시작 화면(null)이다. */
@@ -61,8 +68,11 @@ export type TabsState = {
   toggleFilterPanel: () => void;
 };
 
-/** 서버 기본값(GET /defaults)으로 새 탭의 draft를 만든다. */
-export function createTabsStore(defaults: ChartDefaults) {
+/** 서버 기본값(GET /defaults)으로 새 탭의 draft를 만든다. `view`가 null이면 시작 화면부터 보여준다. */
+export function createTabsStore(
+  defaults: ChartDefaults,
+  view: View | null = null,
+) {
   const base = defaultSpec(defaults);
   const galleryTab = (draft?: Partial<ChartSpec>): WorkspaceTab => ({
     id: crypto.randomUUID(),
@@ -73,7 +83,7 @@ export function createTabsStore(defaults: ChartDefaults) {
     createWorkspaceStore({ readOnly: true, draft: base });
   const first = galleryTab();
   return createStore<TabsState>((set, get) => ({
-    view: null,
+    view,
     tabs: [first],
     active: { gallery: first.id, history: undefined },
     emptyHistory: readOnlyStore(),

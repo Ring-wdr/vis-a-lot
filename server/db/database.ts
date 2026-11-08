@@ -3,6 +3,7 @@
 // 단, PGlite 드라이버 기능(COPY, rowMode array)은 Kysely를 거치지 않으므로 ./pglite-native.ts도 함께 바꾼다.
 
 import type { PGlite } from "@electric-sql/pglite";
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import {
   type ColumnType,
   type Generated,
@@ -89,6 +90,21 @@ export type Db = Kysely<Database>;
 
 /** sql 태그로 만든 조각. 데이터셋 테이블 쿼리는 이 조각을 이어 붙여 만든다. */
 export type Sql = RawBuilder<unknown>;
+
+/** PGlite를 만들 때 넣는 확장. 피드 검색 인덱스(trigram)가 pg_trgm을 쓴다. */
+export const PGLITE_EXTENSIONS = { pg_trgm };
+
+/**
+ * 플래너 설정. PGlite의 페이지는 모두 메모리(wasm 힙)에 있는데 기본값은 디스크를 가정한다.
+ * - random_page_cost: 인덱스로 띄엄띄엄 읽는 비용을 순차 읽기와 비슷하게 본다 (기본 4는 HDD 기준).
+ *   기본값이면 게시물 몇천 건의 이력을 인덱스로 찾는 대신 이력 전체를 해시 조인한다.
+ * - work_mem: 정렬·해시가 쓰는 메모리. 기본 4MB면 100만 행 median·상자 그림이 임시 파일로 넘친다.
+ * PGlite는 연결이 하나라 부팅할 때 한 번 SET하면 끝까지 유지된다.
+ */
+export const PLANNER_SETTINGS = /* sql */ `
+set random_page_cost = 1.1;
+set work_mem = '64MB';
+`;
 
 /** PGlite를 감싼 Kysely 인스턴스. DB를 바꿀 때는 여기 dialect를 바꾼다. */
 export function createDb(pglite: PGlite): Db {

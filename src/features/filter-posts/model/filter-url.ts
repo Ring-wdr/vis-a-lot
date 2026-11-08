@@ -2,9 +2,9 @@
 // 다른 query(g, peek 등)는 건드리지 않는다.
 
 import {
-  CATEGORY_LABELS,
-  FORMAT_LABELS,
-  STATUS_LABELS,
+  categoryLabels,
+  formatLabels,
+  STATUSES,
 } from "@/entities/post/lib/labels";
 import {
   DEFAULT_COLUMNS,
@@ -78,9 +78,10 @@ const oneOf = <T extends string>(values: readonly T[]) => {
   return (v: string): v is T => set.has(v);
 };
 
-const isStatus = oneOf(Object.keys(STATUS_LABELS) as PostStatus[]);
-const isCategory = oneOf(Object.keys(CATEGORY_LABELS) as StatusCategory[]);
-const isFormat = oneOf(Object.keys(FORMAT_LABELS) as PostFormat[]);
+// 값 목록만 쓰므로 언어와 상관없다
+const isStatus = oneOf<PostStatus>(STATUSES);
+const isCategory = oneOf(Object.keys(categoryLabels()) as StatusCategory[]);
+const isFormat = oneOf(Object.keys(formatLabels()) as PostFormat[]);
 const isSortField = oneOf(SORT_FIELDS);
 const isGroupBy = oneOf(GROUP_BYS);
 const isColumn = oneOf(POST_COLUMNS);

@@ -1,16 +1,15 @@
 "use client";
 
 import { Accordion } from "@base-ui/react/accordion";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronDown, Database } from "lucide-react";
-import {
-  COLUMN_TYPE_LABELS,
-  DELETED_DATASET_HINT,
-} from "@/entities/dataset/lib/labels";
+import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { filterOf, sameFilters } from "@/features/data-filter/model/filters";
 import { ColumnFilter } from "@/features/data-filter/ui/ColumnFilter";
 import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+import "../config/messages";
 
 const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
 
@@ -20,6 +19,8 @@ const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
  * 필터는 draw할 때만 적용된다.
  */
 export function FilterPanel() {
+  const { t } = useLingui();
+  const labels = useDatasetLabels();
   const filters = useWorkspace((s) => s.draft.filters);
   const applied = useWorkspace((s) => s.current?.spec.filters);
   const drawn = useWorkspace((s) => s.current !== undefined);
@@ -36,10 +37,12 @@ export function FilterPanel() {
   return (
     <section
       className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-line bg-panel"
-      aria-label="필터"
+      aria-label={t({ message: "필터", context: "data filter panel" })}
     >
       <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
-        <strong>필터</strong>
+        <strong>
+          <Trans context="data filter panel">필터</Trans>
+        </strong>
         {count > 0 && (
           <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent">
             {count}
@@ -51,7 +54,7 @@ export function FilterPanel() {
             className="ml-auto cursor-pointer text-xs text-accent"
             onClick={() => updateDraft({ filters: [] })}
           >
-            모두 지우기
+            <Trans>모두 지우기</Trans>
           </button>
         )}
       </header>
@@ -59,21 +62,29 @@ export function FilterPanel() {
         className="px-3.5 pb-2.5 text-xs text-fg-muted data-pending:text-accent"
         data-pending={pending || undefined}
       >
-        {readOnly
-          ? "이 차트에 적용된 필터입니다."
-          : pending
-            ? "바뀐 필터는 draw를 눌러야 적용됩니다."
-            : "필터는 draw할 때 적용됩니다."}
+        {readOnly ? (
+          <Trans>이 차트에 적용된 필터입니다.</Trans>
+        ) : pending ? (
+          <Trans>바뀐 필터는 draw를 눌러야 적용됩니다.</Trans>
+        ) : (
+          <Trans>필터는 draw할 때 적용됩니다.</Trans>
+        )}
       </p>
       {(schemaState === "missing" ||
         schemaState === "generating" ||
         schemaState === "deleted") && (
-        <EmptyState size="sm" icon={<Database size={16} />} title="컬럼 없음">
-          {schemaState === "generating"
-            ? "데이터 등록이 끝나면 컬럼이 나타납니다."
-            : schemaState === "deleted"
-              ? DELETED_DATASET_HINT
-              : "데이터를 등록하면 컬럼이 나타납니다."}
+        <EmptyState
+          size="sm"
+          icon={<Database size={16} />}
+          title={t`컬럼 없음`}
+        >
+          {schemaState === "generating" ? (
+            <Trans>데이터 등록이 끝나면 컬럼이 나타납니다.</Trans>
+          ) : schemaState === "deleted" ? (
+            labels.deletedDataset
+          ) : (
+            <Trans>데이터를 등록하면 컬럼이 나타납니다.</Trans>
+          )}
         </EmptyState>
       )}
       {schemaState === "loading" && (
@@ -112,7 +123,7 @@ export function FilterPanel() {
                   <Accordion.Trigger className="group/trigger flex h-8.5 w-full cursor-pointer items-center gap-1.5 px-3.5 text-left text-ui font-bold text-fg hover:bg-panel-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent">
                     <span className="min-w-0 flex-1 truncate">{c.label}</span>
                     <span className="text-2xs text-fg-muted">
-                      {COLUMN_TYPE_LABELS[c.type]}
+                      {labels.columnTypes[c.type]}
                     </span>
                     {active && (
                       <>
@@ -120,7 +131,9 @@ export function FilterPanel() {
                           className="size-2 rounded-full bg-accent"
                           aria-hidden="true"
                         />
-                        <span className="sr-only">필터 적용됨</span>
+                        <span className="sr-only">
+                          <Trans>필터 적용됨</Trans>
+                        </span>
                       </>
                     )}
                     <ChevronDown

@@ -1,6 +1,8 @@
 "use client";
 
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
+import { type ReactNode, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type ChartOptionsPatch,
@@ -29,8 +31,10 @@ import {
   resolveTooltipOptions,
   tooltipBoxStyle,
 } from "./tooltip-options";
+import "../config/messages";
 
-type Cursor = { x: number; y: number };
+/** x, y는 PNG 좌표, left·top은 레이어의 화면 위치 (툴팁을 portal로 띄울 때 쓴다) */
+type Cursor = { x: number; y: number; left: number; top: number };
 
 const TOOLTIP_OFFSET = 14;
 /** 화면 밖으로 나가지 않게 위치를 정할 때 쓰는 툴팁 폭. CSS의 .tooltipPortal 폭과 같아야 한다. */
@@ -64,9 +68,10 @@ export function ItemTooltip({
   chartId: string;
   itemKey: string;
   /** x, y 외에 툴팁에 보여줄 컬럼 (서버 조회) */
-  columns: ColumnName[];
+  columns: readonly ColumnName[];
 }) {
-  const layerRef = useRef<HTMLDivElement>(null);
+  // 툴팁 줄 문구(strategies의 t)도 지금 언어로 다시 그린다.
+  const { t } = useLingui();
   const [hovered, setHovered] = useState(false);
   const [cursor, setCursor] = useState<Cursor>();
   const meta = useItemMeta(image.url, hovered);
@@ -105,8 +110,8 @@ export function ItemTooltip({
   const extra = useTooltipValues(chartId, itemKey, rowId, columns);
   const extraFailure =
     extra.error instanceof ApiRequestError && extra.error.status === 404
-      ? "삭제된 데이터라 값을 읽을 수 없습니다"
-      : "값을 읽지 못했습니다";
+      ? t`삭제된 데이터라 값을 읽을 수 없습니다`
+      : t`값을 읽지 못했습니다`;
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     // 커서가 이미 올라가 있을 때 레이어가 새로 생겨도(크게 보기, 모드 전환) 받아 오도록 여기서도 켠다.
@@ -120,17 +125,19 @@ export function ItemTooltip({
     setCursor({
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY,
+      left: rect.left,
+      top: rect.top,
     });
   };
 
   // 계산은 PNG 좌표로 하고, 화면에 놓을 때만 보이는 크기로 환산한다.
   const sx = display.width / image.width;
   const sy = display.height / image.height;
-  const screen = cursor && { x: cursor.x * sx, y: cursor.y * sy };
   // 툴팁은 item 카드의 overflow에 잘리지 않도록 body에 portal로 띄우고 화면 좌표로 놓는다.
-  const layerRect = layerRef.current?.getBoundingClientRect();
-  const client = screen &&
-    layerRect && { x: layerRect.left + screen.x, y: layerRect.top + screen.y };
+  const client = cursor && {
+    x: cursor.left + cursor.x * sx,
+    y: cursor.top + cursor.y * sy,
+  };
   const extraRows = hit?.rowId !== undefined ? columns.length : 0;
   const tooltipPosition =
     client && placeTooltip(client, (hit?.rows.length ?? 1) + extraRows);
@@ -138,7 +145,6 @@ export function ItemTooltip({
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: 마우스 위치를 읽는 시각 보조 레이어. 같은 정보는 이후 표 보기로 제공한다.
     <div
-      ref={layerRef}
       // 도구를 쓰지 않는 일반 모드는 기본 커서. 가리킨 점·막대는 표시(hitMarker·hitBox)로 보여준다.
       className="relative cursor-default"
       style={{ width: display.width, height: display.height }}
@@ -165,7 +171,7 @@ export function ItemTooltip({
                 height: entry.rect.height * sy,
               }}
               color={entry.color}
-              label={`${alt} · ${entry.value} 색 바꾸기`}
+              label={t`${alt} · ${ph({ value: entry.value })} 색 바꾸기`}
               onCommit={(color) => onLegendColor(entry.value, color)}
             />
           ))}
@@ -218,7 +224,7 @@ export function ItemTooltip({
             {look?.title && <strong>{look.title}</strong>}
             <dl className="flex flex-col gap-0.5">
               {hit.rows.map((row) => (
-                <div key={row.label} className={tooltipRow}>
+                <div key={row.id} className={tooltipRow}>
                   <dt
                     className={cn(row.emphasis && "text-fg")}
                     style={rowStyle}
@@ -275,7 +281,9 @@ export function ItemTooltip({
         (meta.isPending || meta.isFetching) &&
         createPortal(
           <div className={tooltipBox} style={tooltipPosition}>
-            <LoadingText>불러오는 중</LoadingText>
+            <LoadingText>
+              <Trans>불러오는 중</Trans>
+            </LoadingText>
           </div>,
           document.body,
         )}

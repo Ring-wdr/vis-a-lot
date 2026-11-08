@@ -1,0 +1,82 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "''{title}'' 공유를 지울까요? 이 링크는 더 열리지 않습니다."
+msgstr "「{title}」の共有を削除しますか？このリンクは開けなくなります。"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "gallery에서 열기"
+msgstr "galleryで開く"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "공유를 불러오는 중"
+msgstr "共有を読み込み中"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "공유를 불러오지 못했습니다: {message}"
+msgstr "共有を読み込めませんでした: {message}"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "내 공유"
+msgstr "自分の共有"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "내 공유 목록으로"
+msgstr "自分の共有一覧へ"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "링크 복사"
+msgstr "リンクをコピー"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "링크를 복사하지 못했습니다: {message}"
+msgstr "リンクをコピーできませんでした: {message}"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "만든 시점의 스냅숏입니다. 확대·도형 같은 편집은 gallery에서 열어서 합니다."
+msgstr "作成時点のスナップショットです。拡大・図形などの編集はgalleryで開いて行います。"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "목록을 불러오지 못했습니다: {listError}"
+msgstr "一覧を読み込めませんでした: {listError}"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "복사됨"
+msgstr "コピーしました"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "불러오는 중"
+msgstr "読み込み中"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "아직 만든 공유가 없습니다."
+msgstr "まだ作成した共有がありません。"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "없는 공유이거나 지워진 공유입니다."
+msgstr "存在しないか、削除された共有です。"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "작업 화면"
+msgstr "ワークスペース"
+
+#: src/views/share/ui/ShareView.tsx
+msgctxt "delete share"
+msgid "지우기"
+msgstr "削除"
+
+#: src/views/share/ui/ShareView.tsx
+msgid "탭 도구 줄의 '링크 복사'나 '피드에 올리기'를 누르면 공유가 생깁니다."
+msgstr "タブのツールバーの「リンクをコピー」または「フィードに投稿」を押すと共有が作成されます。"
+
+#: src/views/share/ui/ShareView.tsx
+msgctxt "app header nav"
+msgid "화면"
+msgstr "画面"

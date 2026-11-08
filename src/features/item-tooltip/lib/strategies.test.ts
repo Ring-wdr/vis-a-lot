@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   CandleMeta,
   GanttMeta,
+  HeatmapMeta,
   PieMeta,
   RadarMeta,
   ScatterMeta,
@@ -14,6 +15,7 @@ import {
   candleStrategy,
   formatDuration,
   ganttStrategy,
+  heatmapStrategy,
   hitSlice,
   nearestVertex,
   pieStrategy,
@@ -106,8 +108,8 @@ describe("barStrategy / boxplotStrategy", () => {
     };
     const hit = barStrategy.hitTest(meta, undefined, 150, 50);
     expect(hit?.rows).toEqual([
-      { label: "범주", value: "B" },
-      { label: "평균", value: "5", emphasis: true },
+      { id: "category", label: "범주", value: "B" },
+      { id: "value", label: "평균", value: "5", emphasis: true },
     ]);
     // 막대(가운데 150, 너비 70, 값 5 → 0)를 감싸되 그림 영역 아래로는 나가지 않는다
     expect(hit?.highlight).toEqual({ x: 112, y: 47, width: 76, height: 53 });
@@ -167,9 +169,9 @@ describe("legend가 있는 bar", () => {
     // 범주 B 가운데(150) 기준 왼쪽 칸 = 야간
     const left = barStrategy.hitTest(meta, undefined, 130, 80);
     expect(left?.rows).toEqual([
-      { label: "범주", value: "B" },
-      { label: "근무조", value: "야간" },
-      { label: "평균", value: "3", emphasis: true },
+      { id: "category", label: "범주", value: "B" },
+      { id: "legend", label: "근무조", value: "야간" },
+      { id: "value", label: "평균", value: "3", emphasis: true },
     ]);
     // 가리킨 막대(가운데 130, 너비 38)를 3px 여유로 감싼다
     expect(left?.highlight).toMatchObject({ x: 108, width: 44 });
@@ -227,14 +229,18 @@ describe("barStrategy 누적", () => {
     // 범주 A(가운데 50), y 90px = 10% → 아래(야간) 막대
     const low = barStrategy.hitTest(meta, undefined, 50, 90);
     expect(low?.rows).toEqual([
-      { label: "범주", value: "A" },
-      { label: "근무조", value: "야간" },
-      { label: "합계", value: "10", emphasis: false },
-      { label: "비율", value: "25.0%", emphasis: true },
+      { id: "category", label: "범주", value: "A" },
+      { id: "legend", label: "근무조", value: "야간" },
+      { id: "value", label: "합계", value: "10", emphasis: false },
+      { id: "ratio", label: "비율", value: "25.0%", emphasis: true },
     ]);
     // y 30px = 70% → 위(주간) 막대. 막대 너비 전체를 감싼다.
     const high = barStrategy.hitTest(meta, undefined, 50, 30);
-    expect(high?.rows[1]).toEqual({ label: "근무조", value: "주간" });
+    expect(high?.rows[1]).toEqual({
+      id: "legend",
+      label: "근무조",
+      value: "주간",
+    });
     expect(high?.highlight).toMatchObject({ x: 12, width: 76 });
   });
 });
@@ -322,13 +328,13 @@ describe("gantt 툴팁", () => {
   it("첫 행은 위, 커서 시각이 든 막대를 찾는다", () => {
     const hit = ganttStrategy.hitTest(meta, prepared, 150, 25);
     expect(hit?.rows).toEqual([
-      { label: "설비", value: "M1" },
-      { label: "상태", value: "경고" },
-      { label: "시작", value: expect.any(String) },
-      { label: "끝", value: expect.any(String) },
-      { label: "길이", value: "500ms", emphasis: true },
-      { label: "개수", value: "2" },
-      { label: "합친 구간", value: "4개" },
+      { id: "row", label: "설비", value: "M1" },
+      { id: "legend", label: "상태", value: "경고" },
+      { id: "start", label: "시작", value: expect.any(String) },
+      { id: "end", label: "끝", value: expect.any(String) },
+      { id: "duration", label: "길이", value: "500ms", emphasis: true },
+      { id: "count", label: "개수", value: "2" },
+      { id: "merged", label: "합친 구간", value: "4개" },
     ]);
     expect(hit?.highlight).toMatchObject({ x: 97, width: 106 });
     // 아래 행(M2)은 40~80px에만 막대가 있다.
@@ -493,5 +499,34 @@ describe("radar", () => {
     const hit = radarStrategy.hitTest(radar, undefined, 133, 118);
     expect(hit?.marker).toEqual({ px: 135, py: 120 });
     expect(hit?.rows.map((r) => r.value)).toEqual(["L2", "주간", "5"]);
+  });
+});
+
+describe("heatmap", () => {
+  // x·y에 같은 컬럼을 고르면 두 줄의 제목이 같다.
+  const heatmap: HeatmapMeta = {
+    chartType: "heatmap",
+    plot: { left: 0, top: 0, width: 100, height: 100 },
+    x: { kind: "number", domain: [-0.5, 1.5] },
+    y: { kind: "number", domain: [-0.5, 1.5] },
+    xTitle: "라인",
+    yTitle: "라인",
+    xCategories: ["L1", "L2"],
+    yCategories: ["L1", "L2"],
+    cells: [
+      [1, 3],
+      [2, 4],
+    ],
+    agg: "avg",
+    colorDomain: [1, 4],
+  };
+
+  it("x·y 제목이 같아도 줄을 역할 id로 구분한다", () => {
+    const hit = heatmapStrategy.hitTest(heatmap, undefined, 25, 25);
+    expect(hit?.rows.map((r) => [r.id, r.label, r.value])).toEqual([
+      ["x", "라인", "L1"],
+      ["y", "라인", "L2"],
+      ["value", "평균", "3"],
+    ]);
   });
 });

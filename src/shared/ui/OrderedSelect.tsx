@@ -1,6 +1,7 @@
 "use client";
 
 import { Combobox } from "@base-ui/react/combobox";
+import { useLingui } from "@lingui/react/macro";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -9,6 +10,7 @@ import { cn } from "@/shared/lib/tw";
 import { useDragSelect } from "@/shared/lib/use-drag-select";
 import { useDialogContainer } from "./Dialog";
 import { selectStyles } from "./select-styles";
+import "@/shared/config/messages";
 
 const s = selectStyles();
 
@@ -30,7 +32,7 @@ export function OrderedSelect<T extends string>({
   options,
   value,
   onChange,
-  placeholder = "추가…",
+  placeholder,
   disabled = false,
 }: {
   label: string;
@@ -40,6 +42,7 @@ export function OrderedSelect<T extends string>({
   placeholder?: string;
   disabled?: boolean;
 }) {
+  const { t } = useLingui();
   const dialog = useDialogContainer();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -172,13 +175,24 @@ export function OrderedSelect<T extends string>({
           <Combobox.Trigger
             ref={triggerRef}
             className={s.trigger()}
-            aria-label={`${label}: ${summary || "없음"}`}
+            aria-label={
+              summary
+                ? t({
+                    message: `${label}: ${summary}`,
+                    comment:
+                      "label은 선택 칸 이름, summary는 고른 값을 쉼표로 이은 목록",
+                  })
+                : t({
+                    message: `${label}: 없음`,
+                    comment: "label은 선택 칸 이름. 아무것도 고르지 않았을 때",
+                  })
+            }
             title={summary || undefined}
           >
             <span
               className={cn(s.value(), shown.length === 0 && s.placeholder())}
             >
-              {summary || placeholder}
+              {summary || (placeholder ?? t`추가…`)}
             </span>
             {shown.length > 0 && (
               <span className={s.count()} aria-hidden="true">
@@ -208,8 +222,11 @@ export function OrderedSelect<T extends string>({
             >
               <Combobox.Input
                 className="w-full border-b border-line px-2.5 py-2 outline-none"
-                placeholder="검색"
-                aria-label="옵션 검색"
+                placeholder={t({
+                  message: "검색",
+                  context: "search input placeholder",
+                })}
+                aria-label={t`옵션 검색`}
                 onKeyDown={(e) => {
                   // Space는 검색어 입력과 겹치므로 키보드로 강조한 항목이 있을 때만 토글로 쓴다.
                   if (e.key !== " " || keyboardHighlight.current === null) {
@@ -221,11 +238,11 @@ export function OrderedSelect<T extends string>({
                 }}
               />
               <Combobox.Empty className="not-empty:p-2.5 not-empty:text-xs not-empty:text-fg-muted">
-                일치하는 항목이 없습니다
+                {t`일치하는 항목이 없습니다`}
               </Combobox.Empty>
               <Combobox.List
                 ref={setListElement}
-                aria-label={`${label} 옵션`}
+                aria-label={t`${label} 옵션`}
                 className="max-h-70 touch-pan-y overflow-y-auto overscroll-contain outline-none select-none data-dragging:cursor-ns-resize"
                 data-dragging={preview ? "" : undefined}
                 hidden={filtered.length === 0}

@@ -2,6 +2,7 @@
 
 // 활동 보고·현황 보고가 함께 쓰는 조각: 머리 줄(발표 모드), 숫자 칸, 가로 막대, 자리 잡기·오류.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import {
   GalleryHorizontal,
   Presentation,
@@ -13,6 +14,7 @@ import { usePresentNav } from "@/features/present-mode/model/present-nav";
 import { cn, tv } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+import "../config/messages";
 
 export const report = tv({
   slots: {
@@ -64,22 +66,25 @@ export function ReportHeader({
         {present ? (
           <button
             type="button"
-            className={button({ variant: "primary" })}
+            className={button({
+              variant: "primary",
+              class: "whitespace-nowrap",
+            })}
             disabled={slideCount === 0}
             onClick={() => openSlide(0)}
           >
             <GalleryHorizontal size={16} aria-hidden="true" />
-            게시물 넘겨 보기
+            <Trans>게시물 넘겨 보기</Trans>
             <span className="tabular-nums">({slideCount})</span>
           </button>
         ) : (
           <button
             type="button"
-            className={button({ size: "sm" })}
+            className={button({ size: "sm", class: "whitespace-nowrap" })}
             onClick={start}
           >
             <Presentation size={14} aria-hidden="true" />
-            발표 모드
+            <Trans context="report header button">발표 모드</Trans>
           </button>
         )}
       </div>
@@ -216,10 +221,11 @@ export function ReportError({
   error: Error;
   onRetry: () => void;
 }) {
+  const { t } = useLingui();
   return (
     <EmptyState
       icon={<TriangleAlert size={20} />}
-      title="보고서를 만들지 못했습니다"
+      title={t`보고서를 만들지 못했습니다`}
     >
       <p>{error.message}</p>
       <button
@@ -228,7 +234,7 @@ export function ReportError({
         onClick={onRetry}
       >
         <RefreshCw size={14} aria-hidden="true" />
-        다시 시도
+        <Trans context="retry building the report">다시 시도</Trans>
       </button>
     </EmptyState>
   );

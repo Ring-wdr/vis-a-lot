@@ -1,8 +1,10 @@
 // 차트 도구의 다운로드: 고른 item의 PNG와 데이터(CSV), 모든 item을 grid 배치로 넣은 엑셀(xlsx).
 
+import { t } from "@lingui/core/macro";
 import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemState } from "@/shared/api/types";
 import { safeFileName, saveBlob } from "@/shared/lib/save-file";
+import "../config/messages";
 
 /** 엑셀 한 파일에 넣는 item 수 상한. 넘으면 앞에서부터 이만큼만 넣는다. */
 export const MAX_EXCEL_ITEMS = 300;
@@ -13,7 +15,7 @@ const RANGE_SIZE = 100;
 export async function drawnItemState(jobId: string, key: string) {
   const state = await api.jobItems(jobId, [key], -1);
   const item = state.items[0];
-  if (!item?.image) throw new Error("아직 그려지지 않은 차트입니다.");
+  if (!item?.image) throw new Error(t`아직 그려지지 않은 차트입니다.`);
   return { ...item, image: item.image };
 }
 
@@ -25,7 +27,14 @@ export async function downloadItemData(
 ) {
   const item = await drawnItemState(jobId, key);
   const csv = await api.exportItemRows(chartId, key);
-  const suffix = item.selectedCount !== undefined ? "_선택" : "";
+  const suffix =
+    item.selectedCount !== undefined
+      ? t({
+          message: "_선택",
+          context: "file name suffix",
+          comment: "선택 영역의 데이터만 받은 CSV 파일 이름 끝에 붙인다",
+        })
+      : "";
   saveBlob(csv, `${safeFileName(item.label)}${suffix}.csv`);
 }
 
@@ -79,12 +88,28 @@ export async function downloadAllChartsExcel(
     allItems(jobId, MAX_EXCEL_ITEMS),
   ]);
   const book = new ExcelJS.Workbook();
-  const sheet = book.addWorksheet("차트");
-  const list = book.addWorksheet("목록");
+  const sheet = book.addWorksheet(
+    t({ message: "차트", context: "excel sheet" }),
+  );
+  const list = book.addWorksheet(
+    t({ message: "목록", context: "excel sheet" }),
+  );
   list.columns = [
-    { header: "순번", key: "index", width: 8 },
-    { header: "이름", key: "label", width: 40 },
-    { header: "상태", key: "status", width: 12 },
+    {
+      header: t({ message: "순번", context: "excel column header" }),
+      key: "index",
+      width: 8,
+    },
+    {
+      header: t({ message: "이름", context: "excel column header" }),
+      key: "label",
+      width: 40,
+    },
+    {
+      header: t({ message: "상태", context: "excel column header" }),
+      key: "status",
+      width: 12,
+    },
   ];
 
   const cols = spec.grid.cols;

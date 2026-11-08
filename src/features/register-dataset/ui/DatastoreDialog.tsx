@@ -3,13 +3,15 @@
 // 데이터스토어 팝업: 등록된 데이터를 가상 스크롤 표로 보여주고, 고른 데이터로 gallery 탭을 연다.
 // 업로드한 데이터가 위(최근 순), 샘플이 맨 아래다. 샘플은 등록을 눌러야 쓸 수 있다.
 
+import { plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Database, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 import { overlay } from "overlay-kit";
 import { useId, useRef, useState } from "react";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
-import { TABS_LOCKED_HINT } from "@/entities/workspace/model/tabs-store";
+import { tabsLockedHint } from "@/entities/workspace/model/tabs-store";
 import {
   useDatasets,
   useDeleteDataset,
@@ -17,11 +19,13 @@ import {
 } from "@/shared/api/queries";
 import type { DatasetId, DatasetStatus } from "@/shared/api/types";
 import { formatBytes } from "@/shared/lib/format";
+import { intlLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { showAlert, showConfirm } from "@/shared/ui/AlertDialog";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 
 /** 업로드·수정 팝업은 처음 열 때 불러온다. */
 const loadUploadDialog = () => import("./UploadDialog");
@@ -51,7 +55,11 @@ function registeredAt(ms: number) {
 type Row = { status: DatasetStatus; index: string };
 
 /** 업로드는 오래된 것부터 1번, 화면에는 최근 순. 샘플은 맨 아래에 둔다. */
-function rowsOf(datasets: DatasetStatus[], query: string): Row[] {
+function rowsOf(
+  datasets: DatasetStatus[],
+  query: string,
+  sampleLabel: string,
+): Row[] {
   const uploads = datasets.filter((d) => d.kind === "upload");
   const samples = datasets.filter((d) => d.kind === "sample");
   const rows: Row[] = [
@@ -59,7 +67,7 @@ function rowsOf(datasets: DatasetStatus[], query: string): Row[] {
       status,
       index: String(uploads.length - i),
     })),
-    ...samples.map((status) => ({ status, index: "샘플" })),
+    ...samples.map((status) => ({ status, index: sampleLabel })),
   ];
   const q = query.trim().toLowerCase();
   return q ? rows.filter((r) => r.status.name.toLowerCase().includes(q)) : rows;
@@ -74,10 +82,13 @@ function StatusCell({
   onGenerate: () => void;
   generating: boolean;
 }) {
+  const { t } = useLingui();
   if (status.state === "missing") {
     return (
       <>
-        <span className="text-fg-muted">미등록</span>
+        <span className="text-fg-muted">
+          <Trans context="dataset status">미등록</Trans>
+        </span>
         <button
           type="button"
           className="cursor-pointer rounded-md bg-accent px-2.5 py-0.5 text-xs text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
@@ -87,7 +98,7 @@ function StatusCell({
             onGenerate();
           }}
         >
-          등록
+          <Trans context="register sample button">등록</Trans>
         </button>
       </>
     );
@@ -95,7 +106,7 @@ function StatusCell({
   if (status.state === "failed") {
     return (
       <span className="text-danger" title={status.error}>
-        실패
+        <Trans context="dataset status">실패</Trans>
       </span>
     );
   }
@@ -107,11 +118,17 @@ function StatusCell({
           className="w-16"
           value={status.phase === "analyze" ? undefined : ratio}
         />
-        {status.phase === "analyze" ? "통계" : `${Math.round(ratio * 100)}%`}
+        {status.phase === "analyze"
+          ? t({ message: "통계", context: "dataset status" })
+          : `${Math.round(ratio * 100)}%`}
       </span>
     );
   }
-  return <span>준비됨</span>;
+  return (
+    <span>
+      <Trans context="dataset status">준비됨</Trans>
+    </span>
+  );
 }
 
 /** 브라우저 저장소(IndexedDB 등) 사용량. 지원하지 않으면 null */
@@ -133,6 +150,7 @@ function DatastoreBody({
   initial?: DatasetId;
   onClose: () => void;
 }) {
+  const { t } = useLingui();
   const titleId = useId();
   const searchId = useId();
   const openGallery = useTabs((s) => s.openGallery);
@@ -146,7 +164,11 @@ function DatastoreBody({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const list = datasets.data?.datasets ?? [];
-  const rows = rowsOf(list, query);
+  const rows = rowsOf(
+    list,
+    query,
+    t({ message: "샘플", context: "dataset kind" }),
+  );
   const pickedStatus = list.find((d) => d.id === picked);
   const pickedReady = pickedStatus?.state === "ready";
   const editable =
@@ -179,12 +201,17 @@ function DatastoreBody({
     }
   };
 
+  const confirmDelete = (name: string) =>
+    t({
+      message: `''${name}''을 삭제할까요? 이 데이터로 그린 탭은 다시 그릴 수 없게 됩니다.`,
+      comment: "name: 데이터 이름",
+    });
+
   const deletePicked = async () => {
     if (!pickedStatus || !editable) return;
-    const ok = await showConfirm(
-      `'${pickedStatus.name}'을 삭제할까요? 이 데이터로 그린 탭은 다시 그릴 수 없게 됩니다.`,
-      { confirmLabel: "삭제" },
-    );
+    const ok = await showConfirm(confirmDelete(pickedStatus.name), {
+      confirmLabel: t({ message: "삭제", context: "delete dataset" }),
+    });
     if (!ok) return;
     remove.mutate(pickedStatus.id, {
       onSuccess: () => setPicked(undefined),
@@ -193,11 +220,13 @@ function DatastoreBody({
   };
 
   const usage = storage.data;
+  const datasetCount = (count: number) =>
+    t`${plural(count, { other: "데이터 #개" })}`;
 
   return (
     <div className="flex flex-col gap-2.5">
       <h2 id={titleId} className="text-base font-bold">
-        데이터 스토어
+        <Trans>데이터 스토어</Trans>
       </h2>
 
       <div className="flex items-center justify-between gap-3">
@@ -210,7 +239,7 @@ function DatastoreBody({
             id={searchId}
             type="search"
             className="min-w-0 flex-1 bg-transparent text-ui text-fg outline-none"
-            placeholder="이름 검색"
+            placeholder={t`이름 검색`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -219,11 +248,11 @@ function DatastoreBody({
           <button
             type="button"
             className={iconButton}
-            aria-label="수정"
+            aria-label={t({ message: "수정", context: "edit dataset" })}
             title={
               pickedStatus?.kind === "sample"
-                ? "샘플은 수정할 수 없습니다"
-                : "이름·전처리 옵션·컬럼 타입 수정"
+                ? t`샘플은 수정할 수 없습니다`
+                : t`이름·전처리 옵션·컬럼 타입 수정`
             }
             disabled={!editable || opening}
             onClick={editPicked}
@@ -233,11 +262,11 @@ function DatastoreBody({
           <button
             type="button"
             className={iconButton}
-            aria-label="삭제"
+            aria-label={t({ message: "삭제", context: "delete dataset" })}
             title={
               pickedStatus?.kind === "sample"
-                ? "샘플은 삭제할 수 없습니다"
-                : "삭제"
+                ? t`샘플은 삭제할 수 없습니다`
+                : t({ message: "삭제", context: "delete dataset" })
             }
             disabled={!editable || remove.isPending}
             onClick={deletePicked}
@@ -247,8 +276,8 @@ function DatastoreBody({
           <button
             type="button"
             className={iconButton}
-            aria-label="새로고침"
-            title="새로고침"
+            aria-label={t`새로고침`}
+            title={t`새로고침`}
             disabled={datasets.isFetching}
             onClick={() => datasets.refetch()}
           >
@@ -271,12 +300,24 @@ function DatastoreBody({
         >
           <thead className="z-sticky sticky top-0 grid bg-panel">
             <tr className={row}>
-              <th className={head}>번호</th>
-              <th className={head}>이름</th>
-              <th className={head}>등록 시간</th>
-              <th className={cn(head, number)}>행 수</th>
-              <th className={cn(head, number)}>크기</th>
-              <th className={head}>상태</th>
+              <th className={head}>
+                <Trans context="datastore table header">번호</Trans>
+              </th>
+              <th className={head}>
+                <Trans context="datastore table header">이름</Trans>
+              </th>
+              <th className={head}>
+                <Trans context="datastore table header">등록 시간</Trans>
+              </th>
+              <th className={cn(head, number)}>
+                <Trans context="datastore table header">행 수</Trans>
+              </th>
+              <th className={cn(head, number)}>
+                <Trans context="datastore table header">크기</Trans>
+              </th>
+              <th className={head}>
+                <Trans context="datastore table header">상태</Trans>
+              </th>
             </tr>
           </thead>
           <tbody
@@ -329,7 +370,7 @@ function DatastoreBody({
                   <td className={cn(cell, number)}>
                     {/* 샘플은 등록 전에도 만들 행 수를 안다. */}
                     {status.state === "ready" || status.kind === "sample"
-                      ? status.total.toLocaleString()
+                      ? status.total.toLocaleString(intlLocale())
                       : "–"}
                   </td>
                   <td
@@ -364,7 +405,7 @@ function DatastoreBody({
           <EmptyState
             size="sm"
             icon={<Database size={20} />}
-            title={query ? "찾는 데이터가 없습니다" : "데이터가 없습니다"}
+            title={query ? t`찾는 데이터가 없습니다` : t`데이터가 없습니다`}
           />
         ) : null}
       </div>
@@ -387,7 +428,7 @@ function DatastoreBody({
 
       <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 text-xs text-fg-secondary">
         <span>
-          내 저장소 사용량{" "}
+          <Trans>내 저장소 사용량</Trans>{" "}
           {usage?.usage !== undefined ? formatBytes(usage.usage) : "–"}
           {usage?.quota ? ` / ${formatBytes(usage.quota)}` : ""}
         </span>
@@ -395,14 +436,14 @@ function DatastoreBody({
           className="w-full"
           value={usage?.usage ?? 0}
           max={usage?.quota || 1}
-          aria-label="저장소 사용량"
+          aria-label={t`저장소 사용량`}
         />
-        <span className="text-fg-muted">데이터 {rows.length}개</span>
+        <span className="text-fg-muted">{datasetCount(rows.length)}</span>
       </div>
 
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={onClose}>
-          닫기
+          <Trans context="datastore dialog">닫기</Trans>
         </button>
         <button
           type="button"
@@ -410,14 +451,14 @@ function DatastoreBody({
           disabled={!pickedReady || locked}
           title={
             locked
-              ? TABS_LOCKED_HINT
+              ? tabsLockedHint()
               : pickedReady
                 ? undefined
-                : "준비된 데이터를 선택하세요"
+                : t`준비된 데이터를 선택하세요`
           }
           onClick={open}
         >
-          gallery에서 열기
+          <Trans>gallery에서 열기</Trans>
         </button>
       </div>
     </div>

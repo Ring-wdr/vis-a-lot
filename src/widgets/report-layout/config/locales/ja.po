@@ -1,0 +1,26 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/widgets/report-layout/ui/report-ui.tsx
+msgid "게시물 넘겨 보기"
+msgstr "投稿を順に見る"
+
+#: src/widgets/report-layout/ui/report-ui.tsx
+msgctxt "retry building the report"
+msgid "다시 시도"
+msgstr "再試行"
+
+#: src/widgets/report-layout/ui/report-ui.tsx
+msgctxt "report header button"
+msgid "발표 모드"
+msgstr "プレゼンモード"
+
+#: src/widgets/report-layout/ui/report-ui.tsx
+msgid "보고서를 만들지 못했습니다"
+msgstr "レポートを作成できませんでした"

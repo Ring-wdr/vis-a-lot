@@ -1,6 +1,8 @@
 // 사용자 전환 메뉴에 붙이는 역할 설명.
 
+import { t } from "@lingui/core/macro";
 import type { FeedUser, GroupDetail } from "@/shared/api/feed/types";
+import "../config/messages";
 
 /** 사용자 id → 그룹 관리자인 그룹 이름들 */
 export function adminGroupsByUser(groups: GroupDetail[]) {
@@ -13,7 +15,13 @@ export function adminGroupsByUser(groups: GroupDetail[]) {
 }
 
 export function roleHint(user: FeedUser, adminOf: string[] = []) {
-  if (user.isAdmin) return "시스템 관리자";
-  if (adminOf.length) return `그룹 관리자 · ${adminOf.join(", ")}`;
-  return "멤버";
+  if (user.isAdmin) return t`시스템 관리자`;
+  if (adminOf.length) {
+    const groups = adminOf.join(", ");
+    return t({
+      message: `그룹 관리자 · ${groups}`,
+      comment: "groups: 관리하는 그룹 이름을 쉼표로 이은 목록",
+    });
+  }
+  return t({ message: "멤버", context: "user role" });
 }

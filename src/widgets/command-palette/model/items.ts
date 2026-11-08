@@ -1,9 +1,11 @@
 // 팔레트 항목: 화면(이동)과 명령. 게시물은 /search 결과로 따로 붙인다.
 // 화면에 기대지 않는 순수 함수라 테스트에서 바로 부른다.
 
+import { t } from "@lingui/core/macro";
 import type { Group } from "@/shared/api/feed/types";
 import { FEED, groupHref } from "@/shared/config/feed-routes";
 import { matchScore } from "@/widgets/command-palette/lib/match";
+import "../config/messages";
 import type { RecentEntry } from "./recent";
 
 export type PaletteSection =
@@ -65,6 +67,17 @@ export type PaletteItem =
       current: boolean;
     };
 
+/**
+ * 검색 키워드. 언어마다 한 메시지에 쉼표로 나눠 적는다 (낱말 수는 언어마다 달라도 된다).
+ * 원문이 같은 다른 문구와 섞이지 않게 모두 이 context를 붙인다.
+ */
+const keywords = (words: string) =>
+  words
+    .split(",")
+    .map((w) => w.trim())
+    .filter(Boolean);
+
+/** 지금 화면 언어의 이름·키워드로 만든다. 그리는 컴포넌트는 useLocale로 언어 변경을 구독한다. */
 export function screenItems({
   groups,
   isAdmin,
@@ -77,7 +90,7 @@ export function screenItems({
     label: string,
     href: string,
     icon: ScreenIcon,
-    keywords: string[] = [],
+    keywords: readonly string[] = [],
     hint?: string,
   ): PaletteItem => ({
     kind: "screen",
@@ -85,52 +98,97 @@ export function screenItems({
     label,
     href,
     icon,
-    keywords,
+    keywords: [...keywords],
     hint,
   });
   const items: PaletteItem[] = [
-    screen("home", "홈", FEED.home, "home", ["피드", "home"]),
-    screen("my", "내 작업", FEED.my, "my", ["담당", "승인 대기", "my"]),
-    screen("inbox", "알림함", FEED.inbox, "inbox", ["알림", "inbox"]),
-    screen("notifications", "알림 설정", FEED.settingsNotifications, "bell", [
-      "설정",
-    ]),
+    screen(
+      "home",
+      t`홈`,
+      FEED.home,
+      "home",
+      keywords(t({ message: "피드, home", context: "palette keywords" })),
+    ),
+    screen(
+      "my",
+      t`내 작업`,
+      FEED.my,
+      "my",
+      keywords(
+        t({ message: "담당, 승인 대기, my", context: "palette keywords" }),
+      ),
+    ),
+    screen(
+      "inbox",
+      t`알림함`,
+      FEED.inbox,
+      "inbox",
+      keywords(t({ message: "알림, inbox", context: "palette keywords" })),
+    ),
+    screen(
+      "notifications",
+      t`알림 설정`,
+      FEED.settingsNotifications,
+      "bell",
+      keywords(t({ message: "설정", context: "palette keywords" })),
+    ),
   ];
   for (const g of groups) {
     const k = g.keyPrefix;
-    const kw = [k, g.name];
-    const hint = `${g.name} · ${k}`;
+    const group = g.name;
+    const kw = [k, group];
+    const hint = `${group} · ${k}`;
     items.push(
       screen(
         `list:${k}`,
-        `${g.name} 리스트`,
+        t({ message: `${group} 리스트`, comment: "group: 그룹 이름" }),
         groupHref(FEED.list, k),
         "list",
-        [...kw, "목록", "list"],
+        [
+          ...kw,
+          ...keywords(
+            t({ message: "목록, list", context: "palette keywords" }),
+          ),
+        ],
         hint,
       ),
       screen(
         `board:${k}`,
-        `${g.name} 보드`,
+        t({ message: `${group} 보드`, comment: "group: 그룹 이름" }),
         groupHref(FEED.board, k),
         "board",
-        [...kw, "칸반", "board"],
+        [
+          ...kw,
+          ...keywords(
+            t({ message: "칸반, board", context: "palette keywords" }),
+          ),
+        ],
         hint,
       ),
       screen(
         `activity:${k}`,
-        `${g.name} 활동 보고`,
+        t({ message: `${group} 활동 보고`, comment: "group: 그룹 이름" }),
         groupHref(FEED.reportActivity, k),
         "activity",
-        [...kw, "보고서", "report"],
+        [
+          ...kw,
+          ...keywords(
+            t({ message: "보고서, report", context: "palette keywords" }),
+          ),
+        ],
         hint,
       ),
       screen(
         `status:${k}`,
-        `${g.name} 현황 보고`,
+        t({ message: `${group} 현황 보고`, comment: "group: 그룹 이름" }),
         groupHref(FEED.reportStatus, k),
         "status",
-        [...kw, "보고서", "report"],
+        [
+          ...kw,
+          ...keywords(
+            t({ message: "보고서, report", context: "palette keywords" }),
+          ),
+        ],
         hint,
       ),
     );
@@ -138,46 +196,63 @@ export function screenItems({
       items.push(
         screen(
           `settings:${k}`,
-          `${g.name} 그룹 설정`,
+          t({ message: `${group} 그룹 설정`, comment: "group: 그룹 이름" }),
           groupHref(FEED.settingsGroup, k),
           "settings",
-          [...kw, "멤버", "게시물 유형", "상태 이름"],
+          [
+            ...kw,
+            ...keywords(
+              t({
+                message: "멤버, 게시물 유형, 상태 이름",
+                context: "palette keywords",
+              }),
+            ),
+          ],
           hint,
         ),
       );
   }
   if (isAdmin)
     items.push(
-      screen("admin", "관리 콘솔", FEED.admin, "admin", [
-        "사용자",
-        "관리자",
+      screen(
         "admin",
-      ]),
+        t`관리 콘솔`,
+        FEED.admin,
+        "admin",
+        keywords(
+          t({ message: "사용자, 관리자, admin", context: "palette keywords" }),
+        ),
+      ),
     );
+  const dev = t({ message: "개발", context: "palette hint: dev-only screen" });
   items.push(
     screen(
       "outbox",
-      "발송 로그",
+      t`발송 로그`,
       FEED.devOutbox,
       "outbox",
-      ["슬랙", "이메일", "dev"],
-      "개발",
+      keywords(
+        t({ message: "슬랙, 이메일, dev", context: "palette keywords" }),
+      ),
+      dev,
     ),
     screen(
       "seed",
-      "시드",
+      t`시드`,
       FEED.devSeed,
       "seed",
-      ["리셋", "데이터", "dev"],
-      "개발",
+      keywords(
+        t({ message: "리셋, 데이터, dev", context: "palette keywords" }),
+      ),
+      dev,
     ),
     screen(
       "clock",
-      "시계",
+      t`시계`,
       FEED.devClock,
       "clock",
-      ["오늘", "시간", "dev"],
-      "개발",
+      keywords(t({ message: "오늘, 시간, dev", context: "palette keywords" })),
+      dev,
     ),
   );
   return items;
@@ -199,24 +274,38 @@ export function commandItems({
       kind: "command",
       id: "cmd:new",
       command: "new",
-      label: "새 게시물",
-      hint: groupKey ? `빠른 생성 · ${groupKey}` : "빠른 생성",
-      keywords: ["만들기", "이슈", "create", "c"],
+      label: t`새 게시물`,
+      hint: groupKey
+        ? t({
+            message: `빠른 생성 · ${groupKey}`,
+            comment: "groupKey: 그룹 키 접두사 (FD)",
+          })
+        : t`빠른 생성`,
+      keywords: keywords(
+        t({ message: "만들기, 이슈, create, c", context: "palette keywords" }),
+      ),
     },
     {
       kind: "command",
       id: "cmd:new-full",
       command: "new-full",
-      label: "전체 폼으로 새 게시물",
-      keywords: ["만들기", "새 게시물", "create"],
+      label: t`전체 폼으로 새 게시물`,
+      keywords: keywords(
+        t({
+          message: "만들기, 새 게시물, create",
+          context: "palette keywords",
+        }),
+      ),
     },
     {
       kind: "command",
       id: "cmd:switch-user",
       command: "switch-user",
-      label: "사용자 전환",
-      hint: "사용자 목록",
-      keywords: ["로그인", "user"],
+      label: t`사용자 전환`,
+      hint: t`사용자 목록`,
+      keywords: keywords(
+        t({ message: "로그인, user", context: "palette keywords" }),
+      ),
     },
   ];
   if (reportPage)
@@ -224,8 +313,10 @@ export function commandItems({
       kind: "command",
       id: "cmd:present",
       command: "present",
-      label: presenting ? "발표 모드 끄기" : "발표 모드 켜기",
-      keywords: ["발표", "present"],
+      label: presenting ? t`발표 모드 끄기` : t`발표 모드 켜기`,
+      keywords: keywords(
+        t({ message: "발표, present", context: "palette keywords" }),
+      ),
     });
   return items;
 }
@@ -282,10 +373,10 @@ export function rankItems(
 
 /** 이슈 키 일부처럼 보이나: fd-12, FD-, 12, 그룹 접두사(FD) */
 export function looksLikeKey(q: string, prefixes: string[]) {
-  const t = q.trim();
+  const term = q.trim();
   return (
-    /^\d+$/.test(t) ||
-    /^[a-z][a-z0-9]{1,5}-\d*$/i.test(t) ||
-    prefixes.some((p) => p.toLowerCase() === t.toLowerCase())
+    /^\d+$/.test(term) ||
+    /^[a-z][a-z0-9]{1,5}-\d*$/i.test(term) ||
+    prefixes.some((p) => p.toLowerCase() === term.toLowerCase())
   );
 }

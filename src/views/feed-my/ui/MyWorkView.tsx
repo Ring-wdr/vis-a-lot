@@ -2,6 +2,7 @@
 
 // 내 작업 (/feed/my): 담당·내가 요청·승인 대기·이해관계자 탭(?tab=), 기한순 표. 기본은 열림·멈춤만(?closed=1이면 닫힌 것도).
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ClipboardList, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -9,9 +10,9 @@ import {
   addDays,
   DUE_SOON_DAYS,
   localToday,
-  MY_TABS,
   type MyTab,
   myFilter,
+  myTabs,
   parseTab,
 } from "@/entities/post/lib/my-work";
 import { PostTable } from "@/entities/post/ui/PostTable";
@@ -21,6 +22,7 @@ import { useOpenPeek } from "@/shared/lib/peek";
 import { button } from "@/shared/ui/button";
 import { EmptyState, LoadingText } from "@/shared/ui/Loading";
 import { tabStyles, useQueryHref, useReplaceQuery } from "@/shared/ui/tabs";
+import "../config/messages";
 
 const LIMIT = 500;
 const COLUMNS = [
@@ -54,12 +56,20 @@ function TabCount({
   return (
     <span className={tabs.count()}>
       {count.data.total}
-      <span className="sr-only">개</span>
+      <span className="sr-only">
+        <Trans
+          context="unit after a tab's post count"
+          comment="숫자 바로 뒤에 붙는다. 영어는 앞에 공백을 둔다"
+        >
+          개
+        </Trans>
+      </span>
     </span>
   );
 }
 
 export function MyWorkView() {
+  const { t } = useLingui();
   const search = useSearchParams();
   const tab = parseTab(search.get("tab"));
   const includeClosed = search.get("closed") === "1";
@@ -85,19 +95,26 @@ export function MyWorkView() {
     !dueSoon || !!dueSoonUntil,
   );
 
+  const days = DUE_SOON_DAYS;
+  const reason = query.error?.message;
+  const total = query.data?.total ?? 0;
+  const shown = query.data?.posts.length ?? 0;
+
   return (
     <div className="mx-auto flex w-full max-w-300 flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-xl font-bold">내 작업</h1>
-      <nav aria-label="내 작업 탭" className={tabs.list()}>
-        {MY_TABS.map((t) => (
+      <h1 className="text-xl font-bold">
+        <Trans>내 작업</Trans>
+      </h1>
+      <nav aria-label={t`내 작업 탭`} className={tabs.list()}>
+        {myTabs().map((item) => (
           <Link
-            key={t.id}
-            href={href({ tab: t.id, due: null })}
+            key={item.id}
+            href={href({ tab: item.id, due: null })}
             className={tabs.tab()}
-            aria-current={t.id === tab ? "page" : undefined}
+            aria-current={item.id === tab ? "page" : undefined}
           >
-            {t.label}
-            <TabCount tab={t.id} includeClosed={includeClosed} />
+            {item.label}
+            <TabCount tab={item.id} includeClosed={includeClosed} />
           </Link>
         ))}
       </nav>
@@ -110,46 +127,50 @@ export function MyWorkView() {
             disabled={dueSoon}
             onChange={(e) => replace({ closed: e.target.checked ? "1" : null })}
           />
-          닫힌 것 포함
+          <Trans>닫힌 것 포함</Trans>
         </label>
         {dueSoon && (
           <span className="inline-flex items-center gap-1 rounded-full border border-accent-line bg-accent-soft py-0.5 pr-1 pl-2 text-accent">
-            기한 임박만 ({DUE_SOON_DAYS}일 안·지남)
+            {t`기한 임박만 (${days}일 안·지남)`}
             <Link
               href={href({ due: null })}
               className="inline-grid size-4 place-items-center rounded-full text-accent hover:bg-accent-soft-strong"
-              aria-label="기한 임박 거르기 해제"
+              aria-label={t`기한 임박 거르기 해제`}
             >
               <X size={12} aria-hidden="true" />
             </Link>
           </span>
         )}
-        <span className="ml-auto">기한이 이른 순</span>
+        <span className="ml-auto">
+          <Trans>기한이 이른 순</Trans>
+        </span>
       </div>
 
       {query.isError ? (
         <div className="flex flex-col items-start gap-2">
           <p role="alert" className="text-ui text-danger">
-            목록을 불러오지 못했습니다 ({query.error.message})
+            {t`목록을 불러오지 못했습니다 (${reason})`}
           </p>
           <button
             type="button"
             className={button({ size: "sm" })}
             onClick={() => query.refetch()}
           >
-            다시 시도
+            <Trans>다시 시도</Trans>
           </button>
         </div>
       ) : !query.data ? (
-        <LoadingText>목록을 불러오는 중</LoadingText>
+        <LoadingText>
+          <Trans>목록을 불러오는 중</Trans>
+        </LoadingText>
       ) : query.data.posts.length === 0 ? (
         <EmptyState
           icon={<ClipboardList size={20} />}
-          title="해당하는 게시물이 없습니다"
+          title={t`해당하는 게시물이 없습니다`}
         >
-          {!includeClosed &&
-            !dueSoon &&
-            "닫힌 것 포함을 켜면 끝난 일도 보입니다."}
+          {!includeClosed && !dueSoon && (
+            <Trans>닫힌 것 포함을 켜면 끝난 일도 보입니다.</Trans>
+          )}
         </EmptyState>
       ) : (
         <>
@@ -160,7 +181,7 @@ export function MyWorkView() {
           />
           {query.data.total > query.data.posts.length && (
             <p className="text-xs text-fg-muted">
-              {query.data.total}개 중 {query.data.posts.length}개만 보여줍니다
+              {t`${total}개 중 ${shown}개만 보여줍니다`}
             </p>
           )}
         </>

@@ -1,0 +1,271 @@
+msgid ""
+msgstr ""
+
+#. m: 분, s: 초
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "{m}분 {s}초"
+msgstr "{m}m {s}s"
+
+#. pageText: 지금 페이지 번호, totalText: 전체 페이지 수
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "{pageText} / {totalText} 페이지로 이동 중…"
+msgstr "Going to page {pageText} / {totalText}…"
+
+#. s: 초 (소수 한 자리)
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "{s}초"
+msgstr "{s}s"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgid "grid로 돌아가기"
+msgstr "Back to grid"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "item 수 세는 중"
+msgstr "Counting items"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgid "item 이동"
+msgstr "Item navigation"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgid "PNG 변환"
+msgstr "Encoding PNG"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "Render Worker 수"
+msgstr "Render Worker count"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "elapsed time caption"
+msgid "경과"
+msgstr "Time"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "경과 시간"
+msgstr "Elapsed time"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "item count"
+msgid "그리는 중"
+msgstr "Drawing"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgctxt "item status"
+msgid "그리는 중"
+msgstr "Drawing"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "그리지 못했습니다"
+msgstr "Couldn't draw"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "time left caption"
+msgid "남은"
+msgstr "ETA"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "남은 시간 (어림)"
+msgstr "Time left (estimate)"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "다시 draw를 눌러 보세요."
+msgstr "Try pressing draw again."
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgid "다시 그리기에 실패했습니다."
+msgstr "Redraw failed."
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "다시 그리는 중"
+msgstr "Redrawing"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "다시 볼 차트 고르기"
+msgstr "Pick a chart to revisit"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgid "다음 item"
+msgstr "Next item"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PageScroller.tsx
+msgid "다음 페이지"
+msgstr "Next page"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "item count"
+msgid "대기"
+msgstr "Queued"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "job status"
+msgid "대기"
+msgstr "Waiting"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgctxt "item status"
+msgid "대기 중"
+msgstr "Queued"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgid "데이터 조회"
+msgstr "Querying data"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "데이터 조회 중"
+msgstr "Querying"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "데이터 준비 중"
+msgstr "Loading data"
+
+#. error: 서버가 준 실패 사유
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgid "렌더 실패: {error}"
+msgstr "Render failed: {error}"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgctxt "item render stage"
+msgid "렌더링"
+msgstr "Rendering"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "렌더링 중"
+msgstr "Rendering"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgid "마지막 item"
+msgstr "Last item"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgctxt "item detail"
+msgid "불러오는 중"
+msgstr "Loading"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "throughput caption"
+msgid "속도"
+msgstr "Rate"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "item count"
+msgid "실패"
+msgstr "Failed"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgctxt "item status"
+msgid "실패"
+msgstr "Failed"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "job status"
+msgid "실패"
+msgstr "Failed"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "아직 그린 차트가 없습니다"
+msgstr "No charts drawn yet"
+
+#. etaText: 2.5초, 1분 3초 같은 시간
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "약 {etaText}"
+msgstr "~{etaText}"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "item count"
+msgid "완료"
+msgstr "Done"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "job status"
+msgid "완료"
+msgstr "Done"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시 그립니다."
+msgstr "Pick a chart in the list on the left to redraw it with its saved settings, zoom, shapes and colors."
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면 조합마다 item 하나씩 grid로 그립니다."
+msgstr "Pick data and x, y on the left, then press draw. With split by, each combination is drawn as one item in the grid."
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgid "이전 item"
+msgstr "Previous item"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PageScroller.tsx
+msgid "이전 페이지"
+msgstr "Previous page"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "일부 실패"
+msgstr "Partly failed"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgctxt "item status"
+msgid "준비 중"
+msgstr "Preparing"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "job status"
+msgid "진행 중"
+msgstr "Running"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "진행률"
+msgstr "Progress"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgctxt "item render stage"
+msgid "집계"
+msgstr "Aggregating"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "차트 여는 중"
+msgstr "Opening chart"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgid "처리 속도"
+msgstr "Throughput"
+
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgid "처음 item"
+msgstr "First item"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "item count"
+msgid "취소"
+msgstr "Cancelled"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+#: src/widgets/chart-grid/ui/DetailView.tsx
+msgctxt "item status"
+msgid "취소됨"
+msgstr "Cancelled"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "job status"
+msgid "취소됨"
+msgstr "Cancelled"
+
+#: src/widgets/chart-grid/ui/ChartItemCard.tsx
+msgctxt "item expand button"
+msgid "크게 보기"
+msgstr "Expand"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PageScroller.tsx
+msgctxt "grid pages"
+msgid "페이지"
+msgstr "Page"
+
+#: src/widgets/chart-grid/ui/JobStatusBar.tsx
+msgctxt "count unit"
+msgid "행"
+msgstr "rows"

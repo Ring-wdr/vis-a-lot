@@ -1,5 +1,7 @@
 // 흉내 AI 어댑터. 모델 없이 규칙과 템플릿으로 같은 입력에 늘 같은 출력을 낸다.
 
+import { plural, t } from "@lingui/core/macro";
+import "@/shared/config/messages";
 import type {
   ActivityData,
   AiAdapter,
@@ -8,12 +10,19 @@ import type {
   SummarizeInput,
 } from "./types";
 
+const assigneeText = (name: string | null) =>
+  name
+    ? t({ message: `담당 ${name}`, comment: "name은 담당자 이름" })
+    : t({ message: "담당자 없음", context: "AI mock summary" });
+
 /** 보고 초안 문장들. 줄 하나가 스트리밍 조각 하나다. */
 export function draftLines(a: ActivityData): string[] {
-  const lines = [`# ${a.groupName} 활동 보고 (${a.from} ~ ${a.to})`, ""];
+  const { groupName: group, from, to } = a;
+  const lines = [t`# ${group} 활동 보고 (${from} ~ ${to})`, ""];
   const total = a.days.reduce((n, d) => n + d.entries.length, 0);
+  const done = a.completed.length;
   lines.push(
-    `기간 동안 활동 ${total}건, 완료 ${a.completed.length}건이 있었습니다.`,
+    t`기간 동안 활동 ${plural(total, { other: "#건" })}, 완료 ${plural(done, { other: "#건" })}이 있었습니다.`,
     "",
   );
 
@@ -27,22 +36,26 @@ export function draftLines(a: ActivityData): string[] {
       list.push(e);
       byActor.set(e.actorName, list);
     }
-    for (const [actor, entries] of byActor) {
-      const items = entries.map((e) =>
-        `${e.key} '${e.title}' ${e.text}`.trim(),
+    for (const [name, entries] of byActor) {
+      const items = entries
+        .map((e) => `${e.key} '${e.title}' ${e.text}`.trim())
+        .join(", ");
+      lines.push(
+        t({
+          message: `- ${name}님: ${items}.`,
+          comment:
+            "name은 행위자 이름, items는 그 사람의 활동을 쉼표로 이은 목록",
+        }),
       );
-      lines.push(`- ${actor}님: ${items.join(", ")}.`);
     }
     lines.push("");
   }
 
-  lines.push("## 완료한 일");
+  lines.push(t`## 완료한 일`);
   if (a.completed.length === 0)
-    lines.push("- 이번 기간에 완료한 일은 없습니다.");
+    lines.push(t`- 이번 기간에 완료한 일은 없습니다.`);
   for (const c of a.completed)
-    lines.push(
-      `- ${c.key} ${c.title} (${c.assigneeName ? `담당 ${c.assigneeName}` : "담당자 없음"})`,
-    );
+    lines.push(`- ${c.key} ${c.title} (${assigneeText(c.assigneeName)})`);
   return lines;
 }
 
@@ -61,22 +74,30 @@ export function summarizeMock({
   lastComment,
 }: SummarizeInput) {
   const first = clip(firstParagraph(bodyText) || title, 200);
-  const comment = lastComment?.trim();
-  return comment ? `${first} 마지막 댓글: ${clip(comment, 120)}` : first;
+  const trimmed = lastComment?.trim();
+  if (!trimmed) return first;
+  const comment = clip(trimmed, 120);
+  return `${first} ${t`마지막 댓글: ${comment}`}`;
 }
 
-/** 게시물 유형 이름 → 제목·본문에서 찾을 말. 위에서부터 처음 맞는 규칙을 쓴다. */
-const TYPE_RULES: [type: string, pattern: RegExp][] = [
-  ["버그", /오류|에러|안\s?됨|안\s?돼|안\s?되|버그|깨짐|실패|error|bug/i],
-  ["데이터 요청", /요청|추출|뽑아/],
-  ["기능", /기능|추가|개선|지원/],
-  ["질문", /\?|문의|궁금|어떻게/],
-  ["업무 기록", /기록|회의|정리|공유/],
+/**
+ * 게시물 유형 이름(한국어·영어) → 제목·본문에서 찾을 말. 위에서부터 처음 맞는 규칙을 쓴다.
+ * 유형 이름은 그룹이 정한 데이터라 화면 언어와 상관없이 두 이름을 다 찾는다.
+ */
+const TYPE_RULES: [types: string[], pattern: RegExp][] = [
+  [
+    ["버그", "bug"],
+    /오류|에러|안\s?됨|안\s?돼|안\s?되|버그|깨짐|실패|error|bug|broken|fail/i,
+  ],
+  [["데이터 요청", "data request"], /요청|추출|뽑아|request|extract/i],
+  [["기능", "feature"], /기능|추가|개선|지원|feature|improve|support/i],
+  [["질문", "question"], /\?|문의|궁금|어떻게|question|how to/i],
+  [["업무 기록", "work log"], /기록|회의|정리|공유|\b(?:meeting|notes|log)\b/i],
 ];
 
 const PRIORITY_RULES: [priority: number, pattern: RegExp][] = [
-  [4, /긴급|급함|asap|당장/i],
-  [3, /중요|빨리|오늘\s?까지/],
+  [4, /긴급|급함|asap|당장|urgent/i],
+  [3, /중요|빨리|오늘\s?까지|important|\bby today\b/i],
 ];
 
 export function suggestFieldsMock({
@@ -88,9 +109,11 @@ export function suggestFieldsMock({
   const text = `${title}\n${body}`;
   const result: SuggestedFields = {};
 
-  for (const [name, pattern] of TYPE_RULES) {
+  for (const [names, pattern] of TYPE_RULES) {
     if (!pattern.test(text)) continue;
-    const type = postTypes.find((t) => t.name === name);
+    const type = postTypes.find((p) =>
+      names.includes(p.name.trim().toLowerCase()),
+    );
     if (type) {
       result.postTypeId = type.id;
       break;
@@ -138,6 +161,8 @@ export function sampleFromSchema(schema: Record<string, unknown>): unknown {
   }
 }
 
+const mockResponse = (prompt: string) => t`(흉내 응답) ${prompt}`;
+
 export const mockAdapter: AiAdapter = {
   async *draftReport(activity, opts) {
     for (const line of draftLines(activity)) {
@@ -150,5 +175,5 @@ export const mockAdapter: AiAdapter = {
   generate: async (prompt, opts) =>
     opts?.schema
       ? JSON.stringify(sampleFromSchema(opts.schema))
-      : `(흉내 응답) ${clip(prompt.trim(), 80)}`,
+      : mockResponse(clip(prompt.trim(), 80)),
 };

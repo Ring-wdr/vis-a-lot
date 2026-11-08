@@ -1,10 +1,19 @@
 // 목록·보드가 함께 쓰는 순수 계산: 열 이름, 보드 상태 순서, 그룹 나누기, 기한 지남, 드래그 전이 고르기.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
 import type {
   PostStatus,
   PostSummary,
   ViewGroupBy,
 } from "@/shared/api/feed/types";
+import {
+  getLocale,
+  intlLocale,
+  type Locale,
+  linguiFor,
+} from "@/shared/lib/i18n";
+import "../config/messages";
 
 export const POST_COLUMNS = [
   "key",
@@ -18,15 +27,27 @@ export const POST_COLUMNS = [
 ] as const;
 export type PostColumn = (typeof POST_COLUMNS)[number];
 
-export const COLUMN_LABELS: Record<PostColumn, string> = {
-  key: "키",
-  title: "제목",
-  status: "상태",
-  priority: "우선순위",
-  assignee: "담당자",
-  dueDate: "기한",
-  updatedAt: "수정",
-  thumbnail: "썸네일",
+const COLUMN_LABELS: Record<PostColumn, MessageDescriptor> = {
+  key: msg({ message: "키", context: "post table column" }),
+  title: msg({ message: "제목", context: "post table column" }),
+  status: msg({ message: "상태", context: "post table column" }),
+  priority: msg({ message: "우선순위", context: "post table column" }),
+  assignee: msg({ message: "담당자", context: "post table column" }),
+  dueDate: msg({ message: "기한", context: "post table column" }),
+  updatedAt: msg({ message: "수정", context: "post table column" }),
+  thumbnail: msg({ message: "썸네일", context: "post table column" }),
+};
+const NO_ASSIGNEE = msg`담당자 없음`;
+const NO_TEAM_LABEL = msg`팀 없음`;
+
+/** 열 이름 (지금 언어) */
+export const columnLabels = (
+  locale: Locale = getLocale(),
+): Record<PostColumn, string> => {
+  const i18n = linguiFor(locale);
+  return Object.fromEntries(
+    POST_COLUMNS.map((c) => [c, i18n._(COLUMN_LABELS[c])]),
+  ) as Record<PostColumn, string>;
 };
 
 /** 리스트 기본 열 (썸네일은 끈다) */
@@ -63,6 +84,8 @@ export function groupPosts(
     user: (id: string) => string;
     priority: (p: number) => string;
   },
+  /** "담당자 없음"의 언어 (기본: 지금 언어) */
+  locale: Locale = getLocale(),
 ): PostGroup[] {
   const buckets = new Map<string, PostSummary[]>();
   const idOf = (p: PostSummary) =>
@@ -86,7 +109,7 @@ export function groupPosts(
           ? names.priority(Number(id))
           : id
             ? names.user(id)
-            : "담당자 없음",
+            : linguiFor(locale)._(NO_ASSIGNEE),
     posts: list,
   }));
   if (groupBy === "status")
@@ -98,7 +121,7 @@ export function groupPosts(
     return groups.sort((a, b) => Number(b.id) - Number(a.id));
   // 담당자: 이름순, 담당자 없음은 맨 끝
   return groups.sort((a, b) =>
-    !a.id ? 1 : !b.id ? -1 : a.label.localeCompare(b.label, "ko"),
+    !a.id ? 1 : !b.id ? -1 : a.label.localeCompare(b.label, intlLocale(locale)),
   );
 }
 
@@ -110,6 +133,8 @@ export const NO_TEAM = "none";
 export function teamLanes(
   posts: readonly PostSummary[],
   teams: readonly { id: string; name: string }[],
+  /** "팀 없음"의 언어 (기본: 지금 언어) */
+  locale: Locale = getLocale(),
 ): Lane[] {
   const known = new Set(teams.map((t) => t.id));
   const lanes: Lane[] = teams.map((t) => ({
@@ -118,7 +143,12 @@ export function teamLanes(
     posts: posts.filter((p) => p.teamId === t.id),
   }));
   const rest = posts.filter((p) => !p.teamId || !known.has(p.teamId));
-  if (rest.length) lanes.push({ id: NO_TEAM, label: "팀 없음", posts: rest });
+  if (rest.length)
+    lanes.push({
+      id: NO_TEAM,
+      label: linguiFor(locale)._(NO_TEAM_LABEL),
+      posts: rest,
+    });
   return lanes;
 }
 

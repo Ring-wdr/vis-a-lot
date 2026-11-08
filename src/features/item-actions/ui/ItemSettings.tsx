@@ -1,5 +1,7 @@
 "use client";
 
+import { select } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
@@ -10,16 +12,10 @@ import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import type { ItemPropsForm } from "../model/item-props-form";
 
 const s = settingsStyles();
-
-const POSITION_LABELS: Record<LegendPosition, string> = {
-  top: "위",
-  bottom: "아래",
-  left: "왼쪽",
-  right: "오른쪽",
-};
 
 type DrawnItem = ItemState & { image: NonNullable<ItemState["image"]> };
 
@@ -54,6 +50,7 @@ export function ItemLegendPositionSettings({
   /** 공통 속성의 legend 위치 */
   commonPosition: LegendPosition;
 }) {
+  const { t } = useLingui();
   const { changes, set } = useItemPropsForm();
   const own =
     changes.legendPosition !== undefined
@@ -62,7 +59,9 @@ export function ItemLegendPositionSettings({
 
   return (
     <div className={s.section()}>
-      <h4 className={s.heading()}>위치</h4>
+      <h4 className={s.heading()}>
+        <Trans context="legend position">위치</Trans>
+      </h4>
       <LegendPositionPicker
         value={own ?? commonPosition}
         disabled={disabled}
@@ -75,7 +74,7 @@ export function ItemLegendPositionSettings({
           disabled={disabled}
           onClick={() => set("legendPosition", null)}
         >
-          공통 위치 따르기 ({POSITION_LABELS[commonPosition]})
+          {t`공통 위치 따르기 (${select(commonPosition, { top: "위", bottom: "아래", left: "왼쪽", other: "오른쪽" })})`}
         </button>
       )}
     </div>
@@ -96,6 +95,7 @@ export function ItemColorSettings({
   /** 공통 색 따르기를 고른 뒤 보일 공통 속성의 색 */
   common: { color: string; legendColors?: Record<string, string> };
 }) {
+  const { t } = useLingui();
   const { changes, set } = useItemPropsForm();
   const meta = useItemMeta(item.image.url, hasLegend);
   const legend = meta.data?.legend;
@@ -112,7 +112,13 @@ export function ItemColorSettings({
 
   return (
     <div className={s.section()}>
-      <h4 className={s.heading()}>{hasLegend ? "범례 값별 색" : "색"}</h4>
+      <h4 className={s.heading()}>
+        {hasLegend ? (
+          <Trans>범례 값별 색</Trans>
+        ) : (
+          <Trans context="item color">색</Trans>
+        )}
+      </h4>
       {!hasLegend ? (
         <>
           <ColorSwatches
@@ -132,7 +138,7 @@ export function ItemColorSettings({
                   className={s.legendSwatch()}
                   style={{ background: shown }}
                   color={shown}
-                  label={`${value} 색 바꾸기`}
+                  label={t`${value} 색 바꾸기`}
                   disabled={disabled}
                   onCommit={(next) =>
                     set("legendColors", {
@@ -159,7 +165,7 @@ export function ItemColorSettings({
             set("legendColors", {});
           }}
         >
-          공통 색 따르기
+          <Trans>공통 색 따르기</Trans>
         </button>
       )}
     </div>

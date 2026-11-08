@@ -2,12 +2,14 @@
 
 // 게시물 찾기 입력: 제목·본문으로 찾고, 이슈 키(FD-12)를 적으면 그 게시물을 바로 찾는다. 상위 이슈·관계 추가에 쓴다.
 
+import { useLingui } from "@lingui/react/macro";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
 import { statusLabel } from "@/entities/post/lib/labels";
 import { postsApi } from "@/shared/api/feed/posts";
 import type { PostRef } from "@/shared/api/feed/types";
 import { LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 import { field } from "./styles";
 
 const KEY_RE = /^[A-Za-z][A-Za-z0-9]*-\d+$/;
@@ -47,23 +49,27 @@ async function search(q: string, groupId?: string): Promise<PostRef[]> {
   return refs;
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_EXCLUDE: readonly string[] = [];
+
 export function PostPicker({
   groupId,
-  exclude = [],
+  exclude = NO_EXCLUDE,
   onPick,
   label,
-  placeholder = "키(FD-12)나 제목으로 찾기",
+  placeholder,
   disabled = false,
 }: {
   /** 이 그룹 안에서만 찾는다 (그룹 id) */
   groupId?: string;
   /** 고를 수 없는 게시물 id (자기 자신 등) */
-  exclude?: string[];
+  exclude?: readonly string[];
   onPick: (post: PostRef) => void;
   label: string;
   placeholder?: string;
   disabled?: boolean;
 }) {
+  const { t } = useLingui();
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -75,6 +81,7 @@ export function PostPicker({
     enabled: open && q.length > 0,
     staleTime: 10_000,
   });
+  const reason = results.error?.message ?? "";
   const items = (results.data ?? []).filter((p) => !exclude.includes(p.id));
 
   const pick = (p: PostRef) => {
@@ -93,7 +100,7 @@ export function PostPicker({
         aria-controls={listId}
         aria-autocomplete="list"
         value={text}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t`키(FD-12)나 제목으로 찾기`}
         disabled={disabled}
         onChange={(e) => {
           setText(e.currentTarget.value);
@@ -124,20 +131,20 @@ export function PostPicker({
         <div
           id={listId}
           role="listbox"
-          aria-label={`${label} 결과`}
+          aria-label={t`${label} 결과`}
           className="z-popover absolute inset-x-0 top-full mt-1 max-h-64 overflow-y-auto rounded-lg border border-line bg-elevated py-1 shadow-lg"
         >
           {results.isPending || q !== text.trim() ? (
             <div className="px-2 py-1.5">
-              <LoadingText>찾는 중</LoadingText>
+              <LoadingText>{t`찾는 중`}</LoadingText>
             </div>
           ) : results.isError ? (
             <p className="px-2 py-1.5 text-xs text-danger">
-              찾지 못했습니다: {results.error.message}
+              {t`찾지 못했습니다: ${reason}`}
             </p>
           ) : items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-fg-muted">
-              맞는 게시물이 없습니다.
+              {t`맞는 게시물이 없습니다.`}
             </p>
           ) : (
             items.map((p, i) => (

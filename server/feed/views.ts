@@ -6,12 +6,7 @@ import type {
   SavedView,
   SaveViewRequest,
 } from "../services/feed/modules/views/schemas";
-import {
-  groupRole,
-  isGroupAdmin,
-  resolveGroup,
-  visibleGroupIds,
-} from "./access";
+import { groupRole, groupRoles, resolveGroup, visibleGroupIds } from "./access";
 import {
   type Actor,
   defineOps,
@@ -52,10 +47,13 @@ const BUILTIN_VIEWS: SavedView[] = [
 
 const isBuiltinId = (id: string) => id.startsWith("builtin-");
 
-async function canEditRow(ctx: OpCtx, actor: Actor, row: ViewRow) {
+/** 지금 사용자의 그룹 역할. 목록은 뷰마다 묻지 않고 한 번만 읽어 넘긴다 */
+type RoleOf = Awaited<ReturnType<typeof groupRoles>>;
+
+function canEditRow(actor: Actor, row: ViewRow, roleOf: RoleOf) {
   if (row.owner_id === actor.id) return true;
   return row.shared && row.group_id != null
-    ? isGroupAdmin(ctx, row.group_id)
+    ? roleOf(row.group_id) === "admin"
     : false;
 }
 
@@ -63,7 +61,9 @@ async function toView(
   ctx: OpCtx,
   actor: Actor,
   row: ViewRow,
+  roleOf?: RoleOf,
 ): Promise<SavedView> {
+  roleOf ??= await groupRoles(ctx, actor);
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -76,7 +76,7 @@ async function toView(
     groupBy: (row.group_by ?? null) as SavedView["groupBy"],
     pinned: row.pinned,
     builtin: false,
-    editable: await canEditRow(ctx, actor, row),
+    editable: canEditRow(actor, row, roleOf),
   };
 }
 
@@ -103,7 +103,7 @@ async function findEditable(ctx: OpCtx, actor: Actor, viewId: string) {
   if (isBuiltinId(viewId))
     throw new FeedError(403, "기본 제공 뷰는 고칠 수 없습니다");
   const row = await findView(ctx, actor, viewId);
-  if (!(await canEditRow(ctx, actor, row)))
+  if (!canEditRow(actor, row, await groupRoles(ctx, actor)))
     throw new FeedError(403, "이 뷰를 고칠 권한이 없습니다");
   return row;
 }
@@ -142,8 +142,9 @@ export const viewsOps = defineOps({
         ]),
       );
     const rows = await query.execute();
+    const roleOf = await groupRoles(ctx, actor);
     const rest: SavedView[] = [];
-    for (const row of rows) rest.push(await toView(ctx, actor, row));
+    for (const row of rows) rest.push(await toView(ctx, actor, row, roleOf));
     rest.sort(byPinnedThenName);
     return { views: [...BUILTIN_VIEWS, ...rest] };
   },

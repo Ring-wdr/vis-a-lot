@@ -2,6 +2,7 @@
 
 // 카드·표·보드가 함께 쓰는 작은 표시: 상태 배지, 우선순위, 사람, 기한, 형식 아이콘, 썸네일.
 
+import { useLingui } from "@lingui/react/macro";
 import {
   ChartColumn,
   Code,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import {
-  FORMAT_LABELS,
+  formatLabels,
   priorityLabel,
   statusLabel,
 } from "@/entities/post/lib/labels";
@@ -23,7 +24,9 @@ import type {
   PostStatus,
   PostSummary,
 } from "@/shared/api/feed/types";
+import { localeCached, useLocale } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
+import "../config/messages";
 
 /** 오늘 'YYYY-MM-DD'. 개발 장치의 시계 오프셋을 따른다 */
 export function useToday() {
@@ -39,13 +42,15 @@ export function useToday() {
 /** 그룹이 바꾼 상태 이름을 붙이는 함수 */
 export function useStatusName() {
   const groups = useGroupMap();
+  const locale = useLocale();
   return useMemo(
     () => (status: PostStatus, groupId?: string) =>
       statusLabel(
         status,
         groupId ? groups.get(groupId)?.statusNames : undefined,
+        locale,
       ),
-    [groups],
+    [groups, locale],
   );
 }
 
@@ -93,11 +98,13 @@ export function PriorityMark({
   priority: number;
   showLabel?: boolean;
 }) {
+  const { t } = useLingui();
   const label = priorityLabel(priority);
+  const title = t`우선순위 ${label}`;
   return (
     <span
       className="inline-flex flex-none items-center gap-1 text-xs text-fg-secondary"
-      title={`우선순위 ${label}`}
+      title={title}
     >
       <span className="inline-flex items-end gap-px" aria-hidden="true">
         {BARS.map((b, i) => (
@@ -115,7 +122,7 @@ export function PriorityMark({
           />
         ))}
       </span>
-      {showLabel ? label : <span className="sr-only">우선순위 {label}</span>}
+      {showLabel ? label : <span className="sr-only">{title}</span>}
     </span>
   );
 }
@@ -124,16 +131,21 @@ export function PriorityMark({
 export function UserChip({
   userId,
   compact = false,
-  emptyLabel = "담당자 없음",
+  emptyLabel,
 }: {
   userId: string | null;
   /** 이름을 숨기고 동그라미만 (이름은 title·sr-only로) */
   compact?: boolean;
   emptyLabel?: string;
 }) {
+  const { t } = useLingui();
   const users = useUserMap();
   if (!userId)
-    return <span className="text-xs text-fg-muted">{emptyLabel}</span>;
+    return (
+      <span className="text-xs text-fg-muted">
+        {emptyLabel ?? t`담당자 없음`}
+      </span>
+    );
   const name = users.get(userId)?.name ?? userId;
   return (
     <span
@@ -168,17 +180,19 @@ export function DueLabel({
   post: Pick<PostSummary, "dueDate" | "category">;
   today: string;
 }) {
+  const { t } = useLingui();
   if (!post.dueDate) return <span className="text-xs text-fg-muted">—</span>;
+  const due = post.dueDate;
   const overdue = isOverdue(post, today);
   return (
     <time
       dateTime={post.dueDate}
       data-overdue={overdue || undefined}
       className="text-xs whitespace-nowrap text-fg-secondary tabular-nums data-overdue:font-semibold data-overdue:text-danger"
-      title={overdue ? `기한 지남 (${post.dueDate})` : post.dueDate}
+      title={overdue ? t`기한 지남 (${due})` : due}
     >
       {shortDay(post.dueDate)}
-      {overdue && <span className="sr-only"> 기한 지남</span>}
+      {overdue && <span className="sr-only">{t` 기한 지남`}</span>}
     </time>
   );
 }
@@ -198,6 +212,7 @@ export function Thumb({
   post: Pick<PostSummary, "thumbnail" | "format" | "title">;
   className?: string;
 }) {
+  useLocale(); // formatLabels가 지금 언어로 읽는다
   const Icon = FORMAT_ICONS[post.format];
   return (
     <span
@@ -206,7 +221,7 @@ export function Thumb({
         className,
       )}
     >
-      <Icon size={20} aria-label={FORMAT_LABELS[post.format]} />
+      <Icon size={20} aria-label={formatLabels()[post.format]} />
       {post.thumbnail && (
         // biome-ignore lint/performance/noImgElement: 정적 export라 next/image 최적화가 없고, 썸네일은 data URL이다
         <img
@@ -223,9 +238,13 @@ export function Thumb({
   );
 }
 
-export const dayTime = new Intl.DateTimeFormat("ko-KR", {
-  month: "numeric",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+/** 지금 언어의 "월/일 시:분" 포매터. `dayTime().format(at)` */
+export const dayTime = localeCached(
+  (locale) =>
+    new Intl.DateTimeFormat(locale, {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+);

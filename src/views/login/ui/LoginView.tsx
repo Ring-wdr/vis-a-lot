@@ -1,6 +1,8 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { LoginForm } from "@/features/auth/ui/LoginForm";
+import "../config/messages";
 
 export function LoginView({ notice }: { notice?: string }) {
   return (
@@ -13,7 +15,7 @@ export function LoginView({ notice }: { notice?: string }) {
           vis-a-lot
         </h1>
         <p className="mt-1 mb-5 text-ui text-fg-muted">
-          서버사이드 렌더링 차트
+          <Trans>서버사이드 렌더링 차트</Trans>
         </p>
         <LoginForm notice={notice} />
       </section>

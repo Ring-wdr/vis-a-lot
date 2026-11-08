@@ -1,22 +1,28 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pin } from "lucide-react";
 import { invalidatePosts } from "@/shared/api/feed/post-queries";
 import { postsApi } from "@/shared/api/feed/posts";
 import type { PostSummary } from "@/shared/api/feed/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import "../config/messages";
 
 /** 카드 위 끌어올리기(pin) 버튼. 켜져 있으면 홈 피드 맨 앞에 온다 */
 export function PinButton({ post }: { post: PostSummary }) {
+  const { t } = useLingui();
   const client = useQueryClient();
   const pinned = post.pinnedAt != null;
   const pin = useMutation({
     mutationFn: (on: boolean) => postsApi.pin(post.id, on),
     onSuccess: () => invalidatePosts(client),
-    onError: (err) => showAlert(`끌어올리지 못했습니다: ${err.message}`),
+    onError: (err) => {
+      const message = err.message;
+      showAlert(t`끌어올리지 못했습니다: ${message}`);
+    },
   });
-  const label = pinned ? "끌어올림 해제" : "끌어올리기";
+  const label = pinned ? t`끌어올림 해제` : t`끌어올리기`;
   return (
     <button
       type="button"

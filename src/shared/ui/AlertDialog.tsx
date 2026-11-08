@@ -1,20 +1,27 @@
 "use client";
 
+import { t } from "@lingui/core/macro";
 import { overlay } from "overlay-kit";
 import type { ReactNode } from "react";
 import { button } from "./button";
 import { Dialog, dialogActions } from "./Dialog";
+import "@/shared/config/messages";
+
+// 팝업은 띄울 때의 언어로 문구를 정한다 (전역 i18n).
+const okLabel = () => t({ message: "확인", context: "dialog button" });
+const cancelLabel = () => t({ message: "취소", context: "dialog button" });
 
 /**
  * 화면 어디서든 띄우는 알림 팝업. 팝업 상태는 overlay-kit이 들고 있어 본문 상태와 섞이지 않는다.
  */
 export function showAlert(message: string) {
+  const ok = okLabel();
   overlay.open(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={close} onExited={unmount}>
       <p>{message}</p>
       <form method="dialog" className={dialogActions}>
         <button type="submit" className={button({ variant: "primary" })}>
-          확인
+          {ok}
         </button>
       </form>
     </Dialog>
@@ -29,7 +36,7 @@ export function showAlert(message: string) {
 export function showConfirm(
   message: string,
   {
-    confirmLabel = "확인",
+    confirmLabel = okLabel(),
     title,
     danger = false,
     children,
@@ -40,6 +47,7 @@ export function showConfirm(
     children?: ReactNode;
   } = {},
 ) {
+  const cancel = cancelLabel();
   return overlay.openAsync<boolean>(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={() => close(false)} onExited={unmount}>
       {title && <h2 className="mb-2 text-base font-semibold">{title}</h2>}
@@ -47,7 +55,7 @@ export function showConfirm(
       {children}
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={() => close(false)}>
-          취소
+          {cancel}
         </button>
         <button
           type="button"
@@ -66,10 +74,11 @@ export function showPrompt(
   message: string,
   {
     defaultValue = "",
-    confirmLabel = "확인",
+    confirmLabel = okLabel(),
     maxLength = 40,
   }: { defaultValue?: string; confirmLabel?: string; maxLength?: number } = {},
 ) {
+  const cancel = cancelLabel();
   return overlay.openAsync<string | null>(({ isOpen, close, unmount }) => (
     <Dialog isOpen={isOpen} onClose={() => close(null)} onExited={unmount}>
       <form
@@ -97,7 +106,7 @@ export function showPrompt(
             className={button()}
             onClick={() => close(null)}
           >
-            취소
+            {cancel}
           </button>
           <button type="submit" className={button({ variant: "primary" })}>
             {confirmLabel}

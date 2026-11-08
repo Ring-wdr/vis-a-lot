@@ -2,6 +2,8 @@
 
 // 체크리스트: 체크, 더하기, 빼기, 위·아래로 옮기기. 체크 비율이 진행률이 된다.
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { usePostAction } from "@/entities/post/model/use-post-action";
@@ -10,10 +12,12 @@ import { postsApi } from "@/shared/api/feed/posts";
 import { cn } from "@/shared/lib/tw";
 import { button, itemButton } from "@/shared/ui/button";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
+import "../config/messages";
 
 const d = detail();
 
 export function PostChecklist({ post }: { post: PostDetail }) {
+  const { t } = useLingui();
   const { run, pending } = usePostAction();
   const [text, setText] = useState("");
   const items = [...post.checklist].sort((a, b) => a.sort - b.sort);
@@ -24,7 +28,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
     const ids = items.map((i) => i.id);
     const [id] = ids.splice(index, 1);
     ids.splice(index + delta, 0, id);
-    run("reorder", "순서를 바꾸지 못했습니다", () =>
+    void run("reorder", t`순서를 바꾸지 못했습니다`, () =>
       postsApi.reorderChecklist(post.id, ids),
     );
   };
@@ -35,7 +39,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
     <section className={d.section()} aria-labelledby="post-checklist-title">
       <div className={d.sectionHead()}>
         <h2 id="post-checklist-title" className={d.sectionTitle()}>
-          체크리스트
+          <Trans>체크리스트</Trans>
           {items.length > 0 && (
             <span className="ml-1.5 font-normal text-fg-muted tabular-nums">
               {done}/{items.length}
@@ -58,7 +62,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
                 aria-label={item.text}
                 onChange={(e) => {
                   const next = e.currentTarget.checked;
-                  run("check", "체크하지 못했습니다", () =>
+                  void run("check", t`체크하지 못했습니다`, () =>
                     postsApi.updateChecklistItem(post.id, item.id, {
                       done: next,
                     }),
@@ -78,7 +82,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
                   <button
                     type="button"
                     className={itemButton()}
-                    aria-label={`${item.text} 위로`}
+                    aria-label={t`${ph({ item: item.text })} 위로`}
                     disabled={i === 0 || !!pending}
                     onClick={() => move(i, -1)}
                   >
@@ -87,7 +91,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
                   <button
                     type="button"
                     className={itemButton()}
-                    aria-label={`${item.text} 아래로`}
+                    aria-label={t`${ph({ item: item.text })} 아래로`}
                     disabled={i === items.length - 1 || !!pending}
                     onClick={() => move(i, 1)}
                   >
@@ -96,10 +100,10 @@ export function PostChecklist({ post }: { post: PostDetail }) {
                   <button
                     type="button"
                     className={itemButton()}
-                    aria-label={`${item.text} 빼기`}
+                    aria-label={t`${ph({ item: item.text })} 빼기`}
                     disabled={!!pending}
                     onClick={() =>
-                      run("remove", "항목을 빼지 못했습니다", () =>
+                      run("remove", t`항목을 빼지 못했습니다`, () =>
                         postsApi.removeChecklistItem(post.id, item.id),
                       )
                     }
@@ -120,7 +124,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
             const value = text.trim();
             if (!value) return;
             if (
-              await run("add", "항목을 더하지 못했습니다", () =>
+              await run("add", t`항목을 더하지 못했습니다`, () =>
                 postsApi.addChecklistItem(post.id, value),
               )
             )
@@ -131,8 +135,8 @@ export function PostChecklist({ post }: { post: PostDetail }) {
             className={field()}
             value={text}
             maxLength={200}
-            placeholder="항목 더하기"
-            aria-label="체크리스트 항목 더하기"
+            placeholder={t`항목 더하기`}
+            aria-label={t`체크리스트 항목 더하기`}
             onChange={(e) => setText(e.currentTarget.value)}
           />
           <button
@@ -141,7 +145,7 @@ export function PostChecklist({ post }: { post: PostDetail }) {
             disabled={!text.trim() || !!pending}
           >
             <Plus size={13} aria-hidden="true" />
-            더하기
+            <Trans>더하기</Trans>
           </button>
         </form>
       )}

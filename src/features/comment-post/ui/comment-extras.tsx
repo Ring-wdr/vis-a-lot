@@ -2,6 +2,8 @@
 
 // 댓글에 붙는 것: 반응 막대(이모지 켜기·끄기)와 투표.
 
+import { ph, plural, select } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChartBar, Check, SmilePlus } from "lucide-react";
 import { useCommentAction } from "@/features/comment-post/model/use-comment-action";
 import type { Comment, Poll } from "@/shared/api/feed/comments";
@@ -9,6 +11,7 @@ import { commentsApi } from "@/shared/api/feed/comments";
 import { dateTime } from "@/shared/lib/time";
 import { tv } from "@/shared/lib/tw";
 import { Popover } from "@/shared/ui/Popover";
+import "../config/messages";
 
 export const EMOJIS = ["👍", "🎉", "👀", "❤️", "😄", "🙏"] as const;
 
@@ -17,11 +20,16 @@ const reactionButton = tv({
 });
 
 export function ReactionsBar({ comment }: { comment: Comment }) {
+  const { t } = useLingui();
   const { run, pending } = useCommentAction();
   const toggle = (emoji: string, on: boolean) =>
-    run("react", "반응을 바꾸지 못했습니다", () =>
+    run("react", t`반응을 바꾸지 못했습니다`, () =>
       commentsApi.react(comment.id, emoji, on),
     );
+  const reactionLabel = (emoji: string, count: number, isMine: boolean) => {
+    const by = isMine ? "me" : "others";
+    return t`${emoji} ${count}명${select(by, { me: ", 내가 누름", other: "" })}`;
+  };
   const mine = new Set(
     comment.reactions.filter((r) => r.mine).map((r) => r.emoji),
   );
@@ -34,7 +42,7 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
           type="button"
           className={reactionButton()}
           aria-pressed={r.mine}
-          aria-label={`${r.emoji} ${r.count}명${r.mine ? ", 내가 누름" : ""}`}
+          aria-label={reactionLabel(r.emoji, r.count, r.mine)}
           disabled={!!pending}
           onClick={() => toggle(r.emoji, !r.mine)}
         >
@@ -44,14 +52,16 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
       ))}
       <Popover
         trigger={<SmilePlus size={13} aria-hidden="true" />}
-        triggerLabel="반응 더하기"
+        triggerLabel={t`반응 더하기`}
         triggerClassName={reactionButton({ class: "px-1.5" })}
         width={208}
         panelClassName="p-1.5"
       >
         {(close) => (
           <fieldset className="flex gap-0.5">
-            <legend className="sr-only">반응 고르기</legend>
+            <legend className="sr-only">
+              <Trans>반응 고르기</Trans>
+            </legend>
             {EMOJIS.map((emoji) => (
               <button
                 key={emoji}
@@ -61,7 +71,7 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
                 aria-label={emoji}
                 onClick={() => {
                   close();
-                  toggle(emoji, !mine.has(emoji));
+                  void toggle(emoji, !mine.has(emoji));
                 }}
               >
                 {emoji}
@@ -75,11 +85,12 @@ export function ReactionsBar({ comment }: { comment: Comment }) {
 }
 
 export function PollView({ poll }: { poll: Poll }) {
+  const { t } = useLingui();
   const { run, pending } = useCommentAction();
   const total = poll.votes.reduce((a, b) => a + b, 0);
   return (
     <fieldset className="flex flex-col gap-1.5 rounded-lg border border-line bg-panel-subtle p-3">
-      <legend className="sr-only">투표: {poll.question}</legend>
+      <legend className="sr-only">{t`투표: ${ph({ question: poll.question })}`}</legend>
       <p className="flex items-center gap-1.5 text-ui font-semibold">
         <ChartBar
           size={14}
@@ -101,7 +112,7 @@ export function PollView({ poll }: { poll: Poll }) {
             aria-pressed={mine}
             disabled={poll.closed || !!pending}
             onClick={() =>
-              run("vote", "투표하지 못했습니다", () =>
+              run("vote", t`투표하지 못했습니다`, () =>
                 commentsApi.vote(poll.id, i),
               )
             }
@@ -116,27 +127,27 @@ export function PollView({ poll }: { poll: Poll }) {
                 <Check
                   size={13}
                   className="flex-none text-accent"
-                  aria-label="내 선택"
+                  aria-label={t`내 선택`}
                 />
               )}
               <span className="min-w-0 truncate">{option}</span>
             </span>
             <span className="relative text-xs text-fg-secondary tabular-nums">
-              {votes}표 · {pct}%
+              {t`${plural(votes, { other: "#표" })} · ${pct}%`}
             </span>
           </button>
         );
       })}
       <p className="text-2xs text-fg-muted">
-        {total}명 참여
+        {t`${total}명 참여`}
         {poll.closed
-          ? " · 마감됨"
+          ? t` · 마감됨`
           : poll.closesAt
-            ? ` · ${dateTime.format(new Date(poll.closesAt))} 마감`
+            ? t` · ${ph({ at: dateTime().format(new Date(poll.closesAt)) })} 마감`
             : ""}
         {!poll.closed &&
           poll.myVote !== null &&
-          " · 다른 선택지를 누르면 바뀝니다"}
+          t` · 다른 선택지를 누르면 바뀝니다`}
       </p>
     </fieldset>
   );

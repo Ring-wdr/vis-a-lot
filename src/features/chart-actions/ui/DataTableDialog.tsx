@@ -1,5 +1,7 @@
 "use client";
 
+import { plural, t as tGlobal } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { keepPreviousData, useQueries } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -17,10 +19,12 @@ import type {
   SampleRowsResponse,
 } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
+import { intlLocale } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
+import "../config/messages";
 
 // 열 폭을 고정해 스크롤하며 행이 바뀌어도 칸이 흔들리지 않게 한다.
 const cell =
@@ -48,19 +52,23 @@ type TablePage = Pick<
   "columns" | "rows" | "total" | "filterCount"
 >;
 
-/** 표가 읽는 곳: 제목, 페이지 조회, 행 수 요약, 빈 표 안내 */
+/** 표가 읽는 곳: 제목, 페이지 조회, 행 수 요약, 빈 표 안내. 문구는 그릴 때 지금 언어로 만든다. */
 type TableSource<P extends TablePage> = {
   /** 쿼리 키. 같은 내용이면 받아 둔 페이지를 다시 쓴다. */
   key: readonly unknown[];
-  title: string;
+  title: () => string;
   fetch: (request: ItemRowsRequest, signal: AbortSignal) => Promise<P>;
   summary: (page: P) => string;
   empty: (page: P) => string;
 };
 
 /** draw 시점 필터 안내. 화면에 지금 보이는 필터가 아니라 차트를 그릴 때의 필터다. */
-const filterNote = (page: TablePage) =>
-  page.filterCount > 0 ? ` · draw 시점 필터 ${page.filterCount}개 적용` : "";
+const filterNote = (page: TablePage) => {
+  const count = page.filterCount;
+  return count > 0
+    ? ` · ${plural(count, { other: "draw 시점 필터 #개 적용" })}`
+    : "";
+};
 
 /**
  * 데이터를 표로 본다. 보이는 행이 든 페이지만 받아 오는 가상 스크롤이고, 열 머리를 눌러 서버에서 정렬한다.
@@ -72,6 +80,8 @@ function DataTable<P extends TablePage>({
   source: TableSource<P>;
   onClose: () => void;
 }) {
+  // source의 문구 함수는 전역 t로 읽으므로 useLingui로 언어 변경을 구독한다.
+  const { t } = useLingui();
   const titleId = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [sort, setSort] = useState<Sort>();
@@ -134,10 +144,14 @@ function DataTable<P extends TablePage>({
     <div className="flex flex-col gap-2.5">
       <header className="flex items-baseline gap-2.5">
         <h2 id={titleId} className="text-base font-bold">
-          {source.title}
+          {source.title()}
         </h2>
         <span className="text-ui text-fg-muted">
-          {first ? source.summary(first) + filterNote(first) : "불러오는 중"}
+          {first ? (
+            source.summary(first) + filterNote(first)
+          ) : (
+            <Trans context="data table summary">불러오는 중</Trans>
+          )}
         </span>
       </header>
 
@@ -146,7 +160,7 @@ function DataTable<P extends TablePage>({
           {failed.message}
         </p>
       ) : first && total === 0 ? (
-        <EmptyState icon={<TableIcon size={20} />} title="행이 없습니다">
+        <EmptyState icon={<TableIcon size={20} />} title={t`행이 없습니다`}>
           {source.empty(first)}
         </EmptyState>
       ) : (
@@ -163,6 +177,7 @@ function DataTable<P extends TablePage>({
               <tr>
                 <th className={cn(cell, head, rowNumber)}>#</th>
                 {columns.map((c) => {
+                  const { label, name } = c;
                   const active = sort?.column === c.name;
                   const SortIcon = !active
                     ? ArrowUpDown
@@ -191,7 +206,10 @@ function DataTable<P extends TablePage>({
                           "inline-flex max-w-full cursor-pointer items-center gap-1 font-semibold text-fg-secondary",
                           c.type !== "categorical" && "flex-row-reverse",
                         )}
-                        title={`${c.label} (${c.name}) 정렬`}
+                        title={t({
+                          message: `${label} (${name}) 정렬`,
+                          comment: "label: 컬럼 표시 이름, name: 컬럼 이름",
+                        })}
                         onClick={() => changeSort(c.name)}
                       >
                         <span className="overflow-hidden text-ellipsis">
@@ -224,7 +242,7 @@ function DataTable<P extends TablePage>({
                   return (
                     <tr key={v.index} className="group/row">
                       <td className={cn(cell, rowNumber, rowHover)}>
-                        {(v.index + 1).toLocaleString()}
+                        {(v.index + 1).toLocaleString(intlLocale())}
                       </td>
                       {columns.map((c, i) => (
                         <td
@@ -258,7 +276,7 @@ function DataTable<P extends TablePage>({
           className={button({ variant: "primary" })}
           onClick={onClose}
         >
-          닫기
+          <Trans context="data table dialog">닫기</Trans>
         </button>
       </div>
     </div>
@@ -287,15 +305,23 @@ type ItemTarget = { chartId: string; itemKey: string; label: string };
 export function openDataTable(target: ItemTarget, version: string) {
   openTable<ItemRowsResponse>({
     key: ["item-rows", target.chartId, target.itemKey, version],
-    title: `${target.label} 데이터`,
+    title: () => {
+      const label = target.label;
+      return tGlobal({
+        message: `${label} 데이터`,
+        comment: "label: 차트 item 이름",
+      });
+    },
     fetch: (request, signal) =>
       api.itemRows(target.chartId, target.itemKey, request, signal),
-    summary: (page) =>
-      `${page.selected ? "선택한 " : ""}${page.total.toLocaleString()}행`,
+    summary: (page) => {
+      const rows = page.total.toLocaleString(intlLocale());
+      return page.selected ? tGlobal`선택한 ${rows}행` : tGlobal`${rows}행`;
+    },
     empty: (page) =>
       page.selected
-        ? "선택 영역 안에 든 데이터가 없습니다."
-        : "이 차트에 그린 데이터가 없습니다.",
+        ? tGlobal`선택 영역 안에 든 데이터가 없습니다.`
+        : tGlobal`이 차트에 그린 데이터가 없습니다.`,
   });
 }
 
@@ -310,12 +336,19 @@ export function openSampleTable(chart: {
 }) {
   openTable<SampleRowsResponse>({
     key: ["sample-rows", chart.chartId, chart.jobId],
-    title: `전체 데이터 · ${chart.title}`,
+    title: () => {
+      const title = chart.title;
+      return tGlobal`전체 데이터 · ${title}`;
+    },
     fetch: (request, signal) => api.sampleRows(chart.chartId, request, signal),
-    summary: (page) =>
-      page.sampled
-        ? `전체 ${page.population.toLocaleString()}행 중 ${page.total.toLocaleString()}행 샘플`
-        : `${page.total.toLocaleString()}행`,
-    empty: () => "필터에 맞는 데이터가 없습니다.",
+    summary: (page) => {
+      const locale = intlLocale();
+      const rows = page.total.toLocaleString(locale);
+      if (!page.sampled) return tGlobal`${rows}행`;
+      const sample = rows;
+      const population = page.population.toLocaleString(locale);
+      return tGlobal`전체 ${population}행 중 ${sample}행 샘플`;
+    },
+    empty: () => tGlobal`필터에 맞는 데이터가 없습니다.`,
   });
 }

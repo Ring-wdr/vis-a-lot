@@ -2,25 +2,24 @@
 
 // 보드 드래그에서 사유가 필요한 전이(보류·취소·반려)를 묻는 팝업. 취소·Esc면 null로 끝난다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { overlay } from "overlay-kit";
 import { useState } from "react";
 import {
-  CANCEL_REASON_LABELS,
-  HOLD_REASON_LABELS,
+  cancelReasonLabels,
+  holdReasonLabels,
 } from "@/entities/post/lib/labels";
 import type { CancelReason, HoldReason } from "@/shared/api/feed/types";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { Select } from "@/shared/ui/Select";
+import "../config/messages";
 
 const options = <T extends string>(labels: Record<T, string>) =>
   (Object.keys(labels) as T[]).map((value) => ({
     value,
     label: labels[value],
   }));
-
-const HOLD_OPTIONS = options(HOLD_REASON_LABELS);
-const CANCEL_OPTIONS = options(CANCEL_REASON_LABELS);
 
 const input =
   "rounded-md border border-line bg-elevated px-2 py-1.5 text-ui text-fg";
@@ -45,7 +44,7 @@ function Actions({
   return (
     <div className={dialogActions}>
       <button type="button" className={button()} onClick={onCancel}>
-        취소
+        <Trans context="dismiss dialog">취소</Trans>
       </button>
       <button
         type="submit"
@@ -67,6 +66,7 @@ function HoldForm({
   today: string;
   close: (v: { reason: HoldReason; holdUntil: string } | null) => void;
 }) {
+  const { t } = useLingui();
   const [reason, setReason] = useState<HoldReason | null>(null);
   const [until, setUntil] = useState(addDays(today, 7));
   return (
@@ -77,16 +77,18 @@ function HoldForm({
         if (reason && until) close({ reason, holdUntil: until });
       }}
     >
-      <p className="font-semibold">보류: {title}</p>
+      <p className="font-semibold">{t`보류: ${title}`}</p>
       <Select
-        label="사유"
+        label={t`사유`}
         value={reason}
-        placeholder="사유를 고르세요"
-        options={HOLD_OPTIONS}
+        placeholder={t`사유를 고르세요`}
+        options={options(holdReasonLabels())}
         onChange={setReason}
       />
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-fg-secondary">재개 예정일</span>
+        <span className="text-xs text-fg-secondary">
+          <Trans>재개 예정일</Trans>
+        </span>
         <input
           type="date"
           className={input}
@@ -98,7 +100,7 @@ function HoldForm({
       </label>
       <Actions
         onCancel={() => close(null)}
-        confirmLabel="보류"
+        confirmLabel={t({ message: "보류", context: "confirm: put on hold" })}
         disabled={!reason || !until}
       />
     </form>
@@ -112,6 +114,7 @@ function CancelForm({
   title: string;
   close: (v: CancelReason | null) => void;
 }) {
+  const { t } = useLingui();
   const [reason, setReason] = useState<CancelReason | null>(null);
   return (
     <form
@@ -121,17 +124,17 @@ function CancelForm({
         if (reason) close(reason);
       }}
     >
-      <p className="font-semibold">취소: {title}</p>
+      <p className="font-semibold">{t`취소: ${title}`}</p>
       <Select
-        label="사유"
+        label={t`사유`}
         value={reason}
-        placeholder="사유를 고르세요"
-        options={CANCEL_OPTIONS}
+        placeholder={t`사유를 고르세요`}
+        options={options(cancelReasonLabels())}
         onChange={setReason}
       />
       <Actions
         onCancel={() => close(null)}
-        confirmLabel="취소로 옮기기"
+        confirmLabel={t`취소로 옮기기`}
         disabled={!reason}
       />
     </form>
@@ -145,6 +148,7 @@ function RejectForm({
   title: string;
   close: (v: string | null) => void;
 }) {
+  const { t } = useLingui();
   const [comment, setComment] = useState("");
   return (
     <form
@@ -154,10 +158,10 @@ function RejectForm({
         if (comment.trim()) close(comment.trim());
       }}
     >
-      <p className="font-semibold">반려: {title}</p>
+      <p className="font-semibold">{t`반려: ${title}`}</p>
       <label className="flex flex-col gap-1">
         <span className="text-xs text-fg-secondary">
-          반려 사유 (댓글로 남습니다)
+          <Trans>반려 사유 (댓글로 남습니다)</Trans>
         </span>
         <textarea
           className={input}
@@ -172,7 +176,7 @@ function RejectForm({
       </label>
       <Actions
         onCancel={() => close(null)}
-        confirmLabel="반려"
+        confirmLabel={t({ message: "반려", context: "confirm: reject" })}
         disabled={!comment.trim()}
       />
     </form>

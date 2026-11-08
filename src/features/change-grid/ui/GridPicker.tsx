@@ -1,5 +1,6 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { Grid3x3 } from "lucide-react";
 import { useState } from "react";
@@ -8,13 +9,19 @@ import {
   useWorkspace,
   useWorkspaceMutating,
   useWorkspaceMutationKey,
+  useWorkspaceStore,
 } from "@/entities/workspace/model/workspace-scope";
 import { api } from "@/shared/api/api";
 import { useJobProgress } from "@/shared/api/queries";
-import { type ChartSpec, isTerminal } from "@/shared/api/types";
+import {
+  type ChartSpec,
+  isTerminal,
+  type JobStateResponse,
+} from "@/shared/api/types";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { Popover } from "@/shared/ui/Popover";
 import { selectStyles } from "@/shared/ui/select-styles";
+import "../config/messages";
 
 const s = selectStyles();
 
@@ -27,6 +34,8 @@ const CELLS = Array.from({ length: MAX * MAX }, (_, i) => ({
 type Grid = ChartSpec["grid"];
 
 const sameGrid = (a: Grid, b: Grid) => a.rows === b.rows && a.cols === b.cols;
+const jobStatus = (job: JobStateResponse) => job.status;
+
 const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
 
 /**
@@ -34,10 +43,11 @@ const gridLabel = ({ rows, cols }: Grid) => `${rows} × ${cols}`;
  * 그린 차트가 있으면 draw 없이 바로 전체를 다시 그리고, 렌더링 중에는 바꿀 수 없어 팝업으로 알린다.
  */
 export function GridPicker() {
-  const draft = useWorkspace((s) => s.draft);
+  const { t } = useLingui();
+  // 화면에 쓰는 값만 구독한다. 페이지·grid 영역은 누를 때 한 번 읽으면 되므로 getState로 꺼낸다.
+  const store = useWorkspaceStore();
+  const selected = useWorkspace((s) => s.draft.grid);
   const current = useWorkspace((s) => s.current);
-  const page = useWorkspace((s) => s.page);
-  const gridArea = useWorkspace((s) => s.gridArea);
   const readOnly = useWorkspace((s) => s.readOnly);
   const updateDraft = useWorkspace((s) => s.updateDraft);
   const replaceJob = useWorkspace((s) => s.replaceJob);
@@ -45,18 +55,21 @@ export function GridPicker() {
   const [hover, setHover] = useState<Grid>();
   const grid = current?.spec.grid;
   const pageSize = grid ? grid.rows * grid.cols : 1;
-  const job = useJobProgress(current?.jobId);
+  // 렌더링 중인지만 쓰므로 상태만 고른다 (진행률 응답마다 다시 그리지 않는다).
+  // 고른 값은 조건 앞에서 읽는다 (렌더 중에 읽어야 react-query가 이 값만 바뀔 때 다시 그린다).
+  const status = useJobProgress(current?.jobId, jobStatus).data;
 
   const change = useMutation({
     mutationKey: useWorkspaceMutationKey("grid"),
     mutationFn: (next: Grid) => {
+      const { gridArea } = store.getState();
       if (!current || !gridArea) throw new Error("no chart");
       return api.changeGrid(current.chartId, next, itemSizeFor(gridArea, next));
     },
     onSuccess: ({ jobId }, next) => {
       if (!current) return;
       // 보던 첫 item이 새 페이지 크기에서도 보이도록 페이지를 맞춘다.
-      const firstItem = page * pageSize;
+      const firstItem = store.getState().page * pageSize;
       replaceJob(
         jobId,
         { ...current.spec, grid: next },
@@ -70,15 +83,16 @@ export function GridPicker() {
   });
 
   const changing = useWorkspaceMutating("grid");
-  const rendering =
-    current !== undefined && (!job.data || !isTerminal(job.data.status));
-  const selected = draft.grid;
+  const rendering = current !== undefined && (!status || !isTerminal(status));
   const preview = hover ?? selected;
+  const { rows, cols } = preview;
+  const sizeText = t`${rows}행 × ${cols}열`;
+  const selectedGrid = gridLabel(selected);
 
   const pick = (next: Grid) => {
     if (current && rendering) {
       showAlert(
-        "렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요.",
+        t`렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요.`,
       );
       return;
     }
@@ -109,12 +123,13 @@ export function GridPicker() {
             >
               {CELLS.map(({ row, col }) => {
                 const cell = { rows: row + 1, cols: col + 1 };
+                const { rows, cols } = cell;
                 return (
                   <button
                     key={`${row}-${col}`}
                     type="button"
                     className="aspect-square cursor-pointer rounded-xs border border-line bg-elevated focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent data-active:border-accent data-active:bg-accent-soft data-selected:not-data-active:border-accent-line"
-                    aria-label={`${cell.rows}행 ${cell.cols}열`}
+                    aria-label={t`${rows}행 ${cols}열`}
                     data-active={
                       (row < preview.rows && col < preview.cols) || undefined
                     }
@@ -136,8 +151,8 @@ export function GridPicker() {
               className="text-center text-xs text-fg-secondary"
               aria-live="polite"
             >
-              {preview.rows}행 × {preview.cols}열
-              {!sameGrid(preview, selected) && ` (현재 ${gridLabel(selected)})`}
+              {sizeText}
+              {!sameGrid(preview, selected) && ` ${t`(현재 ${selectedGrid})`}`}
             </span>
           </div>
         )}

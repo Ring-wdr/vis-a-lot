@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { type ReactNode, type SyntheticEvent, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { type FieldPath, useFormContext } from "react-hook-form";
@@ -8,9 +9,10 @@ import {
   type OptionSection,
   supportsOption,
 } from "@/entities/chart/model/chart-options";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import type { ChartType } from "@/shared/api/types";
 import { button, linkButton } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
+import "../config/messages";
 import { getPath, hasSection, sectionPaths } from "../model/option-fields";
 import {
   type OptionsBase,
@@ -24,8 +26,13 @@ import { settingsDialog } from "./settings-dialog-styles";
 const sd = settingsDialog();
 
 type ItemOptionsProps = OptionsBase & {
-  itemKey: string;
   label: string;
+  /** 그린 차트의 종류. 이 차트가 쓰는 구역만 메뉴에 둔다. */
+  chartType: ChartType | undefined;
+  /** 다시 보기 전용이면 보기만 한다. */
+  readOnly: boolean;
+  /** item을 다시 그리는 동안에는 다음 변경을 보내지 않는다 (서버가 거절한다). */
+  busy: boolean;
   /**
    * 속성 모델 밖에 저장하는 같은 구역의 item 설정(legend 위치는 범례, 색은 팔레트). 그 구역의 필드 표 위에 붙는다.
    * 차트가 쓰지 않는 구역이어도 내용이 있으면 메뉴에 둔다.
@@ -63,20 +70,22 @@ export function ItemOptionsDialog(props: ItemOptionsProps) {
   );
 }
 
+// props 기본값은 렌더마다 새로 만들지 않도록 모듈에 둔다.
+const NO_EXTRAS: NonNullable<ItemOptionsProps["extras"]> = {};
+
 function ItemOptionsBody({
-  itemKey,
   label,
+  chartType,
+  readOnly,
+  busy,
   original,
   base,
-  extras = {},
+  extras = NO_EXTRAS,
   onConfirm,
   onCancel,
 }: ItemOptionsProps) {
+  const { t } = useLingui();
   const titleId = useId();
-  const chartType = useWorkspace((s) => s.current?.spec.chartType);
-  const readOnly = useWorkspace((s) => s.readOnly);
-  // item을 다시 그리는 동안에는 다음 변경을 보내지 않는다 (서버가 거절한다).
-  const busy = useWorkspace((s) => s.itemJobs[itemKey] !== undefined);
   const { formState, setValue } = useFormContext<OptionsFormValues>();
   const patch = useOptionsPatch({ original, base });
   const sections = OPTION_SECTIONS.filter(
@@ -106,11 +115,11 @@ function ItemOptionsBody({
       }}
     >
       <h2 id={titleId} className={sd.title()}>
-        {label} 속성
+        <Trans>{label} 속성</Trans>
       </h2>
       <div className={sd.layout()}>
         <SectionMenu
-          label="속성 메뉴"
+          label={t`속성 메뉴`}
           sections={sections}
           active={active}
           onSelect={setMenu}
@@ -125,15 +134,17 @@ function ItemOptionsBody({
               original={original}
               base={base}
               disabled={readOnly}
-              resetLabel="이 구역은 공통 속성 따르기"
+              resetLabel={t`이 구역은 공통 속성 따르기`}
               showFields={supportsOption(chartType, active.section)}
             >
               {extras[active.section]}
             </OptionSectionForm>
           )}
           <p className="mt-2.5 text-xs text-fg-muted">
-            확인을 누르면 이 item만 다시 그립니다. 전체 설정에서 바꾼 공통
-            속성으로 다시 그리면 item별 속성은 모두 공통 속성으로 바뀝니다.
+            <Trans>
+              확인을 누르면 이 item만 다시 그립니다. 전체 설정에서 바꾼 공통
+              속성으로 다시 그리면 item별 속성은 모두 공통 속성으로 바뀝니다.
+            </Trans>
           </p>
         </div>
       </div>
@@ -144,19 +155,19 @@ function ItemOptionsBody({
             className={linkButton({ class: "mr-auto self-center" })}
             onClick={followAll}
           >
-            모두 공통 속성 따르기
+            <Trans>모두 공통 속성 따르기</Trans>
           </button>
         )}
         <button type="button" className={button()} onClick={onCancel}>
-          취소
+          <Trans context="dialog button">취소</Trans>
         </button>
         <button
           type="submit"
           className={button({ variant: "primary" })}
           disabled={!formState.isDirty || busy || readOnly}
-          title={busy ? "다시 그리는 중에는 바꿀 수 없습니다" : undefined}
+          title={busy ? t`다시 그리는 중에는 바꿀 수 없습니다` : undefined}
         >
-          확인
+          <Trans context="dialog button">확인</Trans>
         </button>
       </div>
     </form>

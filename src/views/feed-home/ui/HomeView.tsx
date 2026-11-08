@@ -2,6 +2,8 @@
 
 // 홈 피드 (/feed): 내 작업 요약 띠 + 그룹 탭(?g=KEY) + 카드 피드. 끌어올린 게시물이 먼저 온다.
 
+import { msg } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Inbox } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -12,15 +14,19 @@ import { usePostQuery } from "@/shared/api/feed/post-queries";
 import { useGroups } from "@/shared/api/feed/queries";
 import type { Group } from "@/shared/api/feed/types";
 import { FEED } from "@/shared/config/feed-routes";
+import { inAllLocales } from "@/shared/lib/lingui";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { button } from "@/shared/ui/button";
 import { EmptyState, LoadingText, Skeleton } from "@/shared/ui/Loading";
+import { StableText } from "@/shared/ui/StableText";
 import { tabStyles, useQueryHref } from "@/shared/ui/tabs";
+import "../config/messages";
 import { MySummaryStrip } from "./MySummaryStrip";
 
 const PAGE = 24;
 const GRID = "grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3";
 const tabs = tabStyles();
+const ALL = msg`전체`;
 
 function GroupTabs({
   groups,
@@ -29,15 +35,16 @@ function GroupTabs({
   groups: Group[];
   current: string | null;
 }) {
+  const { t } = useLingui();
   const href = useQueryHref();
   return (
-    <nav aria-label="그룹" className={tabs.list()}>
+    <nav aria-label={t`그룹`} className={tabs.list()}>
       <Link
         href={href({ g: null })}
         className={tabs.tab()}
         aria-current={current === null ? "page" : undefined}
       >
-        전체
+        <StableText {...inAllLocales(ALL)} />
       </Link>
       {groups.map((g) => (
         <Link
@@ -76,6 +83,7 @@ function CardSkeletons() {
 
 /** 카드 목록. 그룹이 바뀌면 key로 새로 그려 "더 보기"를 처음부터 */
 function CardFeed({ groupIds }: { groupIds?: string[] }) {
+  const { t } = useLingui();
   const [limit, setLimit] = useState(PAGE);
   const openPeek = useOpenPeek();
   const query = usePostQuery({
@@ -87,35 +95,37 @@ function CardFeed({ groupIds }: { groupIds?: string[] }) {
   });
 
   if (query.isPending) return <CardSkeletons />;
-  if (query.isError)
+  if (query.isError) {
+    const reason = query.error.message;
     return (
       <div className="flex flex-col items-start gap-2 p-4">
         <p role="alert" className="text-ui text-danger">
-          게시물을 불러오지 못했습니다 ({query.error.message})
+          {t`게시물을 불러오지 못했습니다 (${reason})`}
         </p>
         <button
           type="button"
           className={button({ size: "sm" })}
           onClick={() => query.refetch()}
         >
-          다시 시도
+          <Trans>다시 시도</Trans>
         </button>
       </div>
     );
+  }
 
   const { posts, total } = query.data;
   if (posts.length === 0)
     return (
-      <EmptyState icon={<Inbox size={20} />} title="게시물이 없습니다">
+      <EmptyState icon={<Inbox size={20} />} title={t`게시물이 없습니다`}>
         <Link href={FEED.new} className="text-accent">
-          새 게시물 만들기
+          <Trans>새 게시물 만들기</Trans>
         </Link>
       </EmptyState>
     );
 
   return (
     <div className="flex flex-col gap-4">
-      <ul className={GRID} aria-label="게시물">
+      <ul className={GRID} aria-label={t`게시물`}>
         {posts.map((post) => (
           <li key={post.id} className="min-w-0">
             <PostCard
@@ -138,9 +148,11 @@ function CardFeed({ groupIds }: { groupIds?: string[] }) {
             onClick={() => setLimit((n) => n + PAGE)}
           >
             {query.isFetching ? (
-              <LoadingText>불러오는 중</LoadingText>
+              <LoadingText>
+                <Trans>불러오는 중</Trans>
+              </LoadingText>
             ) : (
-              "더 보기"
+              <Trans>더 보기</Trans>
             )}
           </button>
         )}
@@ -150,26 +162,30 @@ function CardFeed({ groupIds }: { groupIds?: string[] }) {
 }
 
 export function HomeView() {
+  const { t } = useLingui();
   const groups = useGroups();
   const g = useSearchParams().get("g");
   const group = g ? groups.data?.find((x) => x.keyPrefix === g) : undefined;
+  const groupsError = groups.error?.message;
 
   return (
     <div className="mx-auto flex w-full max-w-300 flex-col gap-4 p-4 sm:p-6">
-      <h1 className="text-xl font-bold">홈</h1>
+      <h1 className="text-xl font-bold">
+        <Trans>홈</Trans>
+      </h1>
       <MySummaryStrip />
       <GroupTabs groups={groups.data ?? []} current={g} />
       {groups.isError && (
         <p className="text-xs text-danger">
-          그룹을 불러오지 못했습니다 ({groups.error.message})
+          {t`그룹을 불러오지 못했습니다 (${groupsError})`}
         </p>
       )}
       {g && groups.isPending ? (
         <CardSkeletons />
       ) : g && !group ? (
-        <EmptyState icon={<Inbox size={20} />} title="모르는 그룹입니다">
+        <EmptyState icon={<Inbox size={20} />} title={t`모르는 그룹입니다`}>
           <Link href={FEED.home} className="text-accent">
-            전체 보기
+            <Trans>전체 보기</Trans>
           </Link>
         </EmptyState>
       ) : (

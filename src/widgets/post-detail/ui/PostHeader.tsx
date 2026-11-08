@@ -2,11 +2,13 @@
 
 // 상세 머리: 키·그룹·제목(고치기), 상태 배지와 전이 버튼, 구독·끌어올리기·지우기.
 
+import { t } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { Bell, BellOff, Check, Pencil, Pin, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
-  CANCEL_REASON_LABELS,
-  HOLD_REASON_LABELS,
+  cancelReasonLabels,
+  holdReasonLabels,
   statusLabel,
 } from "@/entities/post/lib/labels";
 import { usePostAction } from "@/entities/post/model/use-post-action";
@@ -23,6 +25,7 @@ import { showConfirm } from "@/shared/ui/AlertDialog";
 import { button, toolButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
+import "../config/messages";
 
 type Action = {
   name: string;
@@ -42,59 +45,59 @@ function transitionActions(post: PostDetail): Action[] {
   if (post.status === "unresolved" && can("in_progress"))
     actions.push({
       name: "start",
-      label: "진행 시작",
+      label: t`진행 시작`,
       primary: true,
-      failure: "진행을 시작하지 못했습니다",
+      failure: t`진행을 시작하지 못했습니다`,
       run: () => postsApi.transition(post.id, { to: "in_progress" }),
     });
   if (p.requestReview)
     actions.push({
       name: "requestReview",
-      label: "완료 요청",
+      label: t({ message: "완료 요청", context: "post transition button" }),
       primary: true,
-      failure: "완료를 요청하지 못했습니다",
+      failure: t`완료를 요청하지 못했습니다`,
       run: () => postsApi.requestReview(post.id),
     });
   if (p.approve)
     actions.push({
       name: "approve",
-      label: "승인",
+      label: t({ message: "승인", context: "post transition button" }),
       primary: true,
-      failure: "승인하지 못했습니다",
+      failure: t`승인하지 못했습니다`,
       run: () => postsApi.approve(post.id),
     });
   if (p.reject)
     actions.push({
       name: "reject",
-      label: "반려",
+      label: t({ message: "반려", context: "post transition button" }),
       danger: true,
-      failure: "반려하지 못했습니다",
+      failure: t`반려하지 못했습니다`,
     });
   if (post.status === "on_hold" && can("unresolved"))
     actions.push({
       name: "resume",
-      label: "미해결로",
-      failure: "보류를 풀지 못했습니다",
+      label: t`미해결로`,
+      failure: t`보류를 풀지 못했습니다`,
       run: () => postsApi.transition(post.id, { to: "unresolved" }),
     });
   if (p.reopen)
     actions.push({
       name: "reopen",
-      label: "다시 열기",
-      failure: "다시 열지 못했습니다",
+      label: t`다시 열기`,
+      failure: t`다시 열지 못했습니다`,
       run: () => postsApi.reopen(post.id),
     });
   if (can("on_hold"))
     actions.push({
       name: "hold",
-      label: "보류",
-      failure: "보류하지 못했습니다",
+      label: t({ message: "보류", context: "post transition button" }),
+      failure: t`보류하지 못했습니다`,
     });
   if (can("cancelled"))
     actions.push({
       name: "cancel",
-      label: "취소",
-      failure: "취소하지 못했습니다",
+      label: t({ message: "취소", context: "post transition button" }),
+      failure: t`취소하지 못했습니다`,
     });
   return actions;
 }
@@ -125,12 +128,16 @@ async function withInput(name: string, post: PostDetail) {
 function closeReasonLabel(post: PostDetail) {
   const r = post.closeReason;
   if (!r) return null;
-  if (post.status === "cancelled")
-    return CANCEL_REASON_LABELS[r as keyof typeof CANCEL_REASON_LABELS] ?? r;
-  return HOLD_REASON_LABELS[r as keyof typeof HOLD_REASON_LABELS] ?? r;
+  if (post.status === "cancelled") {
+    const labels = cancelReasonLabels();
+    return labels[r as keyof typeof labels] ?? r;
+  }
+  const labels = holdReasonLabels();
+  return labels[r as keyof typeof labels] ?? r;
 }
 
 function TitleEditor({ post }: { post: PostDetail }) {
+  const { t } = useLingui();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(post.title);
   const { run, pending } = usePostAction();
@@ -145,8 +152,8 @@ function TitleEditor({ post }: { post: PostDetail }) {
           <button
             type="button"
             className={cn(toolButton(), "mt-0.5 h-6.5 w-7 flex-none")}
-            aria-label="제목 고치기"
-            title="제목 고치기"
+            aria-label={t`제목 고치기`}
+            title={t`제목 고치기`}
             onClick={() => {
               setValue(post.title);
               setEditing(true);
@@ -162,7 +169,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
     const title = value.trim();
     if (!title || title === post.title) return setEditing(false);
     if (
-      await run("title", "제목을 바꾸지 못했습니다", () =>
+      await run("title", t`제목을 바꾸지 못했습니다`, () =>
         postsApi.update(post.id, { title }),
       )
     )
@@ -173,14 +180,14 @@ function TitleEditor({ post }: { post: PostDetail }) {
       className="flex min-w-0 items-center gap-1.5"
       onSubmit={(e) => {
         e.preventDefault();
-        save();
+        void save();
       }}
     >
       <input
         className={field({ class: "h-9 text-base font-semibold" })}
         value={value}
         maxLength={200}
-        aria-label="제목"
+        aria-label={t({ message: "제목", context: "post title input" })}
         // biome-ignore lint/a11y/noAutofocus: 고치기를 누르면 바로 입력한다
         autoFocus
         onChange={(e) => setValue(e.currentTarget.value)}
@@ -194,7 +201,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
       <button
         type="submit"
         className={cn(toolButton(), "flex-none")}
-        aria-label="제목 저장"
+        aria-label={t`제목 저장`}
         disabled={!!pending}
       >
         {pending ? (
@@ -206,7 +213,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
       <button
         type="button"
         className={cn(toolButton(), "flex-none")}
-        aria-label="고치기 취소"
+        aria-label={t`고치기 취소`}
         onClick={() => setEditing(false)}
       >
         <X size={14} aria-hidden="true" />
@@ -224,10 +231,12 @@ export function PostHeader({
   group: Group | undefined;
   onDeleted: () => void;
 }) {
+  const { t } = useLingui();
   const { run, pending } = usePostAction();
   const actions = transitionActions(post);
   const reason = closeReasonLabel(post);
   const pinned = !!post.pinnedAt;
+  const { key, title, holdUntil, reopenCount } = post;
 
   return (
     <header className="flex min-w-0 flex-col gap-2.5">
@@ -238,22 +247,26 @@ export function PostHeader({
         <span aria-hidden="true">·</span>
         <span>{group?.name ?? post.groupId}</span>
       </p>
-      <TitleEditor key={post.title} post={post} />
+      <TitleEditor post={post} />
       <div className="flex flex-wrap items-center gap-2">
         <span className={statusBadge({ status: post.status })}>
           {statusLabel(post.status, group?.statusNames)}
         </span>
-        {post.blocked && <span className={chip({ tone: "danger" })}>막힘</span>}
+        {post.blocked && (
+          <span className={chip({ tone: "danger" })}>{t`막힘`}</span>
+        )}
         {reason && (
           <span className={chip()}>
-            {post.status === "cancelled" ? "취소 사유" : "보류 사유"}: {reason}
+            {post.status === "cancelled"
+              ? t`취소 사유: ${reason}`
+              : t`보류 사유: ${reason}`}
           </span>
         )}
         {post.status === "on_hold" && post.holdUntil && (
-          <span className={chip()}>재개일 {post.holdUntil}</span>
+          <span className={chip()}>{t`재개일 ${holdUntil}`}</span>
         )}
         {post.reopenCount > 0 && (
-          <span className={chip()}>다시 연 횟수 {post.reopenCount}</span>
+          <span className={chip()}>{t`다시 연 횟수 ${reopenCount}`}</span>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -287,15 +300,15 @@ export function PostHeader({
             type="button"
             className={toolButton()}
             aria-pressed={post.subscribed}
-            aria-label={post.subscribed ? "구독 끄기" : "구독"}
+            aria-label={post.subscribed ? t`구독 끄기` : t`구독`}
             title={
               post.subscribed
-                ? "구독 중: 누르면 알림을 끕니다"
-                : "구독: 바뀌면 알림을 받습니다"
+                ? t`구독 중: 누르면 알림을 끕니다`
+                : t`구독: 바뀌면 알림을 받습니다`
             }
             disabled={!!pending}
             onClick={() =>
-              run("subscribe", "구독을 바꾸지 못했습니다", () =>
+              run("subscribe", t`구독을 바꾸지 못했습니다`, () =>
                 postsApi.subscribe(post.id, !post.subscribed),
               )
             }
@@ -310,15 +323,15 @@ export function PostHeader({
             type="button"
             className={toolButton()}
             aria-pressed={pinned}
-            aria-label={pinned ? "끌어올리기 해제" : "끌어올리기"}
+            aria-label={pinned ? t`끌어올리기 해제` : t`끌어올리기`}
             title={
               pinned
-                ? "끌어올림: 누르면 해제합니다"
-                : "끌어올리기: 홈 피드 위쪽에 둡니다"
+                ? t`끌어올림: 누르면 해제합니다`
+                : t`끌어올리기: 홈 피드 위쪽에 둡니다`
             }
             disabled={!!pending}
             onClick={() =>
-              run("pin", "끌어올리기를 바꾸지 못했습니다", () =>
+              run("pin", t`끌어올리기를 바꾸지 못했습니다`, () =>
                 postsApi.pin(post.id, !pinned),
               )
             }
@@ -329,17 +342,17 @@ export function PostHeader({
             <button
               type="button"
               className={cn(toolButton(), "text-danger")}
-              aria-label="지우기"
-              title="지우기"
+              aria-label={t`지우기`}
+              title={t`지우기`}
               disabled={!!pending}
               onClick={async () => {
                 const ok = await showConfirm(
-                  `${post.key} '${post.title}'을(를) 지울까요?`,
-                  { confirmLabel: "지우기" },
+                  t`${key} ''${title}''을(를) 지울까요?`,
+                  { confirmLabel: t`지우기` },
                 );
                 if (!ok) return;
                 if (
-                  await run("delete", "지우지 못했습니다", () =>
+                  await run("delete", t`지우지 못했습니다`, () =>
                     postsApi.remove(post.id),
                   )
                 )

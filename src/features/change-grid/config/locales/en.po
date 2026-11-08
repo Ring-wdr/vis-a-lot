@@ -1,0 +1,18 @@
+msgid ""
+msgstr ""
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "(현재 {selectedGrid})"
+msgstr "(now {selectedGrid})"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "{rows}행 {cols}열"
+msgstr "{rows} rows, {cols} columns"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "{rows}행 × {cols}열"
+msgstr "{rows} rows × {cols} cols"
+
+#: src/features/change-grid/ui/GridPicker.tsx
+msgid "렌더링 중에는 grid 크기를 바꿀 수 없습니다. 끝나거나 취소한 뒤에 바꿔 주세요."
+msgstr "The grid size can't change while rendering. Change it after it finishes or is cancelled."

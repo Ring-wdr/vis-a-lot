@@ -3,13 +3,16 @@
 // 알림함 (/feed/inbox): 받은 알림·안읽음·보관함 탭(?tab=), 게시물별 묶음(최근 순).
 // 묶음을 누르면 옆 패널로 게시물을 열고 그 묶음을 읽음으로 바꾼다.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, plural } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { Archive, CheckCheck, Inbox, Mail, MailOpen } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { NOTIFY_KIND_LABELS, statusLabel } from "@/entities/post/lib/labels";
+import { notifyKindLabels, statusLabel } from "@/entities/post/lib/labels";
 import { chip, statusBadge } from "@/entities/post/ui/styles";
 import { useGroupMap, useUserMap } from "@/shared/api/feed/lookups";
-import { useClock, useInbox } from "@/shared/api/feed/queries";
+import { useFeedNow, useInbox } from "@/shared/api/feed/queries";
 import type { InboxGroup, Notification } from "@/shared/api/feed/types";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { dateTime, relativeTime } from "@/shared/lib/time";
@@ -22,13 +25,20 @@ import {
   type InboxChange,
   useInboxAction,
 } from "@/views/feed-inbox/model/use-inbox-actions";
+import "../config/messages";
 
 const tabs = tabStyles();
 
+const TAB_LABELS = {
+  all: msg`받은 알림`,
+  unread: msg`안읽음`,
+  archived: msg`보관함`,
+} satisfies Record<string, MessageDescriptor>;
+
 const TABS = [
-  { id: "all", label: "받은 알림", params: {} },
-  { id: "unread", label: "안읽음", params: { unreadOnly: true } },
-  { id: "archived", label: "보관함", params: { archived: true } },
+  { id: "all", params: {} },
+  { id: "unread", params: { unreadOnly: true } },
+  { id: "archived", params: { archived: true } },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -36,9 +46,10 @@ const parseTab = (v: string | null): TabId =>
   TABS.find((t) => t.id === v)?.id ?? "all";
 
 export function InboxView() {
+  const { t, i18n } = useLingui();
   const search = useSearchParams();
   const tab = parseTab(search.get("tab"));
-  const current = TABS.find((t) => t.id === tab) ?? TABS[0];
+  const current = TABS.find((x) => x.id === tab) ?? TABS[0];
   const inbox = useInbox(current.params);
   const href = useQueryHref();
   const action = useInboxAction();
@@ -48,36 +59,43 @@ export function InboxView() {
   );
   const change = (change: InboxChange, ids: string[]) =>
     ids.length && action.mutate({ change, ids });
+  const unreadTotal = inbox.data?.unreadTotal ?? 0;
+  const reason = inbox.error?.message;
 
   return (
     <div className="mx-auto flex w-full max-w-240 flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-xl font-bold">알림함</h1>
+        <h1 className="text-xl font-bold">
+          <Trans>알림함</Trans>
+        </h1>
         {inbox.data && (
           <span className="text-xs text-fg-muted">
-            안읽음 {inbox.data.unreadTotal}개
+            {t`안읽음 ${unreadTotal}개`}
           </span>
         )}
         <button
           type="button"
-          className={button({ size: "sm", class: "ml-auto" })}
+          className={button({
+            size: "sm",
+            class: "ml-auto whitespace-nowrap",
+          })}
           disabled={unreadIds.length === 0 || action.isPending}
           onClick={() => change("read", unreadIds)}
         >
           <CheckCheck size={14} aria-hidden="true" />
-          모두 읽음
+          <Trans>모두 읽음</Trans>
         </button>
       </div>
-      <nav aria-label="알림함 탭" className={tabs.list()}>
-        {TABS.map((t) => (
+      <nav aria-label={t`알림함 탭`} className={tabs.list()}>
+        {TABS.map((item) => (
           <Link
-            key={t.id}
-            href={href({ tab: t.id === "all" ? null : t.id })}
+            key={item.id}
+            href={href({ tab: item.id === "all" ? null : item.id })}
             className={tabs.tab()}
-            aria-current={t.id === tab ? "page" : undefined}
+            aria-current={item.id === tab ? "page" : undefined}
           >
-            {t.label}
-            {t.id === "unread" && !!inbox.data?.unreadTotal && (
+            {i18n._(TAB_LABELS[item.id])}
+            {item.id === "unread" && !!inbox.data?.unreadTotal && (
               <span className={tabs.count()}>{inbox.data.unreadTotal}</span>
             )}
           </Link>
@@ -87,30 +105,34 @@ export function InboxView() {
       {inbox.isError ? (
         <div className="flex flex-col items-start gap-2">
           <p role="alert" className="text-ui text-danger">
-            알림을 불러오지 못했습니다 ({inbox.error.message})
+            {t`알림을 불러오지 못했습니다 (${reason})`}
           </p>
           <button
             type="button"
             className={button({ size: "sm" })}
             onClick={() => inbox.refetch()}
           >
-            다시 시도
+            <Trans>다시 시도</Trans>
           </button>
         </div>
       ) : inbox.isPending ? (
-        <LoadingText>알림을 불러오는 중</LoadingText>
+        <LoadingText>
+          <Trans>알림을 불러오는 중</Trans>
+        </LoadingText>
       ) : groups.length === 0 ? (
         <EmptyState
           icon={<Inbox size={20} />}
           title={
             tab === "archived"
-              ? "보관한 알림이 없습니다"
+              ? t`보관한 알림이 없습니다`
               : tab === "unread"
-                ? "안읽은 알림이 없습니다"
-                : "받은 알림이 없습니다"
+                ? t`안읽은 알림이 없습니다`
+                : t`받은 알림이 없습니다`
           }
         >
-          배정·멘션·댓글·상태 변경 등이 생기면 여기에 게시물별로 모입니다.
+          <Trans>
+            배정·멘션·댓글·상태 변경 등이 생기면 여기에 게시물별로 모입니다.
+          </Trans>
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-3" aria-busy={action.isPending}>
@@ -140,11 +162,14 @@ function InboxGroupItem({
   busy: boolean;
   onChange: (change: InboxChange, ids: string[]) => void;
 }) {
+  const { t } = useLingui();
   const openPeek = useOpenPeek();
   const groupMap = useGroupMap();
   const statusNames = groupMap.get(group.post.groupId)?.statusNames;
   const ids = group.notifications.map((n) => n.id);
   const unread = group.notifications.filter((n) => !n.readAt).map((n) => n.id);
+  const { key, title } = group.post;
+  const unreadCount = group.unread;
 
   return (
     <li
@@ -155,7 +180,10 @@ function InboxGroupItem({
         <button
           type="button"
           className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
-          aria-label={`${group.post.key} ${group.post.title} 열기${group.unread ? `, 안읽음 ${group.unread}개` : ""}`}
+          aria-label={t({
+            message: `${key} ${title} 열기${plural(unreadCount, { 0: "", other: ", 안읽음 #개" })}`,
+            comment: "{key}는 게시물 키(FD-12), {title}은 게시물 제목",
+          })}
           onClick={() => {
             openPeek(group.post.key);
             if (unread.length) onChange("read", unread);
@@ -181,8 +209,8 @@ function InboxGroupItem({
             <button
               type="button"
               className={itemButton()}
-              aria-label="묶음 읽음으로"
-              title="묶음 읽음으로"
+              aria-label={t`묶음 읽음으로`}
+              title={t`묶음 읽음으로`}
               disabled={busy}
               onClick={() => onChange("read", unread)}
             >
@@ -192,8 +220,8 @@ function InboxGroupItem({
             <button
               type="button"
               className={itemButton()}
-              aria-label="묶음 안읽음으로"
-              title="묶음 안읽음으로"
+              aria-label={t`묶음 안읽음으로`}
+              title={t`묶음 안읽음으로`}
               disabled={busy}
               onClick={() => onChange("unread", ids)}
             >
@@ -204,8 +232,8 @@ function InboxGroupItem({
             <button
               type="button"
               className={itemButton()}
-              aria-label="묶음 보관"
-              title="묶음 보관"
+              aria-label={t`묶음 보관`}
+              title={t`묶음 보관`}
               disabled={busy}
               onClick={() => onChange("archive", ids)}
             >
@@ -243,11 +271,13 @@ function NotificationRow({
   statusNames: Parameters<typeof statusLabel>[1];
   onChange: (change: InboxChange, ids: string[]) => void;
 }) {
+  const { t } = useLingui();
   const users = useUserMap();
   const userName = (id: string | null) =>
-    id ? (users.get(id)?.name ?? id) : "알 수 없음";
-  // 피드의 "지금" (/feed/dev/clock 오프셋 반영)
-  const now = Date.now() + (useClock().data?.offsetMs ?? 0);
+    id
+      ? (users.get(id)?.name ?? id)
+      : t({ message: "알 수 없음", context: "unknown user" });
+  const now = useFeedNow();
   const unread = !n.readAt;
 
   return (
@@ -262,9 +292,13 @@ function NotificationRow({
         )}
         aria-hidden="true"
       />
-      {unread && <span className="sr-only">안읽음</span>}
+      {unread && (
+        <span className="sr-only">
+          <Trans>안읽음</Trans>
+        </span>
+      )}
       <span className={chip({ class: "w-18 justify-center" })}>
-        {NOTIFY_KIND_LABELS[n.kind]}
+        {notifyKindLabels()[n.kind]}
       </span>
       <p
         className={cn(
@@ -276,7 +310,7 @@ function NotificationRow({
         <time
           className="ml-1.5 text-2xs whitespace-nowrap text-fg-muted"
           dateTime={n.event.createdAt}
-          title={dateTime.format(new Date(n.event.createdAt))}
+          title={dateTime().format(new Date(n.event.createdAt))}
         >
           {relativeTime(n.event.createdAt, now)}
         </time>
@@ -285,8 +319,8 @@ function NotificationRow({
         <button
           type="button"
           className={itemButton()}
-          aria-label={unread ? "읽음으로" : "안읽음으로"}
-          title={unread ? "읽음으로" : "안읽음으로"}
+          aria-label={unread ? t`읽음으로` : t`안읽음으로`}
+          title={unread ? t`읽음으로` : t`안읽음으로`}
           disabled={busy}
           onClick={() => onChange(unread ? "read" : "unread", [n.id])}
         >
@@ -300,8 +334,11 @@ function NotificationRow({
           <button
             type="button"
             className={itemButton()}
-            aria-label="보관"
-            title="보관"
+            aria-label={t({
+              message: "보관",
+              context: "archive a notification",
+            })}
+            title={t({ message: "보관", context: "archive a notification" })}
             disabled={busy}
             onClick={() => onChange("archive", [n.id])}
           >
