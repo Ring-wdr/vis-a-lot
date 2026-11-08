@@ -8,7 +8,7 @@
 
 | 컴포넌트·hook | 레이어 | 고르는 값 | 반환 | 순수 UI여야 하나 | 조치 |
 | --- | --- | --- | --- | --- | --- |
-| `Workspace` | views | `view`, 보는 탭(`find`), `emptyHistory`, `filterPanelOpen` | 원시값·참조 | 아니요 (조합) | 그대로 |
+| `Workspace` | views | `view`, 보는 탭(`find`), `emptyHistory`, **`filterPanelOpen`** | 원시값·참조 | 아니요 (조합) | 필터 패널 열림은 `FilterDrawer`만 구독 |
 | `useOpenSharedLink`, `TabNotices`, `DrawLock`, `HistorySidebar` | views | `gridArea`, store, `readOnly`, `current !== undefined` | 참조·원시값 | 아니요 | 그대로 |
 | `AppHeader` | widgets | `view`, `locked`, `setView`(getState) | 원시값 | 아니요 | 그대로 |
 | `TabBar` | widgets | **전: `tabs` 배열 전체**, `active[view]`, `locked` | 참조 | 아니요 | 이 view의 탭 id만 `useShallow`로 고른다 |
@@ -17,10 +17,10 @@
 | `FilterToggle` | widgets | `filterPanelOpen`, `toggleFilterPanel`, `draft.filters?.length` | 원시값·함수 | 아니요 | 그대로 |
 | `ChartGrid` | widgets | `current`, `readOnly`, `opening`, `draft.grid`, `page`, `focus`, `gridArea`, action | 참조·원시값·함수 | 아니요 | `useAutoResize`를 떼어 냄, `displaySize` memo, item을 `GridItem`(memo)으로 |
 | `useAutoResize` | features | **`itemJobs` 전체**, `setItemJob` | 참조 | — | `ChartGrid` 본문 밖 `AutoResize` 컴포넌트에서 부른다 |
-| `DrawnItem` (`ChartItemCard`) | widgets | `mode`, `paintTool`, `readOnly`, `itemJobs[key]`, `selectedItem === key`, `undoCounts[key]`, 차트 종류·legend 위치 | 원시값·함수 | 아니요 (item 컨테이너) | 체크박스 표시·페인트 도구를 골라 아래로 넘긴다 |
+| `DrawnItem` (`ChartItemCard`) | widgets | `mode`, `paintTool`, `readOnly`, `itemJobs[key]`, `selectedItem === key`, `undoCounts[key]`, 차트 종류·legend 위치 (구독 11개) | 원시값·함수 | 아니요 (item 컨테이너) | 원시값 9개를 `useShallow` selector 하나로, action은 getState. 체크박스 표시·페인트 도구를 골라 아래로 넘긴다 |
 | `DetailView` | widgets | **`itemJobs` 전체**, `setFocus` | 참조 | 아니요 | 보는 item의 `itemJobs[key] !== undefined`만 고른다 |
 | `ItemSettingsDialog` | widgets | `readOnly`, `current?.spec.common`, 차트 종류 | 원시값·참조 | 아니요 | 다시 그리는 중(`busy`)도 골라 팝업에 넘긴다 |
-| `ControlPanel` | widgets | `draft`, `updateDraft`, `readOnly` | 참조 | 아니요 (설정 전부를 편집) | 그대로 |
+| `ControlPanel` | widgets | **`draft` 전체**, `updateDraft`, `readOnly` | 참조 | 아니요 | 보여주는 필드 10개만 `useShallow`로, 스키마 맞춤(`FitDraftToSchema`)은 따로 |
 | `FilterPanel`, `HistoryList`, `HomeLanding` | widgets | 필터·데이터셋·action 등 | 원시값·참조·함수 | 아니요 | 그대로 |
 | `ItemOptionsDialog` | features | 차트 종류, `readOnly`, `itemJobs[key]` | 원시값 | **예** | store 호출을 빼고 props로 받는다 |
 | `ColorSettings`, `SplitSettings`, `LegendSettings` | features | **`draft` 전체** | 참조 | **예** (설정 팝업의 구역) | store 호출을 빼고 `draft` prop으로 받는다 |
@@ -29,7 +29,8 @@
 | `PaintToolbar` | features | `paintTool`, `setPaintTool` | 원시값·함수 | **예** (item 도구) | `tool`·`onToolChange` props |
 | `LegendCheckboxes` | features | `showLegendCheckboxes && supports(...)` | 원시값 | **예** (item 도구) | `shown` prop |
 | `GridPicker` | features | **`draft` 전체**, `current`, **`page`**, **`gridArea`**, action | 참조 | 아니요 | `draft.grid`만 구독, `page`·`gridArea`는 누를 때 getState |
-| `DrawButton` | features | `draft`, **`gridArea`**, `current`, action | 참조 | 아니요 | `gridArea`는 boolean으로, 크기는 누를 때 getState |
+| `DrawButton` | features | **`draft` 전체**, **`gridArea`**, `current`, action | 참조 | 아니요 | 데이터셋·x/y 선택 여부·job id만 구독, 그릴 설정과 크기는 누를 때 getState |
+| `useDrawState`, `GridPicker`, `ChartGrid`의 `useJobProgress` | features·widgets | 진행률 응답 전체 | 참조(응답마다 새 값) | — | `select`로 쓰는 값(상태·개수·오류)만 고른다 |
 | `ModeBar`, `ChartActionBar`, `ShareButton`, `FeedPostButton`, `EditInGalleryButton`, `ColumnFilter`, `DatastoreDialog` | features | 원자 단위 값, `current`, action | 원시값·참조·함수 | 아니요 (동작 하나) | 그대로 |
 | `ItemTooltip` | features | 데이터셋, `showNearest`, `current?.spec` | 원시값·참조 | 아니요 | 그대로 |
 | `useItemAction`, `useItemDetail`, `useDrawState`, `useOpenChart`, `useWorkspaceMutationKey` | features·entities model | action, `current`, `opening`, `id` | 함수·참조·원시값 | — | 그대로 |
@@ -42,14 +43,15 @@
 
 ## 렌더 횟수 (전 → 후)
 
-테스트: `src/widgets/chart-grid/ui/ChartGrid.render.test.tsx`, `src/widgets/tab-bar/ui/TabBar.render.test.tsx`. query layer를 mock하고, 컴포넌트가 렌더마다 한 번 부르는 hook(`useJob` = ChartGrid, `useJobItem` = 각 item, `useJobRange` = DetailView, `useColumns` = 각 탭 이름)으로 렌더 횟수를 센다. grid는 item 9개, 탭 줄은 탭 3개다.
+테스트: `src/widgets/chart-grid/ui/ChartGrid.render.test.tsx`, `src/widgets/tab-bar/ui/TabBar.render.test.tsx`, `src/widgets/control-panel/ui/ControlPanel.render.test.tsx`. query layer를 mock하고, 컴포넌트가 렌더마다 한 번 부르는 hook(`useJob` = ChartGrid, `useJobItem` = 각 item, `useJobRange` = DetailView, `useColumns` = 각 탭 이름, `useSchemaState` = ControlPanel)으로 렌더 횟수를 센다. 진행률(`useJobProgress`)만은 mock하지 않고 실제 react-query cache에 응답을 넣어 `select`와 구조 공유까지 확인한다. grid는 item 9개, 탭 줄은 탭 3개다.
 
 | 바꾼 것 | 전 | 후 |
 | --- | --- | --- |
 | item 하나 선택 | grid 0 · item 1 | grid 0 · item 1 |
 | 다른 item 선택 | item 2 (전·새) | item 2 |
 | item 하나 다시 그리기 시작(`setItemJob`) | **grid 1 · item 9** | grid 0 · item 1 |
-| job 진행률 응답 | **grid 1 · item 9** | grid 1 · item 0 |
+| job 진행률 응답 | **grid 1 · item 9** | grid 0 · item 0 (하단 상태 줄만 1) |
+| job이 끝남 (상태 바뀜) | — | grid 1 · item 0 |
 | 같은 크기로 grid 영역 다시 잡힘 | **grid 1 · item 9** | grid 0 · item 0 |
 | grid 영역 크기 바뀜 | grid 1 · item 9 | grid 1 · item 9 (모두 새 크기라 맞다) |
 | 상관없는 draft 값 · 알림 | 0 | 0 |
@@ -58,9 +60,32 @@
 | 탭 잠금 | **탭 이름 3** | 0 |
 | 새 탭 열기 | **탭 이름 4** | 1 (새 탭만) |
 | 탭 하나의 데이터 바꿈 | 1 | 1 |
+| 필터·grid·공통 속성 바꿈 → `ControlPanel` | **1씩** | 0 |
+| 패널이 보여주는 값(y) 바꿈 → `ControlPanel` | 1 | 1 |
 | 다른 탭의 상관없는 값 · 필터 패널 열고 닫기 | 0 | 0 |
 
-진행률 응답이 올 때마다 item 9개를 모두 다시 그리던 것이 가장 컸다. 그리는 동안 long polling 응답마다 한 번씩 일어난다. 지금은 react-query가 바뀌지 않은 item의 참조를 그대로 두므로(구조 공유) 상태가 바뀐 item만 다시 그린다.
+진행률 응답이 올 때마다 item 9개를 모두 다시 그리던 것이 가장 컸다. 그리는 동안 long polling 응답마다 한 번씩 일어난다. 지금은 react-query가 바뀌지 않은 item의 참조를 그대로 두므로(구조 공유) 상태가 바뀐 item만 다시 그리고, 진행률(완료 수·속도)은 하단 상태 줄(`JobProgressBar`)만 구독한다.
+
+## 실제 앱에서 잰 렌더 횟수
+
+위 테스트는 query layer를 mock한다. 실제 long polling 타이밍에서도 같은지 `next dev`로 띄운 앱을 Playwright로 조작해 쟀다. React DevTools hook 자리에 stub을 넣어 커밋마다 실제로 렌더 함수가 돈 컴포넌트(fiber의 PerformedWork)를 이름별로 센다. 처음 마운트는 세지 않고 **다시 그린 횟수**만 센다. 시나리오: 로그인 → IoT 10만 행 등록 → 적재가 끝난 뒤 hash 공유 링크로 scatter를 공장×라인 split(12개, 3×3 grid 첫 페이지 item 9개)으로 연다. 전은 develop, 후는 이 브랜치이고 각각 두세 번 돌렸다 (범위로 적는다).
+
+| 구간 | 컴포넌트 | 전 | 후 |
+| --- | --- | --- | --- |
+| 차트를 열어 다 그릴 때까지 (약 5초) | item 본문 `DrawnItem` | 37–42 | **0** |
+| | item 툴팁 `ItemTooltip` | 40–42 | **0** |
+| | `ChartItemCard` (자리 표시 포함) | 135–144 | 39–72 |
+| | memo 감싸개 `GridItem` (item 상태가 바뀔 때만) | — | 21–28 |
+| | `ChartGrid` | 19–20 | 12–16 |
+| | `GridPicker` | 15 | 9–13 |
+| | 하단 상태 줄 `JobStatusBar` | 16–17 | 17–27 (진행률을 여기서만 구독) |
+| 필터 패널 열기 | `DrawnItem` / `ItemTooltip` | 9 / 9–11 | 0 / 1 |
+| | `ChartGrid`, `ControlPanel`, `GridPicker`, `TabBar` | 1씩 | 0 |
+| 다른 탭을 열었다가 돌아오기 | `DrawnItem` / `ItemTooltip` | 18 / 18 | 0 / 0 |
+| | `ChartGrid` | 2 | 1 |
+| item 하나 선택 / 다른 item 선택 | `DrawnItem` | 1 / 2 | 1 / 2 |
+
+hash 링크로 연 차트를 draw 버튼으로 다시 그려도 item 9개가 그대로 그려지고, 페이지 오류는 없었다.
 
 ## 바꾼 위임 구조
 
@@ -69,10 +94,17 @@ SettingsBody (features/chart-settings, 컨테이너: draft·readOnly·action 구
   ├─ CommonOptionSettings  ← defaults, readOnly
   └─ Color/Split/Legend/TooltipSettings  ← draft, readOnly
 
-ChartGrid (widgets, 컨테이너: current·page·focus·gridArea 구독)
+Workspace (views: view·보는 탭만)
+  └─ FilterDrawer  (filterPanelOpen 구독은 여기만)
+
+ControlPanel (widgets: 보여주는 draft 필드만 useShallow)
+  └─ FitDraftToSchema  (draft 전체 구독은 여기만, 스키마에 맞게 바로잡기)
+
+ChartGrid (widgets, 컨테이너: current·page·focus·gridArea, 진행률은 select로 개수·상태·오류만)
   ├─ AutoResize  (itemJobs 구독은 여기만)
+  ├─ JobProgressBar  (진행률 전체 구독은 여기만)
   └─ GridItem (memo) ← item, index, displaySize(memo), onOpen=setFocus
-       └─ DrawnItem (item 컨테이너: 자기 key로 itemJobs[key]·selected·undoCounts[key] 구독)
+       └─ DrawnItem (item 컨테이너: 자기 key로 고른 원시값 9개를 useShallow selector 하나로)
             ├─ PaintToolbar  ← tool, onToolChange
             ├─ LegendCheckboxes  ← shown
             └─ ItemSettingsDialog (widgets) ── ItemOptionsDialog  ← chartType, readOnly, busy
@@ -85,7 +117,8 @@ TabBar (widgets: 이 view의 탭 id[]를 useShallow로)
 
 ## 남은 이슈
 
-- `ControlPanel`은 `draft` 전체를 구독한다. 설정 전부를 편집하는 폼이라 필요하지만, 필드마다 나누면 입력할 때 다시 그리는 범위를 더 줄일 수 있다.
-- `ChartGrid`는 진행률 응답마다 다시 그려진다 (하단 상태 줄·페이지 수가 그 값을 쓴다). item은 memo로 막았다. 상태 줄을 별도 구독 컴포넌트로 떼면 grid 본문도 다시 그리지 않는다.
-- `DrawnItem`은 `useWorkspace`를 10번 넘게 부른다. 각각 원자 단위라 정확하지만, 모드·도구처럼 모든 item이 함께 쓰는 값은 바뀔 때 item 전체가 다시 그려진다 (그 값을 보여야 하므로 맞는 동작이다).
-- 렌더 테스트는 query layer를 mock한다. 실제 long polling 타이밍은 앱에서 확인해야 한다.
+처음 점검에서 남긴 네 가지는 모두 처리했다: `ControlPanel`의 `draft` 전체 구독, 진행률 응답마다 `ChartGrid`가 다시 그려지던 것, `DrawnItem`의 구독 11개, 실제 long polling에서의 측정. 실제 앱에서 재다가 찾은 `Workspace`의 필터 패널 구독과 `DrawButton`의 `draft` 전체 구독도 고쳤다.
+
+- `ControlPanel`(5–10회)과 `DrawButton`(16–21회)은 차트를 여는 동안 여전히 여러 번 다시 그려진다. zustand가 아니라 react-query다. 데이터셋 목록·스키마 query가 다시 받을 때(job이 데이터 준비 단계에 들고 날 때 무효화) 그 결과를 쓰는 hook(`useDatasetStatus`, `useDatasetSchema`, `useSchemaState`)이 다시 그린다. `select`로 쓰는 값만 고르면 더 줄일 수 있다.
+- 모드·페인트 도구처럼 모든 item이 함께 쓰는 값이 바뀌면 item이 전부 다시 그려진다. 모든 item이 그 값을 보여야 하므로 맞는 동작이다.
+- 실제 앱 측정은 저장소에 스크립트로 넣지 않았다 (Playwright가 의존성이 아니다). 방법은 위에 적었다.
