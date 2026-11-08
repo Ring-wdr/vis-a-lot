@@ -2,6 +2,7 @@
 
 // 상태 이름: 6개 상태를 카테고리별로. 비우면 기본 이름. 카테고리는 고정이라 이름만 바꾼다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useId, useState } from "react";
 import { categoryLabels, statusLabels } from "@/entities/post/lib/labels";
 import { field, statusBadge } from "@/entities/post/ui/styles";
@@ -12,32 +13,11 @@ import type {
   StatusCategory,
   StatusNames,
 } from "@/shared/api/feed/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { settings } from "@/shared/ui/feed-settings-styles";
 import { Spinner } from "@/shared/ui/Loading";
 import type { useGroupEdit } from "@/views/feed-settings-group/model/use-group-edit";
-
-const messages = defineMessages({
-  ko: {
-    saveFailed: "상태 이름을 저장하지 못했습니다",
-    title: "상태 이름",
-    hint: "비워 두면 기본 이름을 씁니다.",
-    nameOf: (status: string) => `${status} 상태 이름`,
-    preview: "미리 보기",
-    revert: "되돌리기",
-    save: "저장",
-  },
-  en: {
-    saveFailed: "Couldn't save status names",
-    title: "Status names",
-    hint: "Leave blank to use the default name.",
-    nameOf: (status: string) => `Name for ${status}`,
-    preview: "Preview",
-    revert: "Revert",
-    save: "Save",
-  },
-});
+import "../config/messages";
 
 const s = settings();
 
@@ -80,7 +60,7 @@ export function StatusNamesSection({
   group: GroupDetail;
   edit: ReturnType<typeof useGroupEdit>;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const id = useId();
   const [base, setBase] = useState(group.statusNames);
   const [draft, setDraft] = useState(() => draftOf(group.statusNames));
@@ -94,7 +74,7 @@ export function StatusNamesSection({
   const dirty = !same(next, group.statusNames);
 
   const save = () =>
-    edit.run("status", text.saveFailed, () =>
+    edit.run("status", t`상태 이름을 저장하지 못했습니다`, () =>
       groupsApi.update(group.id, { statusNames: next }),
     );
 
@@ -102,9 +82,11 @@ export function StatusNamesSection({
     <section className={s.section()} aria-labelledby={`${id}-title`}>
       <div className={s.sectionHead()}>
         <h2 id={`${id}-title`} className={s.sectionTitle()}>
-          {text.title}
+          <Trans context="group settings section title">상태 이름</Trans>
         </h2>
-        <p className={s.hint()}>{text.hint}</p>
+        <p className={s.hint()}>
+          <Trans>비워 두면 기본 이름을 씁니다.</Trans>
+        </p>
       </div>
       <form
         className="flex min-w-0 flex-col gap-4"
@@ -119,7 +101,8 @@ export function StatusNamesSection({
               {categoryLabel[category]}
             </legend>
             {statuses.map((status) => {
-              const name = draft[status].trim() || statusLabel[status];
+              const label = statusLabel[status];
+              const name = draft[status].trim() || label;
               return (
                 <div
                   key={status}
@@ -133,7 +116,7 @@ export function StatusNamesSection({
                     value={draft[status]}
                     placeholder={statusLabel[status]}
                     maxLength={20}
-                    aria-label={text.nameOf(statusLabel[status])}
+                    aria-label={t`${label} 상태 이름`}
                     onChange={(e) => {
                       const value = e.currentTarget.value;
                       setDraft((d) => ({ ...d, [status]: value }));
@@ -142,7 +125,10 @@ export function StatusNamesSection({
                   <span className="col-start-2 sm:col-start-auto">
                     <span
                       className={statusBadge({ status })}
-                      title={text.preview}
+                      title={t({
+                        message: "미리 보기",
+                        context: "status badge preview",
+                      })}
                     >
                       {name}
                     </span>
@@ -159,7 +145,7 @@ export function StatusNamesSection({
               className={button({ size: "sm" })}
               onClick={() => setDraft(draftOf(group.statusNames))}
             >
-              {text.revert}
+              <Trans>되돌리기</Trans>
             </button>
           )}
           <button
@@ -168,7 +154,7 @@ export function StatusNamesSection({
             disabled={!dirty || !!edit.pending}
           >
             {edit.pending === "status" && <Spinner size="sm" tone="inherit" />}
-            {text.save}
+            <Trans context="save status names">저장</Trans>
           </button>
         </div>
       </form>

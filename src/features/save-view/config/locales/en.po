@@ -1,0 +1,55 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. groupName: 그룹 이름
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgid "{groupName} 공유"
+msgstr "Share with {groupName}"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgctxt "saved view sharing scope"
+msgid "개인"
+msgstr "Personal"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgctxt "saved view sharing scope"
+msgid "공유"
+msgstr "Sharing"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgctxt "saved view sharing scope"
+msgid "그룹 공유"
+msgstr "Group"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgid "그룹 멤버 모두가 이 뷰를 봅니다. 고치기는 만든 사람과 그룹 관리자만 합니다."
+msgstr "All group members can see this view. Only its creator and group admins can edit it."
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgid "나만 봅니다."
+msgstr "Only you can see it."
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgid "뷰로 저장"
+msgstr "Save as view"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgctxt "saved view name"
+msgid "이름"
+msgstr "Name"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgctxt "save view dialog"
+msgid "저장"
+msgstr "Save"
+
+#: src/features/save-view/ui/save-view-dialog.tsx
+msgctxt "save view dialog"
+msgid "취소"
+msgstr "Cancel"

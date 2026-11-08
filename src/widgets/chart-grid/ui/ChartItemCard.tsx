@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, t as tGlobal } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,47 +36,19 @@ import {
   isTerminal,
 } from "@/shared/api/types";
 import { supports } from "@/shared/config/chart-kinds";
-import { defineMessages, t, useT } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { itemButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
+import "../config/messages";
 import { ItemSettingsDialog } from "./ItemSettingsDialog";
 
-const messages = defineMessages({
-  ko: {
-    stages: {
-      query: "데이터 조회",
-      aggregate: "집계",
-      render: "렌더링",
-      encode: "PNG 변환",
-    } as Record<ItemStage, string>,
-    queued: "대기 중",
-    preparing: "준비 중",
-    backToGrid: "grid로 돌아가기",
-    expand: "크게 보기",
-    redrawFailed: "다시 그리기에 실패했습니다.",
-    redrawing: "다시 그리는 중",
-    renderFailed: (error: string) => `렌더 실패: ${error}`,
-    cancelled: "취소됨",
-  },
-  en: {
-    stages: {
-      query: "Querying data",
-      aggregate: "Aggregating",
-      render: "Rendering",
-      encode: "Encoding PNG",
-    },
-    queued: "Queued",
-    preparing: "Preparing",
-    backToGrid: "Back to grid",
-    expand: "Expand",
-    redrawFailed: "Redraw failed.",
-    redrawing: "Redrawing",
-    renderFailed: (error: string) => `Render failed: ${error}`,
-    cancelled: "Cancelled",
-  },
-});
+const STAGES: Record<ItemStage, MessageDescriptor> = {
+  query: msg`데이터 조회`,
+  aggregate: msg({ message: "집계", context: "item render stage" }),
+  render: msg({ message: "렌더링", context: "item render stage" }),
+  encode: msg`PNG 변환`,
+};
 
 // 누른 item(selected)은 다운로드·데이터 표의 대상이다. 크게 보기에서는 남은 자리를 채운다.
 const itemCard =
@@ -100,14 +75,14 @@ function Pending({
   item?: ItemState;
   placeholder?: string;
 }) {
-  const text = useT(messages);
+  const { t, i18n } = useLingui();
   const stage = item?.stage;
   const label =
     item?.status === "queued"
-      ? text.queued
+      ? t({ message: "대기 중", context: "item status" })
       : stage
-        ? text.stages[stage]
-        : (placeholder ?? text.preparing);
+        ? i18n._(STAGES[stage])
+        : (placeholder ?? t({ message: "준비 중", context: "item status" }));
   return (
     <div className="flex w-[min(8.75rem,90%)] flex-col items-center gap-2 text-center text-xs text-fg-muted">
       <Spinner size="lg" />
@@ -160,9 +135,11 @@ function ExpandButton({
   expanded: boolean;
   onClick?: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   if (!onClick) return null;
-  const label = expanded ? text.backToGrid : text.expand;
+  const label = expanded
+    ? t`grid로 돌아가기`
+    : t({ message: "크게 보기", context: "item expand button" });
   return (
     <div className="flex gap-0.5">
       <button
@@ -213,7 +190,7 @@ function DrawnItem({
   expanded?: boolean;
   onDoubleClick?: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   // item 안의 도구(PaintToolbar, LegendCheckboxes 등)는 store를 읽지 않는다. 여기서 골라 넘긴다.
   // 이 item이 쓰는 값을 selector 하나로 고른다. item마다 store 구독이 하나라 item이 많아도 store를 바꿀 때 드는 일이 적고,
   // 고른 값이 모두 원시값이라 useShallow로 비교하면 이 item과 상관없는 변경에는 다시 그리지 않는다.
@@ -268,7 +245,7 @@ function DrawnItem({
     void client.invalidateQueries({ queryKey: ["jobs", primaryJobId] });
     if (jobStatus === "failed") {
       // 서버가 준 사유(지운 데이터 등)가 있으면 그대로 보여준다.
-      showAlert(redrawError ?? t(messages).redrawFailed);
+      showAlert(redrawError ?? tGlobal`다시 그리기에 실패했습니다.`);
       setItemJob(item.key, undefined);
     } else if (jobStatus !== "success" || item.image.url === redrawnUrl) {
       // 새 PNG가 grid에 반영된 뒤에 조작 차단을 푼다.
@@ -346,7 +323,7 @@ function DrawnItem({
         )}
         {busy ? (
           <div className={busyOverlay} aria-busy="true">
-            <Pending item={redrawing} placeholder={text.redrawing} />
+            <Pending item={redrawing} placeholder={t`다시 그리는 중`} />
           </div>
         ) : (
           rendering && (
@@ -430,7 +407,7 @@ export function ChartItemCard({
   /** 더블 클릭이나 toolbar 버튼으로 크게 보기를 열고 닫는다. */
   onDoubleClick?: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   if (item?.status === "success" && item.image && chartId && primaryJobId) {
     return (
       <DrawnItem
@@ -447,6 +424,7 @@ export function ChartItemCard({
       />
     );
   }
+  const error = item?.error ?? "";
   return (
     <article
       className={itemCard}
@@ -463,10 +441,15 @@ export function ChartItemCard({
         </span>
         {item?.status === "failed" ? (
           <p role="alert" className="text-xs text-danger">
-            {text.renderFailed(item.error ?? "")}
+            {t({
+              message: `렌더 실패: ${error}`,
+              comment: "error: 서버가 준 실패 사유",
+            })}
           </p>
         ) : item?.status === "cancelled" ? (
-          <p className="text-xs text-fg-muted">{text.cancelled}</p>
+          <p className="text-xs text-fg-muted">
+            {t({ message: "취소됨", context: "item status" })}
+          </p>
         ) : (
           <Pending item={item} placeholder={placeholder} />
         )}

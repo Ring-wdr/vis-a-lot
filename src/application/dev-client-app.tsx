@@ -1,16 +1,14 @@
 "use client";
 
+import { t } from "@lingui/core/macro";
 import dynamic from "next/dynamic";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import { useLocale } from "@/shared/lib/i18n";
+import "./messages";
 
-const messages = defineMessages({
-  ko: { loading: "불러오는 중…" },
-  en: { loading: "Loading…" },
-});
-
+/** Providers(Lingui context) 밖에서 그리므로 전역 i18n으로 읽고 useLocale로 언어 변경을 구독한다. */
 function Loading() {
-  const text = useT(messages);
-  return <p>{text.loading}</p>;
+  useLocale();
+  return <p>{t`불러오는 중…`}</p>;
 }
 
 export const DevClientApp = dynamic(() => import("./dev-root"), {

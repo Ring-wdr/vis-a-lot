@@ -1,9 +1,11 @@
 "use client";
 
+import { msg } from "@lingui/core/macro";
 import { useState } from "react";
 import type { ColumnName } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+import { linguiFor, useLocale } from "@/shared/lib/i18n";
 import { type Option, OrderedSelect } from "@/shared/ui/OrderedSelect";
+import "../config/messages";
 
 const MANY_OPTIONS: Option<string>[] = Array.from(
   { length: 10_000 },
@@ -28,16 +30,16 @@ const COLUMN_OPTIONS: Option<ColumnName>[] = [
   ["load_pct", "부하율(%)"],
 ].map(([value, label]) => ({ value, label }));
 
-const messages = defineMessages({
-  ko: { many: "대량", columns: "컬럼" },
-  en: { many: "Many", columns: "Columns" },
-});
+const MANY = msg({ message: "대량", context: "dev select demo" });
+const COLUMNS = msg({ message: "컬럼", context: "dev select demo" });
 
 /** mock 서버 없이 OrderedSelect만 띄워 드래그/키보드 동작을 확인하는 페이지 */
 const output = "mt-1.5 block break-all font-mono text-2xs text-fg-secondary";
 
 export function DevSelectPage() {
-  const text = useT(messages);
+  // 이 페이지는 Providers(LinguiProvider) 밖에서 그린다. useLocale로 고른 언어의 instance를 직접 읽는다
+  // (hydration 중에는 정적 HTML과 같은 기본 언어).
+  const i18n = linguiFor(useLocale());
   const [many, setMany] = useState<string[]>([]);
   const [columns, setColumns] = useState<ColumnName[]>([]);
   const [fieldsetDisabled, setFieldsetDisabled] = useState(false);
@@ -59,7 +61,7 @@ export function DevSelectPage() {
       >
         <section>
           <OrderedSelect
-            label={text.many}
+            label={i18n._(MANY)}
             options={MANY_OPTIONS}
             value={many}
             onChange={setMany}
@@ -70,7 +72,7 @@ export function DevSelectPage() {
         </section>
         <section>
           <OrderedSelect
-            label={text.columns}
+            label={i18n._(COLUMNS)}
             options={COLUMN_OPTIONS}
             value={columns}
             onChange={setColumns}

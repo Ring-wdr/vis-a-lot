@@ -1,31 +1,20 @@
 "use client";
 
+import { Trans } from "@lingui/react/macro";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumnSummary } from "@/shared/api/queries";
 import type { ColumnName } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 import { filterOf, withFilter } from "../model/filters";
 import { RangeFilterBody } from "./RangeFilterBody";
 import { ValuesFilterBody } from "./ValuesFilterBody";
-
-const messages = defineMessages({
-  ko: {
-    loading: "값 범위를 불러오는 중",
-    notReady: "데이터가 준비되면 필터를 쓸 수 있습니다.",
-  },
-  en: {
-    loading: "Loading value range",
-    notReady: "Filters are available once the data is ready.",
-  },
-});
 
 /**
  * 컬럼 하나의 필터. 아코디언을 열 때 처음 마운트되며, 그때 서버에서 컬럼 요약을 받는다(받는 동안 pending).
  * 바꾼 필터는 draft에만 담기고 draw할 때 적용된다.
  */
 export function ColumnFilter({ column }: { column: ColumnName }) {
-  const text = useT(messages);
   const dataset = useWorkspace((s) => s.draft.dataset);
   const filters = useWorkspace((s) => s.draft.filters);
   const readOnly = useWorkspace((s) => s.readOnly);
@@ -39,16 +28,20 @@ export function ColumnFilter({ column }: { column: ColumnName }) {
         className="flex items-center gap-2 text-xs text-fg-muted"
         aria-busy="true"
       >
-        <LoadingText>{text.loading}</LoadingText>
+        <LoadingText>
+          <Trans>값 범위를 불러오는 중</Trans>
+        </LoadingText>
       </div>
     );
   }
   if (summary.error) {
     return (
       <p role="alert" className="text-xs text-danger">
-        {summary.error.message === "dataset is not ready"
-          ? text.notReady
-          : summary.error.message}
+        {summary.error.message === "dataset is not ready" ? (
+          <Trans>데이터가 준비되면 필터를 쓸 수 있습니다.</Trans>
+        ) : (
+          summary.error.message
+        )}
       </p>
     );
   }

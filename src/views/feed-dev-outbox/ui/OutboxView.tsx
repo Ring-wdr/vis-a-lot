@@ -1,51 +1,21 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { RefreshCw } from "lucide-react";
 import { channelLabels } from "@/entities/post/lib/labels";
 import { useOutbox } from "@/shared/api/feed/queries";
-import { defineMessages, localeCached, useT } from "@/shared/lib/i18n";
+import { localeCached } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import { button } from "@/shared/ui/button";
 import { page } from "@/shared/ui/feed-styles";
 import { EmptyState, LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 
 const p = page();
 
 const dateTime = localeCached(
   (l) => new Intl.DateTimeFormat(l, { dateStyle: "short", timeStyle: "short" }),
 );
-
-const messages = defineMessages({
-  ko: {
-    title: "발송 로그",
-    refresh: "새로 고침",
-    lead: "알림 설정에서 슬랙·이메일을 켠 알림이 실제로 나가는 대신 여기에 남습니다.",
-    loading: "발송 로그를 불러오는 중",
-    loadFailed: (error: string) => `발송 로그를 불러오지 못했습니다: ${error}`,
-    empty: "보낸 메시지가 없습니다",
-    emptyHint: "배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다.",
-    time: "시각",
-    channel: "채널",
-    recipient: "받는 사람",
-    subject: "제목",
-    body: "내용",
-  },
-  en: {
-    title: "Delivery log",
-    refresh: "Refresh",
-    lead: "Notifications with Slack or email turned on in notification settings are recorded here instead of being sent.",
-    loading: "Loading delivery log",
-    loadFailed: (error: string) => `Couldn't load the delivery log: ${error}`,
-    empty: "No messages sent",
-    emptyHint:
-      "Assignment, mention, and due-date notifications will show up here.",
-    time: "Time",
-    channel: "Channel",
-    recipient: "Recipient",
-    subject: "Subject",
-    body: "Body",
-  },
-});
 
 /** 표 칸 */
 const cell = tv({
@@ -54,7 +24,7 @@ const cell = tv({
 
 /** /feed/dev/outbox: 슬랙·이메일로 나갔을 메시지 (최근 순). 실제로는 보내지 않는다. */
 export function OutboxView() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const outbox = useOutbox();
   const sent = [...(outbox.data ?? [])].sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),
@@ -63,7 +33,9 @@ export function OutboxView() {
   return (
     <div className={p.root()}>
       <div className="flex items-center gap-2">
-        <h1 className={p.title()}>{text.title}</h1>
+        <h1 className={p.title()}>
+          <Trans>발송 로그</Trans>
+        </h1>
         <button
           type="button"
           className={button({ size: "sm", class: "ml-auto" })}
@@ -71,20 +43,30 @@ export function OutboxView() {
           onClick={() => outbox.refetch()}
         >
           <RefreshCw size={14} aria-hidden="true" />
-          {text.refresh}
+          <Trans>새로 고침</Trans>
         </button>
       </div>
-      <p className={p.lead()}>{text.lead}</p>
+      <p className={p.lead()}>
+        <Trans>
+          알림 설정에서 슬랙·이메일을 켠 알림이 실제로 나가는 대신 여기에
+          남습니다.
+        </Trans>
+      </p>
 
       {outbox.isPending ? (
-        <LoadingText>{text.loading}</LoadingText>
+        <LoadingText>
+          <Trans>발송 로그를 불러오는 중</Trans>
+        </LoadingText>
       ) : outbox.isError ? (
         <p role="alert" className="text-danger">
-          {text.loadFailed(outbox.error.message)}
+          <Trans>발송 로그를 불러오지 못했습니다: {outbox.error.message}</Trans>
         </p>
       ) : sent.length === 0 ? (
-        <EmptyState icon={<RefreshCw size={18} />} title={text.empty}>
-          {text.emptyHint}
+        <EmptyState
+          icon={<RefreshCw size={18} />}
+          title={t`보낸 메시지가 없습니다`}
+        >
+          <Trans>배정·멘션·기한 알림 등이 생기면 여기에 쌓입니다.</Trans>
         </EmptyState>
       ) : (
         <div className="relative overflow-x-auto rounded-lg border border-line bg-elevated">
@@ -93,19 +75,19 @@ export function OutboxView() {
             <thead className="bg-panel text-xs text-fg-muted">
               <tr>
                 <th className={cell({ class: "whitespace-nowrap" })}>
-                  {text.time}
+                  <Trans context="sent time column">시각</Trans>
                 </th>
                 <th className={cell({ class: "whitespace-nowrap" })}>
-                  {text.channel}
+                  <Trans>채널</Trans>
                 </th>
                 <th className={cell({ class: "whitespace-nowrap" })}>
-                  {text.recipient}
+                  <Trans>받는 사람</Trans>
                 </th>
                 <th className={cell({ class: "whitespace-nowrap" })}>
-                  {text.subject}
+                  <Trans context="message subject column">제목</Trans>
                 </th>
                 <th className={cell({ class: "whitespace-nowrap" })}>
-                  {text.body}
+                  <Trans context="message body column">내용</Trans>
                 </th>
               </tr>
             </thead>

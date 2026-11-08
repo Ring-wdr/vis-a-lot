@@ -2,6 +2,7 @@
 
 // 카드·표·보드가 함께 쓰는 작은 표시: 상태 배지, 우선순위, 사람, 기한, 형식 아이콘, 썸네일.
 
+import { useLingui } from "@lingui/react/macro";
 import {
   ChartColumn,
   Code,
@@ -23,28 +24,9 @@ import type {
   PostStatus,
   PostSummary,
 } from "@/shared/api/feed/types";
-import {
-  defineMessages,
-  localeCached,
-  useLocale,
-  useT,
-} from "@/shared/lib/i18n";
+import { localeCached, useLocale } from "@/shared/lib/i18n";
 import { cn, tv } from "@/shared/lib/tw";
-
-const messages = defineMessages({
-  ko: {
-    priority: (label: string) => `우선순위 ${label}`,
-    noAssignee: "담당자 없음",
-    overdueTitle: (due: string) => `기한 지남 (${due})`,
-    overdue: " 기한 지남",
-  },
-  en: {
-    priority: (label: string) => `Priority ${label}`,
-    noAssignee: "Unassigned",
-    overdueTitle: (due: string) => `Overdue (${due})`,
-    overdue: " overdue",
-  },
-});
+import "../config/messages";
 
 /** 오늘 'YYYY-MM-DD'. 개발 장치의 시계 오프셋을 따른다 */
 export function useToday() {
@@ -116,12 +98,13 @@ export function PriorityMark({
   priority: number;
   showLabel?: boolean;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const label = priorityLabel(priority);
+  const title = t`우선순위 ${label}`;
   return (
     <span
       className="inline-flex flex-none items-center gap-1 text-xs text-fg-secondary"
-      title={text.priority(label)}
+      title={title}
     >
       <span className="inline-flex items-end gap-px" aria-hidden="true">
         {BARS.map((b, i) => (
@@ -139,11 +122,7 @@ export function PriorityMark({
           />
         ))}
       </span>
-      {showLabel ? (
-        label
-      ) : (
-        <span className="sr-only">{text.priority(label)}</span>
-      )}
+      {showLabel ? label : <span className="sr-only">{title}</span>}
     </span>
   );
 }
@@ -159,12 +138,12 @@ export function UserChip({
   compact?: boolean;
   emptyLabel?: string;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const users = useUserMap();
   if (!userId)
     return (
       <span className="text-xs text-fg-muted">
-        {emptyLabel ?? text.noAssignee}
+        {emptyLabel ?? t`담당자 없음`}
       </span>
     );
   const name = users.get(userId)?.name ?? userId;
@@ -201,18 +180,19 @@ export function DueLabel({
   post: Pick<PostSummary, "dueDate" | "category">;
   today: string;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   if (!post.dueDate) return <span className="text-xs text-fg-muted">—</span>;
+  const due = post.dueDate;
   const overdue = isOverdue(post, today);
   return (
     <time
       dateTime={post.dueDate}
       data-overdue={overdue || undefined}
       className="text-xs whitespace-nowrap text-fg-secondary tabular-nums data-overdue:font-semibold data-overdue:text-danger"
-      title={overdue ? text.overdueTitle(post.dueDate) : post.dueDate}
+      title={overdue ? t`기한 지남 (${due})` : due}
     >
       {shortDay(post.dueDate)}
-      {overdue && <span className="sr-only">{text.overdue}</span>}
+      {overdue && <span className="sr-only">{t` 기한 지남`}</span>}
     </time>
   );
 }

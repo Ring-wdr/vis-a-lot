@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import {
   Eraser,
   type LucideIcon,
@@ -15,8 +18,8 @@ import {
 } from "@/entities/workspace/model/workspace-store";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { itemButton } from "@/shared/ui/button";
+import "../config/messages";
 
 const TOOL_ICONS: Record<PaintTool, LucideIcon> = {
   rect: Square,
@@ -25,30 +28,12 @@ const TOOL_ICONS: Record<PaintTool, LucideIcon> = {
   text: Type,
 };
 
-const messages = defineMessages({
-  ko: {
-    tools: {
-      rect: "사각형",
-      line: "선",
-      freehand: "자유곡선",
-      text: "텍스트",
-    } satisfies Record<PaintTool, string>,
-    toolbar: (item: string) => `${item} 그리기 도구`,
-    undoShape: "도형 되돌리기",
-    clearShapes: "도형 전체 삭제",
-  },
-  en: {
-    tools: {
-      rect: "Rectangle",
-      line: "Line",
-      freehand: "Freehand",
-      text: "Text",
-    },
-    toolbar: (item: string) => `${item} drawing tools`,
-    undoShape: "Undo shape",
-    clearShapes: "Clear all shapes",
-  },
-});
+const TOOL_LABELS = {
+  rect: msg({ message: "사각형", context: "paint tool" }),
+  line: msg({ message: "선", context: "paint tool" }),
+  freehand: msg({ message: "자유곡선", context: "paint tool" }),
+  text: msg({ message: "텍스트", context: "paint tool" }),
+} satisfies Record<PaintTool, MessageDescriptor>;
 
 /**
  * 페인트 모드의 item 도구: 그리기 도구 선택, 도형 되돌리기, 도형 전체 삭제.
@@ -71,26 +56,29 @@ export function PaintToolbar({
   onToolChange: (tool: PaintTool) => void;
   onAction: (action: ItemAction) => void;
 }) {
-  const text = useT(messages);
+  const { t, i18n } = useLingui();
+  const label = item.label;
+  const undoShape = t`도형 되돌리기`;
+  const clearShapes = t`도형 전체 삭제`;
 
   return (
     <div
       className="flex gap-0.5"
       role="toolbar"
-      aria-label={text.toolbar(item.label)}
+      aria-label={t`${label} 그리기 도구`}
     >
-      {PAINT_TOOLS.map((t) => {
-        const label = text.tools[t];
-        const Icon = TOOL_ICONS[t];
+      {PAINT_TOOLS.map((paint) => {
+        const toolLabel = i18n._(TOOL_LABELS[paint]);
+        const Icon = TOOL_ICONS[paint];
         return (
           <button
-            key={t}
+            key={paint}
             type="button"
             className={itemButton()}
-            title={label}
-            aria-label={label}
-            aria-pressed={tool === t}
-            onClick={() => onToolChange(t)}
+            title={toolLabel}
+            aria-label={toolLabel}
+            aria-pressed={tool === paint}
+            onClick={() => onToolChange(paint)}
           >
             <Icon size={13} aria-hidden="true" />
           </button>
@@ -100,8 +88,8 @@ export function PaintToolbar({
       <button
         type="button"
         className={itemButton()}
-        title={text.undoShape}
-        aria-label={text.undoShape}
+        title={undoShape}
+        aria-label={undoShape}
         disabled={busy || undoCount === 0 || item.shapeCount === 0}
         onClick={() => onAction({ type: "undoShape" })}
       >
@@ -110,8 +98,8 @@ export function PaintToolbar({
       <button
         type="button"
         className={itemButton()}
-        title={text.clearShapes}
-        aria-label={text.clearShapes}
+        title={clearShapes}
+        aria-label={clearShapes}
         disabled={busy || item.shapeCount === 0}
         onClick={() => onAction({ type: "clearShapes" })}
       >

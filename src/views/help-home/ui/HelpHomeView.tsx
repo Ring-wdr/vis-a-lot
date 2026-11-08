@@ -1,19 +1,23 @@
+import { msg, plural } from "@lingui/core/macro";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { HELP, HELP_SERVICES, helpServicePath } from "@/shared/config/help";
+import { inAllLocales } from "@/shared/lib/lingui";
 import { Localized } from "@/shared/ui/Localized";
+import "../config/messages";
 
-/** 도움말 첫 화면: 서비스를 고른다. 정적 서버 컴포넌트라 두 언어를 함께 그린다 (Localized). */
+/** 도움말 첫 화면: 서비스를 고른다. 정적 서버 컴포넌트라 모든 언어를 함께 그린다 (Localized + inAllLocales). */
 export function HelpHomeView() {
   return (
     <>
       <h1 className="text-xl font-bold tracking-tight">
-        <Localized ko="도움말" en="Help" />
+        <Localized {...inAllLocales(msg`도움말`)} />
       </h1>
       <p className="mt-2 text-sm text-fg-secondary">
         <Localized
-          ko="vis-a-lot의 서비스별 사용 방법입니다. 보고 싶은 서비스를 고르세요."
-          en="How to use each vis-a-lot service. Pick the one you want to read about."
+          {...inAllLocales(
+            msg`vis-a-lot의 서비스별 사용 방법입니다. 보고 싶은 서비스를 고르세요.`,
+          )}
         />
       </p>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -33,7 +37,7 @@ export function HelpHomeView() {
                     <ChevronRight size={16} aria-hidden="true" />
                   ) : (
                     <span className="rounded-sm bg-panel-strong px-1.5 text-2xs font-normal whitespace-nowrap text-fg-muted">
-                      <Localized ko="준비 중" en="Coming soon" />
+                      <Localized {...inAllLocales(msg`준비 중`)} />
                     </span>
                   )}
                 </span>
@@ -43,8 +47,9 @@ export function HelpHomeView() {
                 {ready && (
                   <span className="mt-auto pt-2 text-xs text-fg-muted">
                     <Localized
-                      ko={`문서 ${count}개`}
-                      en={`${count} ${count === 1 ? "article" : "articles"}`}
+                      {...inAllLocales(
+                        msg`문서 ${plural(count, { other: "#개" })}`,
+                      )}
                     />
                   </span>
                 )}

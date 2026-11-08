@@ -5,7 +5,7 @@
 
 import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceScope } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -14,6 +14,7 @@ import {
   defaultSpec,
 } from "@/entities/workspace/model/workspace-store";
 import type { ChartDefaults, JobStateResponse } from "@/shared/api/types";
+import { renderWithI18n } from "@/shared/lib/render-with-i18n";
 import { useDrawState } from "./draw-state";
 
 let fetches = 0;
@@ -61,7 +62,7 @@ describe("useDrawState 렌더 횟수", () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    render(
+    renderWithI18n(
       <QueryClientProvider client={client}>
         <WorkspaceScope store={store}>
           <Probe />

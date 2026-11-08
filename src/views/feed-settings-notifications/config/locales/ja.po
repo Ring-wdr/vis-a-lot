@@ -1,0 +1,107 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. 체크박스 이름. kind는 알림 이벤트 이름, channel은 채널 이름
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "{kind} {channel}"
+msgstr "{kind}: {channel}"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "구독한 게시물에 댓글이 달렸을 때"
+msgstr "購読中の投稿にコメントが付いたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "구독한 게시물의 상태가 바뀌었을 때"
+msgstr "購読中の投稿のステータスが変わったとき"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "기본값으로"
+msgstr "デフォルトに戻す"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "나를 담당자로 정했을 때"
+msgstr "自分が担当者に指定されたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "나를 막던 게시물이 닫혀 차단이 풀렸을 때"
+msgstr "自分をブロックしていた投稿がクローズされ、ブロックが解除されたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "내 게시물이 반려되었을 때"
+msgstr "自分の投稿が却下されたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "내 게시물이 승인되었을 때"
+msgstr "自分の投稿が承認されたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "내가 승인할 게시물에 완료 요청이 왔을 때"
+msgstr "自分が承認する投稿に完了リクエストが届いたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "담당 게시물의 기한이 내일이거나 오늘일 때"
+msgstr "担当投稿の期限が今日か明日のとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "담당 게시물의 기한이 지났을 때"
+msgstr "担当投稿の期限が過ぎたとき"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "댓글·설명에서 나를 @멘션했을 때"
+msgstr "コメント・説明で自分が@メンションされたとき"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "되돌리기"
+msgstr "元に戻す"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "보류한 게시물이 재개일에 다시 열렸을 때"
+msgstr "保留中の投稿が再開日に再オープンされたとき"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "설정을 불러오는 중"
+msgstr "設定を読み込み中"
+
+#. placeholder {0}: settings.error.message
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "설정을 불러오지 못했습니다 ({0})"
+msgstr "設定を読み込めませんでした ({0})"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "설정을 저장하지 못했습니다: {error}"
+msgstr "設定を保存できませんでした: {error}"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "알림 설정"
+msgstr "通知設定"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "이벤트"
+msgstr "イベント"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "이벤트마다 받을 채널을 고릅니다. 슬랙·이메일은 실제로 보내지 않고 발송 로그에 남습니다. 내가 한 일은 알리지 않습니다."
+msgstr "イベントごとに受け取るチャネルを選びます。Slack・メールは実際には送信されず、送信ログに記録されます。自分の操作は通知されません。"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "이벤트별 알림 채널"
+msgstr "イベント別の通知チャネル"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgctxt "save notification settings"
+msgid "저장"
+msgstr "保存"
+
+#: src/views/feed-settings-notifications/ui/NotificationSettingsView.tsx
+msgid "저장하지 않은 변경이 있습니다"
+msgstr "保存していない変更があります"
+
+#: src/views/feed-settings-notifications/model/settings-model.ts
+msgid "하위 이슈가 모두 해결되어 검토할 차례일 때"
+msgstr "サブイシューがすべて解決し、レビューの番になったとき"

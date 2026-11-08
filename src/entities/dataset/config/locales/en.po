@@ -1,0 +1,52 @@
+msgid ""
+msgstr ""
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "CSV encoding"
+msgid "EUC-KR (CP949)"
+msgstr "EUC-KR (CP949)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "CSV encoding"
+msgid "UTF-8"
+msgstr "UTF-8"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "column type"
+msgid "범주"
+msgstr "Category"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "삭제된 데이터입니다. datastore에서 다른 데이터를 고르세요."
+msgstr "This data was deleted. Pick other data in datastore."
+
+#: src/entities/dataset/lib/labels.ts
+msgid "세로 막대 (|)"
+msgstr "Pipe (|)"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "세미콜론 (;)"
+msgstr "Semicolon (;)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "column type"
+msgid "숫자"
+msgstr "Number"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "쉼표 (,)"
+msgstr "Comma (,)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "column type"
+msgid "시계열"
+msgstr "Time"
+
+#: src/entities/dataset/lib/labels.ts
+msgid "자동 (UTF-8, 깨지면 EUC-KR)"
+msgstr "Auto (UTF-8, else EUC-KR)"
+
+#: src/entities/dataset/lib/labels.ts
+msgctxt "CSV delimiter"
+msgid "탭"
+msgstr "Tab"

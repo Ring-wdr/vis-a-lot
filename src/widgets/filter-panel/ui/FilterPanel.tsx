@@ -1,39 +1,15 @@
 "use client";
 
 import { Accordion } from "@base-ui/react/accordion";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronDown, Database } from "lucide-react";
 import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { filterOf, sameFilters } from "@/features/data-filter/model/filters";
 import { ColumnFilter } from "@/features/data-filter/ui/ColumnFilter";
 import { useDatasetSchema, useSchemaState } from "@/shared/api/queries";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { EmptyState, Skeleton } from "@/shared/ui/Loading";
-
-const messages = defineMessages({
-  ko: {
-    filters: "필터",
-    clearAll: "모두 지우기",
-    readOnly: "이 차트에 적용된 필터입니다.",
-    pending: "바뀐 필터는 draw를 눌러야 적용됩니다.",
-    idle: "필터는 draw할 때 적용됩니다.",
-    noColumns: "컬럼 없음",
-    generating: "데이터 등록이 끝나면 컬럼이 나타납니다.",
-    missing: "데이터를 등록하면 컬럼이 나타납니다.",
-    active: "필터 적용됨",
-  },
-  en: {
-    filters: "Filters",
-    clearAll: "Clear all",
-    readOnly: "Filters applied to this chart.",
-    pending: "Press draw to apply changed filters.",
-    idle: "Filters apply when you draw.",
-    noColumns: "No columns",
-    generating: "Columns appear once the data is registered.",
-    missing: "Columns appear after you register the data.",
-    active: "Filter applied",
-  },
-});
+import "../config/messages";
 
 const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
 
@@ -43,7 +19,7 @@ const SKELETON_WIDTHS = [50, 70, 30, 50, 70, 30] as const;
  * 필터는 draw할 때만 적용된다.
  */
 export function FilterPanel() {
-  const text = useT(messages);
+  const { t } = useLingui();
   const labels = useDatasetLabels();
   const filters = useWorkspace((s) => s.draft.filters);
   const applied = useWorkspace((s) => s.current?.spec.filters);
@@ -61,10 +37,12 @@ export function FilterPanel() {
   return (
     <section
       className="flex min-h-0 min-w-0 flex-1 flex-col border-l border-line bg-panel"
-      aria-label={text.filters}
+      aria-label={t({ message: "필터", context: "data filter panel" })}
     >
       <header className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-1 text-ui">
-        <strong>{text.filters}</strong>
+        <strong>
+          <Trans context="data filter panel">필터</Trans>
+        </strong>
         {count > 0 && (
           <span className="inline-grid h-4.5 min-w-4.5 place-items-center rounded-full bg-accent px-1 text-2xs text-on-accent">
             {count}
@@ -76,7 +54,7 @@ export function FilterPanel() {
             className="ml-auto cursor-pointer text-xs text-accent"
             onClick={() => updateDraft({ filters: [] })}
           >
-            {text.clearAll}
+            <Trans>모두 지우기</Trans>
           </button>
         )}
       </header>
@@ -84,7 +62,13 @@ export function FilterPanel() {
         className="px-3.5 pb-2.5 text-xs text-fg-muted data-pending:text-accent"
         data-pending={pending || undefined}
       >
-        {readOnly ? text.readOnly : pending ? text.pending : text.idle}
+        {readOnly ? (
+          <Trans>이 차트에 적용된 필터입니다.</Trans>
+        ) : pending ? (
+          <Trans>바뀐 필터는 draw를 눌러야 적용됩니다.</Trans>
+        ) : (
+          <Trans>필터는 draw할 때 적용됩니다.</Trans>
+        )}
       </p>
       {(schemaState === "missing" ||
         schemaState === "generating" ||
@@ -92,13 +76,15 @@ export function FilterPanel() {
         <EmptyState
           size="sm"
           icon={<Database size={16} />}
-          title={text.noColumns}
+          title={t`컬럼 없음`}
         >
-          {schemaState === "generating"
-            ? text.generating
-            : schemaState === "deleted"
-              ? labels.deletedDataset
-              : text.missing}
+          {schemaState === "generating" ? (
+            <Trans>데이터 등록이 끝나면 컬럼이 나타납니다.</Trans>
+          ) : schemaState === "deleted" ? (
+            labels.deletedDataset
+          ) : (
+            <Trans>데이터를 등록하면 컬럼이 나타납니다.</Trans>
+          )}
         </EmptyState>
       )}
       {schemaState === "loading" && (
@@ -145,7 +131,9 @@ export function FilterPanel() {
                           className="size-2 rounded-full bg-accent"
                           aria-hidden="true"
                         />
-                        <span className="sr-only">{text.active}</span>
+                        <span className="sr-only">
+                          <Trans>필터 적용됨</Trans>
+                        </span>
                       </>
                     )}
                     <ChevronDown

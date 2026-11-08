@@ -4,7 +4,7 @@
 
 import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceScope } from "@/entities/workspace/model/workspace-scope";
 import {
@@ -19,6 +19,7 @@ import type {
   ItemState,
   JobStateResponse,
 } from "@/shared/api/types";
+import { renderWithI18n } from "@/shared/lib/render-with-i18n";
 import { ChartGrid } from "./ChartGrid";
 
 const ITEMS = 9;
@@ -124,7 +125,7 @@ function renderGrid() {
     defaultOptions: { queries: { retry: false, enabled: false } },
   });
   client.setQueryData(queryKeys.jobProgress("job"), jobState(0));
-  render(
+  renderWithI18n(
     <QueryClientProvider client={client}>
       <WorkspaceScope store={store}>
         <ChartGrid />

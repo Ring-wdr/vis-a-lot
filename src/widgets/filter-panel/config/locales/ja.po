@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "데이터 등록이 끝나면 컬럼이 나타납니다."
+msgstr "データの登録が完了するとカラムが表示されます。"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "데이터를 등록하면 컬럼이 나타납니다."
+msgstr "データを登録するとカラムが表示されます。"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "모두 지우기"
+msgstr "すべてクリア"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "바뀐 필터는 draw를 눌러야 적용됩니다."
+msgstr "変更したフィルターはdrawを押すと適用されます。"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "이 차트에 적용된 필터입니다."
+msgstr "このチャートに適用されたフィルターです。"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "컬럼 없음"
+msgstr "カラムなし"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgctxt "data filter panel"
+msgid "필터"
+msgstr "フィルター"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "필터 적용됨"
+msgstr "フィルター適用中"
+
+#: src/widgets/filter-panel/ui/FilterPanel.tsx
+msgid "필터는 draw할 때 적용됩니다."
+msgstr "フィルターはdraw時に適用されます。"

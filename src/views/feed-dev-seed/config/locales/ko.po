@@ -1,0 +1,123 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:57+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+
+#. placeholder {0}: status.data.posts
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgctxt "post count"
+msgid "{0, plural, other {#개}}"
+msgstr "{0, plural, other {#개}}"
+
+#. placeholder {0}: status.data.users
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgctxt "user count"
+msgid "{0, plural, other {#명}}"
+msgstr "{0, plural, other {#명}}"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "JSON 가져오기"
+msgstr "JSON 가져오기"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "JSON 내보내기"
+msgstr "JSON 내보내기"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "JSON을 읽지 못했습니다: {error}"
+msgstr "JSON을 읽지 못했습니다: {error}"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgctxt "import seed JSON"
+msgid "가져오기"
+msgstr "가져오기"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "가져오지 못했습니다: {error}"
+msgstr "가져오지 못했습니다: {error}"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "가져올 JSON 파일"
+msgstr "가져올 JSON 파일"
+
+#. placeholder {0}: result.rows
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "가져왔습니다: {0, plural, other {#행}}"
+msgstr "가져왔습니다: {0, plural, other {#행}}"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "게시물"
+msgstr "게시물"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "관리"
+msgstr "관리"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "내보내지 못했습니다: {error}"
+msgstr "내보내지 못했습니다: {error}"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgctxt "reset feed data"
+msgid "리셋"
+msgstr "리셋"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "리셋은 기본 시나리오(사용자 8명, 그룹 2개, 게시물 60개, 4주치 이벤트)를 다시 적재합니다."
+msgstr "리셋은 기본 시나리오(사용자 8명, 그룹 2개, 게시물 60개, 4주치 이벤트)를 다시 적재합니다."
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "리셋하지 못했습니다: {error}"
+msgstr "리셋하지 못했습니다: {error}"
+
+#. placeholder {0}: result.users
+#. placeholder {1}: result.posts
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "리셋했습니다: 사용자 {0}명, 게시물 {1}개"
+msgstr "리셋했습니다: 사용자 {0}명, 게시물 {1}개"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "불러오는 중"
+msgstr "불러오는 중"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "사용자"
+msgstr "사용자"
+
+#. placeholder {0}: status.error.message
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "상태를 불러오지 못했습니다: {0}"
+msgstr "상태를 불러오지 못했습니다: {0}"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgctxt "dev seed page title"
+msgid "시드"
+msgstr "시드"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "지금 데이터"
+msgstr "지금 데이터"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "지금 피드 데이터를 지우고 ''{fileName}''으로 채울까요?"
+msgstr "지금 피드 데이터를 지우고 ''{fileName}''으로 채울까요?"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "처리하는 중"
+msgstr "처리하는 중"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "프로토타입 데이터를 처음 상태로 되돌리거나, JSON으로 저장해 두고 다시 채웁니다."
+msgstr "프로토타입 데이터를 처음 상태로 되돌리거나, JSON으로 저장해 두고 다시 채웁니다."
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "피드 데이터를 모두 지우고 기본 시나리오를 다시 적재할까요?"
+msgstr "피드 데이터를 모두 지우고 기본 시나리오를 다시 적재할까요?"
+
+#: src/views/feed-dev-seed/ui/SeedView.tsx
+msgid "피드 스냅숏 형식(schemaVersion, tables)이 아닙니다."
+msgstr "피드 스냅숏 형식(schemaVersion, tables)이 아닙니다."

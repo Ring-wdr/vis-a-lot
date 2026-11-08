@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/features/switch-user/ui/UserSwitcher.tsx
+msgid "사용자 목록을 불러오지 못했습니다: {loadError}"
+msgstr "ユーザー一覧を読み込めませんでした：{loadError}"
+
+#: src/features/switch-user/ui/UserSwitcher.tsx
+msgid "사용자 없음"
+msgstr "ユーザーなし"
+
+#: src/features/switch-user/ui/UserSwitcher.tsx
+msgid "사용자 전환"
+msgstr "ユーザー切り替え"
+
+#: src/features/switch-user/ui/UserSwitcher.tsx
+msgid "지금 사용자"
+msgstr "現在のユーザー"

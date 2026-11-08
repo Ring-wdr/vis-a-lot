@@ -2,13 +2,13 @@
 
 // 설명: 읽기 전용으로 그리고, 고칠 수 있으면 편집기로 바꿔 저장한다.
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { JSONContent } from "@tiptap/react";
 import { Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
 import { usePostAction } from "@/entities/post/model/use-post-action";
 import { detail } from "@/entities/post/ui/styles";
 import { postsApi } from "@/shared/api/feed/posts";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import {
@@ -18,30 +18,12 @@ import {
   toDoc,
 } from "@/shared/ui/rich-editor/rich-text";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
-
-const messages = defineMessages({
-  ko: {
-    title: "설명",
-    edit: "편집",
-    cancel: "취소",
-    saveFailed: "설명을 저장하지 못했습니다",
-    save: "저장",
-    empty: "설명이 없습니다.",
-  },
-  en: {
-    title: "Description",
-    edit: "Edit",
-    cancel: "Cancel",
-    saveFailed: "Couldn't save the description",
-    save: "Save",
-    empty: "No description.",
-  },
-});
+import "../config/messages";
 
 const d = detail();
 
 export function PostBody({ post }: { post: PostDetail }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const doc = useMemo(() => toDoc(post.body), [post.body]);
   const [draft, setDraft] = useState<JSONContent | null>(null);
   const [editing, setEditing] = useState(false);
@@ -51,7 +33,7 @@ export function PostBody({ post }: { post: PostDetail }) {
     <section className={d.section()} aria-labelledby="post-body-title">
       <div className={d.sectionHead()}>
         <h2 id="post-body-title" className={d.sectionTitle()}>
-          {text.title}
+          <Trans>설명</Trans>
         </h2>
         {post.permissions.edit && !editing && (
           <button
@@ -63,7 +45,7 @@ export function PostBody({ post }: { post: PostDetail }) {
             }}
           >
             <Pencil size={13} aria-hidden="true" />
-            {text.edit}
+            <Trans>편집</Trans>
           </button>
         )}
       </div>
@@ -72,7 +54,7 @@ export function PostBody({ post }: { post: PostDetail }) {
           <RichTextEditor
             initial={doc}
             onChange={setDraft}
-            label={text.title}
+            label={t`설명`}
             autoFocus
           />
           <div className="flex justify-end gap-1.5">
@@ -82,7 +64,7 @@ export function PostBody({ post }: { post: PostDetail }) {
               disabled={!!pending}
               onClick={() => setEditing(false)}
             >
-              {text.cancel}
+              <Trans context="cancel editing">취소</Trans>
             </button>
             <button
               type="button"
@@ -91,7 +73,7 @@ export function PostBody({ post }: { post: PostDetail }) {
               onClick={async () => {
                 const body = isEmptyDoc(draft) ? null : draft;
                 if (
-                  await run("body", text.saveFailed, () =>
+                  await run("body", t`설명을 저장하지 못했습니다`, () =>
                     postsApi.update(post.id, { body }),
                   )
                 )
@@ -99,14 +81,16 @@ export function PostBody({ post }: { post: PostDetail }) {
               }}
             >
               {pending && <Spinner size="sm" tone="inherit" />}
-              {text.save}
+              <Trans context="save edit">저장</Trans>
             </button>
           </div>
         </>
       ) : doc && !isEmptyDoc(doc) ? (
         <RichTextView content={doc} />
       ) : (
-        <p className={d.hint()}>{text.empty}</p>
+        <p className={d.hint()}>
+          <Trans>설명이 없습니다.</Trans>
+        </p>
       )}
     </section>
   );

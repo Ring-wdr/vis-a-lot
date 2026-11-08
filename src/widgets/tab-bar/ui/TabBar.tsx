@@ -1,5 +1,6 @@
 "use client";
 
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronLeft, ChevronRight, Filter, Plus, X } from "lucide-react";
 import { type MouseEvent, memo, type PointerEvent } from "react";
 import { useStore } from "zustand";
@@ -13,36 +14,12 @@ import {
 } from "@/entities/workspace/model/tabs-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useColumns, useDatasetNames } from "@/shared/api/queries";
-import { defineMessages, useT } from "@/shared/lib/i18n";
+
 import { tv } from "@/shared/lib/tw";
 import { usePressRepeat } from "@/shared/lib/use-press-repeat";
 import { LoadingText } from "@/shared/ui/Loading";
+import "../config/messages";
 import { NUDGE_INTERVAL_MS, useTabScroll } from "../model/use-tab-scroll";
-
-const messages = defineMessages({
-  ko: {
-    loading: "불러오는 중",
-    newChart: (dataset: string) => `새 차트 · ${dataset}`,
-    prevTabs: "앞 탭 보기",
-    nextTabs: "뒤 탭 보기",
-    tabs: (view: string) => `${view} 탭`,
-    closeTab: "탭 닫기",
-    emptyHistory: "왼쪽 목록에서 고르면 탭으로 열립니다.",
-    newTab: "새 탭",
-    filter: "필터",
-  },
-  en: {
-    loading: "Loading",
-    newChart: (dataset: string) => `New chart · ${dataset}`,
-    prevTabs: "Scroll tabs left",
-    nextTabs: "Scroll tabs right",
-    tabs: (view: string) => `${view} tabs`,
-    closeTab: "Close tab",
-    emptyHistory: "Pick one from the list on the left to open it in a tab.",
-    newTab: "New tab",
-    filter: "Filter",
-  },
-});
 
 // 탭 닫기·새 탭
 const iconButton = tv({
@@ -54,17 +31,18 @@ const iconButton = tv({
  * 그 탭의 작업 store만 구독하므로 다른 탭이 바뀌거나 탭을 오가도 다시 그리지 않는다.
  */
 const TabLabel = memo(function TabLabel({ tab }: { tab: WorkspaceTab }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const spec = useStore(tab.store, (s) => s.current?.spec);
   const dataset = useStore(tab.store, (s) => s.draft.dataset);
   const columns = useColumns(spec?.dataset ?? dataset);
   const nameOf = useDatasetNames();
   const loading = !spec && tab.view === "history";
+  const name = nameOf(dataset);
   const label = spec
     ? chartTitle(spec, columns)
     : loading
-      ? text.loading
-      : text.newChart(nameOf(dataset));
+      ? t`불러오는 중`
+      : t({ message: `새 차트 · ${name}`, comment: "name: 데이터셋 이름" });
   return (
     <span className="truncate" title={label}>
       {loading ? <LoadingText>{label}</LoadingText> : label}
@@ -84,8 +62,8 @@ const TabItem = memo(function TabItem({
   closable: boolean;
   locked: boolean;
 }) {
-  const text = useT(messages);
-  const tab = useTabs((s) => s.tabs.find((t) => t.id === id));
+  const { t } = useLingui();
+  const tab = useTabs((s) => s.tabs.find((x) => x.id === id));
   // action은 store를 만들 때 정해져 참조가 바뀌지 않는다.
   const activate = useTabs((s) => s.activate);
   const close = useTabs((s) => s.close);
@@ -113,8 +91,8 @@ const TabItem = memo(function TabItem({
         <button
           type="button"
           className={iconButton({ class: "mr-1.5 size-5" })}
-          aria-label={text.closeTab}
-          title={lockedHint ?? text.closeTab}
+          aria-label={t`탭 닫기`}
+          title={lockedHint ?? t`탭 닫기`}
           disabled={locked}
           onClick={() => close(id)}
         >
@@ -127,11 +105,11 @@ const TabItem = memo(function TabItem({
 
 /** 지금 view(gallery / history)의 탭들. gallery는 + 로 새 작업 공간을 연다. */
 export function TabBar({ view }: { view: View }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   // 이 view의 탭 id만 고른다. filter·map은 매번 새 배열을 만들므로 useShallow로 내용이 같으면 같은 값으로 본다.
   // (useShallow가 없으면 store가 바뀔 때마다 다시 그리고, React가 무한 렌더로 본다.)
   const ids = useTabs(
-    useShallow((s) => s.tabs.filter((t) => t.view === view).map((t) => t.id)),
+    useShallow((s) => s.tabs.filter((x) => x.view === view).map((x) => x.id)),
   );
   const active = useTabs((s) => s.active[view]);
   const openGallery = useTabs((s) => s.openGallery);
@@ -170,8 +148,8 @@ export function TabBar({ view }: { view: View }) {
         <button
           type="button"
           className={iconButton({ class: "mb-0.5 size-6.5" })}
-          aria-label={text.prevTabs}
-          title={text.prevTabs}
+          aria-label={t`앞 탭 보기`}
+          title={t`앞 탭 보기`}
           disabled={!canLeft}
           {...arrowHandlers(-1)}
         >
@@ -183,7 +161,10 @@ export function TabBar({ view }: { view: View }) {
       <div
         ref={scrollRef}
         role="tablist"
-        aria-label={text.tabs(view)}
+        aria-label={t({
+          message: `${view} 탭`,
+          comment: "view: 화면 이름 gallery 또는 history (번역하지 않는다)",
+        })}
         className="-mb-px flex min-w-0 [scrollbar-width:none] items-end gap-0.5 overflow-x-auto overflow-y-hidden"
         title={lockedHint}
       >
@@ -198,7 +179,7 @@ export function TabBar({ view }: { view: View }) {
         ))}
         {view === "history" && ids.length === 0 && (
           <span className="self-center px-1 pb-1.5 text-xs text-fg-muted">
-            {text.emptyHistory}
+            <Trans>왼쪽 목록에서 고르면 탭으로 열립니다.</Trans>
           </span>
         )}
       </div>
@@ -206,8 +187,8 @@ export function TabBar({ view }: { view: View }) {
         <button
           type="button"
           className={iconButton({ class: "mb-0.5 size-6.5" })}
-          aria-label={text.nextTabs}
-          title={text.nextTabs}
+          aria-label={t`뒤 탭 보기`}
+          title={t`뒤 탭 보기`}
           disabled={!canRight}
           {...arrowHandlers(1)}
         >
@@ -218,8 +199,8 @@ export function TabBar({ view }: { view: View }) {
         <button
           type="button"
           className={iconButton({ class: "mb-0.5 size-6.5" })}
-          aria-label={text.newTab}
-          title={lockedHint ?? text.newTab}
+          aria-label={t`새 탭`}
+          title={lockedHint ?? t`새 탭`}
           disabled={locked}
           onClick={() => openGallery()}
         >
@@ -233,7 +214,6 @@ export function TabBar({ view }: { view: View }) {
 
 /** 탭 바 오른쪽: 필터 패널 열기/닫기. 지금 탭에 걸린 필터 수를 보여준다. */
 function FilterToggle() {
-  const text = useT(messages);
   const open = useTabs((s) => s.filterPanelOpen);
   const toggle = useTabs((s) => s.toggleFilterPanel);
   const count = useWorkspace((s) => s.draft.filters?.length ?? 0);
@@ -245,7 +225,7 @@ function FilterToggle() {
       onClick={toggle}
     >
       <Filter size={13} aria-hidden="true" />
-      {text.filter}
+      <Trans context="filter panel button">필터</Trans>
       {count > 0 && (
         <span className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-3xs text-on-accent">
           {count}

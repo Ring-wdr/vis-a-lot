@@ -2,21 +2,18 @@
 
 // 필드 고르기 목록: 그룹 멤버·게시물 유형·팀·우선순위. 상세 필드 패널과 새 게시물 폼이 같이 쓴다.
 
+import { t } from "@lingui/core/macro";
 import { useMemo } from "react";
 import { type PriorityLevel, priorityLabels } from "@/entities/post/lib/labels";
 import { useUserMap } from "@/shared/api/feed/lookups";
 import { useGroup } from "@/shared/api/feed/queries";
 import {
-  defineMessages,
   intlLocale,
   type Locale,
+  linguiFor,
   useLocale,
 } from "@/shared/lib/i18n";
-
-const messages = defineMessages({
-  ko: { inactive: "비활성", notMember: "멤버 아님", none: "없음" },
-  en: { inactive: "inactive", notMember: "not a member", none: "None" },
-});
+import "../config/messages";
 
 /** Select의 "없음" 값. base-ui Select는 빈 문자열을 고른 값으로 그리지 않는다 */
 export const NONE = "_none";
@@ -38,7 +35,20 @@ export function useGroupOptions(
   const group = useGroup(groupId);
   const users = useUserMap();
   const locale = useLocale();
-  const text = messages[locale];
+  const text = useMemo(() => {
+    const i18n = linguiFor(locale);
+    return {
+      inactive: t(i18n)({
+        message: "비활성",
+        comment: "고르기 목록에서 사람 이름 뒤 괄호",
+      }),
+      notMember: t(i18n)({
+        message: "멤버 아님",
+        comment: "고르기 목록에서 사람 이름 뒤 괄호",
+      }),
+      none: t(i18n)({ message: "없음", context: "empty select option" }),
+    };
+  }, [locale]);
   const kept = keep.filter((id): id is string => !!id).join(",");
   return useMemo(() => {
     const g = group.data;

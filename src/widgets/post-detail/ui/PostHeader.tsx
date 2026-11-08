@@ -2,6 +2,8 @@
 
 // 상세 머리: 키·그룹·제목(고치기), 상태 배지와 전이 버튼, 구독·끌어올리기·지우기.
 
+import { t } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { Bell, BellOff, Check, Pencil, Pin, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
@@ -18,98 +20,12 @@ import {
 } from "@/features/transition-post/ui/transition-dialogs";
 import { postsApi } from "@/shared/api/feed/posts";
 import type { Group } from "@/shared/api/feed/types";
-import { defineMessages, t, useT } from "@/shared/lib/i18n";
 import { cn } from "@/shared/lib/tw";
 import { showConfirm } from "@/shared/ui/AlertDialog";
 import { button, toolButton } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
-
-const messages = defineMessages({
-  ko: {
-    start: "진행 시작",
-    startFailed: "진행을 시작하지 못했습니다",
-    requestReview: "완료 요청",
-    requestReviewFailed: "완료를 요청하지 못했습니다",
-    approve: "승인",
-    approveFailed: "승인하지 못했습니다",
-    reject: "반려",
-    rejectFailed: "반려하지 못했습니다",
-    resume: "미해결로",
-    resumeFailed: "보류를 풀지 못했습니다",
-    reopen: "다시 열기",
-    reopenFailed: "다시 열지 못했습니다",
-    hold: "보류",
-    holdFailed: "보류하지 못했습니다",
-    cancel: "취소",
-    cancelFailed: "취소하지 못했습니다",
-    editTitle: "제목 고치기",
-    titleFailed: "제목을 바꾸지 못했습니다",
-    title: "제목",
-    saveTitle: "제목 저장",
-    cancelEdit: "고치기 취소",
-    blocked: "막힘",
-    cancelReason: (reason: string) => `취소 사유: ${reason}`,
-    holdReason: (reason: string) => `보류 사유: ${reason}`,
-    holdUntil: (day: string) => `재개일 ${day}`,
-    reopenCount: (n: number) => `다시 연 횟수 ${n}`,
-    unsubscribe: "구독 끄기",
-    subscribe: "구독",
-    subscribedTitle: "구독 중: 누르면 알림을 끕니다",
-    subscribeTitle: "구독: 바뀌면 알림을 받습니다",
-    subscribeFailed: "구독을 바꾸지 못했습니다",
-    unpin: "끌어올리기 해제",
-    pin: "끌어올리기",
-    pinnedTitle: "끌어올림: 누르면 해제합니다",
-    pinTitle: "끌어올리기: 홈 피드 위쪽에 둡니다",
-    pinFailed: "끌어올리기를 바꾸지 못했습니다",
-    delete: "지우기",
-    confirmDelete: (key: string, title: string) =>
-      `${key} '${title}'을(를) 지울까요?`,
-    deleteFailed: "지우지 못했습니다",
-  },
-  en: {
-    start: "Start",
-    startFailed: "Couldn't start progress",
-    requestReview: "Request review",
-    requestReviewFailed: "Couldn't request review",
-    approve: "Approve",
-    approveFailed: "Couldn't approve",
-    reject: "Reject",
-    rejectFailed: "Couldn't reject",
-    resume: "Resume",
-    resumeFailed: "Couldn't lift the hold",
-    reopen: "Reopen",
-    reopenFailed: "Couldn't reopen",
-    hold: "Hold",
-    holdFailed: "Couldn't put on hold",
-    cancel: "Cancel",
-    cancelFailed: "Couldn't cancel",
-    editTitle: "Edit title",
-    titleFailed: "Couldn't change the title",
-    title: "Title",
-    saveTitle: "Save title",
-    cancelEdit: "Cancel editing",
-    blocked: "Blocked",
-    cancelReason: (reason: string) => `Cancel reason: ${reason}`,
-    holdReason: (reason: string) => `Hold reason: ${reason}`,
-    holdUntil: (day: string) => `Resumes ${day}`,
-    reopenCount: (n: number) => `Reopened ${n}×`,
-    unsubscribe: "Unsubscribe",
-    subscribe: "Subscribe",
-    subscribedTitle: "Subscribed: click to turn off notifications",
-    subscribeTitle: "Subscribe: get notified of changes",
-    subscribeFailed: "Couldn't change the subscription",
-    unpin: "Unpin",
-    pin: "Pin",
-    pinnedTitle: "Pinned: click to unpin",
-    pinTitle: "Pin: keep at the top of the home feed",
-    pinFailed: "Couldn't change the pin",
-    delete: "Delete",
-    confirmDelete: (key: string, title: string) => `Delete ${key} '${title}'?`,
-    deleteFailed: "Couldn't delete",
-  },
-});
+import "../config/messages";
 
 type Action = {
   name: string;
@@ -126,63 +42,62 @@ function transitionActions(post: PostDetail): Action[] {
   const p = post.permissions;
   const can = (to: PostDetail["status"]) => p.transitions.includes(to);
   const actions: Action[] = [];
-  const text = t(messages);
   if (post.status === "unresolved" && can("in_progress"))
     actions.push({
       name: "start",
-      label: text.start,
+      label: t`진행 시작`,
       primary: true,
-      failure: text.startFailed,
+      failure: t`진행을 시작하지 못했습니다`,
       run: () => postsApi.transition(post.id, { to: "in_progress" }),
     });
   if (p.requestReview)
     actions.push({
       name: "requestReview",
-      label: text.requestReview,
+      label: t({ message: "완료 요청", context: "post transition button" }),
       primary: true,
-      failure: text.requestReviewFailed,
+      failure: t`완료를 요청하지 못했습니다`,
       run: () => postsApi.requestReview(post.id),
     });
   if (p.approve)
     actions.push({
       name: "approve",
-      label: text.approve,
+      label: t({ message: "승인", context: "post transition button" }),
       primary: true,
-      failure: text.approveFailed,
+      failure: t`승인하지 못했습니다`,
       run: () => postsApi.approve(post.id),
     });
   if (p.reject)
     actions.push({
       name: "reject",
-      label: text.reject,
+      label: t({ message: "반려", context: "post transition button" }),
       danger: true,
-      failure: text.rejectFailed,
+      failure: t`반려하지 못했습니다`,
     });
   if (post.status === "on_hold" && can("unresolved"))
     actions.push({
       name: "resume",
-      label: text.resume,
-      failure: text.resumeFailed,
+      label: t`미해결로`,
+      failure: t`보류를 풀지 못했습니다`,
       run: () => postsApi.transition(post.id, { to: "unresolved" }),
     });
   if (p.reopen)
     actions.push({
       name: "reopen",
-      label: text.reopen,
-      failure: text.reopenFailed,
+      label: t`다시 열기`,
+      failure: t`다시 열지 못했습니다`,
       run: () => postsApi.reopen(post.id),
     });
   if (can("on_hold"))
     actions.push({
       name: "hold",
-      label: text.hold,
-      failure: text.holdFailed,
+      label: t({ message: "보류", context: "post transition button" }),
+      failure: t`보류하지 못했습니다`,
     });
   if (can("cancelled"))
     actions.push({
       name: "cancel",
-      label: text.cancel,
-      failure: text.cancelFailed,
+      label: t({ message: "취소", context: "post transition button" }),
+      failure: t`취소하지 못했습니다`,
     });
   return actions;
 }
@@ -222,7 +137,7 @@ function closeReasonLabel(post: PostDetail) {
 }
 
 function TitleEditor({ post }: { post: PostDetail }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(post.title);
   const { run, pending } = usePostAction();
@@ -237,8 +152,8 @@ function TitleEditor({ post }: { post: PostDetail }) {
           <button
             type="button"
             className={cn(toolButton(), "mt-0.5 h-6.5 w-7 flex-none")}
-            aria-label={text.editTitle}
-            title={text.editTitle}
+            aria-label={t`제목 고치기`}
+            title={t`제목 고치기`}
             onClick={() => {
               setValue(post.title);
               setEditing(true);
@@ -254,7 +169,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
     const title = value.trim();
     if (!title || title === post.title) return setEditing(false);
     if (
-      await run("title", text.titleFailed, () =>
+      await run("title", t`제목을 바꾸지 못했습니다`, () =>
         postsApi.update(post.id, { title }),
       )
     )
@@ -272,7 +187,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
         className={field({ class: "h-9 text-base font-semibold" })}
         value={value}
         maxLength={200}
-        aria-label={text.title}
+        aria-label={t({ message: "제목", context: "post title input" })}
         // biome-ignore lint/a11y/noAutofocus: 고치기를 누르면 바로 입력한다
         autoFocus
         onChange={(e) => setValue(e.currentTarget.value)}
@@ -286,7 +201,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
       <button
         type="submit"
         className={cn(toolButton(), "flex-none")}
-        aria-label={text.saveTitle}
+        aria-label={t`제목 저장`}
         disabled={!!pending}
       >
         {pending ? (
@@ -298,7 +213,7 @@ function TitleEditor({ post }: { post: PostDetail }) {
       <button
         type="button"
         className={cn(toolButton(), "flex-none")}
-        aria-label={text.cancelEdit}
+        aria-label={t`고치기 취소`}
         onClick={() => setEditing(false)}
       >
         <X size={14} aria-hidden="true" />
@@ -316,11 +231,12 @@ export function PostHeader({
   group: Group | undefined;
   onDeleted: () => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { run, pending } = usePostAction();
   const actions = transitionActions(post);
   const reason = closeReasonLabel(post);
   const pinned = !!post.pinnedAt;
+  const { key, title, holdUntil, reopenCount } = post;
 
   return (
     <header className="flex min-w-0 flex-col gap-2.5">
@@ -337,20 +253,20 @@ export function PostHeader({
           {statusLabel(post.status, group?.statusNames)}
         </span>
         {post.blocked && (
-          <span className={chip({ tone: "danger" })}>{text.blocked}</span>
+          <span className={chip({ tone: "danger" })}>{t`막힘`}</span>
         )}
         {reason && (
           <span className={chip()}>
             {post.status === "cancelled"
-              ? text.cancelReason(reason)
-              : text.holdReason(reason)}
+              ? t`취소 사유: ${reason}`
+              : t`보류 사유: ${reason}`}
           </span>
         )}
         {post.status === "on_hold" && post.holdUntil && (
-          <span className={chip()}>{text.holdUntil(post.holdUntil)}</span>
+          <span className={chip()}>{t`재개일 ${holdUntil}`}</span>
         )}
         {post.reopenCount > 0 && (
-          <span className={chip()}>{text.reopenCount(post.reopenCount)}</span>
+          <span className={chip()}>{t`다시 연 횟수 ${reopenCount}`}</span>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -384,11 +300,15 @@ export function PostHeader({
             type="button"
             className={toolButton()}
             aria-pressed={post.subscribed}
-            aria-label={post.subscribed ? text.unsubscribe : text.subscribe}
-            title={post.subscribed ? text.subscribedTitle : text.subscribeTitle}
+            aria-label={post.subscribed ? t`구독 끄기` : t`구독`}
+            title={
+              post.subscribed
+                ? t`구독 중: 누르면 알림을 끕니다`
+                : t`구독: 바뀌면 알림을 받습니다`
+            }
             disabled={!!pending}
             onClick={() =>
-              run("subscribe", text.subscribeFailed, () =>
+              run("subscribe", t`구독을 바꾸지 못했습니다`, () =>
                 postsApi.subscribe(post.id, !post.subscribed),
               )
             }
@@ -403,11 +323,17 @@ export function PostHeader({
             type="button"
             className={toolButton()}
             aria-pressed={pinned}
-            aria-label={pinned ? text.unpin : text.pin}
-            title={pinned ? text.pinnedTitle : text.pinTitle}
+            aria-label={pinned ? t`끌어올리기 해제` : t`끌어올리기`}
+            title={
+              pinned
+                ? t`끌어올림: 누르면 해제합니다`
+                : t`끌어올리기: 홈 피드 위쪽에 둡니다`
+            }
             disabled={!!pending}
             onClick={() =>
-              run("pin", text.pinFailed, () => postsApi.pin(post.id, !pinned))
+              run("pin", t`끌어올리기를 바꾸지 못했습니다`, () =>
+                postsApi.pin(post.id, !pinned),
+              )
             }
           >
             <Pin size={14} aria-hidden="true" />
@@ -416,17 +342,17 @@ export function PostHeader({
             <button
               type="button"
               className={cn(toolButton(), "text-danger")}
-              aria-label={text.delete}
-              title={text.delete}
+              aria-label={t`지우기`}
+              title={t`지우기`}
               disabled={!!pending}
               onClick={async () => {
                 const ok = await showConfirm(
-                  text.confirmDelete(post.key, post.title),
-                  { confirmLabel: text.delete },
+                  t`${key} ''${title}''을(를) 지울까요?`,
+                  { confirmLabel: t`지우기` },
                 );
                 if (!ok) return;
                 if (
-                  await run("delete", text.deleteFailed, () =>
+                  await run("delete", t`지우지 못했습니다`, () =>
                     postsApi.remove(post.id),
                   )
                 )

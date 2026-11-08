@@ -1,5 +1,6 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { type ReactNode, useId, useState } from "react";
 import {
   Controller,
@@ -8,7 +9,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import type { OptionSection } from "@/entities/chart/model/chart-options";
-import { defineMessages, useLocale, useT } from "@/shared/lib/i18n";
+import { useLocale } from "@/shared/lib/i18n";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
 import {
@@ -21,6 +22,7 @@ import {
   sectionParts,
   sectionPaths,
 } from "../model/option-fields";
+import "../config/messages";
 import {
   type OptionsBase,
   type OptionsFormValues,
@@ -32,21 +34,6 @@ const row =
 const check = "flex items-center gap-1.5 text-fg-secondary";
 const control =
   "w-full rounded-md border border-line bg-elevated px-1.5 py-1 text-fg";
-
-const messages = defineMessages({
-  ko: {
-    change: (label: string) => `${label} 바꾸기`,
-    none: "없음",
-    clear: "비우기",
-    auto: "자동",
-  },
-  en: {
-    change: (label: string) => `Change ${label}`,
-    none: "None",
-    clear: "Clear",
-    auto: "Auto",
-  },
-});
 
 /**
  * 속성 구역 하나의 편집 폼(react-hook-form). 필드 표(sectionFields(), 하위 항목이 있으면 그 항목의 필드)대로
@@ -162,7 +149,7 @@ function FieldInput({
   disabled: boolean;
   onCommit: (value: unknown) => void;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const id = useId();
   switch (field.kind) {
     case "boolean":
@@ -228,6 +215,7 @@ function FieldInput({
     }
     case "color": {
       const color = typeof value === "string" ? value : "";
+      const label = field.label;
       return (
         <div className={row}>
           <span id={id}>{field.label}</span>
@@ -236,11 +224,13 @@ function FieldInput({
               className="size-5.5 flex-none rounded-sm border border-line"
               style={{ background: color || "transparent" }}
               color={color || "#ffffff"}
-              label={text.change(field.label)}
+              label={t`${label} 바꾸기`}
               disabled={disabled}
               onCommit={onCommit}
             />
-            <code className="text-2xs text-fg-muted">{color || text.none}</code>
+            <code className="text-2xs text-fg-muted">
+              {color || t({ message: "없음", context: "no color" })}
+            </code>
             {field.optional && color && (
               <button
                 type="button"
@@ -248,7 +238,7 @@ function FieldInput({
                 disabled={disabled}
                 onClick={() => onCommit("")}
               >
-                {text.clear}
+                {t({ message: "비우기", context: "clear color" })}
               </button>
             )}
           </span>
@@ -263,7 +253,11 @@ function FieldInput({
             id={id}
             type="number"
             value={value === null || value === undefined ? "" : String(value)}
-            placeholder={field.nullable ? text.auto : undefined}
+            placeholder={
+              field.nullable
+                ? t({ message: "자동", context: "chart option" })
+                : undefined
+            }
             min={field.min}
             max={field.max}
             step={field.step ?? 1}

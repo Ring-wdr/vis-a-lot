@@ -1,0 +1,124 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "‘{name}’ 뷰를 지울까요?"
+msgstr "ビュー「{name}」を削除しますか?"
+
+#. 복사한 뷰의 기본 이름. {name}은 원래 뷰 이름
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "{name} 사본"
+msgstr "{name} のコピー"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "{total, plural, other {#건}}"
+msgstr "{total, plural, other {#件}}"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "personal saved view"
+msgid "개인"
+msgstr "個人"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "게시물을 불러오지 못했습니다"
+msgstr "投稿を読み込めませんでした"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "pin a saved view"
+msgid "고정"
+msgstr "固定"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "고정 해제"
+msgstr "固定を解除"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "고정을 바꾸지 못했습니다: {reason}"
+msgstr "固定を変更できませんでした: {reason}"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "그룹 공유"
+msgstr "グループ共有"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "기본 제공"
+msgstr "デフォルト"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "내 뷰로 복사"
+msgstr "自分のビューにコピー"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "다시 시도"
+msgstr "再試行"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "view layout"
+msgid "리스트"
+msgstr "リスト"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "view layout"
+msgid "보드"
+msgstr "ボード"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "뷰를 고르세요"
+msgstr "ビューを選んでください"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "뷰를 복사하지 못했습니다: {reason}"
+msgstr "ビューをコピーできませんでした: {reason}"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "뷰를 불러오지 못했습니다"
+msgstr "ビューを読み込めませんでした"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "뷰를 저장하지 못했습니다: {reason}"
+msgstr "ビューを保存できませんでした: {reason}"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "뷰를 지우지 못했습니다: {reason}"
+msgstr "ビューを削除できませんでした: {reason}"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "뷰를 찾을 수 없습니다"
+msgstr "ビューが見つかりません"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "사이드바의 저장된 뷰나 리스트의 ‘뷰로 저장’에서 엽니다."
+msgstr "サイドバーの保存したビューか、リストの「ビューとして保存」から開きます。"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "이 뷰에 맞는 게시물이 없습니다"
+msgstr "このビューに一致する投稿がありません"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "save saved-view changes"
+msgid "저장"
+msgstr "保存"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "delete a saved view"
+msgid "지우기"
+msgstr "削除"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "지워졌거나, 볼 수 없는 그룹의 뷰입니다."
+msgstr "削除されたか、閲覧できないグループのビューです。"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgctxt "view layout"
+msgid "피드"
+msgstr "フィード"
+
+#: src/views/feed-saved-view/ui/SavedViewView.tsx
+msgid "홈으로"
+msgstr "ホームへ"

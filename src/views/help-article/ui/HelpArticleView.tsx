@@ -1,5 +1,8 @@
+import { t } from "@lingui/core/macro";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { MDXContent } from "mdx/types";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   findHelpArticle,
   HELP,
@@ -8,23 +11,32 @@ import {
   helpArticlePath,
   helpServicePath,
 } from "@/shared/config/help";
-import type { Locale } from "@/shared/config/locale";
+import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/shared/config/locale";
+import { linguiFor } from "@/shared/lib/lingui";
 import { Localized } from "@/shared/ui/Localized";
 import { prefixedHeadings } from "@/shared/ui/mdx/mdx-components";
 import { HELP_CONTENT } from "../config/content";
+import "../config/messages";
 
-/** 영어 본문의 제목 id. 한국어 본문과 함께 그려도 id가 겹치지 않는다 (본문 안 링크도 #en-…). */
-const EN_HEADINGS = prefixedHeadings("en-");
+/**
+ * 기본 언어가 아닌 본문의 제목 id에 언어를 붙인다. 여러 언어 본문을 함께 그려도 id가 겹치지 않는다
+ * (본문 안 링크도 #en-…, #ja-…).
+ */
+const HEADINGS = Object.fromEntries(
+  LOCALES.map((locale) => [
+    locale,
+    locale === DEFAULT_LOCALE ? undefined : prefixedHeadings(`${locale}-`),
+  ]),
+) as Record<Locale, ReturnType<typeof prefixedHeadings> | undefined>;
 
-const TEXT = {
-  ko: { prev: "이전", next: "다음", nav: "이전·다음 문서", breadcrumb: "위치" },
-  en: {
-    prev: "Previous",
-    next: "Next",
-    nav: "Previous and next",
-    breadcrumb: "Breadcrumb",
-  },
-} as const satisfies Record<Locale, Record<string, string>>;
+/** 언어마다 하나씩 그린다. Localized에 넘긴다. */
+function perLocale(
+  render: (lang: Locale) => ReactNode,
+): Record<Locale, ReactNode> {
+  return Object.fromEntries(
+    LOCALES.map((locale) => [locale, render(locale)]),
+  ) as Record<Locale, ReactNode>;
+}
 
 function Neighbor({
   service,
@@ -45,7 +57,17 @@ function Neighbor({
       className="group flex flex-col gap-0.5 rounded-lg border border-line px-4 py-3 hover:border-accent-line data-[dir=next]:items-end data-[dir=next]:text-right"
       data-dir={dir}
     >
-      <span className="text-xs text-fg-muted">{TEXT[lang][dir]}</span>
+      <span className="text-xs text-fg-muted">
+        {next
+          ? t(linguiFor(lang))({
+              message: "다음",
+              context: "next help article",
+            })
+          : t(linguiFor(lang))({
+              message: "이전",
+              context: "previous help article",
+            })}
+      </span>
       <span className="flex items-center gap-1 text-sm font-semibold group-hover:text-accent">
         {!next && <ChevronLeft size={14} aria-hidden="true" />}
         {article.title[lang]}
@@ -57,7 +79,8 @@ function Neighbor({
 
 /**
  * 도움말 문서 한 편: 위치, 제목, 본문(MDX), 이전·다음 문서.
- * 정적 서버 컴포넌트라 두 언어를 함께 그리고 <html lang>에 맞는 쪽만 보인다 (Localized).
+ * 정적 서버 컴포넌트라 모든 언어를 함께 그리고 <html lang>에 맞는 쪽만 보인다 (Localized).
+ * 서버 컴포넌트는 Lingui context가 없어 언어별 instance로 번역한다 (t(linguiFor(lang))``).
  */
 export async function HelpArticleView({
   service,
@@ -72,18 +95,19 @@ export async function HelpArticleView({
   if (!found || !load) {
     throw new Error(`도움말 본문이 없습니다: ${service}/${slug}`);
   }
-  const [{ default: ContentKo }, { default: ContentEn }] = await Promise.all([
-    load.ko(),
-    load.en(),
-  ]);
+  const bodies = await Promise.all(LOCALES.map((locale) => load[locale]()));
+  const Content = Object.fromEntries(
+    LOCALES.map((locale, i) => [locale, bodies[i].default]),
+  ) as Record<Locale, MDXContent>;
   const { article, prev, next } = found;
 
   return (
     <article>
       {/* aria-label도 언어마다 달라 nav를 언어마다 하나씩 두고 하나만 보인다. */}
       <Localized
-        ko={<Breadcrumb service={service} article={article} lang="ko" />}
-        en={<Breadcrumb service={service} article={article} lang="en" />}
+        {...perLocale((lang) => (
+          <Breadcrumb service={service} article={article} lang={lang} />
+        ))}
       />
       <h1 className="text-xl font-bold tracking-tight">
         <Localized {...article.title} />
@@ -92,12 +116,15 @@ export async function HelpArticleView({
         <Localized {...article.summary} />
       </p>
       <Localized
-        ko={<ContentKo />}
-        en={<ContentEn components={EN_HEADINGS} />}
+        {...perLocale((lang) => {
+          const Body = Content[lang];
+          return <Body components={HEADINGS[lang]} />;
+        })}
       />
       <Localized
-        ko={<NeighborNav service={service} prev={prev} next={next} lang="ko" />}
-        en={<NeighborNav service={service} prev={prev} next={next} lang="en" />}
+        {...perLocale((lang) => (
+          <NeighborNav service={service} prev={prev} next={next} lang={lang} />
+        ))}
       />
     </article>
   );
@@ -114,7 +141,7 @@ function Breadcrumb({
 }) {
   return (
     <nav
-      aria-label={TEXT[lang].breadcrumb}
+      aria-label={t(linguiFor(lang))`위치`}
       className="mb-3 text-xs text-fg-muted"
     >
       <Link href={helpServicePath(service)} className="hover:text-accent">
@@ -139,7 +166,7 @@ function NeighborNav({
 }) {
   return (
     <nav
-      aria-label={TEXT[lang].nav}
+      aria-label={t(linguiFor(lang))`이전·다음 문서`}
       className="mt-12 grid grid-cols-2 gap-3 border-t border-line pt-6"
     >
       <Neighbor service={service} article={prev} dir="prev" lang={lang} />

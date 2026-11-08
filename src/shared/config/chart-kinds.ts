@@ -1,13 +1,16 @@
 // 차트 종류별 컬럼 역할과 상단 도구 줄에서 쓸 수 있는 기능. 새 차트는 여기에 한 줄씩 더한다.
 // 서버의 같은 표(server/charts/chart-fields.ts)와 컬럼 타입이 맞아야 한다.
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg, t } from "@lingui/core/macro";
 import type {
   ChartSpec,
   ChartSubType,
   ChartType,
   ColumnType,
 } from "@/shared/api/types";
-import { defineMessages, t } from "@/shared/lib/i18n";
+import { linguiFor } from "@/shared/lib/i18n";
+import "@/shared/config/messages";
 
 export type ChartFields = {
   x: readonly ColumnType[];
@@ -23,29 +26,17 @@ export type ChartFields = {
 
 type FieldRole = "x" | "y" | "z";
 
-const messages = defineMessages<{
-  fieldLabels: Partial<Record<ChartType, Partial<Record<FieldRole, string>>>>;
-  subTypeNone: string;
-}>({
-  ko: {
-    fieldLabels: {
-      sankey: { x: "출발 (x)", y: "도착 (y)", z: "흐름 값 (z)" },
-      gantt: { y: "y (작업 행)" },
-    },
-    subTypeNone: "기본",
-  },
-  en: {
-    fieldLabels: {
-      sankey: { x: "Source (x)", y: "Target (y)", z: "Flow (z)" },
-      gantt: { y: "y (task row)" },
-    },
-    subTypeNone: "Default",
-  },
-});
+const FIELD_LABELS: Partial<
+  Record<ChartType, Partial<Record<FieldRole, MessageDescriptor>>>
+> = {
+  sankey: { x: msg`출발 (x)`, y: msg`도착 (y)`, z: msg`흐름 값 (z)` },
+  gantt: { y: msg`y (작업 행)` },
+};
 
 /** 왼쪽 패널의 컬럼 라벨(지금 언어). 차트가 따로 정하지 않았으면 x, y, z */
 export function fieldLabel(chartType: ChartType, role: FieldRole) {
-  return t(messages).fieldLabels[chartType]?.[role] ?? role;
+  const label = FIELD_LABELS[chartType]?.[role];
+  return label ? linguiFor()._(label) : role;
 }
 
 export const CHART_FIELDS: Record<ChartType, ChartFields> = {
@@ -155,7 +146,9 @@ const SUB_TYPE_NAMES: Record<Exclude<ChartSubType, "none">, string> = {
 
 /** 하위 차트 이름. 기본(none)만 언어마다 다르다. 그리는 컴포넌트는 useLocale로 구독한다. */
 export function subTypeLabel(sub: ChartSubType) {
-  return sub === "none" ? t(messages).subTypeNone : SUB_TYPE_NAMES[sub];
+  return sub === "none"
+    ? t({ message: "기본", context: "chart sub type" })
+    : SUB_TYPE_NAMES[sub];
 }
 
 type SubTypeSpec = Pick<ChartSpec, "chartType" | "subType">;

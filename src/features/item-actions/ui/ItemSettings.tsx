@@ -1,9 +1,10 @@
 "use client";
 
+import { select } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useItemMeta } from "@/shared/api/queries";
 import type { ItemState, LegendPosition } from "@/shared/api/types";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { colorName, defaultLegendColor } from "@/shared/lib/palette";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
@@ -11,42 +12,10 @@ import { ColorSwatches } from "@/shared/ui/ColorSwatches";
 import { LegendListSkeleton } from "@/shared/ui/LegendListSkeleton";
 import { LegendPositionPicker } from "@/shared/ui/LegendPositionPicker";
 import { settingsStyles } from "@/shared/ui/settings-styles";
+import "../config/messages";
 import type { ItemPropsForm } from "../model/item-props-form";
 
 const s = settingsStyles();
-
-const messages = defineMessages({
-  ko: {
-    positions: {
-      top: "위",
-      bottom: "아래",
-      left: "왼쪽",
-      right: "오른쪽",
-    } satisfies Record<LegendPosition, string>,
-    position: "위치",
-    followCommonPosition: (position: string) =>
-      `공통 위치 따르기 (${position})`,
-    legendColors: "범례 값별 색",
-    color: "색",
-    changeColor: (value: string) => `${value} 색 바꾸기`,
-    followCommonColor: "공통 색 따르기",
-  },
-  en: {
-    positions: {
-      top: "top",
-      bottom: "bottom",
-      left: "left",
-      right: "right",
-    },
-    position: "Position",
-    followCommonPosition: (position: string) =>
-      `Use common position (${position})`,
-    legendColors: "Color per legend value",
-    color: "Color",
-    changeColor: (value: string) => `Change ${value} color`,
-    followCommonColor: "Use common color",
-  },
-});
 
 type DrawnItem = ItemState & { image: NonNullable<ItemState["image"]> };
 
@@ -81,7 +50,7 @@ export function ItemLegendPositionSettings({
   /** 공통 속성의 legend 위치 */
   commonPosition: LegendPosition;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { changes, set } = useItemPropsForm();
   const own =
     changes.legendPosition !== undefined
@@ -90,7 +59,9 @@ export function ItemLegendPositionSettings({
 
   return (
     <div className={s.section()}>
-      <h4 className={s.heading()}>{text.position}</h4>
+      <h4 className={s.heading()}>
+        <Trans context="legend position">위치</Trans>
+      </h4>
       <LegendPositionPicker
         value={own ?? commonPosition}
         disabled={disabled}
@@ -103,7 +74,7 @@ export function ItemLegendPositionSettings({
           disabled={disabled}
           onClick={() => set("legendPosition", null)}
         >
-          {text.followCommonPosition(text.positions[commonPosition])}
+          {t`공통 위치 따르기 (${select(commonPosition, { top: "위", bottom: "아래", left: "왼쪽", other: "오른쪽" })})`}
         </button>
       )}
     </div>
@@ -124,7 +95,7 @@ export function ItemColorSettings({
   /** 공통 색 따르기를 고른 뒤 보일 공통 속성의 색 */
   common: { color: string; legendColors?: Record<string, string> };
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { changes, set } = useItemPropsForm();
   const meta = useItemMeta(item.image.url, hasLegend);
   const legend = meta.data?.legend;
@@ -142,7 +113,11 @@ export function ItemColorSettings({
   return (
     <div className={s.section()}>
       <h4 className={s.heading()}>
-        {hasLegend ? text.legendColors : text.color}
+        {hasLegend ? (
+          <Trans>범례 값별 색</Trans>
+        ) : (
+          <Trans context="item color">색</Trans>
+        )}
       </h4>
       {!hasLegend ? (
         <>
@@ -163,7 +138,7 @@ export function ItemColorSettings({
                   className={s.legendSwatch()}
                   style={{ background: shown }}
                   color={shown}
-                  label={text.changeColor(value)}
+                  label={t`${value} 색 바꾸기`}
                   disabled={disabled}
                   onCommit={(next) =>
                     set("legendColors", {
@@ -190,7 +165,7 @@ export function ItemColorSettings({
             set("legendColors", {});
           }}
         >
-          {text.followCommonColor}
+          <Trans>공통 색 따르기</Trans>
         </button>
       )}
     </div>

@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:01+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgid "{label} 바꾸기"
+msgstr "Change {label}"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "{label} 속성"
+msgstr "{label} properties"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "{value} 색 바꾸기"
+msgstr "Change {value} color"
+
+#: src/features/chart-settings/ui/LegendSettings.tsx
+msgid "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다."
+msgstr "Pick a legend to draw it here. There is no legend now."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "x 값"
+msgstr "x value"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "X 값"
+msgstr "X value"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "X축"
+msgstr "X axis"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "y 값"
+msgstr "y value"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "Y 값"
+msgstr "Y value"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "Y축"
+msgstr "Y axis"
+
+#: src/features/chart-settings/ui/TooltipSettings.tsx
+msgid "가까운 점"
+msgstr "Nearest point"
+
+#: src/features/chart-settings/ui/TooltipSettings.tsx
+msgid "가까운 점 표시"
+msgstr "Show nearest point"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "가운데"
+msgstr "Center"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "각도"
+msgstr "Angle"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "감쇠"
+msgstr "Damped"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "값"
+msgstr "Value"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "값"
+msgstr "Values"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "강조"
+msgstr "Highlight"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "강조 쓰기"
+msgstr "Enable highlight"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "계절 계수 γ (비우면 자동)"
+msgstr "Seasonal γ (empty: auto)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "계절 길이"
+msgstr "Season length"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "계절 방식"
+msgstr "Seasonal type"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "고정 크기"
+msgstr "Fixed size"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "곱셈"
+msgstr "Multiplicative"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split name example"
+msgid "공장"
+msgstr "Plant"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "공정 능력 (Cpk)"
+msgstr "Process capability (Cpk)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "굵게"
+msgstr "Bold"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 내 확률 (z)"
+msgstr "In-spec probability (z)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "그라데이션"
+msgstr "Gradient"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그라데이션 색 쓰기"
+msgstr "Use gradient colors"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그리드 굵기"
+msgstr "Grid width"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그리드 보이기"
+msgstr "Show grid"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "그리드 색"
+msgstr "Grid color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 색"
+msgstr "Font color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 크기"
+msgstr "Font size"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다."
+msgstr "Font size applies only when Size › Font size Auto is off."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다. 로그 축은 양수 값 축에서만 적용됩니다."
+msgstr "Font size applies only when Size › Font size Auto is off. Log scale applies only to axes with positive values."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "기본 모양"
+msgstr "Default shape"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "기본 색"
+msgstr "Base color"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "기본 색으로 되돌리기"
+msgstr "Reset to default colors"
+
+#: src/features/chart-settings/ui/OptionSettings.tsx
+msgid "기본값으로 되돌리기"
+msgstr "Reset to defaults"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "기타 색 ('기타' 조각, 강조 시 나머지)"
+msgstr "Other color ('Other' slice, rest when highlighting)"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split separator"
+msgid "기호"
+msgstr "Symbol"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "끝 색"
+msgstr "End color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "나머지는 한 가지 색"
+msgstr "Single color for the rest"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "날짜 형식"
+msgstr "Date format"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 개수"
+msgstr "Tick count"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 각도"
+msgstr "Tick label angle"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 보이기"
+msgstr "Show tick labels"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 색"
+msgstr "Tick label color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 글자 크기"
+msgstr "Tick label size"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 길이"
+msgstr "Tick length"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 보이기"
+msgstr "Show ticks"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "눈금 색"
+msgstr "Tick color"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "다시 그리는 중에는 바꿀 수 없습니다"
+msgstr "Can't change while redrawing"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "다음 draw에 적용됩니다."
+msgstr "Applies on the next draw."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "단계 수 (0이면 범례 값 수)"
+msgstr "Steps (0: number of legend values)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "단순 이동 평균"
+msgstr "Simple moving average"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "단순 지수 평활"
+msgstr "Simple exponential smoothing"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "대상"
+msgstr "Target"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "덧셈"
+msgstr "Additive"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "데이터가 준비되면 legend 값이 표시됩니다."
+msgstr "Legend values appear when the data is ready."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "둥근 모서리"
+msgstr "Rounded corners"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "뒤 글자"
+msgstr "Suffix"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split name example"
+msgid "라인"
+msgstr "Line"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "로그 축"
+msgstr "Log scale"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "마름모"
+msgstr "Diamond"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "막대 모서리 둥글기"
+msgstr "Bar corner radius"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "모두 공통 속성 따르기"
+msgstr "Use common properties for all"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "모양"
+msgstr "Shape"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "모양"
+msgstr "Shape"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "방법"
+msgstr "Method"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "배경 색"
+msgstr "Background color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "범례"
+msgstr "Legend"
+
+#: src/features/chart-settings/ui/ColorSettings.tsx
+msgid "범례 값별 색 · {column}"
+msgstr "Colors by legend value · {column}"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "범례 보이기"
+msgstr "Show legend"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "변수 x, y와 + - * / ^, 함수 abs log ln sqrt exp round floor ceil min max pow를 씁니다. 예: log(y), x * 2 + 1. 비우면 원래 값입니다."
+msgstr "Use variables x, y with + - * / ^ and functions abs log ln sqrt exp round floor ceil min max pow. E.g. log(y), x * 2 + 1. Leave empty for the original value."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "부제목"
+msgstr "Subtitle"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "부제목 색"
+msgstr "Subtitle color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "분산분석 F"
+msgstr "ANOVA F"
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "clear color"
+msgid "비우기"
+msgstr "Clear"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "비우면 split 조합 이름"
+msgstr "Empty: split combination"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "비우면 제목 없음"
+msgstr "Empty: no title"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "비우면 컬럼 이름"
+msgstr "Empty: column name"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "빈 칸 값 (비우면 그리지 않음)"
+msgstr "Empty cell value (empty: not drawn)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "빈 칸 값은 그 조합에 데이터가 없는 칸에 씁니다."
+msgstr "The empty cell value is used for cells with no data."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "사각형"
+msgstr "Square"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "삼각형"
+msgstr "Triangle"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상관계수 (r)"
+msgstr "Correlation (r)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상관계수: x·y 상관계수, 분산분석 F: 범례 그룹 간 일원 분산분석 F, 규격 내 확률: 값이 하한~상한 안에 들 확률, 공정 능력: Cpk. 이 둘은 상한·하한이 있어야 계산합니다."
+msgstr "Correlation: x·y correlation coefficient. ANOVA F: one-way ANOVA F across legend groups. In-spec probability: chance a value falls between the lower and upper limits. Process capability: Cpk. These two need both limits."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "상자"
+msgstr "Box"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 배경 색"
+msgstr "Box background color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 보이기"
+msgstr "Show box"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 테두리 굵기"
+msgstr "Box border width"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "상자 테두리 색"
+msgstr "Box border color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "상한"
+msgstr "Upper limit"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "색"
+msgstr "Color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "색 순서 뒤집기"
+msgstr "Reverse colors"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "선"
+msgstr "Line"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선 굵기"
+msgstr "Line width"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선택 밖 진하기"
+msgstr "Unselected opacity"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "설명 보이기"
+msgstr "Show description"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgctxt "split name example"
+msgid "설비"
+msgstr "Machine"
+
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgid "설정 메뉴"
+msgstr "Settings menu"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "소수 자리"
+msgstr "Decimals"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "속성 메뉴"
+msgstr "Properties menu"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "수준 계수 α (비우면 자동)"
+msgstr "Level α (empty: auto)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "순서 뒤집기"
+msgstr "Reverse order"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "시작 색"
+msgstr "Start color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "식"
+msgstr "Expression"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "신뢰 구간"
+msgstr "Confidence interval"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "십자"
+msgstr "Cross"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "아래"
+msgstr "Bottom"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "앞 글자"
+msgstr "Prefix"
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "no color"
+msgid "없음"
+msgstr "None"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "여백"
+msgstr "Margins"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "연결 문자"
+msgstr "Separator"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "예: {example}"
+msgstr "e.g. {example}"
+
+#: src/features/chart-settings/ui/SplitSettings.tsx
+msgid "예: {example} (split by를 고르면 그 컬럼으로 보입니다)"
+msgstr "e.g. {example} (pick split by to see those columns)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예: %m/%d %H:%M · 비우면 자동"
+msgstr "e.g. %m/%d %H:%M · empty: auto"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예: log(y)"
+msgstr "e.g. log(y)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예: x * 2"
+msgstr "e.g. x * 2"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "예측"
+msgstr "Forecast"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예측 개수"
+msgstr "Forecast steps"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "예측 보이기"
+msgstr "Show forecast"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "오른쪽"
+msgstr "Right"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "왼쪽"
+msgstr "Left"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "요약 (오른쪽 점 수·범주 수)"
+msgstr "Summary (point and category counts, right)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "요약 글자 색"
+msgstr "Summary color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "요약 보이기"
+msgstr "Show summary"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "원"
+msgstr "Circle"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "위"
+msgstr "Top"
+
+#: src/features/chart-settings/model/option-fields.ts
+#: src/features/chart-settings/ui/LegendSettings.tsx
+msgctxt "chart option"
+msgid "위치"
+msgstr "Position"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "이 구역은 공통 속성 따르기"
+msgstr "Use common properties for this section"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이동 평균 길이"
+msgstr "Moving average window"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이상치 방식"
+msgstr "Outlier method"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이상치 빼기"
+msgstr "Exclude outliers"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이중 지수 평활"
+msgstr "Double exponential smoothing"
+
+#: src/features/chart-settings/model/option-fields.ts
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "chart option"
+msgid "자동"
+msgstr "Auto"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "적용"
+msgstr "Style"
+
+#: src/features/chart-settings/ui/SettingsButton.tsx
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgid "전체 설정"
+msgstr "Settings"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "점 라벨"
+msgstr "Point labels"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점 라벨 보이기"
+msgstr "Show point labels"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점 크기"
+msgstr "Point size"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "점수"
+msgstr "Scores"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점수 목록"
+msgstr "Scores"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "점수 보이기"
+msgstr "Show scores"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "정규분포 (평균 ± k·σ)"
+msgstr "Normal (mean ± k·σ)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "정렬"
+msgstr "Align"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "제목"
+msgstr "Title"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "제목"
+msgstr "Title"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "제목 보이기"
+msgstr "Show title"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "제목 색"
+msgstr "Title color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "조건"
+msgstr "Condition"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "조건에 맞는 점(막대)을 강조합니다."
+msgstr "Highlights points (bars) that match the condition."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "중간 색"
+msgstr "Middle color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "중앙값 선 색 (boxplot)"
+msgstr "Median line color (boxplot)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "채우기 + 테두리"
+msgstr "Fill + border"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "채우기만"
+msgstr "Fill only"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최대"
+msgstr "Max"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최댓값"
+msgstr "Max"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최소"
+msgstr "Min"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "최솟값"
+msgstr "Min"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "추세 계수 β (비우면 자동)"
+msgstr "Trend β (empty: auto)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "추세 방식"
+msgstr "Trend type"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "축"
+msgstr "Axes"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 보이기"
+msgstr "Show axis"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 선 굵기"
+msgstr "Axis line width"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 선 보이기"
+msgstr "Show axis line"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 선 색"
+msgstr "Axis line color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 제목"
+msgstr "Axis title"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 제목 보이기"
+msgstr "Show axis title"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "축 제목 색 (비우면 눈금 글자 색)"
+msgstr "Axis title color (empty: tick label color)"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgctxt "dialog button"
+msgid "취소"
+msgstr "Cancel"
+
+#: src/features/chart-settings/ui/TooltipSettings.tsx
+msgid "커서에서 가장 가까운 점의 x, y와 tooltip 컬럼을 보여줍니다. 점은 픽셀 하나에 하나씩 줄인 점 중에서 찾습니다. 끄면 커서 위치의 x, y만 보여주고, tooltip 컬럼도 가까운 점의 값이라 함께 숨겨집니다."
+msgstr "Shows x, y and tooltip columns of the point nearest the cursor, searched among points reduced to one per pixel. When off, only the cursor's x, y are shown; tooltip columns are hidden too since they come from the nearest point."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "크기"
+msgstr "Size"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "크기"
+msgstr "Size"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "테두리"
+msgstr "Border"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 굵기"
+msgstr "Border width"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 보이기"
+msgstr "Show border"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 색"
+msgstr "Border color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "테두리 색 (비우면 자동)"
+msgstr "Border color (empty: auto)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "테두리만"
+msgstr "Border only"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "투명도"
+msgstr "Transparency"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "투명도 (0 = 불투명)"
+msgstr "Transparency (0 = opaque)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "툴팁"
+msgstr "Tooltip"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "팔레트"
+msgstr "Palette"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "패널"
+msgstr "Panel"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "하한"
+msgstr "Lower limit"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "홀트-윈터스 지수 평활"
+msgstr "Holt-Winters smoothing"
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+#: src/features/chart-settings/ui/SettingsDialog.tsx
+msgctxt "dialog button"
+msgid "확인"
+msgstr "OK"
+
+#: src/features/chart-settings/ui/OptionSettings.tsx
+msgid "확인을 누르면 다음 draw에 적용됩니다. 그리면 item별로 정한 속성은 모두 공통 속성으로 바뀝니다."
+msgstr "Applies on the next draw after OK. Drawing replaces all per-item properties with the common ones."
+
+#: src/features/chart-settings/ui/ItemOptionsDialog.tsx
+msgid "확인을 누르면 이 item만 다시 그립니다. 전체 설정에서 바꾼 공통 속성으로 다시 그리면 item별 속성은 모두 공통 속성으로 바뀝니다."
+msgstr "OK redraws only this item. Redrawing with common properties changed in Settings replaces all per-item properties."

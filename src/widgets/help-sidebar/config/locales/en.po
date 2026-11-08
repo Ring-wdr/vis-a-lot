@@ -1,0 +1,16 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 14:58+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/widgets/help-sidebar/ui/HelpSidebar.tsx
+msgid "도움말 목차"
+msgstr "Help contents"
+
+#: src/widgets/help-sidebar/ui/HelpSidebar.tsx
+msgid "준비 중"
+msgstr "Coming soon"

@@ -1,49 +1,14 @@
 "use client";
 
 import { ContextMenu } from "@base-ui/react/context-menu";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import type { ItemState } from "@/shared/api/types";
-import { defineMessages, intlLocale, useT } from "@/shared/lib/i18n";
+import { intlLocale } from "@/shared/lib/i18n";
 import { showPrompt } from "@/shared/ui/AlertDialog";
-
-const messages = defineMessages({
-  ko: {
-    favoriteName: "즐겨찾기 이름",
-    favoritePrefix: "즐겨찾기",
-    add: "추가",
-    legendName: "새 범례 이름",
-    legendPrefix: "선택",
-    create: "만들기",
-    selected: (n: string) => `선택 ${n}개`,
-    noSelection: "선택한 영역 없음",
-    addFavorite: "즐겨찾기에 추가…",
-    newLegend: "새 범례…",
-    clearSelection: "선택 해제",
-    selectFavorite: "즐겨찾기 선택",
-    removeFavorite: "즐겨찾기 삭제",
-    restoreDeleted: "지운 점 모두 되돌리기",
-    removeLegend: "새 범례 삭제",
-  },
-  en: {
-    favoriteName: "Favorite name",
-    favoritePrefix: "Favorite",
-    add: "Add",
-    legendName: "New legend name",
-    legendPrefix: "Selection",
-    create: "Create",
-    selected: (n: string) => `${n} selected`,
-    noSelection: "No selection",
-    addFavorite: "Add to favorites…",
-    newLegend: "New legend…",
-    clearSelection: "Clear selection",
-    selectFavorite: "Select favorite",
-    removeFavorite: "Delete favorite",
-    restoreDeleted: "Restore all erased points",
-    removeLegend: "Delete new legend",
-  },
-});
+import "../config/messages";
 
 // item 우클릭 메뉴 (Base UI ContextMenu)
 const menuPositioner = "z-menu outline-0";
@@ -117,23 +82,38 @@ export function ItemContextMenu({
   onAction: (action: ItemAction) => void;
   children: ReactNode;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const selected = item.selectedCount !== undefined;
   const favorites = item.favorites.map((f) => f.name);
   const groups = item.legendGroups.map((g) => g.name);
+  const count = (item.selectedCount ?? 0).toLocaleString(intlLocale());
 
   const addFavorite = async () => {
-    const name = await showPrompt(text.favoriteName, {
-      defaultValue: nextName(text.favoritePrefix, favorites),
-      confirmLabel: text.add,
+    const name = await showPrompt(t`즐겨찾기 이름`, {
+      defaultValue: nextName(
+        t({
+          message: "즐겨찾기",
+          context: "default favorite name",
+          comment: "새 즐겨찾기 이름의 앞부분 (뒤에 번호가 붙는다)",
+        }),
+        favorites,
+      ),
+      confirmLabel: t({ message: "추가", context: "add favorite button" }),
     });
     if (name) onAction({ type: "addFavorite", name });
   };
 
   const addLegendGroup = async () => {
-    const name = await showPrompt(text.legendName, {
-      defaultValue: nextName(text.legendPrefix, groups),
-      confirmLabel: text.create,
+    const name = await showPrompt(t`새 범례 이름`, {
+      defaultValue: nextName(
+        t({
+          message: "선택",
+          context: "default legend group name",
+          comment: "새 범례 이름의 앞부분 (뒤에 번호가 붙는다)",
+        }),
+        groups,
+      ),
+      confirmLabel: t({ message: "만들기", context: "create legend button" }),
     });
     if (name) onAction({ type: "addLegendGroup", name });
   };
@@ -148,37 +128,37 @@ export function ItemContextMenu({
           <ContextMenu.Popup className={menu}>
             <ContextMenu.Group>
               <ContextMenu.GroupLabel className="px-2 py-1 text-xs text-fg-secondary">
-                {selected
-                  ? text.selected(
-                      (item.selectedCount ?? 0).toLocaleString(intlLocale()),
-                    )
-                  : text.noSelection}
+                {selected ? (
+                  <Trans comment="count: 선택한 점 수">선택 {count}개</Trans>
+                ) : (
+                  <Trans>선택한 영역 없음</Trans>
+                )}
               </ContextMenu.GroupLabel>
               <ContextMenu.Item
                 className={menuItem}
                 disabled={!selected}
                 onClick={addFavorite}
               >
-                {text.addFavorite}
+                <Trans>즐겨찾기에 추가…</Trans>
               </ContextMenu.Item>
               <ContextMenu.Item
                 className={menuItem}
                 disabled={!selected}
                 onClick={addLegendGroup}
               >
-                {text.newLegend}
+                <Trans>새 범례…</Trans>
               </ContextMenu.Item>
               <ContextMenu.Item
                 className={menuItem}
                 disabled={!selected}
                 onClick={() => onAction({ type: "select", region: null })}
               >
-                {text.clearSelection}
+                <Trans>선택 해제</Trans>
               </ContextMenu.Item>
             </ContextMenu.Group>
             <ContextMenu.Separator className="my-1 h-px bg-line" />
             <NamedSubmenu
-              label={text.selectFavorite}
+              label={t`즐겨찾기 선택`}
               names={favorites}
               disabled={disabled}
               onSelect={(name) => {
@@ -188,7 +168,7 @@ export function ItemContextMenu({
               }}
             />
             <NamedSubmenu
-              label={text.removeFavorite}
+              label={t`즐겨찾기 삭제`}
               names={favorites}
               disabled={disabled}
               onSelect={(name) => onAction({ type: "removeFavorite", name })}
@@ -198,10 +178,10 @@ export function ItemContextMenu({
               disabled={item.deletionCount === 0}
               onClick={() => onAction({ type: "clearDeletions" })}
             >
-              {text.restoreDeleted}
+              <Trans>지운 점 모두 되돌리기</Trans>
             </ContextMenu.Item>
             <NamedSubmenu
-              label={text.removeLegend}
+              label={t`새 범례 삭제`}
               names={groups}
               disabled={disabled}
               onSelect={(name) => onAction({ type: "removeLegendGroup", name })}

@@ -1,5 +1,8 @@
 "use client";
 
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import { useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useRef, useState } from "react";
 import {
@@ -16,9 +19,9 @@ import type {
   ChartImage as ChartImageData,
   ItemMeta,
 } from "@/shared/api/types";
-import { defineMessages, t, useT } from "@/shared/lib/i18n";
 import { tv } from "@/shared/lib/tw";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import "../config/messages";
 
 const drawLayer = tv({
   base: "relative cursor-crosshair touch-none select-none",
@@ -55,42 +58,19 @@ type Draft =
   | { kind: "freehand"; points: Point[] }
   | { kind: "text"; at: Point };
 
-const messages = defineMessages({
-  ko: {
-    tools: {
-      pan: "이동",
-      zoom: "확대 영역 선택",
-      rectSelect: "사각형으로 선택",
-      lassoSelect: "자유형으로 선택",
-      rectDelete: "사각형으로 지우기",
-      lassoDelete: "자유형으로 지우기",
-      rect: "도형 그리기",
-      line: "도형 그리기",
-      freehand: "도형 그리기",
-      text: "도형 그리기",
-    } satisfies Record<DrawTool, string>,
-    layer: (alt: string, tool: string) => `${alt} 위에 ${tool}`,
-    metaFailed: (message: string) => `차트 정보를 읽지 못했습니다: ${message}`,
-    notePlaceholder: "메모 입력 후 Enter",
-  },
-  en: {
-    tools: {
-      pan: "Pan",
-      zoom: "Select zoom area",
-      rectSelect: "Rectangle select",
-      lassoSelect: "Lasso select",
-      rectDelete: "Rectangle erase",
-      lassoDelete: "Lasso erase",
-      rect: "Draw shapes",
-      line: "Draw shapes",
-      freehand: "Draw shapes",
-      text: "Draw shapes",
-    },
-    layer: (alt: string, tool: string) => `${tool} on ${alt}`,
-    metaFailed: (message: string) => `Couldn't read chart info: ${message}`,
-    notePlaceholder: "Type a note, then Enter",
-  },
-});
+/** 레이어 이름에 넣는 도구 이름. 페인트 도구는 모두 "도형 그리기"다. */
+const TOOL_LABELS = {
+  pan: msg({ message: "이동", context: "draw tool" }),
+  zoom: msg`확대 영역 선택`,
+  rectSelect: msg`사각형으로 선택`,
+  lassoSelect: msg`자유형으로 선택`,
+  rectDelete: msg`사각형으로 지우기`,
+  lassoDelete: msg`자유형으로 지우기`,
+  rect: msg`도형 그리기`,
+  line: msg`도형 그리기`,
+  freehand: msg`도형 그리기`,
+  text: msg`도형 그리기`,
+} satisfies Record<DrawTool, MessageDescriptor>;
 
 const MIN_DRAG_PX = 4;
 const FREEHAND_STEP_PX = 2;
@@ -150,7 +130,8 @@ export function DrawLayer({
   alt: string;
   onAction: (action: ItemAction) => void;
 }) {
-  const msg = useT(messages);
+  const { t, i18n } = useLingui();
+  const toolLabel = i18n._(TOOL_LABELS[tool]);
   const ref = useRef<HTMLDivElement>(null);
   const client = useQueryClient();
   // 그리기 모드에서는 metadata를 미리 받아 둔다 (좌표 변환에 필요).
@@ -164,11 +145,8 @@ export function DrawLayer({
     try {
       return await client.fetchQuery(itemMetaQuery(image.url));
     } catch (err) {
-      showAlert(
-        t(messages).metaFailed(
-          err instanceof Error ? err.message : String(err),
-        ),
-      );
+      const message = err instanceof Error ? err.message : String(err);
+      showAlert(t`차트 정보를 읽지 못했습니다: ${message}`);
       return undefined;
     }
   };
@@ -316,7 +294,7 @@ export function DrawLayer({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       role="application"
-      aria-label={msg.layer(alt, msg.tools[tool])}
+      aria-label={t`${alt} 위에 ${toolLabel}`}
     >
       {/* 이동하는 동안 그림은 그대로 두고 커서(grab)만 바꾼다. 놓으면 서버가 옮긴 범위로 다시 그린다. */}
       {/* resize 대기 중에는 기존 PNG를 칸 크기에 맞게 늘리거나 줄여 보여준다. */}
@@ -392,7 +370,7 @@ export function DrawLayer({
           autoFocus
           value={text}
           maxLength={200}
-          placeholder={msg.notePlaceholder}
+          placeholder={t`메모 입력 후 Enter`}
           onChange={(e) => setText(e.target.value)}
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => {

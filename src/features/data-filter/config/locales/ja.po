@@ -1,0 +1,81 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-28 15:30+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. excludedCount: 뺀 값 개수 (자릿수 구분을 넣은 숫자)
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "{excludedCount}개 제외"
+msgstr "{excludedCount}件除外"
+
+#. nullRows: 값이 없는 행 수 (자릿수 구분을 넣은 숫자)
+#: src/features/data-filter/ui/RangeFilterBody.tsx
+msgid "{nullRows}행"
+msgstr "{nullRows}行"
+
+#. valueCount: 컬럼의 값 개수 (자릿수 구분을 넣은 숫자)
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "{valueCount}개 값에서 검색"
+msgstr "{valueCount}件の値から検索"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "값 검색"
+msgstr "値を検索"
+
+#: src/features/data-filter/ui/ColumnFilter.tsx
+msgid "값 범위를 불러오는 중"
+msgstr "値の範囲を読み込み中"
+
+#: src/features/data-filter/ui/RangeFilterBody.tsx
+msgid "값 없음(null) 포함"
+msgstr "値なし(null)を含める"
+
+#: src/features/data-filter/ui/RangeFilterBody.tsx
+msgid "값이 없는 컬럼입니다."
+msgstr "値がないカラムです。"
+
+#: src/features/data-filter/ui/ColumnFilter.tsx
+msgid "데이터가 준비되면 필터를 쓸 수 있습니다."
+msgstr "データの準備ができるとフィルターを使えます。"
+
+#: src/features/data-filter/ui/RangeFilterBody.tsx
+msgid "범위 반전 (범위 밖만 남기기)"
+msgstr "範囲を反転 (範囲外のみ残す)"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "보이는 값 선택"
+msgstr "表示中の値を選択"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "보이는 값 해제"
+msgstr "表示中の値を解除"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "일치하는 값이 없습니다."
+msgstr "一致する値がありません。"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "전부 포함"
+msgstr "すべて含む"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "전체 선택"
+msgstr "すべて選択"
+
+#: src/features/data-filter/ui/ValuesFilterBody.tsx
+msgid "전체 해제"
+msgstr "すべて解除"
+
+#: src/features/data-filter/ui/RangeFilterBody.tsx
+msgctxt "range filter thumb"
+msgid "최댓값"
+msgstr "最大値"
+
+#: src/features/data-filter/ui/RangeFilterBody.tsx
+msgctxt "range filter thumb"
+msgid "최솟값"
+msgstr "最小値"

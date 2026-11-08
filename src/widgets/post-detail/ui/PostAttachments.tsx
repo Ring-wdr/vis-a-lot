@@ -2,52 +2,17 @@
 
 // 첨부: 파일·링크 목록. 게시물을 고칠 수 있으면 링크(이름 + URL)·파일(2MB까지, data URL)을 더하고 뺀다.
 
+import { ph } from "@lingui/core/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { FileText, Link2, Paperclip, Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { usePostAction } from "@/entities/post/model/use-post-action";
 import { detail, field } from "@/entities/post/ui/styles";
 import { commentsApi } from "@/shared/api/feed/comments";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { showAlert } from "@/shared/ui/AlertDialog";
 import { button, itemButton } from "@/shared/ui/button";
 import type { PostDetail } from "@/widgets/post-detail/model/detail-type";
-
-const messages = defineMessages({
-  ko: {
-    tooLarge: (name: string, mb: string) =>
-      `${name}은(는) ${mb}MB라 올릴 수 없습니다. 2MB 이하 파일만 첨부할 수 있어요.`,
-    fileFailed: "파일을 첨부하지 못했습니다",
-    title: "첨부",
-    link: "링크",
-    file: "파일",
-    fileInput: "첨부할 파일",
-    remove: (name: string) => `${name} 첨부 빼기`,
-    removeFailed: "첨부를 빼지 못했습니다",
-    linkFailed: "링크를 첨부하지 못했습니다",
-    namePlaceholder: "이름 (비우면 URL)",
-    linkName: "링크 이름",
-    linkUrl: "링크 URL",
-    add: "더하기",
-    hint: "링크나 2MB 이하 파일을 첨부할 수 있습니다.",
-  },
-  en: {
-    tooLarge: (name: string, mb: string) =>
-      `${name} is ${mb}MB and can't be uploaded. Files must be 2MB or smaller.`,
-    fileFailed: "Couldn't attach the file",
-    title: "Attachments",
-    link: "Link",
-    file: "File",
-    fileInput: "File to attach",
-    remove: (name: string) => `Remove attachment ${name}`,
-    removeFailed: "Couldn't remove the attachment",
-    linkFailed: "Couldn't attach the link",
-    namePlaceholder: "Name (defaults to URL)",
-    linkName: "Link name",
-    linkUrl: "Link URL",
-    add: "Add",
-    hint: "Attach links or files up to 2MB.",
-  },
-});
+import "../config/messages";
 
 const d = detail();
 
@@ -70,7 +35,7 @@ export function normalizeUrl(raw: string) {
 }
 
 export function PostAttachments({ post }: { post: PostDetail }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const { run, pending } = usePostAction();
   const editable = post.permissions.edit;
   const [adding, setAdding] = useState(false);
@@ -82,11 +47,13 @@ export function PostAttachments({ post }: { post: PostDetail }) {
 
   const addFile = async (file: File) => {
     if (file.size > MAX_FILE_BYTES) {
-      showAlert(text.tooLarge(file.name, (file.size / 1024 / 1024).toFixed(1)));
+      showAlert(
+        t`${ph({ name: file.name })}은(는) ${ph({ mb: (file.size / 1024 / 1024).toFixed(1) })}MB라 올릴 수 없습니다. 2MB 이하 파일만 첨부할 수 있어요.`,
+      );
       return;
     }
     // 파일을 읽지 못한 것도 첨부 실패로 알린다.
-    await run("file", text.fileFailed, async () =>
+    await run("file", t`파일을 첨부하지 못했습니다`, async () =>
       commentsApi.addAttachment(post.id, {
         kind: "file",
         name: file.name,
@@ -99,7 +66,7 @@ export function PostAttachments({ post }: { post: PostDetail }) {
     <section className={d.section()} aria-labelledby="post-attachments-title">
       <div className={d.sectionHead()}>
         <h2 id="post-attachments-title" className={d.sectionTitle()}>
-          {text.title}{" "}
+          <Trans>첨부</Trans>{" "}
           <span className="font-normal text-fg-muted">
             {post.attachments.length}
           </span>
@@ -113,7 +80,7 @@ export function PostAttachments({ post }: { post: PostDetail }) {
               onClick={() => setAdding((v) => !v)}
             >
               <Link2 size={13} aria-hidden="true" />
-              {text.link}
+              <Trans>링크</Trans>
             </button>
             <button
               type="button"
@@ -122,13 +89,13 @@ export function PostAttachments({ post }: { post: PostDetail }) {
               onClick={() => fileRef.current?.click()}
             >
               <Paperclip size={13} aria-hidden="true" />
-              {text.file}
+              <Trans>파일</Trans>
             </button>
             <input
               ref={fileRef}
               type="file"
               className="hidden"
-              aria-label={text.fileInput}
+              aria-label={t`첨부할 파일`}
               onChange={(e) => {
                 const file = e.currentTarget.files?.[0];
                 e.currentTarget.value = "";
@@ -166,10 +133,10 @@ export function PostAttachments({ post }: { post: PostDetail }) {
                   <button
                     type="button"
                     className={itemButton({ class: "mr-1 flex-none" })}
-                    aria-label={text.remove(a.name)}
+                    aria-label={t`${ph({ name: a.name })} 첨부 빼기`}
                     disabled={!!pending}
                     onClick={() =>
-                      run("remove", text.removeFailed, () =>
+                      run("remove", t`첨부를 빼지 못했습니다`, () =>
                         commentsApi.removeAttachment(post.id, a.id),
                       )
                     }
@@ -190,7 +157,7 @@ export function PostAttachments({ post }: { post: PostDetail }) {
             const href = normalizeUrl(url);
             if (!href) return;
             if (
-              await run("link", text.linkFailed, () =>
+              await run("link", t`링크를 첨부하지 못했습니다`, () =>
                 commentsApi.addAttachment(post.id, {
                   kind: "link",
                   name: name.trim() || href,
@@ -208,15 +175,15 @@ export function PostAttachments({ post }: { post: PostDetail }) {
             className={field({ class: "min-w-32 flex-1" })}
             value={name}
             maxLength={200}
-            placeholder={text.namePlaceholder}
-            aria-label={text.linkName}
+            placeholder={t`이름 (비우면 URL)`}
+            aria-label={t`링크 이름`}
             onChange={(e) => setName(e.currentTarget.value)}
           />
           <input
             className={field({ class: "min-w-48 flex-2" })}
             value={url}
             placeholder="https://"
-            aria-label={text.linkUrl}
+            aria-label={t`링크 URL`}
             inputMode="url"
             onChange={(e) => setUrl(e.currentTarget.value)}
           />
@@ -226,12 +193,14 @@ export function PostAttachments({ post }: { post: PostDetail }) {
             disabled={!url.trim() || !!pending}
           >
             <Plus size={13} aria-hidden="true" />
-            {text.add}
+            <Trans>더하기</Trans>
           </button>
         </form>
       )}
       {editable && post.attachments.length === 0 && !adding && (
-        <p className={d.hint()}>{text.hint}</p>
+        <p className={d.hint()}>
+          <Trans>링크나 2MB 이하 파일을 첨부할 수 있습니다.</Trans>
+        </p>
       )}
     </section>
   );

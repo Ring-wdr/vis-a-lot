@@ -1,24 +1,20 @@
 "use client";
 
+import { useLingui } from "@lingui/react/macro";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { openQuickCreate } from "@/features/create-post/ui/quick-create";
 import { PresentBar } from "@/features/present-mode/ui/PresentBar";
-import { defineMessages, useT } from "@/shared/lib/i18n";
 import { useOpenPeek } from "@/shared/lib/peek";
 import { cn } from "@/shared/lib/tw";
 import { FeedSidebar } from "@/widgets/feed-sidebar/ui/FeedSidebar";
 import { PostPeek } from "@/widgets/post-detail/ui/PostPeek";
 import { FeedTopBar } from "./FeedTopBar";
+import "./messages";
 import { useSchedulerTick } from "./use-scheduler-tick";
 
 /** 발표 모드(?present=1): 사이드바를 숨기고, 상단 바를 "발표 끝내기"만 남기고, 글씨를 키운다. */
 export const usePresentMode = () => useSearchParams().get("present") === "1";
-
-const messages = defineMessages({
-  ko: { closeMenu: "메뉴 닫기" },
-  en: { closeMenu: "Close menu" },
-});
 
 /** 입력 중이 아닐 때 C: 빠른 생성 (지금 보고 있는 그룹을 기본값으로) */
 function useQuickCreateKey() {
@@ -50,7 +46,7 @@ export function FeedShell({
   notice?: ReactNode;
   children: ReactNode;
 }) {
-  const text = useT(messages);
+  const { t } = useLingui();
   const present = usePresentMode();
   const [open, setOpen] = useState(false);
   useSchedulerTick();
@@ -64,7 +60,7 @@ export function FeedShell({
             <button
               type="button"
               className="z-drawer fixed inset-0 cursor-default bg-backdrop md:hidden"
-              aria-label={text.closeMenu}
+              aria-label={t`메뉴 닫기`}
               onClick={() => setOpen(false)}
             />
           )}

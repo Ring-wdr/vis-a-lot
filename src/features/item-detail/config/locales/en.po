@@ -1,0 +1,6 @@
+msgid ""
+msgstr ""
+
+#: src/features/item-detail/model/use-item-detail.ts
+msgid "크게 보기 PNG를 그리지 못했습니다."
+msgstr "Couldn't draw the expanded PNG."
