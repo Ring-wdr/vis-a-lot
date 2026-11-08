@@ -17,7 +17,7 @@
       "routing": [
         {
           "group": "help",
-          "paths": ["/help", "/help/:path*", "/help-assets/:path*"]
+          "paths": ["/help", "/help.txt", "/help/:path*", "/help-assets/:path*"]
         }
       ]
     }

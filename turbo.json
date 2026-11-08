@@ -16,7 +16,11 @@
         "src/**/*.po",
         "src/**/config/messages.ts"
       ],
-      "outputs": ["src/**/config/locales/*.ts", "src/application/messages.*.ts"]
+      "outputs": [
+        "src/**/config/locales/*.ts",
+        "src/application/messages.*.ts",
+        "config/locales/*.ts"
+      ]
     },
     "lint": {
       "outputs": []
@@ -64,6 +68,14 @@
         "!**/node_modules/**",
         "!**/.next/**",
         "!**/out/**"
+      ],
+      "outputs": []
+    },
+    "//#lint:mfe": {
+      "inputs": [
+        "scripts/check-microfrontends.mjs",
+        "apps/*/package.json",
+        "apps/*/microfrontends.json"
       ],
       "outputs": []
     }

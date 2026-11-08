@@ -32,7 +32,12 @@ const to = path.join(out, prefix, "_next");
 if (!fs.existsSync(from))
   fail(`${from}이 없다. next build(output: "export") 뒤에 돌린다.`);
 
-fs.rmSync(path.join(out, prefix), { recursive: true, force: true });
+// next build는 out/을 새로 쓰므로 여기서 out/<prefix>가 이미 있으면 라우트 폴더와 이름이 겹친 것이다
+// (예: prefix를 help로 두면 out/help가 페이지 폴더다). 지우지 않고 멈춘다.
+if (fs.existsSync(path.join(out, prefix)))
+  fail(
+    `out/${prefix}이 이미 있다. asset prefix가 라우트 경로와 겹친다. microfrontends.json의 assetPrefix를 바꾼다.`,
+  );
 fs.mkdirSync(path.join(out, prefix), { recursive: true });
 fs.renameSync(from, to);
 

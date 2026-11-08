@@ -98,7 +98,7 @@ pnpm check:affected  # 루트 검사 전체 + develop 대비 바뀐 패키지의
 | `lint` | 앱·패키지마다 i18n 검사(`vis-a-lot-i18n-check`, `.po`만 읽는다) | |
 | `test`·`typecheck` | vitest / `next typegen && tsc --noEmit` | `^i18n:compile`, `i18n:compile` |
 | `dev` | `next dev` (캐시하지 않는다) | `^i18n:compile`, `i18n:compile` |
-| `//#lint:fsd`·`//#lint:biome`·`//#lint:css` | 저장소 전체를 보는 루트 검사. `pnpm lint`가 앱·패키지의 `lint`와 함께 돌린다 | |
+| `//#lint:fsd`·`//#lint:biome`·`//#lint:css`·`//#lint:mfe` | 저장소 전체를 보는 루트 검사 (`lint:mfe`: microfrontends.json과 자식 앱 package.json의 앱 이름·asset prefix가 같은지). `pnpm lint`가 앱·패키지의 `lint`와 함께 돌린다 | |
 
 - 번역 누락은 `build`에서만 멈춘다. 문구를 추출하고 번역을 채우기 전에도 `pnpm dev`·`pnpm test`·`pnpm typecheck`는 돈다 (빈 번역은 한국어 원문으로 보인다).
 - `build`는 같은 패키지의 `typecheck`가 끝난 뒤 돈다. `next build`는 시작할 때 `.next`를 지우고 `.next/types`·`next-env.d.ts`를 다시 쓰는데, `typecheck`(`next typegen`)도 같은 파일을 쓰기 때문이다. 순서를 `dependsOn`으로 정해 두 태스크가 한 패키지에서 동시에 돌 수 없게 했다. `typecheck`의 출력(`.next/types/**`, `next-env.d.ts`, `tsconfig.tsbuildinfo`)도 캐시에 넣는다.
@@ -110,7 +110,7 @@ pnpm check:affected  # 루트 검사 전체 + develop 대비 바뀐 패키지의
 
 #### 바뀐 것만 돌리기 (`--affected`)
 
-`--affected`는 바뀐 **패키지**와 그 패키지에 의존하는 패키지의 태스크만 돌립니다. 루트 태스크(`//#lint:fsd`·`//#lint:biome`·`//#lint:css`)는 루트 패키지 파일이 바뀔 때만 affected로 잡혀, 앱 파일의 FSD·Biome 위반을 놓칩니다. 그래서 **루트 검사는 `--affected` 없이 돌리고(입력이 그대로면 캐시로 끝난다), 패키지 태스크만 `--affected`로 돌립니다.** `pnpm check:affected`가 이 순서로 돕니다 (`pnpm run lint:root` → `turbo run lint test typecheck build --affected`).
+`--affected`는 바뀐 **패키지**와 그 패키지에 의존하는 패키지의 태스크만 돌립니다. 루트 태스크(`//#lint:fsd`·`//#lint:biome`·`//#lint:css`·`//#lint:mfe`)는 루트 패키지 파일이 바뀔 때만 affected로 잡혀, 앱 파일의 FSD·Biome 위반을 놓칩니다. 그래서 **루트 검사는 `--affected` 없이 돌리고(입력이 그대로면 캐시로 끝난다), 패키지 태스크만 `--affected`로 돌립니다.** `pnpm check:affected`가 이 순서로 돕니다 (`pnpm run lint:root` → `turbo run lint test typecheck build --affected`).
 
 기준은 `TURBO_SCM_BASE`와 현재 작업 트리(커밋하지 않은 변경 포함)의 차이입니다. 작업 브랜치의 PR은 develop으로 가므로 기준은 `origin/develop`이고(`check:affected`의 기본값), `release/<버전>` 브랜치의 PR은 main으로 가므로 `origin/main`입니다 ([docs/git-flow.md](docs/git-flow.md)). `TURBO_SCM_BASE`를 주지 않은 `--affected`는 로컬 `main`을 기준으로 삼는데, 로컬 main은 develop보다 크게 뒤처져 있어 거의 모든 패키지가 잡히니 쓰지 않습니다. 얕은 clone(CI 등)이면 기준 커밋까지 fetch합니다.
 

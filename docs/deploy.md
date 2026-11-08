@@ -15,7 +15,7 @@
 | `apps/*/next.config.ts` | `withMicrofrontends`로 감싼다 (`@vercel/microfrontends` 2.4.2). help는 asset prefix `/help-assets`를 받는다 |
 | `apps/help/scripts/prefix-assets.mjs` | help `build`의 마지막 단계. `out/_next`를 `out/help-assets/_next`로 옮긴다 (아래 "정적 export와 asset prefix") |
 | `apps/*/vercel.json` | 프로젝트마다 Framework, Install·Build Command, Output Directory |
-| `apps/help/turbo.json` | help의 `build`·`typecheck` 입력에 `apps/web/microfrontends.json`을 더한다 |
+| `apps/help/package.json`의 `"vis-a-lot".microfrontend` | help가 쓰는 앱 이름·`assetPrefix`. `microfrontends.json`과 같아야 한다 (`scripts/check-microfrontends.mjs`) |
 
 ## 1. Vercel 프로젝트 둘 만들기
 
@@ -74,7 +74,7 @@ Hobby·Pro는 Microfrontends 프로젝트 2개까지 포함한다 ([limits and p
 - **Build Command는 반드시 `turbo run build`다.** Root Directory(앱 폴더)에서 돌리면 turbo가 그 앱과 의존 패키지만 고른다 ([Turborepo on Vercel](https://vercel.com/docs/monorepos/turborepo)). 앱의 `build` 스크립트(`pnpm run build`, `next build`)를 바로 부르면 Lingui 카탈로그를 만드는 `i18n:compile`(앱·`@vis-a-lot/shared`)과 shared의 엄격한 i18n 검사가 돌지 않는다. 이때 앱 `build`는 `vis-a-lot-i18n-check . --compiled`에서 "컴파일한 카탈로그가 없다 … turbo run build로 돌린다"로 멈춘다.
 - turbo는 Vercel 빌드 환경에 전역으로 있고, 루트 `devDependencies`의 `turbo`(2.11.10)를 찾아 그 버전으로 돈다.
 - **Framework는 Other(`null`)**, 출력은 정적 파일 `out/`이다. 두 앱 모두 `output: "export"`라 서버가 없다. Next.js 프리셋을 쓰지 않는 까닭은 아래 "정적 export와 asset prefix"에 있다. `cleanUrls`가 `/help/vis` → `help/vis.html`처럼 확장자 없는 경로를 연다. 없는 경로는 각 프로젝트 `out/404.html`이 404로 나간다.
-- Install Command는 workspace 전체를 설치한다. 앱 하나만 설치하는 filtered install(`pnpm install --filter <앱>...`)은 루트 `devDependencies`(turbo)가 빠질 수 있어 쓰지 않았다.
+- Install Command는 workspace 전체를 설치한다. filtered install(`pnpm install --filter "@vis-a-lot/help..."`)로도 help 빌드는 되지만, `pnpm dev`의 Microfrontends proxy는 web의 `node_modules`에서 돌기 때문에 로컬 개발에는 전체 설치가 필요하다.
 
 ## 4. pnpm 12
 
@@ -98,7 +98,7 @@ lockfile: pnpm 12의 `pnpm-lock.yaml`은 YAML 문서 두 개다. 첫 문서는 p
 |---|---|---|
 | `apps/help/**` (도움말 본문 오타 등) | help만 | shared 태스크는 Remote Cache로 되살리고 help만 빌드 |
 | `apps/web/**` | web만 | |
-| `apps/web/microfrontends.json` | web만 (help의 의존이 아니다) | 경로는 기본 앱(web) 배포가 정하므로 web 배포로 반영된다 |
+| `apps/web/microfrontends.json` | web만 (help의 의존이 아니다) | 경로는 기본 앱(web) 배포가 정하므로 web 배포로 반영된다. help의 앱 이름·`assetPrefix`를 바꾸려면 `apps/help/package.json`도 함께 고쳐야 lint를 통과하므로 help도 다시 빌드된다 |
 | `packages/shared/**`, `packages/i18n-check/**`, `packages/tsconfig/**` | 둘 다 | |
 | `pnpm-lock.yaml` | 영향받는 프로젝트 (위 "pnpm 12"의 단서) | |
 | 루트 파일: `turbo.json`, `pnpm-workspace.yaml`, 루트 `package.json`, `biome.json`, `scripts/**`, `docs/**`, README 등 | 둘 다 (workspace 밖 변경은 전체 변경으로 본다) | 앱 태스크 입력이 그대로면 turbo가 캐시로 끝낸다 (`FULL TURBO`) |
@@ -109,7 +109,7 @@ lockfile: pnpm 12의 `pnpm-lock.yaml`은 YAML 문서 두 개다. 첫 문서는 p
 2. help의 브랜치 URL에서 `/help/**`는 그 Preview를, 나머지 경로는 web의 [fallback 환경](https://vercel.com/docs/microfrontends/routing#how-deployment-routing-works)(기본: Production) 배포를 쓴다.
 3. 병합 뒤 main으로 릴리스하면 help만 새 Production 배포가 생기고, 도메인의 `/help/**`가 그 배포로 바뀐다. web Production 배포는 그대로다.
 
-help의 asset prefix(`microfrontends.json`의 `assetPrefix`)를 바꾸면 web만 다시 배포되므로 help도 다시 배포해야 한다. 또 prefix 변경은 앞뒤 호환이 되지 않는다. 새 prefix 경로를 `routing`에 먼저 넣어 배포한 다음 `assetPrefix`를 바꾼다 ([asset prefix](https://vercel.com/docs/microfrontends/path-routing#configure-an-asset-prefix)).
+help의 asset prefix를 바꿀 때는 `microfrontends.json`의 `assetPrefix`와 `apps/help/package.json`의 `"vis-a-lot".microfrontend.assetPrefix`를 함께 고친다. 하나만 고치면 `pnpm lint`(`lint:mfe`)가 멈춘다. 두 파일이 함께 바뀌므로 Vercel과 turbo 모두 help를 바뀐 프로젝트로 잡는다. 또 prefix 변경은 앞뒤 호환이 되지 않는다. 새 prefix 경로를 `routing`에 먼저 넣어 배포한 다음 `assetPrefix`를 바꾼다 ([asset prefix](https://vercel.com/docs/microfrontends/path-routing#configure-an-asset-prefix)).
 
 ## 정적 export와 asset prefix
 
@@ -120,8 +120,8 @@ help의 asset prefix(`microfrontends.json`의 `assetPrefix`)를 바꾸면 web만
 - 그래서 help `build`의 마지막 단계 `scripts/prefix-assets.mjs`가 `out/_next`를 `out/help-assets/_next`로 옮기고, prefix 없는 `/_next/`를 가리키는 HTML이 남았으면 실패한다. 다른 framework에 대한 Vercel 안내("자산을 asset prefix 폴더 아래로 옮긴다")와 같은 방식이다. build 때는 `withMicrofrontends`의 rewrites 변환을 빼서(`skipTransforms`) export 경고도 없앤다. dev에서는 `next dev`가 rewrites를 처리하므로 그대로 둔다.
 - Vercel 프로젝트의 Framework를 Next.js 프리셋이 아닌 Other로 두는 까닭: Next.js 프리셋은 Next 빌드 산출물(routes manifest)의 rewrite를 배포에 적용할 수 있는데, 그러면 `/help-assets/_next/…`가 옮겨서 없어진 `/_next/…`로 다시 돌아간다. Other는 로컬에서 확인한 `out/` 파일을 그대로 내보낸다.
 - web은 기본 앱이라 prefix가 없고, 브라우저 안의 MSW + Worker 구조라 정적 export를 그대로 쓴다.
-- 남는 같은 경로(`/404.html`, `/_not-found*`, `/favicon.ico`)는 경로가 `/help/**`가 아니라 늘 web이 내보낸다. help의 `404.html`은 `/help/…` 아래 없는 경로에 help 배포가 돌려주는 404 페이지로만 쓰인다. favicon은 두 앱이 같은 파일이다.
-- 클라이언트 탐색의 RSC 요청은 `/help/…/__next.*.txt`처럼 페이지 경로 아래로 가므로 help로 간다.
+- 남는 같은 경로(`/404.html`, `/_not-found*`, `/favicon.ico`)는 경로가 `/help/**`가 아니라 늘 web이 내보낸다. help의 `404.html`은 `/help/…` 아래 없는 경로에 help 배포가 돌려주는 404 페이지로만 쓰인다. favicon은 두 앱이 같은 파일이고, 도메인에서는 늘 web의 파일이 쓰인다. help의 `app/favicon.ico`를 바꿔도 보이지 않는다.
+- 클라이언트 탐색의 RSC 요청은 `/help/…/__next.*.txt`나 `<경로>.txt`로 간다. `/help` 자체의 payload `/help.txt`는 `/help/:path*`에 들지 않으므로 `routing`에 따로 넣었다.
 
 ## 로컬 개발
 
