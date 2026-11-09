@@ -31,7 +31,6 @@
     "@tiptap/pm": "3.32.0",
     "@tiptap/react": "3.32.0",
     "@tiptap/starter-kit": "3.32.0",
-    "@vercel/microfrontends": "2.4.2",
     "@vis-a-lot/shared": "workspace:*",
     "d3-array": "3.2.4",
     "d3-hierarchy": "3.1.2",

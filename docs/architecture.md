@@ -10,7 +10,7 @@
 | `packages/tsconfig` | `@vis-a-lot/tsconfig` | 도구 패키지. 공통 TypeScript 설정 `base.json` (`"extends": "@vis-a-lot/tsconfig/base.json"`) |
 | `packages/i18n-check` | `@vis-a-lot/i18n-check` | 도구 패키지. Lingui 카탈로그 검사 bin `vis-a-lot-i18n-check` ([i18n.md](i18n.md)) |
 
-두 앱은 같은 사이트의 경로로 나뉜다 (`/help/**`는 help, 나머지는 web). Vercel Microfrontends로 묶는데 Next의 `basePath`는 지원하지 않으므로, 도움말 앱도 `basePath` 없이 라우트를 `app/help/` 아래에 둔다. 경로 구성(`apps/web/microfrontends.json`)과 배포는 [deploy.md](deploy.md)에 있다.
+두 앱은 같은 사이트의 경로로 나뉜다 (`/help/**`는 help, 나머지는 web). web의 Vercel 프로젝트가 `/help/**`를 help 프로젝트로 rewrite한다. 도움말 앱은 `basePath` 없이 라우트를 `app/help/` 아래에 두고, 자산만 `assetPrefix: "/help"`로 `/help/_next/**`를 가리키게 한다. 배포는 [deploy.md](deploy.md)에 있다.
 
 - 앱은 쓰는 내부 패키지를 자기 `package.json`에 `"@vis-a-lot/shared": "workspace:*"`로 선언하고 패키지 이름으로 import한다 (`@vis-a-lot/shared/ui/nav`). 배포는 package.json의 의존 그래프로 바뀐 앱만 다시 빌드하므로, 상대 경로(`../../packages/…`)나 tsconfig paths로 우회하면 바뀐 코드가 빌드에서 빠진다.
 - 앱은 다른 앱을 import하지 않는다. 두 앱이 함께 쓰는 코드는 `packages/shared`로 옮긴다. 한 앱만 쓰는 shared 코드는 그 앱의 `src/shared`에 둔다 (API client, MSW, 도움말 목차 등).

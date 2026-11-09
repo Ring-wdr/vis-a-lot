@@ -70,14 +70,6 @@
         "!**/out/**"
       ],
       "outputs": []
-    },
-    "//#lint:mfe": {
-      "inputs": [
-        "scripts/check-microfrontends.mjs",
-        "apps/*/package.json",
-        "apps/*/microfrontends.json"
-      ],
-      "outputs": []
     }
   }
 }

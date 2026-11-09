@@ -3,15 +3,9 @@
   "version": "0.18.0",
   "private": true,
   "description": "vis-a-lot 도움말 문서(/help/**). 로그인 없이 열리는 정적 MDX 페이지",
-  "vis-a-lot": {
-    "microfrontend": {
-      "name": "vis-a-lot-help",
-      "assetPrefix": "help-assets"
-    }
-  },
   "scripts": {
     "dev": "next dev --port 3001",
-    "build": "lingui check sync && lingui check missing && vis-a-lot-i18n-check . --compiled && next build && node scripts/prefix-assets.mjs",
+    "build": "lingui check sync && lingui check missing && vis-a-lot-i18n-check . --compiled && next build",
     "start": "next start --port 3001",
     "i18n:compile": "lingui compile",
     "lint": "vis-a-lot-i18n-check .",
@@ -26,7 +20,6 @@
     "@mdx-js/loader": "3.1.1",
     "@mdx-js/react": "3.1.1",
     "@next/mdx": "16.4.2",
-    "@vercel/microfrontends": "2.4.2",
     "@vis-a-lot/shared": "workspace:*",
     "lucide-react": "1.59.0",
     "next": "16.4.2",

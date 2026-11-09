@@ -74,10 +74,10 @@ pnpm workspace + [Turborepo](https://turborepo.com) 모노레포입니다. 루�
 
 ```bash
 pnpm install
-pnpm dev        # 두 앱(web :3000, help :3001)과 Microfrontends proxy를 함께 띄운다 → http://localhost:3024
-pnpm dev:web    # 시각화·피드·공유·dev (apps/web)만. proxy의 /help/**는 Production fallback으로 간다
-pnpm dev:help   # 도움말 /help/** (apps/help)만. 나머지 경로는 Production fallback으로 간다
-pnpm build      # 앱마다 out/ 정적 사이트 (apps/web/out, apps/help/out — help 자산은 out/help-assets/_next)
+pnpm dev        # 두 앱을 함께 띄운다 (web http://localhost:3000, help http://localhost:3001/help)
+pnpm dev:web    # 시각화·피드·공유·dev (apps/web)만
+pnpm dev:help   # 도움말 /help/** (apps/help)만
+pnpm build      # 앱마다 out/ 정적 사이트 (apps/web/out, apps/help/out — help 자산은 /help/_next를 가리킨다)
 pnpm build:web  # 앱 하나만 빌드 (= turbo run build --filter=@vis-a-lot/web). build:help도 있다
 pnpm gen:api    # 서비스 코드 → OAS(apps/web/public/openapi/*.json) → TS 타입 생성
 pnpm gen:api:check  # 생성물이 서비스 코드와 맞는지 확인 (CI용)
@@ -94,11 +94,11 @@ pnpm check:affected  # 루트 검사 전체 + develop 대비 바뀐 패키지의
 | 태스크 | 하는 일 | 먼저 도는 것 |
 |---|---|---|
 | `i18n:compile` | Lingui 카탈로그 컴파일(엄격하지 않게: 번역이 비어도 원문으로 채운다). 앱 → `src/**/config/locales/*.ts`, shared → `config/locales/*.ts`. 카탈로그를 쓰는 태스크는 이것 하나다 | `^i18n:compile` |
-| `build` | 엄격한 i18n 검사: 추출 누락(`lingui check sync`), 번역 누락(`lingui check missing`), `vis-a-lot-i18n-check`. shared는 검사만 하고, 앱은 그 뒤 `next build` → `out/` (help는 자산을 `out/help-assets`로 옮긴다) | `^build`, `i18n:compile`, 같은 패키지의 `typecheck` |
+| `build` | 엄격한 i18n 검사: 추출 누락(`lingui check sync`), 번역 누락(`lingui check missing`), `vis-a-lot-i18n-check`. shared는 검사만 하고, 앱은 그 뒤 `next build` → `out/` | `^build`, `i18n:compile`, 같은 패키지의 `typecheck` |
 | `lint` | 앱·패키지마다 i18n 검사(`vis-a-lot-i18n-check`, `.po`만 읽는다) | |
 | `test`·`typecheck` | vitest / `next typegen && tsc --noEmit` | `^i18n:compile`, `i18n:compile` |
 | `dev` | `next dev` (캐시하지 않는다) | `^i18n:compile`, `i18n:compile` |
-| `//#lint:fsd`·`//#lint:biome`·`//#lint:css`·`//#lint:mfe` | 저장소 전체를 보는 루트 검사 (`lint:mfe`: microfrontends.json과 자식 앱 package.json의 앱 이름·asset prefix가 같은지). `pnpm lint`가 앱·패키지의 `lint`와 함께 돌린다 | |
+| `//#lint:fsd`·`//#lint:biome`·`//#lint:css` | 저장소 전체를 보는 루트 검사. `pnpm lint`가 앱·패키지의 `lint`와 함께 돌린다 | |
 
 - 번역 누락은 `build`에서만 멈춘다. 문구를 추출하고 번역을 채우기 전에도 `pnpm dev`·`pnpm test`·`pnpm typecheck`는 돈다 (빈 번역은 한국어 원문으로 보인다).
 - `build`는 같은 패키지의 `typecheck`가 끝난 뒤 돈다. `next build`는 시작할 때 `.next`를 지우고 `.next/types`·`next-env.d.ts`를 다시 쓰는데, `typecheck`(`next typegen`)도 같은 파일을 쓰기 때문이다. 순서를 `dependsOn`으로 정해 두 태스크가 한 패키지에서 동시에 돌 수 없게 했다. `typecheck`의 출력(`.next/types/**`, `next-env.d.ts`, `tsconfig.tsbuildinfo`)도 캐시에 넣는다.
@@ -110,7 +110,7 @@ pnpm check:affected  # 루트 검사 전체 + develop 대비 바뀐 패키지의
 
 #### 바뀐 것만 돌리기 (`--affected`)
 
-`--affected`는 바뀐 **패키지**와 그 패키지에 의존하는 패키지의 태스크만 돌립니다. 루트 태스크(`//#lint:fsd`·`//#lint:biome`·`//#lint:css`·`//#lint:mfe`)는 루트 패키지 파일이 바뀔 때만 affected로 잡혀, 앱 파일의 FSD·Biome 위반을 놓칩니다. 그래서 **루트 검사는 `--affected` 없이 돌리고(입력이 그대로면 캐시로 끝난다), 패키지 태스크만 `--affected`로 돌립니다.** `pnpm check:affected`가 이 순서로 돕니다 (`pnpm run lint:root` → `turbo run lint test typecheck build --affected`).
+`--affected`는 바뀐 **패키지**와 그 패키지에 의존하는 패키지의 태스크만 돌립니다. 루트 태스크(`//#lint:fsd`·`//#lint:biome`·`//#lint:css`)는 루트 패키지 파일이 바뀔 때만 affected로 잡혀, 앱 파일의 FSD·Biome 위반을 놓칩니다. 그래서 **루트 검사는 `--affected` 없이 돌리고(입력이 그대로면 캐시로 끝난다), 패키지 태스크만 `--affected`로 돌립니다.** `pnpm check:affected`가 이 순서로 돕니다 (`pnpm run lint:root` → `turbo run lint test typecheck build --affected`).
 
 기준은 `TURBO_SCM_BASE`와 현재 작업 트리(커밋하지 않은 변경 포함)의 차이입니다. 작업 브랜치의 PR은 develop으로 가므로 기준은 `origin/develop`이고(`check:affected`의 기본값), `release/<버전>` 브랜치의 PR은 main으로 가므로 `origin/main`입니다 ([docs/git-flow.md](docs/git-flow.md)). `TURBO_SCM_BASE`를 주지 않은 `--affected`는 로컬 `main`을 기준으로 삼는데, 로컬 main은 develop보다 크게 뒤처져 있어 거의 모든 패키지가 잡히니 쓰지 않습니다. 얕은 clone(CI 등)이면 기준 커밋까지 fetch합니다.
 
@@ -127,7 +127,7 @@ TURBO_SCM_BASE=origin/develop pnpm exec turbo query affected               # 바
 
 ### 배포
 
-두 앱은 Vercel 프로젝트 둘(`vis-a-lot-web`, `vis-a-lot-help`)로 따로 배포하고 Vercel Microfrontends로 한 도메인에 묶습니다 (`/help/**`는 help, 나머지는 web). 커밋마다 바뀐 앱만 빌드합니다. 프로젝트 설정, Build Command(`turbo run build`), pnpm 12(Corepack), 환경 변수, 무엇이 언제 배포되는지는 [`docs/deploy.md`](docs/deploy.md)에 있습니다. 로컬에서는 `pnpm dev`의 proxy(http://localhost:3024)가 같은 방식으로 두 앱을 한 포트에 묶어 앱 사이 링크(상단 바의 help, 도움말의 시각화·피드)도 이어집니다.
+두 앱은 Vercel 프로젝트 둘(`vis-a-lot-web`, `vis-a-lot-help`)로 따로 배포합니다. 도메인은 web 프로젝트에 붙이고, web이 `/help/**`를 help 프로젝트로 rewrite해 같은 도메인에서 도움말을 엽니다. 커밋마다 바뀐 앱만 빌드합니다. 프로젝트 설정, Build Command(`turbo run build`), pnpm 12(Corepack), 환경 변수, 무엇이 언제 배포되는지는 [`docs/deploy.md`](docs/deploy.md)에 있습니다. 로컬에는 rewrite가 없어 앱 사이 링크(상단 바의 도움말, 도움말의 시각화·피드)는 이어지지 않으니 각 앱을 자기 포트에서 확인합니다.
 
 데모 계정은 `demo` / `demo1234`입니다.
 
@@ -144,9 +144,8 @@ NEXT_PUBLIC_ACCESS_TTL_SEC=20 NEXT_PUBLIC_REFRESH_TTL_SEC=30 pnpm build:web
 pnpm workspace + Turborepo 모노레포입니다. 규칙은 [`docs/architecture.md`](docs/architecture.md), 검사는 `scripts/check-fsd.mjs`입니다.
 
 ```
-apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/share), dev 화면. Microfrontends 기본 앱
-  microfrontends.json   Vercel Microfrontends 그룹 구성·경로 (docs/deploy.md)
-  vercel.json           Vercel 프로젝트 설정 (Build Command turbo run build, out/). apps/help에도 있다
+apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/share), dev 화면
+  vercel.json           Vercel 프로젝트 설정 (Build Command turbo run build, out/, /help/** → help 프로젝트 rewrite). apps/help에도 있다
   app/                  Next.js 라우트만 둔다 (page, layout). 화면은 src/에서 불러온다
   src/                  FSD 레이어로 나눈 클라이언트 코드 (@/* = apps/web/src/*)
     application/        provider, mock 서버 부팅, ssr: false 진입점 (FSD의 app 레이어)
@@ -166,9 +165,8 @@ apps/web/               @vis-a-lot/web: 시각화(/), 피드(/feed), 공유(/sha
     workers/            DB Worker, Render Worker
   public/               MSW worker, 서비스별 OpenAPI 3.1 문서(openapi/, 생성물)
   scripts/              gen-api.mts(OAS·타입 생성기), bench-db/(DB 벤치마크)
-apps/help/              @vis-a-lot/help: 도움말 /help/** (로그인 없이 열리는 정적 MDX 페이지). Microfrontends 자식 앱
-  app/help/             도움말 라우트. basePath 없이 /help 아래에 둔다
-  scripts/              prefix-assets.mjs: build 뒤 out/_next를 out/help-assets/_next로 옮긴다
+apps/help/              @vis-a-lot/help: 도움말 /help/** (로그인 없이 열리는 정적 MDX 페이지)
+  app/help/             도움말 라우트. basePath 없이 /help 아래에 두고, 자산은 assetPrefix /help로 /help/_next를 가리킨다
   src/                  FSD 레이어 (application/HelpShell, views/help-*, widgets/help-sidebar, shared/config/help.ts 목차, shared/ui/mdx)
   content/help/         도움말 본문(MDX). 서비스마다 폴더, 쓰는 법은 apps/help/content/help/README.md
   mdx-components.tsx    @next/mdx 필수 파일. 요소 모양은 src/shared/ui/mdx
