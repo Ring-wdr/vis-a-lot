@@ -55,12 +55,12 @@ export function inAllLocales(
   return Object.fromEntries(
     LOCALES.map((locale) => {
       const i18n = instances[locale];
+      // msg`문서 ${plural(count, …)}`처럼 매크로가 자리표시자 값을 descriptor.values에 넣어 두므로,
+      // 넘긴 values는 그 위에 더한다 (덮어쓰면 #이 NaN이 된다).
+      const extra = typeof values === "function" ? values(i18n) : values;
       return [
         locale,
-        i18n._({
-          ...descriptor,
-          values: typeof values === "function" ? values(i18n) : values,
-        }),
+        i18n._({ ...descriptor, values: { ...descriptor.values, ...extra } }),
       ];
     }),
   ) as Record<Locale, string>;
