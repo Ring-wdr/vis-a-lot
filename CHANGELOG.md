@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.18.1] - 2026-11-09
+
+기능 변경 없이 저장소를 pnpm workspace + Turborepo 모노레포로 나눴다. 도움말(`/help`)을 따로 빌드·배포해 문서만 고치면 help만 다시 배포된다. 왼쪽 패널 tooltip 컬럼이 draw 없이 툴팁에 바로 반영되지 않던 문제도 고쳤다.
+
+### 구조
+- `apps/web`(feed·시각화), `apps/help`(`/help/**` 문서), `packages/shared`(두 앱이 함께 쓰는 FSD shared 레이어), `packages/tsconfig`, `packages/i18n-check`로 나눴다. 앱과 패키지는 `workspace:*`와 패키지 이름으로만 잇고, 앱 밖을 가리키는 상대 경로나 다른 앱 import는 `check-fsd`가 막는다
+- Lingui 카탈로그는 앱별로 두고, 공용 문구는 shared 카탈로그로 모았다(번역은 그대로). 앱 사이 링크는 `<a>`다
+- Turborepo 2.11로 작업 순서·캐시·변경 영향 실행(`pnpm check:affected`, 기준 `origin/develop`)을 정리했다. `typecheck`가 `next typegen`을 먼저 돌려 빌드 없이도 돈다. 엄격한 i18n 검사는 build에서만 한다
+
+### 배포
+- Vercel 프로젝트 둘: web(Root Directory `apps/web`, 도메인)과 help(`apps/help`). web의 `vercel.json`이 `/help`, `/help.txt`, `/help/**`를 help Production 도메인으로 rewrite한다. help는 basePath 없이 `assetPrefix: "/help"`를 쓴다
+- skip unaffected projects로 커밋마다 바뀐 앱만 빌드한다. 설정은 `docs/deploy.md`
+- Preview에서 web 도메인의 `/help/**`는 help Production으로 간다. 로컬에서는 rewrite가 없어 앱마다 자기 포트에서 본다
+
+### 고친 것
+- 왼쪽 패널 tooltip 컬럼을 바꾸면 draw 없이 툴팁에 바로 반영한다. 값은 가리킨 행 id로 서버에서 읽는다. 패널에서 데이터셋을 바꿨으면 그린 차트의 데이터셋에 있는 컬럼만, 그린 x·y는 빼고 묻는다
+
 ## [0.18.0] - 2026-11-08
 
 화면을 한국어·영어·일본어로 볼 수 있게 했다. 문구는 Lingui로 관리하고, 상단 바의 사용자 정보를 팝오버로 묶어 그 안에서 테마와 언어를 고른다. 피드 DB와 차트 렌더를 대량 데이터로 재서 빠르게 했고, 상태 구독과 effect를 정리해 다시 그리는 횟수를 줄였다.

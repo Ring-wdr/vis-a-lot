@@ -34,7 +34,7 @@
 | `useDatasetStatus` → `useDatasetState` (`DrawButton`, `ColorSettings`, `useDatasetSchema`, `useSchemaState`) | shared | 목록에서 이 데이터셋 항목 전체 | 참조 | — | 상태(state)만 `select`. `DrawButton`은 핸들러에서만 읽어 목록을 다시 받을 때마다 다시 그렸다 |
 | `GallerySidebar` | views | 공유 링크 열기(mutation 상태, `gridArea`) | 참조 | 아니요 | `OpenSharedLink`(아무것도 그리지 않음)로 떼어 설정 패널·draw 버튼으로 번지지 않게 |
 | `ModeBar`, `ChartActionBar`, `ShareButton`, `FeedPostButton`, `EditInGalleryButton`, `ColumnFilter`, `DatastoreDialog` | features | 원자 단위 값, `current`, action | 원시값·참조·함수 | 아니요 (동작 하나) | 그대로 |
-| `ItemTooltip` | features | 데이터셋, `showNearest`, `current?.spec` | 원시값·참조 | 아니요 | 그대로 |
+| `ItemTooltip` | features | 데이터셋, `showNearest`, `current?.spec`, `draft.tooltip` | 원시값·참조 | 아니요 | 그대로 |
 | `useItemAction`, `useItemDetail`, `useDrawState`, `useOpenChart`, `useWorkspaceMutationKey` | features·entities model | action, `current`, `opening`, `id` | 함수·참조·원시값 | — | 그대로 |
 | `ShareView` | views | 탭 store(getState) | — | 아니요 | 그대로 |
 

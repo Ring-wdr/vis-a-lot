@@ -14,7 +14,7 @@ export default {
     "selector-max-id": 0,
     "selector-pseudo-class-disallowed-list": ["global"],
     "declaration-no-important": true,
-    // 색은 globals.css의 토큰만 쓴다.
+    // 색은 packages/shared/ui/globals.css의 토큰만 쓴다.
     "color-no-hex": true,
     "color-named": "never",
     "function-disallowed-list": ["rgb", "rgba", "hsl", "hsla", "oklch", "lab"],
@@ -39,8 +39,8 @@ export default {
   },
   overrides: [
     {
-      // 토큰을 정의하고 요소 기본값(reset)을 두는 유일한 곳
-      files: ["app/globals.css"],
+      // 토큰을 정의하고 요소 기본값(reset)을 두는 유일한 곳. 두 앱의 app/globals.css는 이 파일을 import만 한다.
+      files: ["packages/shared/ui/globals.css"],
       rules: {
         "selector-max-type": null,
         "selector-max-universal": null,
@@ -51,5 +51,5 @@ export default {
       },
     },
   ],
-  ignoreFiles: ["out/**", ".next/**"],
+  ignoreFiles: ["**/out/**", "**/.next/**", "**/node_modules/**"],
 };

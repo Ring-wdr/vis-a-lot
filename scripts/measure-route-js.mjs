@@ -1,12 +1,22 @@
 // 정적 export 결과(out/)에서 화면마다 HTML이 불러오는 JS의 gzip 크기와 out/ 전체 JS 크기를 잰다.
-// 사용법: pnpm build 뒤 node scripts/measure-route-js.mjs [저장소 경로]
+// 사용법: pnpm build 뒤 node scripts/measure-route-js.mjs [저장소 경로]  (모노레포면 apps/*/out을 읽는다)
 // i18n 라이브러리 비교(docs/i18n-library-comparison.md)에 썼다.
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 
 const repo = path.resolve(process.argv[2] ?? ".");
-const out = path.join(repo, "out");
+// 모노레포가 된 뒤에는 앱마다 out/이 따로 있다 (도움말은 apps/help/out, 그 밖은 apps/web/out).
+// 예전 커밋(루트 out/ 하나)도 잴 수 있게 루트 out/이 있으면 그것을 쓴다.
+const outFor = (route) =>
+  fs.existsSync(path.join(repo, "out"))
+    ? path.join(repo, "out")
+    : path.join(
+        repo,
+        "apps",
+        route.startsWith("/help") ? "help" : "web",
+        "out",
+      );
 const gz = (f) => zlib.gzipSync(fs.readFileSync(f), { level: 9 }).length;
 const routes = {
   "/": "index.html",
@@ -16,6 +26,7 @@ const routes = {
 };
 const res = {};
 for (const [r, f] of Object.entries(routes)) {
+  const out = outFor(r);
   const p = path.join(out, f);
   if (!fs.existsSync(p)) {
     res[r] = "missing";
@@ -43,6 +54,11 @@ const walk = (d) =>
     .flatMap((e) =>
       e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)],
     );
-const js = walk(path.join(out, "_next")).filter((f) => f.endsWith(".js"));
+const outs = [...new Set(Object.keys(routes).map(outFor))].filter((d) =>
+  fs.existsSync(path.join(d, "_next")),
+);
+const js = outs
+  .flatMap((d) => walk(path.join(d, "_next")))
+  .filter((f) => f.endsWith(".js"));
 res.totalJsGzipKB = +(js.reduce((s, f) => s + gz(f), 0) / 1024).toFixed(1);
 console.log(JSON.stringify(res, null, 2));

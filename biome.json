@@ -9,12 +9,13 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
-      "!node_modules",
-      "!.next",
-      "!dist",
-      "!build",
-      "!public/mockServiceWorker.js",
-      "!public/*.svg",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/out",
+      "!**/dist",
+      "!**/build",
+      "!apps/web/public/mockServiceWorker.js",
+      "!apps/web/public/*.svg",
       "!pnpm-lock.yaml",
       "!**/*.md",
       "!.claude/worktrees",
@@ -69,11 +70,26 @@
   },
   "overrides": [
     {
+      "includes": [".claude/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUndeclaredEnvVars": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": [
-        "src/**",
-        "!src/application/MockServerProvider.tsx",
-        "!src/**/*.test.ts",
-        "!src/**/*.test.tsx"
+        "apps/*/src/**",
+        "packages/*/config/**",
+        "packages/*/lib/**",
+        "packages/*/ui/**",
+        "packages/*/model/**",
+        "packages/*/api/**",
+        "!apps/web/src/application/MockServerProvider.tsx",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
       ],
       "linter": {
         "rules": {
@@ -88,7 +104,7 @@
                   },
                   {
                     "group": ["**/*.module.css"],
-                    "message": "스타일은 Tailwind 클래스로 쓴다. 토큰·reset은 app/globals.css 한 곳에 둔다."
+                    "message": "스타일은 Tailwind 클래스로 쓴다. 토큰·reset은 packages/shared/ui/globals.css 한 곳에 둔다."
                   }
                 ]
               }
@@ -99,7 +115,7 @@
     }
   ],
   "tailwind": {
-    "stylesheet": "./app/globals.css",
+    "stylesheet": "./packages/shared/ui/globals.css",
     "mergeFunctions": ["cn"],
     "variantFunctions": ["tv"]
   }

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "turbo run build",
+  "outputDirectory": "out",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/help",
+      "destination": "https://vis-a-lot-help.vercel.app/help"
+    },
+    {
+      "source": "/help.txt",
+      "destination": "https://vis-a-lot-help.vercel.app/help.txt"
+    },
+    {
+      "source": "/help/:path*",
+      "destination": "https://vis-a-lot-help.vercel.app/help/:path*"
+    }
+  ]
+}
