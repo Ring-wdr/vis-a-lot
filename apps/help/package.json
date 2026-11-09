@@ -1,0 +1,46 @@
+{
+  "name": "@vis-a-lot/help",
+  "version": "0.18.0",
+  "private": true,
+  "description": "vis-a-lot 도움말 문서(/help/**). 로그인 없이 열리는 정적 MDX 페이지",
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "lingui check sync && lingui check missing && vis-a-lot-i18n-check . --compiled && next build",
+    "start": "next start --port 3001",
+    "i18n:compile": "lingui compile",
+    "lint": "vis-a-lot-i18n-check .",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lingui:extract": "lingui extract --clean",
+    "lingui:check": "lingui check sync && lingui check missing && vis-a-lot-i18n-check ."
+  },
+  "dependencies": {
+    "@lingui/core": "6.10.1",
+    "@lingui/react": "6.10.1",
+    "@mdx-js/loader": "3.1.1",
+    "@mdx-js/react": "3.1.1",
+    "@next/mdx": "16.4.2",
+    "@vis-a-lot/shared": "workspace:*",
+    "lucide-react": "1.59.0",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "rehype-slug": "6.0.0",
+    "remark-gfm": "4.0.1"
+  },
+  "devDependencies": {
+    "@lingui/cli": "6.10.1",
+    "@lingui/format-po": "6.10.1",
+    "@lingui/swc-plugin": "6.7.1",
+    "@lingui/vite-plugin": "6.10.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/mdx": "2.0.14",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vis-a-lot/i18n-check": "workspace:*",
+    "@vis-a-lot/tsconfig": "workspace:*",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}
