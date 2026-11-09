@@ -1,6 +1,6 @@
 {
   "name": "@vis-a-lot/web",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "private": true,
   "description": "vis-a-lot의 시각화·피드·공유·dev 화면과 브라우저 안의 서버(MSW). /help/**는 @vis-a-lot/help가 맡는다",
   "scripts": {
