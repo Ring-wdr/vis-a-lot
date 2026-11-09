@@ -1,6 +1,6 @@
 {
   "name": "@vis-a-lot/i18n-check",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "private": true,
   "description": "Lingui 카탈로그 검사(자리표시자, 카탈로그 사이 충돌, 등록 import). 앱·패키지가 devDependencies로 선언하고 bin으로 부른다",
   "type": "module",

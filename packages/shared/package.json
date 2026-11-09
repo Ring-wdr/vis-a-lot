@@ -1,6 +1,6 @@
 {
   "name": "@vis-a-lot/shared",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "private": true,
   "description": "두 앱(web, help)이 함께 쓰는 FSD shared 레이어: 언어·테마, Lingui, 디자인 토큰, 공통 UI",
   "scripts": {
