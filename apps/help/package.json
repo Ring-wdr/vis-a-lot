@@ -1,6 +1,6 @@
 {
   "name": "@vis-a-lot/help",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "private": true,
   "description": "vis-a-lot 도움말 문서(/help/**). 로그인 없이 열리는 정적 MDX 페이지",
   "scripts": {
