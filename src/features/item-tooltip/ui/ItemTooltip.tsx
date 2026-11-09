@@ -11,16 +11,15 @@ import {
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
+import { liveTooltipColumns } from "@/features/item-tooltip/lib/tooltip-columns";
 import { ApiRequestError } from "@/shared/api/api";
 import {
   useColumns,
+  useDatasetSchema,
   useItemMeta,
   useTooltipValues,
 } from "@/shared/api/queries";
-import type {
-  ChartImage as ChartImageData,
-  ColumnName,
-} from "@/shared/api/types";
+import type { ChartImage as ChartImageData } from "@/shared/api/types";
 import { formatValue } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/tw";
 import { useDebounced } from "@/shared/lib/use-debounced";
@@ -49,7 +48,6 @@ export function ItemTooltip({
   alt,
   chartId,
   itemKey,
-  columns,
   display,
   onLegendColor,
   overlay,
@@ -67,8 +65,6 @@ export function ItemTooltip({
   alt: string;
   chartId: string;
   itemKey: string;
-  /** x, y 외에 툴팁에 보여줄 컬럼 (서버 조회) */
-  columns: readonly ColumnName[];
 }) {
   // 툴팁 줄 문구(strategies의 t)도 지금 언어로 다시 그린다.
   const { t } = useLingui();
@@ -80,6 +76,22 @@ export function ItemTooltip({
     (s) => s.current?.spec.dataset ?? s.draft.dataset,
   );
   const columnInfo = useColumns(dataset);
+  // x, y 외에 툴팁에 보여줄 컬럼(서버 조회)은 그린 시점의 spec이 아니라 왼쪽 패널 선택을 바로 따른다.
+  const selectedColumns = useWorkspace((s) => s.draft.tooltip);
+  const drawnColumns = useDatasetSchema(dataset).data?.columns;
+  const drawnX = useWorkspace((s) => s.current?.spec.x);
+  const drawnY = useWorkspace((s) => s.current?.spec.y);
+  const columns = useMemo(
+    () =>
+      liveTooltipColumns(
+        selectedColumns,
+        drawnColumns,
+        drawnX !== undefined && drawnY !== undefined
+          ? { x: drawnX, y: drawnY }
+          : undefined,
+      ),
+    [selectedColumns, drawnColumns, drawnX, drawnY],
+  );
   const showNearest = useWorkspace((s) => s.showNearest);
   const spec = useWorkspace((s) => s.current?.spec);
   const defaultOptions = useDefaultOptions(spec?.chartType);

@@ -142,7 +142,6 @@ export function DetailView({
             primaryJobId={current.jobId}
             hasLegend={drawsLegend(current.spec)}
             displaySize={displaySize}
-            tooltipColumns={current.spec.tooltip}
             image={detail.image}
             rendering={detail.rendering}
             expanded

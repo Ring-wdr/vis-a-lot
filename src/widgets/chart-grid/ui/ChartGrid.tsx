@@ -15,7 +15,6 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { useAutoResize } from "@/features/auto-resize/model/use-auto-resize";
 import { useJob, useJobProgress } from "@/shared/api/queries";
 import {
-  type ColumnName,
   type ItemSize,
   type ItemState,
   isTerminal,
@@ -148,7 +147,6 @@ const GridItem = memo(function GridItem({
   primaryJobId,
   hasLegend,
   displaySize,
-  tooltipColumns,
   onOpen,
 }: {
   item: ItemState;
@@ -158,7 +156,6 @@ const GridItem = memo(function GridItem({
   primaryJobId: string;
   hasLegend: boolean;
   displaySize: ItemSize | undefined;
-  tooltipColumns: readonly ColumnName[];
   /** 크게 보기를 연다 (store action이라 참조가 바뀌지 않는다). */
   onOpen: (index: number) => void;
 }) {
@@ -170,7 +167,6 @@ const GridItem = memo(function GridItem({
       primaryJobId={primaryJobId}
       hasLegend={hasLegend}
       displaySize={displaySize}
-      tooltipColumns={tooltipColumns}
     />
   );
 });
@@ -332,7 +328,6 @@ export function ChartGrid() {
                     primaryJobId={current.jobId}
                     hasLegend={drawsLegend(current.spec)}
                     displaySize={displaySize}
-                    tooltipColumns={current.spec.tooltip}
                   />
                 ))}
                 {/* 첫 응답 전이거나 item 목록이 정해지기 전에는 그 grid 모양대로 자리를 잡아 둔다. */}

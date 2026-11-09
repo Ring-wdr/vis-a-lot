@@ -97,7 +97,7 @@ function FitDraftToSchema({
 }
 
 /**
- * 차트 설정. draw를 눌러야 반영된다. 다시 보기 전용 화면(history)에서는 그 차트의 설정을 보여주기만 하고
+ * 차트 설정. draw를 눌러야 반영된다. tooltip 컬럼만은 그린 차트의 툴팁에 바로 반영된다(ItemTooltip). 다시 보기 전용 화면(history)에서는 그 차트의 설정을 보여주기만 하고
  * fieldset disabled로 안의 입력을 모두 막는다.
  */
 export function ControlPanel() {
