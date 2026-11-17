@@ -74,6 +74,7 @@
   - x 전체 범위는 **필터를 건 전체 데이터(모든 split 조합)의 x 최소~최대**다(histogram 구간과 같은 방식). 그래서 item마다 x 범위가 달라도 모든 item·모든 구간별 선이 같은 구간 경계를 쓴다. 시계열 x는 epoch ms로 나눈다.
   - 구간은 같은 폭으로 나누고 `[x0, x1)`, 마지막 구간만 끝값을 포함한다. x 값이 하나뿐이면(최소 = 최대) 그 값 하나인 구간 하나(`x0 = x1`)다. x가 없는 행은 구간별 집계에서 빠진다(구간별이 아닌 선은 x와 상관없이 집계한다).
   - 차트에서 구간을 처음 조회할 때 정하고, 같은 차트에서 나중에 더한 구간별 선(item 속성 변경)도 그 구간을 그대로 쓴다.
+  - 점을 구간에 넣을 때(이탈 판정·툴팁)는 그린 계단을 본다: 맞닿은 두 구간의 경계는 오른쪽 구간, 옆이 빈 구간이면 끝값도 그 구간에 든다. 렌더러(`stepAt`, `server/render/control-limit.ts`)와 화면(`stepAt`, `src/features/item-tooltip/lib/limit-hit.ts`)이 같은 규칙이라, 식으로 x를 뒤집어도 같은 점이 같은 구간에 든다.
 - 값이 없으면(행이 없음, 전부 null) 그 선은 그리지 않는다.
 
 ### 3.3 규격 이탈과 영역
@@ -172,7 +173,7 @@ type ControlLimitOptions = {
 - job-manager가 item마다 `options.controlLimit.lines`를 값이 든 `ResolvedLimit[]`로 바꿔 렌더 입력(`ScatterInput.limits`, `CategoryInput.limits`)에 싣는다. Render Worker는 DB를 모른다.
 - 선 목록은 item마다 합친 속성(전체 → … → 공통 → item)의 것을 쓴다. history·공유로 복원한 item 속성은 저장 때 검사를 거치지 않았을 수 있어, job이 앞에서부터 하나씩 `controlLimitError`(5.1)로 보고 걸리는 선(없는 컬럼, 차트와 맞지 않는 축, 이름 중복, 축마다 두 번째 USL·LSL, 10개 초과)만 빼고 나머지를 그린다. 공통 속성은 draw에서 검사하므로 맞지 않으면 job이 실패한다(5.1).
 - draw·item 다시 그리기·공통 속성 변경·resize·크게 보기·섬네일·내려받기용 light PNG 모두 같은 길(렌더 직전에 값 채우기)로 싣는다.
-- `ResolvedLimit`(`server/render/control-limit.ts`)은 값이 모두 그 축의 데이터 값(시계열 x는 epoch ms, 기준선 ISO 시각도 바꿔 싣는다)인 선이다. 구간별이 아니면 `{ multi: false, value, value2? }`, 구간별이면 `{ multi: true, steps }`. 값을 구하지 못한 선은 job이 빼고, 구역을 끈 차트(3.1)면 `limits`를 싣지 않는다. 영역·이탈 강조·글자·축 범위 설정은 렌더 입력의 `options.controlLimit`에서 읽는다.
+- `ResolvedLimit`(`server/render/control-limit.ts`)은 값이 모두 그 축의 데이터 값(시계열 x는 epoch ms, 기준선 ISO 시각도 바꿔 싣는다)인 선이다. 시간대를 적지 않은 ISO 시각(API로 보낸 값)은 Worker의 지역 시간대가 아니라 화면·PNG가 보이는 KST로 읽는다(`limitTimeOf`, `server/data/limit-data.ts`). 구간별이 아니면 `{ multi: false, value, value2? }`, 구간별이면 `{ multi: true, steps }`. 값을 구하지 못한 선은 job이 빼고, 구역을 끈 차트(3.1)면 `limits`를 싣지 않는다. 영역·이탈 강조·글자·축 범위 설정은 렌더 입력의 `options.controlLimit`에서 읽는다.
 - 새 모듈 `server/render/control-limit.ts`: 축 범위 넓히기, 영역 채움, 선(계단선 포함), 이름 글자, 이탈 판정 함수. `scatter.ts`와 `category.ts`가 3.3의 순서대로 부른다.
 - 로그 축에서 0 이하 값의 선은 그리지 않는다. 구간별 선은 0 이하인 구간만 빼고, 남는 구간이 없으면 선을 뺀다. fitAxis도 log를 켠 축에는 0 이하 값을 넣지 않는다(넣으면 축이 선형으로 돌아간다).
 - **식(expression)**: 받은 값은 식을 적용하지 않은 값이다. 기준선은 사용자가 축 눈금을 보고 적은 값이라 그대로 그리고, 컬럼 선·띠 값과 구간 경계(x)에는 그 축의 식을 적용한다. 다른 축 변수를 쓰는 식(예: y 식에 x)은 선 값에 옮길 수 없어 그 선을 그리지 않는다. 이탈 판정·metadata·Score도 이렇게 옮긴 값(그린 좌표)을 쓴다.
@@ -272,8 +273,6 @@ limits?: {
 ---
 
 ## 9. 정한 것
-
-단위 1에서 아래 기본대로 정했다.
 
 1. **이벤트선**: 넣지 않는다(2.1).
 2. **기준선의 USL·LSL**: 고정 값 기준선에도 USL·LSL을 둔다.

@@ -36,11 +36,17 @@ export function axisToPx(
   return start + (flipped ? 1 - ratio : ratio) * length;
 }
 
-/** x가 든 구간. 구간은 [x0, x1)이고 마지막 구간만 끝을 포함한다. 없으면 undefined */
+/**
+ * x가 든 구간. 렌더러(server/render/control-limit.ts stepAt)와 같은 규칙이다: 두 구간이 맞닿은 경계는 오른쪽 구간,
+ * 옆이 빈 구간이면 끝값도 그 구간에 든다. 식으로 x를 뒤집어도(예: -x) 같은 점이 같은 구간에 든다. 없으면 undefined
+ */
 export function stepAt(steps: readonly LimitStep[], x: number) {
-  return steps.find(
-    (s, i) => x >= s[0] && (x < s[1] || (i === steps.length - 1 && x === s[1])),
-  );
+  let found: LimitStep | undefined;
+  for (const s of steps) {
+    if (s[0] > x) break;
+    found = s;
+  }
+  return found && x <= found[1] ? found : undefined;
 }
 
 /** 선이 x(데이터 값)에서 갖는 값 [v, v2?]. 구간별이면 그 구간의 값이고, 값이 없는 구간이면 undefined */

@@ -81,15 +81,18 @@ y의 작업 행마다 시간 막대를 그립니다. legend(예: 상태)를 고�
 
 ## 차트마다 쓸 수 있는 도구
 
-탭 도구 줄의 모드와 체크박스 표시는 차트 종류에 따라 쓸 수 없는 것이 있습니다. 쓸 수 없는 버튼은 흐리게 보이고, 커서를 올리면 이유가 나옵니다.
+탭 도구 줄의 모드, 체크박스 표시, 관리선은 차트 종류에 따라 쓸 수 없는 것이 있습니다. 쓸 수 없는 버튼은 흐리게 보이고, 커서를 올리면 이유가 나옵니다.
 
-| 차트 | 이동·확대 | 선택 | 점 삭제 | 페인트 | 체크박스 표시 |
-| --- | --- | --- | --- | --- | --- |
-| Scatter, Line | O | O | O | O | O |
-| Bar, Boxplot, Histogram, Waterfall | O | O | | O | O |
-| Heatmap | O | O | | O | |
-| Treemap | O | O | | | O |
-| Candle, Gantt | O | O | | O | O |
-| Pie, Radar, Funnel, Sankey | | O | | | O |
+| 차트 | 이동·확대 | 선택 | 점 삭제 | 페인트 | 체크박스 표시 | 관리선 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Scatter, Line | O | O | O | O | O | O |
+| Bar | O | O | | O | O | O |
+| Boxplot, Histogram, Waterfall | O | O | | O | O | |
+| Heatmap | O | O | | O | | |
+| Treemap | O | O | | | O | |
+| Candle, Gantt | O | O | | O | O | |
+| Pie, Radar, Funnel, Sankey | | O | | | O | |
+
+Line의 ECDF·NCDF·Probability는 관리선을 쓰지 않습니다. 관리선은 [꾸미기](/help/vis/customize#관리선)에서 설명합니다.
 
 각 도구는 [차트 살펴보기](/help/vis/explore)에서 설명합니다.

@@ -90,7 +90,7 @@ export const HELP: Record<HelpService, HelpServiceInfo> = {
         slug: "customize",
         title: inAllLocales(msg`꾸미기`),
         summary: inAllLocales(
-          msg`전체 설정, 순서 바꾸기·강조 방식, legend 색·위치, item 개별 속성`,
+          msg`전체 설정, 순서 바꾸기·강조 방식, 관리선, legend 색·위치, item 개별 속성`,
         ),
       },
       {

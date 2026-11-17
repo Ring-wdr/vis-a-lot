@@ -24,6 +24,7 @@ The menu shows only the sections used by the selected chart type.
 | Forecast | Predict the next values with a moving average or exponential smoothing and draw them with a confidence band |
 | Values | Value for empty cells, excluding outliers or showing outliers only (IQR, normal distribution) |
 | Highlight | Highlight points and bars by condition, rank or range |
+| Control limits | Reference lines, column lines and bands, highlighting out-of-spec (USL, LSL) marks, the spec area → [Control limits](#en-control-limits) |
 | Tooltip | Show the nearest point (changes the display only) |
 | Expression | Draw x and y transformed by an expression, e.g. `log(y)`, `x * 2 + 1` |
 
@@ -57,6 +58,84 @@ Pick a **Method** in the highlight section to show only the fields for that meth
 
 - Rank uses **all** points, bars and boxes the item draws, regardless of the zoom range. Legend values turned off with checkboxes, deleted points and excluded outliers are left out. Every value equal to the boundary is highlighted, so there can be more than the set number.
 - For gantt the y value is the length (time) of a task bar, and for candle it is the close.
+
+## Control limits
+
+Draw references such as upper and lower spec limits, targets or average levels as lines on scatter, line and bar charts, and highlight points and bars outside the spec. Set them in the **Control limits** menu of Settings and of item settings. The **Control limits** button in the chart tools opens Settings at the control limits menu (view only in the history tab).
+
+### Adding lines
+
+Under **Lines**, pick a **Line type to add** and press **Add line**. Each line has a name, axis, color, width and style (solid, dashed, dotted), and the up and down buttons change the order. You can have up to 10 lines, names up to 40 characters, and no two lines may share a name. Names are drawn on the PNG exactly as written.
+
+| Type | Fields | Value drawn |
+| --- | --- | --- |
+| Reference line | Value (a time on the Bottom axis of a time-series x), Spec | The value you enter |
+| Column line | Column, Function (mean, max, median, min), Spec, Per interval | The value aggregated from the item's rows |
+| Band | Column 1, Column 2, Per interval | Two lines, the mean of each column, with the space between them filled |
+
+- Only numeric columns can be picked, and the two columns of a band must differ.
+- Column lines and bands are aggregated from the rows of the item's split combination with the filters applied at draw time. Legend values turned off with checkboxes and deleted points are included, so checking a box does not move the lines.
+- A line whose value cannot be computed (no rows, or all empty) is not drawn for that item.
+- If a line doesn't fit, the reason appears under it and **OK** is disabled.
+- Lines keep the color you chose, even in dark mode. Lines and out-of-spec highlighting are also drawn in chart downloads, Excel and shared images.
+
+### Supported charts
+
+| Chart | Left axis (y) | Bottom axis (x) |
+| --- | --- | --- |
+| Scatter, Line | Reference line, column line, band | Reference line, column line, band for a numeric x; reference line for a time-series x |
+| Bar (Side) | Reference line, column line | |
+| Bar (Stack, Stack 100) | Reference line | |
+
+- Other charts and Line's ECDF, NCDF and Probability have no control limits menu. The **Control limits** button in the chart tools is dimmed when the drawn chart or the chart of the next draw doesn't use control limits; hover over it to see why.
+- A column line on Bar is one line aggregated over all of the item's rows. Stacked bars compare the stacked end value with the lines, and Stack 100 values are percentages.
+
+### Spec (USL, LSL) and out of spec
+
+Pick USL (upper) or LSL (lower) in the **Spec** of reference and column lines. **Each axis can have only one USL and one LSL**. Bands have no spec.
+
+- **Highlight out of spec** (on by default): points and bars whose y (for a Left axis spec) or x (for a Bottom axis spec) is above the USL or below the LSL are repainted in the **Out-of-spec color**. A value equal to the USL or LSL is not out of spec. If the USL is lower than the LSL, that axis is not checked.
+- With a spec line, the title line shows `이탈 N` (out of spec), even when N is 0. It counts every drawn point and bar regardless of zoom, without values turned off with checkboxes or deleted points.
+- Line charts check every point, not just the reduced line, and mark out-of-spec points as dots.
+- With Highlight, highlighted points are drawn over out-of-spec points. Lines are not dimmed by a selection.
+- If the upper and lower limits in the Scores section are empty, probability within spec and Cpk use the Left axis USL and LSL (not per interval). Values you enter there come first.
+
+### Spec area
+
+Turn on **Fill area** to paint by **Fill side**. **Inside spec** is between the LSL and USL (with only one, from that line to the edge of the plot on the inside), **Outside spec** is above the USL and below the LSL. Set the **Area color** and **Transparency** (0 opaque to 1 fully transparent, default 0.8). The area and band fills sit under the points.
+
+### Per interval (step line)
+
+Turn on **Per interval (step line)** for a Left axis column line or band on scatter or line to draw a spec that changes along x as steps.
+
+- The x min to max of all filtered data (every split combination) is split into **240 equal intervals** and each interval is aggregated, so every item uses the same interval edges.
+- The line breaks at intervals without a value, and points in those intervals are not checked. Rows without x are left out of per-interval aggregation.
+- Intervals are fixed on the first draw and don't change when you zoom.
+- A per-interval USL or LSL fills the area interval by interval. The label at the end of the line shows the value of the rightmost interval.
+
+### Reference lines on a time-series x
+
+When x is a time series, the Bottom axis takes only reference lines, and the value is entered in Korea time in the **Time (KST)** field. Use it to mark a single moment, such as an equipment change or a shift. The time in the line label uses the date format of Axes › X axis (empty: `year-month-day hour:minute`).
+
+### Line labels and axis range
+
+- **Show line names and values** (on by default): writes `name value` at the end of the line (`name smaller ~ larger` for a band). Left axis lines are labeled above the right end, Bottom axis lines beside the top end; labels move aside when they overlap other labels and are skipped when there is no room. An empty text color uses the tick label color, and the font size is used only when Size › Font size Auto is off. Thumbnails have no labels.
+- **Extend axis range to show lines** (on by default): when not zoomed, widens the axis range so lines outside the data are visible. A min or max set in the Axes section comes first. While zoomed, the zoomed range stays, so lines and labels outside it are not shown.
+- On a log axis, lines with values of 0 or less (or those intervals of a per-interval line) are not drawn.
+
+### With expressions
+
+When the Expression section transforms x or y, lines are drawn in the transformed coordinates too.
+
+- Reference lines are taken as values read off the transformed axis and drawn as entered.
+- The axis expression is applied to column line and band values and to interval edges. If the expression uses the other axis variable (for example `x` in the y expression), column lines and bands are not drawn.
+- Out-of-spec checks, tooltip values, line labels and the Scores limits all use the transformed values.
+
+### Item settings and lines that no longer fit
+
+- A line list set in item settings replaces the Settings list for that item. Deleting every line leaves only that item without lines. Reset the section to common settings to go back to the Settings list.
+- Changing the dataset, chart type or sub type, or x removes lines in Settings that no longer fit: lines using missing or non-numeric columns, and types the axis can't use (for example column lines when Bar Side becomes Stack, or column lines and numeric reference lines on the Bottom axis when x becomes a time series). Switching to Bar, which has no per-interval lines, only turns per interval off. Things you need to fix yourself, such as duplicate names or USLs, stay and show their reason. Switching to a chart without control limits keeps the lines without drawing them.
+- If item settings restored from history or a share contain lines that don't fit the current chart, only those lines are left out and the rest are drawn.
 
 ## Point shapes
 

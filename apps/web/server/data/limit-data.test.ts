@@ -8,6 +8,7 @@ import {
   type LimitData,
   type LimitRequest,
   limitRequestKey,
+  limitTimeOf,
   queryLimitData,
   resolveLimits,
 } from "./limit-data";
@@ -320,5 +321,17 @@ describe("resolveLimits", () => {
       false,
     );
     expect(out).toEqual([]);
+  });
+
+  it("시간대를 적지 않은 시각은 KST로 읽는다", () => {
+    const kst = Date.parse("2026-01-01T09:30:00+09:00");
+    expect(limitTimeOf("2026-01-01T09:30:00+09:00")).toBe(kst);
+    expect(limitTimeOf("2026-01-01T00:30:00Z")).toBe(kst);
+    expect(limitTimeOf("2026-01-01T09:30")).toBe(kst);
+    expect(limitTimeOf("2026-01-01 09:30:00")).toBe(kst);
+    expect(limitTimeOf("2026-01-01")).toBe(
+      Date.parse("2026-01-01T00:00:00+09:00"),
+    );
+    expect(limitTimeOf("x")).toBeNaN();
   });
 });

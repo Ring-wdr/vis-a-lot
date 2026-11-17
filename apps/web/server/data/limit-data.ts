@@ -182,6 +182,21 @@ function numberOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+const KST_OFFSET = "+09:00";
+
+/**
+ * 시계열 Bottom 기준선의 ISO 시각 → epoch ms. 화면은 `…+09:00`으로 저장한다.
+ * API로 시간대 없이 적은 시각은 Worker의 지역 시간대가 아니라 화면·PNG가 보이는 KST로 읽는다. 못 읽으면 NaN
+ */
+export function limitTimeOf(iso: string): number {
+  const v = iso.trim().replace(" ", "T");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v))
+    return Date.parse(`${v}T00:00${KST_OFFSET}`);
+  if (/T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(v))
+    return Date.parse(`${v}${KST_OFFSET}`);
+  return Date.parse(v);
+}
+
 /** 선이 쓰는 집계 요청. 기준선은 조회하지 않는다. */
 export function limitRequestsOf(line: LimitLine): LimitRequest[] {
   if (line.kind === "column")
@@ -230,7 +245,7 @@ export function resolveLimits(
       const value =
         typeof line.value === "string"
           ? line.axis === "bottom" && timeX
-            ? Date.parse(line.value)
+            ? limitTimeOf(line.value)
             : Number(line.value)
           : line.value;
       if (Number.isFinite(value)) out.push({ ...base, multi: false, value });

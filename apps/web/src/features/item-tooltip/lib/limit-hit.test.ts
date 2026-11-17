@@ -67,6 +67,16 @@ describe("관리선 툴팁", () => {
         50,
       )?.[2],
     ).toBe(2);
+    // 렌더러와 같다: 옆이 빈 구간이면 끝값도 그 구간, 빈 구간 안은 없음
+    const gap: [number, number, number][] = [
+      [0, 1, 10],
+      [1, 2, 20],
+      [5, 6, 30],
+    ];
+    expect(stepAt(gap, 2)?.[2]).toBe(20);
+    expect(stepAt(gap, 3)).toBeUndefined();
+    expect(stepAt(gap, -1)).toBeUndefined();
+    expect(stepAt([[3, 3, 7]], 3)?.[2]).toBe(7);
   });
 
   it("띠는 두 값을 함께 적는다", () => {
