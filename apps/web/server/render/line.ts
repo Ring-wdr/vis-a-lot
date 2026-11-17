@@ -208,6 +208,11 @@ export type LineDrawInput = {
   lineWidth?: number;
   /** 선과 점의 투명도(globalAlpha, shape.transparency). 없으면 1 */
   alpha?: number;
+  /**
+   * 칸 연결 강조: keep이 1인 점(범위 안)이 이어지는 구간만 진하게, 나머지는 dim 진하기로 긋는다.
+   * 없으면 계열 전체를 한 번 긋는다.
+   */
+  emphasis?: { keep: Uint8Array; dim: number };
   /** 점이 적을 때 찍는 점의 모양 (shape·size). 없으면 반지름 2.5 원 */
   dot?: {
     shape: PointShape;
@@ -221,7 +226,7 @@ export type LineDrawInput = {
 
 /** 계열마다 선을 긋는다. 점이 적으면 작은 점도 함께 찍는다. */
 export function drawLines(ctx: Ctx, input: LineDrawInput) {
-  const { sx, sy, series, colors, plot } = input;
+  const { sx, sy, series, colors, plot, emphasis } = input;
   const range: [number, number] = [plot.left, plot.left + plot.width];
   const total = series.reduce((sum, s) => sum + s.length, 0);
   const dots = !input.compact && total <= 400;
@@ -236,51 +241,60 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   // 선택 영역 밖은 다 그린 뒤 배경색으로 덮어 흐리게 한다 (region.dimOutside).
-  ctx.globalAlpha = alpha;
-  for (const g of input.drawOrder ?? series.keys()) {
-    const order = series[g];
-    if (!order || order.length === 0) continue;
-    ctx.strokeStyle = colors[g];
-    ctx.fillStyle = colors[g];
-    const runs = runsOf(order, undefined);
-    ctx.beginPath();
-    for (const [from, to] of runs) {
-      const picks = m4(order, from, to, sx, sy, range);
-      picks.forEach((i, k) => {
-        if (k === 0) ctx.moveTo(sx[i], sy[i]);
-        else ctx.lineTo(sx[i], sy[i]);
-      });
-      // 점 하나뿐인 구간은 선이 안 보이므로 점으로 남긴다.
-      if (picks.length === 1) {
-        const i = picks[0];
-        ctx.fillRect(sx[i] - 1, sy[i] - 1, 2, 2);
-      }
-    }
-    ctx.stroke();
-    if (dots) {
+  // 연결 강조는 계열 전체를 흐리게 먼저 긋고, 범위 안에서 이어지는 구간만 그 위에 진하게 긋는다.
+  const layers: { keep: Uint8Array | undefined; alpha: number }[] = emphasis
+    ? [
+        { keep: undefined, alpha: alpha * emphasis.dim },
+        { keep: emphasis.keep, alpha },
+      ]
+    : [{ keep: undefined, alpha }];
+  for (const layer of layers) {
+    ctx.globalAlpha = layer.alpha;
+    for (const g of input.drawOrder ?? series.keys()) {
+      const order = series[g];
+      if (!order || order.length === 0) continue;
+      ctx.strokeStyle = colors[g];
+      ctx.fillStyle = colors[g];
+      const runs = runsOf(order, layer.keep);
+      ctx.beginPath();
       for (const [from, to] of runs) {
-        for (let k = from; k < to; k++) {
-          const i = order[k];
-          if (plainDot || !dot) {
-            ctx.beginPath();
-            ctx.arc(sx[i], sy[i], dotRadius, 0, Math.PI * 2);
-            ctx.fill();
-          } else {
-            const lineWidth = ctx.lineWidth;
-            drawPoint(
-              ctx,
-              dot.shape,
-              sx[i],
-              sy[i],
-              dotRadius,
-              dot.style,
-              dot.borderWidth,
-              colors[g],
-              dot.stroke,
-            );
-            ctx.lineWidth = lineWidth;
-            ctx.strokeStyle = colors[g];
-            ctx.fillStyle = colors[g];
+        const picks = m4(order, from, to, sx, sy, range);
+        picks.forEach((i, k) => {
+          if (k === 0) ctx.moveTo(sx[i], sy[i]);
+          else ctx.lineTo(sx[i], sy[i]);
+        });
+        // 점 하나뿐인 구간은 선이 안 보이므로 점으로 남긴다.
+        if (picks.length === 1) {
+          const i = picks[0];
+          ctx.fillRect(sx[i] - 1, sy[i] - 1, 2, 2);
+        }
+      }
+      ctx.stroke();
+      if (dots) {
+        for (const [from, to] of runs) {
+          for (let k = from; k < to; k++) {
+            const i = order[k];
+            if (plainDot || !dot) {
+              ctx.beginPath();
+              ctx.arc(sx[i], sy[i], dotRadius, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              const lineWidth = ctx.lineWidth;
+              drawPoint(
+                ctx,
+                dot.shape,
+                sx[i],
+                sy[i],
+                dotRadius,
+                dot.style,
+                dot.borderWidth,
+                colors[g],
+                dot.stroke,
+              );
+              ctx.lineWidth = lineWidth;
+              ctx.strokeStyle = colors[g];
+              ctx.fillStyle = colors[g];
+            }
           }
         }
       }

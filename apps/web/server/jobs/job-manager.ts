@@ -21,6 +21,7 @@ import {
   POINT_CHARTS,
   subTypeOf,
 } from "../charts/chart-fields";
+import { linkNote, linkTargetError } from "../charts/chart-link";
 import { controlLimitSupport, resolveOptions } from "../charts/chart-options";
 import {
   bumpRevision,
@@ -32,8 +33,10 @@ import {
   getCachedChartData,
   getItem,
   limitCacheOf,
+  linkFilter,
   pngUrl,
   putDetail,
+  queryFilters,
   sizeKeyOf,
   THUMBNAIL_SIZE,
   thumbnailUrl,
@@ -332,6 +335,7 @@ async function run(job: Job) {
   const invalid = specError(spec, schema.columns);
   if (invalid) throw new JobError(invalid);
   chart.columns = schema.columns;
+  await fillLinkRows(chart);
 
   // ── 데이터 조회: split 조합이 곧 item 목록이다 ─────────────────
   // 데이터가 없는 상태에서 draw한 경우를 위해 여기서도 조합 개수를 확인한다.
@@ -387,6 +391,21 @@ async function run(job: Job) {
 
   await renderItems(job, data, chart.items, { kind: "item", thumbnail: true });
   job.status = finalStatus(job);
+}
+
+/**
+ * 칸 연결 범위의 행 수(요약 글자)를 센다. 그리면서 건 연결(POST /charts의 link)은 스키마를 안 뒤
+ * 이 칸 쪽 연결 컬럼을 여기서 확인한다. 이미 셌으면 그대로 둔다.
+ */
+export async function fillLinkRows(chart: ChartRecord) {
+  const { link } = chart;
+  if (!link || link.rows !== undefined) return;
+  const invalid = linkTargetError(link, chart.columns);
+  if (invalid) throw new JobError(invalid);
+  link.rows = await getRuntime().db.call("linkRows", {
+    dataset: chart.spec.dataset,
+    filter: linkFilter(link),
+  });
 }
 
 /** 차트의 현재 상태를 history에 저장한다. item 상태는 grid가 보는 primary job 기준이다. */
@@ -549,6 +568,10 @@ function itemView(chart: ChartRecord, item: ChartItem) {
       color: groupColor(item, g),
     })),
     deletionCount: item.deletions.length,
+    link:
+      chart.link?.rows !== undefined
+        ? { rows: chart.link.rows, mode: chart.link.mode }
+        : undefined,
   } satisfies Partial<ItemState>;
 }
 
@@ -729,12 +752,15 @@ async function itemData(chart: ChartRecord) {
   return loadChartData(chart);
 }
 
-/** 차트 종류에 맞는 데이터를 조회한다. 새 차트는 여기에 분기 하나를 더한다. */
-async function queryChartData(
-  spec: ChartRecord["spec"],
-): Promise<CachedChartData> {
+/**
+ * 차트 종류에 맞는 데이터를 조회한다. 새 차트는 여기에 분기 하나를 더한다.
+ * 필터는 draw 필터 + 거르기 연결 범위다. 강조 연결은 점 차트가 행마다 범위 안인지를 함께 받는다.
+ */
+async function queryChartData(chart: ChartRecord): Promise<CachedChartData> {
+  const { spec, link } = chart;
   const { db } = getRuntime();
   const groupOf = new Map<string, number>();
+  const filters = queryFilters(chart);
   // 행 단위 점 차트(scatter, line)는 같은 원자료를 쓴다.
   if (POINT_CHARTS.includes(spec.chartType)) {
     const data = await db.call("chartData", {
@@ -743,7 +769,8 @@ async function queryChartData(
       y: spec.y,
       splitBy: spec.splitBy,
       legend: spec.legend,
-      filters: spec.filters,
+      filters,
+      ...(link?.mode === "highlight" ? { highlight: linkFilter(link) } : {}),
     });
     // 분포 line(ECDF·정규 CDF·정규 확률)은 y 값의 분포 좌표로 바꿔 둔다. 렌더러는 보통 line처럼 잇는다.
     if (isDistributionLine(spec)) {
@@ -767,7 +794,7 @@ async function queryChartData(
         z: spec.z ?? "",
         agg: spec.agg,
         splitBy: spec.splitBy,
-        filters: spec.filters,
+        filters,
       })),
       groupOf,
     };
@@ -780,7 +807,7 @@ async function queryChartData(
         x: spec.x,
         splitBy: spec.splitBy,
         legend: spec.legend,
-        filters: spec.filters,
+        filters,
       })),
       groupOf,
     };
@@ -793,7 +820,7 @@ async function queryChartData(
         x: spec.x,
         y: spec.y,
         splitBy: spec.splitBy,
-        filters: spec.filters,
+        filters,
       })),
       groupOf,
     };
@@ -807,7 +834,7 @@ async function queryChartData(
         y: spec.y,
         splitBy: spec.splitBy,
         legend: spec.legend,
-        filters: spec.filters,
+        filters,
       })),
       groupOf,
     };
@@ -822,7 +849,7 @@ async function queryChartData(
         z: spec.z ?? "",
         agg: spec.agg,
         splitBy: spec.splitBy,
-        filters: spec.filters,
+        filters,
       })),
       groupOf,
     };
@@ -837,7 +864,7 @@ async function queryChartData(
         y: spec.y,
         agg: spec.agg,
         splitBy: spec.splitBy,
-        filters: spec.filters,
+        filters,
         // sunburst는 legend 컬럼으로 조각을 다시 나눠 바깥 고리에 그린다.
         sunburst: legendColumnOf(spec),
       })),
@@ -854,7 +881,7 @@ async function queryChartData(
         agg: spec.agg,
         splitBy: spec.splitBy,
         legend: spec.legend,
-        filters: spec.filters,
+        filters,
       })),
       groupOf,
     };
@@ -874,7 +901,7 @@ async function queryChartData(
       splitBy: spec.splitBy,
       // legend를 스스로 그리는 차트(waterfall)는 spec에 남은 legend 컬럼을 쓰지 않는다.
       legend: legendColumnOf(spec),
-      filters: spec.filters,
+      filters,
       // dot boxplot은 상자 위에 겹쳐 찍을 원값 표본도 받는다.
       dots: spec.chartType === "boxplot" && subTypeOf(spec) === "dot",
     })),
@@ -885,7 +912,7 @@ async function queryChartData(
 async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   const cached = getCachedChartData(chart.id);
   if (cached) return cached;
-  const result = await queryChartData(chart.spec);
+  const result = await queryChartData(chart);
   result.groups.forEach((g, i) => {
     result.groupOf.set(itemKeyOf(g.values), i);
   });
@@ -964,7 +991,7 @@ async function ensureLimits(
     dataset: spec.dataset,
     x: spec.x,
     splitBy: spec.splitBy,
-    filters: spec.filters,
+    filters: queryFilters(chart),
     requests,
     buckets: cache.buckets,
   });
@@ -1051,7 +1078,10 @@ function renderItem(
     size.theme,
   );
   const limits = limitsFor(chart, data, item, options);
+  // 칸 연결 범위의 제목 줄 요약 글자
+  const note = linkNote(chart.link);
   const common = {
+    note,
     options,
     width: size.width,
     height: size.height,
@@ -1097,6 +1127,7 @@ function renderItem(
         xs: data.xs.slice(group.start, group.end),
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),
+        linked: data.highlight?.slice(group.start, group.end),
         deletions: item.deletions,
         limits,
         legend: legend && {
@@ -1121,6 +1152,7 @@ function renderItem(
         height: size.height,
         thumbnail: common.thumbnail,
         title: item.label,
+        note,
         selection: item.selection,
         slices,
         agg: spec.agg,
@@ -1149,6 +1181,7 @@ function renderItem(
         height: size.height,
         thumbnail: common.thumbnail,
         title: item.label,
+        note,
         selection: item.selection,
         color: common.color,
         axisTitle: columnOf(spec.x)?.label ?? spec.x,
@@ -1259,6 +1292,7 @@ function renderItem(
         height: common.height,
         thumbnail: common.thumbnail,
         title: common.title,
+        note,
         shapes: common.shapes,
         selection: common.selection,
         sources: data.sources,

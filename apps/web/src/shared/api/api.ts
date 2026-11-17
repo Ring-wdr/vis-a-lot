@@ -5,6 +5,7 @@ import { chartClient, dataClient } from "./clients";
 import type {
   AnalyticsBoard,
   ChartFilter,
+  ChartLinkRequest,
   ChartSpec,
   ColumnName,
   CreateChartRequest,
@@ -220,6 +221,18 @@ export const api = {
   // ── chart 서비스: 그리기 job ────────────────────────────────
   createChart: (body: CreateChartRequest) =>
     unwrap(chartClient.POST("/charts", { body })),
+
+  /**
+   * 칸 연결 범위 걸기·풀기. 서버가 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다.
+   * link가 null이거나 따를 칸에 선택이 없으면 범위를 푼다. 범위가 그대로면 jobId가 null이다.
+   */
+  setLink: (chartId: string, link: ChartLinkRequest | null) =>
+    unwrap(
+      chartClient.PUT("/charts/{chartId}/link", {
+        params: { path: { chartId } },
+        body: { link },
+      }),
+    ),
 
   /** long polling. since 이후 변화가 생기거나 페이지가 모두 끝나면 응답이 온다. */
   /** search가 있으면 이름 조건으로 거른 순서의 페이지다. */

@@ -21,11 +21,12 @@ import {
 import { queryColumnSummary } from "../data/column-summary";
 import { CsvRejectError } from "../data/csv-import";
 import { DatasetManager } from "../data/datasets";
+import { type ChartFilter, resolveRowsSources } from "../data/filters";
 import { queryFunnelData } from "../data/funnel-data";
 import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
-import { exportItemRows, queryItemRows } from "../data/item-rows";
+import { countRows, exportItemRows, queryItemRows } from "../data/item-rows";
 import { queryLimitData } from "../data/limit-data";
 import {
   attachSunburst,
@@ -109,6 +110,20 @@ async function datasetOf(id: string) {
   const table = await datasets.table(id);
   if (!schema || !table) throw new Error("dataset is not registered");
   return { db, schema, table };
+}
+
+/** 다른 데이터셋 행 범위(칸 연결)가 읽을 source 테이블과 스키마 */
+async function sourceOf(dataset: string) {
+  const { schema, table } = await datasetOf(dataset);
+  return { schema, table };
+}
+
+/** 조회 인자의 필터에서 다른 데이터셋 행 범위의 source를 채운다. */
+async function withSources<P extends { filters?: ChartFilter[] }>(
+  params: P,
+): Promise<P> {
+  const filters = await resolveRowsSources(params.filters, sourceOf);
+  return filters === params.filters ? params : { ...params, filters };
 }
 
 /** CSV 검사에서 거절된 이유는 에러가 아니라 결과로 돌려준다. */
@@ -232,15 +247,30 @@ serveRpc<DbMethods>({
     return queryColumnSummary(db, table, schema, column);
   },
 
-  async chartData({ dataset, ...params }) {
+  async chartData({ dataset, highlight, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
-    const data = await queryChartData(db, schema, { ...params, table });
+    const [resolved] = (await resolveRowsSources(
+      highlight && [highlight],
+      sourceOf,
+    )) ?? [undefined];
+    const data = await queryChartData(db, schema, {
+      ...(await withSources(params)),
+      highlight: resolved,
+      table,
+    });
     return transfer(data, [
       data.xs.buffer,
       data.ys.buffer,
       data.ids.buffer,
       ...(data.legend ? [data.legend.index.buffer] : []),
+      ...(data.highlight ? [data.highlight.buffer] : []),
     ]);
+  },
+
+  async linkRows({ dataset, filter }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    const filters = (await resolveRowsSources([filter], sourceOf)) ?? [];
+    return countRows(db, table, schema, filters);
   },
 
   async legendValues({ dataset, column }) {
@@ -336,8 +366,9 @@ serveRpc<DbMethods>({
     return deleteBoard(db, userId);
   },
 
-  async categoryData({ dataset, ...params }) {
+  async categoryData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     const input = { ...params, table };
     if (params.chartType === "funnel")
       return queryFunnelData(db, schema, input);
@@ -346,38 +377,45 @@ serveRpc<DbMethods>({
       : queryBarData(db, schema, input);
   },
 
-  async sankeyData({ dataset, ...params }) {
+  async sankeyData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     return querySankeyData(db, schema, { ...params, table });
   },
 
-  async heatmapData({ dataset, ...params }) {
+  async heatmapData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     return queryHeatmapData(db, schema, { ...params, table });
   },
 
-  async histogramData({ dataset, ...params }) {
+  async histogramData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     return queryHistogramData(db, schema, { ...params, table });
   },
 
-  async limitValues({ dataset, ...params }) {
+  async limitValues({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     return queryLimitData(db, schema, { ...params, table });
   },
 
-  async candleData({ dataset, ...params }) {
+  async candleData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     return queryCandleData(db, schema, { ...params, table });
   },
 
-  async ganttData({ dataset, ...params }) {
+  async ganttData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     return queryGanttData(db, schema, { ...params, table });
   },
 
-  async pieData({ dataset, sunburst, ...params }) {
+  async pieData({ dataset, sunburst, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     const bars = await queryBarData(db, schema, {
       ...params,
       table,
@@ -403,8 +441,9 @@ serveRpc<DbMethods>({
     return attachSunburst(pie, detail);
   },
 
-  async radarData({ dataset, ...params }) {
+  async radarData({ dataset, ...rest }) {
     const { db, schema, table } = await datasetOf(dataset);
+    const params = await withSources(rest);
     const bars = await queryBarData(db, schema, {
       ...params,
       table,
@@ -417,21 +456,22 @@ serveRpc<DbMethods>({
     const { datasets } = await ready;
     if (!(await datasets.table(dataset))) return null;
     const { db, schema, table } = await datasetOf(dataset);
-    return queryItemRows(db, table, schema, scope, page);
+    return queryItemRows(db, table, schema, await withSources(scope), page);
   },
 
   async sampleRows({ dataset, filters, page }) {
     const { datasets } = await ready;
     if (!(await datasets.table(dataset))) return null;
     const { db, schema, table } = await datasetOf(dataset);
-    return querySampleRows(db, table, schema, filters, page);
+    const resolved = await resolveRowsSources(filters, sourceOf);
+    return querySampleRows(db, table, schema, resolved, page);
   },
 
   async exportItemRows({ dataset, scope }) {
     const { datasets } = await ready;
     if (!(await datasets.table(dataset))) return null;
     const { db, schema, table } = await datasetOf(dataset);
-    return exportItemRows(db, table, schema, scope);
+    return exportItemRows(db, table, schema, await withSources(scope));
   },
 
   async rowValues({ dataset, rowId, columns }) {

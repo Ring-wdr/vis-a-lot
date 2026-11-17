@@ -11,7 +11,7 @@ import {
   legendColumnOf,
   POINT_CHARTS,
 } from "./chart-fields";
-import type { ChartItem, ChartRecord } from "./chart-store";
+import { type ChartItem, type ChartRecord, queryFilters } from "./chart-store";
 
 /** 차트에 쓴 컬럼: split by → x → y → legend → 툴팁 순서, 겹치면 한 번만. 쓰지 않는 y는 뺀다. */
 export function chartColumns(chart: ChartRecord) {
@@ -113,12 +113,16 @@ function allColumns(chart: ChartRecord) {
 /**
  * item이 그린 행의 범위: split 조합 + draw 시점 필터 + 끈 legend 값. 화면에 지금 보이는 필터가 아니라
  * 차트를 그릴 때 저장한 spec.filters를 쓴다. 선택 필드 차트는 선택 영역·지운 영역으로 행을 더 거른다.
+ * 거르기 방식의 칸 연결 범위도 함께 건다(데이터 표·다운로드). 칸 연결의 따를 범위로 쓸 때는
+ * link: false로 그 칸 자신의 범위만 쓴다 (전파는 한 단계, 서로 따라도 범위가 겹겹이 쌓이지 않는다).
  */
 export function itemRowsScope(
   chart: ChartRecord,
   item: ChartItem,
+  { link = true }: { link?: boolean } = {},
 ): ItemRowsScope {
   const { spec } = chart;
+  const filters = link ? queryFilters(chart) : spec.filters;
   if (!filtersRowsBySelection(spec)) {
     return {
       chartType: spec.chartType,
@@ -128,7 +132,7 @@ export function itemRowsScope(
       splitBy: spec.splitBy,
       splitValues: item.values,
       columns: allColumns(chart),
-      filters: spec.filters,
+      filters,
       deletions: [],
       // pie의 legend 체크박스는 조각(x 범주)을 끈다. sunburst의 legend 컬럼(바깥 고리) 값이 아니다.
       hiddenLegend:
@@ -146,7 +150,7 @@ export function itemRowsScope(
     splitBy: spec.splitBy,
     splitValues: item.values,
     columns: allColumns(chart),
-    filters: spec.filters,
+    filters,
     deletions: scatter ? item.deletions : [],
     selection: scatter ? item.selection : undefined,
     selectedMarks: !item.selection

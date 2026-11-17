@@ -2,7 +2,7 @@
 // 인증은 auth 서비스에서 받은 서비스 토큰(client credentials)으로 한다.
 
 import createClient, { type Middleware } from "openapi-fetch";
-import type { ChartFilter } from "../../../data/filters";
+import type { SpecFilter } from "../../../data/filters";
 import type { paths as AuthPaths } from "../generated/auth";
 import type { paths as DataPaths } from "../generated/data";
 
@@ -83,7 +83,7 @@ export const dataService = {
   splitCount: async (
     datasetId: string,
     cols: string[],
-    filters?: ChartFilter[],
+    filters?: SpecFilter[],
   ) =>
     unwrap(
       await data.POST("/datasets/{datasetId}/split-count", {

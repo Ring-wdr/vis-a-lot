@@ -68,6 +68,8 @@ export type WaterfallInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   categories: string[];
   /** 범주별 집계값. 데이터가 없는 범주는 null (0으로 본다) */
   values: (number | null)[];
@@ -215,6 +217,7 @@ export function renderWaterfall(
       plot,
       input.title,
       [
+        input.note,
         input.agg && AGG_LABELS[input.agg],
         `${categories.length}개 범주`,
         inSelection && `${selectedCount}개 선택`,

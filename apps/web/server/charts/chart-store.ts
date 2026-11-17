@@ -15,9 +15,11 @@ import type {
 import type { CandleData } from "../data/candle-data";
 import type { CategoryData } from "../data/category-data";
 import type { ChartData } from "../data/chart-data";
+import type { ChartFilter, RowsFilter } from "../data/filters";
 import type { GanttData } from "../data/gantt-data";
 import type { HeatmapData } from "../data/heatmap-data";
 import type { HistogramData } from "../data/histogram-data";
+import type { ItemRowsScope } from "../data/item-rows";
 import type { LimitBuckets, LimitResult } from "../data/limit-data";
 import type { PieData, RadarData } from "../data/polar-data";
 import type { SankeyData } from "../data/sankey-data";
@@ -69,6 +71,25 @@ export type ChartItem = {
 
 export type ItemDetail = { image: ChartImage; meta: ItemMeta };
 
+/** 칸 연결 방식: 범위 안 행만 그리기(filter) 또는 모두 그리고 범위 밖을 흐리게(highlight) */
+export type LinkMode = "filter" | "highlight";
+
+/**
+ * 칸 연결 범위. 따를 칸 item의 행 범위를 걸어 둔 순간의 값으로 고정한다 (그 뒤 따를 칸을 확대해도 그대로다).
+ * 다른 데이터셋이면 연결 컬럼 값으로 잇는다.
+ */
+export type ChartLink = {
+  scope: ItemRowsScope;
+  sourceDataset: string;
+  /** 다른 데이터셋일 때만: 연결 컬럼 (source = 따를 칸 쪽, target = 이 차트 쪽) */
+  on?: { source: string; target: string };
+  mode: LinkMode;
+  /** 이 차트 데이터셋에서 범위 안 행 수 (이 차트 필터 전). 조회가 끝나야 정해진다. */
+  rows?: number;
+  /** 같은 범위인지 견주는 키 (scope·데이터셋·연결 컬럼·방식) */
+  key: string;
+};
+
 export type ChartRecord = {
   id: string;
   spec: ChartSpec;
@@ -84,7 +105,36 @@ export type ChartRecord = {
   createdAt: number;
   /** 데이터가 준비된 뒤 받은 데이터셋 스키마. 축 종류와 legend 제목을 여기서 정한다. */
   columns?: SpecColumn[];
+  /** 칸 연결 범위 (analytics). 없으면 범위 없이 그린다. */
+  link?: ChartLink;
 };
+
+/** 연결 범위 → 조회 필터 (행 범위) */
+export function linkFilter(link: ChartLink): RowsFilter {
+  return {
+    kind: "rows",
+    scope: link.scope,
+    ...(link.on
+      ? {
+          join: {
+            dataset: link.sourceDataset,
+            source: link.on.source,
+            target: link.on.target,
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * 데이터 조회에 거는 필터: draw 필터 + 거르기 연결 범위. 강조는 거르지 않는다 (chartData의 highlight).
+ * 차트 데이터·관리선 집계·전체 데이터 표가 같은 필터를 쓴다.
+ */
+export function queryFilters(chart: ChartRecord): ChartFilter[] | undefined {
+  const { link } = chart;
+  if (link?.mode !== "filter") return chart.spec.filters;
+  return [...(chart.spec.filters ?? []), linkFilter(link)];
+}
 
 /** item 단위 다시 그리기에 재사용할 조회 결과. 최근 차트 몇 개만 메모리에 둔다. */
 export type CachedChartData = (
@@ -174,6 +224,11 @@ export function cacheChartData(chartId: string, data: CachedChartData) {
     const oldest = dataCache.keys().next().value as string;
     dataCache.delete(oldest);
   }
+}
+
+/** 조회 결과(관리선 값 포함)를 버린다. 연결 범위가 바뀌면 다음 그리기가 다시 조회한다. */
+export function dropChartData(chartId: string) {
+  dataCache.delete(chartId);
 }
 
 export function getCachedChartData(chartId: string) {

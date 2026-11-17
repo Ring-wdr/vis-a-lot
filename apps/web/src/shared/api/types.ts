@@ -120,6 +120,17 @@ export type AnalyticsPanel = Chart["AnalyticsPanel"];
 export type AnalyticsBoard = Chart["AnalyticsBoard"];
 export type SaveAnalyticsPanel = Chart["SaveAnalyticsPanel"];
 export type SaveAnalyticsBoardRequest = Chart["SaveAnalyticsBoardRequest"];
+// ── 칸 연결 ───────────────────────────────────────────────────
+/** 연결 방식: filter(범위 안 행만, 모든 차트) · highlight(범위 밖 흐리게, scatter·line) */
+export type LinkMode = Chart["LinkMode"];
+/** 데이터셋이 다를 때 잇는 컬럼 쌍 (source = 따를 칸 쪽, target = 이 칸 쪽) */
+export type LinkColumns = Chart["LinkColumns"];
+/** 연결 범위 걸기 (PUT /charts/{chartId}/link의 link, POST /charts의 link) */
+export type ChartLinkRequest = Chart["ChartLinkRequest"];
+/** 다시 그리는 job. 범위가 그대로면 null */
+export type SetLinkResponse = Chart["SetLinkResponse"];
+/** item 상태의 연결 범위: 범위 안 행 수와 방식 */
+export type ItemLink = Chart["ItemLink"];
 export type DebugRenderRequest = Chart["DebugRenderRequest"];
 export type DebugRenderResponse = Chart["DebugRenderResponse"];
 

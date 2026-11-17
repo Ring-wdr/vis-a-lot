@@ -66,6 +66,8 @@ export type RadarInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   axisTitle: string;
   axes: string[];
   /** [축][계열] */
@@ -332,6 +334,7 @@ export function renderRadar(
       plot,
       input.title,
       [
+        input.note,
         input.agg ? AGG_LABELS[input.agg] : "",
         `${n}개 축`,
         inSelection ? `${selectedCount}개 선택` : "",

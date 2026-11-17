@@ -5,7 +5,7 @@ import type { BoxStats } from "../data/category-data";
 import type { CsvOptions } from "../data/csv-import";
 import type { LogicalType } from "../data/dataset-schema";
 import type { ColumnInfo } from "../data/datasets";
-import type { ChartFilter } from "../data/filters";
+import type { SpecFilter } from "../data/filters";
 import type { AggFn } from "../data/schema";
 
 /** 컬럼 이름. 데이터셋마다 다르며 스키마로 확인한다. */
@@ -31,6 +31,7 @@ import type {
   AnalyticsBoardSchema,
   AnalyticsLayoutNodeSchema,
   AnalyticsPanelSchema,
+  ChartLinkRequestSchema,
   JobStateResponseSchema,
   SaveAnalyticsBoardRequestSchema,
 } from "../services/chart/schemas";
@@ -236,7 +237,7 @@ export type ChartSpec = {
   grid: { rows: number; cols: number };
   common: CommonProps;
   /** draw할 때 적용하는 데이터 필터. 예전 history에는 없을 수 있다. */
-  filters?: ChartFilter[];
+  filters?: SpecFilter[];
 };
 
 /** 차트 PNG의 색 테마. 화면 테마를 따른다. */
@@ -433,6 +434,8 @@ export type ItemState = {
   favorites: Favorite[];
   legendGroups: { name: string; color: string }[];
   deletionCount: number;
+  /** 칸 연결 범위가 걸려 있으면 범위 안 행 수와 방식 (analytics) */
+  link?: { rows: number; mode: "filter" | "highlight" };
 };
 
 /** long polling 응답. 형태는 chart 서비스 OAS 스키마가 정한다. */
@@ -518,6 +521,8 @@ export type CreateShareRequest = {
 // 모양은 chart 서비스 OAS 스키마가 정한다.
 
 export type AnalyticsLayoutNode = z.infer<typeof AnalyticsLayoutNodeSchema>;
+/** 칸 연결 요청 (PUT /charts/{chartId}/link, POST /charts의 link) */
+export type ChartLinkRequest = z.infer<typeof ChartLinkRequestSchema>;
 export type AnalyticsPanel = z.infer<typeof AnalyticsPanelSchema>;
 export type AnalyticsBoard = z.infer<typeof AnalyticsBoardSchema>;
 export type SaveAnalyticsBoardRequest = z.infer<

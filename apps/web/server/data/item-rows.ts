@@ -205,6 +205,22 @@ export async function queryItemRows(
   };
 }
 
+/** 필터에 맞는 행 수 (칸 연결 범위의 요약 글자) */
+export async function countRows(
+  db: Db,
+  table: string,
+  schema: DatasetSchema,
+  filters: readonly ChartFilter[],
+): Promise<number> {
+  const where = allOf([sql`true`, ...filterSql(schema, filters)]);
+  const res = await sql<{
+    n: number;
+  }>`select count(*)::int as n from ${tableSql(table)} where ${where}`.execute(
+    db,
+  );
+  return res.rows[0]?.n ?? 0;
+}
+
 /** 데이터 다운로드: 조건에 맞는 모든 행을 CSV(머리글 = 컬럼 라벨)로 */
 export async function exportItemRows(
   db: Db,

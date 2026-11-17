@@ -92,6 +92,8 @@ export type PieInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   /** 큰 순 조각. legend.values와 같은 순서다. */
   slices: PieSliceValue[];
   agg?: AggFn;
@@ -454,6 +456,7 @@ export function renderPie(
       plot,
       input.title,
       [
+        input.note,
         input.agg ? AGG_LABELS[input.agg] : "",
         `${slices.length}개 조각`,
         inSelection ? `${selectedCount}개 선택` : "",

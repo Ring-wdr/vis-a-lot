@@ -125,6 +125,8 @@ export type ScatterInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   xKind: AxisKind;
   xs: Float64Array;
   ys: Float64Array;
@@ -139,6 +141,11 @@ export type ScatterInput = {
   groups?: readonly Region[];
   /** 선택 영역. 바깥 점은 흐리게 그린다. */
   selection?: Region;
+  /**
+   * 칸 연결 강조: 행마다 범위 안이면 1. 있으면 범위 밖 점을 '선택 밖 진하기'로 먼저, 범위 안 점을 그 위에 그린다.
+   * line은 범위 안에서 이어지는 구간만 진하게 긋는다. 축 범위는 전체 점 기준 그대로다.
+   */
+  linked?: Uint8Array;
   /** 지운 영역. 안의 점은 없던 것으로 보고 그리지도, 세지도 않는다. */
   deletions?: readonly Region[];
   /** 확대한 범위. 없으면 데이터 전체 범위를 보기 좋게 맞춘다. */
@@ -212,9 +219,9 @@ export function compactPlot(width: number, height: number) {
   };
 }
 
-/** keep이 1인 행만 남긴 입력 (x·y·행 id·legend 인덱스를 함께 줄인다) */
+/** keep이 1인 행만 남긴 입력 (x·y·행 id·legend 인덱스·연결 강조를 함께 줄인다) */
 function keepRows(input: ScatterInput, mask: Uint8Array): ScatterInput {
-  const { xs, ys, ids, legend } = input;
+  const { xs, ys, ids, legend, linked } = input;
   const keep: number[] = [];
   for (let i = 0; i < xs.length; i++) if (mask[i]) keep.push(i);
   if (keep.length === xs.length) return input;
@@ -233,6 +240,7 @@ function keepRows(input: ScatterInput, mask: Uint8Array): ScatterInput {
       ...legend,
       index: pick(legend.index, new Uint8Array(keep.length)),
     },
+    linked: linked && pick(linked, new Uint8Array(keep.length)),
   };
 }
 
@@ -720,7 +728,9 @@ export function renderScatter(
   const keptF: number[] = [];
   const sx = new Float32Array(n);
   const sy = new Float32Array(n);
-  const { selection } = input;
+  const { selection, linked } = input;
+  // 연결 강조: 칸마다 남긴 점이 범위 밖이면, 같은 칸의 범위 안 점으로 바꾼다 (툴팁이 진한 점을 찾게).
+  const keptLinked: number[] = [];
   const inSelection = selection && regionTester(selection);
   // 선택 영역 안의 점 수 (제목 요약과 metadata). 흐리게 하는 건 다 그린 뒤 dimOutside가 한다.
   let selectedCount = 0;
@@ -744,8 +754,10 @@ export function renderScatter(
     const iy = Math.round(cy - plot.top);
     if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
       const idx = iy * plot.width + ix;
-      if (cell[idx] === -1) {
-        cell[idx] = i;
+      // cell은 그 칸에 남긴 점의 metadata 위치다.
+      const k = cell[idx];
+      if (k === -1) {
+        cell[idx] = px.length;
         px.push(Math.round(cx));
         py.push(Math.round(cy));
         keptX.push(xs[i]);
@@ -753,6 +765,16 @@ export function renderScatter(
         keptId.push(input.ids[i]);
         if (groupIndex) keptG.push(groupIndex[i]);
         if (focused) keptF.push(focused[i]);
+        if (linked) keptLinked.push(linked[i]);
+      } else if (linked?.[i] === 1 && keptLinked[k] === 0) {
+        px[k] = Math.round(cx);
+        py[k] = Math.round(cy);
+        keptX[k] = xs[i];
+        keptY[k] = ys[i];
+        keptId[k] = input.ids[i];
+        if (groupIndex) keptG[k] = groupIndex[i];
+        if (focused) keptF[k] = focused[i];
+        keptLinked[k] = 1;
       }
     }
     if (i % CHUNK === 0) progress("aggregate", i / n);
@@ -788,6 +810,7 @@ export function renderScatter(
       plot,
       input.title,
       [
+        input.note,
         expressed.error,
         cleaned.removed > 0 &&
           (o.value.outlierMode === "only"
@@ -851,6 +874,7 @@ export function renderScatter(
       // 섬네일은 정한 굵기의 2/3 (기본 1.5 → 1)
       lineWidth: input.compact ? (o.size.lineWidth * 2) / 3 : o.size.lineWidth,
       alpha: alphaOf(shape.transparency),
+      emphasis: linked && { keep: linked, dim: o.shape.dimOpacity },
       dot: {
         shape: shape.type,
         radius: pointSizeOf(o, 2.5),
@@ -892,76 +916,79 @@ export function renderScatter(
     // 그림 영역 밖이어도 점 반지름만큼은 영역 안으로 걸쳐 보인다.
     const reach = radius + borderWidth;
     // 선택 영역 밖은 다 그린 뒤 배경색으로 덮어 흐리게 한다 (dimOutside).
-    passes.forEach((passColor, g) => {
-      if (off[g]) return;
-      const color = single ? o.palette.othersColor : passColor;
-      ctx.globalAlpha = alpha;
-      if (plain) {
-        ctx.fillStyle = color;
-        ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.25));
-        ctx.lineWidth = borderWidth;
-      }
-      drawn.fill(0);
-      for (let i = 0; i < n; i++) {
-        if (groupIndex && groupIndex[i] !== g) continue;
-        const ix = Math.round(sx[i] - plot.left);
-        const iy = Math.round(sy[i] - plot.top);
-        if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
-          const idx = iy * plot.width + ix;
-          if (drawn[idx] === MAX_PER_CELL) continue;
-          drawn[idx]++;
-        } else if (
-          ix < -reach ||
-          iy < -reach ||
-          ix >= plot.width + reach ||
-          iy >= plot.height + reach
-        ) {
-          continue;
-        }
+    // 연결 강조는 범위 밖 점(0)을 선택 밖 진하기로 먼저, 범위 안 점(1)을 그 위에 그린다.
+    const layers = linked ? [0, 1] : [-1];
+    for (const layer of layers) {
+      passes.forEach((passColor, g) => {
+        if (off[g]) return;
+        const color = single ? o.palette.othersColor : passColor;
+        ctx.globalAlpha = layer === 0 ? alpha * o.shape.dimOpacity : alpha;
         if (plain) {
-          ctx.beginPath();
-          ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
-          ctx.fill();
-          if (borderWidth) ctx.stroke();
-        } else {
-          drawPoint(
-            ctx,
-            shape.type,
-            sx[i],
-            sy[i],
-            radius,
-            shape.style,
-            borderWidth,
-            color,
-            borderOf(shape, surface),
-          );
+          ctx.fillStyle = color;
+          ctx.strokeStyle = borderOf(shape, mixColor(color, "#000000", 0.25));
+          ctx.lineWidth = borderWidth;
         }
-        if (i % CHUNK === 0) progress("render", (g + i / n) / passes.length);
-      }
-    });
+        drawn.fill(0);
+        for (let i = 0; i < n; i++) {
+          if (groupIndex && groupIndex[i] !== g) continue;
+          if (linked && linked[i] !== layer) continue;
+          const ix = Math.round(sx[i] - plot.left);
+          const iy = Math.round(sy[i] - plot.top);
+          if (ix >= 0 && iy >= 0 && ix < plot.width && iy < plot.height) {
+            const idx = iy * plot.width + ix;
+            if (drawn[idx] === MAX_PER_CELL) continue;
+            drawn[idx]++;
+          } else if (
+            ix < -reach ||
+            iy < -reach ||
+            ix >= plot.width + reach ||
+            iy >= plot.height + reach
+          ) {
+            continue;
+          }
+          if (plain) {
+            ctx.beginPath();
+            ctx.arc(sx[i], sy[i], radius, 0, Math.PI * 2);
+            ctx.fill();
+            if (borderWidth) ctx.stroke();
+          } else {
+            drawPoint(
+              ctx,
+              shape.type,
+              sx[i],
+              sy[i],
+              radius,
+              shape.style,
+              borderWidth,
+              color,
+              borderOf(shape, surface),
+            );
+          }
+          if (i % CHUNK === 0) progress("render", (g + i / n) / passes.length);
+        }
+      });
+    }
   }
   ctx.globalAlpha = 1;
 
   // ── focus: 조건에 맞는 점을 맨 위에 ────────────────────────────
   if (focused && focusedCount > 0) {
     const f = o.focus;
-    const r = Math.max(0.5, f.size / 2);
-    ctx.fillStyle = f.color;
-    ctx.strokeStyle = f.color;
-    ctx.lineWidth = Math.max(1, shape.borderWidth || 1);
-    let batched = 0;
-    ctx.beginPath();
-    for (let i = 0; i < n; i++) {
-      if (!focused[i]) continue;
-      pathPoint(ctx, f.shape, sx[i], sy[i], r);
-      if (++batched === 10_000) {
-        finishBatch(ctx, { ...shape, type: f.shape }, f.color, surface);
-        ctx.beginPath();
-        batched = 0;
-      }
-    }
-    if (batched > 0)
-      finishBatch(ctx, { ...shape, type: f.shape }, f.color, surface);
+    drawMarkSet(
+      ctx,
+      n,
+      (i) => focused[i] === 1,
+      sx,
+      sy,
+      linked && ((i) => linked[i] === 0),
+      o.shape.dimOpacity,
+      {
+        shape: { ...shape, type: f.shape },
+        radius: Math.max(0.5, f.size / 2),
+        color: f.color,
+        surface,
+      },
+    );
   }
 
   // ── 예측 선과 구간 ────────────────────────────────────────────
@@ -1000,9 +1027,13 @@ export function renderScatter(
   // ── 관리선과 이탈 점 (선택 밖 흐리게에 덮이지 않는다) ──────────────
   drawLimitLines(ctx, limits, limitAxes, input.compact);
   if (outside && outCount > 0 && o.controlLimit.highlightOut) {
-    const dimAt = inSelection
-      ? (i: number) => !inSelection(xs[i], ys[i])
-      : undefined;
+    // 선택 밖이거나 연결 범위 밖이면 흐리게 찍는다.
+    const dimAt =
+      inSelection || linked
+        ? (i: number) =>
+            (inSelection !== undefined && !inSelection(xs[i], ys[i])) ||
+            linked?.[i] === 0
+        : undefined;
     const r = Math.max(markRadius, input.compact ? 1.5 : 2);
     drawMarkSet(
       ctx,

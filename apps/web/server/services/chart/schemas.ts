@@ -501,6 +501,45 @@ export const ItemRestoreSchema = z
   })
   .openapi("ItemRestore");
 
+// ── 칸 연결 (analytics) ─────────────────────────────────────────
+
+/** 연결 방식: 범위 안 행만 그리기(filter, 모든 차트) 또는 모두 그리고 범위 밖을 흐리게(highlight, scatter·line) */
+export const LinkModeSchema = z
+  .enum(["filter", "highlight"])
+  .openapi("LinkMode");
+
+/** 데이터셋이 다를 때 잇는 컬럼 쌍. 값은 글자로 비교한다. source = 따를 칸 쪽, target = 이 칸 쪽 */
+export const LinkColumnsSchema = z
+  .object({ source: ColumnNameSchema, target: ColumnNameSchema })
+  .openapi("LinkColumns");
+
+/**
+ * 연결 범위 걸기. 서버가 따를 칸 item(source)의 지금 행 범위(draw 필터 + 끈 legend 값 + 지운 영역 + 선택 영역)를
+ * 고정해 이 차트에 건다. on은 데이터셋이 다를 때만 쓴다 (같으면 무시한다).
+ */
+export const ChartLinkRequestSchema = z
+  .object({
+    source: z.object({ chartId: z.string(), itemKey: z.string() }),
+    mode: LinkModeSchema,
+    on: LinkColumnsSchema.optional(),
+  })
+  .openapi("ChartLinkRequest");
+
+/** PUT /charts/{chartId}/link. link가 null이면 범위를 푼다. */
+export const SetLinkRequestSchema = z
+  .object({ link: orNull(ChartLinkRequestSchema) })
+  .openapi("SetLinkRequest");
+
+/** 다시 그리는 job. 범위가 그대로면 null (다시 그리지 않는다) */
+export const SetLinkResponseSchema = z
+  .object({ jobId: z.string().nullable() })
+  .openapi("SetLinkResponse");
+
+/** item에 걸린 연결 범위: 범위 안 행 수(이 칸 데이터, 이 칸 필터 전)와 방식 */
+export const ItemLinkSchema = z
+  .object({ rows: z.number().int(), mode: LinkModeSchema })
+  .openapi("ItemLink");
+
 export const CreateChartRequestSchema = z
   .object({
     spec: ChartSpecSchema,
@@ -511,6 +550,8 @@ export const CreateChartRequestSchema = z
     historyId: z.string().optional(),
     /** false면 history에 남기지 않는다 (history 다시 보기). historyId는 빈 문자열로 온다. */
     record: z.boolean().optional(),
+    /** 칸 연결 범위를 그리면서 건다 (따를 칸에 선택이 없으면 범위 없이 그린다). PUT …/link와 같은 모양 */
+    link: ChartLinkRequestSchema.optional(),
   })
   .openapi("CreateChartRequest");
 
@@ -577,6 +618,8 @@ export const ItemStateSchema = z
     legendGroups: z.array(z.object({ name: z.string(), color: z.string() })),
     /** 지운 영역 수. 되돌리기 버튼 활성화에 쓴다. */
     deletionCount: z.number(),
+    /** 칸 연결 범위가 걸려 있으면 있다 */
+    link: ItemLinkSchema.optional(),
   })
   .openapi("ItemState");
 
@@ -1463,14 +1506,15 @@ type AnalyticsLayoutNodeShape =
       ratios: number[];
     };
 
-/** 칸 연결 (둘째 PR에서 쓴다). 따를 칸 하나, 방식, 데이터셋이 다를 때의 연결 컬럼 쌍 */
+/**
+ * 칸 연결. 따를 칸 하나(자기 아닌 있는 칸), 방식, 데이터셋이 다를 때의 연결 컬럼 쌍.
+ * 다시 열 때 따를 칸을 먼저 그리고 이 칸은 POST /charts의 link로 건다 (ChartLinkRequest).
+ */
 export const AnalyticsPanelLinkSchema = z
   .object({
     follow: z.string().min(1).max(64),
-    mode: z.enum(["filter", "highlight"]),
-    on: z
-      .object({ source: ColumnNameSchema, target: ColumnNameSchema })
-      .optional(),
+    mode: LinkModeSchema,
+    on: LinkColumnsSchema.optional(),
   })
   .openapi("AnalyticsPanelLink");
 

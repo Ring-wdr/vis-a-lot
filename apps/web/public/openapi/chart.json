@@ -1575,6 +1575,9 @@
           },
           "record": {
             "type": "boolean"
+          },
+          "link": {
+            "$ref": "#/components/schemas/ChartLinkRequest"
           }
         },
         "required": ["spec", "itemSize"]
@@ -1899,6 +1902,46 @@
           }
         },
         "required": ["name", "color", "region"]
+      },
+      "ChartLinkRequest": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "chartId": {
+                "type": "string"
+              },
+              "itemKey": {
+                "type": "string"
+              }
+            },
+            "required": ["chartId", "itemKey"]
+          },
+          "mode": {
+            "$ref": "#/components/schemas/LinkMode"
+          },
+          "on": {
+            "$ref": "#/components/schemas/LinkColumns"
+          }
+        },
+        "required": ["source", "mode"]
+      },
+      "LinkMode": {
+        "type": "string",
+        "enum": ["filter", "highlight"]
+      },
+      "LinkColumns": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/ColumnName"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ColumnName"
+          }
+        },
+        "required": ["source", "target"]
       },
       "Share": {
         "type": "object",
@@ -2355,20 +2398,10 @@
             "maxLength": 64
           },
           "mode": {
-            "type": "string",
-            "enum": ["filter", "highlight"]
+            "$ref": "#/components/schemas/LinkMode"
           },
           "on": {
-            "type": "object",
-            "properties": {
-              "source": {
-                "$ref": "#/components/schemas/ColumnName"
-              },
-              "target": {
-                "$ref": "#/components/schemas/ColumnName"
-              }
-            },
-            "required": ["source", "target"]
+            "$ref": "#/components/schemas/LinkColumns"
           }
         },
         "required": ["follow", "mode"]
@@ -4540,6 +4573,9 @@
           },
           "deletionCount": {
             "type": "number"
+          },
+          "link": {
+            "$ref": "#/components/schemas/ItemLink"
           }
         },
         "required": [
@@ -4560,6 +4596,18 @@
       "ItemStage": {
         "type": "string",
         "enum": ["query", "aggregate", "render", "encode"]
+      },
+      "ItemLink": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "integer"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/LinkMode"
+          }
+        },
+        "required": ["rows", "mode"]
       },
       "ShareListResponse": {
         "type": "object",
@@ -4691,6 +4739,31 @@
           }
         },
         "required": ["id", "draft"]
+      },
+      "SetLinkResponse": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": ["jobId"]
+      },
+      "SetLinkRequest": {
+        "type": "object",
+        "properties": {
+          "link": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChartLinkRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["link"]
       },
       "SelectionRequest": {
         "type": "object",
@@ -6013,6 +6086,36 @@
           },
           "403": {
             "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "따를 칸의 차트나 item을 모름",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "따를 칸이 아직 그려지지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "따를 수 없는 연결: 선택을 행으로 바꿀 수 없는 차트, 강조를 쓸 수 없는 차트, 데이터셋이 다른데 연결 컬럼이 없거나 스키마에 없음, 자기 자신",
             "content": {
               "application/json": {
                 "schema": {
@@ -7544,6 +7647,119 @@
           },
           "404": {
             "description": "모르는 차트, 또는 지운 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/link": {
+      "put": {
+        "tags": ["charts"],
+        "summary": "칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없으면 범위를 푼다",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "범위가 그대로라 다시 그리지 않음 (jobId null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetLinkResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "다시 그리는 job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 차트, 또는 따를 칸의 차트나 item을 모름",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이 차트가 그리는 중, 또는 따를 칸이 아직 그려지지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "따를 수 없는 연결: 선택을 행으로 바꿀 수 없는 차트, 강조를 쓸 수 없는 차트, 데이터셋이 다른데 연결 컬럼이 없거나 스키마에 없음, 자기 자신",
             "content": {
               "application/json": {
                 "schema": {

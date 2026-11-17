@@ -194,7 +194,7 @@ type LayoutNode =
 - 전파는 한 단계다. 칸 3이 칸 2를, 칸 2가 칸 1을 따를 때 칸 1의 선택은 칸 2만 바꾼다. 칸 3은 칸 2 자신의 선택만 따른다. 그래서 서로 따르는 것(1 ↔ 2)도 된다.
 - 행 범위는 선택한 순간의 값으로 서버가 고정한다. 그 뒤 따를 칸을 확대하거나 색을 바꿔도 바뀌지 않는다. 따를 칸의 선택이 바뀌거나, 따를 칸을 새로 draw하면(선택이 사라진다) 다시 정한다.
 - 따를 칸이 될 수 있는 차트는 선택 필드를 지원하는 차트다: scatter, line(분포 서브 차트 제외), bar, boxplot, histogram, waterfall. 나머지 차트의 선택은 행으로 바꿀 수 없어 따를 칸 목록에서 비활성이고 이유를 적는다.
-- 행 범위 = 따를 칸의 draw 필터 + 끈 legend 값 + 지운 영역 + 선택 영역 (`server/charts/item-scope.ts`의 `itemRowsScope`, 데이터 테이블의 '선택된 행'과 같다).
+- 행 범위 = 따를 칸의 draw 필터 + 끈 legend 값 + 지운 영역 + 선택 영역 (`server/charts/item-scope.ts`의 `itemRowsScope(…, { link: false })`). 따를 칸 자신이 거르기로 다른 칸을 따르고 있어도 그 범위는 넣지 않는다(전파 한 단계, 서로 따라도 범위가 겹겹이 쌓이지 않는다). 그래서 따를 칸이 거르기 중이면 그 칸 데이터 테이블의 '선택된 행'(연결 범위까지 건다)보다 넓을 수 있다.
 
 ### 4.2 데이터셋이 다를 때
 
@@ -212,7 +212,7 @@ type LayoutNode =
 | 강조 | 모든 행을 그리고 범위 밖 점을 흐리게 한다(모양 › 선택 밖 진하기). 축 범위는 전체 그대로다 | scatter, line(분포 서브 차트 제외) |
 
 - 기본값은 강조를 쓸 수 있는 차트면 강조, 아니면 거르기다. 차트 종류를 바꿔 강조를 쓸 수 없게 되면 거르기로 바꾼다.
-- 걸린 범위는 PNG 제목 줄 요약에 적는다 (예: `칸 1 선택 1,204행`). 범위에 맞는 행이 없으면 빈 차트에 그 사실을 적는다.
+- 걸린 범위는 PNG 제목 줄 요약 맨 앞에 적는다: 거르기 `연결 1,204행`, 강조 `연결 강조 1,204행`. 칸 번호는 옮기면 바뀌고 서버가 모르므로 적지 않는다(어느 칸을 따르는지는 이름표의 `← 1`). 행 수는 이 칸 데이터셋에서 범위에 맞는 행 수(이 칸 필터 전)다. 범위에 맞는 행이 없으면 요약이 `연결 0행`이고 그림은 빈 차트다.
 - 거르기일 때 데이터 테이블·데이터 다운로드는 걸린 범위 안의 행만 담는다. 강조일 때는 그린 행 전부다.
 - 따르는 칸 자신의 선택·확대·도형은 그대로 둔다. 거르기로 점이 줄어도 선택 영역은 데이터 좌표라 남는다.
 
@@ -248,20 +248,21 @@ type LayoutNode =
 
 | 용도 | 요청 | 응답 / 설명 |
 |---|---|---|
-| 연결 범위 걸기 | `PUT /charts/{chartId}/link` | `{ source: { chartId, itemKey }, mode: 'filter' \| 'highlight', on?: { source, target } } \| null` → `{ jobId }` (전체 다시 그리기). 서버가 source item의 지금 행 범위를 고정해 이 차트에 저장한다. source에 선택이 없으면 범위를 지운다. 범위가 그대로면 다시 그리지 않고 `{ jobId: null }` |
-| | 오류 | 그리는 중 409. source 차트·item을 모르면 404. source가 선택 필드를 지원하지 않거나, 강조를 쓸 수 없는 차트에 `highlight`거나, 데이터셋이 다른데 `on`이 없거나 컬럼이 스키마에 없으면 422와 사유 |
-| 그릴 때 함께 걸기 | `POST /charts`의 `link?` | 위와 같은 모양. 따르는 칸을 새로 draw할 때 따를 칸에 선택이 있으면 한 번에 건다 |
+| 연결 범위 걸기 | `PUT /charts/{chartId}/link` | `SetLinkRequest` `{ link: ChartLinkRequest \| null }`, `ChartLinkRequest` = `{ source: { chartId, itemKey }, mode: 'filter' \| 'highlight', on?: { source, target } }` → 202 `{ jobId }` (전체 다시 그리기). 서버가 source item의 지금 행 범위를 고정해 이 차트에 저장한다. `link: null`이거나 source에 선택이 없으면 범위를 지운다. 범위가 그대로면(지울 범위가 없을 때 포함) 다시 그리지 않고 200 `{ jobId: null }`. 본문을 `null` 한 덩어리로 두지 않고 `link`로 감싼다(생성 client가 `null` 본문을 본문 없음으로 다룰 수 있어 선택 API의 `{ region }`과 같은 모양) |
+| | 오류 | 이 차트가 그리는 중(그린 적 없음 포함) 409, source item이 아직 그려지지 않음 409. 이 차트·source 차트·item을 모르면 404. source가 선택 필드를 지원하지 않거나, 강조를 쓸 수 없는 차트에 `highlight`거나, 데이터셋이 다른데 `on`이 없거나 컬럼이 스키마에 없거나, source가 자기 자신이면 422와 사유. 같은 데이터셋이면 `on`은 무시한다 |
+| 그릴 때 함께 걸기 | `POST /charts`의 `link?` | `ChartLinkRequest`. 따르는 칸을 새로 draw할 때 따를 칸에 선택이 있으면 한 번에 건다(없으면 범위 없이 그린다). 위와 같은 404·409·422로 거절한다. 다만 이 칸 쪽 연결 컬럼(`on.target`)은 데이터가 준비된 뒤에야 스키마를 알므로 job이 확인하고, 없으면 job이 사유와 함께 실패한다 |
 
-- `ChartRecord.link = { scope: ItemRowsScope, sourceDataset, on?, mode, rows }`. `rows`는 범위 안 행 수(요약 글자용)다.
-- **거르기:** `server/data/filters.ts`의 필터 종류에 서버 내부용 '행 범위' 하나를 더하고 `filterSql`이 풀어 쓴다. 차트별 데이터 모듈(`*-data.ts`)은 모두 `filterSql`을 거치므로 고치지 않는다. API 스키마(`spec.filters`)에는 넣지 않는다.
+- `ChartRecord.link = { scope: ItemRowsScope, sourceDataset, on?, mode, rows?, key }` (`server/charts/chart-store.ts`의 `ChartLink`). `rows`는 범위 안 행 수(요약 글자용, 이 칸 데이터셋·이 칸 필터 전)로, `PUT`은 응답 전에 세고 `POST`는 job이 스키마를 안 뒤 센다(DB 메서드 `linkRows`). `key`는 scope·source 데이터셋·`on`·방식을 이은 글자로, 같으면 범위가 그대로다. 요청 검증은 `server/charts/chart-link.ts`(`resolveLink`)다.
+- **거르기:** `server/data/filters.ts`의 필터 종류에 서버 내부용 '행 범위'(`RowsFilter`, `kind: "rows"`) 하나를 더하고 `filterSql`이 풀어 쓴다. 차트별 데이터 모듈(`*-data.ts`)은 모두 `filterSql`을 거치므로 고치지 않는다. API 스키마(`spec.filters`, 타입 `SpecFilter`)에는 넣지 않는다. 조회 필터는 `queryFilters(chart)`(draw 필터 + 거르기 범위)로, 차트 데이터·관리선 집계·전체 데이터 표가 함께 쓴다. split 조합 개수(`splitCount`, data 서비스 HTTP)는 draw 필터만 본다(칸은 split이 없다). 컬럼 요약(필터 서랍)은 데이터셋 기준이라 범위와 상관없다.
   - 같은 데이터셋: `itemRowsWhere(schema, scope)` 조건을 그대로 더한다.
-  - 다른 데이터셋: `<target 컬럼>::text in (select distinct <source 컬럼>::text from <source 테이블> where <itemRowsWhere(source 스키마, scope)>)`.
+  - 다른 데이터셋: `<target 컬럼>::text in (select distinct <source 컬럼>::text from <source 테이블> where <itemRowsWhere(source 스키마, scope)>)`. 오가는 필터에는 source 데이터셋 id만 담고, DB Worker가 조회 직전에 테이블·스키마를 채운다(`resolveRowsSources`).
   - 컬럼 이름은 스키마로 확인하고 인용한다. 값은 바인딩 파라미터다.
-- **강조:** 점 차트 데이터 조회(`chartData`)가 조건을 where가 아니라 행마다 참·거짓 열로 받아 `Uint8Array`로 넘긴다. Render Worker는 범위 밖 점을 먼저 '선택 밖 진하기'로, 범위 안 점을 그 위에 그린다. line은 범위 안에서 이어지는 구간만 진하게 그린다(선택 영역의 규칙과 같다). metadata의 점 줄이기는 범위 안 점을 먼저 남긴다.
-- 연결 범위가 바뀌면 그 차트의 데이터 캐시(`cacheChartData`)를 버린다.
+- **강조:** 점 차트 데이터 조회(`chartData`의 `highlight`)가 조건을 where가 아니라 행마다 참·거짓 열로 받아 `Uint8Array`(`ChartData.highlight`, 렌더 입력 `linked`)로 넘긴다. Render Worker는 범위 밖 점을 먼저 '선택 밖 진하기'로, 범위 안 점을 그 위에 그린다. focus 점·관리선 이탈 점도 범위 밖이면 같은 진하기다. line은 계열 전체를 흐리게 긋고 범위 안에서 이어지는 구간만 그 위에 진하게 긋는다(선택 영역의 규칙과 같다, `runsOf`). metadata의 점 줄이기는 같은 픽셀 칸이면 범위 안 점을 남긴다.
+- 연결 범위가 바뀌면 그 차트의 데이터 캐시(관리선 값 포함, `dropChartData`)를 버린다.
 - 데이터 표·다운로드(`itemRowsScope`)는 거르기일 때 연결 범위를 함께 건다.
-- `ItemMeta`(또는 item 상태)에 `link: { rows, mode }`를 더해 화면이 요약을 읽는다. 제목 줄 요약 글자는 서버가 PNG에 그린다.
-- 보드 저장 모양의 `link`: `{ follow: panelId, mode, on? }`. 다시 열 때 따를 칸을 먼저 그리고(선택이 `restore`로 되살아난다) 따르는 칸은 `POST /charts`의 `link`로 건다.
+- item 상태(`ItemState`)에 `link?: { rows, mode }`(`ItemLink`)를 더해 화면이 요약을 읽는다. 범위가 없으면 없다. `ItemMeta`에는 넣지 않는다(툴팁용으로 따로 받는 값이라 job 상태로 충분하다). 제목 줄 요약 글자는 서버가 PNG에 그린다(렌더 입력 `note`, 14종 모두).
+- 보드 저장 모양의 `link`: `{ follow: panelId, mode, on? }` (`AnalyticsPanelLink`, `mode`·`on`은 `LinkMode`·`LinkColumns`로 연결 API와 같은 컴포넌트다). 다시 열 때 따를 칸을 먼저 그리고(선택이 `restore`로 되살아난다) 그 job이 끝난 뒤 따르는 칸은 `POST /charts`의 `link`로 건다.
+- 화면 쪽: `api.setLink(chartId, link | null)`, mutation `useSetLink()`(`{ chartId, link }`), 타입 `ChartLinkRequest`·`LinkMode`·`LinkColumns`·`SetLinkResponse`·`ItemLink`.
 - history·공유: analytics 차트는 history에 없다. 공유 스냅숏은 연결 범위를 담지 않는다(공유를 gallery에서 열면 범위 없는 차트다). 스펙에 그렇게 적는다.
 
 ---
@@ -380,3 +381,5 @@ PR 2에서 정할 것:
 1. **선택이 미치는 범위.** 선택이 따르는 칸만 바꾼다고 적었다. 다른 길은 연결하지 않은 칸까지 모두 강조하는 것이다. 연결을 고르지 않아도 칸끼리 반응하지만 선택마다 모든 칸을 다시 그린다.
 2. **강조의 범위.** scatter·line만이다. bar·histogram(합계·개수)에서 전체 막대 위에 범위 안 막대를 겹치는 것은 뒤로 미뤘다.
 3. **e2e.** 연결(선택 → 따르는 칸)은 화면 사이를 잇는 동작이라 단위 테스트로 덜 잡힌다. PR 2에 Playwright smoke 묶음을 넣을지 정한다.
+
+PR 2에서 정한 것: 위 세 가지는 기본대로다(선택은 따르는 칸만 바꾼다, 강조는 scatter·line만, e2e는 넣지 않는다). 서버는 실제 PGlite로 chart 서비스 API를 부르는 통합 테스트(`server/jobs/link-flow.test.ts`)로 같은 데이터셋 거르기·다른 데이터셋 `machine` 강조를 확인한다.
