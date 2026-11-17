@@ -104,7 +104,12 @@ function FitDraftToSchema({
  * 차트 설정. draw를 눌러야 반영된다. tooltip 컬럼만은 그린 차트의 툴팁에 바로 반영된다(ItemTooltip). 다시 보기 전용 화면(history)에서는 그 차트의 설정을 보여주기만 하고
  * fieldset disabled로 안의 입력을 모두 막는다.
  */
-export function ControlPanel() {
+export function ControlPanel({
+  split = true,
+}: {
+  /** grid·split by를 보인다. analytics 칸은 차트 한 장이라 감춘다. */
+  split?: boolean;
+} = {}) {
   // 통계 함수·축·하위 차트 이름(aggLabel 등)도 지금 언어로 읽으므로 useLingui가 언어 변경을 구독한다.
   const { t } = useLingui();
   const none = t({
@@ -190,7 +195,7 @@ export function ControlPanel() {
         />
       </div>
 
-      <GridPicker />
+      {split && <GridPicker />}
 
       {!distribution && (
         <Select
@@ -249,12 +254,14 @@ export function ControlPanel() {
         />
       )}
 
-      <OrderedSelect
-        label="split by"
-        options={allOptions}
-        value={draft.splitBy}
-        onChange={(splitBy) => updateDraft({ splitBy })}
-      />
+      {split && (
+        <OrderedSelect
+          label="split by"
+          options={allOptions}
+          value={draft.splitBy}
+          onChange={(splitBy) => updateDraft({ splitBy })}
+        />
+      )}
 
       <OrderedSelect
         label="tooltip"

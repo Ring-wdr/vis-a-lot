@@ -1,6 +1,6 @@
 "use client";
 
-// 데이터스토어 팝업: 등록된 데이터를 가상 스크롤 표로 보여주고, 고른 데이터로 gallery 탭을 연다.
+// 데이터스토어 팝업: 등록된 데이터를 가상 스크롤 표로 보여주고, 고른 데이터로 gallery 탭이나 analytics 칸을 연다.
 // 업로드한 데이터가 위(최근 순), 샘플이 맨 아래다. 샘플은 등록을 눌러야 쓸 수 있다.
 
 import { plural } from "@lingui/core/macro";
@@ -10,8 +10,10 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
 import { cn } from "@vis-a-lot/shared/lib/tw";
 import { Database, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { overlay } from "overlay-kit";
 import { useId, useRef, useState } from "react";
+import { useBoardStore } from "@/entities/workspace/model/board-scope";
 import { useTabs } from "@/entities/workspace/model/tabs-scope";
 import { tabsLockedHint } from "@/entities/workspace/model/tabs-store";
 import {
@@ -26,6 +28,7 @@ import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import { EmptyState, Skeleton, Spinner } from "@/shared/ui/Loading";
 import "../config/messages";
+import { openDatasetInAnalytics } from "../model/open-in-analytics";
 
 /** 업로드·수정 팝업은 처음 열 때 불러온다. */
 const loadUploadDialog = () => import("./UploadDialog");
@@ -153,8 +156,17 @@ function DatastoreBody({
   const { t } = useLingui();
   const titleId = useId();
   const searchId = useId();
-  const openGallery = useTabs((s) => s.openGallery);
+  const openTab = useTabs((s) => s.openGallery);
   const locked = useTabs((s) => s.locked);
+  const board = useBoardStore();
+  const router = useRouter();
+  const pathname = usePathname();
+  // 다른 경로(/analytics)에서 열었으면 gallery 탭을 연 뒤 `/`로 간다.
+  const openGallery = (draft: { dataset: DatasetId }) => {
+    if (!openTab(draft)) return;
+    if (pathname !== "/") router.push("/");
+  };
+  const [placing, setPlacing] = useState(false);
   const datasets = useDatasets();
   const generate = useGenerateDataset();
   const remove = useDeleteDataset();
@@ -187,6 +199,18 @@ function DatastoreBody({
     // 고른 데이터로 새 gallery 탭(작업 공간)을 연다.
     openGallery({ dataset: picked });
     onClose();
+  };
+
+  const openAnalytics = async () => {
+    if (!picked || !pickedReady) return;
+    setPlacing(true);
+    try {
+      if (!(await openDatasetInAnalytics(board, picked))) return;
+    } finally {
+      setPlacing(false);
+    }
+    onClose();
+    if (pathname !== "/analytics") router.push("/analytics");
   };
 
   const editPicked = async () => {
@@ -444,6 +468,15 @@ function DatastoreBody({
       <div className={dialogActions}>
         <button type="button" className={button()} onClick={onClose}>
           <Trans context="datastore dialog">닫기</Trans>
+        </button>
+        <button
+          type="button"
+          className={button()}
+          disabled={!pickedReady || placing}
+          title={pickedReady ? undefined : t`준비된 데이터를 선택하세요`}
+          onClick={openAnalytics}
+        >
+          <Trans>analytics에서 열기</Trans>
         </button>
         <button
           type="button"

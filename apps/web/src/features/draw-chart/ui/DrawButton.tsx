@@ -3,14 +3,12 @@
 import { useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
-import { drawSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import {
   useWorkspace,
   useWorkspaceMutationKey,
   useWorkspaceStore,
 } from "@/entities/workspace/model/workspace-scope";
-import { recordsHistory } from "@/entities/workspace/model/workspace-store";
 import { api } from "@/shared/api/api";
 import {
   useCancelJob,
@@ -21,6 +19,7 @@ import {
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import "../config/messages";
+import { requestDraw } from "../model/draw-chart";
 import { useDrawState } from "../model/draw-state";
 
 /**
@@ -51,8 +50,7 @@ export function DrawButton() {
     mutationKey: useWorkspaceMutationKey("draw"),
     mutationFn: async () => {
       // 누른 때의 설정으로 그린다. 그린 차트(current)의 spec도 이 값이다.
-      const state = store.getState();
-      const { gridArea, draft } = state;
+      const { gridArea, draft } = store.getState();
       if (!gridArea) throw new Error(t`grid 영역 크기를 아직 모릅니다.`);
       // 데이터가 준비돼 있으면 split 조합 개수를 미리 확인한다. 아직 없으면 job이 확인한다.
       if (draft.splitBy.length > 0 && datasetState === "ready") {
@@ -74,13 +72,7 @@ export function DrawButton() {
           return undefined;
         }
       }
-      const res = await api.createChart({
-        spec: draft,
-        itemSize: drawSizeFor(gridArea, draft.grid, state.kind === "panel"),
-        // analytics 칸은 history에 남기지 않는다.
-        record: recordsHistory(state),
-      });
-      return { ...res, spec: draft };
+      return requestDraw(store);
     },
     onSuccess: (chart) => chart && setCurrent(chart),
   });

@@ -172,6 +172,7 @@ function DrawnItem({
   rendering,
   expanded = false,
   onDoubleClick,
+  onOpenInGallery,
 }: {
   item: ItemState & { image: NonNullable<ItemState["image"]> };
   /** legend가 있으면 색은 legend 항목별로 바꾼다. */
@@ -186,6 +187,8 @@ function DrawnItem({
   /** 크게 보기 화면의 item인지 */
   expanded?: boolean;
   onDoubleClick?: () => void;
+  /** 우클릭 메뉴의 `gallery에서 열기` (analytics 칸) */
+  onOpenInGallery?: () => void;
 }) {
   const { t } = useLingui();
   // item 안의 도구(PaintToolbar, LegendCheckboxes 등)는 store를 읽지 않는다. 여기서 골라 넘긴다.
@@ -289,6 +292,7 @@ function DrawnItem({
         disabled={readOnly || busy}
         className={itemBody}
         onAction={action.mutate}
+        onOpenInGallery={onOpenInGallery}
       >
         {mode === "normal" ? (
           <ItemTooltip
@@ -380,6 +384,7 @@ export function ChartItemCard({
   rendering,
   expanded = false,
   onDoubleClick,
+  onOpenInGallery,
 }: {
   item?: ItemState;
   hasLegend?: boolean;
@@ -397,6 +402,8 @@ export function ChartItemCard({
   expanded?: boolean;
   /** 더블 클릭이나 toolbar 버튼으로 크게 보기를 열고 닫는다. */
   onDoubleClick?: () => void;
+  /** 우클릭 메뉴의 `gallery에서 열기` (analytics 칸) */
+  onOpenInGallery?: () => void;
 }) {
   const { t } = useLingui();
   if (item?.status === "success" && item.image && chartId && primaryJobId) {
@@ -411,6 +418,7 @@ export function ChartItemCard({
         rendering={rendering}
         expanded={expanded}
         onDoubleClick={onDoubleClick}
+        onOpenInGallery={onOpenInGallery}
       />
     );
   }

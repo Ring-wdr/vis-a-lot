@@ -9,12 +9,14 @@ import {
   CircleHelp,
   Database,
   History,
+  LayoutDashboard,
   LayoutGrid,
   Newspaper,
   Share2,
   Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { SHARE_PAGE } from "@/entities/chart/lib/share";
 import { useTabs, useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import { tabsLockedHint, VIEWS } from "@/entities/workspace/model/tabs-store";
@@ -24,6 +26,9 @@ import {
   openUploadThenDatastore,
 } from "@/features/register-dataset/ui/DatastoreDialog";
 import "../config/messages";
+
+/** 여러 칸을 함께 보는 analytics 화면 경로 */
+const ANALYTICS_PATH = "/analytics";
 
 const TAB_UI = {
   gallery: { label: "gallery", Icon: LayoutGrid },
@@ -39,13 +44,18 @@ function NavLabel({ children }: { children: string }) {
 }
 
 /**
- * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, 내 공유 페이지, 피드, 도움말, 테마, 사용자.
- * 각 view의 탭은 TabBar가, 탭 안의 모드·공유는 TabToolbar가 그린다.
+ * 상단 바: upload·datastore 팝업, gallery(그리기·편집) / history(다시 보기) 전환, analytics(여러 칸), 내 공유 페이지,
+ * 피드, 도움말, 테마, 사용자. 각 view의 탭은 TabBar가, 탭 안의 모드·공유는 TabToolbar가 그린다.
+ * analytics(`/analytics`)에서 gallery·history를 누르면 그 view를 고른 뒤 `/`로 간다.
  */
 export function AppHeader() {
-  const view = useTabs((s) => s.view);
+  const pathname = usePathname();
+  const router = useRouter();
+  const onAnalytics = pathname === ANALYTICS_PATH;
+  const view = useTabs((s) => (onAnalytics ? null : s.view));
   const tabs = useTabsStore();
-  const locked = useTabs((s) => s.locked);
+  // 탭 잠금은 gallery 화면에서만 뜻이 있다 (그 화면을 떠나면 풀린다).
+  const locked = useTabs((s) => !onAnalytics && s.locked);
   // tabsLockedHint는 지금 언어로 읽으므로 useLingui로 언어 변경을 구독한다.
   const { t } = useLingui();
   const lockedHint = locked ? tabsLockedHint() : undefined;
@@ -90,7 +100,10 @@ export function AppHeader() {
                 aria-selected={view === v}
                 title={lockedHint ?? label}
                 disabled={locked && view !== v}
-                onClick={() => tabs.getState().setView(v)}
+                onClick={() => {
+                  tabs.getState().setView(v);
+                  if (pathname !== "/") router.push("/");
+                }}
               >
                 <Icon size={14} aria-hidden="true" />
                 <NavLabel>{label}</NavLabel>
@@ -98,6 +111,15 @@ export function AppHeader() {
             );
           })}
         </div>
+        <Link
+          href={ANALYTICS_PATH}
+          className={navLink()}
+          title="analytics"
+          aria-current={onAnalytics ? "page" : undefined}
+        >
+          <LayoutDashboard size={14} aria-hidden="true" />
+          <NavLabel>analytics</NavLabel>
+        </Link>
         <Link href={SHARE_PAGE} className={navLink()} title="shares">
           <Share2 size={14} aria-hidden="true" />
           <NavLabel>shares</NavLabel>
