@@ -20,6 +20,7 @@ import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
+import { queryLimitData } from "../data/limit-data";
 import {
   attachSunburst,
   PIE_TOP_SLICES,
@@ -335,6 +336,11 @@ serveRpc<DbMethods>({
   async histogramData({ dataset, ...params }) {
     const { db, schema, table } = await datasetOf(dataset);
     return queryHistogramData(db, schema, { ...params, table });
+  },
+
+  async limitValues({ dataset, ...params }) {
+    const { db, schema, table } = await datasetOf(dataset);
+    return queryLimitData(db, schema, { ...params, table });
   },
 
   async candleData({ dataset, ...params }) {

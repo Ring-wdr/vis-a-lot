@@ -35,6 +35,26 @@ msgstr "{name}を{place}の位置に置きました。"
 msgid "{name} 값을 집었습니다."
 msgstr "{name}をつかみました。"
 
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선 색 바꾸기"
+msgstr "{name} の線の色を変更"
+
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선 지우기"
+msgstr "{name} の線を削除"
+
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선을 아래로"
+msgstr "{name} の線を下へ"
+
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선을 위로"
+msgstr "{name} の線を上へ"
+
 #. {place}는 끄는 값을 놓을 자리에 있는 값
 #: src/features/chart-settings/ui/OrderField.tsx
 msgid "{place} 자리"
@@ -52,6 +72,15 @@ msgstr "{value}、{count}件中{position}番目"
 #: src/features/chart-settings/ui/LegendSettings.tsx
 msgid "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다."
 msgstr "legend を選ぶとこの位置に描画します。現在 legend はありません。"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "USL·LSL로 정한 선을 벗어난 점(막대)을 강조합니다. 컬럼 선·띠의 값은 split 조합과 draw 필터의 행으로 집계하며, 범례로 끈 값과 지운 점도 넣습니다."
+msgstr "USL・LSL に設定した線を外れた点(棒)を強調します。列の線・帯の値は split の組み合わせと draw フィルターの行で集計し、凡例でオフにした値や削除した点も含みます。"
+
+#. name: 축 이름(Left, Bottom), type: USL 또는 LSL. 번역하지 않는다
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "USL·LSL은 축마다 하나씩만 정합니다 ({name} 축 {type} 중복)."
+msgstr "USL・LSL は軸ごとに一つだけ設定できます({name} 軸の {type} が重複)。"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "x 값"
@@ -112,9 +141,18 @@ msgctxt "chart option section"
 msgid "값"
 msgstr "値"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit"
+msgid "값"
+msgstr "値"
+
 #: src/features/chart-settings/ui/OrderField.tsx
 msgid "값 목록을 받는 중입니다…"
 msgstr "値の一覧を読み込み中…"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "값을 숫자로 적어 주세요."
+msgstr "数値を入力してください。"
 
 #: src/features/chart-settings/ui/OrderField.tsx
 msgid "값이 너무 많아 순서를 정할 수 없습니다. 정렬만 고를 수 있습니다."
@@ -128,6 +166,10 @@ msgstr "強調"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "강조 쓰기"
 msgstr "強調を使う"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "같은 이름의 선이 이미 있습니다."
+msgstr "同じ名前の線がすでにあります。"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart focus rank"
@@ -165,13 +207,66 @@ msgid "공정 능력 (Cpk)"
 msgstr "工程能力 (Cpk)"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "관리선"
+msgstr "管理線"
+
+#. name: 선 이름(없으면 순번), reason: 맞지 않는 까닭
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "관리선 {name}: {reason}"
+msgstr "管理線 {name}: {reason}"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "관리선은 {max}개까지입니다."
+msgstr "管理線は {max} 本までです。"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "구간별 값 (계단선)"
+msgstr "区間ごとの値(階段線)"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "구간별 값은 scatter·line의 Left 축에서만 쓸 수 있습니다."
+msgstr "区間ごとの値は scatter・line の Left 軸でのみ使えます。"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "굵게"
 msgstr "太字"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "굵기"
+msgstr "太さ"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "규격"
+msgstr "規格"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "규격 내 확률 (z)"
 msgstr "規格内確率 (z)"
+
+#. 관리선 영역 채우기: USL 위와 LSL 아래
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 바깥쪽"
+msgstr "規格の外側"
+
+#. 관리선 영역 채우기: USL과 LSL 사이
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 안쪽"
+msgstr "規格の内側"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 영역"
+msgstr "規格領域"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 이탈"
+msgstr "規格外"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 이탈 강조"
+msgstr "規格外を強調"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -197,6 +292,10 @@ msgstr "グリッドの色"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "글자 색"
 msgstr "文字色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 색 (비우면 눈금 글자 색)"
+msgstr "文字色(空なら目盛り文字の色)"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "글자 크기"
@@ -239,6 +338,11 @@ msgstr "既定パレットに戻す"
 #: src/features/chart-settings/ui/OptionSettings.tsx
 msgid "기본값으로 되돌리기"
 msgstr "デフォルトに戻す"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit kind"
+msgid "기준선"
+msgstr "基準線"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "기타 색 ('기타' 조각, 강조 시 나머지)"
@@ -339,6 +443,10 @@ msgctxt "chart option"
 msgid "대상"
 msgstr "対象"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "더할 선 종류"
+msgstr "追加する線の種類"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "덧셈"
@@ -348,6 +456,11 @@ msgstr "加法"
 msgid "데이터가 준비되면 legend 값이 표시됩니다."
 msgstr "データの準備ができると legend の値が表示されます。"
 
+#. column: 컬럼 이름
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "데이터에 없는 컬럼입니다: {column}"
+msgstr "データにない列です: {column}"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "둥근 모서리"
 msgstr "角丸"
@@ -355,6 +468,15 @@ msgstr "角丸"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "뒤 글자"
 msgstr "接尾辞"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit kind"
+msgid "띠"
+msgstr "帯"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "띠에는 서로 다른 두 컬럼을 골라 주세요."
+msgstr "帯には異なる二つの列を選んでください。"
 
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgctxt "split name example"
@@ -387,6 +509,11 @@ msgstr "形"
 msgctxt "chart option section"
 msgid "모양"
 msgstr "形"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "모양"
+msgstr "線種"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -537,6 +664,7 @@ msgid "상한"
 msgstr "上限"
 
 #: src/features/chart-settings/model/option-fields.ts
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
 msgctxt "chart option"
 msgid "색"
 msgstr "色"
@@ -562,6 +690,30 @@ msgstr "線"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "선 굵기"
 msgstr "線の太さ"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선 더하기"
+msgstr "線を追加"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선 목록"
+msgstr "線の一覧"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선 이름"
+msgstr "線の名前"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선 이름·값 보이기"
+msgstr "線の名前と値を表示"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선이 보이도록 축 범위 넓히기"
+msgstr "線が見えるよう軸の範囲を広げる"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선이 없습니다. 종류를 골라 더하세요. 이름과 값은 PNG에 적은 그대로 그립니다."
+msgstr "線がありません。種類を選んで追加してください。名前と値は入力したとおり PNG に描きます。"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "선택 밖 진하기"
@@ -606,6 +758,19 @@ msgctxt "chart focus type"
 msgid "순위"
 msgstr "順位"
 
+#. column: 컬럼 이름
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "숫자 컬럼이 아닙니다: {column}"
+msgstr "数値の列ではありません: {column}"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "시각 (KST)"
+msgstr "時刻(KST)"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "시각을 적어 주세요."
+msgstr "時刻を入力してください。"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "시작 색"
 msgstr "開始色"
@@ -618,6 +783,11 @@ msgstr "式"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "신뢰 구간"
 msgstr "信頼区間"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "실선"
+msgstr "実線"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -632,6 +802,11 @@ msgstr "下"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "앞 글자"
 msgstr "接頭辞"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit type"
+msgid "없음"
+msgstr "なし"
 
 #: src/features/chart-settings/ui/OptionSectionForm.tsx
 msgctxt "no color"
@@ -651,6 +826,14 @@ msgstr "逆三角形"
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgid "연결 문자"
 msgstr "区切り文字"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "영역 색"
+msgstr "領域の色"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "영역 채우기"
+msgstr "領域を塗る"
 
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgid "예: {example}"
@@ -750,9 +933,26 @@ msgstr "六角形"
 msgid "이 구역은 공통 속성 따르기"
 msgstr "このセクションは共通プロパティに従う"
 
+#. name: 축 이름(Left, Bottom). 번역하지 않는다
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "이 차트의 {name} 축에는 이 종류의 선을 쓸 수 없습니다."
+msgstr "このチャートの {name} 軸ではこの種類の線を使えません。"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이동 평균 길이"
 msgstr "移動平均の期間"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "이름 (PNG에 그대로 적음)"
+msgstr "名前(PNG にそのまま描画)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이름 글자"
+msgstr "名前の文字"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "이름을 적어 주세요."
+msgstr "名前を入力してください。"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이상치 가리기"
@@ -777,6 +977,10 @@ msgstr "外れ値のみ表示"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이중 지수 평활"
 msgstr "二重指数平滑"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이탈 색"
+msgstr "規格外の色"
 
 #: src/features/chart-settings/model/option-fields.ts
 #: src/features/chart-settings/ui/OptionSectionForm.tsx
@@ -816,6 +1020,11 @@ msgstr "点ラベルを表示"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "점 크기"
 msgstr "点のサイズ"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "점선"
+msgstr "点線"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option section"
@@ -881,6 +1090,11 @@ msgstr "条件"
 msgid "중간 색"
 msgstr "中間色"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "중앙값"
+msgstr "中央値"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "중앙값 선 색 (boxplot)"
 msgstr "中央値の線の色 (boxplot)"
@@ -893,6 +1107,11 @@ msgstr "塗り + 枠線"
 msgctxt "chart option"
 msgid "채우기만"
 msgstr "塗りのみ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "control limit area"
+msgid "채울 쪽"
+msgstr "塗る側"
 
 #: src/features/chart-settings/ui/OrderField.tsx
 msgctxt "order field"
@@ -914,6 +1133,11 @@ msgctxt "chart option"
 msgid "최댓값"
 msgstr "最大値"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "최댓값"
+msgstr "最大値"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "최소"
@@ -929,6 +1153,11 @@ msgctxt "chart option"
 msgid "최솟값"
 msgstr "最小値"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "최솟값"
+msgstr "最小値"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "추세 계수 β (비우면 자동)"
 msgstr "トレンド係数 β (空欄で自動)"
@@ -941,6 +1170,16 @@ msgstr "トレンドの方式"
 msgctxt "chart option section"
 msgid "축"
 msgstr "軸"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit"
+msgid "축"
+msgstr "軸"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "control limit"
+msgid "축 범위"
+msgstr "軸の範囲"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "축 보이기"
@@ -979,6 +1218,34 @@ msgstr "キャンセル"
 #: src/features/chart-settings/ui/TooltipSettings.tsx
 msgid "커서에서 가장 가까운 점의 x, y와 tooltip 컬럼을 보여줍니다. 점은 픽셀 하나에 하나씩 줄인 점 중에서 찾습니다. 끄면 커서 위치의 x, y만 보여주고, tooltip 컬럼도 가까운 점의 값이라 함께 숨겨집니다."
 msgstr "カーソルに最も近い点の x, y と tooltip カラムを表示します。点は 1ピクセルに 1つずつ間引いた点から探します。オフにするとカーソル位置の x, y のみ表示し、tooltip カラムも最寄りの点の値なので一緒に非表示になります。"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit"
+msgid "컬럼"
+msgstr "列"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit band"
+msgid "컬럼 1"
+msgstr "列 1"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit band"
+msgid "컬럼 2"
+msgstr "列 2"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "컬럼 고르기"
+msgstr "列を選択"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit kind"
+msgid "컬럼 선"
+msgstr "列の線"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "컬럼을 골라 주세요."
+msgstr "列を選んでください。"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -1035,6 +1302,11 @@ msgctxt "chart option section"
 msgid "툴팁"
 msgstr "ツールチップ"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "파선"
+msgstr "破線"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option section"
 msgid "팔레트"
@@ -1045,10 +1317,19 @@ msgctxt "chart option section"
 msgid "패널"
 msgstr "パネル"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "평균"
+msgstr "平均"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "하한"
 msgstr "下限"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "함수"
+msgstr "関数"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "홀트-윈터스 지수 평활"

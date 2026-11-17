@@ -8,7 +8,11 @@ import { compileExpression } from "./analytics/expression";
 import { focusMatcher } from "./analytics/focus";
 import { keepMask, outlierBounds } from "./analytics/outlier";
 import { type PredictionResult, predict } from "./analytics/prediction";
-import { computeScores, type ScoreResult } from "./analytics/score";
+import {
+  computeScores,
+  type ScoreLimits,
+  type ScoreResult,
+} from "./analytics/score";
 import {
   drawAxisTitles,
   drawXAxis,
@@ -17,7 +21,21 @@ import {
   timeFormat,
   valueScale,
 } from "./axis-style";
-import type { LimitsMeta, ResolvedLimit } from "./control-limit";
+import {
+  drawLimitAreas,
+  drawLimitLabels,
+  drawLimitLines,
+  fitLimitDomain,
+  hasSpec,
+  type LimitsMeta,
+  limitJudge,
+  limitsMeta,
+  limitTransforms,
+  prepareLimits,
+  type ResolvedLimit,
+  scoreLimits,
+  visibleLimits,
+} from "./control-limit";
 import { drawTitle, labelWidth } from "./frame";
 import {
   drawLegendAround,
@@ -45,6 +63,7 @@ import {
   drawPoint,
   drawPointLabel,
   fontPx,
+  formatValue,
   mixColor,
   pathPoint,
   pointSizeOf,
@@ -535,8 +554,8 @@ function scoresOf(
   groupIndex: Uint8Array | undefined,
   off: readonly boolean[],
   o: ChartOptions,
+  limits: ScoreLimits,
 ): ScoreResult[] {
-  const limits = { ucl: o.score.ucl, lcl: o.score.lcl };
   if (!groupIndex || !off.some(Boolean)) {
     return computeScores(o.score.kinds, { xs, ys, groups: groupIndex }, limits);
   }
@@ -570,6 +589,11 @@ export function renderScatter(
   const input = cleaned.input;
   const { width, height, xs, ys } = input;
   const n = xs.length;
+  // 관리선: 식을 적용한 그릴 좌표로 옮긴 선 (없으면 빈 목록이라 아래가 모두 지금과 같다)
+  const limitBase = prepareLimits(
+    rawInput.limits,
+    limitTransforms(o.expression),
+  );
 
   drawPanel(ctx, width, height, o);
 
@@ -610,6 +634,16 @@ export function renderScatter(
         ...(f.result.upper ?? []),
       ]),
     );
+  }
+  // 관리선이 보이도록 넓힌다 (확대 중이면 확대 범위 그대로)
+  if (!view && n > 0 && o.controlLimit.fitAxis && limitBase.length > 0) {
+    xDomain = fitLimitDomain(
+      xDomain,
+      limitBase,
+      "bottom",
+      input.xKind === "number" && o.axes.x.log,
+    );
+    yDomain = fitLimitDomain(yDomain, limitBase, "left", o.axes.y.log);
   }
   const yScaleAt = (range: [number, number]) =>
     valueScale(yDomain, range, o.axes.y, {
@@ -653,6 +687,12 @@ export function renderScatter(
     o.axes.x,
   );
 
+  // 로그 축에 그릴 수 없는 선을 뺀 것이 그리는 선이다. 이탈 판정·요약·metadata가 이 선을 쓴다.
+  const limits = visibleLimits(limitBase, { left: yAxis.log, bottom: xLog });
+  const judge = limitJudge(limits);
+  const outside = judge ? new Uint8Array(n) : undefined;
+  let outCount = 0;
+
   // focus 구역: 맞는 점은 맨 위에 focus 색·모양·크기로 다시 그린다. 순위는 끈 legend 값의 점을 뺀
   // 이 item의 점 전체(지운 점·이상치 제외, 확대와 무관)에서 매긴다.
   const focus = o.focus.enabled
@@ -692,6 +732,10 @@ export function renderScatter(
     sx[i] = cx;
     sy[i] = cy;
     if (groupIndex && off[groupIndex[i]]) continue;
+    if (outside && judge?.(xs[i], ys[i])) {
+      outside[i] = 1;
+      outCount++;
+    }
     if (focused && focus?.(xs[i], ys[i])) {
       focused[i] = 1;
       focusedCount++;
@@ -717,8 +761,12 @@ export function renderScatter(
 
   const scores =
     o.score.visible && o.score.kinds.length > 0
-      ? scoresOf(xs, ys, groupIndex, off, o)
+      ? scoresOf(xs, ys, groupIndex, off, o, scoreLimits(limitBase, o.score))
       : undefined;
+
+  // 관리선 영역·띠 채움은 격자 아래에 깐다.
+  const limitAxes = { x: (v: number) => x(v), y: (v: number) => y(v), plot };
+  drawLimitAreas(ctx, limits, o.controlLimit, limitAxes);
 
   // ── 그리드와 축, 제목, legend (섬네일은 그림 영역만 그린다) ───────────
   let legendMeta: LegendMeta | undefined;
@@ -748,6 +796,7 @@ export function renderScatter(
         selection
           ? `${selectedCount.toLocaleString()} / ${n.toLocaleString()} pts 선택`
           : `${n.toLocaleString()} pts`,
+        hasSpec(limits) && `이탈 ${outCount.toLocaleString()}`,
       ],
       o,
     );
@@ -774,6 +823,8 @@ export function renderScatter(
   const single = focus && o.focus.legendSingleColor;
   const surface = surfaceOf(o);
   const { shape } = o;
+  /** 이탈 점을 다시 찍는 반지름: 그린 점과 같다 (line은 작은 점 크기) */
+  let markRadius = pointSizeOf(o, 2.5);
   if (n === 0) {
     ctx.fillStyle = THEME.textMuted;
     ctx.textAlign = "center";
@@ -826,6 +877,7 @@ export function renderScatter(
             Math.min(1, Math.sqrt(MAX_COVERAGE / coverageAt(POINT_RADIUS))),
         );
     const radius = pointSizeOf(o, autoRadius);
+    markRadius = radius;
     // 기본 모양(원·채우기+테두리·테두리 0)은 불투명 채우기에 같은 색을 진하게 한 1px 테두리를 둘러
     // 겹쳐도 원 하나하나가 보이게 한다. 섬네일은 점이 작아 테두리 없이 그린다.
     const plain =
@@ -945,6 +997,47 @@ export function renderScatter(
       THEME.selection,
     );
   }
+  // ── 관리선과 이탈 점 (선택 밖 흐리게에 덮이지 않는다) ──────────────
+  drawLimitLines(ctx, limits, limitAxes, input.compact);
+  if (outside && outCount > 0 && o.controlLimit.highlightOut) {
+    const dimAt = inSelection
+      ? (i: number) => !inSelection(xs[i], ys[i])
+      : undefined;
+    const r = Math.max(markRadius, input.compact ? 1.5 : 2);
+    drawMarkSet(
+      ctx,
+      n,
+      (i) => outside[i] === 1,
+      sx,
+      sy,
+      dimAt,
+      o.shape.dimOpacity,
+      {
+        shape: { ...shape, style: "brush" },
+        radius: r,
+        color: o.controlLimit.outColor,
+        surface,
+      },
+    );
+    // focus 점은 이탈 점 위에 다시 그린다.
+    if (focused && focusedCount > 0) {
+      drawMarkSet(
+        ctx,
+        n,
+        (i) => outside[i] === 1 && focused[i] === 1,
+        sx,
+        sy,
+        dimAt,
+        o.shape.dimOpacity,
+        {
+          shape: { ...shape, type: o.focus.shape },
+          radius: Math.max(0.5, o.focus.size / 2),
+          color: o.focus.color,
+          surface,
+        },
+      );
+    }
+  }
   // 도형은 점 위에, 같은 그림 영역 clip 안에 그린다.
   drawShapes(
     ctx,
@@ -955,6 +1048,10 @@ export function renderScatter(
   ctx.restore();
 
   if (!input.compact) {
+    drawLimitLabels(ctx, limits, o, limitAxes, {
+      left: (v) => formatValue(v, o.axes.y.decimals),
+      bottom: limitXFormat(input.xKind, o.axes.x),
+    });
     if (scores) drawScoreBox(ctx, plot, scores, o);
     if (o.prediction.description && predicted.length > 0) {
       ctx.save();
@@ -1004,7 +1101,53 @@ export function renderScatter(
     ...(selection ? { selected: selectedCount } : {}),
     legend: legendMeta,
     ...(scores ? { scores } : {}),
+    ...limitsMeta(limits, outCount),
   };
+}
+
+/** 관리선 글자의 x 값: 숫자는 축 소수 자리, 시계열은 날짜 형식(비우면 분까지) KST */
+function limitXFormat(kind: AxisKind, axis: AxisOptions) {
+  if (kind === "number") return (v: number) => formatValue(v, axis.decimals);
+  const fmt = utcFormat(axis.dateFormat.trim() || "%Y-%m-%d %H:%M");
+  return (v: number) => fmt(new Date(v + KST_OFFSET_MS));
+}
+
+/**
+ * pick에 맞는 점을 한 색으로 다시 찍는다 (이탈 점, 그 위 focus 점). 선택 밖(dimAt) 점은 흐리게 한 점과 같은
+ * 진하기(dim)로 찍는다. path를 1만 개씩 묶어 칠한다.
+ */
+function drawMarkSet(
+  ctx: Ctx,
+  n: number,
+  pick: (i: number) => boolean,
+  sx: Float32Array,
+  sy: Float32Array,
+  dimAt: ((i: number) => boolean) | undefined,
+  dim: number,
+  mark: {
+    shape: ChartOptions["shape"];
+    radius: number;
+    color: string;
+    surface: string;
+  },
+) {
+  const passes = dimAt ? [false, true] : [false];
+  for (const dimmed of passes) {
+    ctx.globalAlpha = dimmed ? dim : 1;
+    let batched = 0;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      if (!pick(i) || (dimAt ? dimAt(i) !== dimmed : false)) continue;
+      pathPoint(ctx, mark.shape.type, sx[i], sy[i], mark.radius);
+      if (++batched === 10_000) {
+        finishBatch(ctx, mark.shape, mark.color, mark.surface);
+        ctx.beginPath();
+        batched = 0;
+      }
+    }
+    if (batched > 0) finishBatch(ctx, mark.shape, mark.color, mark.surface);
+  }
+  ctx.globalAlpha = 1;
 }
 
 /** 모아 둔 path를 shape.style대로 칠한다. cross는 선으로만 보인다. */

@@ -18,6 +18,7 @@ import type { ChartData } from "../data/chart-data";
 import type { GanttData } from "../data/gantt-data";
 import type { HeatmapData } from "../data/heatmap-data";
 import type { HistogramData } from "../data/histogram-data";
+import type { LimitBuckets, LimitResult } from "../data/limit-data";
 import type { PieData, RadarData } from "../data/polar-data";
 import type { SankeyData } from "../data/sankey-data";
 import type { Region } from "../render/region";
@@ -96,7 +97,39 @@ export type CachedChartData = (
   | ({ kind: "pie" } & PieData)
   | ({ kind: "radar" } & RadarData)
   | ({ kind: "histogram" } & HistogramData)
-) & { groupOf: Map<string, number> };
+) & {
+  groupOf: Map<string, number>;
+  /** 관리선 집계 값. 차트 데이터와 함께 캐시에서 밀려나면 다시 조회한다. */
+  limits?: LimitValueCache;
+};
+
+/**
+ * 관리선 컬럼 선·띠의 집계 값. 요청(컬럼, 함수, 구간별) 키 → item 키 → 값.
+ * 집계 범위(데이터셋·x·split·필터)가 달라지면 통째로 버리고, 어느 선도 쓰지 않는 요청은 지운다.
+ */
+export type LimitValueCache = {
+  scope: string;
+  /** 구간별 구간. 구간별 요청을 처음 조회할 때 정하고, 이후 요청도 같은 경계로 나눈다. */
+  buckets?: LimitBuckets | null;
+  values: Map<string, Map<string, LimitResult>>;
+};
+
+/** 집계 범위 키 */
+export function limitScopeOf(spec: ChartSpec) {
+  return JSON.stringify([
+    spec.dataset,
+    spec.x,
+    spec.splitBy,
+    spec.filters ?? [],
+  ]);
+}
+
+/** 데이터 캐시에 붙은 관리선 값. 집계 범위가 다르면 비운 새 값으로 바꾼다. */
+export function limitCacheOf(data: CachedChartData, spec: ChartSpec) {
+  const scope = limitScopeOf(spec);
+  if (data.limits?.scope !== scope) data.limits = { scope, values: new Map() };
+  return data.limits;
+}
 
 const charts = new Map<string, ChartRecord>();
 const dataCache = new Map<string, CachedChartData>();

@@ -21,6 +21,7 @@ import type { GanttData, GanttDataParams } from "./data/gantt-data";
 import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
 import type { HistogramData, HistogramDataParams } from "./data/histogram-data";
 import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
+import type { LimitData, LimitDataParams } from "./data/limit-data";
 import type { PieData, RadarData } from "./data/polar-data";
 import type { SampleRowsPage } from "./data/sample-rows";
 import type { SankeyData, SankeyDataParams } from "./data/sankey-data";
@@ -135,6 +136,14 @@ export type DbMethods = {
   histogramData: {
     params: Omit<HistogramDataParams, "table"> & { dataset: string };
     result: HistogramData;
+  };
+  /**
+   * 관리선: split 조합별 컬럼 선·띠 값 (필터 적용, 구간별은 전체 x 범위의 LIMIT_BUCKETS 구간).
+   * buckets를 주면 그 구간으로 나눠 앞서 조회한 값과 경계를 맞춘다.
+   */
+  limitValues: {
+    params: Omit<LimitDataParams, "table"> & { dataset: string };
+    result: LimitData;
   };
   /** candle: 자동 시간 구간별 OHLC */
   candleData: {

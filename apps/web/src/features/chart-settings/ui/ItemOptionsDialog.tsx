@@ -13,6 +13,7 @@ import type { ChartType } from "@/shared/api/types";
 import { button, linkButton } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
 import "../config/messages";
+import { type LimitSource, useLimitCheck } from "../model/control-limit-form";
 import { getPath, hasSection, sectionPaths } from "../model/option-fields";
 import {
   type OptionsBase,
@@ -32,6 +33,8 @@ type ItemOptionsProps = OptionsBase & {
   chartType: ChartType | undefined;
   /** 순서 필드의 값 목록을 받을 곳 (그린 spec의 데이터셋·컬럼) */
   orderSource: OrderSource | undefined;
+  /** 관리선 선 목록이 아는 차트·컬럼 (그린 spec과 그 데이터셋). 관리선을 쓰지 않는 차트면 support가 null */
+  limitSource: LimitSource | undefined;
   /** 다시 보기 전용이면 보기만 한다. */
   readOnly: boolean;
   /** item을 다시 그리는 동안에는 다음 변경을 보내지 않는다 (서버가 거절한다). */
@@ -80,6 +83,7 @@ function ItemOptionsBody({
   label,
   chartType,
   orderSource,
+  limitSource,
   readOnly,
   busy,
   original,
@@ -92,9 +96,14 @@ function ItemOptionsBody({
   const titleId = useId();
   const { formState, setValue } = useFormContext<OptionsFormValues>();
   const patch = useOptionsPatch({ original, base });
+  // 관리선은 분포 line처럼 구역을 끈 하위 차트에서 빼고, 서버가 거절할 선이면 확인을 막는다.
   const sections = OPTION_SECTIONS.filter(
-    (s) => supportsOption(chartType, s) || extras[s] !== undefined,
+    (s) =>
+      (supportsOption(chartType, s) &&
+        (s !== "controlLimit" || !!limitSource?.support)) ||
+      extras[s] !== undefined,
   );
+  const { blocked } = useLimitCheck(limitSource);
   const [menu, setMenu] = useState<MenuTarget>();
   const active = resolveTarget(menu, sections);
 
@@ -137,6 +146,7 @@ function ItemOptionsBody({
               part={active.part}
               chartType={chartType}
               orderSource={orderSource}
+              limitSource={limitSource}
               original={original}
               base={base}
               disabled={readOnly}
@@ -170,8 +180,10 @@ function ItemOptionsBody({
         <button
           type="submit"
           className={button({ variant: "primary" })}
-          disabled={!formState.isDirty || busy || readOnly}
-          title={busy ? t`다시 그리는 중에는 바꿀 수 없습니다` : undefined}
+          disabled={
+            !formState.isDirty || busy || readOnly || blocked !== undefined
+          }
+          title={busy ? t`다시 그리는 중에는 바꿀 수 없습니다` : blocked}
         >
           <Trans context="dialog button">확인</Trans>
         </button>

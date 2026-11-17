@@ -1,6 +1,7 @@
 "use client";
 
 import { ChartActionBar } from "@/features/chart-actions/ui/ChartActionBar";
+import { openControlLimitSettings } from "@/features/chart-settings/ui/SettingsDialog";
 import { ItemSearch } from "@/features/search-items/ui/ItemSearch";
 import { ModeBar } from "@/features/select-mode/ui/ModeBar";
 import { ChartFeedPostButton } from "@/features/share-chart/ui/FeedPostButton";
@@ -14,7 +15,7 @@ export function TabToolbar() {
       <ModeBar />
       {/* 모드 바와 차트 도구 사이 구분선 */}
       <span className="my-2 w-px self-stretch bg-line" aria-hidden="true" />
-      <ChartActionBar />
+      <ChartActionBar onOpenControlLimit={openControlLimitSettings} />
       <div className="ml-auto flex items-center gap-2 self-stretch">
         <ItemSearch />
         <span className="my-2 w-px self-stretch bg-line" aria-hidden="true" />
