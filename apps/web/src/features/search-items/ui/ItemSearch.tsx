@@ -27,10 +27,26 @@ import {
 } from "../model/search-conds";
 
 const MATCH_NAMES: Record<ItemSearchMatch, MessageDescriptor> = {
-  contains: msg({ message: "포함", context: "item search match" }),
-  startsWith: msg({ message: "시작", context: "item search match" }),
-  endsWith: msg({ message: "끝", context: "item search match" }),
-  exact: msg({ message: "완전 일치", context: "item search match" }),
+  contains: msg({
+    message: "포함",
+    context: "item search match",
+    comment: "차트 이름 검색의 일치 방식: 이름에 글자가 들어 있다",
+  }),
+  startsWith: msg({
+    message: "시작",
+    context: "item search match",
+    comment: "차트 이름 검색의 일치 방식: 이름이 글자로 시작한다",
+  }),
+  endsWith: msg({
+    message: "끝",
+    context: "item search match",
+    comment: "차트 이름 검색의 일치 방식: 이름이 글자로 끝난다",
+  }),
+  exact: msg({
+    message: "완전 일치",
+    context: "item search match",
+    comment: "차트 이름 검색의 일치 방식: 이름 전체가 글자와 같다",
+  }),
 };
 
 type Refusal = Extract<AddCondResult, { ok: false }>["reason"];
@@ -235,7 +251,7 @@ export function ItemSearchField({
                     inputRef.current?.focus();
                   }}
                 >
-                  <Trans>모두 지우기</Trans>
+                  <Trans context="item search conditions">모두 지우기</Trans>
                 </button>
               </>
             )}

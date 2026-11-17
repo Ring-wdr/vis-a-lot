@@ -80,6 +80,14 @@ msgstr "# {group} 活動レポート ({from} 〜 {to})"
 msgid "## 완료한 일"
 msgstr "## 完了した作業"
 
+#: src/shared/config/dataset.ts
+msgid "1사분위수"
+msgstr "第1四分位数"
+
+#: src/shared/config/dataset.ts
+msgid "3사분위수"
+msgstr "第3四分位数"
+
 #: src/shared/ui/AiBadge.tsx
 msgid "AI 어댑터: {adapterLabel}"
 msgstr "AI アダプター: {adapterLabel}"
@@ -104,6 +112,10 @@ msgstr "件数"
 msgctxt "search input placeholder"
 msgid "검색"
 msgstr "検索"
+
+#: src/shared/config/dataset.ts
+msgid "고유값 수"
+msgstr "ユニーク数"
 
 #: src/shared/ui/rich-editor/RichEditor.tsx
 msgid "굵게"
@@ -201,6 +213,10 @@ msgstr "モデルをダウンロード"
 #: src/shared/ui/AiBadge.tsx
 msgid "모델 없이 규칙과 템플릿으로 같은 기능을 흉내 냅니다."
 msgstr "モデルなしでルールとテンプレートにより同じ機能を模倣します。"
+
+#: src/shared/config/dataset.ts
+msgid "모표준편차"
+msgstr "母標準偏差"
 
 #: src/shared/lib/time.ts
 msgid "방금"
@@ -345,6 +361,10 @@ msgstr "青"
 #: src/shared/config/dataset.ts
 msgid "평균"
 msgstr "平均"
+
+#: src/shared/config/dataset.ts
+msgid "표준편차"
+msgstr "標準偏差"
 
 #: src/shared/config/dataset.ts
 msgid "합계"

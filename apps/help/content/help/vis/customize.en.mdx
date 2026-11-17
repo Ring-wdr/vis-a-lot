@@ -12,20 +12,76 @@ The menu shows only the sections used by the selected chart type.
 
 | Section | What it changes |
 | --- | --- |
-| Title | Title and subtitle text and color, alignment, summary display, the character joining split item names |
-| Axes | Show the X and Y axes, titles, min and max, log axes, lines, grid, ticks and tick labels |
-| Legend | Show the legend, position (top, bottom, left, right), border, reverse order, text |
+| Title | Title and subtitle text and color, alignment, subtitle font size and alignment, summary display, the character joining split item names |
+| Axes | Show the X and Y axes, titles, min and max, log axes, lines, grid, ticks and tick labels, category sort and order (X axis) |
+| Legend | Show the legend, position (top, bottom, left, right), border, sort and order, reverse order, text |
 | Panel | Background color, gradient, border, padding |
-| Palette | Base color, colors per legend value, gradient colors, other color |
-| Shape | Point shape, fill style, opacity, outline, intensity outside the selection, bar corner radius |
+| Palette | Base color, colors per legend value, gradient colors, other color, color list |
+| Shape | Point shape (10 kinds), fill style, opacity, outline, intensity outside the selection, bar corner radius |
 | Size | Point size (auto or fixed), text size (auto), line width |
 | Point labels | Write values next to points (position, angle, prefix and suffix, decimals) |
 | Scores | Correlation, ANOVA F, probability within spec, process capability (Cpk) |
 | Forecast | Predict the next values with a moving average or exponential smoothing and draw them with a confidence band |
-| Values | Value for empty cells, removing outliers (IQR, normal distribution) |
-| Highlight | Highlight points and bars that match a condition |
+| Values | Value for empty cells, excluding outliers or showing outliers only (IQR, normal distribution) |
+| Highlight | Highlight points and bars by condition, rank or range |
 | Tooltip | Show the nearest point (changes the display only) |
 | Expression | Draw x and y transformed by an expression, e.g. `log(y)`, `x * 2 + 1` |
+
+## Changing the order
+
+Set the order of legend entries and of the categories on the x axis yourself. Change it in **Sort** and **Order** in the legend section, and in **Category sort** and **Category order** under Axes › X axis.
+
+- The **Order** field lists the values in their current order. Drag a value, or focus it and press <Kbd>Alt</Kbd>+<Kbd>↑</Kbd> <Kbd>↓</Kbd> to move it one step. Everything from the top of the list down to the last value you moved is saved as the order (it gets numbers), and the remaining values follow in **Sort** order.
+- **Sort** is **Default (value order)** or **Natural**. Natural compares numbers inside the text as numbers, giving `L1, L2, L10`.
+- **Reset order** clears the order you set.
+- Values in the order that an item doesn't have are skipped.
+- **Colors don't change.** Colors still follow the value, so the same value keeps its color when you change the order.
+- **Reverse order** reverses only the entries in the legend box.
+
+| Order | What changes | Charts |
+| --- | --- | --- |
+| Legend order | Legend box entries, bars and boxes side by side within a category, stacking order, bars within a histogram bin, drawing order of radar polygons and line series | Charts where you pick a legend column (scatter, line, bar, boxplot, histogram, radar, gantt, treemap) |
+| Category order | x-axis categories with their bars, boxes and cells. Waterfall accumulates in the new order | bar, boxplot, waterfall, heatmap (x only) |
+
+A column with more than 200 unique values can't be ordered; you can only pick the sort.
+
+## Highlight methods
+
+Pick a **Method** in the highlight section to show only the fields for that method. **Target** (x value, y value), color, shape, size and **Single color for the rest** are shared by all three methods.
+
+| Method | What is highlighted |
+| --- | --- |
+| Condition | Values matching an operator (`>` `>=` `<` `<=` `=` `!=`) and a value |
+| Rank | The set number (1–1,000) from the largest (or smallest) values |
+| Range | Values between min and max. Both ends are included, and an empty end has no limit |
+
+- Rank uses **all** points, bars and boxes the item draws, regardless of the zoom range. Legend values turned off with checkboxes, deleted points and excluded outliers are left out. Every value equal to the boundary is highlighted, so there can be more than the set number.
+- For gantt the y value is the length (time) of a task bar, and for candle it is the close.
+
+## Point shapes
+
+Pick from 10 shapes in **Default shape** in the shape section and **Shape** in the highlight section: circle, square, triangle, diamond, cross, down triangle, left triangle, right triangle, hexagon and star. Points in the PNG, legend markers and tooltip markers use the same shape.
+
+## Showing outliers only
+
+Turn on **Handle outliers** in the values section to choose **Outlier handling**. What counts as an outlier is set by **Outlier method** (IQR or normal distribution) and **k**.
+
+| Chart | Exclude outliers | Outliers only |
+| --- | --- | --- |
+| Scatter · Line | Draws without points whose y is out of range. The title line shows how many were excluded | Draws only the out-of-range points, and the title line notes it |
+| Bar | Removes out-of-range bars (aggregated values) | Keeps only the out-of-range bars |
+| Boxplot | Removes the outlier points and draws only the boxes | Draws only the outlier points, without boxes or whiskers |
+
+## Palette color list
+
+Add up to 8 colors to **Color list** in the palette section to use them in legend value order instead of the 8 default palette colors. When there are more values than colors, the colors repeat from the first. **Use default palette** clears the list.
+
+- Colors set per legend value (item settings, Settings) come before the color list.
+- When **Use gradient colors** is on, the gradient comes before the color list.
+
+## Subtitle size and alignment
+
+**Subtitle font size** and **Subtitle align** in the title section follow the title when left empty (the size is 0.9 times the title size). Like the title font size, the font size is used only when Size › Font size Auto is off.
 
 ## Legend colors and position
 

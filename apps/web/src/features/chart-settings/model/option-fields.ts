@@ -8,12 +8,18 @@ import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
 import { getLocale, type Locale, linguiFor } from "@vis-a-lot/shared/lib/i18n";
 import {
+  CATEGORY_ORDER_CHARTS,
   type ChartOptions,
   type ChartOptionsPatch,
   FOCUS_OPERATORS,
+  FOCUS_RANK_MAX,
+  type FocusType,
+  LEGEND_ORDER_CHARTS,
+  MAX_PALETTE_COLORS,
   type OptionSection,
   POINT_SHAPES,
 } from "@/entities/chart/model/chart-options";
+import type { ChartType } from "@/shared/api/types";
 import "../config/messages";
 
 type Choice = { value: string; label: string };
@@ -23,6 +29,8 @@ type Base = {
   label: string;
   /** 다른 값에 따라 보일 때만 (예: 예측 방법별 매개변수) */
   when?: (o: ChartOptions) => boolean;
+  /** 이 차트들에서만 보인다 (예: 범주 순서). 없으면 구역을 쓰는 모든 차트 */
+  charts?: readonly ChartType[];
 };
 
 export type OptionField =
@@ -34,12 +42,37 @@ export type OptionField =
       step?: number;
       /** 비우면 null(자동) */
       nullable?: boolean;
+      /** 비운 칸의 안내. 없으면 nullable 칸은 '자동' */
+      placeholder?: string;
     })
   | (Base & { kind: "color" /** 비우기("")를 허용 */; optional?: boolean })
-  | (Base & { kind: "select"; options: readonly Choice[] })
+  | (Base & {
+      kind: "select";
+      options: readonly Choice[];
+      /** 있으면 맨 앞에 이 글자의 빈 선택지를 두고, 고르면 null이다. */
+      emptyLabel?: string;
+    })
   | (Base & { kind: "multi"; options: readonly Choice[] })
   | (Base & { kind: "text"; maxLength: number; placeholder?: string })
-  | { kind: "heading"; label: string; when?: (o: ChartOptions) => boolean };
+  | (Base & {
+      /** 값을 끌어 순서를 정한다 (OrderField). 값 목록은 source로 받는다. */
+      kind: "order";
+      source: "legend" | "category";
+      /** 나머지 값의 순서를 정하는 select 칸의 경로 */
+      sortPath: string;
+    })
+  | (Base & {
+      /** 색 목록 (팔레트 색). 비우면 기본 팔레트 */
+      kind: "colors";
+      max: number;
+      hint?: string;
+    })
+  | {
+      kind: "heading";
+      label: string;
+      when?: (o: ChartOptions) => boolean;
+      charts?: readonly ChartType[];
+    };
 
 /** 필드가 많아 하위 메뉴로 나눠 보이는 구역. 메뉴에서 구역 아래에 하위 항목으로 붙는다. */
 export type SectionPart = { id: string; label: string; fields: OptionField[] };
@@ -66,7 +99,7 @@ const TEXT = {
     axes: msg`글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다. 로그 축은 양수 값 축에서만 적용됩니다.`,
     score: msg`상관계수: x·y 상관계수, 분산분석 F: 범례 그룹 간 일원 분산분석 F, 규격 내 확률: 값이 하한~상한 안에 들 확률, 공정 능력: Cpk. 이 둘은 상한·하한이 있어야 계산합니다.`,
     value: msg`빈 칸 값은 그 조합에 데이터가 없는 칸에 씁니다.`,
-    focus: msg`조건에 맞는 점(막대)을 강조합니다.`,
+    focus: msg`방식에 맞는 점(막대·상자·캔들·작업)을 강조합니다. 순위는 item 전체 값으로 매기고 확대 범위와 상관없습니다.`,
     expression: msg`변수 x, y와 + - * / ^, 함수 abs log ln sqrt exp round floor ceil min max pow를 씁니다. 예: log(y), x * 2 + 1. 비우면 원래 값입니다.`,
   } satisfies Partial<Record<OptionSection, MessageDescriptor>>,
   left: msg({ message: "왼쪽", context: "chart option" }),
@@ -116,6 +149,12 @@ const TEXT = {
   titlePlaceholder: msg`비우면 split 조합 이름`,
   subtitle: msg({ message: "부제목", context: "chart option" }),
   subtitleColor: msg`부제목 색`,
+  subtitleFontSize: msg`부제목 글자 크기`,
+  subtitleAlign: msg`부제목 정렬`,
+  followTitle: msg({
+    message: "제목 따라감",
+    comment: "부제목 글자 크기·정렬을 비우면 제목 값을 따른다는 뜻",
+  }),
   fontSize: msg`글자 크기`,
   bold: msg({ message: "굵게", context: "chart option" }),
   fontColor: msg`글자 색`,
@@ -127,6 +166,19 @@ const TEXT = {
   showBorder: msg`테두리 보이기`,
   borderColor: msg`테두리 색`,
   reverseOrder: msg`순서 뒤집기`,
+  sortDefault: msg({
+    message: "기본 (값 순)",
+    comment: "legend·범주 정렬: 컬럼 값 순서 그대로",
+  }),
+  sortNatural: msg({
+    message: "자연 정렬 (L2 < L10)",
+    comment:
+      "legend·범주 정렬: 글자 안 숫자를 수로 비교. L2, L10은 예시 값이라 번역하지 않는다",
+  }),
+  legendSort: msg({ message: "정렬", context: "legend order" }),
+  legendOrder: msg({ message: "순서", context: "legend order" }),
+  categorySort: msg`범주 정렬`,
+  categoryOrder: msg`범주 순서`,
   titleColor: msg`제목 색`,
   backColor: msg`배경 색`,
   gradient: msg({ message: "그라데이션", context: "chart option" }),
@@ -139,6 +191,8 @@ const TEXT = {
   steps: msg`단계 수 (0이면 범례 값 수)`,
   reverseColors: msg`색 순서 뒤집기`,
   othersColor: msg`기타 색 ('기타' 조각, 강조 시 나머지)`,
+  paletteColors: msg`색 목록`,
+  paletteColorsHint: msg`기본 팔레트 8색 대신 legend 값 순서대로 씁니다. 비우면 기본 팔레트, 그라데이션을 켜면 그라데이션을 씁니다.`,
   defaultShape: msg`기본 모양`,
   shapeStyle: msg({ message: "적용", context: "chart option" }),
   fillAndBorder: msg`채우기 + 테두리`,
@@ -195,10 +249,33 @@ const TEXT = {
   seasonal: msg`계절 방식`,
   damped: msg({ message: "감쇠", context: "chart option" }),
   nullNumeric: msg`빈 칸 값 (비우면 그리지 않음)`,
-  outlier: msg`이상치 빼기`,
+  outlier: msg`이상치 가리기`,
+  outlierMode: msg`이상치 처리`,
+  outlierExcept: msg`이상치 빼기`,
+  outlierOnly: msg`이상치만 보기`,
   outlierMethod: msg`이상치 방식`,
   sigma: msg`정규분포 (평균 ± k·σ)`,
   useFocus: msg`강조 쓰기`,
+  focusType: msg({ message: "방식", context: "chart focus" }),
+  focusCondition: msg({ message: "조건", context: "chart focus type" }),
+  focusRank: msg({ message: "순위", context: "chart focus type" }),
+  focusRange: msg({ message: "범위", context: "chart focus type" }),
+  rankFrom: msg({ message: "방향", context: "chart focus rank" }),
+  rankTop: msg({
+    message: "큰 쪽부터",
+    comment: "순위 강조: 값이 큰 것부터 N개",
+  }),
+  rankBottom: msg({
+    message: "작은 쪽부터",
+    comment: "순위 강조: 값이 작은 것부터 N개",
+  }),
+  rankCount: msg({ message: "개수", context: "chart focus rank" }),
+  rangeMin: msg({ message: "최소 (포함)", context: "chart focus range" }),
+  rangeMax: msg({ message: "최대 (포함)", context: "chart focus range" }),
+  openEnd: msg({
+    message: "끝 없음",
+    comment: "범위 강조의 최소·최대 칸을 비우면 그쪽이 열려 있다는 안내",
+  }),
   target: msg({ message: "대상", context: "chart option" }),
   xValue: msg`x 값`,
   yValue: msg`y 값`,
@@ -241,8 +318,37 @@ const isMethod =
   (o: ChartOptions) =>
     methods.includes(o.prediction.method);
 
+const isFocusType = (type: FocusType) => (o: ChartOptions) =>
+  o.focus.type === type;
+
 function axisFields(m: Text, axis: "x" | "y"): OptionField[] {
   const p = `axes.${axis}`;
+  // 범주 순서는 x축만, 범주를 x에 놓는 차트(CATEGORY_ORDER_CHARTS)만 쓴다.
+  const categoryOrder: OptionField[] =
+    axis === "x"
+      ? [
+          {
+            kind: "heading",
+            label: m.categoryOrder,
+            charts: CATEGORY_ORDER_CHARTS,
+          },
+          {
+            kind: "select",
+            path: `${p}.categorySort`,
+            label: m.categorySort,
+            options: sortChoices(m),
+            charts: CATEGORY_ORDER_CHARTS,
+          },
+          {
+            kind: "order",
+            path: `${p}.categoryOrder`,
+            label: m.categoryOrder,
+            source: "category",
+            sortPath: `${p}.categorySort`,
+            charts: CATEGORY_ORDER_CHARTS,
+          },
+        ]
+      : [];
   return [
     { kind: "boolean", path: `${p}.visible`, label: m.showAxis },
     { kind: "boolean", path: `${p}.title.visible`, label: m.showAxisTitle },
@@ -344,6 +450,14 @@ function axisFields(m: Text, axis: "x" | "y"): OptionField[] {
       maxLength: 40,
       placeholder: m.dateFormatPlaceholder,
     },
+    ...categoryOrder,
+  ];
+}
+
+function sortChoices(m: Text): Choice[] {
+  return [
+    { value: "default", label: m.sortDefault },
+    { value: "natural", label: m.sortNatural },
   ];
 }
 
@@ -398,6 +512,22 @@ function buildTables(m: Text) {
         label: m.align,
         options: aligns,
       },
+      {
+        kind: "number",
+        path: "title.subtitleFontSize",
+        label: m.subtitleFontSize,
+        min: 6,
+        max: 40,
+        nullable: true,
+        placeholder: m.followTitle,
+      },
+      {
+        kind: "select",
+        path: "title.subtitleAlign",
+        label: m.subtitleAlign,
+        options: aligns,
+        emptyLabel: m.followTitle,
+      },
       { kind: "heading", label: m.summaryHeading },
       { kind: "boolean", path: "title.summary.visible", label: m.showSummary },
       { kind: "color", path: "title.summary.color", label: m.summaryColor },
@@ -408,6 +538,21 @@ function buildTables(m: Text) {
       { kind: "boolean", path: "legend.border", label: m.showBorder },
       { kind: "color", path: "legend.borderColor", label: m.borderColor },
       { kind: "boolean", path: "legend.reverse", label: m.reverseOrder },
+      {
+        kind: "select",
+        path: "legend.sort",
+        label: m.legendSort,
+        options: sortChoices(m),
+        charts: LEGEND_ORDER_CHARTS,
+      },
+      {
+        kind: "order",
+        path: "legend.order",
+        label: m.legendOrder,
+        source: "legend",
+        sortPath: "legend.sort",
+        charts: LEGEND_ORDER_CHARTS,
+      },
       {
         kind: "number",
         path: "legend.fontSize",
@@ -464,6 +609,13 @@ function buildTables(m: Text) {
         kind: "color",
         path: "palette.othersColor",
         label: m.othersColor,
+      },
+      {
+        kind: "colors",
+        path: "palette.colors",
+        label: m.paletteColors,
+        max: MAX_PALETTE_COLORS,
+        hint: m.paletteColorsHint,
       },
     ],
     shape: [
@@ -808,6 +960,16 @@ function buildTables(m: Text) {
       },
       {
         kind: "select",
+        path: "value.outlierMode",
+        label: m.outlierMode,
+        options: [
+          { value: "except", label: m.outlierExcept },
+          { value: "only", label: m.outlierOnly },
+        ],
+        when: (o) => o.value.outlier,
+      },
+      {
+        kind: "select",
         path: "value.outlierMethod",
         label: m.outlierMethod,
         options: [
@@ -828,6 +990,16 @@ function buildTables(m: Text) {
       { kind: "boolean", path: "focus.enabled", label: m.useFocus },
       {
         kind: "select",
+        path: "focus.type",
+        label: m.focusType,
+        options: [
+          { value: "condition", label: m.focusCondition },
+          { value: "rank", label: m.focusRank },
+          { value: "range", label: m.focusRange },
+        ],
+      },
+      {
+        kind: "select",
         path: "focus.target",
         label: m.target,
         options: [
@@ -840,6 +1012,7 @@ function buildTables(m: Text) {
         path: "focus.operator",
         label: m.condition,
         options: FOCUS_OPERATORS.map((value) => ({ value, label: value })),
+        when: isFocusType("condition"),
       },
       {
         kind: "number",
@@ -847,6 +1020,45 @@ function buildTables(m: Text) {
         label: m.value,
         min: -1e15,
         max: 1e15,
+        when: isFocusType("condition"),
+      },
+      {
+        kind: "select",
+        path: "focus.rankFrom",
+        label: m.rankFrom,
+        options: [
+          { value: "top", label: m.rankTop },
+          { value: "bottom", label: m.rankBottom },
+        ],
+        when: isFocusType("rank"),
+      },
+      {
+        kind: "number",
+        path: "focus.rankCount",
+        label: m.rankCount,
+        min: 1,
+        max: FOCUS_RANK_MAX,
+        when: isFocusType("rank"),
+      },
+      {
+        kind: "number",
+        path: "focus.rangeMin",
+        label: m.rangeMin,
+        min: -1e15,
+        max: 1e15,
+        nullable: true,
+        placeholder: m.openEnd,
+        when: isFocusType("range"),
+      },
+      {
+        kind: "number",
+        path: "focus.rangeMax",
+        label: m.rangeMax,
+        min: -1e15,
+        max: 1e15,
+        nullable: true,
+        placeholder: m.openEnd,
+        when: isFocusType("range"),
       },
       { kind: "color", path: "focus.color", label: m.color },
       {
@@ -976,6 +1188,20 @@ export function sectionFields(): Readonly<
   Record<OptionSection, OptionField[]>
 > {
   return current().fields;
+}
+
+/**
+ * 필드를 지금 보일지: 차트 종류(charts)와 다른 값(when)에 따라 숨긴다. 숨긴 칸의 값은 그대로 두므로
+ * 저장(buildPatch)·되돌리기는 보이는지와 상관없이 구역의 모든 칸을 다룬다.
+ */
+export function isFieldShown(
+  field: OptionField,
+  options: ChartOptions,
+  chartType: ChartType | undefined,
+) {
+  if (field.charts && (!chartType || !field.charts.includes(chartType)))
+    return false;
+  return !field.when || field.when(options);
 }
 
 /** 구역(과 하위 항목)의 필드. 하위 항목이 있는 구역은 고른 항목의 필드만 보인다. */

@@ -11,6 +11,7 @@ import type {
   ChartType,
   LegendPosition,
 } from "@/shared/api/types";
+import { CHART_FIELDS } from "@/shared/config/chart-kinds";
 
 export const OPTION_SECTIONS = [
   "title",
@@ -479,6 +480,14 @@ export const CATEGORY_ORDER_CHARTS: readonly ChartType[] = [
   "waterfall",
   "heatmap",
 ];
+
+/**
+ * legend 순서(legend.sort·order)를 쓰는 차트: legend 컬럼을 고르는 차트. 차트가 legend를 정하는 종류
+ * (pie·funnel·sankey·waterfall·candle·heatmap)는 쓰지 않는다 (서버 legendOrderOf와 같은 기준).
+ */
+export const LEGEND_ORDER_CHARTS: readonly ChartType[] = (
+  Object.keys(CHART_FIELDS) as ChartType[]
+).filter((type) => CHART_FIELDS[type].legend !== false);
 
 export function supportsOption(
   type: ChartType | undefined,

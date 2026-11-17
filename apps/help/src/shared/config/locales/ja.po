@@ -60,8 +60,8 @@ msgid "알아 두기"
 msgstr "知っておくこと"
 
 #: src/shared/config/help.ts
-msgid "전체 설정, legend 색·위치, item 개별 속성"
-msgstr "全体設定、legend の色・位置、item ごとの属性"
+msgid "전체 설정, 순서 바꾸기·강조 방식, legend 색·위치, item 개별 속성"
+msgstr "全体設定、順序の変更・強調の方式、legend の色・位置、item ごとの属性"
 
 #: src/shared/config/help.ts
 msgid "차트 그리기"
@@ -88,8 +88,8 @@ msgid "컬럼별 범위·값 필터와 적용 시점"
 msgstr "カラムごとの範囲・値フィルターと適用のタイミング"
 
 #: src/shared/config/help.ts
-msgid "툴팁, 모드(이동·확대·선택·삭제·페인트), 크게 보기"
-msgstr "tooltip、モード(移動・拡大・選択・削除・ペイント)、拡大表示"
+msgid "툴팁, 모드(이동·확대·선택·삭제·페인트), 차트 이름 검색, 크게 보기"
+msgstr "tooltip、モード(移動・拡大・選択・削除・ペイント)、チャート名の検索、拡大表示"
 
 #: src/shared/config/help.ts
 msgctxt "help service name"

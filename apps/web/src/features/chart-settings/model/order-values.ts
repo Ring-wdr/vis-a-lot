@@ -1,8 +1,37 @@
 "use client";
 
-import { MAX_ORDER_VALUES } from "@/entities/chart/model/chart-options";
+import {
+  CATEGORY_ORDER_CHARTS,
+  MAX_ORDER_VALUES,
+} from "@/entities/chart/model/chart-options";
 import { useColumnSummary, useLegendValues } from "@/shared/api/queries";
-import type { ColumnName, DatasetId } from "@/shared/api/types";
+import type { ChartSpec, ColumnName, DatasetId } from "@/shared/api/types";
+import { legendColumnOf } from "@/shared/config/chart-kinds";
+
+/**
+ * 순서 필드가 값 목록을 받을 곳. 여는 쪽(전체 설정은 draft, item 속성은 그린 spec)이 만들어 구역 폼에 넘긴다.
+ * legend·category가 null이면 그 순서 필드는 늘어놓을 값이 없다.
+ */
+export type OrderSource = {
+  dataset: DatasetId;
+  legend: ColumnName | null;
+  category: ColumnName | null;
+  /** 데이터셋이 준비됐는지. 준비되기 전에는 값 목록을 받지 않는다. */
+  ready: boolean;
+};
+
+/** spec에서 순서 필드의 값 목록을 받을 곳. 범주는 범주 순서를 쓰는 차트의 x 컬럼이다. */
+export function orderSourceOf(
+  spec: Pick<ChartSpec, "dataset" | "chartType" | "subType" | "x" | "legend">,
+  ready: boolean,
+): OrderSource {
+  return {
+    dataset: spec.dataset,
+    legend: legendColumnOf(spec),
+    category: CATEGORY_ORDER_CHARTS.includes(spec.chartType) ? spec.x : null,
+    ready,
+  };
+}
 
 /** 순서 필드가 늘어놓을 값 목록. 받는 중이면 values가 없다. */
 export type OrderValues = {
@@ -46,8 +75,12 @@ export function useOrderValues({
     };
   }
   const data = summary.data;
-  const values =
-    data?.kind === "values" ? data.values.map((v) => v.value) : undefined;
+  // 시계열 x(heatmap)는 값별 목록이 없어 순서를 정할 값이 없다.
+  const values = !data
+    ? undefined
+    : data.kind === "values"
+      ? data.values.map((v) => v.value)
+      : [];
   return {
     values,
     tooMany: (values?.length ?? 0) > MAX_ORDER_VALUES,

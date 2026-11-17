@@ -24,8 +24,10 @@ import type {
   ChartOptionsPatch,
   OptionSection,
 } from "@/entities/chart/model/chart-options";
+import type { ChartType } from "@/shared/api/types";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import "../config/messages";
+import type { OrderSource } from "../model/order-values";
 import { OptionSectionForm } from "./OptionSectionForm";
 
 const s = settingsStyles();
@@ -54,6 +56,8 @@ export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
 export function CommonOptionSettings({
   section,
   part,
+  chartType,
+  orderSource,
   supported,
   original,
   defaults,
@@ -63,6 +67,10 @@ export function CommonOptionSettings({
   section: OptionSection;
   /** 하위 항목이 있는 구역(축)에서 보일 항목 */
   part?: string;
+  /** 다음 draw에 쓸 차트 종류 */
+  chartType: ChartType | undefined;
+  /** 순서 필드의 값 목록을 받을 곳 (draft의 데이터셋·컬럼) */
+  orderSource: OrderSource;
   /** false면 이 차트가 쓰지 않는 구역이라 children(같은 구역의 기존 설정)만 보인다. */
   supported: boolean;
   /** 저장돼 있던 공통 속성의 차트 속성 */
@@ -78,6 +86,8 @@ export function CommonOptionSettings({
       <OptionSectionForm
         section={section}
         part={part}
+        chartType={chartType}
+        orderSource={orderSource}
         original={original}
         base={defaults}
         disabled={readOnly}

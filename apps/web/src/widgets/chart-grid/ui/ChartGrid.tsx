@@ -372,7 +372,9 @@ export function ChartGrid() {
                         className={button({ size: "sm", class: "mt-2" })}
                         onClick={() => setSearch([])}
                       >
-                        <Trans>조건 지우기</Trans>
+                        <Trans comment="검색 조건을 모두 지워 모든 차트를 다시 보인다">
+                          조건 지우기
+                        </Trans>
                       </button>
                     </EmptyState>
                   </div>

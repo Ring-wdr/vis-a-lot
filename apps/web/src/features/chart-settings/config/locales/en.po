@@ -7,6 +7,11 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
 
+#. {label}은 칸 이름(색 목록), {n}은 목록 안 순번
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgid "{label} {n}번째 색 바꾸기"
+msgstr "Change {label} color {n}"
+
 #: src/features/chart-settings/ui/OptionSectionForm.tsx
 msgid "{label} 바꾸기"
 msgstr "Change {label}"
@@ -15,9 +20,34 @@ msgstr "Change {label}"
 msgid "{label} 속성"
 msgstr "{label} properties"
 
+#. {n}은 색 목록 안 순번
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgid "{n}번째 색 빼기"
+msgstr "Remove color {n}"
+
+#. {name}은 옮긴 값, {place}는 놓은 자리에 있던 값
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "{name} 값을 {place} 자리에 놓았습니다."
+msgstr "Dropped {name} at {place}."
+
+#. {name}은 순서 필드에서 끄는 legend 값이나 범주
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "{name} 값을 집었습니다."
+msgstr "Picked up {name}."
+
+#. {place}는 끄는 값을 놓을 자리에 있는 값
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "{place} 자리"
+msgstr "Position of {place}"
+
 #: src/features/chart-settings/ui/ColorSettings.tsx
 msgid "{value} 색 바꾸기"
 msgstr "Change {value} color"
+
+#. 순서 필드의 값 하나. {value}는 값, {position}은 목록 안 순번
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "{value}, {count}개 중 {position}번째"
+msgstr "{value}, {position} of {count}"
 
 #: src/features/chart-settings/ui/LegendSettings.tsx
 msgid "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다."
@@ -82,6 +112,14 @@ msgctxt "chart option section"
 msgid "값"
 msgstr "Values"
 
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "값 목록을 받는 중입니다…"
+msgstr "Loading values…"
+
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "값이 너무 많아 순서를 정할 수 없습니다. 정렬만 고를 수 있습니다."
+msgstr "Too many values to set an order. You can only choose the sort."
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option section"
 msgid "강조"
@@ -90,6 +128,11 @@ msgstr "Highlight"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "강조 쓰기"
 msgstr "Enable highlight"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus rank"
+msgid "개수"
+msgstr "Count"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "계절 계수 γ (비우면 자동)"
@@ -167,6 +210,11 @@ msgstr "Font size applies only when Size › Font size Auto is off."
 msgid "글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다. 로그 축은 양수 값 축에서만 적용됩니다."
 msgstr "Font size applies only when Size › Font size Auto is off. Log scale applies only to axes with positive values."
 
+#. legend·범주 정렬: 컬럼 값 순서 그대로
+#: src/features/chart-settings/model/option-fields.ts
+msgid "기본 (값 순)"
+msgstr "Default (value order)"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "기본 모양"
 msgstr "Default shape"
@@ -178,6 +226,15 @@ msgstr "Base color"
 #: src/features/chart-settings/ui/ColorSettings.tsx
 msgid "기본 색으로 되돌리기"
 msgstr "Reset to default colors"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "기본 팔레트 8색 대신 legend 값 순서대로 씁니다. 비우면 기본 팔레트, 그라데이션을 켜면 그라데이션을 씁니다."
+msgstr "Used in legend value order instead of the 8 default palette colors. Empty uses the default palette; gradient takes precedence when on."
+
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "palette colors"
+msgid "기본 팔레트로"
+msgstr "Use default palette"
 
 #: src/features/chart-settings/ui/OptionSettings.tsx
 msgid "기본값으로 되돌리기"
@@ -192,9 +249,22 @@ msgctxt "split separator"
 msgid "기호"
 msgstr "Symbol"
 
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "끌거나 Alt+↑↓로 옮깁니다. 옮긴 값까지 순서로 저장합니다."
+msgstr "Drag or press Alt+↑↓ to move. Values up to the last moved one are saved as the order."
+
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "끌어서 옮기거나 Alt+위·아래 화살표로 한 칸씩 옮깁니다."
+msgstr "Drag to move, or press Alt+Up/Down arrow to move one step."
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "끝 색"
 msgstr "End color"
+
+#. 범위 강조의 최소·최대 칸을 비우면 그쪽이 열려 있다는 안내
+#: src/features/chart-settings/model/option-fields.ts
+msgid "끝 없음"
+msgstr "No limit"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "나머지는 한 가지 색"
@@ -203,6 +273,10 @@ msgstr "Single color for the rest"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "날짜 형식"
 msgstr "Date format"
+
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "놓을 자리가 없어 그대로 둡니다."
+msgstr "No drop position. Left unchanged."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "눈금 개수"
@@ -235,6 +309,10 @@ msgstr "Show ticks"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "눈금 색"
 msgstr "Tick color"
+
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "늘어놓을 값이 없습니다."
+msgstr "No values to order."
 
 #: src/features/chart-settings/ui/ItemOptionsDialog.tsx
 msgid "다시 그리는 중에는 바꿀 수 없습니다"
@@ -316,6 +394,20 @@ msgid "방법"
 msgstr "Method"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus"
+msgid "방식"
+msgstr "Method"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "방식에 맞는 점(막대·상자·캔들·작업)을 강조합니다. 순위는 item 전체 값으로 매기고 확대 범위와 상관없습니다."
+msgstr "Highlights points (bars, boxes, candles, tasks) that match the method. Rank uses all values of the item, regardless of zoom."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus rank"
+msgid "방향"
+msgstr "Direction"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "배경 색"
 msgstr "Background color"
 
@@ -333,8 +425,26 @@ msgid "범례 보이기"
 msgstr "Show legend"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus type"
+msgid "범위"
+msgstr "Range"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "범주 순서"
+msgstr "Category order"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "범주 정렬"
+msgstr "Category sort"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "변수 x, y와 + - * / ^, 함수 abs log ln sqrt exp round floor ceil min max pow를 씁니다. 예: log(y), x * 2 + 1. 비우면 원래 값입니다."
 msgstr "Use variables x, y with + - * / ^ and functions abs log ln sqrt exp round floor ceil min max pow. E.g. log(y), x * 2 + 1. Leave empty for the original value."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "별"
+msgstr "Star"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -342,8 +452,16 @@ msgid "부제목"
 msgstr "Subtitle"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgid "부제목 글자 크기"
+msgstr "Subtitle font size"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "부제목 색"
 msgstr "Subtitle color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "부제목 정렬"
+msgstr "Subtitle align"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "분산분석 F"
@@ -423,6 +541,15 @@ msgctxt "chart option"
 msgid "색"
 msgstr "Color"
 
+#: src/features/chart-settings/ui/OptionSectionForm.tsx
+msgctxt "palette colors"
+msgid "색 더하기"
+msgstr "Add color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "색 목록"
+msgstr "Color list"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "색 순서 뒤집기"
 msgstr "Reverse colors"
@@ -466,8 +593,18 @@ msgid "수준 계수 α (비우면 자동)"
 msgstr "Level α (empty: auto)"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "legend order"
+msgid "순서"
+msgstr "Order"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "순서 뒤집기"
 msgstr "Reverse order"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus type"
+msgid "순위"
+msgstr "Rank"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "시작 색"
@@ -505,6 +642,11 @@ msgstr "None"
 msgctxt "chart option"
 msgid "여백"
 msgstr "Margins"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "역삼각형"
+msgstr "Down triangle"
 
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgid "연결 문자"
@@ -550,8 +692,26 @@ msgstr "Right"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
+msgid "오른쪽 삼각형"
+msgstr "Right triangle"
+
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "옮기기를 취소했습니다."
+msgstr "Move cancelled."
+
+#: src/features/chart-settings/ui/OrderField.tsx
+msgid "옮길 수 있는 값"
+msgstr "movable value"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
 msgid "왼쪽"
 msgstr "Left"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "왼쪽 삼각형"
+msgstr "Left triangle"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "요약 (오른쪽 점 수·범주 수)"
@@ -581,6 +741,11 @@ msgctxt "chart option"
 msgid "위치"
 msgstr "Position"
 
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option"
+msgid "육각형"
+msgstr "Hexagon"
+
 #: src/features/chart-settings/ui/ItemOptionsDialog.tsx
 msgid "이 구역은 공통 속성 따르기"
 msgstr "Use common properties for this section"
@@ -588,6 +753,10 @@ msgstr "Use common properties for this section"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이동 평균 길이"
 msgstr "Moving average window"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이상치 가리기"
+msgstr "Handle outliers"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이상치 방식"
@@ -598,6 +767,14 @@ msgid "이상치 빼기"
 msgstr "Exclude outliers"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgid "이상치 처리"
+msgstr "Outlier handling"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이상치만 보기"
+msgstr "Outliers only"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "이중 지수 평활"
 msgstr "Double exponential smoothing"
 
@@ -606,6 +783,16 @@ msgstr "Double exponential smoothing"
 msgctxt "chart option"
 msgid "자동"
 msgstr "Auto"
+
+#. legend·범주 정렬: 글자 안 숫자를 수로 비교. L2, L10은 예시 값이라 번역하지 않는다
+#: src/features/chart-settings/model/option-fields.ts
+msgid "자연 정렬 (L2 < L10)"
+msgstr "Natural (L2 < L10)"
+
+#. 순위 강조: 값이 작은 것부터 N개
+#: src/features/chart-settings/model/option-fields.ts
+msgid "작은 쪽부터"
+msgstr "From smallest"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -653,6 +840,11 @@ msgid "정렬"
 msgstr "Align"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "legend order"
+msgid "정렬"
+msgstr "Sort"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "제목"
 msgstr "Title"
@@ -661,6 +853,11 @@ msgstr "Title"
 msgctxt "chart option section"
 msgid "제목"
 msgstr "Title"
+
+#. 부제목 글자 크기·정렬을 비우면 제목 값을 따른다는 뜻
+#: src/features/chart-settings/model/option-fields.ts
+msgid "제목 따라감"
+msgstr "Same as title"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "제목 보이기"
@@ -671,13 +868,14 @@ msgid "제목 색"
 msgstr "Title color"
 
 #: src/features/chart-settings/model/option-fields.ts
-msgctxt "chart option"
+msgctxt "chart focus type"
 msgid "조건"
 msgstr "Condition"
 
 #: src/features/chart-settings/model/option-fields.ts
-msgid "조건에 맞는 점(막대)을 강조합니다."
-msgstr "Highlights points (bars) that match the condition."
+msgctxt "chart option"
+msgid "조건"
+msgstr "Condition"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "중간 색"
@@ -696,10 +894,20 @@ msgctxt "chart option"
 msgid "채우기만"
 msgstr "Fill only"
 
+#: src/features/chart-settings/ui/OrderField.tsx
+msgctxt "order field"
+msgid "처음 순서로"
+msgstr "Reset order"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "최대"
 msgstr "Max"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus range"
+msgid "최대 (포함)"
+msgstr "Max (inclusive)"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -710,6 +918,11 @@ msgstr "Max"
 msgctxt "chart option"
 msgid "최소"
 msgstr "Min"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart focus range"
+msgid "최소 (포함)"
+msgstr "Min (inclusive)"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -776,6 +989,11 @@ msgstr "Size"
 msgctxt "chart option section"
 msgid "크기"
 msgstr "Size"
+
+#. 순위 강조: 값이 큰 것부터 N개
+#: src/features/chart-settings/model/option-fields.ts
+msgid "큰 쪽부터"
+msgstr "From largest"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"

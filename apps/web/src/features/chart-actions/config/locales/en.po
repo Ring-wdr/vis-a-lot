@@ -1,6 +1,12 @@
 msgid ""
 msgstr ""
 
+#. 검색 조건에 맞는 차트만 담은 엑셀 파일 이름 끝에 붙인다
+#: src/features/chart-actions/model/chart-download.ts
+msgctxt "file name suffix"
+msgid "_검색"
+msgstr "_search"
+
 #. 선택 영역의 데이터만 받은 CSV 파일 이름 끝에 붙인다
 #: src/features/chart-actions/model/chart-download.ts
 msgctxt "file name suffix"

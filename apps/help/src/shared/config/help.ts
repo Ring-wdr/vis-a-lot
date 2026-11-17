@@ -83,13 +83,15 @@ export const HELP: Record<HelpService, HelpServiceInfo> = {
         slug: "explore",
         title: inAllLocales(msg`차트 살펴보기`),
         summary: inAllLocales(
-          msg`툴팁, 모드(이동·확대·선택·삭제·페인트), 크게 보기`,
+          msg`툴팁, 모드(이동·확대·선택·삭제·페인트), 차트 이름 검색, 크게 보기`,
         ),
       },
       {
         slug: "customize",
         title: inAllLocales(msg`꾸미기`),
-        summary: inAllLocales(msg`전체 설정, legend 색·위치, item 개별 속성`),
+        summary: inAllLocales(
+          msg`전체 설정, 순서 바꾸기·강조 방식, legend 색·위치, item 개별 속성`,
+        ),
       },
       {
         slug: "export-share",
