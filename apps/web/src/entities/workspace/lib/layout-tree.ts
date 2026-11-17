@@ -7,8 +7,9 @@ import type { AnalyticsLayoutNode } from "@/shared/api/types";
 /**
  * 칸 배치 트리 (저장 모양 그대로).
  * - leaf: 칸 하나. panelId는 보드 store의 칸 id다.
- * - split: 자식을 나란히 놓는다. horizontal은 왼쪽 → 오른쪽(flex-direction: row), vertical은 위 → 아래(column).
- *   ratios[i]는 children[i]의 몫이고 합은 1이다. 화면은 자식에 `flex: <ratio> 0 0`을 준다.
+ * - split: 자식을 나란히 놓는다. horizontal은 왼쪽 → 오른쪽, vertical은 위 → 아래.
+ *   ratios[i]는 children[i]의 몫이고 합은 1이다. 화면은 트리를 중첩 요소로 그리지 않고, 트리에서 칸마다
+ *   보드에 대한 자리(%)를 구해 칸을 한 목록으로 놓는다 (widgets/analytics-board/lib/layout-rects.ts).
  */
 export type LayoutNode = AnalyticsLayoutNode;
 export type LayoutLeaf = Extract<LayoutNode, { type: "leaf" }>;

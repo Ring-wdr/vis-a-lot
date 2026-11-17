@@ -57,6 +57,11 @@ export const HELP_CONTENT: Record<
       en: () => import("@content/help/vis/history.en.mdx"),
       ja: () => import("@content/help/vis/history.ja.mdx"),
     },
+    analytics: {
+      ko: () => import("@content/help/vis/analytics.mdx"),
+      en: () => import("@content/help/vis/analytics.en.mdx"),
+      ja: () => import("@content/help/vis/analytics.ja.mdx"),
+    },
     faq: {
       ko: () => import("@content/help/vis/faq.mdx"),
       en: () => import("@content/help/vis/faq.en.mdx"),

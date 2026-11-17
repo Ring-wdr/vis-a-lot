@@ -7,6 +7,12 @@ msgstr ""
 "X-Generator: @lingui/cli\n"
 "Language: ja\n"
 
+#. draw all에서 그리지 않은 칸 수
+#: src/features/draw-chart/ui/DrawAllButton.tsx
+msgid "{skipped, plural, other {설정이 끝나지 않았거나 그리는 중인 칸 #개는 건너뛰었습니다.}}"
+msgstr "{skipped, plural, other {設定が終わっていないか描画中のパネル#個はスキップしました。}}"
+
+#: src/features/draw-chart/model/draw-chart.ts
 #: src/features/draw-chart/ui/DrawButton.tsx
 msgid "grid 영역 크기를 아직 모릅니다."
 msgstr "grid 領域のサイズがまだわかりません。"
@@ -16,6 +22,14 @@ msgstr "grid 領域のサイズがまだわかりません。"
 msgid "split 조합이 {countText}개입니다. 최대 {limitText}개까지 그릴 수 있습니다."
 msgstr "split の組み合わせが {countText} 件あります。最大 {limitText} 件まで描画できます。"
 
+#: src/features/draw-chart/ui/DrawAllButton.tsx
+msgid "그리는 모든 칸을 취소합니다"
+msgstr "描画中のすべてのパネルをキャンセルします"
+
 #: src/features/draw-chart/ui/DrawButton.tsx
 msgid "데이터를 등록하고 x, y를 고르면 그릴 수 있습니다"
 msgstr "データを登録して x, y を選ぶと描画できます"
+
+#: src/features/draw-chart/ui/DrawAllButton.tsx
+msgid "설정이 끝난 모든 칸을 번호 순으로 그립니다"
+msgstr "設定済みのすべてのパネルを番号順に描画します"

@@ -25,6 +25,7 @@ import type { BoardStore } from "@/entities/workspace/model/board-store";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
 import type { ChartDefaults } from "@/shared/api/types";
 import { renderWithI18n } from "@/shared/lib/render-with-i18n";
+import { sizesHeld } from "@/shared/lib/size-hold";
 import { AnalyticsBoard } from "./AnalyticsBoard";
 
 vi.mock("@/shared/api/api", () => ({
@@ -260,8 +261,11 @@ describe("AnalyticsBoard", () => {
     expect(outer.style.left).toBe("30%");
     expect(board.getState().layout).toBe(before);
     expect(resize).not.toHaveBeenCalled();
+    // 끄는 동안 칸은 새 크기를 쓰지 않고 기다린다 (손을 멈춰도 다시 그리지 않는다).
+    expect(sizesHeld()).toBe(true);
     fireEvent.pointerUp(outer, { pointerId: 1 });
     expect(resize).toHaveBeenCalledTimes(1);
+    expect(sizesHeld()).toBe(false);
     const layout = board.getState().layout;
     expect(layout.type === "split" && layout.ratios[0]).toBeCloseTo(0.3);
     expect(cell(a)?.style.width).toBe("30%");

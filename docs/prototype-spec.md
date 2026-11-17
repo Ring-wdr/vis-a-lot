@@ -153,8 +153,8 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 └──────────────────┴──────────────────────────────────┴─┴─────────────────┘
 ```
 
-- **상단 바:** `upload`(파일 열기 팝업), `datastore`(데이터 목록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), 사용자. 앱 전체에 걸린 것만 둔다
-- **시작 화면:** 처음 들어오면 연 차트가 없으므로 gallery·history 어느 쪽도 고르지 않은 시작 화면을 띄운다. 새 차트 그리기(gallery)·기록 다시 보기(history, 최근 건수)·데이터 올리기·데이터 관리(쓸 수 있는 데이터 수) 카드를 두고, 상단 바나 카드로 gallery·history를 고르면 작업 화면으로 바뀐다. 공유 링크(`#s=…`)로 들어오면 시작 화면을 건너뛰고 gallery에서 연다.
+- **상단 바:** `upload`(파일 열기 팝업), `datastore`(데이터 목록 팝업), `gallery`(그리고 편집하는 화면), `history`(그린 차트를 다시 보는 화면), `analytics`(여러 칸을 함께 보는 별도 화면 `/analytics`, 4.10), `shares`, `feed`, `help`, 사용자. 앱 전체에 걸린 것만 둔다. `/analytics`에서 `gallery`·`history`를 누르면 그 view를 고른 뒤 `/`로 간다
+- **시작 화면:** 처음 들어오면 연 차트가 없으므로 gallery·history 어느 쪽도 고르지 않은 시작 화면을 띄운다. 새 차트 그리기(gallery)·기록 다시 보기(history, 최근 건수)·여러 차트 함께 보기(`/analytics`)·데이터 올리기·데이터 관리(쓸 수 있는 데이터 수) 카드를 두고, 상단 바나 카드로 gallery·history를 고르면 작업 화면으로 바뀐다. 공유 링크(`#s=…`)로 들어오면 시작 화면을 건너뛰고 gallery에서 연다.
 - **history 삭제:** history 목록 카드 오른쪽 위 X 버튼(커서를 올리거나 포커스가 들어오면 보임) → 확인 팝업(썸네일 미리보기, 삭제 버튼은 위험 동작 모양, 처음 포커스는 취소). 지우면 그 건을 보던 history 탭도 닫는다.
 - **탭 도구 줄:** 탭 바 아래, 탭 내용과 같은 배경. 모드 바와 링크 복사처럼 그 탭의 차트에 걸린 도구를 둔다
 - **탭:** gallery와 history 모두 탭이 있다. 탭마다 작업 상태(데이터·설정·차트·진행)를 따로 가져 오가도 그대로 남는다.
@@ -360,6 +360,13 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - 서버는 차트 데이터 조회, bar/boxplot 집계, split 개수 확인에 같은 조건을 건다. 값은 모두 바인딩 파라미터로 넘긴다.
 - history에는 차트 설정과 함께 필터가 남고, history 탭에서는 보기 전용으로 보인다.
 
+### 4.10 analytics (별도 화면)
+- gallery는 탭 하나에 데이터 하나를 걸고 split 조합마다 같은 차트를 grid로 늘어놓는다. analytics는 반대로 보드 하나에 칸(최대 9개)을 두고 **칸마다 데이터·차트·필터가 따로**인 차트 한 장씩을 함께 본다. 여러 데이터를 한 화면에서 쓰므로 gallery 탭의 모드가 아니라 자기 경로(`/analytics`)와 화면 틀을 갖는 별도 서비스다. 같은 세션 범위(`(session)` layout)에 있어 `/`와 오가도 보드가 남는다.
+- 칸 추가·삭제, 레이아웃 preset 17개, 손잡이로 끌어 재배치(키보드 포함), 경계 끌어 크기 조절, 칸 최대화, 칸별 draw와 `draw all`·`cancel all`, 보드 전체 모드 바, 그리는 중 레이아웃 잠금, 좁은 화면의 한 줄 쌓기.
+- 칸은 split 없는 차트 하나(grid 1×1, item 1개)로 그리고 PNG는 칸 크기다. 칸 draw는 history에 남기지 않는다(`POST /charts`의 `record: false`). 대신 보드를 사용자마다 하나 서버(PGlite)에 자동 저장하고(`/analytics/board`, 6.4), 다시 열면 그린 칸을 저장한 설정과 item 상태로 다시 그린다.
+- datastore의 `analytics에서 열기`, 칸 우클릭의 `gallery에서 열기`, 시작 화면 카드로 오간다.
+- 화면·저장·연결(칸끼리 선택을 잇는 A3)의 자세한 규칙과 작업 단위는 [analytics-spec.md](analytics-spec.md)에 있다.
+
 ## 5. 렌더링 작업(job)
 
 ### 5.1 원칙
@@ -472,7 +479,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | data | 스키마 | `GET /datasets/:id/schema` | 적재된 테이블의 컬럼: 이름, 라벨(주석), 타입(categorical / numeric / datetime), null 허용, 고유값 수(적재 후). 등록 전이면 409 |
 | data | split 개수 확인 | `POST /datasets/:id/split-count` | `{ cols, filters }` → 조합 수 (30,000개 초과 검사, 필터 적용) |
 | data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
-| chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |
+| chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기, analytics 칸)<br>응답: `chartId`, `jobId`, `historyId` |
 | chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }`, job 전체의 상태별 item 수·시간·worker 수 |
 | chart | 진행 상태 (검색) | `GET /jobs/:jobId?page=&pageSize=&offset=&search=&since=` | `search`는 `[{ keyword, match }]` JSON 문자열(`match`: `contains`·`startsWith`·`endsWith`·`exact`, 10개·100자까지, 잘못되면 400). item 이름(label)을 대소문자 무시로 비교해 하나라도 맞는 item만 남기고, `page`·`offset`은 거른 순서 기준이다. 응답 `matchedItems`는 맞는 item 수(`search`가 없으면 `totalItems`, split 조합을 아직 모르면 null). 거른 순서는 job마다 조건 하나만 기억한다. `items=`에는 적용하지 않는다. handler는 `server/services/chart/app.ts` |
 | chart | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
@@ -494,6 +501,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | data | legend 값 목록 | `GET /datasets/:id/legend-values?column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
 | chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409). 관리선 선 목록이 맞지 않으면 400과 사유 (draw에서는 job 실패 사유) |
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
+| chart | analytics 보드 | `GET /analytics/board`, `PUT /analytics/board`, `DELETE /analytics/board` | 사용자(토큰 `sub`)마다 하나인 보드. 받기는 `{ layout, activePanelId, panels: [{ id, draft, drawn?: { spec, restore }, link? }], updatedAt }`(없으면 404). 저장은 `{ layout, activePanelId, panels: [{ id, draft, chartId?, link? }] }` → 204이고, `chartId`가 있으면 서버가 그 차트의 지금 설정·item 상태를 `drawn`으로 고정한다(모르는 차트면 이전 `drawn`을 둔다). 트리와 칸 id가 1:1, 칸 1~9개, 비율 합 1, 칸 draft는 split 없음·grid 1×1이 아니면 400. 비우기는 204. PGlite `analytics_boards`, scope `chart:read`/`chart:write`. 자세한 것은 [analytics-spec.md](analytics-spec.md) 5.1 |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
 | chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
 | chart | 차트 기본값 | `GET /defaults` | 모든 차트에 쓰는 값(차트 속성 전체 값 `options`(관리선 `controlLimit` 포함, 기본은 선 없음), 새 차트 공통 색, split 구분 문자, legend 위치)과 차트 종류마다 다른 값만 담은 `charts[type]`(`legendPosition`, `options` 부분 값. 예: funnel legend 오른쪽). 종류별 기본값은 전체 값 위에 `charts[type]`을 덮은 값이고, draw는 그 위에 공통 → item 개별 속성을 덮는다. 서버 draw와 전체 설정·item 속성 팝업·새 탭 draft가 같은 값(`server/charts/chart-defaults.ts`)을 쓴다. 어드민 기본값이 생기면 이 모듈을 바꾼다 |
@@ -506,7 +514,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 
 ## 7. History
 - 브라우저(IndexedDB)에만 보관한다. 서버 비용은 0원이다.
-- draw 한 번에 한 건이 생긴다. 그 뒤의 확대, 도형, 개별 색상, grid 변경은 같은 건에 덧붙인다. resize는 기록하지 않는다.
+- draw 한 번에 한 건이 생긴다. 그 뒤의 확대, 도형, 개별 색상, grid 변경은 같은 건에 덧붙인다. resize는 기록하지 않는다. analytics 칸의 draw도 기록하지 않는다(보드 자동 저장이 대신한다, 4.10).
 - 저장 내용: 데이터셋 id, 생성기 버전, 차트 설정, 공통/개별 속성, 도형, 확대 상태, item별 최종 상태(`cancelled` 포함), 썸네일.
 - `history` 화면: 왼쪽 목록에서 고르면 그 차트를 다시 그려 보여준다. 설정은 보기 전용(select disabled)이고 모드는 일반(툴팁)만, item 툴바는 숨긴다. 다시 보기는 history에 기록하지 않는다.
 - `gallery에서 편집`을 누르면 그 차트를 gallery로 가져가고, 이후 변경은 그 history 건에 이어서 기록한다.
@@ -525,6 +533,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 - 실패한 item 다시 시도
 - 기기 간 history 동기화, 팀 공유
 - 업로드 데이터의 기기 간 공유, xlsx 등 CSV 외 형식
+- analytics의 보드 여러 개·이름 붙여 저장, 보드 전체 내보내기·공유 링크, 칸 안의 split by. 범위는 [analytics-spec.md](analytics-spec.md) 1장
 
 ---
 

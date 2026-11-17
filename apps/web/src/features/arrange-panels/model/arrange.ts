@@ -48,8 +48,13 @@ export function blockedReason(block: ArrangeBlock) {
   switch (block) {
     case "locked":
       return t`그리는 칸이 있어 레이아웃을 바꿀 수 없습니다. 그리기가 끝나거나 취소한 뒤에 바꿔 주세요.`;
-    case "limit":
-      return t`칸은 ${MAX_PANELS}개까지 둘 수 있습니다.`;
+    case "limit": {
+      const max = MAX_PANELS;
+      return t({
+        message: `칸은 ${plural(max, { other: "#개" })}까지 둘 수 있습니다.`,
+        comment: "보드 한 장의 칸 수 한도",
+      });
+    }
     case "last":
       return t`마지막 칸은 지울 수 없습니다.`;
   }

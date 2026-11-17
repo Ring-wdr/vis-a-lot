@@ -22,6 +22,10 @@ msgstr "{pageText} / {totalText} ページへ移動中…"
 msgid "{s}초"
 msgstr "{s}秒"
 
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "draw를 누르면 다시 그립니다."
+msgstr "drawを押すと再描画します。"
+
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 msgid "grid로 돌아가기"
 msgstr "gridに戻る"
@@ -62,6 +66,7 @@ msgid "그리는 중"
 msgstr "描画中"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "그리지 못했습니다"
 msgstr "描画できませんでした"
 
@@ -75,6 +80,7 @@ msgid "남은 시간 (어림)"
 msgstr "残り時間 (概算)"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "다시 draw를 눌러 보세요."
 msgstr "もう一度drawを押してください。"
 
@@ -118,6 +124,7 @@ msgstr "待機中"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "데이터 조회"
 msgstr "データ取得"
 
@@ -127,6 +134,7 @@ msgstr "データ取得中"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 #: src/widgets/chart-grid/ui/JobStatusBar.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "데이터 준비 중"
 msgstr "データ準備中"
 
@@ -196,6 +204,10 @@ msgstr "完了"
 msgid "왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시 그립니다."
 msgstr "左のリストでチャートを選ぶと、保存された設定と拡大・図形・色のまま再描画します。"
 
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "왼쪽 패널에서 데이터와 x, y를 고르고 draw를 누르세요."
+msgstr "左のパネルでデータとx、yを選び、drawを押してください。"
+
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 msgid "왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면 조합마다 item 하나씩 grid로 그립니다."
 msgstr "左でデータとx, yを選び、drawを押してください。split byを選ぶと組み合わせごとにitemを1つずつgridに描画します。"
@@ -242,8 +254,13 @@ msgid "집계"
 msgstr "集計"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "차트 여는 중"
 msgstr "チャートを開いています"
+
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "차트를 그려 주세요"
+msgstr "チャートを描画してください"
 
 #: src/widgets/chart-grid/ui/JobStatusBar.tsx
 msgid "처리 속도"
@@ -260,6 +277,7 @@ msgstr "キャンセル"
 
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 #: src/widgets/chart-grid/ui/DetailView.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgctxt "item status"
 msgid "취소됨"
 msgstr "キャンセル済み"

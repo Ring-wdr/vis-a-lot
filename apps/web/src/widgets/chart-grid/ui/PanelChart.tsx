@@ -16,6 +16,7 @@ import {
 } from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
+import { onSizesReleased, sizesHeld } from "@/shared/lib/size-hold";
 import { EmptyState } from "@/shared/ui/Loading";
 import "../config/messages";
 import { ChartItemCard } from "./ChartItemCard";
@@ -79,6 +80,7 @@ function DrawnPanel({
       />
       {item ? (
         <ChartItemCard
+          labeled={false}
           item={item}
           chartId={chartId}
           primaryJobId={jobId}
@@ -106,6 +108,7 @@ function DrawnPanel({
         </div>
       ) : (
         <ChartItemCard
+          labeled={false}
           placeholder={
             job.data?.phase === "dataset" ? t`데이터 준비 중` : t`데이터 조회`
           }
@@ -158,13 +161,27 @@ export function PanelChart({
   useEffect(() => {
     const el = areaRef.current;
     if (!el) return;
+    // 경계를 끄는 동안 잰 크기. 놓은 뒤(미룸이 풀리면) 마지막 크기를 한 번 쓴다.
+    let held: { width: number; height: number } | undefined;
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       // 숨긴 칸(다른 칸을 최대화)은 크기가 0이다. 이전 크기를 그대로 두어 다시 그리지 않는다.
-      if (width > 0 && height > 0) setGridArea({ width, height });
+      if (width <= 0 || height <= 0) return;
+      if (sizesHeld()) held = { width, height };
+      else {
+        held = undefined;
+        setGridArea({ width, height });
+      }
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    const stopHold = onSizesReleased(() => {
+      if (held) setGridArea(held);
+      held = undefined;
+    });
+    return () => {
+      observer.disconnect();
+      stopHold();
+    };
   }, [setGridArea]);
 
   return (
@@ -179,7 +196,7 @@ export function PanelChart({
         />
       ) : opening ? (
         // 저장한 보드를 다시 여는 중: 칸 자리에 진행 표시를 둔다.
-        <ChartItemCard placeholder={t`차트 여는 중`} />
+        <ChartItemCard labeled={false} placeholder={t`차트 여는 중`} />
       ) : (
         <div className="flex flex-1 items-center justify-center">
           <EmptyState

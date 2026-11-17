@@ -149,13 +149,14 @@ export function AnalyticsBoard({
   const dropText = (drop: DragState | null) => {
     if (!drop?.targetId || !drop.edge) return t`놓을 칸이 없습니다.`;
     const target = numberOf(drop.targetId);
-    return t`칸 ${target}의 ${select(drop.edge, { top: "위", bottom: "아래", left: "왼쪽", right: "오른쪽", other: "옆" })}에 놓습니다.`;
+    const edge = drop.edge;
+    return t`칸 ${target}의 ${select(edge, { top: "위", bottom: "아래", left: "왼쪽", right: "오른쪽", other: "옆" })}에 놓습니다.`;
   };
 
   const announcements: Announcements = {
     onDragStart: ({ active }) => {
       const n = numberOf(String(active.id));
-      return t`칸 ${n}을(를) 집었습니다. 화살표로 놓을 칸과 변을 고르고 Space나 Enter로 놓습니다. Esc는 취소입니다.`;
+      return t`칸 ${n}의 손잡이를 잡았습니다. 화살표로 놓을 칸과 변을 고르고 Space나 Enter로 놓습니다. Esc는 취소입니다.`;
     },
     onDragMove: () => dropText(dropRef.current),
     onDragOver: () => dropText(dropRef.current),
@@ -164,7 +165,8 @@ export function AnalyticsBoard({
       if (!drop?.targetId || !drop.edge)
         return t`놓을 칸이 없어 그대로 둡니다.`;
       const target = numberOf(drop.targetId);
-      return t`칸 ${target}의 ${select(drop.edge, { top: "위", bottom: "아래", left: "왼쪽", right: "오른쪽", other: "옆" })}에 놓았습니다.`;
+      const edge = drop.edge;
+      return t`칸 ${target}의 ${select(edge, { top: "위", bottom: "아래", left: "왼쪽", right: "오른쪽", other: "옆" })}에 놓았습니다.`;
     },
     onDragCancel: () => t`옮기기를 취소했습니다.`,
   };

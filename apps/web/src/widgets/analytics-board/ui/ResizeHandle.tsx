@@ -2,8 +2,9 @@
 
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "@vis-a-lot/shared/lib/tw";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { moveDivider, RATIO_STEP } from "@/entities/workspace/lib/layout-tree";
+import { holdSizes } from "@/shared/lib/size-hold";
 import "../config/messages";
 import { type Divider, dividerStyle } from "../lib/layout-rects";
 
@@ -23,6 +24,8 @@ type Drag = {
   /** split 길이(px) */
   length: number;
   next: readonly number[];
+  /** 끄는 동안 칸 크기 쓰기를 미룬 것을 푼다 */
+  release: () => void;
 };
 
 /**
@@ -54,12 +57,17 @@ export function ResizeHandle({
   const before = ratios.slice(0, index + 1).reduce((a, b) => a + b, 0);
   const percent = Math.round(before * 100);
 
+  // 끄는 중에 손잡이가 사라지면(최대화, 칸 삭제) 미룬 크기 쓰기를 푼다.
+  useEffect(() => () => drag.current?.release(), []);
+
   const end = (commit: boolean) => {
     const d = drag.current;
     if (!d) return;
     drag.current = null;
     if (commit && !sameRatios(d.next, ratios)) onCommit(divider, d.next);
     else onPreview(divider, null);
+    // 비율을 쓴 뒤에 풀어 칸들이 놓은 크기로 한 번만 다시 그리게 한다.
+    d.release();
   };
 
   return (
@@ -99,6 +107,8 @@ export function ResizeHandle({
           start: row ? e.clientX : e.clientY,
           length,
           next: ratios,
+          // 끄다가 잠깐 멈춰도 칸이 그 크기로 다시 그리지 않게 한다 (그리는 칸이 생기면 놓을 때 레이아웃이 잠긴다).
+          release: holdSizes(),
         };
       }}
       onPointerMove={(e) => {

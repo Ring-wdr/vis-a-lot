@@ -12,19 +12,20 @@ If there are no requests for a while, the session ends and you need to sign in a
 
 ## Start screen
 
-Right after signing in no chart is open yet, so the start screen appears. Pick one of the four cards to move to the workspace.
+Right after signing in no chart is open yet, so the start screen appears. Pick one of the five cards to move to that screen.
 
 | Card | What it does |
 | --- | --- |
 | Draw a new chart | Opens gallery to draw a chart |
 | Revisit history | Opens history to see charts you drew before |
+| View charts side by side | Opens analytics to give each panel its own data and chart on one screen |
 | Upload data | Uploads a CSV or zip file |
 | Manage data | Opens the list of registered data (datastore) |
 
 ## Screen layout
 
 ```
-┌ Top bar: upload · datastore · gallery · history · shares · feed · help     theme · user ┐
+┌ Top bar: upload · datastore · gallery · history · analytics · shares · feed · help  theme · user ┐
 ├ Tab bar: [chart tab] [chart tab] [+]                                          [Filter] ┤
 ├ Tab toolbar: mode bar │ chart tools                       Copy link · Post to feed ┤
 ├ Left panel ─┬ Chart grid ─────────────────────────┬ Page scrollbar ┬ Filter panel ┤
@@ -43,6 +44,7 @@ Menus for the whole app.
 - **datastore**: The list of registered data. Sample data is registered here too.
 - **gallery**: Where you draw and edit charts.
 - **history**: Where you revisit charts you drew before. → [history](/help/vis/history)
+- **analytics**: A separate screen that shows several charts together in panels, each with its own data, chart and filters. → [analytics](/help/vis/analytics)
 - **shares**: The list of shares you created. → [Export and share](/help/vis/export-share)
 - **feed**: Goes to the data sharing feed.
 - **help**: Opens this help.
@@ -71,3 +73,4 @@ Drawn charts are placed on the grid as items. Turn pages with the page scrollbar
 
 1. Register sample data in [Preparing data](/help/vis/data).
 2. Follow [Drawing charts](/help/vis/draw) to draw your first chart.
+3. To see several charts side by side, read [analytics](/help/vis/analytics).

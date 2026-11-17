@@ -16,6 +16,10 @@ msgstr "Going to page {pageText} / {totalText}…"
 msgid "{s}초"
 msgstr "{s}s"
 
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "draw를 누르면 다시 그립니다."
+msgstr "Press draw to draw it again."
+
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 msgid "grid로 돌아가기"
 msgstr "Back to grid"
@@ -56,6 +60,7 @@ msgid "그리는 중"
 msgstr "Drawing"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "그리지 못했습니다"
 msgstr "Couldn't draw"
 
@@ -69,6 +74,7 @@ msgid "남은 시간 (어림)"
 msgstr "Time left (estimate)"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "다시 draw를 눌러 보세요."
 msgstr "Try pressing draw again."
 
@@ -112,6 +118,7 @@ msgstr "Queued"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "데이터 조회"
 msgstr "Querying data"
 
@@ -121,6 +128,7 @@ msgstr "Querying"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 #: src/widgets/chart-grid/ui/JobStatusBar.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "데이터 준비 중"
 msgstr "Loading data"
 
@@ -190,6 +198,10 @@ msgstr "Done"
 msgid "왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시 그립니다."
 msgstr "Pick a chart in the list on the left to redraw it with its saved settings, zoom, shapes and colors."
 
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "왼쪽 패널에서 데이터와 x, y를 고르고 draw를 누르세요."
+msgstr "Choose data, x and y in the left panel and press draw."
+
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 msgid "왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면 조합마다 item 하나씩 grid로 그립니다."
 msgstr "Pick data and x, y on the left, then press draw. With split by, each combination is drawn as one item in the grid."
@@ -236,8 +248,13 @@ msgid "집계"
 msgstr "Aggregating"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "차트 여는 중"
 msgstr "Opening chart"
+
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "차트를 그려 주세요"
+msgstr "Draw a chart"
 
 #: src/widgets/chart-grid/ui/JobStatusBar.tsx
 msgid "처리 속도"
@@ -254,6 +271,7 @@ msgstr "Cancelled"
 
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 #: src/widgets/chart-grid/ui/DetailView.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgctxt "item status"
 msgid "취소됨"
 msgstr "Cancelled"

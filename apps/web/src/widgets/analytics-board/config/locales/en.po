@@ -1,0 +1,81 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 21:29+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "Space나 Enter로 칸을 집고, 화살표로 놓을 칸과 변을 고른 뒤 Space나 Enter로 놓습니다. Esc는 취소입니다."
+msgstr "Press Space or Enter to pick up the panel, choose a target panel and edge with the arrow keys, then press Space or Enter to drop. Esc cancels."
+
+#: src/widgets/analytics-board/ui/ResizeHandle.tsx
+msgid "끌거나 화살표 키로 칸 크기를 바꿉니다"
+msgstr "Drag or use the arrow keys to resize panels"
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "끌어서 칸을 옮깁니다"
+msgstr "Drag to move the panel"
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "놓을 칸이 없습니다."
+msgstr "No panel to drop on."
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "놓을 칸이 없어 그대로 둡니다."
+msgstr "No panel to drop on, so nothing moved."
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "보드로 되돌리기 (Esc)"
+msgstr "Back to board (Esc)"
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "옮기기를 취소했습니다."
+msgstr "Move cancelled."
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "옮길 수 있는 칸"
+msgstr "movable panel"
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "칸 {n}의 손잡이를 잡았습니다. 화살표로 놓을 칸과 변을 고르고 Space나 Enter로 놓습니다. Esc는 취소입니다."
+msgstr "Picked up panel {n}. Choose a target panel and edge with the arrow keys, then press Space or Enter to drop. Esc cancels."
+
+#: src/widgets/analytics-board/ui/DropPreview.tsx
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "칸 {number}"
+msgstr "Panel {number}"
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "칸 {number} 옮기기"
+msgstr "Move panel {number}"
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "칸 {number} 지우기"
+msgstr "Remove panel {number}"
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "칸 {target}의 {edge, select, top {위} bottom {아래} left {왼쪽} right {오른쪽} other {옆}}에 놓습니다."
+msgstr "Drop on the {edge, select, top {top} bottom {bottom} left {left} right {right} other {side}} of panel {target}."
+
+#: src/widgets/analytics-board/ui/AnalyticsBoard.tsx
+msgid "칸 {target}의 {edge, select, top {위} bottom {아래} left {왼쪽} right {오른쪽} other {옆}}에 놓았습니다."
+msgstr "Dropped on the {edge, select, top {top} bottom {bottom} left {left} right {right} other {side}} of panel {target}."
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "칸 되돌리기"
+msgstr "Restore panel"
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "칸 지우기"
+msgstr "Remove panel"
+
+#: src/widgets/analytics-board/ui/PanelSlot.tsx
+msgid "칸 최대화"
+msgstr "Maximize panel"
+
+#: src/widgets/analytics-board/ui/ResizeHandle.tsx
+msgid "칸 크기 조절"
+msgstr "Resize panels"

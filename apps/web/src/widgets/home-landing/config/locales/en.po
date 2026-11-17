@@ -18,6 +18,10 @@ msgid "{readyN, plural, other {쓸 수 있는 데이터 {readyCount}개를 살�
 msgstr "{readyN, plural, one {Review and edit {readyCount} ready dataset.} other {Review and edit {readyCount} ready datasets.}}"
 
 #: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "analytics에서 칸마다 다른 데이터·차트를 두고 한 화면에서 봅니다."
+msgstr "In analytics, give each panel its own data and chart and see them on one screen."
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
 msgid "CSV나 zip을 올려 새 데이터로 등록합니다."
 msgstr "Upload a CSV or zip to register it as new data."
 
@@ -53,3 +57,7 @@ msgstr "Draw a new chart"
 msgctxt "home landing actions"
 msgid "시작하기"
 msgstr "Getting started"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "여러 차트 함께 보기"
+msgstr "View charts side by side"

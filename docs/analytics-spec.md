@@ -49,7 +49,7 @@ gallery는 데이터 하나에 설정 하나를 걸고 split 조합마다 같은
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ vis-a-lot  [upload][datastore][gallery][history][analytics][shares]…사용자│
 ├──────────────────────────────────────────────────────────────────────────┤
-│ [+ 칸][▦ 레이아웃][draw all] │ 모드 바 │ 차트 도구 │        [링크 복사][피드] [필터]│
+│ [+ 칸][▦ 레이아웃][비우기][draw all] │ 모드 바 │ 차트 도구 │  [링크 복사][피드] [필터]│
 ├──────────────────┬───────────────────────────────────────────────────────┤
 │ 칸 2 · Scatter    │ ┌───────────────┐┃┌───────────────────────┐          │
 │ 데이터    [▼]     │ │ ⠿ 1 Bar  🔗 × ││ │ ⠿ 2 Scatter  🔗 ×      │          │
@@ -64,18 +64,19 @@ gallery는 데이터 하나에 설정 하나를 걸고 split 조합마다 같은
 ```
 
 - **상단 바:** gallery와 같은 `AppHeader`를 쓴다. `analytics` 항목을 더하고, 지금 경로가 `/analytics`면 그 항목을 고른 것으로 표시한다. analytics에서 gallery·history를 누르면 그 view를 고른 뒤 `/`로 간다.
-- **보드 도구 줄:** 칸 추가, 레이아웃, draw all(그리는 칸이 있으면 cancel all), 모드 바, 차트 도구, 공유, 필터 토글.
+- **보드 도구 줄:** (64rem 미만에서만) 설정 서랍 버튼, 칸 추가, 레이아웃, 보드 비우기, draw all(그리는 칸이 있으면 cancel all), 모드 바, 차트 도구, 공유, 필터 토글.
 - **왼쪽 패널:** 고른 칸(활성 칸)의 설정. 맨 위에 칸 번호와 차트 이름을 적는다. gallery의 `ControlPanel`에서 grid와 split by를 뺀 모양이다. 하단에 `전체 설정`과 `draw`를 고정한다.
 - **보드:** 레이아웃 트리대로 칸을 놓는다. 칸을 누르거나 칸 안에 포커스가 들어오면 그 칸이 활성 칸이 되고 테두리를 강조한다.
 - **오른쪽 필터 서랍:** 활성 칸의 필터. gallery처럼 보드 위에 겹쳐 연다. 열고 닫은 상태는 gallery와 함께 쓴다(탭 store의 `filterPanelOpen`).
-- **하단 줄:** 칸 수, 그리는 중인 칸 수, 실패한 칸 수, Render Worker 수. 그 오른쪽에 활성 칸 job의 진행(gallery 하단 바와 같은 `JobStatusBar`)을 둔다.
+- **하단 줄:** 칸 수, 그리는 중인 칸 수, 실패한 칸 수, Render Worker 수. 그 오른쪽에 활성 칸 job의 진행(gallery 하단 바와 같은 `JobStatusBar`)을 둔다. Worker 수는 앞쪽에 이미 있어 `JobStatusBar`의 Worker 구획은 뺀다(`workers={false}`).
 
 ### 3.2 칸
 
 - 칸은 차트 한 장이다. 서버에는 split 없는 차트 하나(item 1개, grid 1×1)로 만든다. item 크기는 칸 크기다.
 - 칸마다 데이터셋을 따로 고른다. 새 칸은 활성 칸의 데이터셋으로 시작하고 차트는 scatter다.
 - 칸 번호는 레이아웃 트리를 깊이 우선으로 읽은 순서(1부터)다. 옮기면 번호가 바뀐다.
-- 칸 왼쪽 위에 커서를 올리거나 포커스가 들어오면 손잡이(⠿), 이름표(번호 · 차트 · 데이터셋 이름), 연결 버튼, 닫기를 띄운다. PNG는 칸 전체 크기로 그리고 줄을 따로 두지 않는다. item 툴바(축소, 확대 초기화, 설정, 최대화)는 gallery처럼 오른쪽 위다.
+- 칸 왼쪽 위에 커서를 올리거나 포커스가 들어오면 칸 틀 도구를 띄운다: 손잡이(⠿), 이름표(번호 · 차트 · 데이터셋 이름. 그린 차트가 있으면 그린 설정, 없으면 고치는 설정), (연결 PR부터) 연결 버튼, 최대화, 닫기. 커서 없는 기기에서는 늘 보인다. PNG는 칸 전체 크기로 그리고 줄을 따로 두지 않는다. item 툴바(축소, 확대 초기화, item 속성)는 gallery처럼 오른쪽 위다. 크게 보기 버튼은 없다(칸 최대화가 대신한다).
+- 그림이 아직 없을 때(준비·그리는 중) gallery item은 왼쪽 위에 item 이름을 띄우지만, 칸은 split이 없어 서버가 주는 이름이 '전체'뿐이고 그 자리에 칸 틀이 있으므로 띄우지 않는다(`ChartItemCard`의 `labeled={false}`).
 - 상태별 모양:
 
 | 상태 | 모양 |
@@ -116,7 +117,7 @@ type LayoutNode =
   - 그린 칸이 지워지면 "마지막 칸 N개가 지워집니다" 확인 팝업을 먼저 띄운다. 지워지는 칸을 따르던 연결은 푼다.
 - **재배치:** 손잡이를 끌어 다른 칸 위에 놓는다. 놓는 자리는 대상 칸의 가장 가까운 변(위·아래·왼쪽·오른쪽)이다. 끄는 동안 놓을 변을 반투명으로 칠하고 바뀔 레이아웃을 칸 위에 윤곽과 새 번호로 미리 보인다(실제 칸은 움직이지 않아 포인터 아래 대상이 흔들리지 않는다). 놓으면 원래 자리에서 빼 대상 옆에 넣고 정규화한다 (같은 방향이면 형제로, 다른 방향이면 대상을 split으로 감싼다).
   - 키보드: 손잡이에 포커스를 두고 Space(또는 Enter)로 집고 화살표로 대상과 변을 고른 뒤 Space(또는 Enter)로 놓는다. Esc는 취소다(`@dnd-kit/core`의 `KeyboardSensor`). 화살표는 자기 칸에서 시작하면 그 방향의 가장 가까운 칸으로 가 오던 쪽 변을 고르고, 대상 칸 안에서는 그 방향의 변을 고르며, 이미 그 방향 변이면 다음 칸으로 넘어간다(1×2의 왼쪽 칸에서 → 한 번은 오른쪽 칸의 왼쪽 변, 두 번은 오른쪽 변). 집기·놓을 자리·놓음·취소를 화면 읽기 프로그램에 알린다.
-- **크기 조절:** split의 이웃 사이에 손잡이를 둔다. 끄는 동안에는 React 상태를 바꾸지 않고 칸·경계의 자리만 DOM에서 바꾸며, 놓으면 비율을 store에 쓴다. 한 칸의 최소 비율은 0.05다. 손잡이는 `role="separator"`이고 split 방향의 화살표 키로 0.02씩, Home·End로 끝까지 옮긴다.
+- **크기 조절:** split의 이웃 사이에 손잡이를 둔다. 끄는 동안에는 React 상태를 바꾸지 않고 칸·경계의 자리만 DOM에서 바꾸며, 놓으면 비율을 store에 쓴다. 끄는 동안에는 칸이 잰 크기를 작업 store(`gridArea`)에 쓰지 않고 미뤘다가(`shared/lib/size-hold.ts`) 놓은 뒤 마지막 크기를 한 번 쓴다. 그래서 끄다가 손을 300ms 넘게 멈춰도 다시 그리지 않고, 다시 그리는 칸이 생겨 놓는 순간 레이아웃이 잠기는 일도 없다. 한 칸의 최소 비율은 0.05다. 손잡이는 `role="separator"`이고 split 방향의 화살표 키로 0.02씩, Home·End로 끝까지 옮긴다.
 - **최대화:** 칸 틀(왼쪽 위 도구)의 최대화 버튼이나 칸 더블 클릭(버튼·입력·그리기 레이어 위는 제외)으로 그 칸만 보드 전체에 보인다. 다시 누르거나 Esc로 돌아온다. 다른 칸을 고르거나 레이아웃을 바꾸면 풀린다. 최대화한 동안 다른 칸은 자리와 크기를 그대로 둔 채 감추기만 해(`invisible`·`inert`) 다시 그리지 않는다. 최대화한 동안은 옮기기·크기 조절을 숨긴다.
 - 그리는 칸이 하나라도 있거나 연결 다시 그리기가 진행 중이면 재배치·크기 조절·preset·칸 추가/삭제를 막는다 (PNG 크기가 진행 중인 job과 어긋난다). 막힌 이유를 title로 알린다.
 
@@ -135,7 +136,7 @@ type LayoutNode =
 - 칸마다 job이 하나다. Render Worker는 모든 job이 함께 쓰는 FIFO 대기열 하나(`RenderPool`, 최대 4개)이고 DB Worker는 하나다. 칸이 item 하나라 9칸을 한꺼번에 그려도 렌더 작업은 9개다. 순서를 당기는 우선순위는 두지 않는다.
 - gallery는 그리는 동안 탭 전환을 잠근다. analytics는 그리는 중에도 활성 칸을 바꿀 수 있다. 다른 칸의 draft를 고치고 draw를 눌러도 된다.
 - 그리는 칸이 있는 채로 `/analytics`를 떠나도 job은 계속 돈다. 돌아오면 보드 store가 남아 있어 이어서 보인다.
-- 칸 크기가 바뀌면(창 크기, 경계 끌기, 재배치, preset, 최대화, 배율, 테마) 멈춘 뒤 300ms에 PNG 크기가 칸과 다른 칸만 다시 그린다(`POST /charts/:id/resize`). 그리는 중인 칸은 끝난 뒤에 확인한다.
+- 칸 크기가 바뀌면(창 크기, 경계 끌기, 재배치, preset, 최대화, 배율, 테마) 멈춘 뒤 300ms에 PNG 크기가 칸과 다른 칸만 다시 그린다(`POST /charts/:id/resize`). 경계 끌기는 놓은 뒤를 멈춘 것으로 본다(3.3). 그리는 중인 칸은 끝난 뒤에 확인한다. 크기에 맞춰 다시 그리는 동안도 '그리는 칸'이라 레이아웃을 잠근다.
 
 ### 3.6 도구
 
@@ -151,9 +152,16 @@ type LayoutNode =
 | 상단 바 | analytics | `/analytics`로 간다 (`next/link`). analytics에서는 gallery 탭 잠금을 보지 않는다(gallery 화면을 떠나면 잠금이 풀린다) |
 | 시작 화면 | 카드 "여러 차트 함께 보기" | `/analytics` |
 | datastore 팝업 | `analytics에서 열기` | 빈 칸이 있으면 그 칸에, 없으면 새 칸에 그 데이터를 넣고 `/analytics`로 간다. 9칸이면 활성 칸의 데이터를 바꿀지 묻는다 |
-| gallery 탭 도구 줄 | `analytics 칸으로` | 고른 item의 설정(split 조합은 필터로 바꾼다)과 item 상태로 새 칸을 만든다. **PR 1에서 미룬다:** split 값과 item 상태(`ItemRestore`)를 화면이 알 수 없어 서버 요청(item 하나의 설정·상태)이 있어야 하고, 범주 split 값을 거를 '값 고르기' 필터 종류가 없다 |
+| gallery 탭 도구 줄 | `analytics 칸으로` | 고른 item의 설정(split 조합은 필터로 바꾼다)과 item 상태로 새 칸을 만든다. **PR 1에서 미룬다** (아래) |
 | analytics 칸 우클릭 | `gallery에서 열기` | 그 칸이 그린 설정으로 새 gallery 탭을 열고 `/`로 간 뒤 그 탭에서 그린다. item 상태(확대·도형·색)는 가져가지 않는다(화면이 칸의 `ItemRestore`를 모른다) |
 | history | — | analytics draw는 history에 없다 |
+
+`analytics 칸으로`를 미룬 이유와 남은 일:
+
+- **split 값을 필터로 바꿀 수 없다.** 범주 필터는 '고른 값을 뺀다'(`kind: "exclude"`)뿐이다. 한 값만 남기려면 그 컬럼의 나머지 값을 모두 빼야 하는데, 고유값이 많은 컬럼(설비 id 등)은 목록이 길고, 다시 열 때 새로 생긴 값은 걸러지지 않는다. 서버 `ChartFilter`에 '고른 값만 남긴다'(`include`) 종류를 더하고(`filters.ts`의 `filterSql`, 스키마·`validate-spec`, 필터 서랍의 표시) null 값 split도 표현해야 한다. 숫자·시계열 split은 `range`의 min = max로 된다.
+- **item 상태를 칸으로 옮길 길이 없다.** 화면은 item의 `ItemRestore`(확대·도형·선택·지운 영역·개별 속성)를 모른다. 서버에 'item 하나의 설정과 상태' 요청(예: `GET /charts/:id/items/:key/restore` → `{ spec(split 조합을 include 필터로 바꾼 것), restore }`)을 더하고, item key가 split 없는 차트의 key로 바뀌므로 restore의 key를 바꿔 넣어야 한다. 확대 범위·선택 영역은 데이터 좌표라 그대로 쓸 수 있지만, split 조합별 축 범위가 전체 데이터 기준으로 바뀌어 보이는 영역이 달라질 수 있다.
+- 화면: gallery 탭 도구 줄 버튼(고른 item이 있을 때), 보드에 칸을 넣는 규칙(`analytics에서 열기`와 같은 빈 칸·새 칸·9칸 확인)과 `/analytics`로 가기, 다시 열 때와 같은 `openChartIn`(spec·restore)로 그리기.
+- 서버·API·OAS·필터 UI·화면을 함께 바꾸는 일이라 PR 1의 마무리 범위를 넘는다. 따로 PR로 한다.
 
 ### 3.8 저장과 다시 열기
 
@@ -165,7 +173,7 @@ type LayoutNode =
 - 다시 여는 칸은 칸 크기를 안 뒤에 칸 번호 순으로 한 칸씩 요청하고, 여는 동안은 그 칸이 '여는 중'이라 레이아웃을 바꾸지 않고 자동 저장도 미룬다(그린 차트 id 없이 보내면 서버가 그린 적 없는 칸으로 저장한다). 저장한 보드를 받기 전(실패 포함)에는 자동 저장을 하지 않는다.
 - datastore의 `analytics에서 열기`를 보드를 받기 전에 누르면 받은 뒤 넣는다.
 - 세션 안에서 `/`와 `/analytics`를 오가는 동안에는 보드 store가 메모리에 남아 다시 받지 않는다. 로그아웃하면 사라진다.
-- 도구 줄의 `보드 비우기`는 확인 뒤 빈 칸 하나로 되돌린다.
+- 도구 줄의 `보드 비우기`는 확인 뒤 모든 칸의 job을 취소하고 빈 칸 하나로 되돌린 뒤(`reset`) 서버 보드를 지운다(`DELETE`). 되돌린 보드도 바뀐 것이라 1초 뒤 자동 저장이 빈 칸 하나인 보드를 `PUT`한다. 다시 열면 빈 칸 하나라 결과는 같다. 그리는 칸이 있어도 쓸 수 있다.
 
 ### 3.9 반응형
 
@@ -272,8 +280,9 @@ type LayoutNode =
 | `src/entities/workspace/lib/layout-tree.ts`, `layout-presets.ts` | 트리 순수 함수(찾기, 넣기, 빼기, 옮기기, 정규화, 비율)와 preset 17개 |
 | `src/entities/workspace/model/workspace-store.ts` | 칸용 생성 옵션 `kind: "panel"`(draft를 split 없음·grid 1×1로 고정, history 미기록 `recordsHistory`) |
 | `src/entities/chart/lib/grid-layout.ts`, `src/features/draw-chart/ui/DrawButton.tsx`, `src/features/open-chart/model/open-chart.ts` | 칸이면 PNG를 칸 전체 크기로(`drawSizeFor`), `record: false`. 다시 열 때 고치던 draft를 두는 `keepDraft` |
-| `src/widgets/analytics-board/ui/` | `AnalyticsBoard`(DnD, flex 트리, 미리보기), `PanelSlot`(손잡이, 이름표, 닫기, 놓는 변), `ResizeHandle`. 칸 내용은 render prop(`renderPanel(panelId)`)으로 받는다 (widget은 다른 widget을 import하지 않는다) |
-| `src/widgets/chart-grid/ui/PanelChart.tsx` | 차트 한 장을 칸 크기로 그린다. `ChartItemCard`와 `useAutoResize`를 쓴다. 페이지 스크롤·하단 job 바·크게 보기는 없다 |
+| `src/widgets/analytics-board/ui/`, `lib/` | `AnalyticsBoard`(DnD, 칸을 자리(%) 목록으로 놓기 `lib/layout-rects.ts`, 미리보기 `DropPreview`, 키보드 놓을 자리 `lib/drop-target.ts`), `PanelSlot`(손잡이, 이름표, 최대화, 닫기, 놓는 변), `ResizeHandle`. 칸 내용은 render prop(`renderPanel(panelId)`)으로 받는다 (widget은 다른 widget을 import하지 않는다) |
+| `src/shared/lib/size-hold.ts` | 경계를 끄는 동안 칸 크기 쓰기를 미루는 신호. `ResizeHandle`이 걸고 `PanelChart`가 본다 |
+| `src/widgets/chart-grid/ui/PanelChart.tsx` | 차트 한 장을 칸 크기로 그린다. `ChartItemCard`(`labeled={false}`)와 `useAutoResize`를 쓴다. 페이지 스크롤·하단 job 바·크게 보기는 없다. `JobStatusBar`는 `workers` prop으로 Worker 구획을 뺄 수 있다 |
 | `src/widgets/analytics-toolbar/ui/` | 보드 도구 줄 |
 | `src/widgets/control-panel/ui/ControlPanel.tsx` | grid·split by를 감추는 props |
 | `src/widgets/app-header`, `home-landing` | analytics 항목, 카드 |
@@ -305,7 +314,7 @@ PR을 둘로 나눈다. 첫 PR만으로 화면이 완결되고, 둘째 PR은 서
 | 단위 | 맡는 것 | 주로 고치는 곳 | 앞선 단위 |
 |---|---|---|---|
 | 1. 모델과 저장 | 레이아웃 트리 함수·preset과 테스트, 보드 store·scope, 칸용 작업 store 옵션, 보드 API(스키마·라우트·저장·`gen:api`), `shared/api` 요청 | `entities/workspace`, `server/services/chart`, `server/charts/board-store.ts`, `server/db`, `shared/api` | — |
-| 2. 보드 위젯 | flex 트리 렌더, 재배치(미리보기, 키보드), 크기 조절, 최대화, 칸 틀(손잡이·이름표·닫기), 레이아웃 popover, 칸 추가·삭제·비우기, 좁은 폭의 한 줄 쌓기 | `widgets/analytics-board`, `features/arrange-panels` | 1 |
+| 2. 보드 위젯 | 트리를 자리(%) 목록으로 렌더, 재배치(미리보기, 키보드), 크기 조절, 최대화, 칸 틀(손잡이·이름표·닫기), 레이아웃 popover, 칸 추가·삭제·비우기, 좁은 폭의 한 줄 쌓기 | `widgets/analytics-board`, `features/arrange-panels` | 1 |
 | 3. 칸 차트와 화면 틀 | `PanelChart`, `ControlPanel` props, 라우트·view·`SessionScope`, 도구 줄(모드 전체 적용, draw all), 하단 줄, 필터 서랍, 자동 저장과 다시 열기, 상단 바·시작 화면·datastore·gallery와 오가는 길 | `widgets/chart-grid`, `widgets/control-panel`, `widgets/analytics-toolbar`, `views/analytics`, `application`, `features/draw-chart`, `features/select-mode`, `features/open-chart`, `features/register-dataset`, `widgets/app-header`, `widgets/home-landing` | 1 |
 | 4. 마무리 | 3개 언어 카탈로그, 렌더 횟수 테스트, 도움말, CHANGELOG, `prototype-spec.md` 연결, 전체 검사 | 각 slice `config/locales`, `apps/help`, `docs` | 2, 3 |
 
@@ -337,8 +346,8 @@ PR을 둘로 나눈다. 첫 PR만으로 화면이 완결되고, 둘째 PR은 서
   - `AnalyticsBoard.render.test.tsx`: 한 칸의 draft·진행률이 바뀔 때 다른 칸과 보드가 다시 그려지지 않는다. 경계를 끄는 동안 렌더가 0회다.
   - `ResizeHandle`: 최소 비율, 키보드.
 - `pnpm lint`(FSD·Biome·Stylelint), `pnpm typecheck`, `pnpm test`, `pnpm build`(번역 누락 검사 포함), `pnpm gen:api:check`가 통과한다.
-- 문구는 ko·en·ja 카탈로그에 있다. 인라인 스타일은 런타임 값(`flex` 비율)만 쓴다.
-- 도움말: `apps/help`에 analytics 문서(시작하기, 레이아웃, 칸 그리기)와 목차. 상단 바에서 간다.
+- 문구는 ko·en·ja 카탈로그에 있다. 인라인 스타일은 런타임 값(칸·경계의 자리 %)만 쓴다.
+- 도움말: `apps/help`에 analytics 문서(`/help/vis/analytics`, ko·en·ja)와 목차. 시작하기·데이터 준비·history·알아 두기에서 잇는다. 상단 바 `help`에서 간다.
 - `CHANGELOG.md` 항목, `prototype-spec.md`의 상단 바·범위 밖 절에 이 문서 링크.
 
 ### PR 2
@@ -355,13 +364,19 @@ PR을 둘로 나눈다. 첫 PR만으로 화면이 완결되고, 둘째 PR은 서
 
 ---
 
-## 9. 정해야 할 것
+## 9. 정한 것과 남은 것
 
-1. **PR 수.** 위는 둘(보드 / 연결)로 나눴다. 기능마다 PR 하나라는 원칙대로 하나로 묶을 수도 있다.
-2. **보드 저장.** 사용자당 하나를 서버에 자동 저장한다고 적었다. 세션 동안만 두면(새로고침하면 빈 보드) 보드 API와 다시 열기가 빠져 단위 1·3이 줄어든다.
-3. **history.** analytics draw를 history에 남기지 않는다고 적었다. 남기면 history에서 열 때 어느 화면으로 갈지도 정해야 한다.
-4. **칸 안의 split by.** 뺐다. 넣으면 칸 안에 grid·페이지가 생겨 gallery와 같은 것이 칸마다 들어간다.
-5. **선택이 미치는 범위.** 선택이 따르는 칸만 바꾼다고 적었다. 다른 길은 연결하지 않은 칸까지 모두 강조하는 것이다. 연결을 고르지 않아도 칸끼리 반응하지만 선택마다 모든 칸을 다시 그린다.
-6. **강조의 범위.** scatter·line만이다. bar·histogram(합계·개수)에서 전체 막대 위에 범위 안 막대를 겹치는 것은 뒤로 미뤘다.
-7. **e2e.** 저장소에 브라우저 e2e가 없다(vitest만). 끌어 옮기기·크기 조절은 단위 테스트로 다 잡히지 않는다. PR 1에 Playwright smoke 묶음을 넣을지 정한다.
-8. **모바일.** 48rem 미만은 한 줄 쌓기로 보기만 되게 했다. 빼도 된다.
+PR 1에서 정한 것:
+
+1. **PR 수.** 둘(보드 / 연결)로 나눈다. PR 1은 `feat/analytics-board`.
+2. **보드 저장.** 사용자당 하나를 서버(PGlite)에 자동 저장하고 다시 연다(3.8, 5.1).
+3. **history.** analytics draw는 history에 남기지 않는다(`record: false`). history에서 analytics로 여는 길은 없다.
+4. **칸 안의 split by.** 넣지 않는다. 칸 = 차트 한 장이다.
+5. **모바일.** 48rem 미만은 한 줄 쌓기로 둔다(칸 추가·삭제만).
+6. **e2e.** PR 1에는 넣지 않았다. 끌어 옮기기·크기 조절·재마운트는 단위·렌더 횟수 테스트와 `next dev` 화면에서 손으로 확인했다.
+
+PR 2에서 정할 것:
+
+1. **선택이 미치는 범위.** 선택이 따르는 칸만 바꾼다고 적었다. 다른 길은 연결하지 않은 칸까지 모두 강조하는 것이다. 연결을 고르지 않아도 칸끼리 반응하지만 선택마다 모든 칸을 다시 그린다.
+2. **강조의 범위.** scatter·line만이다. bar·histogram(합계·개수)에서 전체 막대 위에 범위 안 막대를 겹치는 것은 뒤로 미뤘다.
+3. **e2e.** 연결(선택 → 따르는 칸)은 화면 사이를 잇는 동작이라 단위 테스트로 덜 잡힌다. PR 2에 Playwright smoke 묶음을 넣을지 정한다.

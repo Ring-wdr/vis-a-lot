@@ -82,7 +82,14 @@ function seconds(ms: number) {
  * 하단 바: job 단계와 진행률, 상태별 item 수, 경과 시간, 처리 속도와 남은 시간, Render Worker 수.
  * 렌더 단계에서는 끝난 item 수 / 렌더 경과 시간으로 속도를, 남은 item 수로 남은 시간을 어림한다.
  */
-export function JobStatusBar({ job }: { job: JobStateResponse }) {
+export function JobStatusBar({
+  job,
+  workers = true,
+}: {
+  job: JobStateResponse;
+  /** Render Worker 수 구획을 둔다. 보드 하단 줄처럼 바깥에서 이미 보이면 false */
+  workers?: boolean;
+}) {
   // phaseLabel·seconds는 전역 t로 읽으므로 여기서 언어 변경을 구독한다.
   const locale = useLocale();
   const { t } = useLingui();
@@ -285,16 +292,18 @@ export function JobStatusBar({ job }: { job: JobStateResponse }) {
         </span>
       </span>
 
-      <span
-        className={cn(section, "@max-6xl:hidden")}
-        title={t`Render Worker 수`}
-      >
-        <Cpu size={13} aria-hidden="true" />
-        <span>
-          <span className={caption}>Worker </span>
-          {job.renderWorkers}
+      {workers && (
+        <span
+          className={cn(section, "@max-6xl:hidden")}
+          title={t`Render Worker 수`}
+        >
+          <Cpu size={13} aria-hidden="true" />
+          <span>
+            <span className={caption}>Worker </span>
+            {job.renderWorkers}
+          </span>
         </span>
-      </span>
+      )}
     </>
   );
 }

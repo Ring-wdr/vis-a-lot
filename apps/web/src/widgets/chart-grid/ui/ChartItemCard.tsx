@@ -385,6 +385,7 @@ export function ChartItemCard({
   expanded = false,
   onDoubleClick,
   onOpenInGallery,
+  labeled = true,
 }: {
   item?: ItemState;
   hasLegend?: boolean;
@@ -404,6 +405,11 @@ export function ChartItemCard({
   onDoubleClick?: () => void;
   /** 우클릭 메뉴의 `gallery에서 열기` (analytics 칸) */
   onOpenInGallery?: () => void;
+  /**
+   * 그림이 없을 때 왼쪽 위에 item 이름(split 값)을 띄운다. analytics 칸은 split이 없어 서버가 주는 이름이
+   * 뜻 없는 '전체'이고, 그 자리에 칸 틀의 이름표가 있으므로 띄우지 않는다.
+   */
+  labeled?: boolean;
 }) {
   const { t } = useLingui();
   if (item?.status === "success" && item.image && chartId && primaryJobId) {
@@ -431,12 +437,14 @@ export function ChartItemCard({
     >
       <div className={itemBody}>
         {/* 그림이 없으면 PNG 제목 대신 이름을 띄운다. */}
-        <span
-          className="absolute top-2 left-2.5 max-w-[calc(100%-3.75rem)] truncate text-xs font-semibold"
-          title={item?.label}
-        >
-          {item?.label ?? "…"}
-        </span>
+        {labeled && (
+          <span
+            className="absolute top-2 left-2.5 max-w-[calc(100%-3.75rem)] truncate text-xs font-semibold"
+            title={item?.label}
+          >
+            {item?.label ?? "…"}
+          </span>
+        )}
         {item?.status === "failed" ? (
           <p role="alert" className="text-xs text-danger">
             {t({

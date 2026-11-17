@@ -27,6 +27,10 @@ msgstr "{label} 도구"
 msgid "{value} 색 바꾸기"
 msgstr "{value} 색 바꾸기"
 
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "gallery에서 열기"
+msgstr "gallery에서 열기"
+
 #: src/features/item-actions/ui/ItemToolbar.tsx
 msgid "item 속성"
 msgstr "item 속성"

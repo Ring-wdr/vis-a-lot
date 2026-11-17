@@ -142,7 +142,7 @@ export function LayoutPresetButton({ className }: { className?: string }) {
                 className="flex items-center gap-2"
               >
                 <span
-                  className="w-7 flex-none text-2xs text-fg-secondary tabular-nums"
+                  className="w-12 flex-none text-2xs whitespace-nowrap text-fg-secondary tabular-nums"
                   aria-hidden="true"
                 >
                   {t`${plural(panels, { other: "#칸" })}`}

@@ -19,6 +19,7 @@ import type {
   JobStateResponse,
 } from "@/shared/api/types";
 import { renderWithI18n } from "@/shared/lib/render-with-i18n";
+import { holdSizes } from "@/shared/lib/size-hold";
 import { PanelChart } from "./PanelChart";
 
 const PANELS = ["a", "b"] as const;
@@ -91,10 +92,17 @@ vi.mock("@/shared/api/queries", async (original) => ({
   useColumns: () => ({ label: (c: string) => c, info: () => undefined }),
 }));
 
-// long polling 요청은 끝나지 않는다. 응답은 progress로 넣는다.
+// long polling·크기 맞춤 요청은 끝나지 않는다. 응답은 progress로 넣는다.
 vi.mock("@/shared/api/api", async (original) => {
   const mod = await original<typeof import("@/shared/api/api")>();
-  return { ...mod, api: { ...mod.api, job: () => new Promise(() => {}) } };
+  return {
+    ...mod,
+    api: {
+      ...mod.api,
+      job: () => new Promise(() => {}),
+      resizeItems: () => new Promise(() => {}),
+    },
+  };
 });
 
 const stores = {} as Record<Panel, WorkspaceStore>;
@@ -209,5 +217,56 @@ describe("PanelChart 렌더 횟수", () => {
     });
     expect(counts.panel.get("job-b")).toBeUndefined();
     expect(counts.item.get("key-b")).toBeUndefined();
+  });
+});
+
+describe("PanelChart 칸 크기", () => {
+  it("경계를 끄는 동안(크기 쓰기를 미룸)에는 칸 크기를 쓰지 않고, 풀리면 마지막 크기를 한 번 쓴다", () => {
+    cleanup();
+    const observers: ResizeObserverCallback[] = [];
+    const original = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = class {
+      constructor(callback: ResizeObserverCallback) {
+        observers.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    try {
+      renderWithI18n(
+        <QueryClientProvider client={client}>
+          <WorkspaceScope store={stores.a}>
+            <PanelChart active onOpenInGallery={() => {}} />
+          </WorkspaceScope>
+        </QueryClientProvider>,
+      );
+      const resized = (width: number, height: number) =>
+        act(() => {
+          for (const callback of observers)
+            callback(
+              [{ contentRect: { width, height } } as ResizeObserverEntry],
+              {} as ResizeObserver,
+            );
+        });
+      const writes = vi.fn();
+      stores.a.subscribe((s, prev) => {
+        if (s.gridArea !== prev.gridArea) writes(s.gridArea);
+      });
+      const release = holdSizes();
+      resized(500, 400);
+      resized(450, 400);
+      expect(writes).not.toHaveBeenCalled();
+      act(release);
+      expect(writes).toHaveBeenCalledTimes(1);
+      expect(writes).toHaveBeenLastCalledWith({ width: 450, height: 400 });
+      // 미루지 않을 때는 바로 쓴다. 숨긴 칸(크기 0)은 쓰지 않는다.
+      resized(0, 0);
+      resized(420, 400);
+      expect(writes).toHaveBeenCalledTimes(2);
+      expect(writes).toHaveBeenLastCalledWith({ width: 420, height: 400 });
+    } finally {
+      globalThis.ResizeObserver = original;
+    }
   });
 });

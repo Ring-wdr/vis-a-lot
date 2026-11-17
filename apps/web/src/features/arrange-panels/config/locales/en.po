@@ -1,0 +1,109 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 21:29+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "{count, plural, other {마지막 칸 #개가 지워집니다.}} 지워지는 칸의 차트는 다시 볼 수 없습니다. 레이아웃을 바꿀까요?"
+msgstr "{count, plural, one {The last panel will be removed.} other {The last # panels will be removed.}} Their charts can't be restored. Change the layout?"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "{panels, plural, other {#칸}}"
+msgstr "{panels, plural, one {# panel} other {# panels}}"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "그리는 칸이 있어 레이아웃을 바꿀 수 없습니다. 그리기가 끝나거나 취소한 뒤에 바꿔 주세요."
+msgstr "A panel is drawing, so the layout can't change. Change it after drawing finishes or is cancelled."
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "레이아웃"
+msgstr "Layout"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "레이아웃 바꾸기"
+msgstr "Change layout"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "마지막 칸은 지울 수 없습니다."
+msgstr "The last panel can't be removed."
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "모든 칸과 그린 차트를 지우고 빈 칸 하나로 되돌립니다. 그리는 중인 칸은 취소합니다."
+msgstr "Removes every panel and drawn chart and resets to one empty panel. Panels being drawn are cancelled."
+
+#: src/features/arrange-panels/ui/ClearBoardButton.tsx
+msgid "모든 칸을 지우고 빈 칸 하나로 되돌립니다"
+msgstr "Remove every panel and reset to one empty panel"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgctxt "confirm button"
+msgid "바꾸기"
+msgstr "Change"
+
+#: src/features/arrange-panels/model/arrange.ts
+#: src/features/arrange-panels/ui/ClearBoardButton.tsx
+msgid "보드 비우기"
+msgstr "Clear board"
+
+#: src/features/arrange-panels/ui/AddPanelButton.tsx
+msgid "보드에 빈 칸을 더합니다"
+msgstr "Add an empty panel to the board"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgctxt "confirm button"
+msgid "비우기"
+msgstr "Clear"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "아래 큰 칸 + 위 2칸"
+msgstr "Large bottom + 2 on top"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "오른쪽 큰 칸 + 왼쪽 2칸"
+msgstr "Large right + 2 on left"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "왼쪽 큰 칸 + 오른쪽 2칸"
+msgstr "Large left + 2 on right"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "왼쪽 큰 칸 + 오른쪽 3칸"
+msgstr "Large left + 3 on right"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "위 큰 칸 + 아래 2칸"
+msgstr "Large top + 2 below"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "위 큰 칸 + 아래 3칸"
+msgstr "Large top + 3 below"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgctxt "confirm button"
+msgid "지우기"
+msgstr "Remove"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "칸 {n}의 차트가 함께 지워집니다. 지울까요?"
+msgstr "The chart in panel {n} will be removed too. Remove it?"
+
+#: src/features/arrange-panels/ui/LayoutPresetButton.tsx
+msgid "칸 배치를 고릅니다"
+msgstr "Choose how panels are arranged"
+
+#: src/features/arrange-panels/model/arrange.ts
+msgid "칸 지우기"
+msgstr "Remove panel"
+
+#: src/features/arrange-panels/ui/AddPanelButton.tsx
+msgid "칸 추가"
+msgstr "Add panel"
+
+#. 보드 한 장의 칸 수 한도
+#: src/features/arrange-panels/model/arrange.ts
+msgid "칸은 {max, plural, other {#개}}까지 둘 수 있습니다."
+msgstr "A board can have up to {max, plural, one {# panel} other {# panels}}."

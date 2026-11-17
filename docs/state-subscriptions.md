@@ -130,6 +130,45 @@ TabBar (widgets: 이 view의 탭 id[]를 useShallow로)
 
 그 밖에 `setGridArea`는 크기가 같으면 state를 바꾸지 않는다 (ResizeObserver가 같은 크기로 알려도 구독자가 다시 그리지 않는다).
 
+## analytics 보드
+
+analytics(`/analytics`)는 보드 store(`entities/workspace/model/board-store.ts`, `BoardScope`/`useBoard`) 하나와 칸마다 작업 store(`createWorkspaceStore({ kind: "panel" })`)를 든다. 칸 안과 왼쪽 패널·도구 줄은 gallery 컴포넌트를 그대로 쓰므로, 칸은 `PanelScope`, 고른 칸은 `ActivePanelScope`로 감싸 `useWorkspace`가 그 칸을 보게 한다. 보드 위젯(`widgets/analytics-board`)은 칸 내용을 `renderPanel(panelId)`로 받는다(모듈에 고정한 함수라 참조가 바뀌지 않는다). 기준은 [analytics-spec.md](analytics-spec.md) 6장.
+
+| 컴포넌트·hook | 레이어 | 고르는 값 | 반환 | 순수 UI여야 하나 | 조치 |
+| --- | --- | --- | --- | --- | --- |
+| `AnalyticsBoard` | widgets | 보드 `layout`, `panelIds`, `maximizedPanelId`, 잠금 까닭(`layoutBlock`), action | 참조·원시값·함수 | 아니요 (보드 컨테이너) | 칸의 draft·진행률은 고르지 않는다. 끄는 칸·놓을 자리는 자기 state. 경계를 끄는 동안에는 store를 쓰지 않고 DOM의 칸 자리만 바꾼다 |
+| `PanelSlot` (칸 틀) | widgets | `selectPanelNumber(id)`, `selectIsActive(id)`, `selectIsMaximized(id)`, 옮기기·지우기 까닭, action | 원시값·함수 | 아니요 (목록 아이템) | `memo`. 부모는 칸 id·놓을 변만 넘긴다. 칸 내용은 `useMemo(() => renderPanel(id))`로 한 번 만들어 번호·활성 표시가 바뀌어도 다시 그리지 않는다 |
+| `PanelFrame`, `DropZone`, `DragHandle`, `ResizeHandle`, `DropPreview`, `LayoutThumb` | widgets·features | — (props) | — | **예** | store를 부르지 않는다. 경계 끌기는 `onPreview`·`onCommit` 콜백, 끄는 동안 칸 크기 쓰기는 `shared/lib/size-hold`로 미룬다 |
+| `PanelContent` | views | `selectIsActive(id)` | 원시값 | 아니요 | `memo`. 칸 id로 `PanelScope`를 열고 `PanelChart`를 그린다 |
+| `PanelChart` | widgets | 칸 store `current.chartId`·`jobId`·`spec`, `opening`, `gridArea`, `setGridArea` | 원시값·참조·함수 | 아니요 (칸 컨테이너) | 진행률은 `select`로 상태·오류만(`panelProgress`). 크기 맞춤은 `PanelAutoResize`(`itemJobs` 구독)로 떼어 냄. item은 gallery의 `DrawnItem`(자기 key로 고른 원시값) |
+| `PanelLabelText` | views | 칸 store `(current?.spec ?? draft)`의 차트 종류·서브 차트·데이터셋, 데이터셋 이름 | 원시값 | 아니요 | 칸 이름표만 다시 그린다 |
+| `PanelJobs` → `PanelJobSync` | views | 보드 `panelIds`(`useShallow`) → 칸마다 그리는 중(`useDrawState`, `itemJobs` 비었는지), job 실패(`select`) | 참조·원시값 | 아니요 (`return null`) | 칸 job 상태를 보드 `busy`와 화면 store `failed`에 boolean으로 옮긴다. 보드·하단 줄은 그 boolean의 개수만 고른다 |
+| `BoardStatusBar` | views | 칸 수, `busy` 개수, `failed` 개수, Render Worker 수 | 원시값 | 아니요 | 진행률 응답은 `ActiveProgress`(고른 칸의 `JobStatusBar`)만 구독한다 |
+| `PanelHeading`, `ControlPanel`, `DrawButton`, `SettingsButton`, `FilterPanel` | views·widgets·features | 고른 칸 store의 값 (gallery와 같다) | 원시값·참조 | 아니요 | `ActivePanelScope`가 칸 id를 key로 다시 마운트해 이전 칸의 입력 중 값·mutation 결과가 새 칸에 남지 않는다 |
+| `AnalyticsToolbar`의 `BoardModeBar`, `FilterToggle` | widgets | 보드 `mode`·`setMode` / 탭 store `filterPanelOpen`, 고른 칸의 필터 수 | 원시값·함수 | 아니요 | `ModeBar`는 보드 모드를 props로 받는다 |
+| `DrawAllButton` | features | 잠금(`selectLayoutLocked`) | 원시값 | 아니요 | 그릴 칸·데이터셋 목록은 누를 때 `getState`·`getQueryData`로 읽는다 |
+| `AddPanelButton`, `LayoutPresetButton`, `ClearBoardButton` | features | 막힌 까닭(`addPanelBlock`, `layoutBlock`) | 원시값 | 아니요 (동작 하나) | preset 비교용 레이아웃은 popover를 열 때 `getState`로 읽는다 |
+| `BoardAutosave` | views | `hydrated` | 원시값 | 아니요 (`return null`) | 저장할 변경은 store `subscribe`로 듣고(`watchBoard`) 렌더하지 않는다 |
+| `BoardGate` (`useBoardHydrate`) | views | `hydrated`, 보드 query | 원시값·참조 | 아니요 | 받은 뒤에는 children만 그린다 |
+
+렌더 횟수는 `src/widgets/analytics-board/ui/AnalyticsBoard.render.test.tsx`(칸 9개, 칸 내용을 색 상자로)와 `src/widgets/chart-grid/ui/PanelChart.render.test.tsx`(칸 둘)가 잡는다.
+
+| 바꾼 것 | 보드 (`AnalyticsBoard`) | 칸 내용 |
+| --- | --- | --- |
+| 처음 그림 (3×3) | — | 칸마다 1 |
+| 다른 칸 고름 | 다시 그리지 않음 (칸 틀 둘만) | 0 |
+| 한 칸의 draft | 다시 그리지 않음 | 그 값을 고른 그 칸만 1 |
+| 한 칸의 job 진행률 응답 | 다시 그리지 않음 | 0 |
+| 한 칸의 item 다시 그리기 시작 | 다시 그리지 않음 | 그 칸의 item만 1 |
+| 한 칸의 job이 끝남 | 다시 그리지 않음 | 그 칸만 |
+| 경계를 끄는 동안 | 0 (커밋 없음) | 0, 칸 크기도 쓰지 않는다 |
+| 경계를 놓음 · 화살표 키 | 다시 그림 (비율) | 0. 크기가 달라진 칸만 300ms 뒤 PNG를 다시 받는다 |
+| 칸 옮기기(번호가 바뀜) · 칸 지우기 · 트리 모양 바뀜 | 다시 그림 | 0, 다시 마운트하지 않는다 |
+| 최대화·되돌리기 | 다시 그림 | 0 (다른 칸은 크기를 둔 채 감춘다) |
+| 그리는 칸이 생겨 잠김 | 다시 그림 (잠금 표시) | 0 |
+
+`next dev`로 띄운 화면에서도 칸 추가·옮기기·최대화·경계 끌기·좁은 폭 전환 때 칸의 `<img>` 요소가 그대로이고(다시 마운트 없음), `POST /charts/:id/resize`가 크기가 달라진 칸에만 한 번씩 나가는 것을 확인했다.
+
 ## 남은 이슈
 
 처음 점검에서 남긴 네 가지와 react-query 재렌더를 모두 처리했다.

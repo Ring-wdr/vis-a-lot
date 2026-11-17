@@ -1,7 +1,7 @@
 "use client";
 
+import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
-import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
 import { cn } from "@vis-a-lot/shared/lib/tw";
 import { CircleX, Cpu, LayoutDashboard, LoaderCircle } from "lucide-react";
 import {
@@ -22,7 +22,10 @@ const zero = "data-zero:text-fg-muted data-zero:opacity-60";
 function ActiveProgress() {
   const jobId = useWorkspace((s) => s.current?.jobId);
   const progress = useJobProgress(jobId);
-  return progress.data ? <JobStatusBar job={progress.data} /> : null;
+  // Render Worker 수는 하단 줄 앞쪽에 이미 있다.
+  return progress.data ? (
+    <JobStatusBar job={progress.data} workers={false} />
+  ) : null;
 }
 
 /**
@@ -35,13 +38,15 @@ export function BoardStatusBar() {
   const drawing = useBoard((s) => Object.keys(s.busy).length);
   const failed = usePanelStatus((s) => Object.keys(s.failed).length);
   const workers = useHealth().data?.renderWorkers;
-  const n = (value: number) => value.toLocaleString(intlLocale());
 
   return (
     <footer className="flex h-full min-w-0 items-center overflow-hidden border-t border-line bg-elevated text-xs whitespace-nowrap text-fg-secondary tabular-nums">
       <span className={section} title={t`칸 수`}>
         <LayoutDashboard size={13} aria-hidden="true" />
-        {t({ message: `칸 ${n(panels)}개`, comment: "보드의 칸 수" })}
+        {t({
+          message: plural(panels, { other: "칸 #개" }),
+          comment: "보드의 칸 수",
+        })}
       </span>
       <span
         className={cn(section, zero, drawing > 0 && "text-accent")}
@@ -50,8 +55,8 @@ export function BoardStatusBar() {
       >
         <LoaderCircle size={13} aria-hidden="true" />
         {t({
-          message: `그리는 중 ${n(drawing)}`,
-          comment: "그리는 중인 칸 수",
+          message: `그리는 중 ${drawing}`,
+          comment: "drawing: 그리는 중인 칸 수 (하단 줄의 짧은 구획)",
         })}
       </span>
       <span
@@ -60,7 +65,10 @@ export function BoardStatusBar() {
         title={t`실패한 칸 수`}
       >
         <CircleX size={13} aria-hidden="true" />
-        {t({ message: `실패 ${n(failed)}`, comment: "실패한 칸 수" })}
+        {t({
+          message: `실패 ${failed}`,
+          comment: "failed: 실패한 칸 수 (하단 줄의 짧은 구획)",
+        })}
       </span>
       <span className={section} title={t`Render Worker 수`}>
         <Cpu size={13} aria-hidden="true" />

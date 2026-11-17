@@ -1,0 +1,121 @@
+analytics shows several charts together on one screen, split into panels. Open it with **analytics** in the top bar or the **View charts side by side** card on the start screen.
+
+## How it differs from gallery
+
+| | gallery | analytics |
+| --- | --- | --- |
+| On one screen | One chart per tab | One board with several panels (up to 9) |
+| Data | One dataset per tab | Each panel has its own data, chart and filters |
+| One chart | One item per split by combination, laid out in a grid | One panel is one chart (no split by or grid) |
+| While drawing | You can't switch tabs | You can pick another panel, change its settings and draw it |
+| What is kept | Every draw is recorded in history | The board is saved automatically. Nothing is added to history |
+
+## Screen layout
+
+```
+┌ Top bar: upload · datastore · gallery · history · analytics · shares · feed · help ┐
+├ Toolbar: [Add panel][Layout][Clear board][draw all] │ mode bar │ chart tools   Copy link · Post to feed · Filter ┤
+├ Left panel ──┬ Board ──────────────────────────────────┬ Filter drawer ┤
+│ Panel 2 · Bar│ ┌ Panel 1 ───┐┃┌ Panel 2 ──────────┐   │               │
+│ Data         │ │   PNG      │┃│   PNG             │   │               │
+│ Chart, columns│ └────────────┘┃└───────────────────┘   │               │
+│ Settings     │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │               │
+│ draw         │ ┌ Panel 3 ───────────────────────────┐   │               │
+│              │ └────────────────────────────────────┘   │               │
+│              ├ Bottom bar: panels · drawing · failed · Worker · progress of the selected panel ┤
+└──────────────┴──────────────────────────────────────────┴───────────────┘
+```
+
+- The **left panel** shows the settings of the selected panel (the one with the highlighted border). Its number and chart name are at the top. It is gallery's left panel without grid and split by.
+- Click a panel or move focus into it to select it.
+- Hover the top left of a panel to see its frame tools: the move handle, the label (number · chart · data), maximize and remove.
+
+## Adding and removing panels
+
+- **Add panel** adds an empty panel. It starts with the selected panel's data and a Scatter chart.
+- A board holds up to 9 panels. At 9, **Add panel** is dimmed and hovering it tells you why.
+- The X in a panel's frame removes it. If the panel has a drawn chart, you are asked first. The last panel can't be removed.
+- Panel numbers follow the reading order from the top left of the board. Moving a panel changes the numbers.
+- **Clear board** asks for confirmation, then removes every panel and drawn chart and resets to one empty panel. Panels being drawn are cancelled.
+
+## Layout
+
+**Layout** lets you pick one of 17 arrangements, grouped by panel count, from small pictures. The picture matching the current arrangement looks pressed.
+
+| Panels | Arrangements |
+| --- | --- |
+| 1 | 1×1 |
+| 2 | 1×2, 2×1 |
+| 3 | 1×3, 3×1, one large panel on the left, right, top or bottom + two small ones |
+| 4 | 2×2, 1×4, 4×1, large left + 3 on right, large top + 3 below |
+| 6 | 2×3, 3×2 |
+| 9 | 3×3 |
+
+R×C is rows × columns (1×2 is two panels in one row). Missing panels are added empty, and extra panels are removed from the highest number down. If a drawn panel would be removed, you are asked first.
+
+## Moving panels by dragging
+
+Drag a panel's handle (⠿) onto another panel. It lands on the edge of that panel closest to the pointer (top, bottom, left or right). While you drag, that edge is shaded and the new arrangement and numbers are outlined.
+
+You can also move panels with the keyboard.
+
+1. Focus the handle and press <Kbd>Space</Kbd> or <Kbd>Enter</Kbd> to pick it up.
+2. Choose the target panel and edge with the arrow keys. The first press goes to the nearest panel in that direction and picks the edge facing you. Inside that panel, an arrow picks the edge in its direction, and if that edge is already picked it moves on to the next panel.
+3. Press <Kbd>Space</Kbd> or <Kbd>Enter</Kbd> to drop. <Kbd>Esc</Kbd> cancels.
+
+## Resizing
+
+Drag the border between panels to resize them. While you drag only the panel positions change; when you let go, only the panels whose size changed are redrawn once at the new size. You can also focus a border and move it 2% at a time with the arrow keys, or all the way with <Kbd>Home</Kbd> and <Kbd>End</Kbd>. A panel never gets smaller than 5%.
+
+## Maximizing
+
+Press the maximize button in a panel's frame or double-click the panel to show only that panel over the whole board. Press the same button or <Kbd>Esc</Kbd> to go back. Selecting another panel or changing the layout also restores it. While a panel is maximized the others keep their size and are only hidden, so they aren't redrawn.
+
+## Data, chart and filters per panel
+
+- Values you change in the left panel stay with that panel. If you select another panel and come back, your edits are still there.
+- When you change the data, columns that don't exist in it are reset to defaults, the same as in gallery.
+- **Filter** opens the filter drawer of the selected panel. Filters apply when you draw that panel. → [Filters](/help/vis/filter)
+- **Settings** and item settings (⚙) also apply to that panel only. → [Customizing](/help/vis/customize)
+
+## draw and draw all
+
+- **draw** draws the selected panel only.
+- **draw all** draws every set-up panel in number order. Panels without x and y, or already drawing, are skipped and you are told how many.
+- While any panel is drawing, **draw all** becomes **cancel all**, which cancels drawing in every panel.
+- Each panel draws on its own, so while drawing you can still select other panels, change their settings and draw them.
+- The left of the bottom bar shows the panel count, panels being drawn, failed panels and the number of Render Workers. The right shows the progress of the selected panel.
+
+### Lock while drawing
+
+While a panel is drawing (including redraws to fit its size), adding, removing, moving and resizing panels and changing the layout are blocked. Hover a button to see why. The lock lifts when drawing finishes or you cancel with **cancel all**. **Clear board** still works while drawing.
+
+## Tools for the whole board
+
+- There is one **mode bar** for the board. The mode you pick applies to every panel; a panel whose chart doesn't support it stays in the default mode. → [Exploring charts](/help/vis/explore)
+- **Chart tools** (downloads, data tables, etc.), **Copy link** and **Post to feed** act on the selected panel's chart. There is no Excel download of all charts.
+- Inside a panel (tooltip, pan and zoom, shapes, selection, delete, paint, legend, right-click menu) everything works as for a gallery item.
+
+## Autosave and reopening
+
+Each user has one board, saved automatically whenever it changes (1 second after the last change). You don't need to save it yourself.
+
+- What is saved: the arrangement, the selected panel, the settings you were editing in each panel, the last drawn settings and that chart's state (zoom, shapes, selection, deleted areas, item colors, control limits and so on).
+- When you reload or sign in again and open analytics, the saved board is loaded and panels that had been drawn are redrawn in number order.
+- If you go to gallery or history and come back, the board is still there and isn't loaded again. Panels that were drawing keep going.
+- If a panel used data you uploaded and later deleted, that panel opens as failed with the reason. Pick other data and draw again.
+
+<Callout>
+  Like data and history, the board is stored only in the browser you are using now. → [Good to know](/help/vis/faq)
+</Callout>
+
+## Moving between screens
+
+- **datastore → Open in analytics**: puts the chosen data into an empty panel that has never been drawn, or adds a new panel if there is none, and goes to analytics. If all 9 panels are taken, you are asked whether to replace the data of the selected panel. → [Preparing data](/help/vis/data#en-datastore)
+- **Right-click a panel → Open in gallery**: opens a new gallery tab with the settings that panel drew and draws it. Chart state such as zoom, shapes and colors is not carried over.
+- Charts drawn in analytics are **not added to history**. The board's autosave takes that role.
+
+## Narrow screens
+
+- Narrower than 64rem, the left panel folds away. Open it with **Panel settings** at the start of the toolbar.
+- Narrower than 48rem, panels are stacked in number order in one column (4:3) and scroll vertically. Moving, resizing, layout and maximize are hidden; only adding and removing panels remain. The saved arrangement is kept and comes back on a wide screen.
