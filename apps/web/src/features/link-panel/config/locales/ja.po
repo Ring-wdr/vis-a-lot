@@ -1,0 +1,134 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 22:42+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. 칸 연결로 걸린 범위: 방식(강조)과 범위 안 행 수
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "{rows, plural, other {강조 #행}}"
+msgstr "{rows, plural, other {強調 #行}}"
+
+#. 칸 연결로 걸린 범위: 방식(거르기)과 범위 안 행 수
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "{rows, plural, other {거르기 #행}}"
+msgstr "{rows, plural, other {絞り込み #行}}"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgctxt "link mode"
+msgid "강조"
+msgstr "強調"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "강조는 scatter·line(분포 제외) 차트에서만 쓸 수 있습니다."
+msgstr "強調は scatter・line(分布を除く)チャートでのみ使えます。"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgctxt "link mode"
+msgid "거르기"
+msgstr "絞り込み"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "고르기"
+msgstr "選択"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "데이터가 달라, 따를 칸에서 고른 행의 값과 이 칸의 컬럼 값이 같은 행을 따릅니다."
+msgstr "データが異なるため、連動元で選んだ行の値とこのパネルの列の値が同じ行に連動します。"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "두 칸의 데이터가 달라 연결 컬럼을 골라야 범위가 걸립니다."
+msgstr "2つのパネルのデータが異なります。連動列を選ぶと範囲がかかります。"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "따르는 칸: {list}"
+msgstr "連動先: {list}"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "따를 수 있는 다른 칸이 없습니다. 칸을 더해 주세요."
+msgstr "連動できる他のパネルがありません。パネルを追加してください。"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "따를 칸"
+msgstr "連動元"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "따를 칸 컬럼"
+msgstr "連動元の列"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "따를 칸: 칸 {follow}"
+msgstr "連動元: パネル{follow}"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸에서 영역을 선택하면 범위가 걸립니다."
+msgstr "連動元で領域を選択すると範囲がかかります。"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸을 그리면 범위가 걸립니다."
+msgstr "連動元を描画すると範囲がかかります。"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸의 차트는 선택을 행으로 바꿀 수 없어 범위가 걸리지 않습니다."
+msgstr "連動元のチャートは選択を行に変換できないため、範囲がかかりません。"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "모든 행을 그리고 범위 밖 점을 흐리게 합니다."
+msgstr "すべての行を描き、範囲外の点を薄くします。"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "방식"
+msgstr "方式"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "범위 안의 행만으로 그립니다."
+msgstr "範囲内の行だけで描きます。"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgctxt "no linked panel"
+msgid "없음"
+msgstr "なし"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "연결 컬럼"
+msgstr "連動列"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "연결 풀기"
+msgstr "連動を解除"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "이 차트의 선택은 행으로 바꿀 수 없어 따를 수 없습니다."
+msgstr "このチャートの選択は行に変換できないため、連動元にできません。"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "이 칸 컬럼"
+msgstr "このパネルの列"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "지금 걸린 범위: {summary}"
+msgstr "現在の範囲: {summary}"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "칸 {follow}"
+msgstr "パネル{follow}"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "칸 {number}"
+msgstr "パネル{number}"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "칸 {number} 연결"
+msgstr "パネル{number}の連動"
+
+#. number: 연결을 고치는 칸의 번호
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "칸 {number}의 따를 칸"
+msgstr "パネル{number}の連動元"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "칸 연결"
+msgstr "パネル連動"

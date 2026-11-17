@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { leaf, split } from "@/entities/workspace/lib/layout-tree";
 import { createBoardStore } from "@/entities/workspace/model/board-store";
 import type { AnalyticsBoard, ChartDefaults } from "@/shared/api/types";
-import { reopenPanels } from "./reopen-board";
+import { reopenOrder, reopenPanels } from "./reopen-board";
 
 vi.mock("@/shared/api/api", () => ({
   api: { cancelJob: () => Promise.resolve(undefined) },
@@ -101,5 +101,78 @@ describe("보드 다시 열기", () => {
     expect(a.getState().opening).toBe(false);
     expect(a.getState().notices).toHaveLength(1);
     expect(a.getState().notices[0]).toContain("boom");
+  });
+
+  describe("칸 연결", () => {
+    /** 칸 a·b·c가 모두 그린 적 있고, links대로 따른다. */
+    function linkedBoard(links: Record<string, string>) {
+      const saved = savedBoard();
+      saved.panels = saved.panels.map((p) => ({
+        ...p,
+        drawn: p.drawn ?? { spec: { ...p.draft, dataset: "b" }, restore: {} },
+        ...(links[p.id]
+          ? { link: { follow: links[p.id], mode: "filter" as const } }
+          : {}),
+      }));
+      const board = createBoardStore(CHART_DEFAULTS as ChartDefaults);
+      const reopen = board.getState().hydrate(saved);
+      for (const { store } of reopen)
+        store.getState().setGridArea({ width: 400, height: 300 });
+      return { board, reopen };
+    }
+
+    it("순서: 따를 칸을 먼저 둔다. 서로 따르면 먼저 만난 쪽에서 끊는다", () => {
+      const chain = linkedBoard({ a: "b", b: "c" });
+      expect(
+        reopenOrder(chain.reopen, chain.board.getState().links).map(
+          (p) => p.panelId,
+        ),
+      ).toEqual(["c", "b", "a"]);
+      const mutual = linkedBoard({ a: "b", b: "a" });
+      expect(
+        reopenOrder(mutual.reopen, mutual.board.getState().links).map(
+          (p) => p.panelId,
+        ),
+      ).toEqual(["b", "a", "c"]);
+    });
+
+    it("따르는 칸은 따를 칸이 다 그린 뒤에 연다. 관계없는 칸은 기다리지 않는다", async () => {
+      const { board, reopen } = linkedBoard({ a: "b" });
+      const order: string[] = [];
+      const open = vi.fn(async (store) => {
+        const id = Object.entries(board.getState().panels).find(
+          ([, s]) => s === store,
+        )?.[0] as string;
+        order.push(id);
+        // 칸 job 상태를 옮기는 컴포넌트처럼: 그린 칸은 job이 끝날 때까지 그리는 중이다.
+        board.getState().setPanelBusy(id, true);
+      });
+      const done = reopenPanels(board, reopen, open);
+      await tick();
+      // b(따를 칸)와 c(관계없음)는 바로 열고, a는 b가 다 그릴 때까지 기다린다.
+      expect(order).toEqual(["b", "c"]);
+      board.getState().setPanelBusy("c", false);
+      await tick();
+      expect(order).toEqual(["b", "c"]);
+      board.getState().setPanelBusy("b", false);
+      await done;
+      expect(order).toEqual(["b", "c", "a"]);
+    });
+
+    it("기다리는 사이 따를 칸이 지워지면 연결 없이 연다", async () => {
+      const { board, reopen } = linkedBoard({ a: "b" });
+      const open = vi.fn(async (store) => {
+        if (store === board.getState().panels.b)
+          board.getState().setPanelBusy("b", true);
+      });
+      const done = reopenPanels(board, reopen, open);
+      await tick();
+      expect(open).toHaveBeenCalledTimes(2);
+      board.getState().setPanelBusy("b", false);
+      board.getState().removePanel("b");
+      await done;
+      expect(open).toHaveBeenCalledTimes(3);
+      expect(board.getState().links).toEqual({});
+    });
   });
 });

@@ -10,9 +10,14 @@ import { leaf, panelIdsOf, split } from "@/entities/workspace/lib/layout-tree";
 import {
   BoardScope,
   PanelScope,
+  useBoard,
   useBoardStore,
 } from "@/entities/workspace/model/board-scope";
-import type { BoardStore } from "@/entities/workspace/model/board-store";
+import {
+  type BoardStore,
+  selectFollowNumber,
+  selectLinkPeer,
+} from "@/entities/workspace/model/board-store";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { ChartDefaults } from "@/shared/api/types";
 import { renderWithI18n } from "@/shared/lib/render-with-i18n";
@@ -24,6 +29,8 @@ vi.mock("@/shared/api/api", () => ({
 
 /** 칸 id → 칸 내용이 그려진 횟수 */
 const boxes = new Map<string, number>();
+/** 칸 id → 이름표 연결 버튼 자리가 그려진 횟수 */
+const linkBoxes = new Map<string, number>();
 /** 보드 아래에서 무엇이든 다시 그려 커밋한 횟수 */
 let commits = 0;
 
@@ -36,12 +43,20 @@ function ColorBox({ id }: { id: string }) {
   );
 }
 
+/** 이름표의 연결 버튼 자리: 이 칸이 따르는 칸 번호만 구독한다. */
+function LinkBox({ id }: { id: string }) {
+  const follow = useBoard(selectFollowNumber(id));
+  linkBoxes.set(id, (linkBoxes.get(id) ?? 0) + 1);
+  return <span data-testid={`link-${id}`}>{follow}</span>;
+}
+
 // view처럼 컴포넌트 밖에서 고정한다.
 const renderPanel = (id: string) => (
   <PanelScope panelId={id}>
     <ColorBox id={id} />
   </PanelScope>
 );
+const renderLink = (id: string) => <LinkBox id={id} />;
 
 class TestPointerEvent extends MouseEvent {
   pointerId: number;
@@ -88,7 +103,7 @@ beforeEach(() => {
     <BoardScope defaults={CHART_DEFAULTS as ChartDefaults}>
       <Capture />
       <Profiler id="board" onRender={() => commits++}>
-        <AnalyticsBoard renderPanel={renderPanel} />
+        <AnalyticsBoard renderPanel={renderPanel} renderLink={renderLink} />
       </Profiler>
     </BoardScope>,
   );
@@ -97,6 +112,7 @@ beforeEach(() => {
   ids = board.getState().panelIds;
   act(() => board.getState().activate(ids[0]));
   boxes.clear();
+  linkBoxes.clear();
   commits = 0;
 });
 
@@ -106,9 +122,12 @@ afterEach(() => {
 });
 
 /** 바꾼 뒤 다시 그려진 칸 내용 (칸 번호 → 횟수) */
-const renders = () =>
+const renders = (counts: Map<string, number> = boxes) =>
   Object.fromEntries(
-    [...boxes].map(([id, n]) => [board.getState().panelIds.indexOf(id) + 1, n]),
+    [...counts].map(([id, n]) => [
+      board.getState().panelIds.indexOf(id) + 1,
+      n,
+    ]),
   );
 
 describe("AnalyticsBoard 렌더 횟수", () => {
@@ -194,6 +213,40 @@ describe("AnalyticsBoard 렌더 횟수", () => {
   it("칸을 지우면 남은 칸 내용은 다시 그리지 않는다", () => {
     act(() => board.getState().removePanel(ids[4]));
     expect(renders()).toEqual({});
+  });
+
+  it("한 칸의 연결을 바꾸면 그 칸의 연결 버튼만 다시 그리고, 칸 내용과 다른 칸은 그대로다", () => {
+    act(() =>
+      board.getState().setLink(ids[1], { follow: ids[0], mode: "filter" }),
+    );
+    expect(renders(linkBoxes)).toEqual({ 2: 1 });
+    expect(screen.getByTestId(`link-${ids[1]}`).textContent).toBe("1");
+    act(() =>
+      board.getState().setLink(ids[1], { follow: ids[0], mode: "highlight" }),
+    );
+    // 방식만 바꾸면 따르는 칸 번호가 같아 아무것도 다시 그리지 않는다.
+    expect(renders(linkBoxes)).toEqual({ 2: 1 });
+    act(() => board.getState().setLink(ids[1], null));
+    expect(renders(linkBoxes)).toEqual({ 2: 2 });
+    expect(renders()).toEqual({});
+  });
+
+  it("연결 버튼에 커서를 올리면 상대 칸 틀만 강조하고 칸 내용은 다시 그리지 않는다", () => {
+    act(() =>
+      board.getState().setLink(ids[4], { follow: ids[0], mode: "filter" }),
+    );
+    linkBoxes.clear();
+    act(() => board.getState().setLinkHover(ids[4]));
+    const peers = ids.filter((id) => selectLinkPeer(id)(board.getState()));
+    expect(peers).toEqual([ids[0]]);
+    const frame = (id: string) =>
+      screen.getByTestId(`box-${id}`).closest("section");
+    expect(frame(ids[0])?.hasAttribute("data-link-peer")).toBe(true);
+    expect(frame(ids[8])?.hasAttribute("data-link-peer")).toBe(false);
+    act(() => board.getState().setLinkHover(null));
+    expect(frame(ids[0])?.hasAttribute("data-link-peer")).toBe(false);
+    expect(renders()).toEqual({});
+    expect(renders(linkBoxes)).toEqual({});
   });
 
   it("레이아웃이 바뀌어 칸을 다시 마운트하지 않는다", () => {

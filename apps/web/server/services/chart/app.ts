@@ -468,11 +468,13 @@ export const chartApp = createServiceApp()
     chart.link = next;
     // 범위가 바뀌면 조회 결과(관리선 값 포함)를 버리고 다시 조회해 그린다.
     dropChartData(chart.id);
+    // item 다시 그리기로 그린다(primary job을 바꾸지 않는다). 화면이 보는 draw job의 item 상태에 새 PNG·범위가
+    // 반영되므로, 화면은 다시 그리는 동안 이전 PNG 위에 진행을 얹고 끝나면 새 PNG로 바꾼다 (선택·확대와 같은 길).
     return c.json(
       redrawJob(
         chart,
         still.items.map((i) => i.key),
-        { primary: true, record: false },
+        { record: false },
       ),
       202,
     );

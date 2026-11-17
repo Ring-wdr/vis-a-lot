@@ -3,12 +3,12 @@
 import { t } from "@lingui/core/macro";
 import { MutationObserver, type QueryClient } from "@tanstack/react-query";
 import { drawSizeFor } from "@/entities/chart/lib/grid-layout";
+import { createChartIn } from "@/entities/workspace/model/create-chart";
 import {
   type DrawnChart,
   recordsHistory,
   type WorkspaceStore,
 } from "@/entities/workspace/model/workspace-store";
-import { api } from "@/shared/api/api";
 import "../config/messages";
 
 /** draw mutation의 key. 탭·칸을 오가 다시 마운트돼도 useWorkspaceMutating("draw")가 이 key로 진행 중인지 찾는다. */
@@ -25,7 +25,8 @@ export async function requestDraw(store: WorkspaceStore): Promise<DrawnChart> {
   const state = store.getState();
   const { gridArea, draft } = state;
   if (!gridArea) throw new Error(t`grid 영역 크기를 아직 모릅니다.`);
-  const res = await api.createChart({
+  // analytics 칸이면 칸 연결을 함께 건다.
+  const res = await createChartIn(store, {
     spec: draft,
     itemSize: drawSizeFor(gridArea, draft.grid, state.kind === "panel"),
     record: recordsHistory(state),

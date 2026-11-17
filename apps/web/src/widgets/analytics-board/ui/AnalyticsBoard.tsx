@@ -58,6 +58,8 @@ export type AnalyticsBoardProps = {
   renderPanel: RenderPanel;
   /** 칸 이름표의 번호 뒤에 붙일 것 (차트 · 데이터셋 이름). 고정해서 넘긴다. */
   renderLabel?: RenderPanel;
+  /** 칸 이름표 뒤의 연결 버튼. 고정해서 넘긴다. */
+  renderLink?: RenderPanel;
   className?: string;
 };
 
@@ -82,6 +84,7 @@ const OWN_ESCAPE =
 export function AnalyticsBoard({
   renderPanel,
   renderLabel,
+  renderLink,
   className,
 }: AnalyticsBoardProps) {
   const { t } = useLingui();
@@ -257,6 +260,7 @@ export function AnalyticsBoard({
                   panelId={id}
                   renderPanel={renderPanel}
                   renderLabel={renderLabel}
+                  renderLink={renderLink}
                   dropEdge={drag?.targetId === id ? drag.edge : undefined}
                   dragging={drag?.activeId === id}
                   wide={wide}

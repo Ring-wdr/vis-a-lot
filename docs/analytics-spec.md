@@ -218,11 +218,12 @@ type LayoutNode =
 
 ### 4.4 화면
 
-- 칸 이름표의 연결 버튼(🔗)과 왼쪽 패널의 `따를 칸`이 같은 popover를 연다: 따를 칸 목록(번호 · 차트 · 데이터셋), 방식, 연결 컬럼(데이터셋이 다를 때만), 연결 풀기.
-- 따르는 칸은 이름표에 `← 1`, 따를 칸은 `→ 2, 3`을 적는다. 연결 버튼에 커서를 올리면 상대 칸 테두리를 강조한다.
-- 따를 칸에서 선택이 끝나면(선택 다시 그리기 job이 끝나면) 따르는 칸을 다시 그린다. 따르는 칸이 그리는 중이면 끝나기를 기다렸다가 마지막 선택만 보낸다.
-- 따르는 칸이 다시 그리는 동안 이전 PNG 위에 진행 표시를 얹는다.
-- 따를 칸을 지우거나 preset으로 지워지면 연결을 풀고 범위도 푼다.
+- 칸 이름표의 연결 버튼(🔗)과 왼쪽 패널 맨 아래의 `따를 칸`이 같은 popover를 연다: 따를 칸 목록(번호 · 차트 · 데이터셋. 선택을 행으로 바꿀 수 없는 차트는 비활성이고 까닭을 적는다), 방식(강조를 쓸 수 없는 차트면 강조 버튼이 비활성), 연결 컬럼(데이터셋이 다를 때만. 따를 칸 컬럼을 고르면 이 칸에 같은 이름이 있을 때 함께 맞춘다), 지금 상태(걸린 범위, 또는 걸리지 않는 까닭: 따를 칸을 그리지 않음 · 따를 칸 차트가 선택을 행으로 바꿀 수 없음 · 연결 컬럼을 고르지 않음), 서버가 거절한 사유, 연결 풀기.
+- 따르는 칸은 이름표에 `← 1`, 따를 칸은 `→ 2, 3`을 적는다. 범위가 걸려 있으면 연결 버튼이 강조색이고 title에 `거르기 1,204행`·`강조 1,204행`을 적는다(item 상태의 `link`). 왼쪽 패널 `따를 칸` 라벨 줄 오른쪽에도 같은 글자를 둔다. 서버가 연결을 거절하면 버튼이 경고색이고 사유를 적는다. 연결 버튼에 커서를 올리거나 포커스를 두면 상대 칸 테두리를 강조한다.
+- 따를 칸의 범위가 바뀌었을 수 있으면(선택·지우기·legend 같은 item 다시 그리기가 끝났거나, 새로 그렸거나 다시 열었다) 그 칸이 다 그린 뒤 따르는 칸마다 `PUT …/link`를 보낸다. 범위가 같으면 서버가 다시 그리지 않는다. 연결 때문에 다시 그린 칸이 끝나도 그 칸을 따르는 칸에는 보내지 않는다(전파 한 단계). 따르는 칸이나 따를 칸이 그리는 중이면 끝나기를 기다렸다가, 보낼 때의 상태로 만든 요청 하나만 보낸다(마지막 선택). 연결을 걸거나 바꾸거나 풀어도 보낸다. 그린 적 없는 칸에는 보내지 않고 그 칸을 그릴 때 `POST /charts`의 `link`로 함께 건다(따를 칸이 그리는 중이면 빼고 그린 뒤 전파가 건다. 연결 때문에 거절되면 연결 없이 다시 그린다).
+- 따르는 칸이 다시 그리는 동안 이전 PNG 위에 진행 표시를 얹는다(item 다시 그리기와 같은 길. 그동안 레이아웃을 잠근다).
+- 따를 칸을 지우거나 preset으로 지워지면 연결을 풀고 범위도 푼다(`PUT …/link`에 `null`).
+- 연결 맞추기: 이 칸(고치는 설정)의 차트가 강조를 쓸 수 없게 되면 거르기로 바꾼다. 어느 쪽이든 데이터셋이 바뀌면(따를 칸은 그린 설정, 이 칸은 고치는 설정) 연결 컬럼을 기본값으로 다시 정한다. 보낼 때 방식은 그 차트가 쓸 수 있는 것으로 다시 고른다.
 
 ---
 
@@ -248,7 +249,7 @@ type LayoutNode =
 
 | 용도 | 요청 | 응답 / 설명 |
 |---|---|---|
-| 연결 범위 걸기 | `PUT /charts/{chartId}/link` | `SetLinkRequest` `{ link: ChartLinkRequest \| null }`, `ChartLinkRequest` = `{ source: { chartId, itemKey }, mode: 'filter' \| 'highlight', on?: { source, target } }` → 202 `{ jobId }` (전체 다시 그리기). 서버가 source item의 지금 행 범위를 고정해 이 차트에 저장한다. `link: null`이거나 source에 선택이 없으면 범위를 지운다. 범위가 그대로면(지울 범위가 없을 때 포함) 다시 그리지 않고 200 `{ jobId: null }`. 본문을 `null` 한 덩어리로 두지 않고 `link`로 감싼다(생성 client가 `null` 본문을 본문 없음으로 다룰 수 있어 선택 API의 `{ region }`과 같은 모양) |
+| 연결 범위 걸기 | `PUT /charts/{chartId}/link` | `SetLinkRequest` `{ link: ChartLinkRequest \| null }`, `ChartLinkRequest` = `{ source: { chartId, itemKey }, mode: 'filter' \| 'highlight', on?: { source, target } }` → 202 `{ jobId }` (모든 item 다시 그리기. draw job(primary)은 바꾸지 않고 선택·확대처럼 item 다시 그리기 job으로 그려, 화면이 이전 PNG 위에 진행을 얹고 끝나면 draw job의 item 상태에서 새 PNG·범위를 읽는다). 서버가 source item의 지금 행 범위를 고정해 이 차트에 저장한다. `link: null`이거나 source에 선택이 없으면 범위를 지운다. 범위가 그대로면(지울 범위가 없을 때 포함) 다시 그리지 않고 200 `{ jobId: null }`. 본문을 `null` 한 덩어리로 두지 않고 `link`로 감싼다(생성 client가 `null` 본문을 본문 없음으로 다룰 수 있어 선택 API의 `{ region }`과 같은 모양) |
 | | 오류 | 이 차트가 그리는 중(그린 적 없음 포함) 409, source item이 아직 그려지지 않음 409. 이 차트·source 차트·item을 모르면 404. source가 선택 필드를 지원하지 않거나, 강조를 쓸 수 없는 차트에 `highlight`거나, 데이터셋이 다른데 `on`이 없거나 컬럼이 스키마에 없거나, source가 자기 자신이면 422와 사유. 같은 데이터셋이면 `on`은 무시한다 |
 | 그릴 때 함께 걸기 | `POST /charts`의 `link?` | `ChartLinkRequest`. 따르는 칸을 새로 draw할 때 따를 칸에 선택이 있으면 한 번에 건다(없으면 범위 없이 그린다). 위와 같은 404·409·422로 거절한다. 다만 이 칸 쪽 연결 컬럼(`on.target`)은 데이터가 준비된 뒤에야 스키마를 알므로 job이 확인하고, 없으면 job이 사유와 함께 실패한다 |
 
@@ -281,7 +282,7 @@ type LayoutNode =
 | `src/entities/workspace/lib/layout-tree.ts`, `layout-presets.ts` | 트리 순수 함수(찾기, 넣기, 빼기, 옮기기, 정규화, 비율)와 preset 17개 |
 | `src/entities/workspace/model/workspace-store.ts` | 칸용 생성 옵션 `kind: "panel"`(draft를 split 없음·grid 1×1로 고정, history 미기록 `recordsHistory`) |
 | `src/entities/chart/lib/grid-layout.ts`, `src/features/draw-chart/ui/DrawButton.tsx`, `src/features/open-chart/model/open-chart.ts` | 칸이면 PNG를 칸 전체 크기로(`drawSizeFor`), `record: false`. 다시 열 때 고치던 draft를 두는 `keepDraft` |
-| `src/widgets/analytics-board/ui/`, `lib/` | `AnalyticsBoard`(DnD, 칸을 자리(%) 목록으로 놓기 `lib/layout-rects.ts`, 미리보기 `DropPreview`, 키보드 놓을 자리 `lib/drop-target.ts`), `PanelSlot`(손잡이, 이름표, 최대화, 닫기, 놓는 변), `ResizeHandle`. 칸 내용은 render prop(`renderPanel(panelId)`)으로 받는다 (widget은 다른 widget을 import하지 않는다) |
+| `src/widgets/analytics-board/ui/`, `lib/` | `AnalyticsBoard`(DnD, 칸을 자리(%) 목록으로 놓기 `lib/layout-rects.ts`, 미리보기 `DropPreview`, 키보드 놓을 자리 `lib/drop-target.ts`), `PanelSlot`(손잡이, 이름표, 연결 버튼 자리, 최대화, 닫기, 놓는 변, 연결 상대 테두리 강조), `ResizeHandle`. 칸 내용·이름표·연결 버튼은 render prop(`renderPanel`·`renderLabel`·`renderLink(panelId)`)으로 받는다 (widget은 다른 widget을 import하지 않는다) |
 | `src/shared/lib/size-hold.ts` | 경계를 끄는 동안 칸 크기 쓰기를 미루는 신호. `ResizeHandle`이 걸고 `PanelChart`가 본다 |
 | `src/widgets/chart-grid/ui/PanelChart.tsx` | 차트 한 장을 칸 크기로 그린다. `ChartItemCard`(`labeled={false}`)와 `useAutoResize`를 쓴다. 페이지 스크롤·하단 job 바·크게 보기는 없다. `JobStatusBar`는 `workers` prop으로 Worker 구획을 뺄 수 있다 |
 | `src/widgets/analytics-toolbar/ui/` | 보드 도구 줄 |
@@ -291,7 +292,8 @@ type LayoutNode =
 | `src/features/draw-chart/ui/DrawAllButton.tsx` | 모두 draw / 모두 cancel. 칸 draw는 `DrawButton` 그대로 |
 | `src/features/select-mode/ui/ModeBar.tsx` | 보드에서는 고른 모드를 모든 칸에 적용하는 콜백을 props로 받는다 |
 | `src/features/open-chart`, `register-dataset` | `analytics 칸으로`, `gallery에서 열기`, `analytics에서 열기` |
-| `src/features/link-panel/ui/`, `model/` | (둘째 PR) 연결 popover, 선택이 끝나면 따르는 칸에 범위를 거는 일 |
+| `src/features/link-panel/ui/`, `model/` | (둘째 PR) 연결 popover(`LinkPopover`, 표현 `LinkSettings`), 이름표 연결 버튼과 왼쪽 패널 `따를 칸`(`PanelLinkButton`, `LinkField`), 연결 전파(`model/link-propagation.ts`)와 연결 맞추기를 돌리는 `LinkSync`(`return null`) |
+| `src/entities/workspace/lib/panel-link.ts`, `model/create-chart.ts` | (둘째 PR) 연결 규칙(따를 수 있는 차트, 강조, 기본 방식, 연결 컬럼 기본값, 맞추기), 칸을 그릴 때 연결을 함께 거는 `createChartIn`(draw·다시 열기가 쓴다) |
 | `src/shared/api` | 보드·연결 요청과 query. 타입은 생성물만 쓴다 |
 | `server/services/chart/{schemas,routes,app}.ts`, `server/charts/board-store.ts` | 보드 API와 저장 |
 | `server/charts/chart-store.ts`, `item-scope.ts`, `server/data/filters.ts`, `chart-data.ts`, `server/render/scatter.ts`, `line.ts`, `server/jobs/job-manager.ts` | (둘째 PR) 연결 범위 |

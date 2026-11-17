@@ -2,7 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { createMiddleware } from "hono/factory";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ChartSpec, ItemState, JobStateResponse } from "../api/types";
-import { getChart } from "../charts/chart-store";
+import { getChart, getItem } from "../charts/chart-store";
 import { type CategoryDataParams, queryBarData } from "../data/category-data";
 import { type ChartDataParams, queryChartData } from "../data/chart-data";
 import { type DatasetSchema, schemaOf } from "../data/dataset-schema";
@@ -251,8 +251,15 @@ describe("칸 연결", () => {
     // x 0..6 선택 → 행 0~6: m0(0,5) m1(1,6) m2(2) m3(3) m4(4)
     await select(scatter.chartId, scatter.key, rect(-0.5, 6.5));
     const source = { chartId: scatter.chartId, itemKey: scatter.key };
+    const primary = getChart(bar.chartId)?.primaryJobId;
     const first = await link(bar.chartId, { source, mode: "filter" });
     expect(first.status).toBe(202);
+    // item 다시 그리기다: 화면이 보는 draw job은 그대로이고, 다시 그리는 동안 이전 PNG를 둔다.
+    expect(getChart(bar.chartId)?.primaryJobId).toBe(primary);
+    const barChart = getChart(bar.chartId);
+    expect(barChart && getItem(barChart, bar.key)?.busyJobId).toBe(
+      first.body.jobId,
+    );
     await settle(first.body.jobId);
     const input = lastInput(bar.chartId);
     expect(input.bars?.map((row) => row[0])).toEqual([5, 7, 2, 3, 4]);

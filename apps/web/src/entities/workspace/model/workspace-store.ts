@@ -3,6 +3,7 @@
 import { createStore } from "zustand";
 import {
   type ChartDefaults,
+  type ChartLinkRequest,
   type ChartSpec,
   type CreateChartResponse,
   type ItemSearch,
@@ -50,6 +51,17 @@ export const PAINT_TOOLS = ["rect", "line", "freehand", "text"] as const;
 export type PaintTool = (typeof PAINT_TOOLS)[number];
 
 export type DrawnChart = CreateChartResponse & { spec: ChartSpec };
+
+/**
+ * 칸을 그릴 때(POST /charts) 함께 거는 칸 연결. 보드가 칸 store를 만들 때 넣는다 (탭에는 없다).
+ * draw·다시 열기가 이 칸의 차트를 만들 때 request로 연결을 받아 함께 보낸다.
+ */
+export type DrawLink = {
+  /** 이 설정으로 그릴 때 걸 연결. 걸 것이 없거나 따를 칸이 그리는 중이면 undefined (범위 없이 그린다) */
+  request: (spec: ChartSpec) => ChartLinkRequest | undefined;
+  /** 연결을 걸었으면 null, 서버가 거절했으면(422) 그 사유 */
+  settled: (error: string | null) => void;
+};
 
 type Size = { width: number; height: number };
 
@@ -117,6 +129,8 @@ export type WorkspaceState = {
   undoCounts: Record<string, number>;
   /** 이 탭에서 난 오류 중 아직 보여주지 않은 것. 다른 탭을 보는 동안 쌓였다가 돌아오면 뜬다. */
   notices: string[];
+  /** analytics 칸이면 그릴 때 함께 거는 칸 연결. 만들 때 정해지고 바뀌지 않는다. */
+  drawLink?: DrawLink;
   updateDraft: (patch: Partial<ChartSpec>) => void;
   setDraft: (spec: ChartSpec) => void;
   setCurrent: (chart: DrawnChart) => void;
@@ -158,6 +172,7 @@ export function createWorkspaceStore({
   draft,
   kind = "tab",
   id = crypto.randomUUID(),
+  drawLink,
 }: {
   readOnly?: boolean;
   draft: ChartSpec;
@@ -165,6 +180,8 @@ export function createWorkspaceStore({
   kind?: WorkspaceKind;
   /** 칸이면 보드의 칸 id를 넘긴다. 없으면 새로 만든다. */
   id?: string;
+  /** 칸이면 그릴 때 함께 거는 칸 연결 (보드가 넣는다) */
+  drawLink?: DrawLink;
 }) {
   // 칸은 draft를 어떤 길로 바꿔도(패널, 다시 열기) split·grid가 생기지 않게 한다.
   const fitDraft = kind === "panel" ? panelDraft : (spec: ChartSpec) => spec;
@@ -185,6 +202,7 @@ export function createWorkspaceStore({
     itemJobs: {},
     undoCounts: {},
     notices: [],
+    drawLink,
     updateDraft: (patch) =>
       set((s) => ({ draft: fitDraft({ ...s.draft, ...patch }) })),
     setDraft: (draft) => set({ draft: fitDraft(draft) }),

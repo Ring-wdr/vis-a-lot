@@ -9,7 +9,10 @@ import { leaf, panelIdsOf, split } from "../lib/layout-tree";
 import {
   boardSaveBody,
   createBoardStore,
+  linkRequestOf,
   selectCanAddPanel,
+  selectFollowerNumbers,
+  selectFollowNumber,
   selectLayoutLocked,
 } from "./board-store";
 import type { DrawnChart } from "./workspace-store";
@@ -196,6 +199,107 @@ describe("보드 store", () => {
     expect(body.panels[0]).not.toHaveProperty("link");
     expect(body.panels[1]).toMatchObject({ link: { follow: a } });
     expect(body.panels[1]).not.toHaveProperty("chartId");
+  });
+});
+
+describe("칸 연결", () => {
+  /** 칸 a·b·c */
+  function three() {
+    const store = boardStore();
+    const a = store.getState().activePanelId;
+    const b = store.getState().addPanel() as string;
+    const c = store.getState().addPanel() as string;
+    return { store, a, b, c };
+  }
+
+  it("자기 자신이나 없는 칸은 따를 수 없고, 같은 연결이면 바꾸지 않는다", () => {
+    const { store, a, b } = three();
+    store.getState().setLink(a, { follow: a, mode: "filter" });
+    store.getState().setLink(a, { follow: "none", mode: "filter" });
+    expect(store.getState().links).toEqual({});
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    const links = store.getState().links;
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    expect(store.getState().links).toBe(links);
+  });
+
+  it("이름표 번호: 따르는 칸 ← 1, 따를 칸 → 2, 3", () => {
+    const { store, a, b, c } = three();
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    store.getState().setLink(c, { follow: a, mode: "filter" });
+    const s = store.getState();
+    expect(selectFollowNumber(b)(s)).toBe(1);
+    expect(selectFollowNumber(a)(s)).toBe(0);
+    expect(selectFollowerNumbers(a)(s)).toEqual([2, 3]);
+  });
+
+  it("따를 칸을 지우면 그 칸을 따르던 연결과 거절 사유를 함께 푼다", () => {
+    const { store, a, b, c } = three();
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    store.getState().setLink(c, { follow: b, mode: "filter" });
+    store.getState().setLinkError(b, "거절");
+    store.getState().removePanel(a);
+    expect(store.getState().links).toEqual({
+      [c]: { follow: b, mode: "filter" },
+    });
+    expect(store.getState().linkErrors).toEqual({});
+  });
+
+  it("연결을 바꾸면 거절 사유를 지운다. 연결이 없는 칸에는 사유를 남기지 않는다", () => {
+    const { store, a, b } = three();
+    store.getState().setLinkError(b, "거절");
+    expect(store.getState().linkErrors).toEqual({});
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    store.getState().setLinkError(b, "거절");
+    expect(store.getState().linkErrors).toEqual({ [b]: "거절" });
+    store.getState().setLink(b, { follow: a, mode: "highlight" });
+    expect(store.getState().linkErrors).toEqual({});
+  });
+
+  it("보낼 요청: 따를 칸이 그린 차트의 범위, 방식은 이 칸이 쓸 수 있는 것으로, 연결 컬럼은 데이터셋이 다를 때만", () => {
+    const { store, a, b } = three();
+    const target = store.getState().panels[b].getState().draft;
+    store.getState().setLink(b, {
+      follow: a,
+      mode: "highlight",
+      on: { source: "machine", target: "machine" },
+    });
+    expect(linkRequestOf(store.getState(), b, target)).toEqual({
+      request: null,
+      issue: "sourceNotDrawn",
+    });
+    draw(store, a);
+    expect(linkRequestOf(store.getState(), b, target).request).toEqual({
+      source: { chartId: `chart-${a}`, itemKey: "all" },
+      mode: "highlight",
+    });
+    expect(
+      linkRequestOf(store.getState(), b, { ...target, chartType: "bar" })
+        .request?.mode,
+    ).toBe("filter");
+    expect(
+      linkRequestOf(store.getState(), b, { ...target, dataset: "iot-1m" })
+        .request?.on,
+    ).toEqual({ source: "machine", target: "machine" });
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    expect(
+      linkRequestOf(store.getState(), b, { ...target, dataset: "iot-1m" }),
+    ).toEqual({ request: null, issue: "needsColumns" });
+  });
+
+  it("칸을 새로 그릴 때 함께 걸 연결: 따를 칸이 그리는 중이면 걸지 않는다", () => {
+    const { store, a, b } = three();
+    store.getState().setLink(b, { follow: a, mode: "filter" });
+    draw(store, a);
+    const panel = store.getState().panels[b].getState();
+    expect(panel.drawLink?.request(panel.draft)?.source.chartId).toBe(
+      `chart-${a}`,
+    );
+    store.getState().setPanelBusy(a, true);
+    expect(panel.drawLink?.request(panel.draft)).toBeUndefined();
+    store.getState().setPanelBusy(a, false);
+    panel.drawLink?.settled("거절");
+    expect(store.getState().linkErrors[b]).toBe("거절");
   });
 });
 
