@@ -46,20 +46,13 @@ function rankSlices(group: CategoryData["groups"][number]) {
 }
 
 /**
- * '기타'를 조각 값의 합이 아니라 원래 행으로 다시 집계할 통계 함수. 합계·개수는 합과 같고,
- * 평균·최솟값·최댓값·중앙값은 예전 그림(조각 값의 합)을 지키려고 그대로 더한다.
+ * '기타'를 조각 값의 합이 아니라 원래 행으로 다시 집계할 통계 함수.
+ * 합계·개수만 조각 값의 합과 같아 다시 묻지 않는다.
  */
 export function pieOthersReaggregated(agg: AggFn) {
   return !PIE_OTHERS_SUMMED.has(agg);
 }
-const PIE_OTHERS_SUMMED = new Set<AggFn>([
-  "avg",
-  "sum",
-  "count",
-  "min",
-  "max",
-  "median",
-]);
+const PIE_OTHERS_SUMMED = new Set<AggFn>(["sum", "count"]);
 
 /** split 조합마다 '기타'로 묶일 범주. 다시 집계(queryRestAgg)할 때 쓴다. */
 export function pieOverflow(data: CategoryData, top = PIE_TOP_SLICES) {

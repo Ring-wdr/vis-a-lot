@@ -161,7 +161,7 @@
 
 통계 함수를 쓰는 모든 차트(bar, pie, radar, heatmap, treemap, sankey, waterfall, funnel)와 '기타' 다시 집계에 적용한다. 이름은 화면 3개 언어, 서버 `AGG_LABELS`.
 
-'기타': funnel·sankey는 지금처럼 모든 통계 함수를 원래 행으로 다시 집계한다. pie는 예전 그림을 지키려고 예전 여섯 함수는 조각 값을 더하고, 더할 수 없는 새 함수 다섯만 split 조합마다 '기타' 범주의 원래 행으로 다시 집계한다(`server/data/category-data.ts`의 `queryRestAgg`, `polar-data.ts`의 `pieOthersReaggregated`).
+'기타': funnel·sankey는 지금처럼 모든 통계 함수를 원래 행으로 다시 집계한다. pie도 split 조합마다 '기타' 범주의 원래 행으로 다시 집계한다. 합계·개수는 조각 값의 합과 같아 그대로 더한다. 평균·최솟값·최댓값·중앙값의 '기타'가 조각 값의 합이던 예전 그림은 이 값으로 바뀐다(`server/data/category-data.ts`의 `queryRestAgg`, `polar-data.ts`의 `pieOthersReaggregated`).
 
 ### 5.2 점 모양
 

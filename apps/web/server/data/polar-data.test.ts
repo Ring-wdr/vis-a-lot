@@ -105,9 +105,11 @@ describe("pie '기타' 다시 집계", () => {
     expect(none.groups[0].slices.map((s) => s.category)).toEqual(["a", "c"]);
   });
 
-  it("새 통계 함수만 다시 집계하고, 예전 함수는 예전처럼 더한다", () => {
-    expect(pieOthersReaggregated("avg")).toBe(false);
+  it("합계·개수만 조각 값을 더하고, 나머지는 원래 행으로 다시 집계한다", () => {
     expect(pieOthersReaggregated("sum")).toBe(false);
+    expect(pieOthersReaggregated("count")).toBe(false);
+    expect(pieOthersReaggregated("avg")).toBe(true);
+    expect(pieOthersReaggregated("median")).toBe(true);
     expect(pieOthersReaggregated("stddev")).toBe(true);
     expect(pieOthersReaggregated("uniqueCount")).toBe(true);
   });

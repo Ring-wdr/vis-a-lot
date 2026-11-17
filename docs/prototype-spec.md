@@ -203,7 +203,7 @@ candle은 구간 간격을 split 조합과 상관없이 전체 기간으로 한 
 
 gantt는 legend(예: 상태)가 있으면 행마다 시간순으로 같은 legend 값이 이어지는 구간(gaps-and-islands, SQL window 함수)을 막대 하나로 그리고, 막대 끝은 다음 구간 시작에 붙인다. legend가 없으면 행마다 처음~마지막 시각 막대 하나. y는 행 인덱스 공간이라 행이 많으면 확대·이동으로 일부 행을 본다. 행마다 같은 픽셀 칸 안에서 시작하고 끝나는 짧은 구간은 앞 막대에 합쳐 그리고(툴팁에 합친 수), metadata 막대는 30,000개까지 담는다. 선택·페인트는 막대 가운데(가운데 시각, 행)로 판정한다. 툴팁은 행·legend 값·시작·끝·길이·개수.
 
-통계 함수(`AggFn`)는 11가지다: 평균(`avg`)·합계(`sum`)·개수(`count`)·최솟값(`min`)·최댓값(`max`)·중앙값(`median`)·고유값 수(`uniqueCount`, `count(distinct)`)·표준편차(`stddev`, `stddev_samp`. 행이 하나면 null이라 빈 칸)·모표준편차(`stddevP`, `stddev_pop`)·1사분위수(`q1`)·3사분위수(`q3`, `percentile_cont(0.25 / 0.75)`). 통계 함수를 쓰는 모든 차트(bar, pie, radar, heatmap, treemap, sankey, waterfall, funnel)가 같은 SQL(`AGG_SQL`)로 모은다. 작은 범주를 묶은 '기타'는 funnel·sankey에서 늘 원래 행으로 다시 집계한다. pie는 더할 수 없는 새 통계 함수(고유값 수·표준편차·모표준편차·사분위수)만 split 조합마다 '기타' 범주의 원래 행을 모아 다시 집계하고(`queryRestAgg`), 예전 여섯 함수는 예전 그림을 지키려고 조각 값을 더한다.
+통계 함수(`AggFn`)는 11가지다: 평균(`avg`)·합계(`sum`)·개수(`count`)·최솟값(`min`)·최댓값(`max`)·중앙값(`median`)·고유값 수(`uniqueCount`, `count(distinct)`)·표준편차(`stddev`, `stddev_samp`. 행이 하나면 null이라 빈 칸)·모표준편차(`stddevP`, `stddev_pop`)·1사분위수(`q1`)·3사분위수(`q3`, `percentile_cont(0.25 / 0.75)`). 통계 함수를 쓰는 모든 차트(bar, pie, radar, heatmap, treemap, sankey, waterfall, funnel)가 같은 SQL(`AGG_SQL`)로 모은다. 작은 범주를 묶은 '기타'는 funnel·sankey·pie 모두 원래 행으로 다시 집계한다. pie는 split 조합마다 '기타' 범주의 원래 행을 모아 다시 집계하고(`queryRestAgg`), 합계·개수는 조각 값의 합과 같아 그대로 더한다.
 
 점 모양(`shape.type`, `focus.shape`)은 10가지다: 원·사각형·삼각형·마름모·십자·역삼각형·왼쪽 삼각형·오른쪽 삼각형·육각형·별. PNG 점, legend 표시(PNG와 DOM), 툴팁 표시가 같은 경로로 그린다(서버 `server/render/style.ts`, 화면 `entities/chart/lib/point-shape.ts`). metadata는 원이 아닐 때만 모양을 담는다: scatter·line의 `shape`(점)·`focusShape`(강조 점), legend의 `layout.shape`(항목 표시).
 

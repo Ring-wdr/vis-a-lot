@@ -355,7 +355,7 @@ serveRpc<DbMethods>({
       chartType: "bar",
       legend: null,
     });
-    // 더할 수 없는 통계 함수는 '기타'를 원래 행으로 다시 집계한다.
+    // 합계·개수가 아니면 '기타'를 원래 행으로 다시 집계한다.
     const others = pieOthersReaggregated(params.agg)
       ? await queryRestAgg(db, schema, { ...params, table }, pieOverflow(bars))
       : undefined;
