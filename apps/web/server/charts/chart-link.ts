@@ -9,6 +9,7 @@ import {
 } from "./chart-fields";
 import {
   type ChartLink,
+  type ChartRecord,
   getChart,
   getItem,
   type LinkMode,
@@ -46,20 +47,27 @@ export function linkTargetError(
   return `연결 컬럼 '${link.on.target}'이 이 칸의 데이터에 없습니다.`;
 }
 
+const NOT_DRAWN_YET = "따를 칸이 아직 그려지지 않았습니다.";
+
 /**
  * 연결 요청 → 고정할 범위. 따를 칸 item에 선택이 없으면 link가 undefined다 (범위를 지운다).
  * 범위는 따를 칸 자신의 행 범위다: draw 필터 + 끈 legend 값 + 지운 영역 + 선택 영역 (그 칸이 따르는 범위는 빼고).
+ * 따를 칸의 draw가 끝났는데(drawEnded) 그린 것이 없으면(실패·취소) 선택도 없는 것이라 범위를 지운다.
+ * 아직 그리는 중이면 409다.
  */
 export function resolveLink(
   target: { id?: string; spec: ChartSpec; columns?: readonly SpecColumn[] },
   request: LinkRequest,
+  drawEnded: (chart: ChartRecord) => boolean,
 ): LinkRejected | { link: ChartLink | undefined } {
   if (request.source.chartId === target.id)
     return { status: 422, error: "자기 자신은 따를 수 없습니다." };
   const source = getChart(request.source.chartId);
   if (!source) return { status: 404, error: "unknown source chart" };
   if (!source.items)
-    return { status: 409, error: "따를 칸이 아직 그려지지 않았습니다." };
+    return drawEnded(source)
+      ? { link: undefined }
+      : { status: 409, error: NOT_DRAWN_YET };
   const item = getItem(source, request.source.itemKey);
   if (!item) return { status: 404, error: "unknown source item" };
   if (!canFollow(source.spec))
@@ -89,8 +97,11 @@ export function resolveLink(
   if (targetError) return { status: 422, error: targetError };
   if (!item.selection) return { link: undefined };
   // bar·histogram의 선택은 그린 막대(metadata)로 판정하므로 그린 뒤에만 고정할 수 있다.
+  // 그리기가 끝났는데 metadata가 없으면 그리지 못한 것이다.
   if (!item.meta)
-    return { status: 409, error: "따를 칸이 아직 그려지지 않았습니다." };
+    return drawEnded(source)
+      ? { link: undefined }
+      : { status: 409, error: NOT_DRAWN_YET };
   const scope = itemRowsScope(source, item, { link: false });
   const key = JSON.stringify([scope, source.spec.dataset, on, request.mode]);
   return {

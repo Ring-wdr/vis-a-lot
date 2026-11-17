@@ -16,18 +16,24 @@ import {
 } from "@/entities/workspace/model/board-store";
 import { selectStyles } from "@/shared/ui/select-styles";
 import "../config/messages";
+import { useFollowFailed } from "../model/use-follow-failed";
 import { useItemLink } from "../model/use-item-link";
-import { LinkPopover, useLinkRangeText } from "./LinkPopover";
+import { LinkPopover, useIssueText, useLinkRangeText } from "./LinkPopover";
 
 const s = selectStyles();
 
-/** 이 칸의 연결 상태 글자들: 따르는 칸, 따르는 칸이 따르는 칸들, 걸린 범위, 거절 사유 */
+/**
+ * 이 칸의 연결 상태 글자들: 따르는 칸, 이 칸을 따르는 칸들, 걸린 범위, 경고(서버가 거절한 사유, 따를 칸의 draw 실패)
+ */
 function usePanelLink(panelId: string) {
   const follow = useBoard(selectFollowNumber(panelId));
   const followers = useBoard(useShallow(selectFollowerNumbers(panelId)));
-  const error = useBoard((s) => s.linkErrors[panelId]);
+  const rejected = useBoard((s) => s.linkErrors[panelId]);
   const store = useBoard((s) => s.panels[panelId]);
   const range = useItemLink(store);
+  const failed = useFollowFailed(panelId);
+  const issueText = useIssueText();
+  const error = rejected ?? (failed ? issueText("sourceFailed") : undefined);
   return { follow, followers, error, range: follow > 0 ? range : undefined };
 }
 
@@ -49,14 +55,25 @@ export const PanelLinkButton = memo(function PanelLinkButton({
   const lines = [
     follow > 0 && t`따를 칸: 칸 ${follow}`,
     range && rangeText(range),
-    followers.length > 0 && t`따르는 칸: ${list}`,
+    followers.length > 0 &&
+      t({
+        message: `따르는 칸: ${list}`,
+        comment: "list: 이 칸을 따르는 칸 번호들 (예: 2, 3)",
+      }),
     error,
   ].filter(Boolean);
   return (
     <LinkPopover
       panelId={panelId}
       label={t`칸 ${number} 연결`}
-      title={lines.length > 0 ? lines.join("\n") : t`칸 연결`}
+      title={
+        lines.length > 0
+          ? lines.join("\n")
+          : t({
+              message: "칸 연결",
+              comment: "연결 버튼 title: 연결이 없을 때",
+            })
+      }
       onHover={(hover) => board.getState().setLinkHover(hover ? panelId : null)}
       className={cn(
         "inline-flex h-5.5 min-w-6 flex-none cursor-pointer items-center justify-center gap-1 rounded-sm border border-transparent px-1 text-2xs text-fg-secondary tabular-nums hover:border-line hover:bg-elevated data-popup-open:border-accent",
@@ -80,21 +97,26 @@ export function LinkField() {
   const panelId = useBoard((s) => s.activePanelId);
   const { follow, error, range } = usePanelLink(panelId);
   const rangeText = useLinkRangeText();
+  const followLabel = t({
+    message: "따를 칸",
+    context: "panel link field",
+    comment: "왼쪽 패널 필드 이름: 이 칸이 선택을 따라갈 다른 칸",
+  });
   return (
     <div className={s.field()}>
       <div className={s.labelRow()}>
-        <span className={s.label()}>{t`따를 칸`}</span>
+        <span className={s.label()}>{followLabel}</span>
         {range && <span className={s.aside()}>{rangeText(range)}</span>}
       </div>
       <LinkPopover
         panelId={panelId}
-        label={t`따를 칸`}
+        label={followLabel}
         title={error}
         className={s.trigger()}
       >
         <span className={cn(s.value(), follow === 0 && s.placeholder())}>
           {follow > 0
-            ? t`칸 ${follow}`
+            ? t({ message: `칸 ${follow}`, comment: "follow: 따를 칸의 번호" })
             : t({ message: "없음", context: "no linked panel" })}
         </span>
         <span className={s.chevron()}>

@@ -1,8 +1,9 @@
 "use client";
 
-// 칸 연결 전파. 따를 칸의 범위가 바뀌면(선택·지우기·legend 같은 item 조작이 끝났거나, 새로 그렸다) 그 칸을 따르는
-// 칸마다 PUT /charts/{chartId}/link를 보낸다. 연결을 바꾸거나 풀어도 보낸다. 서버는 따를 칸의 지금 행 범위를 고정해
-// 걸고 따르는 칸을 다시 그린다(범위가 그대로면 그리지 않는다).
+// 칸 연결 전파. 따를 칸의 범위가 바뀌었을 수 있으면(선택·지우기·legend 체크·개별 속성 같은 item 조작이 끝났거나,
+// 새로 그렸다) 그 칸을 따르는 칸마다 PUT /charts/{chartId}/link를 보낸다. 연결을 바꾸거나 풀어도 보낸다.
+// 서버는 따를 칸의 지금 행 범위를 고정해 걸고 따르는 칸을 다시 그린다(범위가 그대로면 그리지 않는다).
+// - 확대·이동·크기·색·도형·즐겨찾기처럼 범위를 바꾸지 않는 다시 그리기(lookJobs)가 끝나면 보내지 않는다.
 // - 따르는 칸이나 따를 칸이 그리는 중이면(409) 끝나기를 기다렸다가 보낸다. 기다리는 동안 여러 번 바뀌어도
 //   보낼 때의 상태로 만든 마지막 요청 하나만 간다.
 // - 전파는 한 단계다: 연결 때문에 다시 그린 칸(연결 job)이 끝나도 그 칸을 따르는 칸에는 보내지 않는다.
@@ -33,12 +34,16 @@ function settled(s: BoardState, id: string) {
   return !p.opening && !s.busy[id] && Object.keys(p.itemJobs).length === 0;
 }
 
-/** item 다시 그리기가 새로 시작됐으면 그 job id들 */
+/**
+ * item 다시 그리기가 새로 시작됐으면 그 job id들. 그린 행의 범위를 바꾸지 않는 것(확대·크기·색·도형, lookJobs)은 뺀다.
+ * 그 다시 그리기가 끝나도 따르는 칸에 보낼 것이 없다.
+ */
 function startedJobs(next: WorkspaceState, prev: WorkspaceState) {
   if (next.itemJobs === prev.itemJobs) return [];
   return Object.entries(next.itemJobs)
     .filter(([key, jobId]) => prev.itemJobs[key] !== jobId)
-    .map(([, jobId]) => jobId);
+    .map(([, jobId]) => jobId)
+    .filter((jobId) => !next.lookJobs[jobId]);
 }
 
 /**

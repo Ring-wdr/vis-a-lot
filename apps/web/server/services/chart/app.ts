@@ -131,6 +131,12 @@ function panelDrawn(chartId: string): DrawnChart | undefined {
   return { spec: chart.spec, restore: chartRestore(chart) };
 }
 
+/** 차트의 draw(primary job)가 끝났는지. 그린 것이 없으면 실패·취소한 것이다. */
+function drawEnded(chart: Chart) {
+  const primary = chart.primaryJobId ? getJob(chart.primaryJobId) : undefined;
+  return primary !== undefined && isTerminal(primary.status);
+}
+
 function redrawJob(
   chart: Chart,
   keys: string[],
@@ -143,7 +149,8 @@ export const chartApp = createServiceApp()
   .openapi(routes.createChart, async (c) => {
     const body = c.req.valid("json");
     // 칸 연결은 따를 칸의 지금 범위로 고정한다. 이 칸 쪽 연결 컬럼은 job이 스키마를 안 뒤 확인한다.
-    const linked = body.link && resolveLink({ spec: body.spec }, body.link);
+    const linked =
+      body.link && resolveLink({ spec: body.spec }, body.link, drawEnded);
     if (linked && "error" in linked)
       return apiError(c, linked.status, linked.error);
     // 컬럼과 타입은 데이터셋마다 달라 job이 데이터 준비 뒤 스키마로 확인한다.
@@ -450,12 +457,16 @@ export const chartApp = createServiceApp()
   // 칸 연결: 따를 칸의 지금 범위를 고정해 걸고 전체를 다시 그린다. 범위가 그대로면 그리지 않는다.
   .openapi(routes.setLink, async (c) => {
     const chartId = c.req.valid("param").chartId;
+    const failed = getChart(chartId);
+    // 이 칸을 그리지 못했으면(실패·취소) 걸 그림이 없다. 다시 draw할 때 POST /charts의 link로 건다.
+    if (failed && !failed.items && drawEnded(failed))
+      return apiError(c, 409, "이 칸을 그리지 못해 범위를 걸 수 없습니다.");
     const target = idleChart(chartId);
     if ("error" in target) return reject(c, target);
     const { chart } = target;
     const request = c.req.valid("json").link;
     const resolved = request
-      ? resolveLink(chart, request)
+      ? resolveLink(chart, request, drawEnded)
       : { link: undefined };
     if ("error" in resolved)
       return apiError(c, resolved.status, resolved.error);

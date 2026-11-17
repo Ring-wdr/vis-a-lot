@@ -174,6 +174,16 @@ async function settle(jobId: string) {
   throw new Error("job did not finish");
 }
 
+/** 결과와 상관없이 job이 끝날 때까지 기다린다. */
+async function ended(jobId: string) {
+  for (let i = 0; i < 200; i++) {
+    const job = getJob(jobId);
+    if (job && ["success", "failed", "cancelled"].includes(job.status)) return;
+    await new Promise((r) => setTimeout(r, 5));
+  }
+  throw new Error("job did not finish");
+}
+
 /** 칸 하나를 그리고 끝날 때까지 기다린다. */
 async function draw(s: ChartSpec, link?: unknown) {
   const res = await call("POST", "/charts", {
@@ -421,6 +431,43 @@ describe("칸 연결", () => {
       (await link(drawing.body.chartId, { source, mode: "filter" })).status,
     ).toBe(409);
     await settle(drawing.body.jobId);
+  });
+
+  it("따를 칸을 그리지 못했으면 범위를 푼다, 이 칸을 그리지 못했으면 409", async () => {
+    const scatter = await draw(spec({}));
+    const bar = await draw(spec({ chartType: "bar", x: "machine" }));
+    await select(scatter.chartId, scatter.key, rect(-0.5, 0.5));
+    const set = await link(bar.chartId, {
+      source: { chartId: scatter.chartId, itemKey: scatter.key },
+      mode: "filter",
+    });
+    await settle(set.body.jobId);
+    expect((await itemState(bar.chartId)).link?.rows).toBe(1);
+
+    // 따를 칸을 새로 그렸는데 실패했다 (없는 컬럼): 선택이 없으므로 범위를 푼다.
+    const broken = await call("POST", "/charts", {
+      spec: spec({ x: "nope" }),
+      itemSize: { width: 400, height: 300 },
+      record: false,
+    });
+    const source = { chartId: broken.body.chartId, itemKey: scatter.key };
+    await ended(broken.body.jobId);
+    expect(getJob(broken.body.jobId)?.status).toBe("failed");
+    const cleared = await link(bar.chartId, { source, mode: "filter" });
+    expect(cleared.status).toBe(202);
+    await settle(cleared.body.jobId);
+    expect((await itemState(bar.chartId)).link).toBeUndefined();
+    expect((await link(bar.chartId, { source, mode: "filter" })).body).toEqual({
+      jobId: null,
+    });
+
+    // 실패한 칸에 걸면 까닭을 알린다.
+    const res = await link(broken.body.chartId, {
+      source: { chartId: scatter.chartId, itemKey: scatter.key },
+      mode: "filter",
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain("그리지 못해");
   });
 
   it("범위가 바뀌면 조회 결과를 버리고 다시 조회한다", async () => {

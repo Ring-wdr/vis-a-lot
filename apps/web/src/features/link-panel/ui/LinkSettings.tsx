@@ -53,7 +53,12 @@ function SourceRow({
       onClick={() => !selected && onPick(id)}
     >
       <span className="flex w-full min-w-0 items-baseline gap-1.5">
-        <span className="font-semibold tabular-nums">{t`칸 ${number}`}</span>
+        <span className="font-semibold tabular-nums">
+          {t({
+            message: `칸 ${number}`,
+            comment: "number: 따를 칸 목록의 칸 번호",
+          })}
+        </span>
         <span className="min-w-0 truncate text-fg-secondary">{label}</span>
       </span>
       {disabledReason && (
@@ -128,7 +133,7 @@ export function LinkSettings({
 
       <fieldset className="flex flex-col gap-1" disabled={!linked}>
         <legend className={sectionTitle}>
-          <Trans>방식</Trans>
+          <Trans context="link mode label">방식</Trans>
         </legend>
         <div className={seg.root()}>
           <button
@@ -174,7 +179,10 @@ export function LinkSettings({
             <Select
               label={t`따를 칸 컬럼`}
               value={columns.value?.source ?? null}
-              placeholder={t`고르기`}
+              placeholder={t({
+                message: "고르기",
+                context: "link column placeholder",
+              })}
               options={columns.source}
               onChange={(source) =>
                 columns.onChange({
@@ -189,7 +197,10 @@ export function LinkSettings({
             <Select
               label={t`이 칸 컬럼`}
               value={columns.value?.target ?? null}
-              placeholder={t`고르기`}
+              placeholder={t({
+                message: "고르기",
+                context: "link column placeholder",
+              })}
               options={columns.target}
               onChange={(target) =>
                 columns.onChange({

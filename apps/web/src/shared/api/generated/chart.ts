@@ -2563,7 +2563,7 @@ export type paths = {
       cookie?: never;
     };
     get?: never;
-    /** 칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없으면 범위를 푼다 */
+    /** 칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없거나 따를 칸을 그리지 못했으면(실패·취소) 범위를 푼다 */
     put: {
       parameters: {
         query?: never;
@@ -2633,7 +2633,7 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
-        /** @description 이 차트가 그리는 중, 또는 따를 칸이 아직 그려지지 않음 */
+        /** @description 이 차트가 그리는 중이거나 그리지 못함(실패·취소), 또는 따를 칸이 아직 그리는 중 */
         409: {
           headers: {
             [name: string]: unknown;

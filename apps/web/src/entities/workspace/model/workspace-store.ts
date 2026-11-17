@@ -125,6 +125,11 @@ export type WorkspaceState = {
   gridArea?: Size;
   /** item 단위로 다시 그리는 중인 job (item 키 → job id) */
   itemJobs: Record<string, string>;
+  /**
+   * itemJobs 중 그린 행의 범위를 바꾸지 않는 다시 그리기(확대·이동·크기·색·도형·즐겨찾기)의 job id.
+   * analytics 칸 연결이 따르는 칸에 범위를 다시 보낼지 가리는 데 쓴다.
+   */
+  lookJobs: Record<string, true>;
   /** 이 세션에서 추가한 도형 수. undo는 이 범위 안에서만 된다. */
   undoCounts: Record<string, number>;
   /** 이 탭에서 난 오류 중 아직 보여주지 않은 것. 다른 탭을 보는 동안 쌓였다가 돌아오면 뜬다. */
@@ -146,7 +151,12 @@ export type WorkspaceState = {
   setShowNearest: (show: boolean) => void;
   toggleLegendCheckboxes: () => void;
   setGridArea: (size: Size) => void;
-  setItemJob: (key: string, jobId: string | undefined) => void;
+  /** look: 그린 행의 범위를 바꾸지 않는 다시 그리기 (lookJobs) */
+  setItemJob: (
+    key: string,
+    jobId: string | undefined,
+    options?: { look?: boolean },
+  ) => void;
   changeUndo: (key: string, delta: number | "reset") => void;
   notify: (message: string) => void;
 };
@@ -200,6 +210,7 @@ export function createWorkspaceStore({
     showNearest: true,
     showLegendCheckboxes: false,
     itemJobs: {},
+    lookJobs: {},
     undoCounts: {},
     notices: [],
     drawLink,
@@ -214,6 +225,7 @@ export function createWorkspaceStore({
         search: NO_SEARCH,
         selectedItem: null,
         itemJobs: {},
+        lookJobs: {},
         undoCounts: {},
         // 새 차트가 지원하지 않는 모드(예: pie의 이동)였으면 기본 모드로 돌린다.
         ...(modeSupported(s.mode, current.spec)
@@ -226,6 +238,7 @@ export function createWorkspaceStore({
           ? {
               current: { ...s.current, jobId, spec },
               itemJobs: {},
+              lookJobs: {},
               page: page ?? s.page,
             }
           : {},
@@ -253,12 +266,19 @@ export function createWorkspaceStore({
           ? s
           : { gridArea },
       ),
-    setItemJob: (key, jobId) =>
+    setItemJob: (key, jobId, options) =>
       set((s) => {
         const itemJobs = { ...s.itemJobs };
-        if (jobId) itemJobs[key] = jobId;
-        else delete itemJobs[key];
-        return { itemJobs };
+        const lookJobs = { ...s.lookJobs };
+        const prev = itemJobs[key];
+        if (jobId) {
+          itemJobs[key] = jobId;
+          if (options?.look) lookJobs[jobId] = true;
+        } else delete itemJobs[key];
+        // 크기 다시 그리기는 여러 item이 job 하나를 함께 쓴다. 남은 item이 없을 때 뺀다.
+        if (prev && prev !== jobId && !Object.values(itemJobs).includes(prev))
+          delete lookJobs[prev];
+        return { itemJobs, lookJobs };
       }),
     changeUndo: (key, delta) =>
       set((s) => ({

@@ -150,6 +150,14 @@ analytics(`/analytics`)는 보드 store(`entities/workspace/model/board-store.ts
 | `AddPanelButton`, `LayoutPresetButton`, `ClearBoardButton` | features | 막힌 까닭(`addPanelBlock`, `layoutBlock`) | 원시값 | 아니요 (동작 하나) | preset 비교용 레이아웃은 popover를 열 때 `getState`로 읽는다 |
 | `BoardAutosave` | views | `hydrated` | 원시값 | 아니요 (`return null`) | 저장할 변경은 store `subscribe`로 듣고(`watchBoard`) 렌더하지 않는다 |
 | `BoardGate` (`useBoardHydrate`) | views | `hydrated`, 보드 query | 원시값·참조 | 아니요 | 받은 뒤에는 children만 그린다 |
+| `PanelSlot`의 연결 표시 | widgets | `selectLinkPeer(id)` (연결 버튼에 커서를 올린 칸과 이어져 있는지) | 원시값 | 아니요 | 연결 버튼은 `renderLink(panelId)`로 받아 `useMemo`로 한 번 만든다. 커서가 오가도 이어진 두 칸의 틀만 다시 그린다 |
+| `PanelLinkButton` (이름표 연결 버튼) | features | `selectPanelNumber(id)`, `selectFollowNumber(id)`, `selectFollowerNumbers(id)`(`useShallow`), `linkErrors[id]`, 칸 store, 걸린 범위(`useItemLink`), 따를 칸 실패(`useFollowFailed`) | 원시값·참조 | 아니요 (동작 하나) | `memo`. 칸 id만 받는다. 범위·실패는 react-query `select`로 고른 값이라 진행률 응답에는 다시 그리지 않는다 |
+| `LinkField` (왼쪽 패널 `따를 칸`) | features | 보드 `activePanelId`와 위와 같은 값 | 원시값·참조 | 아니요 | 고른 칸이 바뀔 때만 다른 칸 것으로 바뀐다 |
+| `useItemLink` | features | 칸 store `current?.jobId` → draw job item 상태의 `link` | 원시값·참조 | — | 칸 차트(`PanelChart`)와 같은 페이지 크기(1)의 `useJob` query를 함께 쓴다 |
+| `useFollowFailed` | features | 보드 `links[id].follow`의 칸 store → 그 칸 `current?.jobId`(`useSyncExternalStore`) → 진행률 query의 실패 여부(`select`) | 원시값 | — | 따를 칸의 draw가 실패하면 연결 버튼·창에 까닭을 보인다. `PanelJobSync`와 같은 query를 함께 쓴다 |
+| `LinkPopover` → `LinkPopoverBody` | features | 보드 `links[id]`, `linkErrors[id]`, 칸 store, 이 칸 draft의 데이터셋·차트 종류·서브 차트(`useShallow`), 모든 칸의 차트 종류·데이터셋(`usePanelKinds`, 한 줄 글자로 견준다) | 원시값·참조 | 아니요 (팝업 컨테이너) | 본문은 열린 동안만 그려 모든 칸 store 구독도 그동안만 건다. 바뀐 것이 없으면 같은 글자라 다시 그리지 않는다 |
+| `LinkSettings` | features | — (props) | — | **예** | store를 부르지 않는다. 따를 칸 목록·방식·연결 컬럼·상태 글자를 props로 받는다 |
+| `LinkSync` → `LinkFit` → `FitLink` | features | 보드 `links`의 키 목록(`useShallow`) → 칸마다 `links[id].follow`, 두 칸 store → 따를 칸 데이터셋, 이 칸 draft의 데이터셋·차트 종류·서브 차트(`useShallow`), 두 스키마 | 원시값·참조 | 아니요 (`return null`) | 연결 맞추기(방식·연결 컬럼)만 한다. 연결 전파(`createLinkPropagation`)는 렌더 없이 보드·칸 store를 `subscribe`해 돌린다 |
 
 렌더 횟수는 `src/widgets/analytics-board/ui/AnalyticsBoard.render.test.tsx`(칸 9개, 칸 내용을 색 상자로)와 `src/widgets/chart-grid/ui/PanelChart.render.test.tsx`(칸 둘)가 잡는다.
 

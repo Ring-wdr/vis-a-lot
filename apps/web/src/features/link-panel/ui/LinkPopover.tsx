@@ -35,6 +35,7 @@ import type {
   LinkMode,
 } from "@/shared/api/types";
 import "../config/messages";
+import { useFollowFailed } from "../model/use-follow-failed";
 import { useItemLink } from "../model/use-item-link";
 import {
   type ColumnsField,
@@ -112,13 +113,18 @@ export function useLinkRangeText() {
         });
 }
 
+/** 연결이 걸리지 않는 까닭. 따를 칸의 draw 실패(sourceFailed)는 job 상태에서 본다. */
+export type LinkIssueShown = LinkIssue | "sourceFailed";
+
 /** 연결이 걸리지 않는 까닭 */
-function useIssueText() {
+export function useIssueText() {
   const { t } = useLingui();
-  return (issue: LinkIssue) => {
+  return (issue: LinkIssueShown) => {
     switch (issue) {
       case "sourceNotDrawn":
         return t`따를 칸을 그리면 범위가 걸립니다.`;
+      case "sourceFailed":
+        return t`따를 칸을 그리지 못해 범위가 풀렸습니다. 따를 칸을 다시 그리면 그 선택으로 걸립니다.`;
       case "sourceCannotFollow":
         return t`따를 칸의 차트는 선택을 행으로 바꿀 수 없어 범위가 걸리지 않습니다.`;
       case "needsColumns":
@@ -148,6 +154,7 @@ function LinkPopoverBody({ panelId }: { panelId: string }) {
   const range = useItemLink(target);
   const rangeText = useLinkRangeText();
   const issueText = useIssueText();
+  const sourceFailed = useFollowFailed(panelId);
   const self = kinds.find((k) => k.id === panelId);
   const source = link && kinds.find((k) => k.id === link.follow);
   const sourceColumns = useDatasetSchema(source?.dataset ?? "").data?.columns;
@@ -165,15 +172,17 @@ function LinkPopoverBody({ panelId }: { panelId: string }) {
     }));
 
   const differ = source !== undefined && source.dataset !== draft.dataset;
-  const issue: LinkIssue | undefined = !source
+  const issue: LinkIssueShown | undefined = !source
     ? undefined
     : !source.drawn
       ? "sourceNotDrawn"
-      : !canFollow(source)
-        ? "sourceCannotFollow"
-        : differ && !link?.on
-          ? "needsColumns"
-          : undefined;
+      : sourceFailed
+        ? "sourceFailed"
+        : !canFollow(source)
+          ? "sourceCannotFollow"
+          : differ && !link?.on
+            ? "needsColumns"
+            : undefined;
   const summary = range && rangeText(range);
   const status = issue
     ? issueText(issue)

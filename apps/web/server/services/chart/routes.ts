@@ -308,7 +308,7 @@ export const setLink = createRoute({
   path: "/charts/{chartId}/link",
   tags: ["charts"],
   summary:
-    "칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없으면 범위를 푼다",
+    "칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없거나 따를 칸을 그리지 못했으면(실패·취소) 범위를 푼다",
   ...write,
   request: { params: ChartParams, body: jsonBody(SetLinkRequestSchema) },
   responses: {
@@ -322,7 +322,7 @@ export const setLink = createRoute({
     ...linkErrors,
     404: errorResponse("모르는 차트, 또는 따를 칸의 차트나 item을 모름"),
     409: errorResponse(
-      "이 차트가 그리는 중, 또는 따를 칸이 아직 그려지지 않음",
+      "이 차트가 그리는 중이거나 그리지 못함(실패·취소), 또는 따를 칸이 아직 그리는 중",
     ),
   },
 });

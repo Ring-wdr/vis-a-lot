@@ -115,6 +115,18 @@ describe("칸 연결 전파", () => {
     expect(calls[1].link?.source.chartId).toBe("chart-2");
   });
 
+  it("범위를 바꾸지 않는 다시 그리기(확대·크기·색·도형)가 끝나면 보내지 않는다", async () => {
+    panel(1).getState().setItemJob(PANEL_ITEM_KEY, "zoom", { look: true });
+    panel(1).getState().setItemJob(PANEL_ITEM_KEY, undefined);
+    await tick();
+    expect(calls).toEqual([]);
+    expect(panel(1).getState().lookJobs).toEqual({});
+    // 범위를 바꿀 수 있는 조작은 보낸다.
+    select(1);
+    await tick();
+    expect(calls.map((c) => c.chartId)).toEqual(["chart-2"]);
+  });
+
   it("서로 따라도(1 ↔ 2) 연결 다시 그리기가 되돌아 전파되지 않는다", async () => {
     follow(1, 2);
     await tick();
