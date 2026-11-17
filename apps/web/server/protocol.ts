@@ -1,6 +1,7 @@
 // Worker별 RPC 메서드 정의.
 
 import type {
+  AnalyticsBoard,
   ChartTheme,
   CsvCheck,
   DatasetStatus,
@@ -10,6 +11,7 @@ import type {
   StagedUpload,
   UploadTask,
 } from "./api/types";
+import type { StoredBoardBody } from "./charts/board-store";
 import type { CandleData, CandleDataParams } from "./data/candle-data";
 import type { CategoryData, CategoryDataParams } from "./data/category-data";
 import type { ChartData, ChartDataParams } from "./data/chart-data";
@@ -182,6 +184,15 @@ export type DbMethods = {
   /** 만든 사용자의 공유 목록 (최근 순) */
   shareList: { params: { createdBy: string }; result: Share[] };
   sharePng: { params: { id: string }; result: Uint8Array | null };
+  /** analytics 보드 (사용자당 하나). 없으면 null */
+  boardGet: { params: { userId: string }; result: AnalyticsBoard | null };
+  /** 있으면 통째로 바꾼다. */
+  boardSave: {
+    params: { userId: string; body: StoredBoardBody; updatedAt: number };
+    result: undefined;
+  };
+  /** 지웠으면 true */
+  boardDelete: { params: { userId: string }; result: boolean };
   /** 피드 op 하나 (op 이름과 인자는 server/feed/ops.ts). 도메인 오류는 결과로 돌려준다. */
   feed: { params: FeedRequest; result: FeedReply };
   /** 피드 스키마를 지우고 빈 스키마로 다시 만든다 (/feed/dev/seed 리셋) */

@@ -107,6 +107,19 @@ export type HistoryListResponse = Chart["HistoryListResponse"];
 export type CreateShareRequest = Chart["CreateShareRequest"];
 export type Share = Chart["Share"];
 export type ShareListResponse = Chart["ShareListResponse"];
+// ── analytics 보드 ─────────────────────────────────────────────
+/** 칸 배치 트리. horizontal은 자식을 왼쪽 → 오른쪽, vertical은 위 → 아래로 놓는다. */
+export type AnalyticsLayoutNode = Chart["AnalyticsLayoutNode"];
+/** 칸 연결 (둘째 PR) */
+export type AnalyticsPanelLink = Chart["AnalyticsPanelLink"];
+/** 칸이 편집 중인 설정. 칸 store의 draft(ChartSpec)를 그대로 보낸다. */
+export type AnalyticsPanelDraft = Chart["AnalyticsPanelDraft"];
+/** 칸이 마지막으로 그린 설정과 item 상태. 다시 열 때 POST /charts의 spec·restore로 쓴다. */
+export type AnalyticsDrawn = Chart["AnalyticsDrawn"];
+export type AnalyticsPanel = Chart["AnalyticsPanel"];
+export type AnalyticsBoard = Chart["AnalyticsBoard"];
+export type SaveAnalyticsPanel = Chart["SaveAnalyticsPanel"];
+export type SaveAnalyticsBoardRequest = Chart["SaveAnalyticsBoardRequest"];
 export type DebugRenderRequest = Chart["DebugRenderRequest"];
 export type DebugRenderResponse = Chart["DebugRenderResponse"];
 

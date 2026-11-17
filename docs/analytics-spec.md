@@ -98,18 +98,19 @@ type LayoutNode =
   | { type: "split"; direction: "horizontal" | "vertical"; children: LayoutNode[]; ratios: number[] };
 ```
 
-- CSS grid가 아니라 flex 트리다. split은 `flex-direction`을 정하고 자식은 `flex: <ratio> 0 0`으로 나눈다.
+- CSS grid가 아니라 flex 트리다. split은 `flex-direction`을 정하고 자식은 `flex: <ratio> 0 0`으로 나눈다. `horizontal`은 자식을 왼쪽 → 오른쪽(`row`), `vertical`은 위 → 아래(`column`)로 놓는다.
 - 트리는 늘 정규화한다: 자식이 하나인 split은 자식으로 바꾸고, 같은 방향으로 겹친 split은 한 단계로 편다. 비율의 합은 1이다.
-- **칸 추가:** 뿌리가 leaf면 세로 split으로 감싸고, 뿌리가 세로 split이면 끝에 더하고, 가로 split이면 세로 split으로 감싼다. 새 칸의 비율은 `1 / (칸 수)`이고 나머지는 같은 비율로 줄인다.
-- **preset:** 17개다. 9칸까지에서 자주 쓰는 균등 격자와 '큰 칸 하나 + 작은 칸 여럿' 모양을 고른 것이다.
+- **칸 추가:** 뿌리가 leaf면 세로 split으로 감싸고, 뿌리가 세로 split이면 끝에 더하고, 가로 split이면 세로 split으로 감싼다. 새 칸의 비율은 `1 / (그 세로 split의 자식 수)`이고 나머지는 같은 비율로 줄인다.
+- **preset:** 17개다. 9칸까지에서 자주 쓰는 균등 격자와 '큰 칸 하나 + 작은 칸 여럿' 모양을 고른 것이다. R×C는 행×열이다(1×2 = 한 줄에 두 칸).
 
 | 칸 수 | preset |
 |---|---|
 | 1 | 1×1 |
 | 2 | 1×2, 2×1 |
 | 3 | 1×3, 3×1, 왼쪽 큰 + 오른쪽 2, 오른쪽 큰 + 왼쪽 2, 위 큰 + 아래 2, 아래 큰 + 위 2 |
-| 4 | 2×2, 1×4, 4×1 |
-| 5 이상 | 2×3, 3×2, 3×2 왼쪽 큰, 2×3 위 큰, 3×3 |
+| 4 | 2×2, 1×4, 4×1, 왼쪽 큰 + 오른쪽 3, 위 큰 + 아래 3 |
+| 6 | 2×3, 3×2 |
+| 9 | 3×3 |
 
   - 레이아웃 popover에서 작은 그림으로 고른다. preset의 칸 수에 맞춰 모자라면 빈 칸을 더하고, 남으면 뒤 번호 칸부터 지운다.
   - 그린 칸이 지워지면 "마지막 칸 N개가 지워집니다" 확인 팝업을 먼저 띄운다. 지워지는 칸을 따르던 연결은 푼다.
@@ -223,12 +224,13 @@ type LayoutNode =
 
 | 용도 | 요청 | 응답 / 설명 |
 |---|---|---|
-| 보드 받기 | `GET /analytics/board` | `{ layout, activePanelId, panels: [{ id, draft, drawn?: { spec, restore }, link? }], updatedAt }`. 없으면 404 (화면은 빈 칸 하나로 시작) |
-| 보드 저장 | `PUT /analytics/board` | `{ layout, activePanelId, panels: [{ id, draft, chartId?, link? }] }` → 204. `chartId`가 있으면 서버가 그 차트의 지금 설정과 item 상태(`chartRestore`)를 `drawn`으로 고정한다. 모르는 `chartId`면 그 칸의 이전 `drawn`을 그대로 둔다 |
-| 보드 비우기 | `DELETE /analytics/board` | 204 |
+| 보드 받기 | `GET /analytics/board` | `AnalyticsBoard` `{ layout, activePanelId, panels: [{ id, draft, drawn?: { spec, restore }, link? }], updatedAt }`. 없으면 404 (화면은 빈 칸 하나로 시작) |
+| 보드 저장 | `PUT /analytics/board` | `SaveAnalyticsBoardRequest` `{ layout, activePanelId, panels: [{ id, draft, chartId?, link? }] }` → 204, 검증 실패는 400. `chartId`가 있으면 서버가 그 차트의 지금 설정과 item 상태(`chartRestore`)를 `drawn`으로 고정한다. 모르는 `chartId`(또는 split 있는 차트)면 그 칸의 이전 `drawn`을 그대로 둔다. `chartId`가 없으면 그린 적 없는 칸이다 |
+| 보드 비우기 | `DELETE /analytics/board` | 204 (없었어도) |
 
 - 저장소: PGlite 고정 테이블 `analytics_boards(user_id primary key, body jsonb, updated_at)` (`server/db/database.ts`에 타입, 공유 테이블과 같은 방식으로 연다). 사용자 id는 토큰의 `sub`다. scope는 `chart:read` / `chart:write`.
-- 검증: 트리의 leaf와 `panels`의 id가 1:1, 칸 1~9개, 비율 합 1(오차 허용), `link.follow`는 있는 칸.
+- 검증: 트리의 leaf와 `panels`의 id가 1:1, 칸 1~9개, split마다 자식 2개 이상·비율 수 = 자식 수·비율 합 1(오차 1e-3), 활성 칸은 있는 칸, `link.follow`는 자기 아닌 있는 칸, 칸 draft는 `splitBy: []`·grid 1×1. draft(`AnalyticsPanelDraft`)는 `ChartSpec`과 같되 x·y가 고르기 전의 빈 글자여도 된다.
+- 화면 쪽: `api.board`·`api.saveBoard`·`api.clearBoard`, query `useAnalyticsBoard`(404면 status 404 `ApiRequestError`, 다시 받지 않는다), mutation `useSaveBoard`·`useClearBoard`.
 - 칸의 draw는 지금 API 그대로다: `POST /charts`에 `grid 1×1`, `splitBy: []`, `record: false`, 다시 열 때는 `restore`. item 키는 split 없는 차트의 키 하나다.
 - 차트 레코드는 지금처럼 서버 메모리에 있다. 새로고침하면 사라지므로 다시 열 때 새로 그린다.
 
@@ -264,9 +266,10 @@ type LayoutNode =
 | `src/application/SessionScope.tsx` | `BoardScope`를 `TabsScope` 옆에 둔다. `/`와 `/analytics`를 오가도 보드가 남는다 |
 | `src/views/analytics/ui/AnalyticsView.tsx` | 화면 틀 조합: 상단 바, 도구 줄, 왼쪽 패널, 보드, 필터 서랍, 하단 줄. 활성 칸의 `WorkspaceScope`로 패널·도구를 감싼다. 보드 위젯의 칸 자리에 칸 차트 위젯을 끼운다 |
 | `src/views/analytics/model/` | 이 화면만 쓰는 것: 보드 받기·자동 저장, 다시 열기 순서 |
-| `src/entities/workspace/model/board-store.ts`, `board-scope.tsx` | 보드 store(레이아웃 트리, 칸 목록, 활성 칸, 최대화, 연결). 칸마다 `createWorkspaceStore`로 만든 store를 든다. `useBoard(selector)` |
+| `src/entities/workspace/model/board-store.ts`, `board-scope.tsx` | 보드 store(레이아웃 트리, 칸 목록, 활성 칸, 최대화, 그리는 칸, 보드 모드, 연결, 저장 모양 `boardSaveBody`). 칸마다 `createWorkspaceStore({ kind: "panel" })`로 만든 store를 든다. `BoardScope`, `useBoard(selector)`, `PanelScope`, `ActivePanelScope`, 칸 주입점 타입 `RenderPanel` |
 | `src/entities/workspace/lib/layout-tree.ts`, `layout-presets.ts` | 트리 순수 함수(찾기, 넣기, 빼기, 옮기기, 정규화, 비율)와 preset 17개 |
-| `src/entities/workspace/model/workspace-store.ts` | 칸용 생성 옵션(grid 1×1 고정) |
+| `src/entities/workspace/model/workspace-store.ts` | 칸용 생성 옵션 `kind: "panel"`(draft를 split 없음·grid 1×1로 고정, history 미기록 `recordsHistory`) |
+| `src/entities/chart/lib/grid-layout.ts`, `src/features/draw-chart/ui/DrawButton.tsx`, `src/features/open-chart/model/open-chart.ts` | 칸이면 PNG를 칸 전체 크기로(`drawSizeFor`), `record: false`. 다시 열 때 고치던 draft를 두는 `keepDraft` |
 | `src/widgets/analytics-board/ui/` | `AnalyticsBoard`(DnD, flex 트리, 미리보기), `PanelSlot`(손잡이, 이름표, 닫기, 놓는 변), `ResizeHandle`. 칸 내용은 render prop(`renderPanel(panelId)`)으로 받는다 (widget은 다른 widget을 import하지 않는다) |
 | `src/widgets/chart-grid/ui/PanelChart.tsx` | 차트 한 장을 칸 크기로 그린다. `ChartItemCard`와 `useAutoResize`를 쓴다. 페이지 스크롤·하단 job 바·크게 보기는 없다 |
 | `src/widgets/analytics-toolbar/ui/` | 보드 도구 줄 |

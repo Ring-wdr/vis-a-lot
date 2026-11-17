@@ -1,4 +1,5 @@
 import { z } from "@hono/zod-openapi";
+import { boardIssue, MAX_BOARD_PANELS } from "../../charts/board-store";
 import {
   FOCUS_RANK_MAX,
   FOCUS_TYPES,
@@ -1431,6 +1432,108 @@ export const ShareSchema = z
 export const ShareListResponseSchema = z
   .object({ shares: z.array(ShareSchema) })
   .openapi("ShareListResponse");
+
+// ── analytics 보드 ─────────────────────────────────────────────
+// 사용자당 하나. 칸(panel)마다 차트 한 장(grid 1×1, split 없음)을 두고 칸 배치는 레이아웃 트리로 적는다.
+
+/**
+ * 칸 배치 트리. split은 자식을 나란히 놓는다: horizontal은 왼쪽 → 오른쪽(flex row), vertical은 위 → 아래(flex column).
+ * ratios는 자식마다 차지하는 몫(합 1)이다. 칸 번호는 leaf를 깊이 우선으로 읽은 순서(1부터)다.
+ */
+export const AnalyticsLayoutNodeSchema: z.ZodType<AnalyticsLayoutNodeShape> = z
+  .lazy(() =>
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("leaf"), panelId: z.string().min(1).max(64) }),
+      z.object({
+        type: z.literal("split"),
+        direction: z.enum(["horizontal", "vertical"]),
+        children: z.array(AnalyticsLayoutNodeSchema).min(2).max(9),
+        ratios: z.array(z.number().positive().max(1)).min(2).max(9),
+      }),
+    ]),
+  )
+  .openapi("AnalyticsLayoutNode");
+
+type AnalyticsLayoutNodeShape =
+  | { type: "leaf"; panelId: string }
+  | {
+      type: "split";
+      direction: "horizontal" | "vertical";
+      children: AnalyticsLayoutNodeShape[];
+      ratios: number[];
+    };
+
+/** 칸 연결 (둘째 PR에서 쓴다). 따를 칸 하나, 방식, 데이터셋이 다를 때의 연결 컬럼 쌍 */
+export const AnalyticsPanelLinkSchema = z
+  .object({
+    follow: z.string().min(1).max(64),
+    mode: z.enum(["filter", "highlight"]),
+    on: z
+      .object({ source: ColumnNameSchema, target: ColumnNameSchema })
+      .optional(),
+  })
+  .openapi("AnalyticsPanelLink");
+
+/** 칸에서 편집 중인 설정. x·y는 고르기 전이면 빈 글자다. 칸은 grid 1×1, split 없음 (보드 검증이 확인한다). */
+export const AnalyticsPanelDraftSchema = z
+  .object({
+    ...ChartSpecSchema.shape,
+    x: z.string().max(63),
+    y: z.string().max(63),
+  })
+  .openapi("AnalyticsPanelDraft");
+
+/** 칸이 마지막으로 그린 차트. 다시 열 때 이 설정과 item 상태로 새로 그린다 (`POST /charts`의 restore). */
+export const AnalyticsDrawnSchema = z
+  .object({
+    spec: ChartSpecSchema,
+    restore: z.record(z.string(), ItemRestoreSchema),
+  })
+  .openapi("AnalyticsDrawn");
+
+const panelId = z.string().min(1).max(64);
+
+export const AnalyticsPanelSchema = z
+  .object({
+    id: panelId,
+    draft: AnalyticsPanelDraftSchema,
+    /** 그린 적이 없으면 없다 */
+    drawn: AnalyticsDrawnSchema.optional(),
+    link: AnalyticsPanelLinkSchema.optional(),
+  })
+  .openapi("AnalyticsPanel");
+
+export const AnalyticsBoardSchema = z
+  .object({
+    layout: AnalyticsLayoutNodeSchema,
+    activePanelId: panelId,
+    /** 칸 번호 순서와 상관없다. 순서는 layout이 정한다. */
+    panels: z.array(AnalyticsPanelSchema),
+    updatedAt: z.number(),
+  })
+  .openapi("AnalyticsBoard");
+
+export const SaveAnalyticsPanelSchema = z
+  .object({
+    id: panelId,
+    draft: AnalyticsPanelDraftSchema,
+    /** 이 칸이 그린 차트. 서버가 그 차트의 지금 설정·item 상태를 drawn으로 고정한다. 모르는 차트면 이전 drawn을 둔다. */
+    chartId: z.string().optional(),
+    link: AnalyticsPanelLinkSchema.optional(),
+  })
+  .openapi("SaveAnalyticsPanel");
+
+export const SaveAnalyticsBoardRequestSchema = z
+  .object({
+    layout: AnalyticsLayoutNodeSchema,
+    activePanelId: panelId,
+    panels: z.array(SaveAnalyticsPanelSchema).min(1).max(MAX_BOARD_PANELS),
+  })
+  .superRefine((board, ctx) => {
+    const issue = boardIssue(board);
+    if (issue) ctx.addIssue({ code: "custom", message: issue });
+  })
+  .openapi("SaveAnalyticsBoardRequest");
 
 // ── 운영 ───────────────────────────────────────────────────────
 

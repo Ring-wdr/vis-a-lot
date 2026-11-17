@@ -27,7 +27,13 @@ import type { AxisMeta, ItemView, ScatterMeta } from "../render/scatter";
 import type { Shape, ShapeType } from "../render/shapes";
 import type { TreemapMeta } from "../render/treemap";
 import type { WaterfallMeta } from "../render/waterfall";
-import type { JobStateResponseSchema } from "../services/chart/schemas";
+import type {
+  AnalyticsBoardSchema,
+  AnalyticsLayoutNodeSchema,
+  AnalyticsPanelSchema,
+  JobStateResponseSchema,
+  SaveAnalyticsBoardRequestSchema,
+} from "../services/chart/schemas";
 
 export type HealthResponse = {
   db: { version: string; bootCount: number; bootMs: number };
@@ -507,3 +513,13 @@ export type CreateShareRequest = {
   itemKey?: string;
   title: string;
 };
+
+// ── analytics 보드 ─────────────────────────────────────────────────
+// 모양은 chart 서비스 OAS 스키마가 정한다.
+
+export type AnalyticsLayoutNode = z.infer<typeof AnalyticsLayoutNodeSchema>;
+export type AnalyticsPanel = z.infer<typeof AnalyticsPanelSchema>;
+export type AnalyticsBoard = z.infer<typeof AnalyticsBoardSchema>;
+export type SaveAnalyticsBoardRequest = z.infer<
+  typeof SaveAnalyticsBoardRequestSchema
+>;

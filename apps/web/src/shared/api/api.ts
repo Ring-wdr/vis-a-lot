@@ -3,6 +3,7 @@
 
 import { chartClient, dataClient } from "./clients";
 import type {
+  AnalyticsBoard,
   ChartFilter,
   ChartSpec,
   ColumnName,
@@ -20,6 +21,7 @@ import type {
   ItemSize,
   JobStateResponse,
   Region,
+  SaveAnalyticsBoardRequest,
   Shape,
   Share,
   TooltipRequest,
@@ -322,6 +324,17 @@ export const api = {
         params: { path: { shareId } },
       }),
     ),
+
+  // ── chart 서비스: analytics 보드 ────────────────────────────
+  /** 내 보드. 저장한 적이 없으면 404 (ApiRequestError) */
+  board: () =>
+    as<AnalyticsBoard>()(unwrap(chartClient.GET("/analytics/board"))),
+
+  /** 보드를 통째로 저장한다. 그린 칸은 chartId를 보내면 서버가 그 차트의 상태를 고정한다. */
+  saveBoard: (body: SaveAnalyticsBoardRequest) =>
+    unwrap(chartClient.PUT("/analytics/board", { body })),
+
+  clearBoard: () => unwrap(chartClient.DELETE("/analytics/board")),
 
   // ── chart 서비스: 툴팁 ──────────────────────────────────────
   /** PNG와 같은 item의 metadata */
