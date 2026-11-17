@@ -31,6 +31,11 @@ const AGG_NAMES: Record<AggFn, MessageDescriptor> = {
   min: msg`최솟값`,
   max: msg`최댓값`,
   median: msg`중앙값`,
+  uniqueCount: msg`고유값 수`,
+  stddev: msg`표준편차`,
+  stddevP: msg`모표준편차`,
+  q1: msg`1사분위수`,
+  q3: msg`3사분위수`,
 };
 
 /** 통계 함수의 지금 언어 이름. 그리는 컴포넌트는 useLocale로 구독한다. */

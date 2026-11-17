@@ -70,6 +70,7 @@ const jobState = (version: number): JobStateResponse => ({
   phase: "render",
   progress: { done: version, total: ITEMS },
   totalItems: ITEMS,
+  matchedItems: ITEMS,
   page: 0,
   pageSize: ITEMS,
   offset: 0,

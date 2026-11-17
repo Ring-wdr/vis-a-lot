@@ -32,6 +32,12 @@ export type OptionSection = (typeof OPTION_SECTIONS)[number];
 
 export type TextAlign = "left" | "center" | "right";
 
+/** 순서 목록에 적지 않은 나머지 값의 순서. default: 컬럼 값 순, natural: 글자 안 숫자를 수로 비교 */
+export const ORDER_SORTS = ["default", "natural"] as const;
+export type OrderSort = (typeof ORDER_SORTS)[number];
+/** legend 순서·범주 순서에 적을 수 있는 값 수 */
+export const MAX_ORDER_VALUES = 200;
+
 export type TitleOptions = {
   visible: boolean;
   /** 비우면 split 조합 이름(item label) */
@@ -77,12 +83,24 @@ export type AxisOptions = {
   dateFormat: string;
 };
 
+/** x축만 범주 순서를 갖는다 (bar, boxplot, waterfall, heatmap). */
+export type XAxisOptions = AxisOptions & {
+  /** 범주 순서에 적지 않은 범주의 순서 */
+  categorySort: OrderSort;
+  /** 앞에 둘 범주. 적은 순서대로 놓고, 그 item에 없는 값은 건너뛴다. */
+  categoryOrder: string[];
+};
+
 export type LegendStyle = {
   visible: boolean;
   border: boolean;
   borderColor: string;
-  /** 항목 순서를 뒤집는다. */
+  /** 항목 순서를 뒤집는다. sort·order로 정한 순서를 뒤집는다. */
   reverse: boolean;
+  /** order에 적지 않은 legend 값의 순서 */
+  sort: OrderSort;
+  /** 앞에 둘 legend 값. 적은 순서대로 놓고, 그 item에 없는 값은 건너뛴다. 색은 바뀌지 않는다. */
+  order: string[];
   fontSize: number;
   fontColor: string;
   titleColor: string;
@@ -98,6 +116,9 @@ export type PanelOptions = {
   margin: { top: number; right: number; bottom: number; left: number };
 };
 
+/** palette.colors에 적을 수 있는 색 수 (기본 팔레트 크기) */
+export const MAX_PALETTE_COLORS = 8;
+
 export type PaletteOptions = {
   /** legend 값 색을 시작→(중간)→끝 그라데이션 단계로 */
   gradient: boolean;
@@ -108,6 +129,8 @@ export type PaletteOptions = {
   /** 단계 수. 0이면 legend 값 수 */
   steps: number;
   reverse: boolean;
+  /** 기본 팔레트 8색을 대신할 색 목록. 비면 기본 팔레트, gradient를 켜면 gradient가 우선 */
+  colors: string[];
   /** 팔레트에 들지 못한 나머지('기타' 조각)와 강조 시 나머지 색 */
   othersColor: string;
 };
@@ -118,6 +141,11 @@ export const POINT_SHAPES = [
   "triangle",
   "diamond",
   "cross",
+  "downTriangle",
+  "leftTriangle",
+  "rightTriangle",
+  "hexagon",
+  "star",
 ] as const;
 export type PointShape = (typeof POINT_SHAPES)[number];
 
@@ -208,11 +236,16 @@ export type PredictionOptions = {
   damped: boolean;
 };
 
+/** except: 이상치를 빼고 그린다, only: 이상치만 그린다. */
+export const OUTLIER_MODES = ["except", "only"] as const;
+export type OutlierMode = (typeof OUTLIER_MODES)[number];
+
 export type ValueOptions = {
   /** 빈 칸(그 조합에 값이 없음)을 이 값으로 그린다. null이면 비워 둔다. */
   nullNumeric: number | null;
-  /** 이상치를 빼고 그린다. */
+  /** 이상치를 가린다. 어떻게 가릴지는 outlierMode */
   outlier: boolean;
+  outlierMode: OutlierMode;
   outlierMethod: "iqr" | "sigma";
   /** iqr: Q1 - k·IQR .. Q3 + k·IQR, sigma: 평균 ± k·σ */
   outlierK: number;
@@ -221,11 +254,23 @@ export type ValueOptions = {
 export const FOCUS_OPERATORS = [">", ">=", "<", "<=", "=", "!="] as const;
 export type FocusOperator = (typeof FOCUS_OPERATORS)[number];
 
+/** condition: 연산자 + 값, rank: 위·아래 N개, range: 최소~최대(양 끝 포함) */
+export const FOCUS_TYPES = ["condition", "rank", "range"] as const;
+export type FocusType = (typeof FOCUS_TYPES)[number];
+export const FOCUS_RANK_MAX = 1000;
+
 export type FocusOptions = {
   enabled: boolean;
+  type: FocusType;
   target: "x" | "y";
   operator: FocusOperator;
   value: number;
+  /** 순위: 큰 쪽(top)·작은 쪽(bottom)에서 rankCount개. 경계 값과 같은 것은 모두 넣는다. */
+  rankFrom: "top" | "bottom";
+  rankCount: number;
+  /** 범위. null이면 그쪽은 열려 있다. */
+  rangeMin: number | null;
+  rangeMax: number | null;
   color: string;
   /** 조건에 맞는 점의 모양·크기 (점 차트) */
   shape: PointShape;
@@ -259,7 +304,7 @@ export type ExpressionOptions = {
 
 export type ChartOptions = {
   title: TitleOptions;
-  axes: { x: AxisOptions; y: AxisOptions };
+  axes: { x: XAxisOptions; y: AxisOptions };
   legend: LegendStyle;
   panel: PanelOptions;
   palette: PaletteOptions;
@@ -422,6 +467,14 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "expression",
   ),
 };
+
+/** 범주 순서(axes.x.categorySort·categoryOrder)를 쓰는 차트. 값 크기로 놓는 차트와 gantt 행은 쓰지 않는다. */
+export const CATEGORY_ORDER_CHARTS: readonly ChartType[] = [
+  "bar",
+  "boxplot",
+  "waterfall",
+  "heatmap",
+];
 
 export function supportsOption(
   type: ChartType | undefined,

@@ -1928,6 +1928,8 @@ export type paths = {
           offset?: number | null;
           /** @description 쉼표로 구분한 item 키 */
           items?: string;
+          /** @description item 이름 조건 [{ keyword, match }]의 JSON 문자열. match는 contains·startsWith·endsWith·exact */
+          search?: string;
           since?: number | null;
         };
         header?: never;
@@ -2762,6 +2764,13 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    ItemSearch: components["schemas"]["ItemSearchCond"][];
+    ItemSearchCond: {
+      keyword: string;
+      match: components["schemas"]["ItemSearchMatch"];
+    };
+    /** @enum {string} */
+    ItemSearchMatch: "contains" | "startsWith" | "endsWith" | "exact";
     ItemJobResponse: {
       jobId: string;
     };
@@ -2853,7 +2862,7 @@ export type components = {
         };
       };
       axes?: {
-        x?: components["schemas"]["AxisOptions"];
+        x?: components["schemas"]["XAxisOptions"];
         y?: components["schemas"]["AxisOptions"];
       };
       legend?: {
@@ -2861,6 +2870,8 @@ export type components = {
         border?: boolean;
         borderColor?: components["schemas"]["HexColor"];
         reverse?: boolean;
+        sort?: components["schemas"]["OrderSort"];
+        order?: string[];
         fontSize?: number;
         fontColor?: components["schemas"]["HexColor"];
         titleColor?: components["schemas"]["HexColor"];
@@ -2884,6 +2895,7 @@ export type components = {
         end?: components["schemas"]["HexColor"];
         steps?: number;
         reverse?: boolean;
+        colors?: components["schemas"]["HexColor"][];
         othersColor?: components["schemas"]["HexColor"];
       };
       shape?: {
@@ -2956,16 +2968,25 @@ export type components = {
         nullNumeric?: number | null;
         outlier?: boolean;
         /** @enum {string} */
+        outlierMode?: "except" | "only";
+        /** @enum {string} */
         outlierMethod?: "iqr" | "sigma";
         outlierK?: number;
       };
       focus?: {
         enabled?: boolean;
         /** @enum {string} */
+        type?: "condition" | "rank" | "range";
+        /** @enum {string} */
         target?: "x" | "y";
         /** @enum {string} */
         operator?: ">" | ">=" | "<" | "<=" | "=" | "!=";
         value?: number;
+        /** @enum {string} */
+        rankFrom?: "top" | "bottom";
+        rankCount?: number;
+        rangeMin?: number | null;
+        rangeMax?: number | null;
         color?: components["schemas"]["HexColor"];
         shape?: components["schemas"]["PointShape"];
         size?: number;
@@ -2989,6 +3010,12 @@ export type components = {
         y?: string;
       };
     };
+    XAxisOptions: components["schemas"]["AxisOptions"] & {
+      categorySort?: components["schemas"]["OrderSort"];
+      categoryOrder?: string[];
+    };
+    /** @enum {string} */
+    OrderSort: "default" | "natural";
     AxisOptions: {
       visible?: boolean;
       title?: {
@@ -3025,7 +3052,17 @@ export type components = {
       dateFormat?: string;
     };
     /** @enum {string} */
-    PointShape: "circle" | "square" | "triangle" | "diamond" | "cross";
+    PointShape:
+      | "circle"
+      | "square"
+      | "triangle"
+      | "diamond"
+      | "cross"
+      | "downTriangle"
+      | "leftTriangle"
+      | "rightTriangle"
+      | "hexagon"
+      | "star";
     GridRequest: {
       grid: components["schemas"]["Grid"];
       itemSize: components["schemas"]["ItemSize"];
@@ -3160,7 +3197,18 @@ export type components = {
     /** @example factory */
     ColumnName: string;
     /** @enum {string} */
-    AggFn: "avg" | "sum" | "count" | "min" | "max" | "median";
+    AggFn:
+      | "avg"
+      | "sum"
+      | "count"
+      | "min"
+      | "max"
+      | "median"
+      | "uniqueCount"
+      | "stddev"
+      | "stddevP"
+      | "q1"
+      | "q3";
     ChartFilter:
       | components["schemas"]["RangeFilter"]
       | components["schemas"]["ExcludeFilter"];
@@ -3808,6 +3856,7 @@ export type components = {
         total: number;
       };
       totalItems: number | null;
+      matchedItems: number | null;
       page: number;
       pageSize: number;
       offset: number;

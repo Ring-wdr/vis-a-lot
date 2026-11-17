@@ -249,6 +249,7 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
         ? { ...job.dataset }
         : { done, total: job.order.length },
     totalItems: job.phase === "render" ? job.order.length : null,
+    matchedItems: job.phase === "render" ? job.order.length : null,
     page: "page" in selection ? selection.page : 0,
     pageSize: "pageSize" in selection ? selection.pageSize : 0,
     offset: startOf(selection),

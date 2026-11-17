@@ -42,6 +42,9 @@ for (const [name, service] of Object.entries(SERVICES) as [
   if ("securitySchemes" in service)
     for (const [scheme, value] of Object.entries(service.securitySchemes))
       app.openAPIRegistry.registerComponent("securitySchemes", scheme, value);
+  if ("schemas" in service)
+    for (const [schemaName, schema] of Object.entries(service.schemas))
+      app.openAPIRegistry.register(schemaName, schema);
   for (const route of Object.values(service.routes)) {
     app.openAPIRegistry.registerPath(route);
   }

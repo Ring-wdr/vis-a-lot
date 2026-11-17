@@ -81,6 +81,14 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
   ),
 };
 
+/** 범주 순서(axes.x.categorySort·categoryOrder)를 쓰는 차트. 값 크기로 놓는 차트와 gantt 행은 쓰지 않는다. */
+export const CATEGORY_ORDER_CHARTS: readonly ChartType[] = [
+  "bar",
+  "boxplot",
+  "waterfall",
+  "heatmap",
+];
+
 export function supportsOption(type: ChartType, section: OptionSection) {
   return OPTION_SUPPORT[type].includes(section);
 }

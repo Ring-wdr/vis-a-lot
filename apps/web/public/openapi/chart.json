@@ -19,6 +19,31 @@
       }
     },
     "schemas": {
+      "ItemSearch": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ItemSearchCond"
+        },
+        "maxItems": 10
+      },
+      "ItemSearchCond": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "match": {
+            "$ref": "#/components/schemas/ItemSearchMatch"
+          }
+        },
+        "required": ["keyword", "match"]
+      },
+      "ItemSearchMatch": {
+        "type": "string",
+        "enum": ["contains", "startsWith", "endsWith", "exact"]
+      },
       "ItemJobResponse": {
         "type": "object",
         "properties": {
@@ -301,7 +326,7 @@
             "type": "object",
             "properties": {
               "x": {
-                "$ref": "#/components/schemas/AxisOptions"
+                "$ref": "#/components/schemas/XAxisOptions"
               },
               "y": {
                 "$ref": "#/components/schemas/AxisOptions"
@@ -322,6 +347,16 @@
               },
               "reverse": {
                 "type": "boolean"
+              },
+              "sort": {
+                "$ref": "#/components/schemas/OrderSort"
+              },
+              "order": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 200
               },
               "fontSize": {
                 "type": "number"
@@ -396,6 +431,13 @@
               },
               "reverse": {
                 "type": "boolean"
+              },
+              "colors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HexColor"
+                },
+                "maxItems": 8
               },
               "othersColor": {
                 "$ref": "#/components/schemas/HexColor"
@@ -657,6 +699,10 @@
               "outlier": {
                 "type": "boolean"
               },
+              "outlierMode": {
+                "type": "string",
+                "enum": ["except", "only"]
+              },
               "outlierMethod": {
                 "type": "string",
                 "enum": ["iqr", "sigma"]
@@ -672,6 +718,10 @@
               "enabled": {
                 "type": "boolean"
               },
+              "type": {
+                "type": "string",
+                "enum": ["condition", "rank", "range"]
+              },
               "target": {
                 "type": "string",
                 "enum": ["x", "y"]
@@ -682,6 +732,33 @@
               },
               "value": {
                 "type": "number"
+              },
+              "rankFrom": {
+                "type": "string",
+                "enum": ["top", "bottom"]
+              },
+              "rankCount": {
+                "type": "number"
+              },
+              "rangeMin": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rangeMax": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "color": {
                 "$ref": "#/components/schemas/HexColor"
@@ -759,6 +836,32 @@
             }
           }
         }
+      },
+      "XAxisOptions": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AxisOptions"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "categorySort": {
+                "$ref": "#/components/schemas/OrderSort"
+              },
+              "categoryOrder": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 200
+              }
+            }
+          }
+        ]
+      },
+      "OrderSort": {
+        "type": "string",
+        "enum": ["default", "natural"]
       },
       "AxisOptions": {
         "type": "object",
@@ -892,7 +995,18 @@
       },
       "PointShape": {
         "type": "string",
-        "enum": ["circle", "square", "triangle", "diamond", "cross"]
+        "enum": [
+          "circle",
+          "square",
+          "triangle",
+          "diamond",
+          "cross",
+          "downTriangle",
+          "leftTriangle",
+          "rightTriangle",
+          "hexagon",
+          "star"
+        ]
       },
       "GridRequest": {
         "type": "object",
@@ -1355,7 +1469,19 @@
       },
       "AggFn": {
         "type": "string",
-        "enum": ["avg", "sum", "count", "min", "max", "median"]
+        "enum": [
+          "avg",
+          "sum",
+          "count",
+          "min",
+          "max",
+          "median",
+          "uniqueCount",
+          "stddev",
+          "stddevP",
+          "q1",
+          "q3"
+        ]
       },
       "ChartFilter": {
         "anyOf": [
@@ -3678,6 +3804,9 @@
           "totalItems": {
             "type": ["number", "null"]
           },
+          "matchedItems": {
+            "type": ["number", "null"]
+          },
           "page": {
             "type": "number"
           },
@@ -3748,6 +3877,7 @@
           "phase",
           "progress",
           "totalItems",
+          "matchedItems",
           "page",
           "pageSize",
           "offset",
@@ -6150,6 +6280,16 @@
             "required": false,
             "description": "쉼표로 구분한 item 키",
             "name": "items",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "item 이름 조건 [{ keyword, match }]의 JSON 문자열. match는 contains·startsWith·endsWith·exact"
+            },
+            "required": false,
+            "description": "item 이름 조건 [{ keyword, match }]의 JSON 문자열. match는 contains·startsWith·endsWith·exact",
+            "name": "search",
             "in": "query"
           },
           {

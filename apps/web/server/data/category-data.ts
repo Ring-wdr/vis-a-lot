@@ -75,6 +75,12 @@ export const AGG_SQL: Record<AggFn, (y: Sql) => Sql> = {
   min: (y) => sql`min(${y})`,
   max: (y) => sql`max(${y})`,
   median: (y) => sql`percentile_cont(0.5) within group (order by ${y})`,
+  uniqueCount: (y) => sql`count(distinct ${y})`,
+  /** 행이 하나면 null → 빈 칸 */
+  stddev: (y) => sql`stddev_samp(${y})`,
+  stddevP: (y) => sql`stddev_pop(${y})`,
+  q1: (y) => sql`percentile_cont(0.25) within group (order by ${y})`,
+  q3: (y) => sql`percentile_cont(0.75) within group (order by ${y})`,
 };
 
 /** x는 범주, y는 숫자. split·legend 컬럼까지 스키마에서 확인해 꺼낸다. */
