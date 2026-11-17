@@ -7,8 +7,8 @@ import { scaleLinear } from "d3-scale";
 import type { BoxStats } from "../data/category-data";
 import { AGG_LABELS, type AggFn } from "../data/schema";
 import { compileExpression } from "./analytics/expression";
-import { focusTest } from "./analytics/focus";
-import { outlierBounds } from "./analytics/outlier";
+import { focusMatcher } from "./analytics/focus";
+import { keepsValue, outlierBounds } from "./analytics/outlier";
 import { drawAxisTitles, drawYAxis, valueScale } from "./axis-style";
 import {
   drawBaseline,
@@ -220,11 +220,17 @@ function valueExtent(
       }
     }
   } else {
+    const only = boxOutliersOnly(input);
     for (const row of input.boxes ?? []) {
       for (const b of row) {
         if (!b) continue;
-        min = Math.min(min, b.lo, ...b.outliers);
-        max = Math.max(max, b.hi, ...b.outliers);
+        // 이상치만 그리면 상자·수염은 축 범위에 넣지 않는다.
+        if (!only) {
+          min = Math.min(min, b.lo);
+          max = Math.max(max, b.hi);
+        }
+        min = Math.min(min, ...b.outliers);
+        max = Math.max(max, ...b.outliers);
         for (const v of b.dots ?? []) {
           if (v < min) min = v;
           if (v > max) max = v;
@@ -313,18 +319,33 @@ export function groupSlot(
   };
 }
 
+/** boxplot에서 value.outlierMode가 only면 상자·수염 없이 이상치 점만 그린다. */
+export function boxOutliersOnly(input: CategoryInput) {
+  const { value } = optionsOf(input);
+  return (
+    input.chartType === "boxplot" &&
+    value.outlier &&
+    value.outlierMode === "only"
+  );
+}
+
 /**
- * value·expression 구역을 집계값에 적용한 입력. bar는 빈 칸을 nullNumeric으로 채우고, 이상치 범위 밖 막대를 빼고,
- * y 식을 막대 값에 적용한다(x는 범주 인덱스). boxplot은 이상치를 켜면 이상치 점을 빼고 그린다.
+ * value·expression 구역을 집계값에 적용한 입력. bar는 빈 칸을 nullNumeric으로 채우고, 이상치 범위 밖 막대를 빼고
+ * (only면 범위 밖 막대만 남기고), y 식을 막대 값에 적용한다(x는 범주 인덱스).
+ * boxplot은 이상치를 켜면 이상치 점을 빼고 그린다. only면 이상치 점만 그리므로 dot 표본도 뺀다.
  */
 export function applyValueOptions(input: CategoryInput): CategoryInput {
   const o = optionsOf(input);
   if (input.chartType === "boxplot") {
     if (!o.value.outlier) return input;
+    const only = o.value.outlierMode === "only";
     return {
       ...input,
       boxes: input.boxes?.map((row) =>
-        row.map((b) => b && { ...b, outliers: [] }),
+        row.map(
+          (b) =>
+            b && (only ? { ...b, dots: undefined } : { ...b, outliers: [] }),
+        ),
       ),
     };
   }
@@ -341,7 +362,9 @@ export function applyValueOptions(input: CategoryInput): CategoryInput {
       o.value.outlierK,
     );
     bars = bars.map((row) =>
-      row.map((v) => (v === null || (v >= lo && v <= hi) ? v : null)),
+      row.map((v) =>
+        v === null || keepsValue(v, [lo, hi], o.value.outlierMode) ? v : null,
+      ),
     );
   }
   const expr = o.expression.y.trim() ? compileExpression(o.expression.y) : null;
@@ -392,15 +415,6 @@ export function renderCategory(
     }
     return g;
   };
-  // focus: 조건에 맞는 막대/상자(x = 범주 인덱스, y = 막대 값·중앙값)는 focus 색, legendSingleColor면 나머지는 회색
-  const focus = o.focus.enabled ? focusTest(o.focus) : undefined;
-  const colorOf = (index: number, point?: readonly [number, number], i = 0) => {
-    if (focus && point) {
-      if (focus(i, point[1])) return o.focus.color;
-      if (o.focus.legendSingleColor) return o.palette.othersColor;
-    }
-    return input.legend?.colors[index] ?? input.color;
-  };
   /** 선택이 있으면 바깥 막대/상자는 흐리게 */
   const selectionAlpha = (point: readonly [number, number]) =>
     !inSelection || inSelection(point[0], point[1]) ? 1 : o.shape.dimOpacity;
@@ -413,6 +427,35 @@ export function renderCategory(
   const pointOf = (i: number, g: number, v: number) => {
     const seg = segments?.[i]?.[g];
     return seg ? stackPoint(i, seg) : markPoint(i, g, groupCount, v);
+  };
+  // focus: 맞는 막대/상자(x = 범주 인덱스, y = 막대 값·중앙값, 누적이면 구간 가운데)는 focus 색,
+  // legendSingleColor면 나머지는 회색. 순위는 그리는 막대/상자 전체(끈 legend 값 제외)에서 매긴다.
+  const focus = o.focus.enabled
+    ? focusMatcher(o.focus, ...focusValues())
+    : undefined;
+  function focusValues(): [number[], number[]] {
+    const fx: number[] = [];
+    const fy: number[] = [];
+    if (o.focus.type !== "rank") return [fx, fy];
+    for (let i = 0; i < n; i++) {
+      for (let g = 0; g < groupCount; g++) {
+        const v = markValue(i, g);
+        if (v === null) continue;
+        if (segments && !segments[i]?.[g]) continue;
+        const point = pointOf(i, g, v);
+        if (off[legendIndexOf(g, point)]) continue;
+        fx.push(i);
+        fy.push(point[1]);
+      }
+    }
+    return [fx, fy];
+  }
+  const colorOf = (index: number, point?: readonly [number, number], i = 0) => {
+    if (focus && point) {
+      if (focus(i, point[1])) return o.focus.color;
+      if (o.focus.legendSingleColor) return o.palette.othersColor;
+    }
+    return input.legend?.colors[index] ?? input.color;
   };
   if (inSelection) {
     for (let i = 0; i < n; i++) {
@@ -553,6 +596,7 @@ export function renderCategory(
       if (i % 200 === 0) progress("render", i / n);
     });
   } else {
+    const outliersOnly = boxOutliersOnly(input);
     (input.boxes ?? []).forEach((row, i) => {
       row.forEach((b, g) => {
         if (!b) return;
@@ -563,61 +607,66 @@ export function renderCategory(
         if (off[index]) return;
         const color = colorOf(index, point, i);
         const alpha = selectionAlpha(point);
-        const line = o.size.lineWidth;
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = line;
-        // 수염
-        ctx.beginPath();
-        ctx.moveTo(cx, y(b.hi));
-        ctx.lineTo(cx, y(b.q3));
-        ctx.moveTo(cx, y(b.q1));
-        ctx.lineTo(cx, y(b.lo));
-        ctx.moveTo(cx - half / 2, y(b.hi));
-        ctx.lineTo(cx + half / 2, y(b.hi));
-        ctx.moveTo(cx - half / 2, y(b.lo));
-        ctx.lineTo(cx + half / 2, y(b.lo));
-        ctx.stroke();
-        // 상자
-        // shape: brush는 테두리 없이 채우기만, border는 테두리만. 테두리 굵기를 정했으면 그 굵기
-        const top = y(b.q3);
-        const h = Math.max(1, y(b.q1) - top);
-        if (shape.style !== "border") {
-          ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
-          ctx.fillStyle = color;
-          ctx.fillRect(cx - half, top, w, h);
-        }
-        ctx.globalAlpha = alpha;
-        if (shape.style !== "brush") {
-          ctx.strokeStyle =
-            shape.style === "border" ? color : borderOf(shape, color);
-          ctx.lineWidth = shape.borderWidth > 0 ? shape.borderWidth : line;
-          ctx.strokeRect(cx - half, top, w, h);
-        }
-        // dot: 원값 표본을 상자 너비 안에 흩어 찍는다. 흩는 위치는 순번으로 정해 다시 그려도 같다.
-        if (b.dots && b.dots.length > 0) {
-          ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
-          // 상자와 같은 색이면 채운 상자 위에서 보이지 않아 진하게 칠한다.
-          ctx.fillStyle =
-            shape.style === "border" ? color : mixColor(color, "#000000", 0.35);
-          const dotRadius = pointSizeOf(o, 1.6);
-          const spread = Math.max(0, half - dotRadius);
-          b.dots.forEach((v, k) => {
-            // 황금비 수열: 0~1에 고르게 퍼지는 결정적 값
-            const jitter = ((k * 0.618033988749895) % 1) * 2 - 1;
-            ctx.beginPath();
-            ctx.arc(cx + jitter * spread, y(v), dotRadius, 0, Math.PI * 2);
-            ctx.fill();
-          });
+        // 이상치만 그리면 상자·수염·dot·중앙값은 그리지 않는다.
+        if (!outliersOnly) {
+          const line = o.size.lineWidth;
           ctx.globalAlpha = alpha;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = line;
+          // 수염
+          ctx.beginPath();
+          ctx.moveTo(cx, y(b.hi));
+          ctx.lineTo(cx, y(b.q3));
+          ctx.moveTo(cx, y(b.q1));
+          ctx.lineTo(cx, y(b.lo));
+          ctx.moveTo(cx - half / 2, y(b.hi));
+          ctx.lineTo(cx + half / 2, y(b.hi));
+          ctx.moveTo(cx - half / 2, y(b.lo));
+          ctx.lineTo(cx + half / 2, y(b.lo));
+          ctx.stroke();
+          // 상자
+          // shape: brush는 테두리 없이 채우기만, border는 테두리만. 테두리 굵기를 정했으면 그 굵기
+          const top = y(b.q3);
+          const h = Math.max(1, y(b.q1) - top);
+          if (shape.style !== "border") {
+            ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
+            ctx.fillStyle = color;
+            ctx.fillRect(cx - half, top, w, h);
+          }
+          ctx.globalAlpha = alpha;
+          if (shape.style !== "brush") {
+            ctx.strokeStyle =
+              shape.style === "border" ? color : borderOf(shape, color);
+            ctx.lineWidth = shape.borderWidth > 0 ? shape.borderWidth : line;
+            ctx.strokeRect(cx - half, top, w, h);
+          }
+          // dot: 원값 표본을 상자 너비 안에 흩어 찍는다. 흩는 위치는 순번으로 정해 다시 그려도 같다.
+          if (b.dots && b.dots.length > 0) {
+            ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
+            // 상자와 같은 색이면 채운 상자 위에서 보이지 않아 진하게 칠한다.
+            ctx.fillStyle =
+              shape.style === "border"
+                ? color
+                : mixColor(color, "#000000", 0.35);
+            const dotRadius = pointSizeOf(o, 1.6);
+            const spread = Math.max(0, half - dotRadius);
+            b.dots.forEach((v, k) => {
+              // 황금비 수열: 0~1에 고르게 퍼지는 결정적 값
+              const jitter = ((k * 0.618033988749895) % 1) * 2 - 1;
+              ctx.beginPath();
+              ctx.arc(cx + jitter * spread, y(v), dotRadius, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            ctx.globalAlpha = alpha;
+          }
+          // 중앙값
+          ctx.strokeStyle = shape.medianColor;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - half, y(b.median));
+          ctx.lineTo(cx + half, y(b.median));
+          ctx.stroke();
         }
-        // 중앙값
-        ctx.strokeStyle = shape.medianColor;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(cx - half, y(b.median));
-        ctx.lineTo(cx + half, y(b.median));
-        ctx.stroke();
         // 이상치: shape 모양·크기를 따른다. 기본은 반지름 2 원
         ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
         const radius = pointSizeOf(o, 2);
@@ -635,7 +684,7 @@ export function renderCategory(
           );
         }
         ctx.globalAlpha = 1;
-        labels.push([cx, y(b.median), b.median]);
+        if (!outliersOnly) labels.push([cx, y(b.median), b.median]);
       });
       if (i % 50 === 0) progress("render", i / n);
     });

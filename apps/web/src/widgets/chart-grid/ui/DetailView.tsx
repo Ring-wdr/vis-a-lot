@@ -21,7 +21,11 @@ import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import type { DrawnChart } from "@/entities/workspace/model/workspace-store";
 import { useItemDetail } from "@/features/item-detail/model/use-item-detail";
 import { useJobRange } from "@/shared/api/queries";
-import { type ItemState, isTerminal } from "@/shared/api/types";
+import {
+  type ItemSearch,
+  type ItemState,
+  isTerminal,
+} from "@/shared/api/types";
 import { drawsLegend } from "@/shared/config/chart-kinds";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
@@ -65,12 +69,16 @@ export function DetailView({
   current,
   focus,
   totalItems,
+  search,
   onClose,
 }: {
   current: DrawnChart;
-  /** 크게 보는 item의 전체 순번 */
+  /** 크게 보는 item의 순번 (검색 중이면 거른 순서) */
   focus: number;
+  /** 도는 item 수 (검색 중이면 조건에 맞는 item 수) */
   totalItems: number;
+  /** item 이름 조건. 섬네일 목록도 거른 순서를 따른다. */
+  search: ItemSearch;
   onClose: () => void;
 }) {
   const { t, i18n } = useLingui();
@@ -85,7 +93,7 @@ export function DetailView({
   // 크게 보는 item을 가운데 두고 한 칸씩 미끄러진다. 처음·끝에서는 목록을 꽉 채운 채 멈춘다.
   const count = listArea ? thumbnailCountFor(listArea.width) : 1;
   const start = windowStart(focus, count, totalItems);
-  const strip = useJobRange(current.jobId, start, count);
+  const strip = useJobRange(current.jobId, start, count, search);
   const offset = strip.data?.offset ?? 0;
   const thumbs = strip.data?.items ?? [];
   const item = thumbs[focus - offset];

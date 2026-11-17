@@ -1,16 +1,31 @@
 import { useLingui } from "@lingui/react/macro";
 import type { ChartImage, LegendMeta } from "@/shared/api/types";
 import "../config/messages";
+import type { PointShape } from "../model/chart-options";
+import { PointMarker } from "./PointMarker";
 
-type Layout = NonNullable<LegendMeta["layout"]>;
+/** shape: 점 차트의 색 표시 모양 (원이면 없다) */
+type Layout = NonNullable<LegendMeta["layout"]> & { shape?: PointShape };
 type Entry = LegendMeta["entries"][number];
 
 const text =
   "absolute -translate-y-1/2 truncate whitespace-nowrap leading-none";
 
-/** 색 표시(●). 끈 값은 속이 빈 테두리만 그린다 (PNG와 같은 모양). */
+/** 색 표시(●, 점 차트는 점 모양). 끈 값은 속이 빈 테두리만 그린다 (PNG와 같은 모양). */
 function Marker({ entry, layout }: { entry: Entry; layout: Layout }) {
   const r = layout.marker;
+  if (layout.shape && layout.shape !== "circle") {
+    return (
+      <PointMarker
+        shape={layout.shape}
+        radius={r}
+        color={entry.color}
+        filled={entry.visible}
+        x={entry.marker.x}
+        y={entry.marker.y}
+      />
+    );
+  }
   const size = entry.visible ? (r - 1) * 2 : r * 2 - 0.5;
   return (
     <span
@@ -44,7 +59,8 @@ export function ChartLegend({
   display: { width: number; height: number };
 }) {
   const { t } = useLingui();
-  const { layout, box, title } = legend;
+  const { box, title } = legend;
+  const layout: Layout | undefined = legend.layout;
   if (!layout || legend.entries.length === 0) return null;
   const sx = display.width / image.width;
   const sy = display.height / image.height;

@@ -1,5 +1,7 @@
-// Value 구역의 이상치: iqr은 Q1 - k·IQR .. Q3 + k·IQR, sigma는 평균 ± k·σ 밖을 뺀다.
+// Value 구역의 이상치: iqr은 Q1 - k·IQR .. Q3 + k·IQR, sigma는 평균 ± k·σ 밖이 이상치다.
+// outlierMode가 except면 이상치를 빼고, only면 이상치만 남긴다.
 
+import type { OutlierMode } from "../options";
 import { meanSd, quantileSorted } from "./stats";
 
 /** 이상치가 아닌 범위 [lo, hi]. 값이 없으면 전 범위 */
@@ -22,13 +24,25 @@ export function outlierBounds(
   return [q1 - k * iqr, q3 + k * iqr];
 }
 
-/** 범위 안 값이면 1. NaN은 0 */
+/** 남길 값인지. except: 범위 안, only: 범위 밖(이상치). NaN은 어느 쪽도 아니다. */
+export function keepsValue(
+  v: number,
+  [lo, hi]: [number, number],
+  mode: OutlierMode = "except",
+) {
+  if (Number.isNaN(v)) return false;
+  const inside = v >= lo && v <= hi;
+  return mode === "only" ? !inside : inside;
+}
+
+/** 남길 값이면 1 (keepsValue). NaN은 0 */
 export function keepMask(
   values: ArrayLike<number>,
-  [lo, hi]: [number, number],
+  bounds: [number, number],
+  mode: OutlierMode = "except",
 ): Uint8Array {
   const mask = new Uint8Array(values.length);
   for (let i = 0; i < values.length; i++)
-    mask[i] = values[i] >= lo && values[i] <= hi ? 1 : 0;
+    mask[i] = keepsValue(values[i], bounds, mode) ? 1 : 0;
   return mask;
 }

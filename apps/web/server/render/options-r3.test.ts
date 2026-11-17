@@ -1,8 +1,8 @@
 // heatmap·candle·gantt·treemap이 차트 속성(options)을 따르는지. 그리기 호출을 기록하는 가짜 canvas로 확인한다.
 
 import { describe, expect, it } from "vitest";
-import { renderCandle } from "./candle";
-import { renderGantt } from "./gantt";
+import { candleFocus, renderCandle } from "./candle";
+import { ganttFocus, renderGantt } from "./gantt";
 import { renderHeatmap, sequentialColor } from "./heatmap";
 import {
   type ChartOptions,
@@ -305,5 +305,49 @@ describe("treemap options", () => {
       noop,
     );
     expect(texts()).toContain("$3");
+  });
+});
+
+describe("candle · gantt focus 방식", () => {
+  it("candle 순위: 종가 위 둘, 끈 legend 값(하락)은 빼고 매긴다", () => {
+    const top2 = opts({
+      focus: { enabled: true, type: "rank", target: "y", rankCount: 2 },
+    });
+    expect([...(candleFocus(candles, 60_000, top2) ?? [])]).toEqual([0, 1, 1]);
+    // 첫 캔들(하락, 종가 3)을 빼도 위 둘은 그대로 5, 7
+    const rising = (i: number) => candles.close[i] >= candles.open[i];
+    const top1 = opts({
+      focus: {
+        enabled: true,
+        type: "rank",
+        rankFrom: "bottom",
+        target: "y",
+        rankCount: 1,
+      },
+    });
+    expect([...(candleFocus(candles, 60_000, top1, rising) ?? [])]).toEqual([
+      0, 1, 0,
+    ]);
+  });
+
+  it("gantt 범위: 구간 길이(시간) 1~1.5", () => {
+    const o = opts({
+      focus: {
+        enabled: true,
+        type: "range",
+        target: "y",
+        rangeMin: 1,
+        rangeMax: 1.5,
+      },
+    });
+    expect([...(ganttFocus(ganttInput.bars, o) ?? [])]).toEqual([1, 0]);
+    const rank = opts({
+      focus: { enabled: true, type: "rank", target: "y", rankCount: 1 },
+    });
+    expect([...(ganttFocus(ganttInput.bars, rank) ?? [])]).toEqual([0, 1]);
+    // 둘째 막대를 빼면 첫 막대가 위 하나다.
+    expect([
+      ...(ganttFocus(ganttInput.bars, rank, (j) => j === 0) ?? []),
+    ]).toEqual([1, 0]);
   });
 });

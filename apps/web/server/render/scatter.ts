@@ -5,7 +5,7 @@ import { extent } from "d3-array";
 import { scaleLinear, scaleUtc } from "d3-scale";
 import { utcFormat } from "d3-time-format";
 import { compileExpression } from "./analytics/expression";
-import { focusTest } from "./analytics/focus";
+import { focusMatcher } from "./analytics/focus";
 import { keepMask, outlierBounds } from "./analytics/outlier";
 import { type PredictionResult, predict } from "./analytics/prediction";
 import { computeScores, type ScoreResult } from "./analytics/score";
@@ -31,6 +31,7 @@ import {
   type ChartOptions,
   DEFAULT_OPTIONS,
   optionsOf,
+  type PointShape,
 } from "./options";
 import { dimOutside, drawSelection, type Region, regionTester } from "./region";
 import { drawShapes, type Shape } from "./shapes";
@@ -78,7 +79,13 @@ export type ScatterMeta = {
     id: number[];
     /** legend 인덱스 (legend가 있을 때만) */
     g?: number[];
+    /** focus에 맞는 점이면 1 (focus를 켰을 때만) */
+    f?: number[];
   };
+  /** 점 모양(shape.type). 원이면 없다. 화면의 가까운 점 표시가 같은 모양을 쓴다. */
+  shape?: PointShape;
+  /** focus에 맞는 점의 모양 (focus를 켰을 때만) */
+  focusShape?: PointShape;
   total: number;
   /** 선택 영역 안에 든 점 수. 선택이 없으면 없다. */
   selected?: number;
@@ -247,7 +254,7 @@ export function withExpression(
   return { input: keepRows({ ...input, xs: nx, ys: ny }, mask) };
 }
 
-/** value 구역의 이상치: y가 범위 밖인 행을 뺀다. 뺀 수를 함께 돌려준다. */
+/** value 구역의 이상치: y가 범위 밖인 행을 뺀다(only면 범위 밖 행만 남긴다). 뺀 수를 함께 돌려준다. */
 export function withoutOutliers(
   input: ScatterInput,
   value: ChartOptions["value"],
@@ -256,6 +263,7 @@ export function withoutOutliers(
   const mask = keepMask(
     input.ys,
     outlierBounds(input.ys, value.outlierMethod, value.outlierK),
+    value.outlierMode,
   );
   const out = keepRows(input, mask);
   return { input: out, removed: input.ys.length - out.ys.length };
@@ -639,8 +647,16 @@ export function renderScatter(
     o.axes.x,
   );
 
-  // focus 구역: 조건에 맞는 점은 맨 위에 focus 색·모양·크기로 다시 그린다.
-  const focus = o.focus.enabled ? focusTest(o.focus) : undefined;
+  // focus 구역: 맞는 점은 맨 위에 focus 색·모양·크기로 다시 그린다. 순위는 끈 legend 값의 점을 뺀
+  // 이 item의 점 전체(지운 점·이상치 제외, 확대와 무관)에서 매긴다.
+  const focus = o.focus.enabled
+    ? focusMatcher(
+        o.focus,
+        xs,
+        ys,
+        groupIndex ? (i) => !off[groupIndex[i]] : undefined,
+      )
+    : undefined;
   const focused = focus ? new Uint8Array(n) : undefined;
 
   // 점마다 d3 scale을 부르면 함수 몇 겹을 거쳐 느리다. 선형 축이면 같은 식을 풀어 쓴다 (결과는 같다).
@@ -655,6 +671,7 @@ export function renderScatter(
   const keptY: number[] = [];
   const keptId: number[] = [];
   const keptG: number[] = [];
+  const keptF: number[] = [];
   const sx = new Float32Array(n);
   const sy = new Float32Array(n);
   const { selection } = input;
@@ -685,6 +702,7 @@ export function renderScatter(
         keptY.push(ys[i]);
         keptId.push(input.ids[i]);
         if (groupIndex) keptG.push(groupIndex[i]);
+        if (focused) keptF.push(focused[i]);
       }
     }
     if (i % CHUNK === 0) progress("aggregate", i / n);
@@ -718,7 +736,9 @@ export function renderScatter(
       [
         expressed.error,
         cleaned.removed > 0 &&
-          `이상치 ${cleaned.removed.toLocaleString()} 제외`,
+          (o.value.outlierMode === "only"
+            ? "이상치만"
+            : `이상치 ${cleaned.removed.toLocaleString()} 제외`),
         selection
           ? `${selectedCount.toLocaleString()} / ${n.toLocaleString()} pts 선택`
           : `${n.toLocaleString()} pts`,
@@ -727,8 +747,15 @@ export function renderScatter(
     );
 
     // ── legend ────────────────────────────────────────────────
+    // legend 색 표시는 점과 같은 모양으로 그린다.
     legendMeta = input.legend
-      ? drawLegendAround(ctx, input.legend, plot, yLabelWidth, o)
+      ? drawLegendAround(
+          ctx,
+          { ...input.legend, shape: o.shape.type },
+          plot,
+          yLabelWidth,
+          o,
+        )
       : undefined;
   }
 
@@ -962,7 +989,10 @@ export function renderScatter(
       y: keptY,
       id: keptId,
       ...(input.legend ? { g: keptG } : {}),
+      ...(focused ? { f: keptF } : {}),
     },
+    ...(o.shape.type !== "circle" ? { shape: o.shape.type } : {}),
+    ...(focused ? { focusShape: o.focus.shape } : {}),
     total: n,
     ...(selection ? { selected: selectedCount } : {}),
     legend: legendMeta,

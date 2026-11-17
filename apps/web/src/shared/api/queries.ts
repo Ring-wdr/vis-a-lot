@@ -17,8 +17,10 @@ import {
   type CsvOptions,
   type DatasetId,
   type DatasetStatus,
+  type ItemSearch,
   isTerminal,
   type JobStateResponse,
+  NO_SEARCH,
   type UploadTask,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
@@ -45,10 +47,16 @@ export const queryKeys = {
     ["datasets", id, "summary", column] as const,
   legendValues: (id: DatasetId, column: ColumnName | null) =>
     ["datasets", id, "legend-values", column] as const,
-  job: (jobId: string, page: number, pageSize: number) =>
-    ["jobs", jobId, page, pageSize] as const,
-  jobRange: (jobId: string, offset: number, count: number) =>
-    ["jobs", jobId, "range", offset, count] as const,
+  job: (jobId: string, page: number, pageSize: number, search: ItemSearch) =>
+    ["jobs", jobId, page, pageSize, search] as const,
+  jobRange: (
+    jobId: string,
+    offset: number,
+    count: number,
+    search: ItemSearch,
+  ) => ["jobs", jobId, "range", offset, count, search] as const,
+  jobMatched: (jobId: string, search: ItemSearch) =>
+    ["jobs", jobId, "matched", search] as const,
   jobProgress: (jobId: string) => ["jobs", jobId, "progress"] as const,
   jobItem: (jobId: string, key: string) =>
     ["jobs", jobId, "item", key] as const,
@@ -288,14 +296,16 @@ export function isPageSettled(job: JobStateResponse | undefined) {
 /**
  * job 진행 상태를 long polling으로 받는다.
  * 응답이 오면 바로 다음 요청을 보내고, 페이지가 모두 끝난 상태가 되면 멈춘다.
+ * search가 있으면 이름 조건으로 거른 순서의 페이지다. 조건만 바뀌는 동안에는 이전 응답을 그대로 둔다.
  */
 export function useJob(
   jobId: string | undefined,
   page: number,
   pageSize: number,
+  search: ItemSearch = NO_SEARCH,
 ) {
   const client = useQueryClient();
-  const queryKey = queryKeys.job(jobId ?? "", page, pageSize);
+  const queryKey = queryKeys.job(jobId ?? "", page, pageSize, search);
   return useQuery({
     queryKey,
     queryFn: ({ signal }) => {
@@ -306,9 +316,16 @@ export function useJob(
         pageSize,
         prev?.version ?? -1,
         signal,
+        search,
       );
     },
     enabled: jobId !== undefined,
+    placeholderData: (prev, prevQuery) => {
+      const [, prevJob, , prevSize, prevSearch] = prevQuery?.queryKey ?? [];
+      return prevJob === jobId && prevSize === pageSize && prevSearch !== search
+        ? prev
+        : undefined;
+    },
     refetchInterval: (query) => (isPageSettled(query.state.data) ? false : 1),
     refetchIntervalInBackground: true,
     ...LONG_POLL_RETRY,
@@ -323,9 +340,10 @@ export function useJobRange(
   jobId: string | undefined,
   offset: number,
   count: number,
+  search: ItemSearch = NO_SEARCH,
 ) {
   const client = useQueryClient();
-  const queryKey = queryKeys.jobRange(jobId ?? "", offset, count);
+  const queryKey = queryKeys.jobRange(jobId ?? "", offset, count, search);
   return useQuery({
     queryKey,
     queryFn: ({ signal }) => {
@@ -336,6 +354,7 @@ export function useJobRange(
         count,
         prev?.version ?? -1,
         signal,
+        search,
       );
     },
     enabled: jobId !== undefined,
@@ -385,6 +404,40 @@ export function useJobProgress<T = JobStateResponse>(
     refetchIntervalInBackground: true,
     ...LONG_POLL_RETRY,
   });
+}
+
+/**
+ * 이름 조건에 맞는 item 수. split 조합이 정해지기 전(null)에는 long polling으로 기다리고,
+ * 정해지면 바뀌지 않으므로 멈춘다. 조건이 없으면 받지 않는다.
+ */
+export function useMatchedItems(jobId: string | undefined, search: ItemSearch) {
+  const client = useQueryClient();
+  const queryKey = queryKeys.jobMatched(jobId ?? "", search);
+  const matched = useQuery({
+    queryKey,
+    select: (job: JobStateResponse) => job.matchedItems,
+    queryFn: ({ signal }) => {
+      const prev = client.getQueryData<JobStateResponse>(queryKey);
+      return api.job(
+        jobId as string,
+        0,
+        0,
+        prev?.version ?? -1,
+        signal,
+        search,
+      );
+    },
+    enabled: jobId !== undefined && search.length > 0,
+    refetchInterval: (query) =>
+      !query.state.data ||
+      (query.state.data.matchedItems === null &&
+        !isTerminal(query.state.data.status))
+        ? 1
+        : false,
+    refetchIntervalInBackground: true,
+    ...LONG_POLL_RETRY,
+  });
+  return matched.data ?? null;
 }
 
 /** item 단위 다시 그리기에서 그 item 하나의 상태. 그 item이 끝나면 polling을 멈춘다. */

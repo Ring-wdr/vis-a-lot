@@ -6,8 +6,15 @@ import {
   type ChartOptions,
   DEFAULT_OPTIONS,
   type LegendStyle,
+  type PointShape,
 } from "./options";
-import { headerHeight, legendStyleOf, marginOf, surfaceOf } from "./style";
+import {
+  headerHeight,
+  legendStyleOf,
+  marginOf,
+  pathPoint,
+  surfaceOf,
+} from "./style";
 import { THEME } from "./theme";
 
 export type Rect = { x: number; y: number; width: number; height: number };
@@ -25,6 +32,8 @@ export type LegendInput = {
   hidden?: readonly string[];
   /** legend 모양(options.legend, 글자 크기 자동 반영). 없으면 framePlot·drawLegendAround에 넘긴 options에서 */
   style?: LegendStyle;
+  /** 색 표시 모양. 점을 그리는 차트(scatter·line)가 점과 같은 모양(shape.type)을 넘긴다. 없으면 원 */
+  shape?: PointShape;
 };
 
 /** legend 인덱스별로 끈 값인지. 렌더러가 그 값의 점(막대/상자)을 건너뛴다. */
@@ -59,6 +68,8 @@ export type LegendLayout = {
   fontSize: number;
   /** 색 표시(●) 반지름 */
   marker: number;
+  /** 색 표시 모양. 원이면 없다 */
+  shape?: PointShape;
   textColor: string;
   titleColor: string;
   mutedColor: string;
@@ -80,6 +91,7 @@ function layoutOf(
     orientation,
     fontSize: look.font,
     marker: look.marker,
+    ...(look.shape ? { shape: look.shape } : {}),
     textColor: look.textColor,
     titleColor: look.titleColor,
     mutedColor: THEME.textMuted,
@@ -118,6 +130,8 @@ type Look = {
   box: number;
   row: number;
   marker: number;
+  /** 색 표시 모양. 원이면 undefined */
+  shape: PointShape | undefined;
   textColor: string;
   titleColor: string;
   border: boolean;
@@ -138,6 +152,7 @@ function lookOf(legend: LegendInput, o: ChartOptions): Look {
     box: font + 9,
     row: font + 7,
     marker: Math.max(3, Math.round(font * 0.45)),
+    shape: legend.shape === "circle" ? undefined : legend.shape,
     textColor: style.fontColor,
     titleColor: style.titleColor,
     border: style.border,
@@ -332,6 +347,20 @@ function drawMarker(
   const r = look.marker;
   // 마커는 데이터 색, 글자는 텍스트 색 (텍스트에 데이터 색을 입히지 않는다)
   ctx.beginPath();
+  if (look.shape) {
+    // 점 모양: 켠 값은 채우고(cross는 선), 끈 값은 테두리만. 화면 PointMarker와 같은 크기다.
+    const { shape } = look;
+    pathPoint(ctx, shape, cx, cy, visible ? r : r - 1);
+    if (visible && shape !== "cross") {
+      ctx.fillStyle = color;
+      ctx.fill();
+      return;
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    return;
+  }
   if (!visible) {
     // 끈 값은 속이 빈 테두리만 그린다.
     ctx.arc(cx, cy, r - 1, 0, Math.PI * 2);

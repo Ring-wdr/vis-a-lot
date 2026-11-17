@@ -49,8 +49,7 @@ import {
   toDistribution,
 } from "../render/analytics/distribution";
 import { CANDLE_LEGEND } from "../render/candle";
-import { gradientColors, legendStyleOf } from "../render/style";
-import { defaultLegendColor } from "../render/theme";
+import { gradientColors, legendStyleOf, paletteColor } from "../render/style";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
 import { getRuntime } from "../runtime";
@@ -58,6 +57,7 @@ import {
   DataServiceError,
   dataService,
 } from "../services/chart/clients/data-service";
+import { filterOrder, type ItemSearch, searchKeyOf } from "./item-search";
 
 type Job = {
   id: string;
@@ -67,6 +67,8 @@ type Job = {
   dataset: { done: number; total: number };
   items: Map<string, ItemState>;
   order: string[];
+  /** 마지막으로 이름 조건으로 거른 순서. 조건 문자열과 원래 순서(참조)가 같으면 다시 쓴다. */
+  searched?: { key: string; source: string[]; order: string[] };
   version: number;
   waiters: Set<() => void>;
   abort: AbortController;
@@ -182,14 +184,34 @@ export type ItemSelection =
       pageSize: number;
       /** 지정하면 페이지 경계와 상관없이 이 순번부터 pageSize개 (크게 보기 섬네일 목록) */
       offset?: number;
+      /** item 이름 조건. 있으면 page·offset은 거른 순서 기준이다. */
+      search?: ItemSearch;
     }
   | { keys: string[] };
+
+/**
+ * 이름 조건으로 거른 item 순서. 조건이 없으면 job.order 그대로다.
+ * 30,000개를 long polling 요청마다 다시 훑지 않게 job마다 한 건만 기억한다.
+ */
+function orderOf(job: Job, search: ItemSearch | undefined) {
+  const key = searchKeyOf(search);
+  if (!key || !search) return job.order;
+  const cached = job.searched;
+  if (cached?.key === key && cached.source === job.order) return cached.order;
+  const labels = new Map(job.chart.items?.map((i) => [i.key, i.label]));
+  const order = filterOrder(job.order, (k) => labels.get(k), search);
+  job.searched = { key, source: job.order, order };
+  return order;
+}
 
 function selectedKeys(job: Job, selection: ItemSelection) {
   if ("keys" in selection)
     return selection.keys.filter((k) => job.items.has(k));
   const start = startOf(selection);
-  return job.order.slice(start, start + selection.pageSize);
+  return orderOf(job, selection.search).slice(
+    start,
+    start + selection.pageSize,
+  );
 }
 
 /** 응답 item 중 첫 item의 전체 순번 */
@@ -249,7 +271,12 @@ export function jobState(job: Job, selection: ItemSelection): JobStateResponse {
         ? { ...job.dataset }
         : { done, total: job.order.length },
     totalItems: job.phase === "render" ? job.order.length : null,
-    matchedItems: job.phase === "render" ? job.order.length : null,
+    matchedItems:
+      job.phase !== "render"
+        ? null
+        : "keys" in selection
+          ? job.order.length
+          : orderOf(job, selection.search).length,
     page: "page" in selection ? selection.page : 0,
     pageSize: "pageSize" in selection ? selection.pageSize : 0,
     offset: startOf(selection),
@@ -539,7 +566,8 @@ function optionsFor(chart: ChartRecord, item: ChartItem, theme?: ChartTheme) {
 
 /**
  * legend 값별 색: item 개별 색 → 공통 속성의 legend 색 → 기본 색 순서로 고른다.
- * 기본 색은 palette.gradient가 켜져 있으면 값 순서대로 그라데이션 단계, 아니면 차트가 정한 색이나 팔레트 순서다.
+ * 기본 색은 palette.gradient가 켜져 있으면 값 순서대로 그라데이션 단계, 아니면 차트가 정한 색이나
+ * 팔레트 순서다. 팔레트는 palette.colors가 있으면 그 목록, 비면 기본 8색이다.
  */
 export function legendColors(
   chart: ChartRecord,
@@ -558,7 +586,7 @@ export function legendColors(
       chart.spec.common.legendColors?.[v] ??
       gradient?.[i] ??
       defaults?.[i] ??
-      defaultLegendColor(i),
+      paletteColor(palette, i),
   );
 }
 

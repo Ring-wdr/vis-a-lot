@@ -256,3 +256,49 @@ export async function queryBoxData(
     })),
   };
 }
+
+/** split 조합 키. SQL 쪽(queryRestAgg의 splitKey)과 같은 규칙으로 null은 빈 글자로 본다. */
+export const splitKeyOf = (values: readonly (string | null)[]) =>
+  values.map((v) => v ?? "").join("\u001f");
+
+/**
+ * split 조합마다 '기타'로 묶을 범주(rest)의 원래 행만 모아 통계 함수로 다시 집계한다.
+ * 평균·중앙값·표준편차처럼 더할 수 없는 통계도 맞는다. 결과는 splitKeyOf 키 → 값.
+ */
+export async function queryRestAgg(
+  db: Db,
+  schema: DatasetSchema,
+  params: Pick<
+    CategoryDataParams,
+    "table" | "x" | "y" | "agg" | "splitBy" | "filters"
+  >,
+  overflow: { values: readonly string[]; rest: readonly string[] }[],
+): Promise<Map<string, number | null>> {
+  if (overflow.length === 0) return new Map();
+  const x = columnOf(schema, params.x, "categorical");
+  const y = ident(columnOf(schema, params.y, "numeric").name);
+  const split = params.splitBy.map((c) => columnOf(schema, c));
+  const splitKey = split.length
+    ? sql.join(
+        split.map((c) => sql`coalesce(${textSql(c)}, '')`),
+        sql` || chr(31) || `,
+      )
+    : sql`''`;
+  const keys = overflow.flatMap((o) =>
+    o.rest.map((c) => `${splitKeyOf(o.values)}\u001e${c}`),
+  );
+  const where = allOf([
+    sql`${y} is not null`,
+    ...filterSql(schema, params.filters),
+    sql`(${splitKey} || chr(30) || coalesce(${textSql(x)}, '')) in
+        (select jsonb_array_elements_text(${JSON.stringify(keys)}::jsonb))`,
+  ]);
+  const res = await sql<{
+    k: string;
+    v: number | null;
+  }>`select ${splitKey} as k, ${AGG_SQL[params.agg](y)}::float8 as v
+    from ${tableSql(params.table)}
+    where ${where}
+    group by 1`.execute(db);
+  return new Map(res.rows.map((r) => [r.k, r.v]));
+}

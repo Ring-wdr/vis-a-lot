@@ -129,6 +129,10 @@ export const ChartOptionsSchema = opt({
     color: HexColorSchema,
     align: z.enum(["left", "center", "right"]),
     subtitleColor: HexColorSchema,
+    /** null이면 제목 크기의 0.9배 */
+    subtitleFontSize: orNull(num(6, 40)),
+    /** null이면 제목 정렬을 따른다. */
+    subtitleAlign: orNull(z.enum(["left", "center", "right"])),
     summary: opt({ visible: z.boolean(), color: HexColorSchema }),
   }),
   axes: opt({ x: XAxisOptionsSchema, y: AxisOptionsSchema }),

@@ -1,10 +1,12 @@
 "use client";
 
 import { createStore } from "zustand";
-import type {
-  ChartDefaults,
-  ChartSpec,
-  CreateChartResponse,
+import {
+  type ChartDefaults,
+  type ChartSpec,
+  type CreateChartResponse,
+  type ItemSearch,
+  NO_SEARCH,
 } from "@/shared/api/types";
 import { type ChartFeature, supports } from "@/shared/config/chart-kinds";
 import { DEFAULT_DATASET } from "@/shared/config/dataset";
@@ -63,8 +65,10 @@ export type WorkspaceState = {
   /** history나 공유 링크의 차트를 이 탭에 다시 그리는 중 */
   opening: boolean;
   page: number;
-  /** 크게 보고 있는 item의 전체 순번. null이면 grid를 보여준다. */
+  /** 크게 보고 있는 item의 순번(검색 중이면 거른 순서). null이면 grid를 보여준다. */
   focus: number | null;
+  /** item 이름 검색 조건(여럿이면 OR). 탭 상태라 차트 설정(spec)·history·공유에 넣지 않는다. */
+  search: ItemSearch;
   /** 마지막으로 누른 item 키. 차트·데이터 다운로드와 데이터 표가 이 item을 쓴다. */
   selectedItem: string | null;
   mode: Mode;
@@ -89,6 +93,8 @@ export type WorkspaceState = {
   replaceJob: (jobId: string, spec: ChartSpec, page?: number) => void;
   setPage: (page: number) => void;
   setFocus: (focus: number | null) => void;
+  /** 검색 조건을 바꾸면 순번이 달라지므로 첫 페이지 grid로 돌아간다. */
+  setSearch: (search: ItemSearch) => void;
   setSelectedItem: (key: string | null) => void;
   setMode: (mode: Mode) => void;
   setPaintTool: (tool: PaintTool) => void;
@@ -130,6 +136,7 @@ export function createWorkspaceStore({
     opening: false,
     page: 0,
     focus: null,
+    search: NO_SEARCH,
     selectedItem: null,
     mode: "normal",
     paintTool: "rect",
@@ -145,6 +152,7 @@ export function createWorkspaceStore({
         current,
         page: 0,
         focus: null,
+        search: NO_SEARCH,
         selectedItem: null,
         itemJobs: {},
         undoCounts: {},
@@ -165,6 +173,12 @@ export function createWorkspaceStore({
       ),
     setPage: (page) => set({ page }),
     setFocus: (focus) => set({ focus }),
+    setSearch: (search) =>
+      set({
+        search: search.length > 0 ? search : NO_SEARCH,
+        page: 0,
+        focus: null,
+      }),
     setSelectedItem: (selectedItem) => set({ selectedItem }),
     // 다시 보기 전용 화면은 일반 모드(툴팁)만 쓴다.
     setMode: (mode) => set((s) => (s.readOnly ? {} : { mode })),

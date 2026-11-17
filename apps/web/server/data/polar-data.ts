@@ -2,6 +2,7 @@
 // 범주는 split item마다 다를 수 있어(예: 공장별 설비) 상위 N은 item 안에서 고른다.
 
 import type { CategoryData } from "./category-data";
+import type { AggFn } from "./schema";
 
 /** 이름을 붙여 그리는 조각 수. 팔레트가 8색이라 나머지는 '기타' 하나로 묶는다. */
 export const PIE_TOP_SLICES = 8;
@@ -34,25 +35,65 @@ export type PieData = {
 const positive = (v: number | null | undefined): v is number =>
   typeof v === "number" && Number.isFinite(v) && v > 0;
 
+/** item 안의 양수 조각을 큰 순으로. sort는 안정 정렬이라 같은 값은 원래(SQL) 순서대로 남는다. */
+function rankSlices(group: CategoryData["groups"][number]) {
+  const ranked: PieSliceValue[] = [];
+  group.categories.forEach((category, i) => {
+    const value = group.bars?.[i]?.[0];
+    if (positive(value)) ranked.push({ category, value });
+  });
+  return ranked.sort((a, b) => b.value - a.value);
+}
+
+/**
+ * '기타'를 조각 값의 합이 아니라 원래 행으로 다시 집계할 통계 함수. 합계·개수는 합과 같고,
+ * 평균·최솟값·최댓값·중앙값은 예전 그림(조각 값의 합)을 지키려고 그대로 더한다.
+ */
+export function pieOthersReaggregated(agg: AggFn) {
+  return !PIE_OTHERS_SUMMED.has(agg);
+}
+const PIE_OTHERS_SUMMED = new Set<AggFn>([
+  "avg",
+  "sum",
+  "count",
+  "min",
+  "max",
+  "median",
+]);
+
+/** split 조합마다 '기타'로 묶일 범주. 다시 집계(queryRestAgg)할 때 쓴다. */
+export function pieOverflow(data: CategoryData, top = PIE_TOP_SLICES) {
+  return data.groups
+    .map((group) => ({
+      values: group.values,
+      rest: rankSlices(group)
+        .slice(top)
+        .map((s) => s.category),
+    }))
+    .filter((o) => o.rest.length > 0);
+}
+
 /**
  * bar 집계(legend 없음)를 pie 조각으로 바꾼다. 음수·0·빈 값은 비율을 낼 수 없어 뺀다.
  * item 안에서 큰 순으로 top개만 이름을 붙이고, 나머지는 '기타'로 더해 끝에 둔다.
+ * others(split 값 → 다시 집계한 값)를 주면 더하지 않고 그 값을 쓴다 (0 이하·빈 값이면 '기타'를 두지 않는다).
  */
-export function toPieData(data: CategoryData, top = PIE_TOP_SLICES): PieData {
+export function toPieData(
+  data: CategoryData,
+  top = PIE_TOP_SLICES,
+  others?: (values: string[]) => number | null | undefined,
+): PieData {
   const totals = new Map<string, number>();
   const groups = data.groups.map((group) => {
-    const ranked: PieSliceValue[] = [];
-    group.categories.forEach((category, i) => {
-      const value = group.bars?.[i]?.[0];
-      if (positive(value)) ranked.push({ category, value });
-    });
-    // sort는 안정 정렬이라 같은 값은 원래(SQL) 순서대로 남는다.
-    ranked.sort((a, b) => b.value - a.value);
+    const ranked = rankSlices(group);
     const slices = ranked.slice(0, top);
-    const rest = ranked.slice(top).reduce((sum, s) => sum + s.value, 0);
+    const rest = others
+      ? (others(group.values) ?? 0)
+      : ranked.slice(top).reduce((sum, s) => sum + s.value, 0);
     for (const s of slices)
       totals.set(s.category, (totals.get(s.category) ?? 0) + s.value);
-    if (rest > 0) slices.push({ category: OTHERS_SLICE, value: rest });
+    if (ranked.length > top && positive(rest))
+      slices.push({ category: OTHERS_SLICE, value: rest });
     return { values: group.values, slices };
   });
   const order = [...totals].sort((a, b) => b[1] - a[1]).map(([c]) => c);

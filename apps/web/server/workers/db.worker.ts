@@ -1,7 +1,12 @@
 import { PGlite } from "@electric-sql/pglite";
 import { CompiledQuery, sql } from "kysely";
 import { queryCandleData } from "../data/candle-data";
-import { queryBarData, queryBoxData } from "../data/category-data";
+import {
+  queryBarData,
+  queryBoxData,
+  queryRestAgg,
+  splitKeyOf,
+} from "../data/category-data";
 import {
   queryChartData,
   queryLegendValues,
@@ -15,7 +20,14 @@ import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
 import { exportItemRows, queryItemRows } from "../data/item-rows";
-import { attachSunburst, toPieData, toRadarData } from "../data/polar-data";
+import {
+  attachSunburst,
+  PIE_TOP_SLICES,
+  pieOthersReaggregated,
+  pieOverflow,
+  toPieData,
+  toRadarData,
+} from "../data/polar-data";
 import { querySampleRows } from "../data/sample-rows";
 import { querySankeyData } from "../data/sankey-data";
 import { createDb, PGLITE_EXTENSIONS, PLANNER_SETTINGS } from "../db/database";
@@ -343,7 +355,15 @@ serveRpc<DbMethods>({
       chartType: "bar",
       legend: null,
     });
-    const pie = toPieData(bars);
+    // 더할 수 없는 통계 함수는 '기타'를 원래 행으로 다시 집계한다.
+    const others = pieOthersReaggregated(params.agg)
+      ? await queryRestAgg(db, schema, { ...params, table }, pieOverflow(bars))
+      : undefined;
+    const pie = toPieData(
+      bars,
+      PIE_TOP_SLICES,
+      others && ((values) => others.get(splitKeyOf(values))),
+    );
     if (!sunburst) return pie;
     const detail = await queryBarData(db, schema, {
       ...params,

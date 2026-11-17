@@ -15,6 +15,7 @@ import type {
   HistoryDetail,
   ItemMeta,
   ItemRowsRequest,
+  ItemSearch,
   ItemSettingsChanges,
   ItemSize,
   JobStateResponse,
@@ -61,6 +62,9 @@ function as<T>() {
 }
 
 const dataset = (datasetId: DatasetId) => ({ datasetId });
+/** job 조회의 search query. 조건이 없으면 보내지 않는다. */
+const searchParam = (search: ItemSearch = []) =>
+  search.length > 0 ? JSON.stringify(search) : undefined;
 const item = (chartId: string, itemKey: string) => ({ chartId, itemKey });
 
 /** PNG URL(`/api/chart/charts/{chartId}/items/{itemKey}/png?v=…`)에서 item을 꺼낸다. */
@@ -216,17 +220,22 @@ export const api = {
     unwrap(chartClient.POST("/charts", { body })),
 
   /** long polling. since 이후 변화가 생기거나 페이지가 모두 끝나면 응답이 온다. */
+  /** search가 있으면 이름 조건으로 거른 순서의 페이지다. */
   job: (
     jobId: string,
     page: number,
     pageSize: number,
     since: number,
     signal?: AbortSignal,
+    search?: ItemSearch,
   ) =>
     as<JobStateResponse>()(
       unwrap(
         chartClient.GET("/jobs/{jobId}", {
-          params: { path: { jobId }, query: { page, pageSize, since } },
+          params: {
+            path: { jobId },
+            query: { page, pageSize, since, search: searchParam(search) },
+          },
           signal,
         }),
       ),
@@ -239,13 +248,19 @@ export const api = {
     count: number,
     since: number,
     signal?: AbortSignal,
+    search?: ItemSearch,
   ) =>
     as<JobStateResponse>()(
       unwrap(
         chartClient.GET("/jobs/{jobId}", {
           params: {
             path: { jobId },
-            query: { offset, pageSize: count, since },
+            query: {
+              offset,
+              pageSize: count,
+              since,
+              search: searchParam(search),
+            },
           },
           signal,
         }),

@@ -165,8 +165,8 @@
 |---|---|---|---|
 | `value.outlierMode` | `"except" \| "only"` | `except` | 이상치 처리. except는 지금처럼 이상치를 빼고, only는 이상치만 그린다 |
 | `palette.colors` | `string[]` | `[]` | 기본 팔레트 8색을 대신할 색 목록(8개까지). 비면 기본 팔레트. 그라데이션을 켜면 그라데이션이 우선 |
-| `title.subtitleFontSize` | number | 11 | 부제목 글자 크기 |
-| `title.subtitleAlign` | `left \| center \| right` | `left` | 부제목 정렬 |
+| `title.subtitleFontSize` | `number \| null` | null | 부제목 글자 크기. null이면 지금처럼 제목 크기의 0.9배. `title.fontSize`처럼 `size.fontAuto`가 꺼져 있을 때만 쓴다 |
+| `title.subtitleAlign` | `left \| center \| right \| null` | null | 부제목 정렬. null이면 지금처럼 제목 정렬(`title.align`)을 따른다 |
 
 기본값은 모두 지금 그림과 같다. `option-fields.test.ts`(서버 기본값의 모든 칸이 설정 창에 있는지)가 새 칸도 지킨다.
 
@@ -181,7 +181,7 @@
 | | 내용 |
 |---|---|
 | 지금 있는 것 | 보이기, 글자(`text`), 부제목(`subtitle`)·부제목 색, 글자 크기·굵게·색·정렬, 요약 보이기·색, split 구분 기호 |
-| 더하는 것 | 부제목 글자 크기·정렬 (5.3) |
+| 더하는 것 | 부제목 글자 크기·정렬 (5.3). 기본 null이면 제목을 따른다 |
 | 하지 않는 것 | 글꼴 고르기. PNG 글꼴은 하나다 |
 
 ### 축 (`axes.x`, `axes.y`)

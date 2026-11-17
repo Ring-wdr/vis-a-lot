@@ -49,6 +49,10 @@ export type TitleOptions = {
   color: string;
   align: TextAlign;
   subtitleColor: string;
+  /** 부제목 글자 크기. null이면 제목 크기의 0.9배. size.fontAuto가 꺼져 있을 때만 쓴다. */
+  subtitleFontSize: number | null;
+  /** 부제목 정렬. null이면 제목 정렬(align)을 따른다. */
+  subtitleAlign: TextAlign | null;
   /** 오른쪽 요약(점 수·범주 수 등) */
   summary: { visible: boolean; color: string };
 };

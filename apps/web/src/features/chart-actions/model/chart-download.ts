@@ -1,8 +1,8 @@
-// 차트 도구의 다운로드: 고른 item의 PNG와 데이터(CSV), 모든 item을 grid 배치로 넣은 엑셀(xlsx).
+// 차트 도구의 다운로드: 고른 item의 PNG와 데이터(CSV), 모든 item(검색 중이면 맞는 item)을 grid 배치로 넣은 엑셀(xlsx).
 
 import { t } from "@lingui/core/macro";
 import { api } from "@/shared/api/api";
-import type { ChartSpec, ItemState } from "@/shared/api/types";
+import type { ChartSpec, ItemSearch, ItemState } from "@/shared/api/types";
 import { safeFileName, saveBlob } from "@/shared/lib/save-file";
 import "../config/messages";
 
@@ -52,14 +52,21 @@ export async function downloadChartPng(
   );
 }
 
-/** job의 모든 item 상태를 앞에서부터 limit개까지 받는다. */
-async function allItems(jobId: string, limit: number) {
+/** job의 모든 item(search가 있으면 맞는 item) 상태를 앞에서부터 limit개까지 받는다. */
+async function allItems(jobId: string, limit: number, search: ItemSearch) {
   const items: ItemState[] = [];
   let total = Number.POSITIVE_INFINITY;
   while (items.length < Math.min(total, limit)) {
     const count = Math.min(RANGE_SIZE, limit - items.length);
-    const state = await api.jobRange(jobId, items.length, count, -1);
-    total = state.totalItems ?? 0;
+    const state = await api.jobRange(
+      jobId,
+      items.length,
+      count,
+      -1,
+      undefined,
+      search,
+    );
+    total = state.matchedItems ?? 0;
     if (state.items.length === 0) break;
     items.push(...state.items);
   }
@@ -75,17 +82,19 @@ const GAP_PX = 16;
  * 모든 item의 PNG를 엑셀 한 시트에 차트 grid와 같은 열 수로 놓는다. 이름은 이미지 위 칸에 적고,
  * 두 번째 시트에 item 목록(순번·이름·상태)을 둔다. 그리지 못한 item은 목록에만 남는다.
  * PNG는 light 테마다. 화면이 다크면 item마다 light로 한 장씩 더 그리므로 그만큼 오래 걸린다.
+ * 검색 조건이 있으면 맞는 item만 담고 파일 이름 끝에 '_검색'을 붙인다.
  * onProgress는 넣은 item 수를 알린다.
  */
 export async function downloadAllChartsExcel(
   chartId: string,
   jobId: string,
   spec: ChartSpec,
+  search: ItemSearch,
   onProgress?: (done: number, total: number) => void,
 ) {
   const [{ default: ExcelJS }, { items, total }] = await Promise.all([
     import("exceljs"),
-    allItems(jobId, MAX_EXCEL_ITEMS),
+    allItems(jobId, MAX_EXCEL_ITEMS, search),
   ]);
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet(
@@ -139,11 +148,19 @@ export async function downloadAllChartsExcel(
   }
 
   const buffer = await book.xlsx.writeBuffer();
+  const suffix =
+    search.length > 0
+      ? t({
+          message: "_검색",
+          context: "file name suffix",
+          comment: "검색 조건에 맞는 차트만 담은 엑셀 파일 이름 끝에 붙인다",
+        })
+      : "";
   saveBlob(
     new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
-    `${safeFileName(`${spec.chartType}_${spec.x}_${spec.y}`)}.xlsx`,
+    `${safeFileName(`${spec.chartType}_${spec.x}_${spec.y}`)}${suffix}.xlsx`,
   );
   return { written: items.length, total };
 }

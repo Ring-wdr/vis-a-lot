@@ -135,6 +135,26 @@ describe("scatter 속성", () => {
     expect(meta.total).toBe(39);
   });
 
+  it("outlierMode only면 이상치 행만 남기고 요약에 적는다", () => {
+    const i = input();
+    i.ys[0] = 1000;
+    const { input: out, removed } = withoutOutliers(i, {
+      ...DEFAULT_OPTIONS.value,
+      outlier: true,
+      outlierMode: "only",
+    });
+    expect(Array.from(out.ys)).toEqual([1000]);
+    expect(removed).toBe(39);
+    const { meta, texts } = render({
+      ...i,
+      options: mergeOptions<ChartOptions>(DEFAULT_OPTIONS, {
+        value: { outlier: true, outlierMode: "only" },
+      }),
+    });
+    expect(meta.total).toBe(1);
+    expect(texts.some((t) => t.includes("이상치만"))).toBe(true);
+  });
+
   it("score 상자에 고른 점수를 적고 metadata에 남긴다", () => {
     const { meta, texts } = render(
       input({ score: { visible: true, kinds: ["rscore", "cpk"], ucl: 12 } }),
@@ -216,5 +236,45 @@ describe("scatter 속성", () => {
     const { texts } = render(input({ title: { visible: false } }));
     expect(texts).not.toContain("item");
     expect(texts.some((t) => t.endsWith("pts"))).toBe(false);
+  });
+});
+
+describe("scatter focus 방식", () => {
+  it("순위: 위 N개, 경계 값과 같은 점은 모두", () => {
+    // y는 1..10이 넷씩. 위 다섯은 10 넷과 9 하나라 경계 9와 같은 점까지 8개다.
+    const { calls, meta } = render(
+      input({
+        shape: { type: "square" },
+        focus: { enabled: true, type: "rank", rankCount: 5 },
+      }),
+    );
+    expect(calls.arc).toBe(8);
+    // metadata는 픽셀 칸마다 첫 점만 남긴다. 남은 점마다 focus 여부가 있다.
+    expect(meta.points.f).toHaveLength(meta.points.px.length);
+    expect(
+      meta.points.y.filter((_, k) => meta.points.f?.[k]).every((v) => v >= 9),
+    ).toBe(true);
+    expect(meta.focusShape).toBe("circle");
+  });
+
+  it("순위는 확대 범위와 상관없이 item 점 전체에서 매긴다", () => {
+    const { meta } = render(
+      input(
+        { focus: { enabled: true, type: "rank", rankCount: 4 } },
+        { view: { x: [0, 10], y: [0, 5] } },
+      ),
+    );
+    // 보이는 범위(y ≤ 5)에는 위 넷(y = 10)이 없다.
+    expect(meta.points.f?.some(Boolean) ?? false).toBe(false);
+  });
+
+  it("범위: 최소만 정하면 위로 열려 있다", () => {
+    const { calls } = render(
+      input({
+        shape: { type: "square" },
+        focus: { enabled: true, type: "range", rangeMin: 9, rangeMax: null },
+      }),
+    );
+    expect(calls.arc).toBe(8);
   });
 });

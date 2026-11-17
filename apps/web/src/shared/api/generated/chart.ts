@@ -2856,6 +2856,8 @@ export type components = {
         /** @enum {string} */
         align?: "left" | "center" | "right";
         subtitleColor?: components["schemas"]["HexColor"];
+        subtitleFontSize?: number | null;
+        subtitleAlign?: ("left" | "center" | "right") | null;
         summary?: {
           visible?: boolean;
           color?: components["schemas"]["HexColor"];

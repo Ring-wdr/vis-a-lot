@@ -309,6 +309,27 @@
               "subtitleColor": {
                 "$ref": "#/components/schemas/HexColor"
               },
+              "subtitleFontSize": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "subtitleAlign": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": ["left", "center", "right"]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "summary": {
                 "type": "object",
                 "properties": {

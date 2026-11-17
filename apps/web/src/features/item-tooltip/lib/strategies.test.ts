@@ -17,6 +17,7 @@ import {
   ganttStrategy,
   heatmapStrategy,
   hitSlice,
+  markerShape,
   nearestVertex,
   pieStrategy,
   radarStrategy,
@@ -70,6 +71,21 @@ describe("scatterStrategy", () => {
     expect(hit?.rows[2].value).toBe("50");
     expect(hit?.marker).toEqual({ px: 140, py: 70 });
     expect(hit?.rowId).toBe(22);
+  });
+
+  it("가까운 점 표시는 PNG 점 모양을 따르고, focus 점은 focus 모양이다", () => {
+    const shaped = {
+      ...meta,
+      shape: "star",
+      focusShape: "hexagon",
+      points: { ...meta.points, f: [0, 1, 0] },
+    } as ScatterMeta;
+    expect(markerShape(shaped, 0)).toBe("star");
+    expect(markerShape(shaped, 1)).toBe("hexagon");
+    // 원은 따로 적지 않는다.
+    expect(markerShape(meta, 1)).toBeUndefined();
+    const hit = scatterStrategy.hitTest(shaped, prepared, 142, 68);
+    expect(hit?.marker).toEqual({ px: 140, py: 70, shape: "hexagon" });
   });
 
   it("가까운 점 표시를 끄면 커서 좌표만 보여주고 점 표시와 서버 호출도 없다", () => {

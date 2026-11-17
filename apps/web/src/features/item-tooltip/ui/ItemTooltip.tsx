@@ -10,6 +10,7 @@ import {
   useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
 import { ChartImage } from "@/entities/chart/ui/ChartImage";
+import { PointRing } from "@/entities/chart/ui/PointMarker";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { strategyFor } from "@/features/item-tooltip/lib/strategies";
 import { liveTooltipColumns } from "@/features/item-tooltip/lib/tooltip-columns";
@@ -189,12 +190,21 @@ export function ItemTooltip({
           ))}
         </div>
       )}
-      {cursor && hit?.marker && (
-        <span
-          className="pointer-events-none absolute size-2.5 -translate-1/2 rounded-full border-2 border-chart-ink ring-2 ring-chart-paper"
-          style={{ left: hit.marker.px * sx, top: hit.marker.py * sy }}
-        />
-      )}
+      {cursor &&
+        hit?.marker &&
+        (hit.marker.shape && hit.marker.shape !== "circle" ? (
+          // 원이 아닌 점은 PNG 점과 같은 모양으로 표시한다.
+          <PointRing
+            shape={hit.marker.shape}
+            x={hit.marker.px * sx}
+            y={hit.marker.py * sy}
+          />
+        ) : (
+          <span
+            className="pointer-events-none absolute size-2.5 -translate-1/2 rounded-full border-2 border-chart-ink ring-2 ring-chart-paper"
+            style={{ left: hit.marker.px * sx, top: hit.marker.py * sy }}
+          />
+        ))}
       {cursor && hit?.highlight && (
         // bar/boxplot: 가리킨 막대/상자를 감싸는 사각형
         <span

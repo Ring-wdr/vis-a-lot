@@ -40,6 +40,10 @@ export type TitleOptions = {
   color: string;
   align: TextAlign;
   subtitleColor: string;
+  /** 부제목 글자 크기. null이면 제목 크기의 0.9배. size.fontAuto가 꺼져 있을 때만 쓴다. */
+  subtitleFontSize: number | null;
+  /** 부제목 정렬. null이면 제목 정렬(align)을 따른다. */
+  subtitleAlign: TextAlign | null;
   /** 오른쪽 요약(점 수·범주 수 등) */
   summary: { visible: boolean; color: string };
 };
@@ -344,6 +348,8 @@ export const DEFAULT_OPTIONS: ChartOptions = {
     color: "#0b0b0b",
     align: "left",
     subtitleColor: "#52514e",
+    subtitleFontSize: null,
+    subtitleAlign: null,
     summary: { visible: true, color: "#8a8984" },
   },
   // 지금까지 x축은 세로 그리드 없이 아래 축 선만, y축은 가로 그리드만 그렸다.
