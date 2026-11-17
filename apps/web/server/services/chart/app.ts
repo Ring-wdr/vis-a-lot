@@ -1,8 +1,9 @@
-// chart 서비스: 그리기 job, item 조작, 툴팁, PNG, history, 공유.
+// chart 서비스: 그리기 job, item 조작, 툴팁, PNG, history, 공유, analytics 보드.
 // 요청 형식은 routes의 zod 스키마가 검증하고, 여기서는 필드 사이의 규칙과 상태만 확인한다.
 
 import type { Context } from "hono";
 import { type ItemSize, isTerminal } from "../../api/types";
+import { type DrawnChart, resolvePanels } from "../../charts/board-store";
 import { CHART_DEFAULTS } from "../../charts/chart-defaults";
 import { canDelete } from "../../charts/chart-fields";
 import { pickSupported } from "../../charts/chart-options";
@@ -117,6 +118,13 @@ function idleChart(
 
 function reject(c: Context, { status, error }: Rejected) {
   return status === 404 ? apiError(c, 404, error) : apiError(c, 409, error);
+}
+
+/** 칸이 그린 차트의 지금 설정·item 상태. 모르는 차트나 split 차트(칸이 그린 것이 아님)면 없다. */
+function panelDrawn(chartId: string): DrawnChart | undefined {
+  const chart = getChart(chartId);
+  if (!chart || chart.spec.splitBy.length > 0) return undefined;
+  return { spec: chart.spec, restore: chartRestore(chart) };
 }
 
 function redrawJob(
@@ -632,6 +640,40 @@ export const chartApp = createServiceApp()
       createdBy: c.get("principal").sub,
     });
     if (!deleted) return apiError(c, 404, "unknown share");
+    return c.body(null, 204);
+  })
+  .openapi(routes.getBoard, async (c) => {
+    const board = await getRuntime().db.call("boardGet", {
+      userId: c.get("principal").sub,
+    });
+    if (!board) return apiError(c, 404, "no saved board");
+    return c.json(board, 200);
+  })
+  .openapi(routes.saveBoard, async (c) => {
+    const userId = c.get("principal").sub;
+    const { layout, activePanelId, panels } = c.req.valid("json");
+    // 모르는 chartId인 칸은 이전 drawn을 이어 쓰므로, 그런 칸이 있을 때만 이전 보드를 읽는다.
+    const needsPrevious = panels.some(
+      (p) => p.chartId !== undefined && !panelDrawn(p.chartId),
+    );
+    const previous = needsPrevious
+      ? await getRuntime().db.call("boardGet", { userId })
+      : null;
+    await getRuntime().db.call("boardSave", {
+      userId,
+      body: {
+        layout,
+        activePanelId,
+        panels: resolvePanels(panels, previous, panelDrawn),
+      },
+      updatedAt: Date.now(),
+    });
+    return c.body(null, 204);
+  })
+  .openapi(routes.clearBoard, async (c) => {
+    await getRuntime().db.call("boardDelete", {
+      userId: c.get("principal").sub,
+    });
     return c.body(null, 204);
   })
   .openapi(routes.defaults, (c) => c.json(CHART_DEFAULTS, 200))

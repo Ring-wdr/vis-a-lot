@@ -1,10 +1,11 @@
-// chart 서비스 API 정의: 그리기 job, item 조작(확대·도형·색), 툴팁, PNG, history, 공유.
+// chart 서비스 API 정의: 그리기 job, item 조작(확대·도형·색), 툴팁, PNG, history, 공유, analytics 보드.
 
 import { createRoute, z } from "@hono/zod-openapi";
 import { BEARER, requireAuth } from "../common/auth";
 import { errorResponse, jsonBody, jsonResponse } from "../common/http";
 import {
   AddShapeRequestSchema,
+  AnalyticsBoardSchema,
   ChartDefaultsSchema,
   ChartHealthSchema,
   CommonPropsRequestSchema,
@@ -29,6 +30,7 @@ import {
   NameRequestSchema,
   ResizeRequestSchema,
   SampleRowsResponseSchema,
+  SaveAnalyticsBoardRequestSchema,
   SelectionRequestSchema,
   ShareListResponseSchema,
   ShareSchema,
@@ -570,6 +572,49 @@ export const deleteShare = createRoute({
     204: { description: "지움" },
     ...authErrors,
     404: errorResponse("모르는 공유이거나 만든 사용자가 아님"),
+  },
+});
+
+// ── analytics 보드 ─────────────────────────────────────────────
+// 사용자(토큰의 sub)당 하나. 화면이 바뀔 때마다 자동으로 저장하고 /analytics를 처음 열 때 받는다.
+
+export const getBoard = createRoute({
+  method: "get",
+  path: "/analytics/board",
+  tags: ["analytics"],
+  summary: "내 보드. 그린 칸은 다시 그릴 설정과 item 상태(drawn)를 담는다",
+  ...read,
+  responses: {
+    200: jsonResponse(AnalyticsBoardSchema, "보드"),
+    ...authErrors,
+    404: errorResponse("저장한 보드가 없음 (화면은 빈 칸 하나로 시작)"),
+  },
+});
+
+export const saveBoard = createRoute({
+  method: "put",
+  path: "/analytics/board",
+  tags: ["analytics"],
+  summary:
+    "보드 저장 (통째로 바꾼다). chartId가 있는 칸은 그 차트의 지금 설정·item 상태를 drawn으로 고정한다",
+  ...write,
+  request: { body: jsonBody(SaveAnalyticsBoardRequestSchema) },
+  responses: {
+    204: { description: "저장함" },
+    ...badRequest,
+    ...authErrors,
+  },
+});
+
+export const clearBoard = createRoute({
+  method: "delete",
+  path: "/analytics/board",
+  tags: ["analytics"],
+  summary: "보드 비우기. 다음에 열면 빈 칸 하나다",
+  ...write,
+  responses: {
+    204: { description: "지움 (없었어도)" },
+    ...authErrors,
   },
 });
 

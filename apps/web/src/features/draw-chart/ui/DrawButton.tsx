@@ -3,7 +3,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
-import { itemSizeFor } from "@/entities/chart/lib/grid-layout";
 import { useDatasetLabels } from "@/entities/dataset/lib/labels";
 import {
   useWorkspace,
@@ -20,6 +19,7 @@ import {
 import { button } from "@/shared/ui/button";
 import { Spinner } from "@/shared/ui/Loading";
 import "../config/messages";
+import { requestDraw } from "../model/draw-chart";
 import { useDrawState } from "../model/draw-state";
 
 /**
@@ -72,11 +72,7 @@ export function DrawButton() {
           return undefined;
         }
       }
-      const res = await api.createChart({
-        spec: draft,
-        itemSize: itemSizeFor(gridArea, draft.grid),
-      });
-      return { ...res, spec: draft };
+      return requestDraw(store);
     },
     onSuccess: (chart) => chart && setCurrent(chart),
   });

@@ -902,6 +902,154 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/analytics/board": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 내 보드. 그린 칸은 다시 그릴 설정과 item 상태(drawn)를 담는다 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 보드 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AnalyticsBoard"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 저장한 보드가 없음 (화면은 빈 칸 하나로 시작) */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    /** 보드 저장 (통째로 바꾼다). chartId가 있는 칸은 그 차트의 지금 설정·item 상태를 drawn으로 고정한다 */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SaveAnalyticsBoardRequest"];
+        };
+      };
+      responses: {
+        /** @description 저장함 */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    /** 보드 비우기. 다음에 열면 빈 칸 하나다 */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 지움 (없었어도) */
+        204: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts": {
     parameters: {
       query?: never;
@@ -3395,6 +3543,63 @@ export type components = {
       legendPosition?: components["schemas"]["LegendPosition"];
       options?: components["schemas"]["ChartOptions"];
     };
+    AnalyticsBoard: {
+      layout: components["schemas"]["AnalyticsLayoutNode"];
+      activePanelId: string;
+      panels: components["schemas"]["AnalyticsPanel"][];
+      updatedAt: number;
+    };
+    AnalyticsLayoutNode:
+      | {
+          /** @enum {string} */
+          type: "leaf";
+          panelId: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "split";
+          /** @enum {string} */
+          direction: "horizontal" | "vertical";
+          children: components["schemas"]["AnalyticsLayoutNode"][];
+          ratios: number[];
+        };
+    AnalyticsPanel: {
+      id: string;
+      draft: components["schemas"]["AnalyticsPanelDraft"];
+      drawn?: components["schemas"]["AnalyticsDrawn"];
+      link?: components["schemas"]["AnalyticsPanelLink"];
+    };
+    AnalyticsPanelDraft: {
+      dataset: components["schemas"]["DatasetId"];
+      chartType: components["schemas"]["ChartType"];
+      subType?: components["schemas"]["ChartSubType"] | null;
+      x: string;
+      y: string;
+      z?: components["schemas"]["ColumnName"] | null;
+      agg: components["schemas"]["AggFn"];
+      legend: components["schemas"]["ColumnName"] | null;
+      splitBy: components["schemas"]["ColumnName"][];
+      splitSeparator: string;
+      tooltip: components["schemas"]["ColumnName"][];
+      grid: components["schemas"]["Grid"];
+      common: components["schemas"]["CommonProps"];
+      filters?: components["schemas"]["ChartFilter"][];
+    };
+    AnalyticsDrawn: {
+      spec: components["schemas"]["ChartSpec"];
+      restore: {
+        [key: string]: components["schemas"]["ItemRestore"];
+      };
+    };
+    AnalyticsPanelLink: {
+      follow: string;
+      /** @enum {string} */
+      mode: "filter" | "highlight";
+      on?: {
+        source: components["schemas"]["ColumnName"];
+        target: components["schemas"]["ColumnName"];
+      };
+    };
     ChartHealth: {
       /** @enum {string} */
       service: "chart";
@@ -4007,6 +4212,17 @@ export type components = {
       population: number;
       sampled: boolean;
       filterCount: number;
+    };
+    SaveAnalyticsBoardRequest: {
+      layout: components["schemas"]["AnalyticsLayoutNode"];
+      activePanelId: string;
+      panels: components["schemas"]["SaveAnalyticsPanel"][];
+    };
+    SaveAnalyticsPanel: {
+      id: string;
+      draft: components["schemas"]["AnalyticsPanelDraft"];
+      chartId?: string;
+      link?: components["schemas"]["AnalyticsPanelLink"];
     };
     SelectionRequest: {
       region:

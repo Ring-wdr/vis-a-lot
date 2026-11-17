@@ -1,0 +1,69 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 21:29+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. 보드의 칸 수
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "{panels, plural, other {칸 #개}}"
+msgstr "{panels, plural, one {# panel} other {# panels}}"
+
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "Render Worker 수"
+msgstr "Render Worker count"
+
+#. drawing: 그리는 중인 칸 수 (하단 줄의 짧은 구획)
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "그리는 중 {drawing}"
+msgstr "Drawing {drawing}"
+
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "그리는 중인 칸 수"
+msgstr "Panels being drawn"
+
+#: src/views/analytics/ui/AnalyticsView.tsx
+msgid "다시 시도"
+msgstr "Retry"
+
+#: src/views/analytics/ui/AnalyticsView.tsx
+msgid "보드 불러오는 중"
+msgstr "Loading board"
+
+#: src/views/analytics/ui/AnalyticsView.tsx
+msgid "보드를 불러오지 못했습니다"
+msgstr "Couldn't load the board"
+
+#: src/views/analytics/ui/AnalyticsView.tsx
+msgctxt "analytics panel settings drawer"
+msgid "설정"
+msgstr "Panel settings"
+
+#. failed: 실패한 칸 수 (하단 줄의 짧은 구획)
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "실패 {failed}"
+msgstr "Failed {failed}"
+
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "실패한 칸 수"
+msgstr "Failed panels"
+
+#: src/views/analytics/model/reopen-board.ts
+msgid "저장한 차트를 다시 열지 못했습니다: {reason}"
+msgstr "Couldn't reopen the saved chart: {reason}"
+
+#. number: 칸 번호, chart: 차트 종류 이름
+#: src/views/analytics/ui/AnalyticsView.tsx
+msgid "칸 {number} · {chart}"
+msgstr "Panel {number} · {chart}"
+
+#: src/views/analytics/ui/AnalyticsView.tsx
+msgid "칸 설정"
+msgstr "Panel settings"
+
+#: src/views/analytics/ui/BoardStatusBar.tsx
+msgid "칸 수"
+msgstr "Panels"

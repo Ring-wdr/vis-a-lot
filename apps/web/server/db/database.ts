@@ -12,6 +12,7 @@ import {
   type RawBuilder,
 } from "kysely";
 import type { HistoryDetail, HistorySummary, Share } from "../api/types";
+import type { StoredBoardBody } from "../charts/board-store";
 import type { ColumnStat, StoredUpload } from "../data/datasets";
 import { bindNative } from "./pglite-native";
 
@@ -68,6 +69,13 @@ export interface SharesTable {
   png: Uint8Array;
 }
 
+/** analytics 보드. 사용자(토큰의 sub)당 한 행이고, 보드 전체를 body 하나에 둔다. */
+export interface AnalyticsBoardsTable {
+  user_id: string;
+  body: Json<StoredBoardBody>;
+  updated_at: number;
+}
+
 /** 행 수로 데이터셋을 구분하던 예전 메타. 남아 있으면 dataset_meta로 옮기고 지운다. */
 export interface LegacyDatasetsTable {
   rows: number;
@@ -83,6 +91,7 @@ export interface Database {
   dataset_meta: DatasetMetaTable;
   history: HistoryTable;
   shares: SharesTable;
+  analytics_boards: AnalyticsBoardsTable;
   datasets: LegacyDatasetsTable;
 }
 

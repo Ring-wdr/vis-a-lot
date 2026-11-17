@@ -78,9 +78,12 @@ function ActionButton({
  */
 export function ChartActionBar({
   onOpenControlLimit,
+  allChartsExcel = true,
 }: {
   /** 전체 설정 팝업을 관리선 구역으로 연다. 설정 팝업은 다른 feature라 조합하는 쪽이 넘긴다. */
   onOpenControlLimit: (store: WorkspaceStore) => void;
+  /** 모든 차트 엑셀 다운로드를 둔다. analytics 칸은 차트 한 장이라 두지 않는다. */
+  allChartsExcel?: boolean;
 }) {
   const { t } = useLingui();
   const store = useWorkspaceStore();
@@ -224,13 +227,15 @@ export function ChartActionBar({
         disabled={!target}
         onClick={() => target && chartPng.mutate(target)}
       />
-      <ActionButton
-        label={t`모든 차트 엑셀로 다운로드`}
-        Icon={FileSpreadsheet}
-        pending={excel.isPending}
-        disabled={!drawn}
-        onClick={() => excel.mutate()}
-      />
+      {allChartsExcel && (
+        <ActionButton
+          label={t`모든 차트 엑셀로 다운로드`}
+          Icon={FileSpreadsheet}
+          pending={excel.isPending}
+          disabled={!drawn}
+          onClick={() => excel.mutate()}
+        />
+      )}
       <ActionButton
         label={itemLabel(t`데이터 다운로드`)}
         Icon={Download}

@@ -66,10 +66,22 @@ const MODE_NAMES: Record<Mode, MessageDescriptor> = {
  * 다시 보기 전용 화면이나 아직 그린 차트가 없으면 일반 모드(툴팁)만 된다.
  * 그린 차트 종류가 지원하지 않는 모드(CHART_SUPPORT)도 막는다.
  */
-export function ModeBar() {
+export function ModeBar({
+  mode: boardMode,
+  onModeChange,
+}: {
+  /**
+   * analytics 보드의 모드. 주면 이 값을 고른 것으로 보이고, 고르면 onModeChange로 넘긴다(보드가 모든 칸에 적용한다).
+   * 없으면 지금 작업 상태(탭)의 모드를 보이고 바꾼다.
+   */
+  mode?: Mode;
+  onModeChange?: (mode: Mode) => void;
+} = {}) {
   const { t, i18n } = useLingui();
-  const mode = useWorkspace((s) => s.mode);
-  const setMode = useWorkspace((s) => s.setMode);
+  const ownMode = useWorkspace((s) => s.mode);
+  const setOwnMode = useWorkspace((s) => s.setMode);
+  const mode = boardMode ?? ownMode;
+  const setMode = onModeChange ?? setOwnMode;
   const editable = useWorkspace((s) => !s.readOnly && s.current !== undefined);
   const chartType = useWorkspace((s) => s.current?.spec.chartType);
   const subType = useWorkspace((s) => s.current?.spec.subType);

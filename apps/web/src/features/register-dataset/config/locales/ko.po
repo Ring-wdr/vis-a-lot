@@ -49,6 +49,10 @@ msgstr "{name} 타입"
 msgid "{rows}행 · 생성 {seconds}초"
 msgstr "{rows}행 · 생성 {seconds}초"
 
+#: src/features/register-dataset/ui/DatastoreDialog.tsx
+msgid "analytics에서 열기"
+msgstr "analytics에서 열기"
+
 #. n: zip 안의 CSV 수
 #: src/features/register-dataset/ui/UploadDialog.tsx
 msgid "CSV {n}개를 하나로 합칩니다"
@@ -108,6 +112,10 @@ msgstr "구분 기호"
 #: src/features/register-dataset/ui/UploadOptions.tsx
 msgid "구분 기호 직접 입력"
 msgstr "구분 기호 직접 입력"
+
+#: src/features/register-dataset/model/open-in-analytics.ts
+msgid "그리는 칸이 있어 칸을 더할 수 없습니다. 끝나거나 cancel한 뒤 다시 열어 주세요."
+msgstr "그리는 칸이 있어 칸을 더할 수 없습니다. 끝나거나 cancel한 뒤 다시 열어 주세요."
 
 #: src/features/register-dataset/ui/UploadOptions.tsx
 msgid "날짜 시간 형식"
@@ -197,6 +205,11 @@ msgstr "미등록 · datastore에서 등록"
 #: src/features/register-dataset/ui/UploadDialog.tsx
 msgid "미리보기"
 msgstr "미리보기"
+
+#: src/features/register-dataset/model/open-in-analytics.ts
+msgctxt "replace panel dataset"
+msgid "바꾸기"
+msgstr "바꾸기"
 
 #: src/features/register-dataset/ui/DatastoreDialog.tsx
 msgctxt "datastore table header"
@@ -379,6 +392,10 @@ msgstr "첫 번째 행 헤더"
 msgctxt "upload dialog"
 msgid "취소"
 msgstr "취소"
+
+#: src/features/register-dataset/model/open-in-analytics.ts
+msgid "칸이 가득 찼습니다. 지금 고른 칸의 데이터를 바꿀까요?"
+msgstr "칸이 가득 찼습니다. 지금 고른 칸의 데이터를 바꿀까요?"
 
 #: src/features/register-dataset/ui/DatasetPanel.tsx
 msgctxt "column table header"

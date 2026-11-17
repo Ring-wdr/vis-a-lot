@@ -18,6 +18,10 @@ msgid "{readyN, plural, other {쓸 수 있는 데이터 {readyCount}개를 살�
 msgstr "{readyN, plural, other {使えるデータ {readyCount}件を確認・編集します。}}"
 
 #: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "analytics에서 칸마다 다른 데이터·차트를 두고 한 화면에서 봅니다."
+msgstr "analyticsでパネルごとに別のデータ・チャートを置き、1つの画面で見ます。"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
 msgid "CSV나 zip을 올려 새 데이터로 등록합니다."
 msgstr "CSV か zip をアップロードして新しいデータとして登録します。"
 
@@ -53,3 +57,7 @@ msgstr "新しいチャートを描く"
 msgctxt "home landing actions"
 msgid "시작하기"
 msgstr "はじめに"
+
+#: src/widgets/home-landing/ui/HomeLanding.tsx
+msgid "여러 차트 함께 보기"
+msgstr "複数のチャートを並べて見る"

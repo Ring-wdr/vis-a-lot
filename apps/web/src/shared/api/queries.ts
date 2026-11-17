@@ -21,6 +21,7 @@ import {
   isTerminal,
   type JobStateResponse,
   NO_SEARCH,
+  type SaveAnalyticsBoardRequest,
   type UploadTask,
 } from "@/shared/api/types";
 import { columnLookup } from "@/shared/lib/format";
@@ -63,6 +64,7 @@ export const queryKeys = {
   shares: ["shares"] as const,
   share: (id: string) => ["shares", id] as const,
   chartDefaults: ["chart-defaults"] as const,
+  board: ["analytics-board"] as const,
 };
 
 /** 서버가 정한 차트 기본값. 세션 동안 바뀌지 않아 한 번만 받는다. */
@@ -568,5 +570,41 @@ export function useDeleteShare() {
       client.removeQueries({ queryKey: queryKeys.share(id) });
       return client.invalidateQueries({ queryKey: queryKeys.shares });
     },
+  });
+}
+
+// ── analytics 보드 ─────────────────────────────────────────────
+
+/**
+ * 저장한 보드. 저장한 적이 없으면 status 404인 ApiRequestError로 끝난다 (화면은 빈 칸 하나로 시작한다).
+ * 세션 동안은 보드 store가 원본이라 다시 받지 않는다. 처음 한 번 받아 store에 채운 뒤에는 쓰지 않는다.
+ */
+export function useAnalyticsBoard({ enabled = true } = {}) {
+  return useQuery({
+    queryKey: queryKeys.board,
+    queryFn: api.board,
+    enabled,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
+    retry: (count, err) =>
+      !(err instanceof ApiRequestError && err.status === 404) && count < 2,
+  });
+}
+
+/** 보드 자동 저장. 받은 보드 query는 store가 원본이므로 갱신하지 않는다. */
+export function useSaveBoard() {
+  return useMutation({
+    mutationKey: ["analytics-board", "save"],
+    mutationFn: (body: SaveAnalyticsBoardRequest) => api.saveBoard(body),
+  });
+}
+
+/** 보드 비우기. 다음에 처음 열 때 빈 보드로 시작하게 받은 보드도 버린다. */
+export function useClearBoard() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationKey: ["analytics-board", "clear"],
+    mutationFn: api.clearBoard,
+    onSuccess: () => client.removeQueries({ queryKey: queryKeys.board }),
   });
 }

@@ -84,6 +84,8 @@ function DrawLock() {
 
   // 그리는 상태는 이 탭의 query·mutation에서 나오므로, 탭 밖(헤더·탭 줄)이 읽는 탭 store에 옮겨 둔다.
   useEffect(() => tabs.getState().setLocked(locked), [locked, tabs]);
+  // 다른 경로(/analytics 등)로 떠나면 잠금을 푼다. 그곳에서 gallery 탭을 열 수 있게 하고, 돌아오면 다시 잰다.
+  useEffect(() => () => tabs.getState().setLocked(false), [tabs]);
   return null;
 }
 

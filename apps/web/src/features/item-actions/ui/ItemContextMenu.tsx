@@ -67,6 +67,7 @@ function NamedSubmenu({
 
 /**
  * item 우클릭 메뉴: 선택 영역을 즐겨찾기나 새 범례로 남기고, 남긴 즐겨찾기를 다시 선택한다.
+ * analytics 칸에서는 그 칸의 설정으로 gallery 탭을 여는 항목도 둔다.
  * 다시 보기 전용 화면이나 다시 그리는 중에는 메뉴를 열지 않는다.
  */
 export function ItemContextMenu({
@@ -74,12 +75,15 @@ export function ItemContextMenu({
   disabled,
   className,
   onAction,
+  onOpenInGallery,
   children,
 }: {
   item: ItemState;
   disabled: boolean;
   className: string;
   onAction: (action: ItemAction) => void;
+  /** 이 차트의 설정으로 새 gallery 탭을 연다 (analytics 칸). 없으면 메뉴에 두지 않는다. */
+  onOpenInGallery?: () => void;
   children: ReactNode;
 }) {
   const { t } = useLingui();
@@ -186,6 +190,17 @@ export function ItemContextMenu({
               disabled={disabled}
               onSelect={(name) => onAction({ type: "removeLegendGroup", name })}
             />
+            {onOpenInGallery && (
+              <>
+                <ContextMenu.Separator className="my-1 h-px bg-line" />
+                <ContextMenu.Item
+                  className={menuItem}
+                  onClick={onOpenInGallery}
+                >
+                  <Trans>gallery에서 열기</Trans>
+                </ContextMenu.Item>
+              </>
+            )}
           </ContextMenu.Popup>
         </ContextMenu.Positioner>
       </ContextMenu.Portal>

@@ -60,6 +60,10 @@ msgid "알아 두기"
 msgstr "知っておくこと"
 
 #: src/shared/config/help.ts
+msgid "여러 칸에 데이터·차트를 따로 두고 함께 보기: 레이아웃, 칸 옮기기·크기 조절, draw all, 자동 저장"
+msgstr "複数のパネルにデータ・チャートを別々に置いて一緒に見る: レイアウト、パネルの移動・大きさの調整、draw all、自動保存"
+
+#: src/shared/config/help.ts
 msgid "전체 설정, 순서 바꾸기·강조 방식, 관리선, legend 색·위치, item 개별 속성"
 msgstr "全体設定、順序の変更・強調の方式、管理線、legend の色・位置、item ごとの属性"
 

@@ -6,10 +6,12 @@ import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
 import {
   Database,
   History,
+  LayoutDashboard,
   LayoutGrid,
   type LucideIcon,
   Upload,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTabsStore } from "@/entities/workspace/model/tabs-scope";
 import {
   openDatastoreDialog,
@@ -53,11 +55,12 @@ function ActionCard({
 
 /**
  * 처음 들어왔을 때의 시작 화면. 아직 연 차트가 없으므로 빈 grid 대신 할 수 있는 일을 고르게 한다.
- * gallery나 history를 고르면 작업 화면으로 바뀐다.
+ * gallery나 history를 고르면 작업 화면으로 바뀌고, 여러 차트 함께 보기는 analytics(`/analytics`)로 간다.
  */
 export function HomeLanding() {
   const { t } = useLingui();
   const tabs = useTabsStore();
+  const router = useRouter();
   const history = useHistoryList().data?.entries.length;
   const datasets = useDatasets().data?.datasets;
   const ready = datasets?.filter((d) => d.state === "ready").length;
@@ -112,6 +115,15 @@ export function HomeLanding() {
                   "{historyCount}는 언어에 맞춰 적은 건수(받는 중이면 …), historyN은 복수형을 고르는 수",
               })}
             </span>
+          </ActionCard>
+          <ActionCard
+            Icon={LayoutDashboard}
+            title={t`여러 차트 함께 보기`}
+            onClick={() => router.push("/analytics")}
+          >
+            <Trans>
+              analytics에서 칸마다 다른 데이터·차트를 두고 한 화면에서 봅니다.
+            </Trans>
           </ActionCard>
           <ActionCard
             Icon={Upload}

@@ -1,5 +1,11 @@
 import { PGlite } from "@electric-sql/pglite";
 import { CompiledQuery, sql } from "kysely";
+import {
+  deleteBoard,
+  getBoard,
+  openBoards,
+  saveBoard,
+} from "../charts/board-store";
 import { queryCandleData } from "../data/candle-data";
 import {
   queryBarData,
@@ -84,6 +90,7 @@ const ready = PGlite.create("idb://vis-a-lot", {
   const datasets = await DatasetManager.open(db);
   await openHistory(db);
   await openShares(db);
+  await openBoards(db);
   await migrateFeed(pglite);
   const feedDb = createFeedDb(pglite);
   return {
@@ -311,6 +318,22 @@ serveRpc<DbMethods>({
   async shareDelete({ id, createdBy }) {
     const { db } = await ready;
     return deleteShare(db, id, createdBy);
+  },
+
+  async boardGet({ userId }) {
+    const { db } = await ready;
+    return getBoard(db, userId);
+  },
+
+  async boardSave({ userId, body, updatedAt }) {
+    const { db } = await ready;
+    await saveBoard(db, userId, body, updatedAt);
+    return undefined;
+  },
+
+  async boardDelete({ userId }) {
+    const { db } = await ready;
+    return deleteBoard(db, userId);
   },
 
   async categoryData({ dataset, ...params }) {

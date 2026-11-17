@@ -6,6 +6,8 @@ import {
   type DrawnChart,
   defaultSpec,
   modeSupported,
+  PANEL_GRID,
+  recordsHistory,
 } from "./workspace-store";
 
 describe("modeSupported", () => {
@@ -51,5 +53,25 @@ describe("item 검색 조건", () => {
     expect(store.getState().search).toBe(search);
     store.getState().setCurrent({ ...chart, jobId: "j3" });
     expect(store.getState().search).toBe(NO_SEARCH);
+  });
+});
+
+describe("칸(panel) 작업 상태", () => {
+  const draft = defaultSpec(CHART_DEFAULTS as ChartDefaults);
+
+  it("draft를 늘 split 없음·grid 1×1로 둔다. 탭은 그대로다", () => {
+    const panel = createWorkspaceStore({ draft, kind: "panel", id: "p1" });
+    expect(panel.getState()).toMatchObject({ id: "p1", kind: "panel" });
+    expect(panel.getState().draft.grid).toEqual(PANEL_GRID);
+    panel.getState().setDraft({ ...draft, splitBy: ["factory"] });
+    expect(panel.getState().draft.splitBy).toEqual([]);
+    const tab = createWorkspaceStore({ draft });
+    expect(tab.getState().draft).toBe(draft);
+  });
+
+  it("draw를 history에 남기는 것은 읽기 전용이 아닌 탭뿐이다", () => {
+    expect(recordsHistory({ kind: "tab", readOnly: false })).toBe(true);
+    expect(recordsHistory({ kind: "tab", readOnly: true })).toBe(false);
+    expect(recordsHistory({ kind: "panel", readOnly: false })).toBe(false);
   });
 });

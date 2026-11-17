@@ -22,6 +22,10 @@ msgstr "{pageText} / {totalText} 페이지로 이동 중…"
 msgid "{s}초"
 msgstr "{s}초"
 
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "draw를 누르면 다시 그립니다."
+msgstr "draw를 누르면 다시 그립니다."
+
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 msgid "grid로 돌아가기"
 msgstr "grid로 돌아가기"
@@ -62,6 +66,7 @@ msgid "그리는 중"
 msgstr "그리는 중"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "그리지 못했습니다"
 msgstr "그리지 못했습니다"
 
@@ -75,6 +80,7 @@ msgid "남은 시간 (어림)"
 msgstr "남은 시간 (어림)"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "다시 draw를 눌러 보세요."
 msgstr "다시 draw를 눌러 보세요."
 
@@ -118,6 +124,7 @@ msgstr "대기 중"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "데이터 조회"
 msgstr "데이터 조회"
 
@@ -127,6 +134,7 @@ msgstr "데이터 조회 중"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 #: src/widgets/chart-grid/ui/JobStatusBar.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "데이터 준비 중"
 msgstr "데이터 준비 중"
 
@@ -196,6 +204,10 @@ msgstr "완료"
 msgid "왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시 그립니다."
 msgstr "왼쪽 목록에서 차트를 고르면 저장된 설정과 확대·도형·색 그대로 다시 그립니다."
 
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "왼쪽 패널에서 데이터와 x, y를 고르고 draw를 누르세요."
+msgstr "왼쪽 패널에서 데이터와 x, y를 고르고 draw를 누르세요."
+
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
 msgid "왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면 조합마다 item 하나씩 grid로 그립니다."
 msgstr "왼쪽에서 데이터와 x, y를 고르고 draw를 누르세요. split by를 고르면 조합마다 item 하나씩 grid로 그립니다."
@@ -242,8 +254,13 @@ msgid "집계"
 msgstr "집계"
 
 #: src/widgets/chart-grid/ui/ChartGrid.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgid "차트 여는 중"
 msgstr "차트 여는 중"
+
+#: src/widgets/chart-grid/ui/PanelChart.tsx
+msgid "차트를 그려 주세요"
+msgstr "차트를 그려 주세요"
 
 #: src/widgets/chart-grid/ui/JobStatusBar.tsx
 msgid "처리 속도"
@@ -260,6 +277,7 @@ msgstr "취소"
 
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 #: src/widgets/chart-grid/ui/DetailView.tsx
+#: src/widgets/chart-grid/ui/PanelChart.tsx
 msgctxt "item status"
 msgid "취소됨"
 msgstr "취소됨"

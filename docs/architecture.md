@@ -4,7 +4,7 @@
 
 | 위치 | 패키지 이름 | 두는 것 |
 | --- | --- | --- |
-| `apps/web` | `@vis-a-lot/web` | 시각화(`/`), 피드(`/feed/**`), 공유(`/share`), dev 화면, 브라우저 안의 서버(`server/`, MSW worker `public/`) |
+| `apps/web` | `@vis-a-lot/web` | 시각화(`/`), analytics(`/analytics`), 피드(`/feed/**`), 공유(`/share`), dev 화면, 브라우저 안의 서버(`server/`, MSW worker `public/`) |
 | `apps/help` | `@vis-a-lot/help` | 도움말(`/help/**`): 라우트, 화면, 본문(`content/help`), MDX 설정 |
 | `packages/shared` | `@vis-a-lot/shared` | FSD 패키지(`package.json`에 `"vis-a-lot": { "fsd": true }`). 두 앱이 함께 쓰는 FSD `shared` 레이어: 언어·테마(`config`, `lib`), Lingui instance, `tw`, 공통 UI(`Localized`, `StableText`, `nav`, 화면 설정 `PreferencesMenu`), 디자인 토큰 `ui/globals.css`, 도움말 경로 `config/help-routes.ts` |
 | `packages/tsconfig` | `@vis-a-lot/tsconfig` | 도구 패키지. 공통 TypeScript 설정 `base.json` (`"extends": "@vis-a-lot/tsconfig/base.json"`) |

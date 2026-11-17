@@ -53,14 +53,45 @@ export type DrawnChart = CreateChartResponse & { spec: ChartSpec };
 
 type Size = { width: number; height: number };
 
+/**
+ * 작업 store가 놓이는 곳.
+ * - tab: gallery·history 탭. split 조합마다 item을 grid로 늘어놓고, draw마다 history에 남긴다 (읽기 전용이면 남기지 않는다).
+ * - panel: analytics 칸. 차트 한 장(split 없음, grid 1×1)이고 item 크기가 곧 칸 크기다. history에 남기지 않는다.
+ */
+export type WorkspaceKind = "tab" | "panel";
+
+/** 칸의 grid. 칸은 item 한 장이다. */
+export const PANEL_GRID: ChartSpec["grid"] = { rows: 1, cols: 1 };
+
+/** 칸의 draft로 맞춘다: split 없음, grid 1×1. 이미 맞으면 같은 참조를 돌려준다. */
+export function panelDraft(spec: ChartSpec): ChartSpec {
+  return spec.splitBy.length === 0 &&
+    spec.grid.rows === PANEL_GRID.rows &&
+    spec.grid.cols === PANEL_GRID.cols
+    ? spec
+    : { ...spec, splitBy: [], grid: PANEL_GRID };
+}
+
+/** 이 작업 상태에서 draw하면 history에 남기는지 (`POST /charts`의 record) */
+export function recordsHistory(
+  state: Pick<WorkspaceState, "kind" | "readOnly">,
+) {
+  return state.kind === "tab" && !state.readOnly;
+}
+
 export type WorkspaceState = {
-  /** 이 작업 상태(탭)의 id. 탭을 오가도 이어지는 mutation을 이 탭 것으로 찾는 데 쓴다. */
+  /**
+   * 이 작업 상태(탭·칸)의 id. 탭을 오가도 이어지는 mutation을 이 탭 것으로 찾는 데 쓴다.
+   * 칸이면 보드의 칸 id와 같다.
+   */
   id: string;
+  /** 탭인지 analytics 칸인지. 만들 때 정해지고 바뀌지 않는다. */
+  kind: WorkspaceKind;
   /** 다시 보기 전용 (history). 설정·모드·item 조작을 모두 막는다. */
   readOnly: boolean;
   /** 왼쪽 패널에서 편집 중인 설정. draw를 눌러야 차트에 반영된다. */
   draft: ChartSpec;
-  /** 마지막으로 draw한 차트 */
+  /** 마지막으로 draw한 차트. 칸이면 item 하나(split 없는 차트의 키)다. */
   current?: DrawnChart;
   /** history나 공유 링크의 차트를 이 탭에 다시 그리는 중 */
   opening: boolean;
@@ -125,14 +156,23 @@ export const defaultSpec = (defaults: ChartDefaults): ChartSpec => ({
 export function createWorkspaceStore({
   readOnly = false,
   draft,
+  kind = "tab",
+  id = crypto.randomUUID(),
 }: {
   readOnly?: boolean;
   draft: ChartSpec;
+  /** 기본은 탭. 칸이면 draft를 늘 split 없음·grid 1×1로 맞추고 history에 남기지 않는다. */
+  kind?: WorkspaceKind;
+  /** 칸이면 보드의 칸 id를 넘긴다. 없으면 새로 만든다. */
+  id?: string;
 }) {
+  // 칸은 draft를 어떤 길로 바꿔도(패널, 다시 열기) split·grid가 생기지 않게 한다.
+  const fitDraft = kind === "panel" ? panelDraft : (spec: ChartSpec) => spec;
   return createStore<WorkspaceState>((set) => ({
-    id: crypto.randomUUID(),
+    id,
+    kind,
     readOnly,
-    draft,
+    draft: fitDraft(draft),
     opening: false,
     page: 0,
     focus: null,
@@ -145,8 +185,9 @@ export function createWorkspaceStore({
     itemJobs: {},
     undoCounts: {},
     notices: [],
-    updateDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
-    setDraft: (draft) => set({ draft }),
+    updateDraft: (patch) =>
+      set((s) => ({ draft: fitDraft({ ...s.draft, ...patch }) })),
+    setDraft: (draft) => set({ draft: fitDraft(draft) }),
     setCurrent: (current) =>
       set((s) => ({
         current,

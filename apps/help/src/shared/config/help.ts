@@ -106,6 +106,13 @@ export const HELP: Record<HelpService, HelpServiceInfo> = {
         summary: inAllLocales(msg`그린 차트를 다시 보고 이어서 편집하기`),
       },
       {
+        slug: "analytics",
+        title: { ko: "analytics", en: "analytics", ja: "analytics" },
+        summary: inAllLocales(
+          msg`여러 칸에 데이터·차트를 따로 두고 함께 보기: 레이아웃, 칸 옮기기·크기 조절, draw all, 자동 저장`,
+        ),
+      },
+      {
         slug: "faq",
         title: inAllLocales(msg`알아 두기`),
         summary: inAllLocales(msg`데이터 보관 위치, 한도, 자주 묻는 질문`),

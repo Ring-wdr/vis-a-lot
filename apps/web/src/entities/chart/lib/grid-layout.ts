@@ -71,3 +71,16 @@ export function itemSizeFor(
     look,
   );
 }
+
+/**
+ * draw·다시 열기에 쓸 item PNG 크기. gallery 탭은 grid 칸 하나 크기이고,
+ * analytics 칸(single)은 영역 전체가 item 한 장이라 크게 보기와 같이 잰다 (테두리만 뺀다).
+ */
+export function drawSizeFor(
+  area: { width: number; height: number },
+  grid: ChartSpec["grid"],
+  single: boolean,
+  look: Look = {},
+): ItemSize {
+  return single ? detailSizeFor(area, look) : itemSizeFor(area, grid, look);
+}
