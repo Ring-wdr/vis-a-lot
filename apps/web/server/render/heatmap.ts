@@ -19,6 +19,7 @@ import {
   type PaletteOptions,
   type ValueOptions,
 } from "./options";
+import { isIdentityOrder, orderIndexes } from "./order";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -198,11 +199,28 @@ function truncate(ctx: Ctx, text: string, maxWidth: number) {
   return `${text.slice(0, end)}…`;
 }
 
+/**
+ * x 범주 순서(axes.x.categorySort·categoryOrder)대로 x 범주와 칸 열을 함께 옮긴다. y 범주는 그대로다.
+ * 시계열 x(구간)는 시간 순이 축이라 옮기지 않는다. 기본값이면 그대로 둔다.
+ */
+export function orderHeatmap(input: HeatmapInput): HeatmapInput {
+  if (input.xStarts) return input;
+  const { categorySort, categoryOrder } = optionsOf(input).axes.x;
+  const idx = orderIndexes(input.xCategories, categoryOrder, categorySort);
+  if (isIdentityOrder(idx)) return input;
+  return {
+    ...input,
+    xCategories: idx.map((i) => input.xCategories[i]),
+    cells: idx.map((i) => input.cells[i] ?? []),
+  };
+}
+
 export function renderHeatmap(
   ctx: Ctx,
-  input: HeatmapInput,
+  rawInput: HeatmapInput,
   progress: ProgressFn,
 ): HeatmapMeta {
+  const input = orderHeatmap(rawInput);
   const o = optionsOf(input);
   const { width, height, xCategories, yCategories, view } = input;
   // 빈 칸을 값으로 채우면 metadata(툴팁)도 채운 값을 본다.

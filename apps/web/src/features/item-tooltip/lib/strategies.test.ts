@@ -74,12 +74,12 @@ describe("scatterStrategy", () => {
   });
 
   it("가까운 점 표시는 PNG 점 모양을 따르고, focus 점은 focus 모양이다", () => {
-    const shaped = {
+    const shaped: ScatterMeta = {
       ...meta,
       shape: "star",
       focusShape: "hexagon",
       points: { ...meta.points, f: [0, 1, 0] },
-    } as ScatterMeta;
+    };
     expect(markerShape(shaped, 0)).toBe("star");
     expect(markerShape(shaped, 1)).toBe("hexagon");
     // 원은 따로 적지 않는다.
@@ -197,6 +197,21 @@ describe("legend가 있는 bar", () => {
 
   it("legend 상자 위에서는 툴팁을 띄우지 않는다", () => {
     expect(barStrategy.hitTest(meta, undefined, 50, 10)).toBeNull();
+  });
+
+  it("legend 순서를 바꾸면(legendOrder) 자리의 legend 값과 칸을 그 순서로 찾는다", () => {
+    // 왼쪽 칸이 주간(1), 오른쪽 칸이 야간(0). bars 칸은 legend 인덱스 그대로다.
+    const ordered = { ...meta, legendOrder: [1, 0] };
+    const left = barStrategy.hitTest(ordered, undefined, 130, 80);
+    expect(left).toBeNull();
+    const right = barStrategy.hitTest(ordered, undefined, 170, 80);
+    expect(right?.rows).toEqual([
+      { id: "category", label: "범주", value: "B" },
+      { id: "legend", label: "근무조", value: "야간" },
+      { id: "value", label: "평균", value: "3", emphasis: true },
+    ]);
+    // 하이라이트는 가리킨 자리(오른쪽 칸, 가운데 170)
+    expect(right?.highlight).toMatchObject({ x: 148, width: 44 });
   });
 });
 

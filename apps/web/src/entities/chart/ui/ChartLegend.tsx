@@ -1,11 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
 import type { ChartImage, LegendMeta } from "@/shared/api/types";
 import "../config/messages";
-import type { PointShape } from "../model/chart-options";
 import { PointMarker } from "./PointMarker";
 
-/** shape: 점 차트의 색 표시 모양 (원이면 없다) */
-type Layout = NonNullable<LegendMeta["layout"]> & { shape?: PointShape };
+type Layout = NonNullable<LegendMeta["layout"]>;
 type Entry = LegendMeta["entries"][number];
 
 const text =
@@ -59,8 +57,7 @@ export function ChartLegend({
   display: { width: number; height: number };
 }) {
   const { t } = useLingui();
-  const { box, title } = legend;
-  const layout: Layout | undefined = legend.layout;
+  const { layout, box, title } = legend;
   if (!layout || legend.entries.length === 0) return null;
   const sx = display.width / image.width;
   const sy = display.height / image.height;

@@ -34,7 +34,49 @@ export type LegendInput = {
   style?: LegendStyle;
   /** 색 표시 모양. 점을 그리는 차트(scatter·line)가 점과 같은 모양(shape.type)을 넘긴다. 없으면 원 */
   shape?: PointShape;
+  /**
+   * legend 값을 놓는 순서(values 인덱스). legend.sort·order로 job-manager가 정한다. 색과 인덱스는 그대로이고
+   * 놓는 자리만 바뀐다. 새 범례 항목처럼 여기에 없는 인덱스는 원래 순서로 뒤에 붙는다. 없으면 values 순서다.
+   */
+  order?: readonly number[];
 };
+
+/**
+ * 0..count-1 인덱스를 legend 순서(LegendInput.order)대로. count를 넘는 인덱스는 빼고, 빠진 인덱스는 뒤에 붙인다.
+ * 렌더러가 나란히 놓는 막대·쌓는 순서·계열을 그리는 순서에 쓴다.
+ */
+export function legendSequence(
+  legend: LegendInput | undefined,
+  count: number,
+): number[] {
+  const seen = new Set<number>();
+  const out: number[] = [];
+  for (const i of legend?.order ?? []) {
+    if (i < 0 || i >= count || seen.has(i)) continue;
+    seen.add(i);
+    out.push(i);
+  }
+  for (let i = 0; i < count; i++) if (!seen.has(i)) out.push(i);
+  return out;
+}
+
+/** legend 인덱스 → legend 순서에서의 자리. count 밖의 인덱스는 그대로 돌려준다. */
+export function slotLookup(legend: LegendInput | undefined, count: number) {
+  const slotOf: number[] = [];
+  legendSequence(legend, count).forEach((g, k) => {
+    slotOf[g] = k;
+  });
+  return (g: number) => slotOf[g] ?? g;
+}
+
+/** legend 순서가 values 순서와 다르면 그 순서, 같으면 undefined. metadata에 순서를 실을 때 쓴다. */
+export function changedSequence(
+  legend: LegendInput | undefined,
+  count: number,
+): number[] | undefined {
+  const seq = legendSequence(legend, count);
+  return seq.every((v, i) => v === i) ? undefined : seq;
+}
 
 /** legend 인덱스별로 끈 값인지. 렌더러가 그 값의 점(막대/상자)을 건너뛴다. */
 export function hiddenIndexes(legend: LegendInput | undefined) {
@@ -178,9 +220,9 @@ export function legendSpace(
   return lookOf(legend, o).box + 6;
 }
 
-/** 그리는 순서. reverse면 뒤집지만 항목은 원래 인덱스를 그대로 가진다. */
+/** 그리는 순서. legend 순서(sort·order)를 정한 뒤 reverse면 뒤집는다. 항목은 원래 인덱스를 그대로 가진다. */
 function order(legend: LegendInput, look: Look) {
-  const idx = legend.values.map((_, i) => i);
+  const idx = legendSequence(legend, legend.values.length);
   return look.reverse ? idx.reverse() : idx;
 }
 

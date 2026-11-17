@@ -2271,9 +2271,21 @@
                 "items": {
                   "type": "number"
                 }
+              },
+              "f": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
               }
             },
             "required": ["px", "py", "x", "y", "id"]
+          },
+          "shape": {
+            "$ref": "#/components/schemas/PointShape"
+          },
+          "focusShape": {
+            "$ref": "#/components/schemas/PointShape"
           },
           "total": {
             "type": "number"
@@ -2421,6 +2433,9 @@
               "marker": {
                 "type": "number"
               },
+              "shape": {
+                "$ref": "#/components/schemas/PointShape"
+              },
               "textColor": {
                 "type": "string"
               },
@@ -2524,6 +2539,12 @@
           },
           "groupGap": {
             "type": "number"
+          },
+          "legendOrder": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
           },
           "agg": {
             "$ref": "#/components/schemas/AggFn"
@@ -3514,6 +3535,12 @@
           },
           "groupCount": {
             "type": "number"
+          },
+          "legendOrder": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
           },
           "selected": {
             "type": "number"

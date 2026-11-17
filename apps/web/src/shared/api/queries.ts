@@ -524,11 +524,19 @@ export function useLegendValues(
   });
 }
 
-/** 필터 아코디언을 열 때 그 컬럼의 범위나 값 목록을 서버에서 받는다. 데이터는 바뀌지 않으므로 다시 받지 않는다. */
-export function useColumnSummary(id: DatasetId, column: ColumnName) {
+/**
+ * 필터 아코디언을 열 때 그 컬럼의 범위나 값 목록을 서버에서 받는다. 데이터는 바뀌지 않으므로 다시 받지 않는다.
+ * enabled가 false면 받지 않는다 (범주 순서 필드가 범주 컬럼을 고르기 전).
+ */
+export function useColumnSummary(
+  id: DatasetId,
+  column: ColumnName,
+  enabled = true,
+) {
   return useQuery({
     queryKey: queryKeys.columnSummary(id, column),
     queryFn: () => api.columnSummary(id, column),
+    enabled,
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

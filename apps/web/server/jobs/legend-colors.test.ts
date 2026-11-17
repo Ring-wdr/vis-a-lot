@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ChartItem, ChartRecord } from "../charts/chart-store";
-import type { ChartOptionsPatch } from "../render/options";
-import { legendColors } from "./job-manager";
+import { type ChartOptionsPatch, DEFAULT_OPTIONS } from "../render/options";
+import { legendColors, legendOrderOf } from "./job-manager";
 
 vi.mock("../runtime", () => ({ getRuntime: () => ({ render: { size: 1 } }) }));
 
@@ -59,5 +59,45 @@ describe("legendColors · palette.colors", () => {
       "#000000",
       "#ffffff",
     ]);
+  });
+});
+
+describe("legendOrderOf · legend 순서", () => {
+  const style = (patch: Partial<typeof DEFAULT_OPTIONS.legend>) => ({
+    ...DEFAULT_OPTIONS.legend,
+    ...patch,
+  });
+  const typed = (chartType: string) =>
+    ({ spec: { chartType, common: {} } }) as unknown as ChartRecord;
+  const lines = ["L2", "L10", "L1"];
+
+  it("기본값(default, 빈 목록)이면 순서를 넘기지 않는다", () => {
+    expect(legendOrderOf(typed("bar"), lines, style({}))).toBeUndefined();
+  });
+
+  it("legend 컬럼을 고르는 차트는 직접 순서 + 자연 정렬을 values 인덱스로 넘긴다", () => {
+    expect(
+      legendOrderOf(typed("bar"), lines, style({ sort: "natural" })),
+    ).toEqual([2, 0, 1]);
+    expect(
+      legendOrderOf(typed("scatter"), lines, style({ order: ["L1"] })),
+    ).toEqual([2, 0, 1]);
+  });
+
+  it("차트가 legend를 정하는 종류와 legend 컬럼이 없는 item은 쓰지 않는다", () => {
+    for (const type of ["pie", "funnel", "sankey", "waterfall", "candle"])
+      expect(
+        legendOrderOf(typed(type), lines, style({ sort: "natural" })),
+      ).toBeUndefined();
+    expect(
+      legendOrderOf(typed("bar"), undefined, style({ sort: "natural" })),
+    ).toBeUndefined();
+  });
+
+  it("순서를 바꿔도 값의 색은 그대로다 (색은 values 순번을 따른다)", () => {
+    const chart = chartOf({ legend: { sort: "natural", order: ["L10"] } });
+    expect(legendColors(chart, {} as ChartItem, lines)).toEqual(
+      legendColors(chartOf({}), {} as ChartItem, lines),
+    );
   });
 });

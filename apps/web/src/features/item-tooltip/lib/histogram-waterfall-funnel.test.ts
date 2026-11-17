@@ -63,6 +63,18 @@ describe("histogramStrategy", () => {
     expect(hit?.highlight).toEqual({ x: 47, y: 37, width: 31, height: 63 });
   });
 
+  it("legend 순서를 바꾸면(legendOrder) 앞 칸이 그 순서의 첫 값이다", () => {
+    const ordered: HistogramMeta = { ...meta, legendOrder: [1, 0] };
+    // 구간 [15, 20)의 앞 칸(150..175px) = y(1, 끔) → 툴팁 없음, 뒤 칸 = x(0)
+    expect(histogramStrategy.hitTest(ordered, undefined, 160, 50)).toBeNull();
+    const hit = histogramStrategy.hitTest(ordered, undefined, 185, 50);
+    expect(hit?.rows).toEqual([
+      { id: "range", label: "구간", value: "15 ~ 20" },
+      { id: "legend", label: "종류", value: "x" },
+      { id: "count", label: "개수", value: "3", emphasis: true },
+    ]);
+  });
+
   it("마지막 구간은 끝값을 포함하고, 끈 legend 값의 칸은 무시한다", () => {
     const hit = histogramStrategy.hitTest(meta, undefined, 155, 50);
     expect(hit?.rows[0]).toEqual({

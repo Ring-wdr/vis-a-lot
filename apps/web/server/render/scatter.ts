@@ -24,6 +24,7 @@ import {
   hiddenIndexes,
   type LegendInput,
   type LegendMeta,
+  legendSequence,
 } from "./legend";
 import { drawLines, seriesOrder } from "./line";
 import {
@@ -783,6 +784,7 @@ export function renderScatter(
       sx,
       sy,
       series: seriesOrder(xs, groupIndex, count, off),
+      drawOrder: legendSequence(input.legend, count),
       colors: single
         ? new Array(count).fill(o.palette.othersColor)
         : input.legend

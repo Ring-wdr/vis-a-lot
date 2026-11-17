@@ -17,13 +17,17 @@ import {
   labelWidth,
 } from "./frame";
 import {
+  changedSequence,
   drawLegendAround,
   framePlot,
   hiddenIndexes,
   type LegendInput,
   type LegendMeta,
+  legendSequence,
+  slotLookup,
 } from "./legend";
 import { type ChartOptions, optionsOf, type ShapeOptions } from "./options";
+import { isIdentityOrder, orderIndexes } from "./order";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -60,6 +64,11 @@ export type CategoryMeta = {
   groupCount: number;
   /** 묶음 안에서 막대/상자 사이 간격(px). 화면이 groupSlot을 같은 값으로 계산한다. */
   groupGap: number;
+  /**
+   * 묶음 안에 나란히 놓은 막대/상자의 legend 인덱스(왼쪽부터). legend 순서(sort·order)를 바꿨을 때만 있다.
+   * 없으면 legend 인덱스 순서다. bars·boxes·segments의 칸은 legend 인덱스 그대로다.
+   */
+  legendOrder?: number[];
   agg?: AggFn;
   /** [범주][legend 값] */
   bars?: (number | null)[][];
@@ -257,13 +266,15 @@ export function markPoint(
 }
 
 /**
- * 누적 막대 구간. 범주마다 legend 순서대로 양수는 0에서 위로, 음수는 아래로 쌓는다.
+ * 누적 막대 구간. 범주마다 legend 순서(sequence, 없으면 인덱스 순)대로 양수는 0에서 위로, 음수는 아래로 쌓는다.
  * percent면 범주 안 절댓값 합계 대비 %로 바꾼다. 끈 legend 값(off)과 빈 칸은 null이고 쌓지 않는다.
+ * 돌려주는 칸은 legend 인덱스 그대로다.
  */
 export function stackSegments(
   bars: readonly (readonly (number | null)[])[],
   off: readonly boolean[],
   percent: boolean,
+  sequence?: readonly number[],
 ): ([number, number] | null)[][] {
   return bars.map((row) => {
     const total = row.reduce<number>(
@@ -273,36 +284,62 @@ export function stackSegments(
     const scale = percent ? (total > 0 ? 100 / total : 0) : 1;
     let up = 0;
     let down = 0;
-    return row.map((v, g) => {
-      if (v === null || off[g] || !Number.isFinite(v)) return null;
+    const out: ([number, number] | null)[] = row.map(() => null);
+    for (const g of sequence ?? row.keys()) {
+      const v = row[g];
+      if (v === null || v === undefined || off[g] || !Number.isFinite(v))
+        continue;
       const h = v * scale;
       if (h >= 0) {
-        const seg: [number, number] = [up, up + h];
+        out[g] = [up, up + h];
         up += h;
-        return seg;
+      } else {
+        out[g] = [down, down + h];
+        down += h;
       }
-      const seg: [number, number] = [down, down + h];
-      down += h;
-      return seg;
-    });
+    }
+    return out;
   });
 }
 
-/** 누적 막대 한 범주에서 맨 위(양수 끝)와 맨 아래(음수 끝) 막대의 legend 순번 */
-function stackEnds(row: readonly ([number, number] | null)[]) {
+/** 누적 막대 한 범주에서 맨 위(양수 끝)와 맨 아래(음수 끝) 막대의 legend 순번. 쌓은 순서(sequence)로 찾는다. */
+function stackEnds(
+  row: readonly ([number, number] | null)[],
+  sequence: readonly number[],
+) {
   let top: number | undefined;
   let bottom: number | undefined;
-  row.forEach((seg, g) => {
-    if (!seg) return;
+  for (const g of sequence) {
+    const seg = row[g];
+    if (!seg) continue;
     if (seg[1] >= seg[0]) top = g;
     else bottom = g;
-  });
+  }
   return { top, bottom };
 }
 
 /** 누적 막대의 대표 좌표: 범주 가운데, 구간 가운데 높이 */
 export function stackPoint(i: number, seg: readonly [number, number]) {
   return [i, (seg[0] + seg[1]) / 2] as [number, number];
+}
+
+/** metadata에 싣는 legend 순서. 순서를 바꾸지 않았으면 칸을 두지 않아 예전 metadata와 같다. */
+export function legendOrderMeta(
+  legend: LegendInput | undefined,
+  count: number,
+) {
+  const order = changedSequence(legend, count);
+  return order ? { legendOrder: order } : {};
+}
+
+/** metadata의 legend 순서로 legend 인덱스 g가 놓인 자리. 순서가 없으면 g 그대로 */
+export function slotIndex(
+  legendOrder: readonly number[] | undefined,
+  g: number,
+) {
+  if (!legendOrder) return g;
+  const k = legendOrder.indexOf(g);
+  return k < 0 ? g : k;
 }
 
 /** 범주 i 안에서 g번째 막대/상자의 가운데 x와 너비 */
@@ -316,6 +353,22 @@ export function groupSlot(
   return {
     cx: center - markWidth / 2 + slot * (g + 0.5),
     width: Math.max(1, slot - (groupCount > 1 ? GROUP_GAP : 0)),
+  };
+}
+
+/**
+ * 범주 순서(axes.x.categorySort·categoryOrder)대로 범주와 막대·상자 행을 함께 옮긴다. 기본값이면 그대로 둔다.
+ * 데이터를 받은 직후에 적용해, 이후의 식(x = 범주 인덱스)·metadata·선택이 모두 바뀐 순서를 쓴다.
+ */
+export function orderCategories(input: CategoryInput): CategoryInput {
+  const { categorySort, categoryOrder } = optionsOf(input).axes.x;
+  const idx = orderIndexes(input.categories, categoryOrder, categorySort);
+  if (isIdentityOrder(idx)) return input;
+  return {
+    ...input,
+    categories: idx.map((i) => input.categories[i]),
+    bars: input.bars && idx.map((i) => input.bars?.[i] ?? []),
+    boxes: input.boxes && idx.map((i) => input.boxes?.[i] ?? []),
   };
 }
 
@@ -386,7 +439,7 @@ export function renderCategory(
   rawInput: CategoryInput,
   progress: ProgressFn,
 ): CategoryMeta {
-  const input = applyValueOptions(rawInput);
+  const input = applyValueOptions(orderCategories(rawInput));
   const o = optionsOf(input);
   const { width, height, categories, view } = input;
   const n = categories.length;
@@ -398,10 +451,14 @@ export function renderCategory(
   );
   // 체크박스로 끈 legend 값의 막대/상자는 그리지 않는다.
   const off = hiddenIndexes(input.legend);
+  // legend 순서(sort·order): 나란히 놓는 자리와 쌓는 순서. 색과 칸은 legend 인덱스 그대로다.
+  const sequence = legendSequence(input.legend, groupCount);
+  /** legend 인덱스 → 묶음 안 자리 */
+  const slotOf = slotLookup(input.legend, groupCount);
   // 누적 막대는 범주 하나에 한 줄로 쌓는다. 끈 값은 빼고 쌓아 남은 막대끼리 이어 붙는다.
   const stack = input.chartType === "bar" ? input.stack : undefined;
   const segments = stack
-    ? stackSegments(input.bars ?? [], off, stack === "stack100")
+    ? stackSegments(input.bars ?? [], off, stack === "stack100", sequence)
     : undefined;
   /** 막대/상자를 놓는 칸 수. 누적이면 하나 */
   const slots = segments ? 1 : groupCount;
@@ -426,7 +483,7 @@ export function renderCategory(
   /** 막대/상자의 대표 좌표. 누적이면 구간 가운데 */
   const pointOf = (i: number, g: number, v: number) => {
     const seg = segments?.[i]?.[g];
-    return seg ? stackPoint(i, seg) : markPoint(i, g, groupCount, v);
+    return seg ? stackPoint(i, seg) : markPoint(i, slotOf(g), groupCount, v);
   };
   // focus: 맞는 막대/상자(x = 범주 인덱스, y = 막대 값·중앙값, 누적이면 구간 가운데)는 focus 색,
   // legendSingleColor면 나머지는 회색. 순위는 그리는 막대/상자 전체(끈 legend 값 제외)에서 매긴다.
@@ -553,7 +610,7 @@ export function renderCategory(
     const fill = alphaOf(shape.transparency);
     (input.bars ?? []).forEach((row, i) => {
       // 누적이면 범주의 맨 위·맨 아래 막대만 바깥 끝을 둥글게 한다.
-      const ends = segments && stackEnds(segments[i] ?? []);
+      const ends = segments && stackEnds(segments[i] ?? [], sequence);
       row.forEach((v, g) => {
         if (v === null) return;
         const seg = segments?.[i]?.[g];
@@ -561,7 +618,12 @@ export function renderCategory(
         const [from, to] = seg ?? [baseValue, v];
         // 로그 축에서 0 이하 값은 그릴 자리가 없다.
         if (yLog && (to <= 0 || (seg && from <= 0))) return;
-        const { cx, width: w } = groupSlot(x(i), markWidth, slots, seg ? 0 : g);
+        const { cx, width: w } = groupSlot(
+          x(i),
+          markWidth,
+          slots,
+          seg ? 0 : slotOf(g),
+        );
         const y0 = seg ? y(from) : zero;
         const top = Math.min(y(to), y0);
         const h = Math.abs(y(to) - y0);
@@ -600,9 +662,14 @@ export function renderCategory(
     (input.boxes ?? []).forEach((row, i) => {
       row.forEach((b, g) => {
         if (!b) return;
-        const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
+        const { cx, width: w } = groupSlot(
+          x(i),
+          markWidth,
+          groupCount,
+          slotOf(g),
+        );
         const half = w / 2;
-        const point = markPoint(i, g, groupCount, b.median);
+        const point = markPoint(i, slotOf(g), groupCount, b.median);
         const index = legendIndexOf(g, point);
         if (off[index]) return;
         const color = colorOf(index, point, i);
@@ -723,6 +790,7 @@ export function renderCategory(
     markWidth,
     groupCount,
     groupGap: GROUP_GAP,
+    ...legendOrderMeta(input.legend, groupCount),
     agg: input.agg,
     bars: input.bars,
     ...(segments ? { stack, segments } : {}),

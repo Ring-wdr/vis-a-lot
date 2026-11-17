@@ -3444,7 +3444,10 @@ export type components = {
         y: number[];
         id: number[];
         g?: number[];
+        f?: number[];
       };
+      shape?: components["schemas"]["PointShape"];
+      focusShape?: components["schemas"]["PointShape"];
       total: number;
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
@@ -3487,6 +3490,7 @@ export type components = {
         orientation: "horizontal" | "vertical";
         fontSize: number;
         marker: number;
+        shape?: components["schemas"]["PointShape"];
         textColor: string;
         titleColor: string;
         mutedColor: string;
@@ -3518,6 +3522,7 @@ export type components = {
       markWidth: number;
       groupCount: number;
       groupGap: number;
+      legendOrder?: number[];
       agg?: components["schemas"]["AggFn"];
       bars?: (number | null)[][];
       boxes?: (components["schemas"]["BoxSummary"] | null)[][];
@@ -3772,6 +3777,7 @@ export type components = {
       };
       counts: number[][];
       groupCount: number;
+      legendOrder?: number[];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
     };

@@ -15,6 +15,7 @@ import {
 } from "../api/types";
 import { defaultsFor } from "../charts/chart-defaults";
 import {
+  CHART_FIELDS,
   isDistributionLine,
   legendColumnOf,
   POINT_CHARTS,
@@ -49,6 +50,8 @@ import {
   toDistribution,
 } from "../render/analytics/distribution";
 import { CANDLE_LEGEND } from "../render/candle";
+import type { LegendStyle } from "../render/options";
+import { isIdentityOrder, orderIndexes } from "../render/order";
 import { gradientColors, legendStyleOf, paletteColor } from "../render/style";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
 import { CancelledError, type PoolCallOptions } from "../render-pool";
@@ -599,6 +602,22 @@ export function groupColor(
 }
 
 /**
+ * legend 값을 놓을 순서(legend.sort·order). legend 컬럼을 고르는 차트에서만 쓰고, 차트가 legend를 정하는
+ * 종류(pie·funnel·sankey·waterfall·candle·heatmap)는 쓰지 않는다. 색은 값을 따르므로 바꾸지 않는다.
+ * 순서가 그대로면 undefined.
+ */
+export function legendOrderOf(
+  chart: ChartRecord,
+  values: readonly string[] | undefined,
+  style: LegendStyle,
+): number[] | undefined {
+  if (!values || CHART_FIELDS[chart.spec.chartType].legend === false)
+    return undefined;
+  const order = orderIndexes(values, style.order, style.sort);
+  return isIdentityOrder(order) ? undefined : order;
+}
+
+/**
  * legend 입력. 새 범례가 있으면 원래 legend 뒤에 덧붙이고, 원래 legend가 없으면
  * 나머지 점을 '기타' 하나로 둔다. legend도 새 범례도 없으면 undefined.
  */
@@ -613,6 +632,8 @@ function legendInput(
 ) {
   const groups = item.legendGroups;
   if (!values && groups.length === 0) return undefined;
+  const style = legendStyleOf(optionsFor(chart, item, theme));
+  const order = legendOrderOf(chart, values, style);
   return {
     title: values ? title : "범례",
     values: [...(values ?? [OTHERS_LABEL]), ...groups.map((g) => g.name)],
@@ -624,7 +645,8 @@ function legendInput(
     ],
     position: legendPosition(chart, item),
     hidden: item.props?.hiddenLegend,
-    style: legendStyleOf(optionsFor(chart, item, theme)),
+    style,
+    ...(order ? { order } : {}),
   };
 }
 
@@ -1009,6 +1031,7 @@ function renderItem(
           position: legendPosition(chart, item),
           hidden: item.props?.hiddenLegend,
           style: legendStyleOf(options),
+          order: legendOrderOf(chart, values, legendStyleOf(options)),
         },
       },
       poolOptions,

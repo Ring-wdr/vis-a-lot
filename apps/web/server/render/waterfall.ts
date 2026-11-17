@@ -20,6 +20,7 @@ import {
   type LegendMeta,
 } from "./legend";
 import { type ChartOptions, optionsOf } from "./options";
+import { isIdentityOrder, orderIndexes } from "./order";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -115,11 +116,27 @@ function valueExtent(steps: WaterfallStep[]): [number, number] {
   return min === max ? [min - 1, max + 1] : [min, max];
 }
 
+/**
+ * 범주 순서(axes.x.categorySort·categoryOrder)대로 범주와 값을 함께 옮긴다. 누적은 바꾼 순서대로 쌓는다.
+ * 기본값이면 그대로 둔다.
+ */
+export function orderWaterfall(input: WaterfallInput): WaterfallInput {
+  const { categorySort, categoryOrder } = optionsOf(input).axes.x;
+  const idx = orderIndexes(input.categories, categoryOrder, categorySort);
+  if (isIdentityOrder(idx)) return input;
+  return {
+    ...input,
+    categories: idx.map((i) => input.categories[i]),
+    values: idx.map((i) => input.values[i] ?? null),
+  };
+}
+
 export function renderWaterfall(
   ctx: Ctx,
-  input: WaterfallInput,
+  rawInput: WaterfallInput,
   progress: ProgressFn,
 ): WaterfallMeta {
+  const input = orderWaterfall(rawInput);
   const o = optionsOf(input);
   const { width, height, categories, view } = input;
   // value: 빈 범주(null)는 nullNumeric이 있으면 그 값으로 쌓는다 (없으면 지금처럼 0).

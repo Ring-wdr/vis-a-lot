@@ -199,6 +199,8 @@ export type LineDrawInput = {
   sy: Float32Array;
   /** 계열별 x 순 인덱스 (seriesOrder) */
   series: Int32Array[];
+  /** 계열을 그리는 순서(legend 순서). 나중 계열이 위에 온다. 없으면 계열 인덱스 순 */
+  drawOrder?: readonly number[];
   colors: readonly string[];
   plot: { left: number; width: number };
   compact?: boolean;
@@ -235,8 +237,9 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
   ctx.lineCap = "round";
   // 선택 영역 밖은 다 그린 뒤 배경색으로 덮어 흐리게 한다 (region.dimOutside).
   ctx.globalAlpha = alpha;
-  series.forEach((order, g) => {
-    if (order.length === 0) return;
+  for (const g of input.drawOrder ?? series.keys()) {
+    const order = series[g];
+    if (!order || order.length === 0) continue;
     ctx.strokeStyle = colors[g];
     ctx.fillStyle = colors[g];
     const runs = runsOf(order, undefined);
@@ -282,6 +285,6 @@ export function drawLines(ctx: Ctx, input: LineDrawInput) {
         }
       }
     }
-  });
+  }
   ctx.globalAlpha = 1;
 }

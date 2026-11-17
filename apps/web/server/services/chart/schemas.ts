@@ -811,6 +811,8 @@ export const LegendMetaSchema = z
         fontSize: z.number(),
         /** 색 표시(●) 반지름 */
         marker: z.number(),
+        /** 색 표시 모양 (scatter·line의 shape.type). 원이면 없다. */
+        shape: PointShapeSchema.optional(),
         textColor: z.string(),
         titleColor: z.string(),
         mutedColor: z.string(),
@@ -842,7 +844,13 @@ export const ScatterMetaSchema = z
       id: z.array(z.number()),
       /** legend 인덱스 (legend가 있을 때만) */
       g: z.array(z.number()).optional(),
+      /** 남긴 점마다 focus에 맞으면 1, 아니면 0 (focus를 켰을 때만) */
+      f: z.array(z.number()).optional(),
     }),
+    /** 점 모양(shape.type). 원이면 없다. 화면의 가까운 점 표시가 같은 모양을 쓴다. */
+    shape: PointShapeSchema.optional(),
+    /** focus에 맞는 점의 모양 (focus를 켰을 때만) */
+    focusShape: PointShapeSchema.optional(),
     total: z.number(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
@@ -877,6 +885,11 @@ export const CategoryMetaSchema = z
     groupCount: z.number(),
     /** 묶음 안에서 막대/상자 사이 간격(px) */
     groupGap: z.number(),
+    /**
+     * 묶음 안에 나란히 놓은 막대/상자의 legend 인덱스(왼쪽부터). legend 순서(sort·order)를 바꿨을 때만 있다.
+     * bars·boxes·segments의 칸은 legend 인덱스 그대로다.
+     */
+    legendOrder: z.array(z.number()).optional(),
     agg: AggFnSchema.optional(),
     /** [범주][legend 값] */
     bars: z.array(z.array(z.number().nullable())).optional(),
@@ -1150,6 +1163,8 @@ export const HistogramMetaSchema = z
     counts: z.array(z.array(z.number())),
     /** 구간 하나에 나란히 놓는 막대 수 (legend 값 수, 없으면 1) */
     groupCount: z.number(),
+    /** 구간 안에 나란히 놓은 막대의 legend 인덱스(왼쪽부터). legend 순서를 바꿨을 때만 있다. counts의 칸은 그대로다. */
+    legendOrder: z.array(z.number()).optional(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
   })

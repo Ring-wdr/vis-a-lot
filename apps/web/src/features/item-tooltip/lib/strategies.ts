@@ -190,20 +190,14 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
   },
 };
 
-/** 점 모양 metadata: shape(원이면 없다), focus를 켰으면 focusShape와 점마다 focus 여부(points.f) */
-type ShapeMeta = ScatterMeta & {
-  shape?: PointShape;
-  focusShape?: PointShape;
-  points: ScatterMeta["points"] & { f?: number[] };
-};
-
 /** 가까운 점이 PNG에 그려진 모양 (원이면 undefined). focus에 맞는 점은 focus 모양이다. */
 export function markerShape(
   meta: ScatterMeta,
   index: number,
 ): PointShape | undefined {
-  const m: ShapeMeta = meta;
-  const shape = m.focusShape && m.points.f?.[index] ? m.focusShape : m.shape;
+  // shape(원이면 없다), focus를 켰으면 focusShape와 점마다 focus 여부(points.f)
+  const shape =
+    meta.focusShape && meta.points.f?.[index] ? meta.focusShape : meta.shape;
   return shape === "circle" ? undefined : shape;
 }
 
@@ -257,15 +251,17 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
     return { index, g, cx, width };
   }
   const left = center - meta.markWidth / 2;
-  const g = Math.min(
+  // 커서가 든 자리. legend 순서를 바꿨으면 그 자리의 legend 인덱스를 찾는다.
+  const slot = Math.min(
     meta.groupCount - 1,
     Math.max(0, Math.floor(((px - left) / meta.markWidth) * meta.groupCount)),
   );
+  const g = legendAtSlot(meta.legendOrder, slot);
   const { cx, width } = groupSlot(
     center,
     meta.markWidth,
     meta.groupCount,
-    g,
+    slot,
     meta.groupGap,
   );
   return { index, g, cx, width };
@@ -972,6 +968,17 @@ function xToPx(meta: ItemMeta, v: number) {
   return plot.left + ((v - d0) / (d1 - d0)) * plot.width;
 }
 
+/**
+ * 나란히 놓은 막대/상자에서 slot번째 자리의 legend 인덱스. metadata의 legendOrder(legend 순서를 바꿨을 때만 있다)를
+ * 따르고, 없으면 자리가 곧 legend 인덱스다.
+ */
+export function legendAtSlot(
+  legendOrder: readonly number[] | undefined,
+  slot: number,
+) {
+  return legendOrder?.[slot] ?? slot;
+}
+
 /** legend 체크박스로 끈 값인지 */
 function legendHidden(meta: ItemMeta, index: number) {
   return meta.legend?.entries.find((e) => e.index === index)?.visible === false;
@@ -995,10 +1002,11 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
     const pos = (v - bins.lo) / bins.step;
     const i = Math.min(bins.count - 1, Math.floor(pos));
     if (pos < 0 || pos > bins.count) return null;
-    const g = Math.min(
+    const slot = Math.min(
       meta.groupCount - 1,
       Math.max(0, Math.floor((pos - i) * meta.groupCount)),
     );
+    const g = legendAtSlot(meta.legendOrder, slot);
     if (legendHidden(meta, g)) return null;
     const count = meta.counts[i]?.[g] ?? 0;
     const from = bins.lo + bins.step * i;
@@ -1009,8 +1017,11 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
       i === bins.count - 1
         ? closedRange(num(from), num(to))
         : openRange(num(from), num(to));
-    const left = xToPx(meta, from + (bins.step * g) / meta.groupCount);
-    const right = xToPx(meta, from + (bins.step * (g + 1)) / meta.groupCount);
+    const left = xToPx(meta, from + (bins.step * slot) / meta.groupCount);
+    const right = xToPx(
+      meta,
+      from + (bins.step * (slot + 1)) / meta.groupCount,
+    );
     const rows: TooltipRow[] = [
       { id: "range", label: text("range"), value: range },
     ];
