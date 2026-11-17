@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   type ChartOptions,
@@ -11,6 +11,7 @@ import {
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
 import { buildPatch } from "@/features/chart-settings/model/option-fields";
 import type { OptionsFormValues } from "@/features/chart-settings/model/options-form";
+import { orderSourceOf } from "@/features/chart-settings/model/order-values";
 import { ItemOptionsDialog } from "@/features/chart-settings/ui/ItemOptionsDialog";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import {
@@ -22,9 +23,10 @@ import {
   ItemColorSettings,
   ItemLegendPositionSettings,
 } from "@/features/item-actions/ui/ItemSettings";
-import { useChartDefaults } from "@/shared/api/queries";
+import { useChartDefaults, useDatasetState } from "@/shared/api/queries";
 import type {
   ChartOptionsBody,
+  DatasetId,
   ItemState,
   LegendPosition,
 } from "@/shared/api/types";
@@ -52,6 +54,14 @@ export function ItemSettingsDialog({
   const readOnly = useWorkspace((s) => s.readOnly);
   const common = useWorkspace((s) => s.current?.spec.common);
   const chartType = useWorkspace((s) => s.current?.spec.chartType);
+  // 순서 필드(legend·범주 순서)는 그린 spec의 데이터셋·컬럼 값을 늘어놓는다.
+  const spec = useWorkspace((s) => s.current?.spec);
+  const datasetReady =
+    useDatasetState(spec?.dataset ?? ("" as DatasetId)).data === "ready";
+  const orderSource = useMemo(
+    () => (spec ? orderSourceOf(spec, datasetReady) : undefined),
+    [spec, datasetReady],
+  );
   // item을 다시 그리는 중인지. 팝업(ItemOptionsDialog)은 store를 읽지 않으므로 여기서 골라 넘긴다.
   const busy = useWorkspace((s) => s.itemJobs[item.key] !== undefined);
   const defaults = useDefaultOptions(chartType);
@@ -100,6 +110,7 @@ export function ItemSettingsDialog({
     <FormProvider {...form}>
       <ItemOptionsDialog
         chartType={chartType}
+        orderSource={orderSource}
         readOnly={readOnly}
         busy={busy}
         label={item.label}

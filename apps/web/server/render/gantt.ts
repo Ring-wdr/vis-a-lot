@@ -4,7 +4,7 @@
 
 import { scaleLinear } from "d3-scale";
 import type { GanttBars } from "../data/gantt-data";
-import { focusTest } from "./analytics/focus";
+import { focusMatcher } from "./analytics/focus";
 import { drawAxisTitles, drawXAxis, timeFormat } from "./axis-style";
 import { timeXAxis } from "./candle";
 import { drawTitle } from "./frame";
@@ -166,18 +166,22 @@ function truncate(ctx: Ctx, text: string, maxWidth: number) {
 const HOUR_MS = 3_600_000;
 
 /**
- * focus 조건에 맞는 막대. target x는 막대 시작 시각(epoch ms), y는 구간 길이(시간 단위)로 견준다.
- * focus가 꺼져 있으면 undefined
+ * focus에 맞는 막대. target x는 막대 시작 시각(epoch ms), y는 구간 길이(시간 단위)로 견준다.
+ * 순위는 include가 true인 막대(끈 legend 값 제외) 전체에서 매긴다. focus가 꺼져 있으면 undefined
  */
 export function ganttFocus(
   bars: GanttBars,
   o: ChartOptions,
+  include?: (j: number) => boolean,
 ): Uint8Array | undefined {
   if (!o.focus.enabled) return undefined;
-  const test = focusTest(o.focus);
-  const out = new Uint8Array(bars.s.length);
-  for (let j = 0; j < out.length; j++) {
-    out[j] = test(bars.s[j], (bars.e[j] - bars.s[j]) / HOUR_MS) ? 1 : 0;
+  const n = bars.s.length;
+  const hours = new Float64Array(n);
+  for (let j = 0; j < n; j++) hours[j] = (bars.e[j] - bars.s[j]) / HOUR_MS;
+  const test = focusMatcher(o.focus, bars.s, hours, include);
+  const out = new Uint8Array(n);
+  for (let j = 0; j < n; j++) {
+    out[j] = (!include || include(j)) && test(bars.s[j], hours[j]) ? 1 : 0;
   }
   return out;
 }
@@ -216,7 +220,7 @@ export function renderGantt(
       if (inside[j]) selectedCount++;
     }
   }
-  const focus = ganttFocus(bars, o);
+  const focus = ganttFocus(bars, o, (j) => !off[index[j]]);
   // focus: 조건에 맞는 막대는 focus 색, legendSingleColor면 나머지는 회색 한 가지
   const colorOf = (j: number) =>
     focus?.[j]

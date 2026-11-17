@@ -19,6 +19,7 @@ import {
   WorkspaceScope,
 } from "@/entities/workspace/model/workspace-scope";
 import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
+import { useDatasetState } from "@/shared/api/queries";
 import type { ChartSpec } from "@/shared/api/types";
 import { button } from "@/shared/ui/button";
 import { Dialog, dialogActions } from "@/shared/ui/Dialog";
@@ -28,6 +29,7 @@ import {
   commonFormValues,
   commonFromForm,
 } from "../model/common-settings-form";
+import { orderSourceOf } from "../model/order-values";
 import { ColorSettings } from "./ColorSettings";
 import { LegendSettings } from "./LegendSettings";
 import { CommonOptionSettings } from "./OptionSettings";
@@ -73,6 +75,9 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
   const setShowNearest = useWorkspace((s) => s.setShowNearest);
   // 서버 draw와 같은 기본값. 폼의 '기본값'과 되돌리기 기준이 된다.
   const defaults = useDefaultOptions(chartType);
+  // 순서 필드(legend·범주 순서)는 다음 draw에 쓸 데이터셋·컬럼의 값을 늘어놓는다.
+  const datasetReady = useDatasetState(draft.dataset).data === "ready";
+  const orderSource = orderSourceOf(draft, datasetReady);
   // 열 때의 값. 폼은 이 값에서 시작하고, 확인을 누르면 바뀐 것만 draft로 옮긴다.
   const [opened] = useState(() => {
     const { draft, showNearest } = store.getState();
@@ -136,6 +141,8 @@ function SettingsBody({ onClose }: { onClose: () => void }) {
               key={`${active.section}-${active.part}`}
               section={active.section}
               part={active.part}
+              chartType={chartType}
+              orderSource={orderSource}
               supported={supportsOption(chartType, active.section)}
               original={opened.common.options as ChartOptionsPatch | undefined}
               defaults={defaults}

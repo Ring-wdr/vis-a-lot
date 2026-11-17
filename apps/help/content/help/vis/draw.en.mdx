@@ -10,9 +10,24 @@ In a gallery tab, pick data and columns in the left panel and press **draw** to 
 | grid | Rows × columns of items on one page |
 | x · y · z | Columns used by the chart. Which column types you can pick depends on the chart type |
 | legend | A categorical column to split colors by. Only categorical columns with 8 or fewer unique values can be picked |
-| Aggregate | How to combine y values: mean, sum, count, min, max, median. Only shown for charts that aggregate values |
+| Aggregate | How to combine y values. Only shown for charts that aggregate values → [Aggregates](#en-aggregates) |
 | split by | Columns to split charts by. You can pick several |
 | tooltip | Columns to also show in the tooltip. You can pick several |
+
+## Aggregates
+
+bar, pie, radar, heatmap, treemap, sankey, waterfall and funnel combine the y values (z for sankey and heatmap) of each category with an aggregate.
+
+| Aggregate | Value |
+| --- | --- |
+| Mean · Sum · Count | Average, total and number of rows |
+| Min · Max · Median | Smallest, largest and middle value |
+| Unique count | Number of distinct values |
+| Std. dev. | Sample standard deviation. Empty when there is only one row |
+| Population std. dev. | Population standard deviation |
+| 1st quartile · 3rd quartile | Values at the 25% and 75% positions |
+
+The 'Other' group that collects small categories is always recomputed from the original rows of the grouped categories in pie, funnel and sankey.
 
 ## split by and grid
 

@@ -1,7 +1,10 @@
 import { CHART_DEFAULTS } from "@server/charts/chart-defaults";
 import { describe, expect, it } from "vitest";
 import {
+  CATEGORY_ORDER_CHARTS,
   type ChartOptions,
+  type FocusType,
+  LEGEND_ORDER_CHARTS,
   mergeOptions,
   OPTION_SECTIONS,
 } from "@/entities/chart/model/chart-options";
@@ -11,6 +14,8 @@ import {
   fieldsOf,
   getPath,
   hasSection,
+  isFieldShown,
+  type OptionField,
   removeSection,
   sectionFields,
   sectionParts,
@@ -183,5 +188,196 @@ describe("설정 창 필드", () => {
       for (const f of fields) if ("path" in f) paths.add(f.path);
     }
     expect(leafPaths(DEFAULT_OPTIONS).filter((p) => !paths.has(p))).toEqual([]);
+  });
+});
+
+describe("새 칸 (순서·강조 방식·이상치·팔레트·부제목)", () => {
+  const resolve = (patch: object | undefined) =>
+    mergeOptions<ChartOptions>(DEFAULT_OPTIONS, patch);
+  const edit = (patch: object | undefined, path: string, value: unknown) =>
+    setPath(resolve(patch), path, value) as ChartOptions;
+  /** 보이는 입력 칸 경로 */
+  const shown = (
+    fields: OptionField[],
+    options: ChartOptions,
+    chartType: Parameters<typeof isFieldShown>[2],
+  ) =>
+    fields.flatMap((f) =>
+      f.kind !== "heading" && isFieldShown(f, options, chartType)
+        ? [f.path]
+        : [],
+    );
+
+  it("강조 방식마다 그 방식의 칸만 보이고, 대상·색·모양·크기는 늘 보인다", () => {
+    const visible = (type: FocusType) =>
+      shown(
+        sectionFields().focus,
+        edit(undefined, "focus.type", type),
+        "scatter",
+      );
+    const always = [
+      "focus.enabled",
+      "focus.type",
+      "focus.target",
+      "focus.color",
+      "focus.shape",
+      "focus.size",
+      "focus.legendSingleColor",
+    ];
+    expect(visible("condition")).toEqual(
+      expect.arrayContaining([...always, "focus.operator", "focus.value"]),
+    );
+    expect(visible("condition")).toHaveLength(always.length + 2);
+    expect(visible("rank").sort()).toEqual(
+      [...always, "focus.rankFrom", "focus.rankCount"].sort(),
+    );
+    expect(visible("range").sort()).toEqual(
+      [...always, "focus.rangeMin", "focus.rangeMax"].sort(),
+    );
+  });
+
+  it("이상치 처리는 이상치 가리기를 켰을 때만 보인다", () => {
+    const fields = sectionFields().value;
+    expect(shown(fields, DEFAULT_OPTIONS, "bar")).not.toContain(
+      "value.outlierMode",
+    );
+    expect(
+      shown(fields, edit(undefined, "value.outlier", true), "bar"),
+    ).toContain("value.outlierMode");
+  });
+
+  it("legend 순서는 legend 컬럼을 고르는 차트만, 범주 순서는 범주 x축 차트의 X축에만 보인다", () => {
+    for (const type of ["scatter", "bar", "gantt", "treemap"] as const) {
+      expect(LEGEND_ORDER_CHARTS).toContain(type);
+      expect(shown(sectionFields().legend, DEFAULT_OPTIONS, type)).toEqual(
+        expect.arrayContaining(["legend.sort", "legend.order"]),
+      );
+    }
+    for (const type of ["pie", "funnel", "sankey"] as const)
+      expect(
+        shown(sectionFields().legend, DEFAULT_OPTIONS, type),
+      ).not.toContain("legend.order");
+    const x = fieldsOf("axes", "x");
+    for (const type of CATEGORY_ORDER_CHARTS)
+      expect(shown(x, DEFAULT_OPTIONS, type)).toEqual(
+        expect.arrayContaining(["axes.x.categorySort", "axes.x.categoryOrder"]),
+      );
+    for (const type of ["scatter", "line", "gantt"] as const)
+      expect(shown(x, DEFAULT_OPTIONS, type)).not.toContain(
+        "axes.x.categoryOrder",
+      );
+    expect(
+      shown(fieldsOf("axes", "y"), DEFAULT_OPTIONS, "bar").some((p) =>
+        p.includes("category"),
+      ),
+    ).toBe(false);
+  });
+
+  it("순서 칸은 나머지 순서를 정하는 정렬 칸을 가리킨다", () => {
+    const order = [...sectionFields().legend, ...fieldsOf("axes", "x")].filter(
+      (f) => f.kind === "order",
+    );
+    expect(order.map((f) => [f.path, f.sortPath, f.source])).toEqual([
+      ["legend.order", "legend.sort", "legend"],
+      ["axes.x.categoryOrder", "axes.x.categorySort", "category"],
+    ]);
+  });
+
+  it("배열 칸(순서·색 목록)은 통째로 저장하고, 원래대로 돌리면 정하지 않는다", () => {
+    const values = edit(
+      edit(undefined, "legend.order", ["L10", "L2"]),
+      "palette.colors",
+      ["#111111", "#222222"],
+    );
+    expect(
+      buildPatch({
+        original: undefined,
+        opened: DEFAULT_OPTIONS,
+        base: DEFAULT_OPTIONS,
+        values,
+        resets: [],
+      }),
+    ).toEqual({
+      legend: { order: ["L10", "L2"] },
+      palette: { colors: ["#111111", "#222222"] },
+    });
+    // 순서를 줄이면 줄인 배열이 그대로 남는다 (합칠 때 배열은 통째로 바뀐다).
+    const original = { legend: { order: ["L10", "L2"] } };
+    expect(
+      buildPatch({
+        original,
+        opened: resolve(original),
+        base: DEFAULT_OPTIONS,
+        values: edit(original, "legend.order", ["L2"]),
+        resets: [],
+      }),
+    ).toEqual({ legend: { order: ["L2"] } });
+    expect(
+      buildPatch({
+        original: undefined,
+        opened: DEFAULT_OPTIONS,
+        base: DEFAULT_OPTIONS,
+        values: edit(undefined, "axes.x.categoryOrder", []),
+        resets: [],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("강조 방식·순위·범위와 부제목 칸을 저장한다. 비운 칸은 null로 남는다", () => {
+    let values = edit(undefined, "focus.type", "range");
+    values = setPath(values, "focus.rangeMin", 20) as ChartOptions;
+    values = setPath(values, "title.subtitleAlign", "right") as ChartOptions;
+    values = setPath(values, "title.subtitleFontSize", 9) as ChartOptions;
+    const patch = buildPatch({
+      original: undefined,
+      opened: DEFAULT_OPTIONS,
+      base: DEFAULT_OPTIONS,
+      values,
+      resets: [],
+    });
+    expect(patch).toEqual({
+      focus: { type: "range", rangeMin: 20 },
+      title: { subtitleAlign: "right", subtitleFontSize: 9 },
+    });
+    // 정해 둔 칸은 비워도(null = 제목 따라감) 정한 채로 남는다.
+    const original = { title: { subtitleAlign: "right" as const } };
+    expect(
+      buildPatch({
+        original,
+        opened: resolve(original),
+        base: DEFAULT_OPTIONS,
+        values: edit(original, "title.subtitleAlign", null),
+        resets: [],
+      }),
+    ).toEqual({ title: { subtitleAlign: null } });
+  });
+
+  it("구역을 되돌리면 새 칸도 함께 지운다", () => {
+    const original = {
+      legend: { sort: "natural" as const, order: ["b", "a"] },
+      focus: { type: "rank" as const, rankCount: 3 },
+      value: { outlier: true, outlierMode: "only" as const },
+    };
+    const reset = (section: "legend" | "focus" | "value") =>
+      setPath(
+        resolve(original),
+        section,
+        DEFAULT_OPTIONS[section],
+      ) as ChartOptions;
+    for (const section of ["legend", "focus", "value"] as const) {
+      const patch = buildPatch({
+        original,
+        opened: resolve(original),
+        base: DEFAULT_OPTIONS,
+        values: reset(section),
+        resets: [section],
+      });
+      expect(patch?.[section]).toBeUndefined();
+      expect(Object.keys(patch ?? {}).sort()).toEqual(
+        Object.keys(original)
+          .filter((k) => k !== section)
+          .sort(),
+      );
+    }
   });
 });

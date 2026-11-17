@@ -55,6 +55,7 @@
 
 ### 2.3 서버
 
+- job 조회 handler는 `server/services/chart/app.ts`다. query `search`를 `ItemSelection`에 넘긴다(`items=`가 있으면 넘기지 않는다).
 - `server/jobs/job-manager.ts`: `ItemSelection`에 `search`를 더하고, `selectedKeys`·`startOf`가 `job.order`를 item `label`로 거른 순서를 쓴다. 거른 순서는 job마다 조건 문자열을 키로 한 건만 기억한다(30,000개를 요청마다 다시 훑지 않게).
 - long polling 종료 조건(요청한 페이지 item이 모두 끝남)은 그대로다.
 
@@ -94,6 +95,8 @@
 
 - **legend 순서**가 바꾸는 것: legend 상자의 항목 순서, 범주 안에 나란히 놓는 막대·상자 순서, 쌓는 순서(Stack·Stack 100), histogram의 구간 안 막대 순서, radar 다각형·line 계열을 그리는 순서.
 - **색은 바뀌지 않는다.** 색은 지금처럼 값을 따른다(전체 데이터 기준 legend 값 순번). metadata의 legend 항목도 원래 순번을 그대로 갖는다(`reverse`와 같은 방식).
+- 범주 안에 나란히 놓는 차트(bar, boxplot, histogram)는 순서가 바뀐 때만 metadata에 `legendOrder`(그려진 자리 순서대로의 legend 인덱스)를 담는다. 툴팁·선택이 자리 → legend 순번을 이것으로 바꾼다. 순서가 그대로면 넣지 않는다.
+- `legend.reverse`는 legend 상자의 항목만 뒤집는다. 막대·상자를 놓는 순서는 `sort`·`order`만 따른다.
 - **범주 순서**를 쓰는 차트: bar, boxplot, waterfall, heatmap(x). waterfall은 바꾼 순서대로 누적한다. 값 크기로 놓는 차트(pie, funnel, radar 축, treemap, sankey)와 gantt 행은 쓰지 않는다.
 - legend 순서를 쓰는 차트: legend 컬럼을 고르는 차트(scatter, line, bar, boxplot, histogram, radar, gantt, treemap). 차트가 legend를 정하는 종류(pie, funnel, sankey, waterfall, candle, heatmap)는 쓰지 않는다.
 - 범주 순서는 데이터를 받은 직후 범주 배열과 칸을 함께 옮겨 적용한다. 툴팁·선택·데이터 테이블은 metadata의 범주 순번을 쓰므로 그대로 맞는다.
@@ -102,13 +105,15 @@
 
 - 전체 설정·item 속성 팝업의 범례 구역에 `정렬`(select)과 `순서`, 축 › X축에 `범주 정렬`과 `범주 순서`.
 - `순서` 필드는 새 필드 종류 `order`다. 값 목록을 끌어 순서를 바꾸고(키보드는 Alt+↑↓), 옮긴 값만 저장한다. 목록 맨 위부터 마지막으로 옮긴 값까지가 `order`가 된다. `처음 순서로`로 비운다.
-- 값 목록: legend는 `GET /api/data/datasets/:id/legend-values?column=`, 범주는 `GET /api/data/datasets/:id/columns/:column/summary`. 고유값이 200개를 넘는 범주 컬럼은 `순서`를 막고 정렬만 고르게 한다.
+- 값 목록: legend는 `GET /api/data/datasets/:id/legend-values?column=`, 범주는 `GET /api/data/datasets/:id/columns/:column/summary`. 고유값이 200개를 넘는 범주 컬럼은 `순서`를 막고 정렬만 고르게 한다. 시계열 x(heatmap)는 값별 목록이 없어 늘어놓을 값이 없다.
+- 값 목록을 받을 곳(`OrderSource`: 데이터셋, legend 컬럼, 범주 컬럼, 데이터셋 준비 여부)은 여는 쪽이 정해 구역 폼에 넘긴다. 전체 설정은 draft spec, item 속성 팝업은 그린 spec(`current.spec`)이다(`features/chart-settings/model/order-values.ts`의 `orderSourceOf`).
+- `정렬`·`순서` 칸은 그 순서를 쓰는 차트에서만 보인다. legend는 `LEGEND_ORDER_CHARTS`(legend 컬럼을 고르는 차트), 범주는 `CATEGORY_ORDER_CHARTS`. 필드 표의 `charts`로 고르고 구역 폼이 차트 종류를 받아 숨긴다.
 - 드래그는 저장소가 이미 쓰는 dnd-kit, 긴 목록은 가상 스크롤.
 
 | 위치 | 내용 |
 |---|---|
-| `apps/web/src/features/chart-settings` | `model/option-fields.ts`에 필드와 `order` 종류, `ui/OptionSectionForm.tsx`가 그린다. 새 `ui/OrderField.tsx` |
-| `apps/web/src/entities/chart/model/chart-options.ts` | 차트별 지원 표(범주 순서를 쓰는 차트) |
+| `apps/web/src/features/chart-settings` | `model/option-fields.ts`에 필드와 `order` 종류, `ui/OptionSectionForm.tsx`가 그린다. 새 `ui/OrderField.tsx`, `model/order-values.ts`(값 목록) |
+| `apps/web/src/entities/chart/model/chart-options.ts` | 차트별 지원 표(범주 순서를 쓰는 차트 `CATEGORY_ORDER_CHARTS`, legend 순서를 쓰는 차트 `LEGEND_ORDER_CHARTS`) |
 | `apps/web/server/render/options.ts`, `server/charts/chart-defaults.ts`, `server/services/chart/schemas.ts` | 타입·기본값·검증 |
 | `apps/web/server/jobs/job-manager.ts`, `server/render/legend.ts`, `server/render/category.ts`, `server/render/heatmap.ts`, `server/render/waterfall.ts` | 순서 적용 |
 | `apps/web/server/render/order.ts` (새 파일) | `orderValues(values, order, sort)`와 자연 정렬 비교. 렌더러가 쓰므로 import 없는 순수 함수 |
@@ -130,11 +135,12 @@
 
 - 순위는 그 item이 그리는 도형(점·막대·상자·캔들·작업) 전체에서 대상 값으로 매긴다. 확대 범위와 상관없고, 필터·지운 점·끈 legend 값은 뺀 뒤다. 경계 값과 같은 것은 모두 넣는다.
 - 지금 focus를 쓰는 차트(scatter, line, bar, boxplot, gantt, candle)에서 그대로 쓴다. 색·모양·크기·`legendSingleColor`는 세 방식이 함께 쓴다.
-- 설정 팝업은 방식에 맞는 필드만 보인다 (조건: 연산자·값, 순위: 방향·개수, 범위: 최소·최대).
+- 설정 팝업은 방식에 맞는 필드만 보인다 (조건: 연산자·값, 순위: 방향·개수, 범위: 최소·최대). 대상·색·모양·크기·`legendSingleColor`는 늘 보인다. 숨긴 칸의 값은 그대로 두고 저장·되돌리기도 구역의 모든 칸을 다룬다.
 
 ### 4.2 구현
 
-- `server/render/analytics/focus.ts`: `focusTest`를 `focusMatcher(options, xs, ys)`로 바꾼다. 순위는 먼저 경계 값을 구하고(개수 N 크기 heap, O(n log N)) 판정 함수를 돌려준다. 조건·범위는 값만 본다.
+- `server/render/analytics/focus.ts`: `focusTest`를 `focusMatcher(options, xs, ys, include?)`로 바꾼다. 순위는 먼저 경계 값을 구하고(개수 N 크기 heap, O(n log N)) 판정 함수를 돌려준다. `include`는 순위를 매길 도형을 고른다(체크박스로 끈 legend 값의 도형을 뺀다). 지운 점·이상치는 그 전에 입력에서 빠진다. 조건·범위는 값만 본다.
+- gantt는 x = 시작 시각, y = 막대 길이(시간), candle은 x = 구간 가운데 시각, y = 종가로 판정한다.
 - 부르는 곳: `server/render/scatter.ts`, `category.ts`, `gantt.ts`, `candle.ts`.
 - 화면: `features/chart-settings/model/option-fields.ts`의 강조 구역, 필드를 방식에 따라 숨기는 규칙.
 
@@ -155,20 +161,26 @@
 
 통계 함수를 쓰는 모든 차트(bar, pie, radar, heatmap, treemap, sankey, waterfall, funnel)와 '기타' 다시 집계에 적용한다. 이름은 화면 3개 언어, 서버 `AGG_LABELS`.
 
+'기타': funnel·sankey는 지금처럼 모든 통계 함수를 원래 행으로 다시 집계한다. pie도 split 조합마다 '기타' 범주의 원래 행으로 다시 집계한다. 합계·개수는 조각 값의 합과 같아 그대로 더한다. 평균·최솟값·최댓값·중앙값의 '기타'가 조각 값의 합이던 예전 그림은 이 값으로 바뀐다(`server/data/category-data.ts`의 `queryRestAgg`, `polar-data.ts`의 `pieOthersReaggregated`).
+
 ### 5.2 점 모양
 
 지금 5종(`POINT_SHAPES`). legend 값이 8개까지라 모양으로도 계열을 가르려면 모자란다. `downTriangle`, `leftTriangle`, `rightTriangle`, `hexagon`, `star`를 더한다. `shape.type`과 `focus.shape`가 함께 쓴다. PNG 점, legend 표시(PNG와 DOM), 툴팁 표시가 같은 모양이어야 한다.
+
+화면이 같은 모양을 그리도록 metadata에 원이 아닐 때만 모양을 담는다: `ScatterMeta.shape`(점)·`focusShape`(강조 점, focus를 켰을 때), `LegendMeta.layout.shape`(legend 항목 표시, scatter·line). 그리기는 서버 `server/render/style.ts`, 화면 `entities/chart/lib/point-shape.ts`·`ui/PointMarker.tsx`가 같은 경로를 쓴다.
 
 ### 5.3 그 밖
 
 | 경로 | 타입 | 기본 | 뜻 |
 |---|---|---|---|
-| `value.outlierMode` | `"except" \| "only"` | `except` | 이상치 처리. except는 지금처럼 이상치를 빼고, only는 이상치만 그린다 |
+| `value.outlierMode` | `"except" \| "only"` | `except` | 이상치 처리. except는 지금처럼 이상치를 빼고, only는 이상치만 그린다. scatter·line은 y가 범위 밖인 점만(제목 줄에 '이상치만'), bar는 범위 밖 막대(집계값)만, boxplot은 상자·수염 없이 이상치 점만(dot 표본도 뺀다) |
 | `palette.colors` | `string[]` | `[]` | 기본 팔레트 8색을 대신할 색 목록(8개까지). 비면 기본 팔레트. 그라데이션을 켜면 그라데이션이 우선 |
-| `title.subtitleFontSize` | number | 11 | 부제목 글자 크기 |
-| `title.subtitleAlign` | `left \| center \| right` | `left` | 부제목 정렬 |
+| `title.subtitleFontSize` | `number \| null` | null | 부제목 글자 크기. null이면 지금처럼 제목 크기의 0.9배. `title.fontSize`처럼 `size.fontAuto`가 꺼져 있을 때만 쓴다 |
+| `title.subtitleAlign` | `left \| center \| right \| null` | null | 부제목 정렬. null이면 지금처럼 제목 정렬(`title.align`)을 따른다 |
 
 기본값은 모두 지금 그림과 같다. `option-fields.test.ts`(서버 기본값의 모든 칸이 설정 창에 있는지)가 새 칸도 지킨다.
+
+설정 창: `value.outlier`의 이름을 '이상치 빼기'에서 '이상치 가리기'로 바꾸고, 켰을 때만 `이상치 처리`(이상치 빼기·이상치만 보기)가 보인다. `palette.colors`는 새 필드 종류 `colors`(색마다 바꾸기·빼기, `색 더하기`, `기본 팔레트로`), 부제목 정렬은 빈 선택지('제목 따라감' = null)를 둔 select, 부제목 글자 크기는 비우면 null인 숫자 칸이다.
 
 ---
 
@@ -181,7 +193,7 @@
 | | 내용 |
 |---|---|
 | 지금 있는 것 | 보이기, 글자(`text`), 부제목(`subtitle`)·부제목 색, 글자 크기·굵게·색·정렬, 요약 보이기·색, split 구분 기호 |
-| 더하는 것 | 부제목 글자 크기·정렬 (5.3) |
+| 더하는 것 | 부제목 글자 크기·정렬 (5.3). 기본 null이면 제목을 따른다 |
 | 하지 않는 것 | 글꼴 고르기. PNG 글꼴은 하나다 |
 
 ### 축 (`axes.x`, `axes.y`)
@@ -279,7 +291,7 @@ PR 하나, 에이전트 여섯 덩어리. 0번이 계약(타입·기본값·검�
 | # | 덩어리 | 맡는 파일 | 의존 |
 |---|---|---|---|
 | 0 | 계약 | `server/render/options.ts`(3.1·4.1·5.2·5.3의 타입·기본값), `server/data/schema.ts`(`AGG_FNS`), `server/services/chart/schemas.ts`·`server/services/data` 스키마, `server/charts/chart-defaults.ts`, `src/entities/chart/model/chart-options.ts`, `pnpm gen:api` | — |
-| 1 | 제목 검색 | `server/jobs/job-manager.ts`의 item 고르기, `server/services/chart/routes.ts`의 job 조회, `features/search-items`, `entities/workspace`, `widgets/tab-toolbar`, `widgets/chart-grid`의 페이지·빈 상태, `features/chart-actions`의 엑셀 | 0 |
+| 1 | 제목 검색 | `server/jobs/job-manager.ts`의 item 고르기, `server/services/chart/app.ts`의 job 조회, `features/search-items`, `entities/workspace`, `widgets/tab-toolbar`, `widgets/chart-grid`의 페이지·빈 상태, `features/chart-actions`의 엑셀 | 0 |
 | 2 | 순서 | `server/render/order.ts`, `legend.ts`, `category.ts`·`heatmap.ts`·`waterfall.ts`의 범주·legend 순서, `job-manager.ts`의 렌더 입력(legend 순서 전달), `features/chart-settings/ui/OrderField.tsx` | 0 |
 | 3 | 강조 · 점 모양 | `server/render/analytics/focus.ts`, `scatter.ts`·`gantt.ts`·`candle.ts`와 `category.ts`의 focus 부분, 점 모양 그리기(`server/render/style.ts` 계열), legend 표시 DOM·툴팁 표시(`entities/chart/ui`) | 0 |
 | 4 | 통계 함수 · 값 · 팔레트 · 부제목 | `server/data/category-data.ts`·`polar-data.ts` 등 집계 SQL, `server/render/analytics/outlier.ts`, palette 색 목록 적용, 부제목 그리기(`server/render/frame.ts` 계열), 왼쪽 패널 통계 함수 select | 0 |

@@ -12,6 +12,7 @@ import {
 } from "./axis-style";
 import {
   categoryValueAxis,
+  legendOrderMeta,
   markLabeler,
   paintMark,
   rotatedLabelWidth,
@@ -23,6 +24,7 @@ import {
   hiddenIndexes,
   type LegendInput,
   type LegendMeta,
+  slotLookup,
 } from "./legend";
 import { type ChartOptions, mergeOptions, optionsOf } from "./options";
 import { drawSelection, type Region, regionTester } from "./region";
@@ -48,6 +50,8 @@ export type HistogramMeta = {
   counts: number[][];
   /** 구간 하나에 나란히 놓는 막대 수 (legend 값 수, 없으면 1) */
   groupCount: number;
+  /** 구간 안에 나란히 놓은 막대의 legend 인덱스(왼쪽부터). legend 순서를 바꿨을 때만 있다. counts의 칸은 그대로다. */
+  legendOrder?: number[];
   /** 선택 영역 안에 든 막대 수. 선택이 없으면 없다. */
   selected?: number;
   legend?: LegendMeta;
@@ -120,6 +124,8 @@ export function renderHistogram(
     (input.legend?.values.length ?? 1) - groups.length,
   );
   const off = hiddenIndexes(input.legend);
+  // legend 순서(sort·order)로 구간 안 막대 자리를 정한다. 색과 칸은 legend 인덱스 그대로다.
+  const slotOf = slotLookup(input.legend, groupCount);
   const inSelection = input.selection && regionTester(input.selection);
   const colorOf = (index: number) => input.legend?.colors[index] ?? input.color;
   const legendIndexOf = (g: number, point: readonly [number, number]) => {
@@ -136,7 +142,7 @@ export function renderHistogram(
   counts.forEach((row, i) => {
     row.forEach((c, g) => {
       if (c === 0) return;
-      const point = histogramMarkPoint(bins, i, g, groupCount, c);
+      const point = histogramMarkPoint(bins, i, slotOf(g), groupCount, c);
       if (off[legendIndexOf(g, point)]) return;
       maxCount = Math.max(maxCount, c);
       total += c;
@@ -239,12 +245,12 @@ export function renderHistogram(
     const slot = (right - left - gap) / groupCount;
     row.forEach((c, g) => {
       if (c === 0) return;
-      const point = histogramMarkPoint(bins, i, g, groupCount, c);
+      const point = histogramMarkPoint(bins, i, slotOf(g), groupCount, c);
       const index = legendIndexOf(g, point);
       if (off[index]) return;
       const top = y(c);
       const barWidth = Math.max(1, slot - (groupCount > 1 ? 1 : 0));
-      const barLeft = left + gap / 2 + slot * g;
+      const barLeft = left + gap / 2 + slot * slotOf(g);
       ctx.globalAlpha =
         (!inSelection || inSelection(...point) ? 1 : o.shape.dimOpacity) * fill;
       ctx.beginPath();
@@ -276,6 +282,7 @@ export function renderHistogram(
     bins,
     counts,
     groupCount,
+    ...legendOrderMeta(input.legend, groupCount),
     ...(inSelection ? { selected: selectedCount } : {}),
     legend: legendMeta,
   };

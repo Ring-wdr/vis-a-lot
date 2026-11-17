@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { keepMask, outlierBounds } from "./outlier";
+import { keepMask, keepsValue, outlierBounds } from "./outlier";
 
 describe("outlier", () => {
   it("iqr: Q1 - k·IQR .. Q3 + k·IQR", () => {
@@ -18,5 +18,14 @@ describe("outlier", () => {
     expect(hi).toBeCloseTo(10 + sd);
     expect(Array.from(keepMask([Number.NaN, 10], [lo, hi]))).toEqual([0, 1]);
     expect(outlierBounds([], "iqr", 1.5)).toEqual([-Infinity, Infinity]);
+  });
+
+  it("only: 범위 밖 값만 남기고 NaN은 어느 쪽도 아니다", () => {
+    const bounds: [number, number] = [-3, 13];
+    expect(
+      Array.from(keepMask([1, 100, -5, Number.NaN], bounds, "only")),
+    ).toEqual([0, 1, 1, 0]);
+    expect(keepsValue(13, bounds, "only")).toBe(false);
+    expect(keepsValue(13, bounds)).toBe(true);
   });
 });

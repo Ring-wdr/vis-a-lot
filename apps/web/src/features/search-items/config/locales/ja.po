@@ -1,0 +1,79 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 19:31+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#. keyword: 검색 조건의 글자. 조건 하나를 지우는 버튼
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "\"{keyword}\" 조건 지우기"
+msgstr "「{keyword}」の条件を削除"
+
+#. matchedText: 검색 조건에 맞는 차트 수 (자릿수 구분)
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "{matchedText}개"
+msgstr "{matchedText}件"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "검색어는 {MAX_SEARCH_KEYWORD}자까지 쓸 수 있습니다."
+msgstr "検索語は{MAX_SEARCH_KEYWORD}文字まで入力できます。"
+
+#. 차트 이름 검색의 일치 방식: 이름이 글자로 끝난다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "끝"
+msgstr "で終わる"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search conditions"
+msgid "모두 지우기"
+msgstr "すべてクリア"
+
+#. 차트 이름 검색의 일치 방식: 이름이 글자로 시작한다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "시작"
+msgstr "で始まる"
+
+#. 차트 이름 검색의 일치 방식: 이름 전체가 글자와 같다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "완전 일치"
+msgstr "完全一致"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "이름을 입력하고 Enter를 누르면 조건을 겁니다. 조건이 여럿이면 하나라도 맞는 차트를 보여 줍니다."
+msgstr "名前を入力してEnterを押すと条件を追加します。条件が複数あると、どれか1つに合うチャートを表示します。"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "이미 걸어 둔 조건입니다."
+msgstr "すでに追加した条件です。"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "일치 방식"
+msgstr "一致方式"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "조건에 맞는 차트 수"
+msgstr "条件に合うチャート数"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "조건은 {MAX_SEARCH_CONDS}개까지 걸 수 있습니다."
+msgstr "条件は{MAX_SEARCH_CONDS}個まで追加できます。"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "차트 이름 검색"
+msgstr "チャート名を検索"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "차트 이름 검색 조건"
+msgstr "チャート名の検索条件"
+
+#. 차트 이름 검색의 일치 방식: 이름에 글자가 들어 있다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "포함"
+msgstr "含む"

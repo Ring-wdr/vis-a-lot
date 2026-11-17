@@ -8,8 +8,20 @@ export const SEED = 20261020;
 
 export const ROW_SIZES = [100_000, 500_000, 1_000_000] as const;
 
-/** bar의 통계 함수 */
-export const AGG_FNS = ["avg", "sum", "count", "min", "max", "median"] as const;
+/** 통계 함수 (bar, pie, radar, heatmap, treemap, sankey, waterfall, funnel) */
+export const AGG_FNS = [
+  "avg",
+  "sum",
+  "count",
+  "min",
+  "max",
+  "median",
+  "uniqueCount",
+  "stddev",
+  "stddevP",
+  "q1",
+  "q3",
+] as const;
 export type AggFn = (typeof AGG_FNS)[number];
 
 export const AGG_LABELS: Record<AggFn, string> = {
@@ -19,6 +31,11 @@ export const AGG_LABELS: Record<AggFn, string> = {
   min: "최솟값",
   max: "최댓값",
   median: "중앙값",
+  uniqueCount: "고유값 수",
+  stddev: "표준편차",
+  stddevP: "모표준편차",
+  q1: "1사분위수",
+  q3: "3사분위수",
 };
 
 /** split by 조합(= item)의 최대 개수 */

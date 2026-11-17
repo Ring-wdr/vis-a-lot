@@ -2,7 +2,7 @@
 // 모두 마지막 인자로 차트 속성(options)을 받고, 없으면 기본값으로 지금까지와 같이 그린다.
 
 import { drawYAxis } from "./axis-style";
-import { type ChartOptions, DEFAULT_OPTIONS } from "./options";
+import { type ChartOptions, DEFAULT_OPTIONS, type TextAlign } from "./options";
 import {
   fontPx,
   subtitleFont,
@@ -79,24 +79,31 @@ export function drawTitle(
   const text = titleText(options, title);
   ctx.fillStyle = o.color;
   ctx.font = `${o.bold ? "600 " : ""}${titleFont(options)}px ${THEME.font}`;
-  ctx.textAlign = o.align;
-  const x =
-    o.align === "left"
+  // 가운데·오른쪽 정렬은 요약과 겹치지 않게 비켜 둔다. 부제목도 같은 규칙으로 놓는다.
+  const xOf = (align: TextAlign) =>
+    align === "left"
       ? plot.left
-      : o.align === "center"
+      : align === "center"
         ? plot.left + plot.width / 2
         : right - summaryWidth;
-  const maxWidth =
-    o.align === "center" ? plot.width - summaryWidth * 2 : plot.width;
-  ctx.fillText(text, x, baseline, Math.max(10, maxWidth));
+  const widthOf = (align: TextAlign) =>
+    Math.max(
+      10,
+      align === "center" ? plot.width - summaryWidth * 2 : plot.width,
+    );
+  ctx.textAlign = o.align;
+  ctx.fillText(text, xOf(o.align), baseline, widthOf(o.align));
   if (o.subtitle.trim()) {
+    // 부제목 정렬을 정하지 않으면 제목 정렬을 따른다.
+    const align = o.subtitleAlign ?? o.align;
     ctx.fillStyle = o.subtitleColor;
     ctx.font = `${subtitleFont(options)}px ${THEME.font}`;
+    ctx.textAlign = align;
     ctx.fillText(
       o.subtitle,
-      x,
+      xOf(align),
       baseline + subtitleFont(options) + 4,
-      Math.max(10, maxWidth),
+      widthOf(align),
     );
   }
   ctx.fillStyle = o.summary.color;

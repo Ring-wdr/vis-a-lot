@@ -213,6 +213,15 @@ msgstr "이전 페이지"
 msgid "일부 실패"
 msgstr "일부 실패"
 
+#. 검색 조건을 모두 지워 모든 차트를 다시 보인다
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "조건 지우기"
+msgstr "조건 지우기"
+
+#: src/widgets/chart-grid/ui/ChartGrid.tsx
+msgid "조건에 맞는 차트가 없습니다"
+msgstr "조건에 맞는 차트가 없습니다"
+
 #: src/widgets/chart-grid/ui/ChartItemCard.tsx
 msgctxt "item status"
 msgid "준비 중"

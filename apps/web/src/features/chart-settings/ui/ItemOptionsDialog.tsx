@@ -19,6 +19,7 @@ import {
   type OptionsFormValues,
   useOptionsPatch,
 } from "../model/options-form";
+import type { OrderSource } from "../model/order-values";
 import { OptionSectionForm } from "./OptionSectionForm";
 import { type MenuTarget, resolveTarget, SectionMenu } from "./SectionMenu";
 import { settingsDialog } from "./settings-dialog-styles";
@@ -29,6 +30,8 @@ type ItemOptionsProps = OptionsBase & {
   label: string;
   /** 그린 차트의 종류. 이 차트가 쓰는 구역만 메뉴에 둔다. */
   chartType: ChartType | undefined;
+  /** 순서 필드의 값 목록을 받을 곳 (그린 spec의 데이터셋·컬럼) */
+  orderSource: OrderSource | undefined;
   /** 다시 보기 전용이면 보기만 한다. */
   readOnly: boolean;
   /** item을 다시 그리는 동안에는 다음 변경을 보내지 않는다 (서버가 거절한다). */
@@ -76,6 +79,7 @@ const NO_EXTRAS: NonNullable<ItemOptionsProps["extras"]> = {};
 function ItemOptionsBody({
   label,
   chartType,
+  orderSource,
   readOnly,
   busy,
   original,
@@ -131,6 +135,8 @@ function ItemOptionsBody({
               key={`${active.section}-${active.part}`}
               section={active.section}
               part={active.part}
+              chartType={chartType}
+              orderSource={orderSource}
               original={original}
               base={base}
               disabled={readOnly}

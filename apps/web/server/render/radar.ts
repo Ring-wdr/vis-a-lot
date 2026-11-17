@@ -11,6 +11,7 @@ import {
   hiddenIndexes,
   type LegendInput,
   type LegendMeta,
+  slotLookup,
 } from "./legend";
 import { type ChartOptions, optionsOf } from "./options";
 import { drawEmpty, drawHeader, fixedSpace } from "./polar";
@@ -240,7 +241,12 @@ export function renderRadar(
     const lineWidth = o.size.lineWidth;
     const dot = pointSizeOf(o, DOT_R);
     const surface = surfaceOf(o);
-    for (const [k, s] of series.entries()) {
+    // legend 순서(sort·order)대로 그려 나중 계열이 위에 온다. metadata의 series는 legend 인덱스 순 그대로다.
+    const slotOf = slotLookup(legend, seriesCount);
+    const drawn = [...series.entries()].sort(
+      ([, a], [, b]) => slotOf(a.index) - slotOf(b.index),
+    );
+    for (const [k, s] of drawn) {
       const any = !inSelection || inside[k].some(Boolean);
       const alpha = any ? 1 : o.shape.dimOpacity;
       const shown = s.points.filter((p): p is [number, number] => p !== null);

@@ -4,6 +4,7 @@ import type { ChartType } from "../api/types";
 import { DEFAULT_OPTIONS, mergeOptions } from "../render/options";
 import { CHART_DEFAULTS, defaultsFor } from "./chart-defaults";
 import {
+  CATEGORY_ORDER_CHARTS,
   OPTION_SUPPORT,
   resolveOptions,
   supportsOption,
@@ -12,6 +13,7 @@ import {
 describe("chart options", () => {
   it("화면 사본이 서버 표와 같다", () => {
     expect(client.OPTION_SUPPORT).toEqual(OPTION_SUPPORT);
+    expect(client.CATEGORY_ORDER_CHARTS).toEqual(CATEGORY_ORDER_CHARTS);
   });
 
   it("draw는 화면이 GET /defaults로 받는 기본값 객체를 그대로 쓴다", () => {

@@ -13,8 +13,10 @@
 //         o.size.lineWidth                        선 굵기. 차트 종류별 기본 굵기는 CHART_DEFAULTS.charts가 정한다
 // legend  legendStyleOf(o)                        LegendInput.style에 넣는 값 (글자 크기 자동 반영). job-manager가 넣어 준다
 // palette gradientColors(palette, n)              start→(middle)→end 그라데이션 n색. job-manager가 legend 기본 색으로 쓴다
+//         paletteColor(palette, i)                 색 목록(colors)이나 기본 팔레트의 i번째 색
 // shape   pathPoint(ctx, shape, x, y, r)          현재 path에 도형 하나를 더한다 (같은 색 점을 한 path로 모아 fill 한 번)
 //         drawPoint(ctx, shape, x, y, r, style, borderWidth, fill, stroke)  점 하나를 바로 그린다
+//         SHAPE_VERTICES                          다각형 점 모양(세모 셋·육각형·별)의 반지름 1 꼭짓점
 //         alphaOf(transparency)                   투명도 → globalAlpha (0이면 불투명)
 // label   formatValue(v, decimals)                소수 자리 (null이면 자동, 천 단위 쉼표)
 //         createLabelGuard()                      겹치는 점 글자를 건너뛰는 검사기
@@ -31,7 +33,7 @@ import {
   type PointShape,
   type ShapeOptions,
 } from "./options";
-import { THEME } from "./theme";
+import { defaultLegendColor, THEME } from "./theme";
 
 type Ctx = OffscreenCanvasRenderingContext2D;
 export type Rect = { x: number; y: number; width: number; height: number };
@@ -144,8 +146,12 @@ export function titleFont(o: ChartOptions = DEFAULT_OPTIONS) {
   return fontPx(o, 12, o.title.fontSize);
 }
 
+/** 부제목 글자 크기. subtitleFontSize가 null이면 제목 크기의 0.9배 */
 export function subtitleFont(o: ChartOptions = DEFAULT_OPTIONS) {
-  return Math.max(8, Math.round(titleFont(o) * 0.9));
+  const auto = Math.max(8, Math.round(titleFont(o) * 0.9));
+  // 제목 크기처럼 size.fontAuto가 꺼져 있을 때만 정한 크기를 쓴다.
+  const manual = o.title.subtitleFontSize;
+  return manual === null || o.size.fontAuto ? auto : manual;
 }
 
 /** 제목 글자의 baseline (여백 포함). 기본 17 */
@@ -193,6 +199,12 @@ export function gradientColors(palette: PaletteOptions, n: number): string[] {
     { length: n },
     (_, i) => grades[Math.min(steps - 1, Math.floor((i * steps) / n))],
   );
+}
+
+/** legend 값 i번째의 팔레트 색. palette.colors가 있으면 그 목록을 돌려 쓰고, 비면 기본 팔레트 */
+export function paletteColor(palette: PaletteOptions, i: number) {
+  const { colors } = palette;
+  return colors.length > 0 ? colors[i % colors.length] : defaultLegendColor(i);
 }
 
 // ── shape ───────────────────────────────────────────────────────
@@ -245,8 +257,40 @@ export function pathPoint(
       ctx.moveTo(x + r, y - r);
       ctx.lineTo(x - r, y + r);
       return;
+    default: {
+      // 다각형 모양은 반지름 1 꼭짓점을 r배 한다.
+      const vs = SHAPE_VERTICES[shape];
+      ctx.moveTo(x + vs[0][0] * r, y + vs[0][1] * r);
+      for (let k = 1; k < vs.length; k++) {
+        ctx.lineTo(x + vs[k][0] * r, y + vs[k][1] * r);
+      }
+      ctx.closePath();
+    }
   }
 }
+
+/** 반지름 1 정다각형 꼭짓점. 각도 0이 위쪽이고 시계 방향이다 (y는 아래로). */
+function polygon(count: number, radius = (_k: number) => 1, turn = 0) {
+  return Array.from({ length: count }, (_, k) => {
+    const a = ((k + turn) / count) * Math.PI * 2;
+    return [Math.sin(a) * radius(k), -Math.cos(a) * radius(k)] as const;
+  });
+}
+
+/**
+ * 다각형 점 모양의 꼭짓점 (반지름 1, y는 아래로). 세모 셋은 triangle을 돌린 것이고
+ * 별은 안쪽 꼭짓점을 0.45로 둔다. 화면의 점 모양 표시(entities/chart/ui/PointMarker)와 같은 값이다.
+ */
+export const SHAPE_VERTICES: Record<
+  Exclude<PointShape, "circle" | "square" | "triangle" | "diamond" | "cross">,
+  readonly (readonly [number, number])[]
+> = {
+  downTriangle: polygon(3, undefined, 1.5),
+  leftTriangle: polygon(3, undefined, 2.25),
+  rightTriangle: polygon(3, undefined, 0.75),
+  hexagon: polygon(6),
+  star: polygon(10, (k) => (k % 2 === 0 ? 1 : 0.45)),
+};
 
 /**
  * 점 하나. style both: 채우기(fill) + 테두리(stroke, borderWidth), border: fill 색 테두리만,

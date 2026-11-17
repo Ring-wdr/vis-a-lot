@@ -1,5 +1,14 @@
 import { z } from "@hono/zod-openapi";
 import {
+  FOCUS_RANK_MAX,
+  FOCUS_TYPES,
+  MAX_ORDER_VALUES,
+  MAX_PALETTE_COLORS,
+  ORDER_SORTS,
+  OUTLIER_MODES,
+  POINT_SHAPES,
+} from "../../render/options";
+import {
   AggFnSchema,
   ColumnNameSchema,
   ColumnTypeSchema,
@@ -70,9 +79,11 @@ const num = (min: number, max: number) =>
 const text = (max = 80) => z.string().max(max);
 const opt = <T extends z.ZodRawShape>(shape: T) => z.object(shape).partial();
 
-const PointShapeSchema = z
-  .enum(["circle", "square", "triangle", "diamond", "cross"])
-  .openapi("PointShape");
+const PointShapeSchema = z.enum(POINT_SHAPES).openapi("PointShape");
+
+const OrderSortSchema = z.enum(ORDER_SORTS).openapi("OrderSort");
+/** 앞에 둘 값 목록 (legend 값·범주). 합칠 때 통째로 바뀐다. */
+const OrderValuesSchema = z.array(z.string()).max(MAX_ORDER_VALUES);
 
 const AxisOptionsSchema = opt({
   visible: z.boolean(),
@@ -102,6 +113,12 @@ const AxisOptionsSchema = opt({
   dateFormat: text(40),
 }).openapi("AxisOptions");
 
+/** x축만 범주 순서를 갖는다. */
+const XAxisOptionsSchema = AxisOptionsSchema.extend(
+  opt({ categorySort: OrderSortSchema, categoryOrder: OrderValuesSchema })
+    .shape,
+).openapi("XAxisOptions");
+
 export const ChartOptionsSchema = opt({
   title: opt({
     visible: z.boolean(),
@@ -112,14 +129,20 @@ export const ChartOptionsSchema = opt({
     color: HexColorSchema,
     align: z.enum(["left", "center", "right"]),
     subtitleColor: HexColorSchema,
+    /** null이면 제목 크기의 0.9배 */
+    subtitleFontSize: orNull(num(6, 40)),
+    /** null이면 제목 정렬을 따른다. */
+    subtitleAlign: orNull(z.enum(["left", "center", "right"])),
     summary: opt({ visible: z.boolean(), color: HexColorSchema }),
   }),
-  axes: opt({ x: AxisOptionsSchema, y: AxisOptionsSchema }),
+  axes: opt({ x: XAxisOptionsSchema, y: AxisOptionsSchema }),
   legend: opt({
     visible: z.boolean(),
     border: z.boolean(),
     borderColor: HexColorSchema,
     reverse: z.boolean(),
+    sort: OrderSortSchema,
+    order: OrderValuesSchema,
     fontSize: num(6, 40),
     fontColor: HexColorSchema,
     titleColor: HexColorSchema,
@@ -143,6 +166,7 @@ export const ChartOptionsSchema = opt({
     end: HexColorSchema,
     steps: num(0, 64),
     reverse: z.boolean(),
+    colors: z.array(HexColorSchema).max(MAX_PALETTE_COLORS),
     othersColor: HexColorSchema,
   }),
   shape: opt({
@@ -209,14 +233,20 @@ export const ChartOptionsSchema = opt({
   value: opt({
     nullNumeric: orNull(finite),
     outlier: z.boolean(),
+    outlierMode: z.enum(OUTLIER_MODES),
     outlierMethod: z.enum(["iqr", "sigma"]),
     outlierK: num(0, 10),
   }),
   focus: opt({
     enabled: z.boolean(),
+    type: z.enum(FOCUS_TYPES),
     target: z.enum(["x", "y"]),
     operator: z.enum([">", ">=", "<", "<=", "=", "!="]),
     value: finite,
+    rankFrom: z.enum(["top", "bottom"]),
+    rankCount: num(1, FOCUS_RANK_MAX).pipe(z.number().int()),
+    rangeMin: orNull(finite),
+    rangeMax: orNull(finite),
     color: HexColorSchema,
     shape: PointShapeSchema,
     size: num(0.5, 40),
@@ -491,6 +521,8 @@ export const JobStateResponseSchema = z
     progress: z.object({ done: z.number(), total: z.number() }),
     /** 조회가 끝나기 전에는 item 개수를 모른다. */
     totalItems: z.number().nullable(),
+    /** search에 맞는 item 수. search가 없으면 totalItems와 같고, 조회가 끝나기 전에는 null */
+    matchedItems: z.number().nullable(),
     page: z.number(),
     pageSize: z.number(),
     /** items[0]의 전체 순번 */
@@ -519,6 +551,49 @@ export const JobStateResponseSchema = z
   })
   .openapi("JobStateResponse");
 
+// ── item 제목 검색 ──────────────────────────────────────────────
+
+export const ITEM_SEARCH_MATCHES = [
+  "contains",
+  "startsWith",
+  "endsWith",
+  "exact",
+] as const;
+/** 검색 조건 수와 글자 수의 상한 */
+export const MAX_SEARCH_CONDS = 10;
+export const MAX_SEARCH_KEYWORD = 100;
+
+export const ItemSearchMatchSchema = z
+  .enum(ITEM_SEARCH_MATCHES)
+  .openapi("ItemSearchMatch");
+
+/** item 이름(split 조합 이름)에 거는 조건 하나. 대소문자를 가리지 않는다. */
+export const ItemSearchCondSchema = z
+  .object({
+    keyword: z.string().min(1).max(MAX_SEARCH_KEYWORD),
+    match: ItemSearchMatchSchema,
+  })
+  .openapi("ItemSearchCond");
+
+/** 조건이 여럿이면 하나라도 맞는 item을 남긴다(OR). */
+export const ItemSearchSchema = z
+  .array(ItemSearchCondSchema)
+  .max(MAX_SEARCH_CONDS)
+  .openapi("ItemSearch");
+
+/** query의 search: ItemSearch를 JSON 문자열로. 잘못된 JSON이나 한도 초과는 400이다. */
+const SearchQuerySchema = z
+  .string()
+  .transform((raw, ctx) => {
+    try {
+      return JSON.parse(raw) as unknown;
+    } catch {
+      ctx.addIssue({ code: "custom", message: "search must be JSON" });
+      return z.NEVER;
+    }
+  })
+  .pipe(ItemSearchSchema);
+
 export const JobQuerySchema = z.object({
   page: z.coerce.number().int().min(0).default(0),
   pageSize: z.coerce.number().int().min(0).max(100).default(9),
@@ -529,6 +604,11 @@ export const JobQuerySchema = z.object({
     .string()
     .optional()
     .openapi({ description: "쉼표로 구분한 item 키" }),
+  /** item 이름 조건. page·offset은 거른 순서 기준이다. items에는 적용하지 않는다. */
+  search: SearchQuerySchema.optional().openapi({
+    description:
+      "item 이름 조건 [{ keyword, match }]의 JSON 문자열. match는 contains·startsWith·endsWith·exact",
+  }),
   since: z.coerce.number().default(-1),
 });
 
@@ -731,6 +811,8 @@ export const LegendMetaSchema = z
         fontSize: z.number(),
         /** 색 표시(●) 반지름 */
         marker: z.number(),
+        /** 색 표시 모양 (scatter·line의 shape.type). 원이면 없다. */
+        shape: PointShapeSchema.optional(),
         textColor: z.string(),
         titleColor: z.string(),
         mutedColor: z.string(),
@@ -762,7 +844,13 @@ export const ScatterMetaSchema = z
       id: z.array(z.number()),
       /** legend 인덱스 (legend가 있을 때만) */
       g: z.array(z.number()).optional(),
+      /** 남긴 점마다 focus에 맞으면 1, 아니면 0 (focus를 켰을 때만) */
+      f: z.array(z.number()).optional(),
     }),
+    /** 점 모양(shape.type). 원이면 없다. 화면의 가까운 점 표시가 같은 모양을 쓴다. */
+    shape: PointShapeSchema.optional(),
+    /** focus에 맞는 점의 모양 (focus를 켰을 때만) */
+    focusShape: PointShapeSchema.optional(),
     total: z.number(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
@@ -797,6 +885,11 @@ export const CategoryMetaSchema = z
     groupCount: z.number(),
     /** 묶음 안에서 막대/상자 사이 간격(px) */
     groupGap: z.number(),
+    /**
+     * 묶음 안에 나란히 놓은 막대/상자의 legend 인덱스(왼쪽부터). legend 순서(sort·order)를 바꿨을 때만 있다.
+     * bars·boxes·segments의 칸은 legend 인덱스 그대로다.
+     */
+    legendOrder: z.array(z.number()).optional(),
     agg: AggFnSchema.optional(),
     /** [범주][legend 값] */
     bars: z.array(z.array(z.number().nullable())).optional(),
@@ -1070,6 +1163,8 @@ export const HistogramMetaSchema = z
     counts: z.array(z.array(z.number())),
     /** 구간 하나에 나란히 놓는 막대 수 (legend 값 수, 없으면 1) */
     groupCount: z.number(),
+    /** 구간 안에 나란히 놓은 막대의 legend 인덱스(왼쪽부터). legend 순서를 바꿨을 때만 있다. counts의 칸은 그대로다. */
+    legendOrder: z.array(z.number()).optional(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
   })

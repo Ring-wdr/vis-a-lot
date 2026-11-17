@@ -1,0 +1,79 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 19:31+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. keyword: 검색 조건의 글자. 조건 하나를 지우는 버튼
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "\"{keyword}\" 조건 지우기"
+msgstr "Remove \"{keyword}\" condition"
+
+#. matchedText: 검색 조건에 맞는 차트 수 (자릿수 구분)
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "{matchedText}개"
+msgstr "{matchedText} matched"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "검색어는 {MAX_SEARCH_KEYWORD}자까지 쓸 수 있습니다."
+msgstr "Search text can be up to {MAX_SEARCH_KEYWORD} characters."
+
+#. 차트 이름 검색의 일치 방식: 이름이 글자로 끝난다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "끝"
+msgstr "Ends with"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search conditions"
+msgid "모두 지우기"
+msgstr "Clear all"
+
+#. 차트 이름 검색의 일치 방식: 이름이 글자로 시작한다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "시작"
+msgstr "Starts with"
+
+#. 차트 이름 검색의 일치 방식: 이름 전체가 글자와 같다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "완전 일치"
+msgstr "Exact"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "이름을 입력하고 Enter를 누르면 조건을 겁니다. 조건이 여럿이면 하나라도 맞는 차트를 보여 줍니다."
+msgstr "Type a name and press Enter to add a condition. With several conditions, charts matching any of them are shown."
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "이미 걸어 둔 조건입니다."
+msgstr "This condition is already set."
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "일치 방식"
+msgstr "Match type"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "조건에 맞는 차트 수"
+msgstr "Number of matching charts"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "조건은 {MAX_SEARCH_CONDS}개까지 걸 수 있습니다."
+msgstr "You can add up to {MAX_SEARCH_CONDS} conditions."
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "차트 이름 검색"
+msgstr "Search chart names"
+
+#: src/features/search-items/ui/ItemSearch.tsx
+msgid "차트 이름 검색 조건"
+msgstr "Chart name search conditions"
+
+#. 차트 이름 검색의 일치 방식: 이름에 글자가 들어 있다
+#: src/features/search-items/ui/ItemSearch.tsx
+msgctxt "item search match"
+msgid "포함"
+msgstr "Contains"

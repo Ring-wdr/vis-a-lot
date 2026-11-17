@@ -14,7 +14,10 @@ import {
   TableProperties,
 } from "lucide-react";
 import { chartKindLabel, chartTitle } from "@/entities/chart/lib/title";
-import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import {
+  useWorkspace,
+  useWorkspaceStore,
+} from "@/entities/workspace/model/workspace-scope";
 import {
   downloadAllChartsExcel,
   downloadChartPng,
@@ -71,6 +74,7 @@ function ActionButton({
  */
 export function ChartActionBar() {
   const { t } = useLingui();
+  const store = useWorkspaceStore();
   const current = useWorkspace((s) => s.current);
   const selectedItem = useWorkspace((s) => s.selectedItem);
   const checkboxes = useWorkspace((s) => s.showLegendCheckboxes);
@@ -97,10 +101,12 @@ export function ChartActionBar() {
   const excel = useMutation({
     mutationFn: () => {
       if (!current) throw new Error(tGlobal`그린 차트가 없습니다.`);
+      // 검색 중이면 맞는 item만 담는다. 그리지 않는 값이라 누를 때 읽는다.
       return downloadAllChartsExcel(
         current.chartId,
         current.jobId,
         current.spec,
+        store.getState().search,
       );
     },
     onSuccess: ({ written, total }) => {

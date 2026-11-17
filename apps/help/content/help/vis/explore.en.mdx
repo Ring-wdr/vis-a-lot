@@ -71,6 +71,24 @@ Hover over an item to show tools at its top right.
 - **Item settings**: Change settings that apply only to this item (legend position, colors and so on). → [Customizing](/help/vis/customize#en-per-item-settings)
 - **Detail view**
 
+## Searching chart names
+
+When there are many split items, use **Search chart names** at the right of the tab toolbar to see only the items whose names match.
+
+1. Click the input to open the match types and the list of conditions. Pick a match type: **Contains · Starts with · Ends with · Exact**.
+2. Type some text and press <Kbd>Enter</Kbd> to add it as a condition. The input is cleared so you can type the next one right away.
+3. Remove conditions one at a time with ✕ next to each, or all at once with **Clear all**.
+
+- Case is ignored. A condition with the same text and match type isn't added twice.
+- With several conditions, items matching **any** of them are shown. Use it like "show only machine A and machine B".
+- Up to 10 conditions, each up to 100 characters.
+- It looks at the item name (the split combination name, including the joining character). Title text changed in the title section isn't searched.
+- While conditions are set, the grid, pages and detail view thumbnails show only the matching items in order, and the number of matches appears next to the input. Changing the conditions goes back to the first page. If nothing matches, **Clear conditions** is shown.
+- **Download all charts as Excel** includes only the matching items and adds `_search` to the end of the file name.
+- The drawing order and the progress in the bottom bar stay based on all items.
+- The search stays only in the tab and isn't saved in chart settings, history or shares. A new draw clears it. It also works in history tabs.
+- It can't be used before charts are drawn or when there is only one item.
+
 ## Detail view
 
 Double-click an item or press **Detail view** to show that one item large in place of the grid. Tooltips, zoom, shapes and colors work the same in the detail view.

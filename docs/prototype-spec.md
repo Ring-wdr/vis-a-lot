@@ -137,7 +137,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 ├──────────────────────────────────────────────────────────────────────────┤
 │ [Scatter · 측정 시각 × 측정값 ×] [새 차트 · IoT 10만 행 ×] [+]   [필터 2] │ ← 탭
 ├──────────────────────────────────────────────────────────────────────────┤
-│ [↖][✥][🔍][⬚][➰][⬚x][➰x][🖌] │ [☑][🖼][📊][⬇][▦] ← 모드 바 │ 차트 도구 [링크 복사] │ ← 탭 도구 줄
+│ [↖][✥][🔍][⬚][➰][⬚x][➰x][🖌] │ [☑][🖼][📊][⬇][▦] │ [링크 복사]  [차트 이름 검색 ⌕] 12개 │ ← 탭 도구 줄
 ├──────────────────┬──────────────────────────────────┬─┬─────────────────┤
 │ 데이터    [▼]     │  ┌────────┐ ┌────────┐ ┌────────┐ │▮│ 필터            │
 │ 차트 종류 (아이콘)  │  │toolbar │ │toolbar │ │toolbar │ │ │ ▸ 측정 시각      │
@@ -160,9 +160,10 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
   - history는 목록에서 고른 건마다 탭으로 열고(이미 열린 건이면 그 탭으로), `gallery에서 편집`은 새 gallery 탭으로 가져간다.
 - **모드 바:** 기본 / 이동 / 확대 / 사각형 선택 / 자유형 선택 / 사각형 삭제 / 자유형 삭제 / 페인트. 아이콘으로 표시하고 이름은 title로 보여준다. 기본 외의 모드는 그린 차트가 없거나 다시 보기 전용(history)이면 disabled이고 흐리게 보인다
 - **차트 도구:** 모드 바 오른쪽에 구분선을 두고 누르면 바로 동작하는 버튼을 둔다. 체크박스 표시(토글), 차트 다운로드, 모든 차트 엑셀로 다운로드, 데이터 다운로드, 데이터 테이블
+- **차트 이름 검색:** 탭 도구 줄 오른쪽 입력(`features/search-items`). 포커스가 들어오면 popover에 일치 방식 넷(포함·시작·끝·완전 일치)과 걸어 둔 조건 목록, `모두 지우기`가 열린다. Enter로 조건을 더하고 입력을 비운다(글자·방식이 같은 조건은 대소문자 무시로 중복, 조건 10개·글자 100자까지). 대상은 item 이름(split 조합 이름)이고 대소문자를 가리지 않으며, 조건이 여럿이면 하나라도 맞는 item을 남긴다. 조건이 있으면 grid·페이지 스크롤바·크게 보기 섬네일이 맞는 item만 보이고(job 조회 `search`, 6.4), 입력 옆에 맞는 수를, 맞는 것이 없으면 grid 자리에 빈 상태와 `조건 지우기`를 둔다. 조건이 바뀌면 첫 페이지로 가고, 다시 받는 동안 이전 grid를 흐리게 둔다. 모든 차트 엑셀 다운로드는 맞는 item만 담고 파일 이름에 `_검색`을 붙인다. 그리는 순서와 하단 진행률은 전체 기준이다. 조건은 탭 상태라 spec·history·공유에 넣지 않고 새 draw에서 지운다. 그린 차트가 없거나 item이 하나면 막고, history 탭에서도 쓴다
 - **고른 item:** item을 누르거나 item 안에 포커스가 들어오면 그 item을 고른 것으로 보고 테두리를 강조한다. 차트·데이터 다운로드와 데이터 테이블처럼 item 하나를 대상으로 하는 도구가 이 item을 쓰고, 고르기 전에는 막혀 있다. 새로 draw하면 풀린다
 - **페인트 도구:** 페인트 모드일 때만 item 좌측 상단에 우측 툴바와 같은 모양으로 띄운다. 사각형 / 선 / 자유곡선 / 텍스트 중 고르고(탭 안 모든 item이 같은 도구), 도형 undo와 전체 삭제도 여기에 둔다
-- **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, legend, 통계 함수(bar일 때만), split by, tooltip. `전체 설정`과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
+- **왼쪽 패널:** 데이터, 차트 종류, grid 크기, x, y, legend, 통계 함수(값을 모으는 차트만, 4.2), split by, tooltip. `전체 설정`과 draw 버튼은 패널 하단에 고정되어 설정을 스크롤해도 보인다
 - **전체 설정 팝업:** 자주 바꾸지 않는 설정을 모은다. 왼쪽 메뉴로 고른다: 색상(공통 색 또는 legend 값별 색), legend(위치), split by(구분 기호), 툴팁(가까운 점 표시)
 - **선택 필드:** 단일 선택(데이터, x, y, legend, 통계 함수)과 다중 선택(split by, tooltip)은 같은 트리거·팝업 모양을 쓴다(Base UI Select / Combobox). 높이를 아끼려고 다중 선택은 고른 값을 한 줄에 순서대로 쉼표로 이어 쓰고 넘치면 말줄임, 오른쪽에 개수를 보여준다.
 - **split by / tooltip:** 순서 다중 선택(OrderedSelect, Base UI Combobox + 가상 스크롤). 항목을 누른 채 끌면 지나간 순서대로 선택된다. 라이브러리 선정과 드래그 규칙은 [select-library-comparison.md](select-library-comparison.md)
@@ -201,6 +202,16 @@ line은 scatter와 같은 원자료(행 하나 = 점 하나)를 쓴다. legend �
 candle은 구간 간격을 split 조합과 상관없이 전체 기간으로 한 번 정하고(구간 경계는 KST), OHLC는 SQL로 집계한다(시가/종가 = 구간 안 첫/마지막 시각의 평균값. 같은 시각에 설비·센서 행이 여럿이어도 행 순서에 치우치지 않는다. 고가·저가는 원래 값의 최대·최소). legend 컬럼은 쓰지 않고 '상승(종가 ≥ 시가)/하락' 두 항목을 legend로 그려 체크박스로 한쪽을 숨긴다. 선택·페인트는 캔들 대표점(구간 가운데 시각, 종가)으로 판정한다. 툴팁은 구간·시가·고가·저가·종가·개수.
 
 gantt는 legend(예: 상태)가 있으면 행마다 시간순으로 같은 legend 값이 이어지는 구간(gaps-and-islands, SQL window 함수)을 막대 하나로 그리고, 막대 끝은 다음 구간 시작에 붙인다. legend가 없으면 행마다 처음~마지막 시각 막대 하나. y는 행 인덱스 공간이라 행이 많으면 확대·이동으로 일부 행을 본다. 행마다 같은 픽셀 칸 안에서 시작하고 끝나는 짧은 구간은 앞 막대에 합쳐 그리고(툴팁에 합친 수), metadata 막대는 30,000개까지 담는다. 선택·페인트는 막대 가운데(가운데 시각, 행)로 판정한다. 툴팁은 행·legend 값·시작·끝·길이·개수.
+
+통계 함수(`AggFn`)는 11가지다: 평균(`avg`)·합계(`sum`)·개수(`count`)·최솟값(`min`)·최댓값(`max`)·중앙값(`median`)·고유값 수(`uniqueCount`, `count(distinct)`)·표준편차(`stddev`, `stddev_samp`. 행이 하나면 null이라 빈 칸)·모표준편차(`stddevP`, `stddev_pop`)·1사분위수(`q1`)·3사분위수(`q3`, `percentile_cont(0.25 / 0.75)`). 통계 함수를 쓰는 모든 차트(bar, pie, radar, heatmap, treemap, sankey, waterfall, funnel)가 같은 SQL(`AGG_SQL`)로 모은다. 작은 범주를 묶은 '기타'는 funnel·sankey·pie 모두 원래 행으로 다시 집계한다. pie는 split 조합마다 '기타' 범주의 원래 행을 모아 다시 집계하고(`queryRestAgg`), 합계·개수는 조각 값의 합과 같아 그대로 더한다.
+
+점 모양(`shape.type`, `focus.shape`)은 10가지다: 원·사각형·삼각형·마름모·십자·역삼각형·왼쪽 삼각형·오른쪽 삼각형·육각형·별. PNG 점, legend 표시(PNG와 DOM), 툴팁 표시가 같은 경로로 그린다(서버 `server/render/style.ts`, 화면 `entities/chart/lib/point-shape.ts`). metadata는 원이 아닐 때만 모양을 담는다: scatter·line의 `shape`(점)·`focusShape`(강조 점), legend의 `layout.shape`(항목 표시).
+
+강조(`focus`)는 방식이 셋이다: 조건(연산자 + 값), 순위(`rankFrom` 큰 쪽·작은 쪽에서 `rankCount`개, 1~1,000), 범위(`rangeMin`~`rangeMax`, 양 끝 포함, null이면 그쪽은 열림). 순위는 그 item이 그리는 도형 전체(확대와 무관, 끈 legend 값·지운 점·뺀 이상치 제외)에서 대상 값으로 경계를 구하고, 경계 값과 같은 것은 모두 넣는다. gantt의 y는 막대 길이(시간), candle의 y는 종가다. 설정 창은 방식에 맞는 칸만 보인다.
+
+값 구역의 이상치(`value.outlier`)는 `outlierMode`로 처리를 고른다: `except`(지금처럼 빼기)·`only`(이상치만). scatter·line은 y가 범위 밖인 점만 그리고 제목 줄에 '이상치만'을 적는다. bar는 범위 밖 막대(집계값)만 남긴다. boxplot은 상자·수염 없이 이상치 점만 그린다(dot 표본도 뺀다).
+
+팔레트 색 목록(`palette.colors`, 8개까지)은 기본 팔레트 8색 대신 legend 값 순번대로 돌려 쓴다. legend 값별로 정한 색이 먼저고, 그라데이션을 켜면 그라데이션이 우선이다. 부제목은 글자 크기(`title.subtitleFontSize`, null이면 제목 크기의 0.9배, 글자 크기 자동을 끈 때만)와 정렬(`title.subtitleAlign`, null이면 제목 정렬)을 따로 정할 수 있다.
 
 컬럼 역할(x·y·z에 쓸 수 있는 타입, 통계 함수 사용)은 차트 종류별 표 하나로 정한다: 서버 `server/charts/chart-fields.ts`, 화면 `src/shared/config/chart-kinds.ts`. z는 세 번째 값 컬럼으로, 쓰는 차트에서만 고른다.
 
@@ -299,6 +310,9 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - 색 결정 순서: item 개별 legend 색 → 공통 속성의 legend 색 → 팔레트 기본 색(legend 값 순서).
 - 개별 속성: item 툴바의 설정(⚙) 팝업에서 legend 위치와 legend 값별 색을 바꾼다. 'item 위치/색 공통 따르기'로 되돌린다. item에 커서를 올리면 PNG의 legend 항목 자리에 버튼이 겹쳐지고, ●를 누르면 네이티브 color picker가 열린다. 고르기를 마친 최종 색(`change` 이벤트)으로 한 번만 서버에 요청해 그 item을 다시 그린다.
 - 공통 속성: 전체 설정의 색상·legend 메뉴에서 legend 값별 색과 위치를 바꾸면 전체를 다시 그리고 item 개별 색·위치를 덮어쓴다.
+- 순서: legend 값은 `legend.order`(앞에 둘 값, 200개까지)를 먼저 놓고 나머지를 `legend.sort`(`default` 컬럼 값 순 · `natural` 글자 안 숫자를 수로 비교) 순으로 놓는다. 그 item에 없는 값은 건너뛴다. 바꾸는 것은 legend 상자 항목, 범주 안 막대·상자, 쌓는 순서, histogram 구간 안 막대, radar 다각형·line 계열을 그리는 순서다. 색과 metadata의 legend 순번은 그대로라(색은 값을 따른다) 같은 값은 순서를 바꿔도 같은 색이다. bar·boxplot·histogram metadata에는 순서가 바뀐 때만 `legendOrder`(나란히 놓은 자리 → legend 순번)를 담아 툴팁·선택이 자리를 맞춘다. `legend.reverse`는 정한 순서를 legend 상자에서 뒤집는다. legend 컬럼을 고르는 차트(scatter, line, bar, boxplot, histogram, radar, gantt, treemap)만 쓰고, 차트가 legend를 정하는 종류(pie, funnel, sankey, waterfall, candle, heatmap)는 쓰지 않는다.
+- 범주 순서: `axes.x.categoryOrder`·`categorySort`는 같은 규칙으로 범주 x축(bar, boxplot, waterfall, heatmap의 x)을 놓는다. 데이터를 받은 직후 범주와 칸을 함께 옮기므로 metadata 범주 순번을 쓰는 툴팁·선택·데이터 테이블이 그대로 맞고, waterfall은 바꾼 순서대로 누적한다.
+- 설정 창: 범례 구역의 `정렬`·`순서`, 축 › X축의 `범주 정렬`·`범주 순서`. 순서 칸은 값 목록(legend는 `legend-values`, 범주는 컬럼 요약)을 끌거나 Alt+↑↓로 옮기고, 목록 맨 위부터 마지막으로 옮긴 값까지를 저장한다. `처음 순서로`로 비운다. 고유값이 200개를 넘으면 순서는 막고 정렬만 고른다.
 - legend 상자 위에서는 툴팁 대신 색 선택이 동작하고, 툴팁에는 가리킨 점/막대/상자의 legend 값이 함께 나온다.
 
 - 체크박스 표시: 차트 도구의 토글을 켜면 PNG legend 항목의 색 표시(●) 자리에 체크박스를 겹친다(위치는 metadata의 `marker`). 다시 그리지 않고 화면에만 띄운다. 체크를 풀면 그 item에서 그 값을 숨기고(`PATCH .../props { legendVisible }`) 서버가 그 값의 점·막대·상자를 빼고 legend 표시를 속 빈 원과 흐린 글자로 다시 그린다. 숨긴 값은 item 개별 속성이라 history와 공유 링크로 복원된다.
@@ -450,6 +464,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
 | chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기)<br>응답: `chartId`, `jobId`, `historyId` |
 | chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }`, job 전체의 상태별 item 수·시간·worker 수 |
+| chart | 진행 상태 (검색) | `GET /jobs/:jobId?page=&pageSize=&offset=&search=&since=` | `search`는 `[{ keyword, match }]` JSON 문자열(`match`: `contains`·`startsWith`·`endsWith`·`exact`, 10개·100자까지, 잘못되면 400). item 이름(label)을 대소문자 무시로 비교해 하나라도 맞는 item만 남기고, `page`·`offset`은 거른 순서 기준이다. 응답 `matchedItems`는 맞는 item 수(`search`가 없으면 `totalItems`, split 조합을 아직 모르면 null). 거른 순서는 job마다 조건 하나만 기억한다. `items=`에는 적용하지 않는다. handler는 `server/services/chart/app.ts` |
 | chart | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
 | chart | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
 | chart | 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |

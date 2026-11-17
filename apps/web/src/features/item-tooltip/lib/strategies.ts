@@ -5,6 +5,7 @@ import { i18n } from "@lingui/core";
 import { msg, t } from "@lingui/core/macro";
 import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
 import { invertAxis } from "@/entities/chart/lib/coords";
+import type { PointShape } from "@/entities/chart/model/chart-options";
 import type {
   CandleMeta,
   CategoryMeta,
@@ -90,8 +91,8 @@ export type TooltipRow = {
 };
 
 export type TooltipHit = {
-  /** 점 하이라이트 위치 (PNG 좌표). scatter */
-  marker?: { px: number; py: number };
+  /** 점 하이라이트 위치 (PNG 좌표)와 그 점의 모양 (없으면 원). scatter */
+  marker?: { px: number; py: number; shape?: PointShape };
   /** 가리킨 막대/상자를 감싸는 사각형 (PNG 좌표). bar, boxplot */
   highlight?: { x: number; y: number; width: number; height: number };
   /** 가리킨 흐름 띠의 윤곽 (SVG path, PNG 좌표). sankey */
@@ -178,12 +179,27 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
       });
     }
     return {
-      marker: { px: points.px[index], py: points.py[index] },
+      marker: {
+        px: points.px[index],
+        py: points.py[index],
+        shape: markerShape(meta, index),
+      },
       rows,
       rowId: points.id[index],
     };
   },
 };
+
+/** 가까운 점이 PNG에 그려진 모양 (원이면 undefined). focus에 맞는 점은 focus 모양이다. */
+export function markerShape(
+  meta: ScatterMeta,
+  index: number,
+): PointShape | undefined {
+  // shape(원이면 없다), focus를 켰으면 focusShape와 점마다 focus 여부(points.f)
+  const shape =
+    meta.focusShape && meta.points.f?.[index] ? meta.focusShape : meta.shape;
+  return shape === "circle" ? undefined : shape;
+}
 
 /** legend 상자 위에서는 툴팁 대신 legend 색 선택이 동작한다. */
 export function inLegendBox(meta: ItemMeta, px: number, py: number) {
@@ -235,15 +251,17 @@ function hitCategory(meta: CategoryMeta, px: number, py: number) {
     return { index, g, cx, width };
   }
   const left = center - meta.markWidth / 2;
-  const g = Math.min(
+  // 커서가 든 자리. legend 순서를 바꿨으면 그 자리의 legend 인덱스를 찾는다.
+  const slot = Math.min(
     meta.groupCount - 1,
     Math.max(0, Math.floor(((px - left) / meta.markWidth) * meta.groupCount)),
   );
+  const g = legendAtSlot(meta.legendOrder, slot);
   const { cx, width } = groupSlot(
     center,
     meta.markWidth,
     meta.groupCount,
-    g,
+    slot,
     meta.groupGap,
   );
   return { index, g, cx, width };
@@ -950,6 +968,17 @@ function xToPx(meta: ItemMeta, v: number) {
   return plot.left + ((v - d0) / (d1 - d0)) * plot.width;
 }
 
+/**
+ * 나란히 놓은 막대/상자에서 slot번째 자리의 legend 인덱스. metadata의 legendOrder(legend 순서를 바꿨을 때만 있다)를
+ * 따르고, 없으면 자리가 곧 legend 인덱스다.
+ */
+export function legendAtSlot(
+  legendOrder: readonly number[] | undefined,
+  slot: number,
+) {
+  return legendOrder?.[slot] ?? slot;
+}
+
 /** legend 체크박스로 끈 값인지 */
 function legendHidden(meta: ItemMeta, index: number) {
   return meta.legend?.entries.find((e) => e.index === index)?.visible === false;
@@ -973,10 +1002,11 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
     const pos = (v - bins.lo) / bins.step;
     const i = Math.min(bins.count - 1, Math.floor(pos));
     if (pos < 0 || pos > bins.count) return null;
-    const g = Math.min(
+    const slot = Math.min(
       meta.groupCount - 1,
       Math.max(0, Math.floor((pos - i) * meta.groupCount)),
     );
+    const g = legendAtSlot(meta.legendOrder, slot);
     if (legendHidden(meta, g)) return null;
     const count = meta.counts[i]?.[g] ?? 0;
     const from = bins.lo + bins.step * i;
@@ -987,8 +1017,11 @@ export const histogramStrategy: TooltipStrategy<HistogramMeta> = {
       i === bins.count - 1
         ? closedRange(num(from), num(to))
         : openRange(num(from), num(to));
-    const left = xToPx(meta, from + (bins.step * g) / meta.groupCount);
-    const right = xToPx(meta, from + (bins.step * (g + 1)) / meta.groupCount);
+    const left = xToPx(meta, from + (bins.step * slot) / meta.groupCount);
+    const right = xToPx(
+      meta,
+      from + (bins.step * (slot + 1)) / meta.groupCount,
+    );
     const rows: TooltipRow[] = [
       { id: "range", label: text("range"), value: range },
     ];

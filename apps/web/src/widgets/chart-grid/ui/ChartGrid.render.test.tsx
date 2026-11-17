@@ -70,6 +70,7 @@ const jobState = (version: number): JobStateResponse => ({
   phase: "render",
   progress: { done: version, total: ITEMS },
   totalItems: ITEMS,
+  matchedItems: ITEMS,
   page: 0,
   pageSize: ITEMS,
   offset: 0,
@@ -240,6 +241,19 @@ describe("ChartGrid 렌더 횟수", () => {
     act(() => store.getState().setGridArea({ width: 600, height: 600 }));
     expect(counts.grid).toBe(1);
     expect(itemRenders()).toBe(ITEMS);
+  });
+
+  it("검색 조건을 바꾸면 grid는 다시 그리지만 바뀌지 않은 item은 다시 그리지 않는다", () => {
+    act(() =>
+      store.getState().setSearch([{ keyword: "item", match: "contains" }]),
+    );
+    expect(counts.grid).toBeGreaterThan(0);
+    expect(itemRenders()).toBe(0);
+  });
+
+  it("조건이 없을 때 모두 지우기를 눌러도 다시 그리지 않는다", () => {
+    act(() => store.getState().setSearch([]));
+    expect(renders()).toEqual({ grid: 0, items: {} });
   });
 
   it("크게 보는 동안 다른 item을 다시 그려도 크게 보기는 다시 그리지 않는다", () => {

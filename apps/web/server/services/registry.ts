@@ -2,6 +2,7 @@
 
 import * as authRoutes from "./auth/routes";
 import * as chartRoutes from "./chart/routes";
+import { ItemSearchSchema } from "./chart/schemas";
 import * as dataRoutes from "./data/routes";
 import * as feedRoutes from "./feed/routes";
 import { FEED_SECURITY_SCHEMES } from "./feed/security";
@@ -24,6 +25,8 @@ export const SERVICES = {
     title: "vis-a-lot chart service",
     description: "서버사이드 차트 렌더링 job, item 조작, 툴팁, PNG, history",
     routes: chartRoutes,
+    /** 라우트가 JSON 문자열로만 받아 OAS에 저절로 오르지 않는 모양. 화면이 생성 타입으로 쓴다. */
+    schemas: { ItemSearch: ItemSearchSchema },
   },
   feed: {
     basePath: "/api/feed",

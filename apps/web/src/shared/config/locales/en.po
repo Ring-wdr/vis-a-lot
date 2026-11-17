@@ -80,6 +80,14 @@ msgstr "# {group} activity report ({from} – {to})"
 msgid "## 완료한 일"
 msgstr "## Completed"
 
+#: src/shared/config/dataset.ts
+msgid "1사분위수"
+msgstr "1st quartile"
+
+#: src/shared/config/dataset.ts
+msgid "3사분위수"
+msgstr "3rd quartile"
+
 #: src/shared/ui/AiBadge.tsx
 msgid "AI 어댑터: {adapterLabel}"
 msgstr "AI adapter: {adapterLabel}"
@@ -104,6 +112,10 @@ msgstr "Count"
 msgctxt "search input placeholder"
 msgid "검색"
 msgstr "Search"
+
+#: src/shared/config/dataset.ts
+msgid "고유값 수"
+msgstr "Unique count"
 
 #: src/shared/ui/rich-editor/RichEditor.tsx
 msgid "굵게"
@@ -201,6 +213,10 @@ msgstr "Download model"
 #: src/shared/ui/AiBadge.tsx
 msgid "모델 없이 규칙과 템플릿으로 같은 기능을 흉내 냅니다."
 msgstr "Mimics the same features with rules and templates, no model."
+
+#: src/shared/config/dataset.ts
+msgid "모표준편차"
+msgstr "Population std. dev."
 
 #: src/shared/lib/time.ts
 msgid "방금"
@@ -345,6 +361,10 @@ msgstr "Blue"
 #: src/shared/config/dataset.ts
 msgid "평균"
 msgstr "Mean"
+
+#: src/shared/config/dataset.ts
+msgid "표준편차"
+msgstr "Std. dev."
 
 #: src/shared/config/dataset.ts
 msgid "합계"

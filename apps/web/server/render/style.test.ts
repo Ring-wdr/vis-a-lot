@@ -7,10 +7,21 @@ import {
   formatValue,
   gradientColors,
   headerHeight,
+  paletteColor,
   pointSizeOf,
 } from "./style";
 
 const palette = DEFAULT_OPTIONS.palette;
+
+describe("paletteColor", () => {
+  it("색 목록이 비면 기본 팔레트, 있으면 그 목록을 돌려 쓴다", () => {
+    expect(paletteColor(palette, 1)).toBe("#eb6834");
+    const colors = ["#111111", "#222222"];
+    expect(
+      [0, 1, 2].map((i) => paletteColor({ ...palette, colors }, i)),
+    ).toEqual(["#111111", "#222222", "#111111"]);
+  });
+});
 
 describe("gradientColors", () => {
   it("시작에서 끝까지 n단계로 나눈다", () => {

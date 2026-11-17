@@ -106,6 +106,29 @@ describe("bar 속성", () => {
     expect(applyValueOptions(input).bars?.[4]).toEqual([null]);
   });
 
+  it("value.outlierMode only: 범위 밖 막대만 남긴다", () => {
+    const input = {
+      ...bar({
+        value: {
+          outlier: true,
+          outlierMode: "only",
+          outlierMethod: "sigma",
+          outlierK: 1,
+        },
+      }),
+      bars: [[10], [11], [9], [10], [100], [null]],
+      categories: ["a", "b", "c", "d", "e", "f"],
+    };
+    expect(applyValueOptions(input).bars).toEqual([
+      [null],
+      [null],
+      [null],
+      [null],
+      [100],
+      [null],
+    ]);
+  });
+
   it("y축 min·max로 범위를 고정하고, 확대가 있으면 확대 범위가 이긴다", () => {
     const fixed = renderCategory(
       recorder().ctx,
@@ -231,6 +254,33 @@ describe("boxplot 속성", () => {
     );
     expect(shown.y.domain[1]).toBeGreaterThanOrEqual(30);
     expect(hidden.y.domain[1]).toBeLessThan(30);
+  });
+
+  it("value.outlierMode only: 상자·중앙값 없이 이상치 점만 그리고 축도 이상치에 맞춘다", () => {
+    const { ctx, calls } = recorder();
+    const meta = renderCategory(
+      ctx,
+      input({
+        value: { outlier: true, outlierMode: "only" },
+        pointLabel: { visible: true },
+      }),
+      noop,
+    );
+    const boxRects = (cs: Call[]) =>
+      cs.filter(
+        (c) =>
+          (c.op === "fillRect" || c.op === "strokeRect") &&
+          (c.state.fillStyle === "#2a78d6" ||
+            c.state.strokeStyle === "#2a78d6"),
+      );
+    const shown = recorder();
+    renderCategory(shown.ctx, input(), noop);
+    expect(boxRects(shown.calls).length).toBeGreaterThan(0);
+    expect(boxRects(calls)).toEqual([]);
+    expect(calls.filter((c) => c.op === "arc")).toHaveLength(1);
+    expect(texts(calls)).not.toContain("10");
+    // 상자(8..14)는 축 범위에 넣지 않는다.
+    expect(meta.y.domain[0]).toBeGreaterThan(14);
   });
 
   it("shape.type이 이상치 점 모양, pointLabel은 중앙값", () => {
@@ -404,5 +454,47 @@ describe("boxplot dot", () => {
     // 표본 값도 축 범위에 든다.
     expect(meta.y.domain[1]).toBeGreaterThanOrEqual(50);
     expect(meta.boxes?.[0]?.[0]).not.toHaveProperty("dots");
+  });
+});
+
+describe("bar focus 방식", () => {
+  const twoGroups = (focus: ChartOptionsPatch["focus"]): CategoryInput => ({
+    ...bar({ focus: { enabled: true, color: "#ff0000", ...focus } }),
+    bars: [
+      [10, 50],
+      [20, 5],
+      [30, 40],
+    ],
+    legend: {
+      title: "g",
+      values: ["p", "q"],
+      colors: ["#2a78d6", "#eb6834"],
+      hidden: ["q"],
+    },
+  });
+  const focusFills = (input: CategoryInput) => {
+    const { ctx, calls } = recorder();
+    renderCategory(ctx, input, noop);
+    return calls.filter(
+      (c) => c.op === "fill" && c.state.fillStyle === "#ff0000",
+    ).length;
+  };
+
+  it("순위는 끈 legend 값의 막대를 빼고 매긴다", () => {
+    // q(50, 5, 40)를 끄면 위 하나는 p의 30이다.
+    expect(focusFills(twoGroups({ type: "rank", rankCount: 1 }))).toBe(1);
+    expect(
+      focusFills(twoGroups({ type: "rank", rankFrom: "bottom", rankCount: 2 })),
+    ).toBe(2);
+  });
+
+  it("범위는 양 끝을 넣는다", () => {
+    expect(
+      focusFills(twoGroups({ type: "range", rangeMin: 10, rangeMax: 20 })),
+    ).toBe(2);
+    // 뒤집힌 범위는 맞는 막대가 없다.
+    expect(
+      focusFills(twoGroups({ type: "range", rangeMin: 30, rangeMax: 10 })),
+    ).toBe(0);
   });
 });

@@ -1,7 +1,7 @@
 // item 하나가 그린 행의 범위. 데이터 표와 데이터 다운로드가 DB에 넘긴다.
 
 import type { ItemRowsScope } from "../data/item-rows";
-import { markPoint, stackPoint } from "../render/category";
+import { markPoint, slotIndex, stackPoint } from "../render/category";
 import { histogramMarkPoint } from "../render/histogram";
 import { regionTester } from "../render/region";
 import { stepPoint, WATERFALL_KINDS } from "../render/waterfall";
@@ -54,7 +54,7 @@ function selectedMarks(chart: ChartRecord, item: ChartItem) {
       if (meta.segments && !seg) continue;
       const point = seg
         ? stackPoint(i, seg)
-        : markPoint(i, g, meta.groupCount, value);
+        : markPoint(i, slotIndex(meta.legendOrder, g), meta.groupCount, value);
       if (inside(...point)) marks.push([category, legendValues?.[g] ?? null]);
     }
   });
@@ -73,7 +73,13 @@ function selectedBins(chart: ChartRecord, item: ChartItem) {
   meta.counts.forEach((row, i) => {
     row.forEach((count, g) => {
       if (count === 0) return;
-      const point = histogramMarkPoint(meta.bins, i, g, meta.groupCount, count);
+      const point = histogramMarkPoint(
+        meta.bins,
+        i,
+        slotIndex(meta.legendOrder, g),
+        meta.groupCount,
+        count,
+      );
       if (inside(...point)) marks.push([i, legendValues?.[g] ?? null]);
     });
   });

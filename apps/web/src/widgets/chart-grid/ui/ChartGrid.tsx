@@ -4,7 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useColorScheme } from "@vis-a-lot/shared/lib/color-scheme";
 import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
 import { cn } from "@vis-a-lot/shared/lib/tw";
-import { History, LayoutGrid, TriangleAlert } from "lucide-react";
+import { History, LayoutGrid, SearchX, TriangleAlert } from "lucide-react";
 import {
   memo,
   useDeferredValue,
@@ -27,6 +27,7 @@ import { drawsLegend } from "@/shared/config/chart-kinds";
 import { usePixelRatio } from "@/shared/lib/pixel-ratio";
 import { usePendingValue } from "@/shared/lib/use-pending-value";
 import { showAlert } from "@/shared/ui/AlertDialog";
+import { button } from "@/shared/ui/button";
 import { EmptyState, Spinner } from "@/shared/ui/Loading";
 import "../config/messages";
 import { ChartItemCard } from "./ChartItemCard";
@@ -196,6 +197,8 @@ export function ChartGrid() {
   const setPage = useWorkspace((s) => s.setPage);
   const focus = useWorkspace((s) => s.focus);
   const setFocus = useWorkspace((s) => s.setFocus);
+  const search = useWorkspace((s) => s.search);
+  const setSearch = useWorkspace((s) => s.setSearch);
   const scroller = useRef<PageScrollerHandle>(null);
   const gridId = useId();
   // 스크롤하는 동안 보이는 페이지. 서버 조회 페이지(page)는 throttle로 뒤따라오고,
@@ -205,12 +208,19 @@ export function ChartGrid() {
   // 조회와 item 렌더는 deferred 값으로 해 스크롤바 조작보다 뒤로 미룬다.
   const deferredPage = useDeferredValue(page);
   const moving = viewPage !== deferredPage;
+  // 검색 조건이 바뀌면 거른 페이지를 받는 동안 이전 grid를 흐리게 둔다 (useJob이 이전 응답을 그대로 둔다).
+  const deferredSearch = useDeferredValue(search);
+  const searching = deferredSearch.length > 0;
   const grid = current?.spec.grid ?? { rows: 1, cols: 1 };
   const pageSize = grid.rows * grid.cols;
-  const job = useJob(current?.jobId, deferredPage, pageSize);
+  const job = useJob(current?.jobId, deferredPage, pageSize, deferredSearch);
+  const searchPending = job.isPlaceholderData || search !== deferredSearch;
   // 하단 진행률과 job 종료 여부는 job 전체 long polling으로 받는다.
   const progress = useJobProgress(current?.jobId, gridProgress);
-  const totalItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;
+  const allItems = progress.data?.totalItems ?? job.data?.totalItems ?? null;
+  // grid·페이지·크게 보기가 도는 item 수. 검색 중이면 조건에 맞는 item 수다.
+  const totalItems = searching ? (job.data?.matchedItems ?? null) : allItems;
+  const noMatch = searching && totalItems === 0 && !searchPending;
   const totalPages =
     totalItems === null ? 1 : Math.max(1, Math.ceil(totalItems / pageSize));
   const pageText = (viewPage + 1).toLocaleString(intlLocale());
@@ -230,7 +240,7 @@ export function ChartGrid() {
         : undefined,
     [gridArea, rows, cols, pixelRatio, theme],
   );
-  const detailOpen = focus !== null && totalItems !== null;
+  const detailOpen = focus !== null && totalItems !== null && totalItems > 0;
   // 크게 보는 동안에는 grid가 보이지 않으니 grid item을 새 크기로 다시 그리지 않는다. 돌아오면 맞춘다.
 
   // job이 실패 사유를 알려 주면 팝업으로도 알린다.
@@ -308,13 +318,19 @@ export function ChartGrid() {
               current={current}
               focus={focus}
               totalItems={totalItems}
+              search={deferredSearch}
               onClose={closeDetail}
             />
           ) : (
             <div className="flex min-h-0 flex-1 gap-2">
               <div
                 id={gridId}
-                className={gridClass(grid)}
+                className={cn(
+                  gridClass(grid),
+                  "transition-opacity",
+                  searchPending && "opacity-50",
+                )}
+                aria-busy={searchPending || undefined}
                 // 페이지 이동은 오른쪽 스크롤바가 맡는다. grid 위의 휠도 그쪽으로 넘긴다.
                 onWheel={(e) => scroller.current?.wheel(e.deltaY)}
               >
@@ -345,6 +361,24 @@ export function ChartGrid() {
                       }
                     />
                   ))}
+                {noMatch && (
+                  <div className="col-span-full row-span-full self-center">
+                    <EmptyState
+                      icon={<SearchX size={20} />}
+                      title={t`조건에 맞는 차트가 없습니다`}
+                    >
+                      <button
+                        type="button"
+                        className={button({ size: "sm", class: "mt-2" })}
+                        onClick={() => setSearch([])}
+                      >
+                        <Trans comment="검색 조건을 모두 지워 모든 차트를 다시 보인다">
+                          조건 지우기
+                        </Trans>
+                      </button>
+                    </EmptyState>
+                  </div>
+                )}
                 {/* item 목록이 정해지기 전에 실패하면(지운 데이터, 스키마 오류 등) 빈 grid 대신 사유를 보여준다. */}
                 {job.data?.status === "failed" &&
                   job.data.totalItems === null && (

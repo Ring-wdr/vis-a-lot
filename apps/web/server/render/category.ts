@@ -7,8 +7,8 @@ import { scaleLinear } from "d3-scale";
 import type { BoxStats } from "../data/category-data";
 import { AGG_LABELS, type AggFn } from "../data/schema";
 import { compileExpression } from "./analytics/expression";
-import { focusTest } from "./analytics/focus";
-import { outlierBounds } from "./analytics/outlier";
+import { focusMatcher } from "./analytics/focus";
+import { keepsValue, outlierBounds } from "./analytics/outlier";
 import { drawAxisTitles, drawYAxis, valueScale } from "./axis-style";
 import {
   drawBaseline,
@@ -17,13 +17,17 @@ import {
   labelWidth,
 } from "./frame";
 import {
+  changedSequence,
   drawLegendAround,
   framePlot,
   hiddenIndexes,
   type LegendInput,
   type LegendMeta,
+  legendSequence,
+  slotLookup,
 } from "./legend";
 import { type ChartOptions, optionsOf, type ShapeOptions } from "./options";
+import { isIdentityOrder, orderIndexes } from "./order";
 import { drawSelection, type Region, regionTester } from "./region";
 import {
   type AxisMeta,
@@ -60,6 +64,11 @@ export type CategoryMeta = {
   groupCount: number;
   /** 묶음 안에서 막대/상자 사이 간격(px). 화면이 groupSlot을 같은 값으로 계산한다. */
   groupGap: number;
+  /**
+   * 묶음 안에 나란히 놓은 막대/상자의 legend 인덱스(왼쪽부터). legend 순서(sort·order)를 바꿨을 때만 있다.
+   * 없으면 legend 인덱스 순서다. bars·boxes·segments의 칸은 legend 인덱스 그대로다.
+   */
+  legendOrder?: number[];
   agg?: AggFn;
   /** [범주][legend 값] */
   bars?: (number | null)[][];
@@ -220,11 +229,17 @@ function valueExtent(
       }
     }
   } else {
+    const only = boxOutliersOnly(input);
     for (const row of input.boxes ?? []) {
       for (const b of row) {
         if (!b) continue;
-        min = Math.min(min, b.lo, ...b.outliers);
-        max = Math.max(max, b.hi, ...b.outliers);
+        // 이상치만 그리면 상자·수염은 축 범위에 넣지 않는다.
+        if (!only) {
+          min = Math.min(min, b.lo);
+          max = Math.max(max, b.hi);
+        }
+        min = Math.min(min, ...b.outliers);
+        max = Math.max(max, ...b.outliers);
         for (const v of b.dots ?? []) {
           if (v < min) min = v;
           if (v > max) max = v;
@@ -251,13 +266,15 @@ export function markPoint(
 }
 
 /**
- * 누적 막대 구간. 범주마다 legend 순서대로 양수는 0에서 위로, 음수는 아래로 쌓는다.
+ * 누적 막대 구간. 범주마다 legend 순서(sequence, 없으면 인덱스 순)대로 양수는 0에서 위로, 음수는 아래로 쌓는다.
  * percent면 범주 안 절댓값 합계 대비 %로 바꾼다. 끈 legend 값(off)과 빈 칸은 null이고 쌓지 않는다.
+ * 돌려주는 칸은 legend 인덱스 그대로다.
  */
 export function stackSegments(
   bars: readonly (readonly (number | null)[])[],
   off: readonly boolean[],
   percent: boolean,
+  sequence?: readonly number[],
 ): ([number, number] | null)[][] {
   return bars.map((row) => {
     const total = row.reduce<number>(
@@ -267,36 +284,62 @@ export function stackSegments(
     const scale = percent ? (total > 0 ? 100 / total : 0) : 1;
     let up = 0;
     let down = 0;
-    return row.map((v, g) => {
-      if (v === null || off[g] || !Number.isFinite(v)) return null;
+    const out: ([number, number] | null)[] = row.map(() => null);
+    for (const g of sequence ?? row.keys()) {
+      const v = row[g];
+      if (v === null || v === undefined || off[g] || !Number.isFinite(v))
+        continue;
       const h = v * scale;
       if (h >= 0) {
-        const seg: [number, number] = [up, up + h];
+        out[g] = [up, up + h];
         up += h;
-        return seg;
+      } else {
+        out[g] = [down, down + h];
+        down += h;
       }
-      const seg: [number, number] = [down, down + h];
-      down += h;
-      return seg;
-    });
+    }
+    return out;
   });
 }
 
-/** 누적 막대 한 범주에서 맨 위(양수 끝)와 맨 아래(음수 끝) 막대의 legend 순번 */
-function stackEnds(row: readonly ([number, number] | null)[]) {
+/** 누적 막대 한 범주에서 맨 위(양수 끝)와 맨 아래(음수 끝) 막대의 legend 순번. 쌓은 순서(sequence)로 찾는다. */
+function stackEnds(
+  row: readonly ([number, number] | null)[],
+  sequence: readonly number[],
+) {
   let top: number | undefined;
   let bottom: number | undefined;
-  row.forEach((seg, g) => {
-    if (!seg) return;
+  for (const g of sequence) {
+    const seg = row[g];
+    if (!seg) continue;
     if (seg[1] >= seg[0]) top = g;
     else bottom = g;
-  });
+  }
   return { top, bottom };
 }
 
 /** 누적 막대의 대표 좌표: 범주 가운데, 구간 가운데 높이 */
 export function stackPoint(i: number, seg: readonly [number, number]) {
   return [i, (seg[0] + seg[1]) / 2] as [number, number];
+}
+
+/** metadata에 싣는 legend 순서. 순서를 바꾸지 않았으면 칸을 두지 않아 예전 metadata와 같다. */
+export function legendOrderMeta(
+  legend: LegendInput | undefined,
+  count: number,
+) {
+  const order = changedSequence(legend, count);
+  return order ? { legendOrder: order } : {};
+}
+
+/** metadata의 legend 순서로 legend 인덱스 g가 놓인 자리. 순서가 없으면 g 그대로 */
+export function slotIndex(
+  legendOrder: readonly number[] | undefined,
+  g: number,
+) {
+  if (!legendOrder) return g;
+  const k = legendOrder.indexOf(g);
+  return k < 0 ? g : k;
 }
 
 /** 범주 i 안에서 g번째 막대/상자의 가운데 x와 너비 */
@@ -314,17 +357,48 @@ export function groupSlot(
 }
 
 /**
- * value·expression 구역을 집계값에 적용한 입력. bar는 빈 칸을 nullNumeric으로 채우고, 이상치 범위 밖 막대를 빼고,
- * y 식을 막대 값에 적용한다(x는 범주 인덱스). boxplot은 이상치를 켜면 이상치 점을 빼고 그린다.
+ * 범주 순서(axes.x.categorySort·categoryOrder)대로 범주와 막대·상자 행을 함께 옮긴다. 기본값이면 그대로 둔다.
+ * 데이터를 받은 직후에 적용해, 이후의 식(x = 범주 인덱스)·metadata·선택이 모두 바뀐 순서를 쓴다.
+ */
+export function orderCategories(input: CategoryInput): CategoryInput {
+  const { categorySort, categoryOrder } = optionsOf(input).axes.x;
+  const idx = orderIndexes(input.categories, categoryOrder, categorySort);
+  if (isIdentityOrder(idx)) return input;
+  return {
+    ...input,
+    categories: idx.map((i) => input.categories[i]),
+    bars: input.bars && idx.map((i) => input.bars?.[i] ?? []),
+    boxes: input.boxes && idx.map((i) => input.boxes?.[i] ?? []),
+  };
+}
+
+/** boxplot에서 value.outlierMode가 only면 상자·수염 없이 이상치 점만 그린다. */
+export function boxOutliersOnly(input: CategoryInput) {
+  const { value } = optionsOf(input);
+  return (
+    input.chartType === "boxplot" &&
+    value.outlier &&
+    value.outlierMode === "only"
+  );
+}
+
+/**
+ * value·expression 구역을 집계값에 적용한 입력. bar는 빈 칸을 nullNumeric으로 채우고, 이상치 범위 밖 막대를 빼고
+ * (only면 범위 밖 막대만 남기고), y 식을 막대 값에 적용한다(x는 범주 인덱스).
+ * boxplot은 이상치를 켜면 이상치 점을 빼고 그린다. only면 이상치 점만 그리므로 dot 표본도 뺀다.
  */
 export function applyValueOptions(input: CategoryInput): CategoryInput {
   const o = optionsOf(input);
   if (input.chartType === "boxplot") {
     if (!o.value.outlier) return input;
+    const only = o.value.outlierMode === "only";
     return {
       ...input,
       boxes: input.boxes?.map((row) =>
-        row.map((b) => b && { ...b, outliers: [] }),
+        row.map(
+          (b) =>
+            b && (only ? { ...b, dots: undefined } : { ...b, outliers: [] }),
+        ),
       ),
     };
   }
@@ -341,7 +415,9 @@ export function applyValueOptions(input: CategoryInput): CategoryInput {
       o.value.outlierK,
     );
     bars = bars.map((row) =>
-      row.map((v) => (v === null || (v >= lo && v <= hi) ? v : null)),
+      row.map((v) =>
+        v === null || keepsValue(v, [lo, hi], o.value.outlierMode) ? v : null,
+      ),
     );
   }
   const expr = o.expression.y.trim() ? compileExpression(o.expression.y) : null;
@@ -363,7 +439,7 @@ export function renderCategory(
   rawInput: CategoryInput,
   progress: ProgressFn,
 ): CategoryMeta {
-  const input = applyValueOptions(rawInput);
+  const input = applyValueOptions(orderCategories(rawInput));
   const o = optionsOf(input);
   const { width, height, categories, view } = input;
   const n = categories.length;
@@ -375,10 +451,14 @@ export function renderCategory(
   );
   // 체크박스로 끈 legend 값의 막대/상자는 그리지 않는다.
   const off = hiddenIndexes(input.legend);
+  // legend 순서(sort·order): 나란히 놓는 자리와 쌓는 순서. 색과 칸은 legend 인덱스 그대로다.
+  const sequence = legendSequence(input.legend, groupCount);
+  /** legend 인덱스 → 묶음 안 자리 */
+  const slotOf = slotLookup(input.legend, groupCount);
   // 누적 막대는 범주 하나에 한 줄로 쌓는다. 끈 값은 빼고 쌓아 남은 막대끼리 이어 붙는다.
   const stack = input.chartType === "bar" ? input.stack : undefined;
   const segments = stack
-    ? stackSegments(input.bars ?? [], off, stack === "stack100")
+    ? stackSegments(input.bars ?? [], off, stack === "stack100", sequence)
     : undefined;
   /** 막대/상자를 놓는 칸 수. 누적이면 하나 */
   const slots = segments ? 1 : groupCount;
@@ -392,15 +472,6 @@ export function renderCategory(
     }
     return g;
   };
-  // focus: 조건에 맞는 막대/상자(x = 범주 인덱스, y = 막대 값·중앙값)는 focus 색, legendSingleColor면 나머지는 회색
-  const focus = o.focus.enabled ? focusTest(o.focus) : undefined;
-  const colorOf = (index: number, point?: readonly [number, number], i = 0) => {
-    if (focus && point) {
-      if (focus(i, point[1])) return o.focus.color;
-      if (o.focus.legendSingleColor) return o.palette.othersColor;
-    }
-    return input.legend?.colors[index] ?? input.color;
-  };
   /** 선택이 있으면 바깥 막대/상자는 흐리게 */
   const selectionAlpha = (point: readonly [number, number]) =>
     !inSelection || inSelection(point[0], point[1]) ? 1 : o.shape.dimOpacity;
@@ -412,7 +483,36 @@ export function renderCategory(
   /** 막대/상자의 대표 좌표. 누적이면 구간 가운데 */
   const pointOf = (i: number, g: number, v: number) => {
     const seg = segments?.[i]?.[g];
-    return seg ? stackPoint(i, seg) : markPoint(i, g, groupCount, v);
+    return seg ? stackPoint(i, seg) : markPoint(i, slotOf(g), groupCount, v);
+  };
+  // focus: 맞는 막대/상자(x = 범주 인덱스, y = 막대 값·중앙값, 누적이면 구간 가운데)는 focus 색,
+  // legendSingleColor면 나머지는 회색. 순위는 그리는 막대/상자 전체(끈 legend 값 제외)에서 매긴다.
+  const focus = o.focus.enabled
+    ? focusMatcher(o.focus, ...focusValues())
+    : undefined;
+  function focusValues(): [number[], number[]] {
+    const fx: number[] = [];
+    const fy: number[] = [];
+    if (o.focus.type !== "rank") return [fx, fy];
+    for (let i = 0; i < n; i++) {
+      for (let g = 0; g < groupCount; g++) {
+        const v = markValue(i, g);
+        if (v === null) continue;
+        if (segments && !segments[i]?.[g]) continue;
+        const point = pointOf(i, g, v);
+        if (off[legendIndexOf(g, point)]) continue;
+        fx.push(i);
+        fy.push(point[1]);
+      }
+    }
+    return [fx, fy];
+  }
+  const colorOf = (index: number, point?: readonly [number, number], i = 0) => {
+    if (focus && point) {
+      if (focus(i, point[1])) return o.focus.color;
+      if (o.focus.legendSingleColor) return o.palette.othersColor;
+    }
+    return input.legend?.colors[index] ?? input.color;
   };
   if (inSelection) {
     for (let i = 0; i < n; i++) {
@@ -510,7 +610,7 @@ export function renderCategory(
     const fill = alphaOf(shape.transparency);
     (input.bars ?? []).forEach((row, i) => {
       // 누적이면 범주의 맨 위·맨 아래 막대만 바깥 끝을 둥글게 한다.
-      const ends = segments && stackEnds(segments[i] ?? []);
+      const ends = segments && stackEnds(segments[i] ?? [], sequence);
       row.forEach((v, g) => {
         if (v === null) return;
         const seg = segments?.[i]?.[g];
@@ -518,7 +618,12 @@ export function renderCategory(
         const [from, to] = seg ?? [baseValue, v];
         // 로그 축에서 0 이하 값은 그릴 자리가 없다.
         if (yLog && (to <= 0 || (seg && from <= 0))) return;
-        const { cx, width: w } = groupSlot(x(i), markWidth, slots, seg ? 0 : g);
+        const { cx, width: w } = groupSlot(
+          x(i),
+          markWidth,
+          slots,
+          seg ? 0 : slotOf(g),
+        );
         const y0 = seg ? y(from) : zero;
         const top = Math.min(y(to), y0);
         const h = Math.abs(y(to) - y0);
@@ -553,71 +658,82 @@ export function renderCategory(
       if (i % 200 === 0) progress("render", i / n);
     });
   } else {
+    const outliersOnly = boxOutliersOnly(input);
     (input.boxes ?? []).forEach((row, i) => {
       row.forEach((b, g) => {
         if (!b) return;
-        const { cx, width: w } = groupSlot(x(i), markWidth, groupCount, g);
+        const { cx, width: w } = groupSlot(
+          x(i),
+          markWidth,
+          groupCount,
+          slotOf(g),
+        );
         const half = w / 2;
-        const point = markPoint(i, g, groupCount, b.median);
+        const point = markPoint(i, slotOf(g), groupCount, b.median);
         const index = legendIndexOf(g, point);
         if (off[index]) return;
         const color = colorOf(index, point, i);
         const alpha = selectionAlpha(point);
-        const line = o.size.lineWidth;
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = line;
-        // 수염
-        ctx.beginPath();
-        ctx.moveTo(cx, y(b.hi));
-        ctx.lineTo(cx, y(b.q3));
-        ctx.moveTo(cx, y(b.q1));
-        ctx.lineTo(cx, y(b.lo));
-        ctx.moveTo(cx - half / 2, y(b.hi));
-        ctx.lineTo(cx + half / 2, y(b.hi));
-        ctx.moveTo(cx - half / 2, y(b.lo));
-        ctx.lineTo(cx + half / 2, y(b.lo));
-        ctx.stroke();
-        // 상자
-        // shape: brush는 테두리 없이 채우기만, border는 테두리만. 테두리 굵기를 정했으면 그 굵기
-        const top = y(b.q3);
-        const h = Math.max(1, y(b.q1) - top);
-        if (shape.style !== "border") {
-          ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
-          ctx.fillStyle = color;
-          ctx.fillRect(cx - half, top, w, h);
-        }
-        ctx.globalAlpha = alpha;
-        if (shape.style !== "brush") {
-          ctx.strokeStyle =
-            shape.style === "border" ? color : borderOf(shape, color);
-          ctx.lineWidth = shape.borderWidth > 0 ? shape.borderWidth : line;
-          ctx.strokeRect(cx - half, top, w, h);
-        }
-        // dot: 원값 표본을 상자 너비 안에 흩어 찍는다. 흩는 위치는 순번으로 정해 다시 그려도 같다.
-        if (b.dots && b.dots.length > 0) {
-          ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
-          // 상자와 같은 색이면 채운 상자 위에서 보이지 않아 진하게 칠한다.
-          ctx.fillStyle =
-            shape.style === "border" ? color : mixColor(color, "#000000", 0.35);
-          const dotRadius = pointSizeOf(o, 1.6);
-          const spread = Math.max(0, half - dotRadius);
-          b.dots.forEach((v, k) => {
-            // 황금비 수열: 0~1에 고르게 퍼지는 결정적 값
-            const jitter = ((k * 0.618033988749895) % 1) * 2 - 1;
-            ctx.beginPath();
-            ctx.arc(cx + jitter * spread, y(v), dotRadius, 0, Math.PI * 2);
-            ctx.fill();
-          });
+        // 이상치만 그리면 상자·수염·dot·중앙값은 그리지 않는다.
+        if (!outliersOnly) {
+          const line = o.size.lineWidth;
           ctx.globalAlpha = alpha;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = line;
+          // 수염
+          ctx.beginPath();
+          ctx.moveTo(cx, y(b.hi));
+          ctx.lineTo(cx, y(b.q3));
+          ctx.moveTo(cx, y(b.q1));
+          ctx.lineTo(cx, y(b.lo));
+          ctx.moveTo(cx - half / 2, y(b.hi));
+          ctx.lineTo(cx + half / 2, y(b.hi));
+          ctx.moveTo(cx - half / 2, y(b.lo));
+          ctx.lineTo(cx + half / 2, y(b.lo));
+          ctx.stroke();
+          // 상자
+          // shape: brush는 테두리 없이 채우기만, border는 테두리만. 테두리 굵기를 정했으면 그 굵기
+          const top = y(b.q3);
+          const h = Math.max(1, y(b.q1) - top);
+          if (shape.style !== "border") {
+            ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
+            ctx.fillStyle = color;
+            ctx.fillRect(cx - half, top, w, h);
+          }
+          ctx.globalAlpha = alpha;
+          if (shape.style !== "brush") {
+            ctx.strokeStyle =
+              shape.style === "border" ? color : borderOf(shape, color);
+            ctx.lineWidth = shape.borderWidth > 0 ? shape.borderWidth : line;
+            ctx.strokeRect(cx - half, top, w, h);
+          }
+          // dot: 원값 표본을 상자 너비 안에 흩어 찍는다. 흩는 위치는 순번으로 정해 다시 그려도 같다.
+          if (b.dots && b.dots.length > 0) {
+            ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
+            // 상자와 같은 색이면 채운 상자 위에서 보이지 않아 진하게 칠한다.
+            ctx.fillStyle =
+              shape.style === "border"
+                ? color
+                : mixColor(color, "#000000", 0.35);
+            const dotRadius = pointSizeOf(o, 1.6);
+            const spread = Math.max(0, half - dotRadius);
+            b.dots.forEach((v, k) => {
+              // 황금비 수열: 0~1에 고르게 퍼지는 결정적 값
+              const jitter = ((k * 0.618033988749895) % 1) * 2 - 1;
+              ctx.beginPath();
+              ctx.arc(cx + jitter * spread, y(v), dotRadius, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            ctx.globalAlpha = alpha;
+          }
+          // 중앙값
+          ctx.strokeStyle = shape.medianColor;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - half, y(b.median));
+          ctx.lineTo(cx + half, y(b.median));
+          ctx.stroke();
         }
-        // 중앙값
-        ctx.strokeStyle = shape.medianColor;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(cx - half, y(b.median));
-        ctx.lineTo(cx + half, y(b.median));
-        ctx.stroke();
         // 이상치: shape 모양·크기를 따른다. 기본은 반지름 2 원
         ctx.globalAlpha = alphaOf(shape.transparency) * alpha;
         const radius = pointSizeOf(o, 2);
@@ -635,7 +751,7 @@ export function renderCategory(
           );
         }
         ctx.globalAlpha = 1;
-        labels.push([cx, y(b.median), b.median]);
+        if (!outliersOnly) labels.push([cx, y(b.median), b.median]);
       });
       if (i % 50 === 0) progress("render", i / n);
     });
@@ -674,6 +790,7 @@ export function renderCategory(
     markWidth,
     groupCount,
     groupGap: GROUP_GAP,
+    ...legendOrderMeta(input.legend, groupCount),
     agg: input.agg,
     bars: input.bars,
     ...(segments ? { stack, segments } : {}),

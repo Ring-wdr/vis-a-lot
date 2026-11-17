@@ -56,6 +56,12 @@ export type ItemSettingsChanges = Extract<
   { settings: unknown }
 >["settings"];
 export type ItemSize = Chart["ItemSize"];
+/** item 이름 조건 (GET /jobs/:jobId의 search에 JSON 문자열로 보낸다). 여럿이면 OR */
+export type ItemSearch = Chart["ItemSearch"];
+export type ItemSearchCond = Chart["ItemSearchCond"];
+export type ItemSearchMatch = Chart["ItemSearchMatch"];
+/** 검색 조건이 없을 때. 참조를 하나로 두어 query key·selector가 바뀌지 않게 한다. */
+export const NO_SEARCH: ItemSearch = [];
 /** 차트 PNG의 색 테마 (화면 테마를 따른다) */
 export type ChartTheme = Chart["ChartTheme"];
 export type ItemView = Chart["ItemView"];

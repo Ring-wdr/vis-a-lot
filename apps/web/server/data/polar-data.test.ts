@@ -3,6 +3,8 @@ import type { CategoryData } from "./category-data";
 import {
   attachSunburst,
   OTHERS_SLICE,
+  pieOthersReaggregated,
+  pieOverflow,
   toPieData,
   toRadarData,
 } from "./polar-data";
@@ -75,6 +77,41 @@ describe("toPieData", () => {
       ]),
     );
     expect(data.colorOrder).toEqual(["a", "b"]);
+  });
+});
+
+describe("pie '기타' 다시 집계", () => {
+  const data = bars([
+    [
+      ["a", 10],
+      ["b", 1],
+      ["c", 2],
+      ["d", -1],
+    ],
+    [["b", 30]],
+  ]);
+
+  it("묶일 범주를 split 조합마다 모은다 (0 이하는 조각이 아니라 빠진다)", () => {
+    expect(pieOverflow(data, 2)).toEqual([{ values: ["g0"], rest: ["b"] }]);
+  });
+
+  it("다시 집계한 값이 있으면 더하지 않고 그 값을 쓴다. 0 이하·빈 값이면 '기타'가 없다", () => {
+    const pie = toPieData(data, 2, (values) => (values[0] === "g0" ? 7 : null));
+    expect(pie.groups[0].slices.at(-1)).toEqual({
+      category: OTHERS_SLICE,
+      value: 7,
+    });
+    const none = toPieData(data, 2, () => null);
+    expect(none.groups[0].slices.map((s) => s.category)).toEqual(["a", "c"]);
+  });
+
+  it("합계·개수만 조각 값을 더하고, 나머지는 원래 행으로 다시 집계한다", () => {
+    expect(pieOthersReaggregated("sum")).toBe(false);
+    expect(pieOthersReaggregated("count")).toBe(false);
+    expect(pieOthersReaggregated("avg")).toBe(true);
+    expect(pieOthersReaggregated("median")).toBe(true);
+    expect(pieOthersReaggregated("stddev")).toBe(true);
+    expect(pieOthersReaggregated("uniqueCount")).toBe(true);
   });
 });
 

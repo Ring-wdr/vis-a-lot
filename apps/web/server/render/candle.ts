@@ -3,7 +3,7 @@
 // legend는 데이터 컬럼이 아니라 '상승/하락' 두 항목이라 체크박스로 한쪽을 숨길 수 있다.
 
 import { scaleLinear, scaleUtc } from "d3-scale";
-import { focusTest } from "./analytics/focus";
+import { focusMatcher } from "./analytics/focus";
 import {
   drawAxisTitles,
   drawXAxis,
@@ -154,19 +154,23 @@ export function intervalLabel(ms: number) {
 }
 
 /**
- * focus 조건에 맞는 캔들. target x는 구간 가운데 시각, y는 종가로 견준다.
- * focus가 꺼져 있으면 undefined
+ * focus에 맞는 캔들. target x는 구간 가운데 시각, y는 종가로 견준다.
+ * 순위는 include가 true인 캔들(끈 legend 값 제외) 전체에서 매긴다. focus가 꺼져 있으면 undefined
  */
 export function candleFocus(
   candles: CandleSeries,
   interval: number,
   o: ChartOptions,
+  include?: (i: number) => boolean,
 ): Uint8Array | undefined {
   if (!o.focus.enabled) return undefined;
-  const test = focusTest(o.focus);
-  const out = new Uint8Array(candles.t.length);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = test(...candlePoint(candles, interval, i)) ? 1 : 0;
+  const n = candles.t.length;
+  const xs = new Float64Array(n);
+  for (let i = 0; i < n; i++) xs[i] = candlePoint(candles, interval, i)[0];
+  const test = focusMatcher(o.focus, xs, candles.close, include);
+  const out = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    out[i] = (!include || include(i)) && test(xs[i], candles.close[i]) ? 1 : 0;
   }
   return out;
 }
@@ -198,7 +202,7 @@ export function renderCandle(
     }
   }
 
-  const focus = candleFocus(candles, interval, o);
+  const focus = candleFocus(candles, interval, o, (i) => !off[index[i]]);
 
   drawPanel(ctx, width, height, o);
 
