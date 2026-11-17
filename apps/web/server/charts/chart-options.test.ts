@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import * as client from "@/entities/chart/model/chart-options";
-import type { ChartType } from "../api/types";
-import { DEFAULT_OPTIONS, mergeOptions } from "../render/options";
+import type { ChartSubType, ChartType } from "../api/types";
+import {
+  DARK_OPTIONS,
+  DEFAULT_OPTIONS,
+  type LimitLine,
+  mergeOptions,
+} from "../render/options";
 import { CHART_DEFAULTS, defaultsFor } from "./chart-defaults";
 import {
   CATEGORY_ORDER_CHARTS,
+  controlLimitSupport,
   OPTION_SUPPORT,
+  pickSupported,
   resolveOptions,
   supportsOption,
 } from "./chart-options";
@@ -128,5 +135,104 @@ describe("chart options", () => {
     });
     expect(merged.score.kinds).toEqual(["cpk"]);
     expect(merged.score.ucl).toBeNull();
+  });
+});
+
+describe("관리선 구역", () => {
+  const line = (name: string): LimitLine => ({
+    name,
+    axis: "left",
+    color: "#e03131",
+    width: 1,
+    style: "solid",
+    kind: "reference",
+    value: 1,
+    type: "none",
+  });
+
+  it("기본값은 선이 없고, 다크 테마에서도 색이 같다", () => {
+    expect(DEFAULT_OPTIONS.controlLimit.lines).toEqual([]);
+    expect(DARK_OPTIONS.controlLimit).toBeUndefined();
+    expect(
+      resolveOptions("scatter", undefined, undefined, "dark").controlLimit,
+    ).toEqual(DEFAULT_OPTIONS.controlLimit);
+  });
+
+  it("scatter·line·bar만 구역을 쓰고, 나머지는 저장하지 않는다", () => {
+    const supported = (Object.keys(OPTION_SUPPORT) as ChartType[]).filter((t) =>
+      supportsOption(t, "controlLimit"),
+    );
+    expect(supported.sort()).toEqual(["bar", "line", "scatter"]);
+    expect(
+      pickSupported("boxplot", { controlLimit: { lines: [line("A")] } }),
+    ).toBeUndefined();
+  });
+
+  it("item에 선 목록을 정하면 공통 목록 대신 그 목록을 쓴다", () => {
+    const common = {
+      controlLimit: { lines: [line("A"), line("B")], fitAxis: false },
+    };
+    // 목록을 적지 않은 item은 공통 목록을 따르고, 낱개 칸만 덮는다.
+    expect(
+      resolveOptions("scatter", common, {
+        controlLimit: { highlightOut: false },
+      }).controlLimit,
+    ).toMatchObject({
+      lines: [line("A"), line("B")],
+      fitAxis: false,
+      highlightOut: false,
+    });
+    expect(
+      resolveOptions("scatter", common, {
+        controlLimit: { lines: [line("C")] },
+      }).controlLimit.lines,
+    ).toEqual([line("C")]);
+    // 빈 목록이면 그 item만 선이 없다.
+    expect(
+      resolveOptions("scatter", common, { controlLimit: { lines: [] } })
+        .controlLimit.lines,
+    ).toEqual([]);
+  });
+
+  it("차트·하위 차트·x 타입별로 쓸 수 있는 선", () => {
+    expect(controlLimitSupport({ chartType: "scatter" }, "datetime")).toEqual({
+      left: ["reference", "column", "band"],
+      bottom: ["reference"],
+      multi: true,
+    });
+    expect(
+      controlLimitSupport({ chartType: "line" }, "numeric")?.bottom,
+    ).toEqual(["reference", "column", "band"]);
+    expect(
+      controlLimitSupport({ chartType: "line", subType: "ecdf" }),
+    ).toBeNull();
+    expect(controlLimitSupport({ chartType: "bar" })).toEqual({
+      left: ["reference", "column"],
+      bottom: [],
+      multi: false,
+    });
+    expect(
+      controlLimitSupport({ chartType: "bar", subType: "stack100" })?.left,
+    ).toEqual(["reference"]);
+    expect(controlLimitSupport({ chartType: "histogram" })).toBeNull();
+  });
+
+  it("화면 사본이 서버와 같은 규칙으로 관리선 지원을 정한다", () => {
+    const subTypes: (ChartSubType | undefined)[] = [
+      undefined,
+      "none",
+      "ecdf",
+      "ncdf",
+      "probability",
+      "side",
+      "stack",
+      "stack100",
+    ];
+    for (const chartType of Object.keys(OPTION_SUPPORT) as ChartType[])
+      for (const subType of subTypes)
+        for (const xType of ["numeric", "datetime", "categorical"] as const)
+          expect(
+            client.controlLimitSupport({ chartType, subType }, xType),
+          ).toEqual(controlLimitSupport({ chartType, subType }, xType));
   });
 });

@@ -21,7 +21,7 @@ import {
   POINT_CHARTS,
   subTypeOf,
 } from "../charts/chart-fields";
-import { resolveOptions } from "../charts/chart-options";
+import { controlLimitSupport, resolveOptions } from "../charts/chart-options";
 import {
   bumpRevision,
   type CachedChartData,
@@ -31,6 +31,7 @@ import {
   detailUrl,
   getCachedChartData,
   getItem,
+  limitCacheOf,
   pngUrl,
   putDetail,
   sizeKeyOf,
@@ -39,7 +40,13 @@ import {
 } from "../charts/chart-store";
 import { itemKeyOf, itemLabelOf } from "../charts/item-key";
 import { propsOrNone } from "../charts/item-props";
-import { specError } from "../charts/validate-spec";
+import { controlLimitError, specError } from "../charts/validate-spec";
+import {
+  type LimitRequest,
+  limitRequestKey,
+  limitRequestsOf,
+  resolveLimits,
+} from "../data/limit-data";
 import { OTHERS_SLICE, type PieData } from "../data/polar-data";
 import { MAX_SPLIT_ITEMS } from "../data/schema";
 import { saveHistory } from "../history/recorder";
@@ -50,7 +57,8 @@ import {
   toDistribution,
 } from "../render/analytics/distribution";
 import { CANDLE_LEGEND } from "../render/candle";
-import type { LegendStyle } from "../render/options";
+import type { ResolvedLimit } from "../render/control-limit";
+import type { ChartOptions, LegendStyle, LimitLine } from "../render/options";
 import { isIdentityOrder, orderIndexes } from "../render/order";
 import { gradientColors, legendStyleOf, paletteColor } from "../render/style";
 import { WATERFALL_KINDS, waterfallDefaultColors } from "../render/waterfall";
@@ -367,6 +375,9 @@ async function run(job: Job) {
       }),
     };
   });
+  // 관리선 값도 조회 단계에서 채운다 (공통 속성과 복원한 item 속성의 선).
+  await ensureLimits(chart, data, chart.items);
+  throwIfCancelled();
   for (const item of chart.items)
     job.items.set(item.key, initialState(chart, item));
   job.order = chart.items.map((i) => i.key);
@@ -882,6 +893,126 @@ async function loadChartData(chart: ChartRecord): Promise<CachedChartData> {
   return result;
 }
 
+/** 관리선을 어떻게 쓰는지 (controlLimitSupport). 구역을 끈 차트·하위 차트면 null */
+function limitSupportOf(chart: ChartRecord) {
+  const xType = chart.columns?.find((c) => c.name === chart.spec.x)?.type;
+  return controlLimitSupport(chart.spec, xType);
+}
+
+/** 검사를 통과한 선 목록. 합친 속성의 선 목록은 공통·item 속성의 배열을 그대로 쓰므로 참조로 한 번만 본다. */
+const checkedLines = new WeakMap<
+  ChartRecord,
+  WeakMap<readonly LimitLine[], readonly LimitLine[]>
+>();
+
+/**
+ * 그릴 수 있는 선만 남긴다. history·공유로 복원한 item 속성은 저장 때 검사를 거치지 않았을 수 있어,
+ * 앞에서부터 하나씩 더해 보며 controlLimitError에 걸리는 선(없는 컬럼·범주 컬럼, 차트와 맞지 않는 축·종류,
+ * 이름 중복, 축마다 두 번째 USL·LSL, 10개를 넘는 선)은 빼고 나머지는 그린다.
+ */
+function validLimitLines(
+  chart: ChartRecord,
+  lines: readonly LimitLine[],
+): readonly LimitLine[] {
+  if (lines.length === 0) return lines;
+  let memo = checkedLines.get(chart);
+  if (!memo) {
+    memo = new WeakMap();
+    checkedLines.set(chart, memo);
+  }
+  const hit = memo.get(lines);
+  if (hit) return hit;
+  const accepted: LimitLine[] = [];
+  for (const line of lines) {
+    const error = controlLimitError(
+      chart.spec,
+      [...accepted, line],
+      chart.columns ?? [],
+    );
+    if (!error) accepted.push(line);
+  }
+  memo.set(lines, accepted);
+  return accepted;
+}
+
+/**
+ * 그릴 item들의 관리선 값을 데이터 캐시 옆에 채운다. 캐시에 없는 요청(컬럼, 함수, 구간별)만 모아 한 번 조회한다.
+ * draw는 공통 속성과 복원한 item 속성의 선을, item 다시 그리기는 바뀐 속성이 새로 쓰는 선을 여기서 조회한다.
+ */
+async function ensureLimits(
+  chart: ChartRecord,
+  data: CachedChartData,
+  items: readonly ChartItem[],
+) {
+  if (!limitSupportOf(chart)) return;
+  const cache = limitCacheOf(data, chart.spec);
+  const missing = new Map<string, LimitRequest>();
+  for (const item of items) {
+    const { lines } = optionsFor(chart, item).controlLimit;
+    for (const line of validLimitLines(chart, lines)) {
+      for (const r of limitRequestsOf(line)) {
+        const key = limitRequestKey(r);
+        if (!cache.values.has(key)) missing.set(key, r);
+      }
+    }
+  }
+  if (missing.size === 0) return;
+  pruneLimits(chart, cache);
+  const { spec } = chart;
+  const requests = [...missing.values()];
+  const result = await getRuntime().db.call("limitValues", {
+    dataset: spec.dataset,
+    x: spec.x,
+    splitBy: spec.splitBy,
+    filters: spec.filters,
+    requests,
+    buckets: cache.buckets,
+  });
+  if (result.buckets !== undefined) cache.buckets = result.buckets;
+  requests.forEach((r, i) => {
+    cache.values.set(
+      limitRequestKey(r),
+      new Map(result.groups.map((g) => [itemKeyOf(g.values), g.results[i]])),
+    );
+  });
+}
+
+/** 어느 선(공통·item 속성)도 쓰지 않게 된 요청 값을 지운다. 선 정의가 바뀔 때 쌓이지 않게 한다. */
+function pruneLimits(
+  chart: ChartRecord,
+  cache: NonNullable<CachedChartData["limits"]>,
+) {
+  const used = new Set<string>();
+  const add = (lines: readonly LimitLine[] | undefined) => {
+    for (const line of lines ?? [])
+      for (const r of limitRequestsOf(line)) used.add(limitRequestKey(r));
+  };
+  add(chart.spec.common.options?.controlLimit?.lines);
+  for (const item of chart.items ?? [])
+    add(item.props?.options?.controlLimit?.lines);
+  for (const key of [...cache.values.keys()])
+    if (!used.has(key)) cache.values.delete(key);
+}
+
+/** item 렌더 입력의 관리선. 구역을 끈 차트면 undefined (limits를 싣지 않는다). ensureLimits 뒤에 부른다. */
+function limitsFor(
+  chart: ChartRecord,
+  data: CachedChartData,
+  item: ChartItem,
+  options: ChartOptions,
+): ResolvedLimit[] | undefined {
+  if (!limitSupportOf(chart)) return undefined;
+  const cache = data.limits;
+  const timeX =
+    chart.columns?.find((c) => c.name === chart.spec.x)?.type === "datetime";
+  return resolveLimits(
+    validLimitLines(chart, options.controlLimit.lines),
+    (r) => cache?.values.get(limitRequestKey(r))?.get(item.key),
+    cache?.buckets,
+    timeX,
+  );
+}
+
 type RenderOutput = { png: ArrayBuffer; thumb?: ArrayBuffer; meta: ItemMeta };
 
 /** 차트 종류에 맞는 렌더러를 골라 item 하나를 그린다. */
@@ -919,6 +1050,7 @@ function renderItem(
     item.props?.options,
     size.theme,
   );
+  const limits = limitsFor(chart, data, item, options);
   const common = {
     options,
     width: size.width,
@@ -966,6 +1098,7 @@ function renderItem(
         ys: data.ys.slice(group.start, group.end),
         ids: data.ids.slice(group.start, group.end),
         deletions: item.deletions,
+        limits,
         legend: legend && {
           ...legend,
           // legend 컬럼이 없으면 모든 점이 '기타'(0)에서 출발한다.
@@ -1252,6 +1385,7 @@ function renderItem(
       bars: group?.bars,
       boxes: group?.boxes,
       agg: spec.chartType === "bar" ? spec.agg : undefined,
+      limits,
       legend: legendInput(
         chart,
         item,
@@ -1273,6 +1407,8 @@ async function renderItems(
 ) {
   const { chart } = job;
   const { signal } = job.abort;
+  // 다시 그리기·크게 보기·resize도 바뀐 속성의 새 선이나 캐시에서 밀려난 값을 여기서 채운다.
+  await ensureLimits(chart, data, items);
 
   await Promise.all(
     items.map((item) => {
@@ -1387,14 +1523,9 @@ export async function lightPng(
   }
   const { width, height, pixelRatio } = image;
   const size = { width, height, ...(pixelRatio ? { pixelRatio } : {}) };
-  const { png } = await renderItem(
-    chart,
-    await itemData(chart),
-    item,
-    size,
-    false,
-    {},
-  );
+  const data = await itemData(chart);
+  await ensureLimits(chart, data, [item]);
+  const { png } = await renderItem(chart, data, item, size, false, {});
   return png;
 }
 

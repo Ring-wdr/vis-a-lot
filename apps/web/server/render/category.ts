@@ -11,6 +11,20 @@ import { focusMatcher } from "./analytics/focus";
 import { keepsValue, outlierBounds } from "./analytics/outlier";
 import { drawAxisTitles, drawYAxis, valueScale } from "./axis-style";
 import {
+  drawLimitAreas,
+  drawLimitLabels,
+  drawLimitLines,
+  fitLimitDomain,
+  hasSpec,
+  type LimitsMeta,
+  limitJudge,
+  limitsMeta,
+  limitTransforms,
+  prepareLimits,
+  type ResolvedLimit,
+  visibleLimits,
+} from "./control-limit";
+import {
   drawBaseline,
   drawCategoryLabels,
   drawTitle,
@@ -44,6 +58,7 @@ import {
   drawPoint,
   drawPointLabel,
   fontPx,
+  formatValue,
   type LabelGuard,
   mixColor,
   pointSizeOf,
@@ -81,6 +96,8 @@ export type CategoryMeta = {
   /** 선택 영역 안에 든 막대/상자 수. 선택이 없으면 없다. */
   selected?: number;
   legend?: LegendMeta;
+  /** 그린 관리선과 이탈 막대 수 (bar만). 그린 선이 없으면 없다. */
+  limits?: LimitsMeta;
 };
 
 /** bar 누적 방식: stack은 값 그대로, stack100은 범주 합계 대비 % */
@@ -111,6 +128,8 @@ export type CategoryInput = {
   compact?: boolean;
   /** 축 제목(axes.*.title.visible)에 쓰는 이름. 보통 x·y 컬럼 라벨 */
   axisTitles?: { x?: string; y?: string };
+  /** 값을 채운 관리선 (bar만, job-manager가 만든다). 없으면 그리지 않는다. */
+  limits?: readonly ResolvedLimit[];
 };
 
 type Ctx = OffscreenCanvasRenderingContext2D;
@@ -529,8 +548,16 @@ export function renderCategory(
 
   drawPanel(ctx, width, height, o);
 
+  // 관리선(bar만): y 식을 적용한 그릴 좌표로 옮긴 선. 없으면 빈 목록이라 아래가 모두 지금과 같다.
+  const limitBase = prepareLimits(
+    input.chartType === "bar" ? rawInput.limits : undefined,
+    { y: limitTransforms(o.expression).y },
+  );
+
   // ── 축 (aggregate) ────────────────────────────────────────────
-  const extent = valueExtent(input, segments);
+  let extent = valueExtent(input, segments);
+  if (!view && o.controlLimit.fitAxis && limitBase.length > 0)
+    extent = fitLimitDomain(extent, limitBase, "left", o.axes.y.log);
   const { ticks: yTicks, format: yFormat } = categoryValueAxis(extent, view, o);
   const yLabelWidth = labelWidth(
     ctx,
@@ -554,6 +581,28 @@ export function renderCategory(
     .range([plot.left, plot.left + plot.width]);
   const band = plot.width / (xDomain[1] - xDomain[0]);
   const markWidth = Math.max(1, band * MARK_RATIO);
+
+  // 이탈 막대: 그리는 막대(끈 legend 값·로그 축에 못 그리는 막대 제외) 중 막대 끝 값(누적이면 쌓은 끝)이
+  // USL·LSL을 벗어난 것. 제목 요약이 막대보다 먼저라 미리 센다.
+  const limits = visibleLimits(limitBase, { left: yLog, bottom: false });
+  const judge = limitJudge(limits);
+  const outside = new Set<string>();
+  if (judge) {
+    for (let i = 0; i < n; i++) {
+      for (let g = 0; g < groupCount; g++) {
+        const v = markValue(i, g);
+        if (v === null) continue;
+        const seg = segments?.[i]?.[g];
+        if (segments && !seg) continue;
+        const [from, to] = seg ?? [baseValue, v];
+        if (yLog && (to <= 0 || (seg && from <= 0))) continue;
+        if (off[legendIndexOf(g, pointOf(i, g, v))]) continue;
+        if (judge(i, to)) outside.add(`${i}:${g}`);
+      }
+    }
+  }
+  const limitAxes = { x: (v: number) => x(v), y: (v: number) => y(v), plot };
+  drawLimitAreas(ctx, limits, o.controlLimit, limitAxes);
   progress("aggregate", 1);
 
   // ── 그리드와 축, 제목, legend (섬네일은 그림 영역만 그린다) ───────────
@@ -587,6 +636,7 @@ export function renderCategory(
         stack === "stack" ? "누적" : stack === "stack100" ? "100% 누적" : "",
         `${n}개 범주`,
         inSelection ? `${selectedCount}개 선택` : "",
+        hasSpec(limits) ? `이탈 ${outside.size}` : "",
       ],
       o,
     );
@@ -604,6 +654,8 @@ export function renderCategory(
   ctx.clip();
   /** 점 글자 자리: [x, y, 값]. clip을 푼 뒤 그린다. */
   const labels: [number, number, number][] = [];
+  /** 이탈 색으로 다시 그릴 막대: [x, y, w, h, 모서리, 진하기]. focus 막대는 focus 색이 이겨 넣지 않는다. */
+  const outMarks: [number, number, number, number, number[], number][] = [];
   const { shape } = o;
   if (input.chartType === "bar") {
     const zero = y(baseValue);
@@ -640,6 +692,15 @@ export function renderCategory(
         ctx.beginPath();
         ctx.roundRect(cx - w / 2, top, w, Math.max(h, 1), radii);
         paintMark(ctx, shape, colorOf(index, point, i));
+        if (outside.has(`${i}:${g}`) && !focus?.(i, point[1]))
+          outMarks.push([
+            cx - w / 2,
+            top,
+            w,
+            Math.max(h, 1),
+            radii,
+            selectionAlpha(point) * fill,
+          ]);
         // 쌓은 막대 사이는 배경색 선으로 가른다.
         if (seg && shape.style !== "border") {
           ctx.globalAlpha = fill;
@@ -765,6 +826,17 @@ export function renderCategory(
       THEME.selection,
     );
   }
+  // 관리선, 그 위에 이탈 막대
+  drawLimitLines(ctx, limits, limitAxes, input.compact);
+  if (o.controlLimit.highlightOut) {
+    for (const [mx, my, mw, mh, radii, alpha] of outMarks) {
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.roundRect(mx, my, mw, mh, radii);
+      paintMark(ctx, shape, o.controlLimit.outColor);
+    }
+    ctx.globalAlpha = 1;
+  }
   drawShapes(
     ctx,
     input.shapes,
@@ -775,6 +847,10 @@ export function renderCategory(
   // 점 글자: 막대 끝 값, 상자는 중앙값
   const label = input.compact ? undefined : markLabeler(ctx, plot, o);
   if (label) for (const [lx, ly, v] of labels) label(lx, ly, v);
+  if (!input.compact) {
+    const fmt = (v: number) => formatValue(v, o.axes.y.decimals);
+    drawLimitLabels(ctx, limits, o, limitAxes, { left: fmt, bottom: fmt });
+  }
   progress("render", 1);
 
   return {
@@ -803,5 +879,6 @@ export function renderCategory(
     ),
     ...(inSelection ? { selected: selectedCount } : {}),
     legend: legendMeta,
+    ...limitsMeta(limits, outside.size),
   };
 }

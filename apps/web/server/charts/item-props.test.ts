@@ -70,5 +70,29 @@ describe("applyItemChanges", () => {
     expect(
       applyItemChanges(undefined, { options: { axes: {} } }, "pie"),
     ).toBeUndefined();
+    expect(
+      applyItemChanges(
+        undefined,
+        { options: { controlLimit: { lines: [] } } },
+        "boxplot",
+      ),
+    ).toBeUndefined();
+  });
+
+  it("관리선 목록은 item 속성에 그대로 남는다 (빈 목록도 공통 목록을 끄는 값이다)", () => {
+    expect(
+      applyItemChanges(
+        undefined,
+        { options: { controlLimit: { lines: [] } } },
+        "scatter",
+      ),
+    ).toEqual({ options: { controlLimit: { lines: [] } } });
+    expect(
+      applyItemChanges(
+        { options: { controlLimit: { lines: [] } } },
+        { options: null },
+        "bar",
+      ),
+    ).toBeUndefined();
   });
 });

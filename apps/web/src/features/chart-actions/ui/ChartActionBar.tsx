@@ -5,6 +5,7 @@ import { useLingui } from "@lingui/react/macro";
 import { useMutation } from "@tanstack/react-query";
 import { intlLocale } from "@vis-a-lot/shared/lib/i18n";
 import {
+  AlignVerticalSpaceAround,
   Download,
   FileSpreadsheet,
   ImageDown,
@@ -14,10 +15,12 @@ import {
   TableProperties,
 } from "lucide-react";
 import { chartKindLabel, chartTitle } from "@/entities/chart/lib/title";
+import { controlLimitSupport } from "@/entities/chart/model/chart-options";
 import {
   useWorkspace,
   useWorkspaceStore,
 } from "@/entities/workspace/model/workspace-scope";
+import type { WorkspaceStore } from "@/entities/workspace/model/workspace-store";
 import {
   downloadAllChartsExcel,
   downloadChartPng,
@@ -66,13 +69,19 @@ function ActionButton({
 }
 
 /**
- * 모드 바 옆의 차트 도구: legend 체크박스 표시, 고른 차트 다운로드, 모든 차트 엑셀로 다운로드,
+ * 모드 바 옆의 차트 도구: legend 체크박스 표시, 관리선 설정, 고른 차트 다운로드, 모든 차트 엑셀로 다운로드,
  * 고른 차트의 데이터 다운로드(CSV)·데이터 테이블(모든 컬럼), 전체 데이터 테이블(최대 30,000행 샘플).
  * 데이터는 모두 draw 시점 필터를 따르고, 선택 필드 차트는 선택 영역이 있으면 그 안의 행만이다.
  * 모드처럼 하나만 고르는 게 아니라 누를 때마다 바로 동작하는 버튼들이다.
- * 체크박스 표시는 차트 종류가 지원할 때만 켠다(CHART_SUPPORT).
+ * 체크박스 표시는 차트 종류가 지원할 때만 켠다(CHART_SUPPORT). 관리선은 그린 차트와 다음 draw의 차트가
+ * 모두 관리선을 쓸 때만 켠다 (전체 설정 팝업은 다음 draw의 공통 속성을 고친다).
  */
-export function ChartActionBar() {
+export function ChartActionBar({
+  onOpenControlLimit,
+}: {
+  /** 전체 설정 팝업을 관리선 구역으로 연다. 설정 팝업은 다른 feature라 조합하는 쪽이 넘긴다. */
+  onOpenControlLimit: (store: WorkspaceStore) => void;
+}) {
   const { t } = useLingui();
   const store = useWorkspaceStore();
   const current = useWorkspace((s) => s.current);
@@ -84,6 +93,17 @@ export function ChartActionBar() {
   const chartType = current?.spec.chartType;
   const chartKind = current ? chartKindLabel(current.spec) : "";
   const checkboxOk = !chartType || supports(current?.spec, "checkbox");
+  const draftType = useWorkspace((s) => s.draft.chartType);
+  const draftSub = useWorkspace((s) => s.draft.subType);
+  const draftSpec = { chartType: draftType, subType: draftSub };
+  // 관리선을 못 쓰는 차트 이름 (그린 차트 먼저). 둘 다 쓰면 undefined
+  const limitBlockedKind = !current
+    ? undefined
+    : !controlLimitSupport(current.spec)
+      ? chartKind
+      : !controlLimitSupport(draftSpec)
+        ? chartKindLabel(draftSpec)
+        : undefined;
   const columns = useColumns(current?.spec.dataset ?? "");
 
   const chartPng = useMutation({
@@ -155,6 +175,7 @@ export function ChartActionBar() {
     });
   const itemLabel = (name: string) => (target ? name : needsItem(name));
   const checkboxesText = t`체크박스 표시`;
+  const controlLimitText = t({ message: "관리선", context: "chart tool" });
   const downloadChart = t`차트 다운로드`;
   /** 이 차트 종류에서 못 쓰는 도구의 안내 */
   const unsupported = (name: string, chartKind: string) =>
@@ -177,6 +198,24 @@ export function ChartActionBar() {
         onClick={toggleCheckboxes}
       >
         <SquareCheck size={16} strokeWidth={1.8} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className={toolButton()}
+        title={
+          limitBlockedKind
+            ? unsupported(controlLimitText, limitBlockedKind)
+            : controlLimitText
+        }
+        aria-label={controlLimitText}
+        disabled={!drawn || limitBlockedKind !== undefined}
+        onClick={() => onOpenControlLimit(store)}
+      >
+        <AlignVerticalSpaceAround
+          size={16}
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </button>
       <ActionButton
         label={selectedItem ? downloadChart : needsItem(downloadChart)}

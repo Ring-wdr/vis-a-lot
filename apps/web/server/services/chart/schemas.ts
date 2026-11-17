@@ -2,6 +2,12 @@ import { z } from "@hono/zod-openapi";
 import {
   FOCUS_RANK_MAX,
   FOCUS_TYPES,
+  LIMIT_AXES,
+  LIMIT_FNS,
+  LIMIT_STYLES,
+  LIMIT_TYPES,
+  MAX_LIMIT_LINES,
+  MAX_LIMIT_NAME,
   MAX_ORDER_VALUES,
   MAX_PALETTE_COLORS,
   ORDER_SORTS,
@@ -118,6 +124,70 @@ const XAxisOptionsSchema = AxisOptionsSchema.extend(
   opt({ categorySort: OrderSortSchema, categoryOrder: OrderValuesSchema })
     .shape,
 ).openapi("XAxisOptions");
+
+const LimitAxisSchema = z.enum(LIMIT_AXES).openapi("LimitAxis");
+const LimitTypeSchema = z.enum(LIMIT_TYPES).openapi("LimitType");
+
+/** 선 하나의 공통 칸 */
+const limitBase = {
+  /** 목록 안에서 겹치지 않는 이름 (검사는 server/charts/validate-spec.ts) */
+  name: text(MAX_LIMIT_NAME),
+  axis: LimitAxisSchema,
+  color: HexColorSchema,
+  width: num(0.5, 10),
+  style: z.enum(LIMIT_STYLES),
+};
+
+/**
+ * 관리선 하나. 목록은 합칠 때 통째로 바뀌므로 선은 부분 값이 아니라 모든 칸이 있다.
+ * 컬럼이 있는지·숫자형인지·차트와 축이 맞는지는 데이터 스키마를 알아야 해 서비스가 따로 본다.
+ */
+const LimitLineSchema = z
+  .discriminatedUnion("kind", [
+    z.object({
+      ...limitBase,
+      kind: z.literal("reference"),
+      /** 시계열 x의 Bottom 선이면 ISO 시각, 그 밖은 숫자 */
+      value: z.union([finite, text(40)]),
+      type: LimitTypeSchema,
+    }),
+    z.object({
+      ...limitBase,
+      kind: z.literal("column"),
+      column: ColumnNameSchema,
+      fn: z.enum(LIMIT_FNS),
+      type: LimitTypeSchema,
+      /** 구간별: x 구간마다 집계한 계단선 (Left 축 scatter·line) */
+      multi: z.boolean(),
+    }),
+    z.object({
+      ...limitBase,
+      kind: z.literal("band"),
+      column: ColumnNameSchema,
+      column2: ColumnNameSchema,
+      multi: z.boolean(),
+    }),
+  ])
+  .openapi("LimitLine");
+
+const ControlLimitOptionsSchema = opt({
+  lines: z.array(LimitLineSchema).max(MAX_LIMIT_LINES),
+  highlightOut: z.boolean(),
+  outColor: HexColorSchema,
+  area: opt({
+    visible: z.boolean(),
+    color: HexColorSchema,
+    transparency: num(0, 1),
+    side: z.enum(["in", "out"]),
+  }),
+  /** color가 ""이면 눈금 글자 색 */
+  text: opt({
+    visible: z.boolean(),
+    fontSize: num(6, 40),
+    color: z.union([HexColorSchema, z.literal("")]),
+  }),
+  fitAxis: z.boolean(),
+}).openapi("ControlLimitOptions");
 
 export const ChartOptionsSchema = opt({
   title: opt({
@@ -266,6 +336,7 @@ export const ChartOptionsSchema = opt({
     decimals: orNull(num(0, 10)),
   }),
   expression: opt({ x: text(120), y: text(120) }),
+  controlLimit: ControlLimitOptionsSchema,
 }).openapi("ChartOptions");
 
 export const LegendPositionSchema = z
@@ -827,6 +898,32 @@ export const LegendMetaSchema = z
   })
   .openapi("LegendMeta");
 
+/** 구간별 선의 구간 하나: [x0, x1, 값, 띠의 두 번째 값]. x는 x 데이터 값(시계열은 epoch ms) */
+const LimitStepSchema = z.union([
+  z.tuple([finite, finite, finite]),
+  z.tuple([finite, finite, finite, finite]),
+]);
+
+/** 그린 관리선과 이탈 수 (server/render/control-limit.ts의 LimitsMeta). 그린 선이 없으면 없다. */
+export const LimitsMetaSchema = z
+  .object({
+    lines: z.array(
+      z.object({
+        name: z.string(),
+        axis: LimitAxisSchema,
+        type: LimitTypeSchema,
+        /** 축의 데이터 값 (시계열 x는 epoch ms). 구간별이면 없고 steps가 있다. */
+        value: finite.optional(),
+        /** 띠의 두 번째 값 */
+        value2: finite.optional(),
+        steps: z.array(LimitStepSchema).optional(),
+      }),
+    ),
+    /** USL·LSL을 벗어나 그린 점(막대) 수. 끈 legend 값·지운 점은 세지 않는다. */
+    out: z.number(),
+  })
+  .openapi("LimitsMeta");
+
 export const ScatterMetaSchema = z
   .object({
     /** line도 같은 행 단위 점 metadata를 쓴다. */
@@ -854,6 +951,7 @@ export const ScatterMetaSchema = z
     total: z.number(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
+    limits: LimitsMetaSchema.optional(),
   })
   .openapi("ScatterMeta");
 
@@ -901,6 +999,8 @@ export const CategoryMetaSchema = z
     segments: z.array(z.array(orNull(z.tuple([finite, finite])))).optional(),
     selected: z.number().optional(),
     legend: LegendMetaSchema.optional(),
+    /** bar만 */
+    limits: LimitsMetaSchema.optional(),
   })
   .openapi("CategoryMeta");
 

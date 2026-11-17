@@ -51,12 +51,12 @@
 
 | 차트 | 선 종류 | 축 | 메모 |
 |---|---|---|---|
-| scatter | 기준선, 컬럼 선, 띠 | Left(y), Bottom(x) | Bottom은 x가 숫자일 때 기준선·컬럼 선, 시계열이면 기준선만(값은 ISO 시각) |
-| line | 같음 | 같음 | 분포 서브 차트(ECDF·NCDF·Probability)는 좌표가 컬럼 값이 아니라 **구역을 끈다** |
+| scatter | 기준선, 컬럼 선, 띠 | Left(y), Bottom(x) | Bottom은 x가 숫자일 때 기준선·컬럼 선·띠, 시계열이면 기준선만(값은 ISO 시각) |
+| line | 같음 | 같음 | 분포 서브 차트(ECDF·NCDF·Probability)는 좌표가 컬럼 값이 아니라 **구역을 끈다**. 저장한 선은 남지만 검사하지도 그리지도 않는다 |
 | bar (Side) | 기준선, 컬럼 선 | Left | 컬럼 선은 그 item 행 전체의 집계 한 줄 |
 | bar (Stack, Stack 100) | 기준선 | Left | 쌓은 합·비율에 컬럼 집계는 뜻이 없다 |
 
-그 밖의 차트는 쓰지 않는다. 구역이 없고 도구 줄 버튼은 비활성(title로 이유)이다. 이탈을 판정할 단위(점 하나, 막대 하나)와 값 축이 분명한 차트로 좁혔다. boxplot은 상자 하나가 분포라 '벗어난 것'의 단위가 없고, histogram·waterfall·candle은 값 축이 개수·누적·구간 값이라 컬럼 집계와 맞지 않는다. pie·radar·sankey 등은 직교 축이 없다. 고칠 렌더러도 `scatter.ts`(scatter·line)와 `category.ts`의 막대 경로 둘로 묶인다.
+규칙은 `controlLimitSupport(spec, xType)`(서버 `server/charts/chart-options.ts`, 화면 사본 `src/entities/chart/model/chart-options.ts`)가 축별 선 종류와 구간별 여부로 돌려준다. 그 밖의 차트는 쓰지 않는다. 구역이 없고 도구 줄 버튼은 비활성(title로 이유)이다. 이탈을 판정할 단위(점 하나, 막대 하나)와 값 축이 분명한 차트로 좁혔다. boxplot은 상자 하나가 분포라 '벗어난 것'의 단위가 없고, histogram·waterfall·candle은 값 축이 개수·누적·구간 값이라 컬럼 집계와 맞지 않는다. pie·radar·sankey 등은 직교 축이 없다. 고칠 렌더러도 `scatter.ts`(scatter·line)와 `category.ts`의 막대 경로 둘로 묶인다.
 
 ### 3.2 선 종류
 
@@ -68,8 +68,13 @@
 | 컬럼 선 `column` | 숫자 컬럼, 함수(평균·최대·중앙값·최소) | item 행(3.4)에서 집계한 값 | 선 하나. 구간별이면 계단선 |
 | 띠 `band` | 숫자 컬럼 둘 | 두 컬럼을 각각 평균한 값 | 선 둘과 그 사이 채움. 구간별이면 계단 띠 |
 
-- **USL / LSL**: 기준선과 컬럼 선에 종류(없음·USL·LSL)를 정한다. IoT 샘플에는 규격 컬럼이 없으므로 고정 값(기준선)으로도 규격을 정할 수 있어야 한다. 띠는 종류를 고르지 않는다.
+- **USL / LSL**: 기준선과 컬럼 선에 종류(없음·USL·LSL)를 정한다. IoT 샘플에는 규격 컬럼이 없으므로 고정 값(기준선)으로도 규격을 정할 수 있어야 한다. 띠는 종류를 고르지 않는다. USL·LSL은 축마다 하나씩만 정한다 (영역 채우기와 Score 상·하한이 한 쌍을 기준으로 한다).
+- 선은 목록에 10개까지, 이름은 40자까지. 띠의 두 컬럼은 서로 달라야 한다.
 - **구간별**: 컬럼 값이 x를 따라 달라지는 규격이다(예: 기간마다 다른 상한). Left 축 선에서만 쓴다. x 전체 범위를 240구간으로 나눠 구간마다 집계하고, 값이 있는 구간을 계단선으로 잇는다. 구간은 전체 범위로 한 번 정하므로 확대해도 다시 조회하지 않는다. bar에서는 쓰지 않는다.
+  - x 전체 범위는 **필터를 건 전체 데이터(모든 split 조합)의 x 최소~최대**다(histogram 구간과 같은 방식). 그래서 item마다 x 범위가 달라도 모든 item·모든 구간별 선이 같은 구간 경계를 쓴다. 시계열 x는 epoch ms로 나눈다.
+  - 구간은 같은 폭으로 나누고 `[x0, x1)`, 마지막 구간만 끝값을 포함한다. x 값이 하나뿐이면(최소 = 최대) 그 값 하나인 구간 하나(`x0 = x1`)다. x가 없는 행은 구간별 집계에서 빠진다(구간별이 아닌 선은 x와 상관없이 집계한다).
+  - 차트에서 구간을 처음 조회할 때 정하고, 같은 차트에서 나중에 더한 구간별 선(item 속성 변경)도 그 구간을 그대로 쓴다.
+  - 점을 구간에 넣을 때(이탈 판정·툴팁)는 그린 계단을 본다: 맞닿은 두 구간의 경계는 오른쪽 구간, 옆이 빈 구간이면 끝값도 그 구간에 든다. 렌더러(`stepAt`, `server/render/control-limit.ts`)와 화면(`stepAt`, `src/features/item-tooltip/lib/limit-hit.ts`)이 같은 규칙이라, 식으로 x를 뒤집어도 같은 점이 같은 구간에 든다.
 - 값이 없으면(행이 없음, 전부 null) 그 선은 그리지 않는다.
 
 ### 3.3 규격 이탈과 영역
@@ -81,14 +86,14 @@ USL·LSL로 정한 선이 하나라도 있으면 동작한다.
 | 규격 이탈 강조 | 켬 | Left 축이면 y, Bottom 축이면 x가 USL보다 크거나 LSL보다 작은 점(막대)을 이탈 색으로 맨 위에 다시 그린다. 구간별 규격이면 그 점이 든 구간의 값과 비교한다 |
 | 이탈 색 | `#e03131` | 사용자가 정한 색이라 테마와 상관없다 |
 | 영역 채우기 | 끔 | In: USL과 LSL 사이를 채운다(하나뿐이면 선에서 그림 영역 끝까지 규격 안쪽). Out: 그 반대쪽 |
-| 영역 색·투명도 | `#2f9e44`, 80 | 투명도 0~100 (0이 불투명, 100이 완전 투명) |
-| 이름 글자 | 켬 | 선 끝(Left 축은 오른쪽 끝 위, Bottom 축은 위쪽 끝 옆)에 `이름 값`. 글자 크기·색을 정한다. 색을 비우면 눈금 글자 색 |
+| 영역 색·투명도 | `#2f9e44`, 0.8 | 투명도 0~1 (0이 불투명, 1이 완전 투명). 다른 구역의 투명도(`shape.transparency` 등)와 같은 범위 |
+| 이름 글자 | 켬 | 선 끝(Left 축은 오른쪽 끝 위, Bottom 축은 위쪽 끝 옆)에 `이름 값`. 글자 크기(기본 10)·색을 정한다. 색을 비우면 눈금 글자 색 |
 | 축 범위에 포함 | 켬 | 확대하지 않았을 때 선 값이 보이도록 축 범위를 넓힌다 (예측의 `extendDomain`과 같은 방식). 끄면 데이터 범위만 쓰고 밖의 선은 잘린다 |
 
-- 이탈 수는 그린 점 기준(끈 legend 값·지운 점 제외)으로 세어 PNG 제목 줄 요약에 `이탈 N`으로 더하고 metadata에 담는다.
+- 이탈 수는 그린 점 기준(끈 legend 값·지운 점 제외)으로 세어 PNG 제목 줄 요약에 `이탈 N`으로 더하고(그린 USL·LSL 선이 있으면 0이어도 적는다) metadata에 담는다.
 - Focus와 함께 켜면 이탈 점을 먼저, Focus 점을 그 위에 그린다.
 - 그리는 순서: 영역 채움 → 격자 → 점·선·막대 → 선택 밖 흐리게 → 관리선 → 이탈 점 → 이름 글자. 관리선은 선택 밖 흐리게에 덮이지 않는다.
-- 섬네일에는 영역과 선만 그리고 글자는 뺀다.
+- 섬네일에는 영역·선·이탈 점만 그리고 글자는 뺀다. 선 굵기는 2/3(최소 1)로 줄인다.
 - line은 M4로 줄인 선과 별개로 이탈 판정을 원자료 점으로 한다. 이탈 점은 점으로 찍는다.
 
 ### 3.4 집계 범위
@@ -122,10 +127,10 @@ USL·LSL로 정한 선이 하나라도 있으면 동작한다.
 ```ts
 // server/render/options.ts
 type LimitLine = {
-  name: string;
+  name: string;               // 40자까지, 목록 안에서 겹치지 않는다
   axis: "left" | "bottom";
   color: string;              // hex
-  width: number;
+  width: number;              // 0.5~10
   style: "solid" | "dash" | "dot";
 } & (
   | { kind: "reference"; value: number | string; type: LimitType }   // string은 시계열 x의 ISO 시각
@@ -135,11 +140,11 @@ type LimitLine = {
 type LimitType = "none" | "usl" | "lsl";
 
 type ControlLimitOptions = {
-  lines: LimitLine[];                       // 기본 []
+  lines: LimitLine[];                       // 기본 [], 10개까지
   highlightOut: boolean;                    // true
   outColor: string;                         // "#e03131"
-  area: { visible: boolean; color: string; transparency: number; side: "in" | "out" };
-  text: { visible: boolean; fontSize: number; color: string };   // color ""이면 눈금 글자 색
+  area: { visible: boolean; color: string; transparency: number; side: "in" | "out" };  // false, "#2f9e44", 0.8, "in"
+  text: { visible: boolean; fontSize: number; color: string };   // true, 10, "" (눈금 글자 색)
   fitAxis: boolean;                         // true
 };
 ```
@@ -153,32 +158,47 @@ type ControlLimitOptions = {
 
 ### 5.1 검증
 
-- `server/charts/validate-spec.ts`: 공통 속성의 선이 쓰는 컬럼이 스키마에 있고 숫자형인지, 이름이 비었거나 겹치는지, 띠의 두 컬럼이 다 있는지, 축과 차트가 맞는지(3.1) 본다. 맞지 않으면 다른 설정처럼 사유를 알려 준다.
-- item 속성(`PATCH …/props`)도 같은 검사를 하고 400으로 거절한다.
+- `server/charts/validate-spec.ts`의 `controlLimitError`: 선이 쓰는 컬럼이 스키마에 있고 숫자형인지, 이름이 비었거나 겹치는지, 띠의 두 컬럼이 다 있고 서로 다른지, 축·종류·구간별이 차트와 맞는지(3.1), 기준선 값이 축에 맞는지(시계열 Bottom은 ISO 시각, 그 밖은 숫자), 축마다 USL·LSL이 하나씩인지 본다. 맞지 않으면 다른 설정처럼 사유를 알려 준다. 구역을 끈 차트(3.1)에서는 보지 않는다.
+- 공통 속성은 draw(`specError`)에서 job 실패 사유로, 공통 속성 변경(`PATCH …/common`)에서 400으로 거절한다. item 속성(`PATCH …/props`)도 같은 검사를 하고 400으로 거절한다. 둘 다 draw 때 받은 스키마(`chart.columns`)로 본다.
 - 컬럼 이름은 다른 SQL처럼 스키마로 확인하고 인용한다.
 
 ### 5.2 계산
 
-- 새 DB op `limitValues` (`server/data/limit-data.ts`): `{ dataset, splitBy, filters, x, lines: [{ column, fn, multi }] }` → split 조합별 값. 한 번의 `group by`로 요청한 (컬럼, 함수) 전부를 집계한다. 중앙값은 `percentile_cont(0.5)`. 구간별은 `width_bucket(x, min, max, 240)`을 더해 구간별 값을 준다.
-- 값은 차트 데이터 캐시 옆에 (컬럼, 함수, 구간별) 키로 보관한다. draw에서는 공통 속성과 복원할 item 속성에 쓰인 것을 모아 한 번 조회하고, item 속성 변경으로 새 조합이 생기면 그때 조회한다. 캐시에서 밀려나면 차트 데이터처럼 다시 조회한다.
+- 새 DB op `limitValues` (`server/data/limit-data.ts`): `{ dataset, splitBy, filters, x, requests: [{ column, fn, multi }], buckets? }` → `{ buckets?, groups: [{ values, results }] }` (split 조합별, 요청 순서대로의 값). 띠는 두 컬럼의 `avg` 요청 둘이다. 구간별이 아닌 요청은 split `group by` 한 번으로 전부 집계하고, 구간별 요청은 x 범위를 한 번 조회한 뒤 split + 구간 `group by` 한 번으로 전부 집계한다. 중앙값은 `percentile_cont(0.5)`. 구간 번호는 `least(width_bucket(x, min, max, 240), 240) - 1`(3.2). `buckets`를 주면 범위를 다시 조회하지 않고 그 구간으로 나눈다.
+- 값은 차트 데이터 캐시 옆(`CachedChartData.limits`)에 (컬럼, 함수, 구간별) 키 → item 키 → 값으로 보관한다. draw에서는 공통 속성과 복원할 item 속성에 쓰인 것을 모아 조회 단계에서 한 번 조회하고, item 속성·공통 속성 변경으로 새 조합이 생기면 그 다시 그리기에서 없는 것만 조회한다. 집계 범위(데이터셋·x·split·필터)가 다르면 통째로 버리고, 새로 조회할 때 어느 선도 쓰지 않게 된 요청 값은 지운다. 캐시에서 밀려나면 차트 데이터와 함께 다시 조회한다.
 - 기준선은 조회하지 않는다.
 
 ### 5.3 그리기
 
 - job-manager가 item마다 `options.controlLimit.lines`를 값이 든 `ResolvedLimit[]`로 바꿔 렌더 입력(`ScatterInput.limits`, `CategoryInput.limits`)에 싣는다. Render Worker는 DB를 모른다.
+- 선 목록은 item마다 합친 속성(전체 → … → 공통 → item)의 것을 쓴다. history·공유로 복원한 item 속성은 저장 때 검사를 거치지 않았을 수 있어, job이 앞에서부터 하나씩 `controlLimitError`(5.1)로 보고 걸리는 선(없는 컬럼, 차트와 맞지 않는 축, 이름 중복, 축마다 두 번째 USL·LSL, 10개 초과)만 빼고 나머지를 그린다. 공통 속성은 draw에서 검사하므로 맞지 않으면 job이 실패한다(5.1).
+- draw·item 다시 그리기·공통 속성 변경·resize·크게 보기·섬네일·내려받기용 light PNG 모두 같은 길(렌더 직전에 값 채우기)로 싣는다.
+- `ResolvedLimit`(`server/render/control-limit.ts`)은 값이 모두 그 축의 데이터 값(시계열 x는 epoch ms, 기준선 ISO 시각도 바꿔 싣는다)인 선이다. 시간대를 적지 않은 ISO 시각(API로 보낸 값)은 Worker의 지역 시간대가 아니라 화면·PNG가 보이는 KST로 읽는다(`limitTimeOf`, `server/data/limit-data.ts`). 구간별이 아니면 `{ multi: false, value, value2? }`, 구간별이면 `{ multi: true, steps }`. 값을 구하지 못한 선은 job이 빼고, 구역을 끈 차트(3.1)면 `limits`를 싣지 않는다. 영역·이탈 강조·글자·축 범위 설정은 렌더 입력의 `options.controlLimit`에서 읽는다.
 - 새 모듈 `server/render/control-limit.ts`: 축 범위 넓히기, 영역 채움, 선(계단선 포함), 이름 글자, 이탈 판정 함수. `scatter.ts`와 `category.ts`가 3.3의 순서대로 부른다.
-- 로그 축에서 0 이하 값의 선은 그리지 않는다.
+- 로그 축에서 0 이하 값의 선은 그리지 않는다. 구간별 선은 0 이하인 구간만 빼고, 남는 구간이 없으면 선을 뺀다. fitAxis도 log를 켠 축에는 0 이하 값을 넣지 않는다(넣으면 축이 선형으로 돌아간다).
+- **식(expression)**: 받은 값은 식을 적용하지 않은 값이다. 기준선은 사용자가 축 눈금을 보고 적은 값이라 그대로 그리고, 컬럼 선·띠 값과 구간 경계(x)에는 그 축의 식을 적용한다. 다른 축 변수를 쓰는 식(예: y 식에 x)은 선 값에 옮길 수 없어 그 선을 그리지 않는다. 이탈 판정·metadata·Score도 이렇게 옮긴 값(그린 좌표)을 쓴다.
+- **축 범위**: fitAxis는 확대하지 않았고 데이터가 있을 때만 넓힌다. 확대 중이면 확대 범위 그대로라 밖의 선은 잘리고 글자도 그리지 않는다. 축 최소·최대를 정했으면 그 값이 이긴다.
+- **선**: 사용자가 정한 색·굵기 그대로(테마와 무관). 파선은 대시 `[4w, 3w]`, 점선은 끝이 둥근 짧은 대시 간격 `2.5w`(w = 굵기, 최소 1). 홀수 굵기는 픽셀 가운데에 맞춘다. 구간별 계단선은 값 있는 구간이 이어지는 동안 세로 이음으로 잇고, 빈 구간에서 끊는다(빈 구간은 판정하지 않으므로 선도 없다).
+- **띠 채움**: 두 값 사이를 선 색 globalAlpha 0.15로 채운다. 영역 채우기와 함께 격자 아래에 깔아 점을 가리지 않는다.
+- **영역 채우기**: 투명도 t면 globalAlpha `1 − t`(기본 0.2). 구간별 USL·LSL이면 구간 경계로 나눈 조각마다 채우고, 그 선의 값이 없는 조각은 채우지 않는다.
+- **뒤집힌 규격**: USL이 LSL보다 작으면(구간별이면 그 구간에서) 그 축은 이탈을 판정하지 않고 영역도 채우지 않는다. 선은 그대로 그린다. 값이 USL·LSL과 같으면 이탈이 아니다.
+- **이탈 점**: 그린 점과 같은 모양·반지름(최소 2, 섬네일 1.5)으로 이탈 색을 채워 찍는다. 선택이 있으면 선택 밖 이탈 점은 흐리게 한 점과 같은 진하기(`shape.dimOpacity`)로 찍는다. focus에도 맞는 점은 그 위에 focus 모양·색으로 다시 찍는다. 이탈 수는 확대와 상관없이 그린 점 전체(제목의 `N pts`와 같은 범위)에서 센다.
+- **bar 이탈**: 나란히 놓은 막대는 막대 값, 누적 막대는 쌓은 끝 값(stack100은 %)으로 판정한다. 이탈 막대는 같은 자리·모서리로 이탈 색을 다시 칠하고, focus에 맞는 막대는 focus 색을 둔다(수에는 센다).
+- **글자**: `이름 값`(띠는 `이름 작은값 ~ 큰값`, 구간별은 오른쪽 끝 구간 값). 값은 축 소수 자리(`axes.*.decimals`)로, 시계열 x는 날짜 형식(비우면 `%Y-%m-%d %H:%M`, KST)으로 적는다. left 선은 오른쪽 끝 위(띠는 위쪽 선), 겹치면 선 아래, 그래도 겹치면 한 줄씩 위아래로 비켜 자리를 찾고 그림 영역을 벗어나면 그리지 않는다. bottom 선은 위쪽 끝 오른쪽, 자리가 없으면 왼쪽, 그래도 겹치면 한 줄씩 아래로. 바탕색 테두리(3px)를 둘러 점 위에서도 읽힌다.
+- 선이 없으면(`limits`가 없거나 빈 목록) 그리기 호출과 metadata가 예전과 같다.
 
 ### 5.4 metadata와 툴팁
 
 ```ts
 // ScatterMeta, CategoryMeta
 limits?: {
-  lines: { name: string; axis: "left" | "bottom"; type: LimitType; value?: number; value2?: number; steps?: [x0: number, x1: number, v: number, v2?: number][] }[];
+  lines: { name: string; axis: "left" | "bottom"; type: LimitType; value?: number; value2?: number; steps?: LimitStep[] }[];
   out: number;
 };
+// LimitStep = [x0, x1, v] | [x0, x1, v, v2] (띠만 v2). 타입은 server/render/control-limit.ts (LimitsMeta)
 ```
 
+- `lines`는 실제로 그린 선(로그 축·식 때문에 뺀 선 제외)이고, 값은 그린 좌표(식을 적용한 축 값, 시계열 x는 epoch ms)다. 확대로 그림 영역 밖에 있는 선도 담는다. `out`은 USL·LSL 선이 없으면 0이다.
 - 화면 툴팁은 커서가 선에서 4px 안이면 서버 호출 없이 `이름: 값`을 한 줄 더한다. 구간별 선은 커서 x가 든 구간의 값이다.
 - 점 툴팁에는 그 점이 이탈이면 '규격 이탈'을 적는다 (metadata의 선 값으로 화면이 판정).
 
@@ -188,7 +208,7 @@ limits?: {
 |---|---|
 | `ChartOptionsSchema` | `controlLimit` 구역 추가. `CommonProps.options`, `ItemRestore.options`, `ItemState.options`, `ItemPropsRequest`가 함께 넓어진다 |
 | `GET /defaults` | `options.controlLimit` 기본값 |
-| `ScatterMeta`, `CategoryMeta` | `limits` (선택) |
+| `ScatterMeta`, `CategoryMeta` | `limits` (선택, 컴포넌트 `LimitsMeta`). 선 목록 컴포넌트는 `LimitLine`·`LimitAxis`·`LimitType`, 구역은 `ControlLimitOptions` |
 | 호환 | 더하기만 한다. 예전 history·공유 링크에는 구역이 없어 기본값(선 없음)으로 열린다 |
 
 `pnpm gen:api`로 `public/openapi/chart.json`과 생성 타입을 다시 만든다.
@@ -197,21 +217,26 @@ limits?: {
 
 ## 6. 화면
 
-- **설정 창**: 전체 설정과 item 속성 팝업에 '관리선' 메뉴를 더한다. 위에 전체 설정(이탈 강조·색, 영역, 글자, 축 범위에 포함), 아래에 선 목록 표. 종류(컬럼 선·띠·기준선)를 고르고 `+`로 행을 더하며, 종류에 없는 칸은 `-`로 비운다. 컬럼 select는 숫자 컬럼만 보인다. 폼은 react-hook-form `useFieldArray`.
-- 설정 창의 필드 표(`option-fields.ts`)는 낱개 필드만 안다. 관리선의 낱개 필드는 표에 넣고, 선 목록은 전용 컴포넌트가 그린다. `option-fields.test.ts`의 '서버 기본값의 모든 칸이 설정 창에 있다' 검사에는 전용 컴포넌트가 맡는 경로(`controlLimit.lines`)를 따로 적는다.
-- **도구 줄**: 차트 도구에 '관리선' 버튼. 전체 설정 팝업을 관리선 메뉴로 연다. 그린 차트가 지원하지 않으면(3.1) 비활성하고 title로 이유를 알린다. history 탭에서는 보기 전용으로 연다.
-- **데이터셋 변경**: 다른 데이터셋으로 바꾸면 스키마에 없는 컬럼을 쓰는 선을 지운다 (x·y·legend를 바로잡는 곳과 같은 규칙).
+- **설정 창**: 전체 설정과 item 속성 팝업에 '관리선' 메뉴를 더한다(아이콘은 두 가로선 사이 `AlignVerticalSpaceAround`). 위에 전체 설정(이탈 강조·색, 영역, 글자, 축 범위에 포함), 아래에 선 목록. 팝업 폭(40rem)에 칸이 열 개 넘는 표가 들어가지 않아, 선 하나를 카드 한 장(머리 줄: 종류·이름·위/아래·지우기, 그 아래 2열 칸)으로 그린다. 아래의 종류 select(이 차트가 쓰는 종류만)와 `+ 선 더하기`로 더하고, 그 종류에 없는 칸은 그리지 않는다. 축 select는 그 종류를 쓸 수 있는 축만, 구간별 체크는 scatter·line의 Left 축 컬럼 선·띠에만 보인다. 컬럼 select는 숫자 컬럼만 보인다. 새 선의 이름은 `종류 이름 N`(겹치지 않는 번호), 컬럼은 y(숫자면)나 첫 숫자 컬럼, 색은 목록 순서의 팔레트 색이다. 폼은 react-hook-form `useFieldArray`.
+- 시계열 x의 Bottom 기준선 값은 `datetime-local` 칸에 KST로 받아 `…+09:00` ISO 시각으로 저장한다(화면·PNG의 시각이 KST다). 축을 Left ↔ 시계열 Bottom으로 바꾸면 값 모양(숫자·시각)을 바꾸고, Left가 아닌 축으로 옮기면 구간별을 끈다.
+- 서버 검사(5.1)와 같은 규칙(`src/entities/chart/model/control-limit.ts`의 `limitIssues`)으로 선마다 사유를 카드 아래에 적고, 맞지 않는 선이 있으면 확인 버튼을 막고 첫 사유를 title로 보인다. 관리선을 쓰지 않는 차트(3.1)에서는 보지 않는다. 다시 보기 전용(history)은 저장하지 않으므로 막지 않는다.
+- 분포 서브 차트(ECDF·NCDF·Probability)는 구역을 끄므로 두 팝업 메뉴에서 관리선을 뺀다.
+- 설정 창의 필드 표(`option-fields.ts`)는 낱개 필드만 안다. 관리선의 낱개 필드는 표에 넣고, 선 목록은 전용 컴포넌트가 그린다. 전용 컴포넌트가 맡는 배열 경로는 `LIST_PATHS`(`controlLimit.lines`)에 적어 저장(`buildPatch`)·구역 되돌리기·'모두 공통 속성 따르기'가 다른 칸처럼 경로 하나로 다루고, `option-fields.test.ts`의 '서버 기본값의 모든 칸' 검사도 이 목록을 따로 더한다. 목록은 통째로 저장하므로 item에서 공통 선을 모두 지우면 `[]`가 남아 그 item만 선이 없다.
+- **도구 줄**: 차트 도구(체크박스 표시 다음)에 '관리선' 버튼. 전체 설정 팝업을 관리선 메뉴로 연다. 그린 차트가 없거나, 그린 차트 또는 다음 draw의 차트(draft — 팝업이 고치는 공통 속성의 차트)가 관리선을 쓰지 않으면(3.1) 비활성하고 title로 그 차트 이름을 알린다. history 탭에서는 보기 전용으로 연다. 설정 팝업은 다른 feature(`chart-settings`)라 도구 줄(`tab-toolbar` widget)이 여는 함수를 `ChartActionBar`에 넘긴다.
+- **데이터셋 변경**: 다른 데이터셋으로 바꾸면 스키마에 없는·숫자형이 아닌 컬럼을 쓰는 선을 지운다 (x·y·legend를 바로잡는 곳 `FitDraftToSchema`와 같은 곳). 차트 종류·하위 차트·x를 바꿔도 같은 곳에서 그 축에서 못 쓰는 종류의 선(bar Side → Stack의 컬럼 선, 시계열 x가 된 Bottom의 컬럼 선·숫자 기준선)을 지우고, 구간별을 못 쓰는 곳(bar)의 선은 구간별만 끈다. 이름·USL 겹침처럼 사용자가 고칠 것은 두고 팝업이 사유를 보인다. 관리선을 쓰지 않는 차트로 바꾸면 선을 그대로 둔다(검사도 그리지도 않는다).
+- **툴팁**: 커서가 선에서 4px 안이면 `이름: 값`(띠는 `값 ~ 값2`) 줄을 더한다. bar는 막대 밖이어도 선 가까이면 선 줄만 보인다. 가까운 점(막대)이 이탈이면 '규격 이탈: 벗어난 선 이름' 줄을 더한다. 판정은 렌더러와 같다(경계 값은 이탈이 아님, 뒤집힌 규격의 축은 보지 않음, 누적 막대는 쌓은 끝 값).
 - 문구는 ko·en·ja 카탈로그에 넣는다. 선 이름은 사용자가 적은 그대로 PNG에 그린다.
 
 ### 화면 위치
 
 | 내용 | 위치 (`apps/web`) |
 |---|---|
-| 관리선 설정 폼, 선 목록 표 | `src/features/chart-settings/ui/ControlLimitSettings.tsx`, `model/control-limit-form.ts` |
+| 관리선 설정 폼, 선 목록 | `src/features/chart-settings/ui/ControlLimitSettings.tsx`, `model/control-limit-form.ts` |
+| 선 규칙(검사·정리), draft 바로잡기 | `src/entities/chart/model/control-limit.ts`, `src/widgets/control-panel/ui/ControlPanel.tsx`(`FitDraftToSchema`) |
 | 낱개 필드·구역 라벨 | `src/features/chart-settings/model/option-fields.ts` |
 | 구역·지원 표 화면 사본 | `src/entities/chart/model/chart-options.ts` |
 | 도구 줄 버튼 | `src/features/chart-actions/ui/ChartActionBar.tsx` |
-| 툴팁 한 줄 | `src/features/item-tooltip/lib` |
+| 툴팁 한 줄 | `src/features/item-tooltip/lib/limit-hit.ts`, `strategies.ts` |
 | 서버 | `server/render/control-limit.ts`, `server/data/limit-data.ts`, `server/charts/*`, `server/jobs/job-manager.ts`, `server/services/chart/schemas.ts` |
 
 새 slice는 만들지 않는다. 설정은 `chart-settings`, 버튼은 `chart-actions`가 이미 맡는 동작이다.
@@ -247,11 +272,11 @@ limits?: {
 
 ---
 
-## 9. 정해야 할 것
+## 9. 정한 것
 
-1. **이벤트선**: 이번 순서에서 뺐다(2.1). 이번 PR에서 '등록된 다른 데이터셋 고르기'로 넣을지.
-2. **기준선의 USL·LSL**: IoT 샘플에 규격 컬럼이 없어 고정 값으로도 규격을 정하게 했다. 규격은 컬럼 선에만 둘지.
-3. **구간별 규격**: x 구간별 계단선(3.2)을 이번 PR에 넣을지, 뒤로 미룰지. 빼면 `multi` 필드와 240구간 집계가 빠진다.
-4. **집계 범위**: 끈 legend 값·지운 점을 집계에서 빼지 않는다(3.4). 보이는 점만으로 다시 계산하길 원하는지.
-5. **도구 줄 버튼**: 전체 설정 팝업을 관리선 메뉴로 여는 버튼을 둘지, 설정 메뉴만으로 충분한지.
-6. **지원 차트**: boxplot·histogram에 이탈 판정 없이 기준선만 그리는 것을 이번에 넣을지. 기본은 뺀다.
+1. **이벤트선**: 넣지 않는다(2.1).
+2. **기준선의 USL·LSL**: 고정 값 기준선에도 USL·LSL을 둔다.
+3. **구간별 규격**: 넣는다(3.2). `multi`와 240구간 집계를 둔다.
+4. **집계 범위**: 끈 legend 값·지운 점을 집계에서 빼지 않는다(3.4).
+5. **도구 줄 버튼**: 둔다(6장).
+6. **지원 차트**: scatter·line·bar만(3.1). boxplot·histogram은 넣지 않는다.

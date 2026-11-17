@@ -77,6 +77,11 @@ msgctxt "chart tooltip"
 msgid "구간"
 msgstr "구간"
 
+#: src/features/item-tooltip/lib/limit-hit.ts
+msgctxt "chart tooltip"
+msgid "규격 이탈"
+msgstr "규격 이탈"
+
 #: src/features/item-tooltip/lib/strategies.ts
 msgctxt "chart tooltip"
 msgid "길이"

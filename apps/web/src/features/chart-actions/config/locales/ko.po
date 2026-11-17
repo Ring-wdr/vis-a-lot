@@ -48,6 +48,11 @@ msgid "{rows}행"
 msgstr "{rows}행"
 
 #: src/features/chart-actions/ui/ChartActionBar.tsx
+msgctxt "chart tool"
+msgid "관리선"
+msgstr "관리선"
+
+#: src/features/chart-actions/ui/ChartActionBar.tsx
 msgid "그린 차트가 없습니다."
 msgstr "그린 차트가 없습니다."
 

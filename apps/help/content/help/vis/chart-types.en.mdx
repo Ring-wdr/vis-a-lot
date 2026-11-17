@@ -81,15 +81,18 @@ Draws time bars for each task row of y. Pick a legend (e.g. status) to split bar
 
 ## Tools available per chart
 
-Some modes and the checkbox display in the tab toolbar aren't available for every chart type. Unavailable buttons are dimmed, and hovering shows why.
+Some modes, the checkbox display and control limits in the tab toolbar aren't available for every chart type. Unavailable buttons are dimmed, and hovering shows why.
 
-| Chart | Pan·Zoom | Select | Delete points | Paint | Show checkboxes |
-| --- | --- | --- | --- | --- | --- |
-| Scatter, Line | O | O | O | O | O |
-| Bar, Boxplot, Histogram, Waterfall | O | O | | O | O |
-| Heatmap | O | O | | O | |
-| Treemap | O | O | | | O |
-| Candle, Gantt | O | O | | O | O |
-| Pie, Radar, Funnel, Sankey | | O | | | O |
+| Chart | Pan·Zoom | Select | Delete points | Paint | Show checkboxes | Control limits |
+| --- | --- | --- | --- | --- | --- | --- |
+| Scatter, Line | O | O | O | O | O | O |
+| Bar | O | O | | O | O | O |
+| Boxplot, Histogram, Waterfall | O | O | | O | O | |
+| Heatmap | O | O | | O | | |
+| Treemap | O | O | | | O | |
+| Candle, Gantt | O | O | | O | O | |
+| Pie, Radar, Funnel, Sankey | | O | | | O | |
+
+Line's ECDF, NCDF and Probability don't use control limits. Control limits are explained in [Customizing](/help/vis/customize#en-control-limits).
 
 Each tool is explained in [Exploring charts](/help/vis/explore).

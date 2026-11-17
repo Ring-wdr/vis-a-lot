@@ -15,10 +15,12 @@ import {
   getPath,
   hasSection,
   isFieldShown,
+  LIST_PATHS,
   type OptionField,
   removeSection,
   sectionFields,
   sectionParts,
+  sectionPaths,
   setPath,
 } from "./option-fields";
 
@@ -187,7 +189,23 @@ describe("설정 창 필드", () => {
         : sectionFields()[section];
       for (const f of fields) if ("path" in f) paths.add(f.path);
     }
+    // 배열 칸 중 전용 컴포넌트가 편집하는 경로 (관리선 선 목록)
+    const lists = Object.values(LIST_PATHS).flat();
+    expect(lists).toEqual(["controlLimit.lines"]);
+    for (const path of lists) paths.add(path);
     expect(leafPaths(DEFAULT_OPTIONS).filter((p) => !paths.has(p))).toEqual([]);
+  });
+
+  it("전용 컴포넌트의 배열 칸은 구역 경로에 들고 필드 표와 겹치지 않는다", () => {
+    for (const [section, lists] of Object.entries(LIST_PATHS)) {
+      const own = sectionFields()[section as keyof typeof LIST_PATHS];
+      for (const path of lists ?? []) {
+        expect(path.startsWith(`${section}.`)).toBe(true);
+        expect(Array.isArray(getPath(DEFAULT_OPTIONS, path))).toBe(true);
+        expect(own.some((f) => "path" in f && f.path === path)).toBe(false);
+        expect(sectionPaths(section as never)).toContain(path);
+      }
+    }
   });
 });
 

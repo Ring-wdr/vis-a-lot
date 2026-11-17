@@ -35,6 +35,26 @@ msgstr "Dropped {name} at {place}."
 msgid "{name} 값을 집었습니다."
 msgstr "Picked up {name}."
 
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선 색 바꾸기"
+msgstr "Change {name} line color"
+
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선 지우기"
+msgstr "Delete line {name}"
+
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선을 아래로"
+msgstr "Move line {name} down"
+
+#. name: 선 이름
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "{name} 선을 위로"
+msgstr "Move line {name} up"
+
 #. {place}는 끄는 값을 놓을 자리에 있는 값
 #: src/features/chart-settings/ui/OrderField.tsx
 msgid "{place} 자리"
@@ -52,6 +72,15 @@ msgstr "{value}, {position} of {count}"
 #: src/features/chart-settings/ui/LegendSettings.tsx
 msgid "legend를 고르면 이 위치에 그립니다. 지금은 legend가 없습니다."
 msgstr "Pick a legend to draw it here. There is no legend now."
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "USL·LSL로 정한 선을 벗어난 점(막대)을 강조합니다. 컬럼 선·띠의 값은 split 조합과 draw 필터의 행으로 집계하며, 범례로 끈 값과 지운 점도 넣습니다."
+msgstr "Highlights points (bars) outside the lines set as USL or LSL. Column lines and bands aggregate the rows of the split combination and draw filters, including legend values turned off and deleted points."
+
+#. name: 축 이름(Left, Bottom), type: USL 또는 LSL. 번역하지 않는다
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "USL·LSL은 축마다 하나씩만 정합니다 ({name} 축 {type} 중복)."
+msgstr "Each axis can have only one USL and one LSL ({type} repeated on the {name} axis)."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "x 값"
@@ -112,9 +141,18 @@ msgctxt "chart option section"
 msgid "값"
 msgstr "Values"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit"
+msgid "값"
+msgstr "Value"
+
 #: src/features/chart-settings/ui/OrderField.tsx
 msgid "값 목록을 받는 중입니다…"
 msgstr "Loading values…"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "값을 숫자로 적어 주세요."
+msgstr "Enter a number."
 
 #: src/features/chart-settings/ui/OrderField.tsx
 msgid "값이 너무 많아 순서를 정할 수 없습니다. 정렬만 고를 수 있습니다."
@@ -128,6 +166,10 @@ msgstr "Highlight"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "강조 쓰기"
 msgstr "Enable highlight"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "같은 이름의 선이 이미 있습니다."
+msgstr "A line with this name already exists."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart focus rank"
@@ -165,13 +207,66 @@ msgid "공정 능력 (Cpk)"
 msgstr "Process capability (Cpk)"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "관리선"
+msgstr "Control limits"
+
+#. name: 선 이름(없으면 순번), reason: 맞지 않는 까닭
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "관리선 {name}: {reason}"
+msgstr "Control limit {name}: {reason}"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "관리선은 {max}개까지입니다."
+msgstr "Up to {max} control limits."
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "구간별 값 (계단선)"
+msgstr "Per interval (step line)"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "구간별 값은 scatter·line의 Left 축에서만 쓸 수 있습니다."
+msgstr "Per-interval values are only available on the Left axis of scatter and line."
+
+#: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "굵게"
 msgstr "Bold"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "굵기"
+msgstr "Width"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "규격"
+msgstr "Spec"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "규격 내 확률 (z)"
 msgstr "In-spec probability (z)"
+
+#. 관리선 영역 채우기: USL 위와 LSL 아래
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 바깥쪽"
+msgstr "Outside spec"
+
+#. 관리선 영역 채우기: USL과 LSL 사이
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 안쪽"
+msgstr "Inside spec"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 영역"
+msgstr "Spec area"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 이탈"
+msgstr "Out of spec"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "규격 이탈 강조"
+msgstr "Highlight out of spec"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -197,6 +292,10 @@ msgstr "Grid color"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "글자 색"
 msgstr "Font color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "글자 색 (비우면 눈금 글자 색)"
+msgstr "Text color (empty: tick label color)"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "글자 크기"
@@ -239,6 +338,11 @@ msgstr "Use default palette"
 #: src/features/chart-settings/ui/OptionSettings.tsx
 msgid "기본값으로 되돌리기"
 msgstr "Reset to defaults"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit kind"
+msgid "기준선"
+msgstr "Reference line"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "기타 색 ('기타' 조각, 강조 시 나머지)"
@@ -339,6 +443,10 @@ msgctxt "chart option"
 msgid "대상"
 msgstr "Target"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "더할 선 종류"
+msgstr "Line type to add"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "덧셈"
@@ -348,6 +456,11 @@ msgstr "Additive"
 msgid "데이터가 준비되면 legend 값이 표시됩니다."
 msgstr "Legend values appear when the data is ready."
 
+#. column: 컬럼 이름
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "데이터에 없는 컬럼입니다: {column}"
+msgstr "Column not in the data: {column}"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "둥근 모서리"
 msgstr "Rounded corners"
@@ -355,6 +468,15 @@ msgstr "Rounded corners"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "뒤 글자"
 msgstr "Suffix"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit kind"
+msgid "띠"
+msgstr "Band"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "띠에는 서로 다른 두 컬럼을 골라 주세요."
+msgstr "Choose two different columns for a band."
 
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgctxt "split name example"
@@ -387,6 +509,11 @@ msgstr "Shape"
 msgctxt "chart option section"
 msgid "모양"
 msgstr "Shape"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "모양"
+msgstr "Style"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -537,6 +664,7 @@ msgid "상한"
 msgstr "Upper limit"
 
 #: src/features/chart-settings/model/option-fields.ts
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
 msgctxt "chart option"
 msgid "색"
 msgstr "Color"
@@ -562,6 +690,30 @@ msgstr "Line"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "선 굵기"
 msgstr "Line width"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선 더하기"
+msgstr "Add line"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선 목록"
+msgstr "Lines"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선 이름"
+msgstr "Line name"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선 이름·값 보이기"
+msgstr "Show line names and values"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선이 보이도록 축 범위 넓히기"
+msgstr "Extend axis range to show lines"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "선이 없습니다. 종류를 골라 더하세요. 이름과 값은 PNG에 적은 그대로 그립니다."
+msgstr "No lines yet. Choose a type and add one. Names and values are drawn on the PNG as entered."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "선택 밖 진하기"
@@ -606,6 +758,19 @@ msgctxt "chart focus type"
 msgid "순위"
 msgstr "Rank"
 
+#. column: 컬럼 이름
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "숫자 컬럼이 아닙니다: {column}"
+msgstr "Not a numeric column: {column}"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "시각 (KST)"
+msgstr "Time (KST)"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "시각을 적어 주세요."
+msgstr "Enter a time."
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "시작 색"
 msgstr "Start color"
@@ -618,6 +783,11 @@ msgstr "Expression"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "신뢰 구간"
 msgstr "Confidence interval"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "실선"
+msgstr "Solid"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -632,6 +802,11 @@ msgstr "Bottom"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "앞 글자"
 msgstr "Prefix"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit type"
+msgid "없음"
+msgstr "None"
 
 #: src/features/chart-settings/ui/OptionSectionForm.tsx
 msgctxt "no color"
@@ -651,6 +826,14 @@ msgstr "Down triangle"
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgid "연결 문자"
 msgstr "Separator"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "영역 색"
+msgstr "Area color"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "영역 채우기"
+msgstr "Fill area"
 
 #: src/features/chart-settings/ui/SplitSettings.tsx
 msgid "예: {example}"
@@ -750,9 +933,26 @@ msgstr "Hexagon"
 msgid "이 구역은 공통 속성 따르기"
 msgstr "Use common properties for this section"
 
+#. name: 축 이름(Left, Bottom). 번역하지 않는다
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "이 차트의 {name} 축에는 이 종류의 선을 쓸 수 없습니다."
+msgstr "This line type can't be used on the {name} axis of this chart."
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이동 평균 길이"
 msgstr "Moving average window"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "이름 (PNG에 그대로 적음)"
+msgstr "Name (drawn on the PNG as is)"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이름 글자"
+msgstr "Name labels"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "이름을 적어 주세요."
+msgstr "Enter a name."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이상치 가리기"
@@ -777,6 +977,10 @@ msgstr "Outliers only"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "이중 지수 평활"
 msgstr "Double exponential smoothing"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "이탈 색"
+msgstr "Out-of-spec color"
 
 #: src/features/chart-settings/model/option-fields.ts
 #: src/features/chart-settings/ui/OptionSectionForm.tsx
@@ -816,6 +1020,11 @@ msgstr "Show point labels"
 #: src/features/chart-settings/model/option-fields.ts
 msgid "점 크기"
 msgstr "Point size"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "점선"
+msgstr "Dotted"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option section"
@@ -881,6 +1090,11 @@ msgstr "Condition"
 msgid "중간 색"
 msgstr "Middle color"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "중앙값"
+msgstr "Median"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "중앙값 선 색 (boxplot)"
 msgstr "Median line color (boxplot)"
@@ -893,6 +1107,11 @@ msgstr "Fill + border"
 msgctxt "chart option"
 msgid "채우기만"
 msgstr "Fill only"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "control limit area"
+msgid "채울 쪽"
+msgstr "Fill side"
 
 #: src/features/chart-settings/ui/OrderField.tsx
 msgctxt "order field"
@@ -914,6 +1133,11 @@ msgctxt "chart option"
 msgid "최댓값"
 msgstr "Max"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "최댓값"
+msgstr "Max"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "최소"
@@ -929,6 +1153,11 @@ msgctxt "chart option"
 msgid "최솟값"
 msgstr "Min"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "최솟값"
+msgstr "Min"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgid "추세 계수 β (비우면 자동)"
 msgstr "Trend β (empty: auto)"
@@ -941,6 +1170,16 @@ msgstr "Trend type"
 msgctxt "chart option section"
 msgid "축"
 msgstr "Axes"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit"
+msgid "축"
+msgstr "Axis"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "control limit"
+msgid "축 범위"
+msgstr "Axis range"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "축 보이기"
@@ -979,6 +1218,34 @@ msgstr "Cancel"
 #: src/features/chart-settings/ui/TooltipSettings.tsx
 msgid "커서에서 가장 가까운 점의 x, y와 tooltip 컬럼을 보여줍니다. 점은 픽셀 하나에 하나씩 줄인 점 중에서 찾습니다. 끄면 커서 위치의 x, y만 보여주고, tooltip 컬럼도 가까운 점의 값이라 함께 숨겨집니다."
 msgstr "Shows x, y and tooltip columns of the point nearest the cursor, searched among points reduced to one per pixel. When off, only the cursor's x, y are shown; tooltip columns are hidden too since they come from the nearest point."
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit"
+msgid "컬럼"
+msgstr "Column"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit band"
+msgid "컬럼 1"
+msgstr "Column 1"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit band"
+msgid "컬럼 2"
+msgstr "Column 2"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "컬럼 고르기"
+msgstr "Choose a column"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit kind"
+msgid "컬럼 선"
+msgstr "Column line"
+
+#: src/features/chart-settings/model/control-limit-form.ts
+msgid "컬럼을 골라 주세요."
+msgstr "Choose a column."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
@@ -1035,6 +1302,11 @@ msgctxt "chart option section"
 msgid "툴팁"
 msgstr "Tooltip"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit style"
+msgid "파선"
+msgstr "Dashed"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option section"
 msgid "팔레트"
@@ -1045,10 +1317,19 @@ msgctxt "chart option section"
 msgid "패널"
 msgstr "Panel"
 
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgctxt "control limit fn"
+msgid "평균"
+msgstr "Mean"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "하한"
 msgstr "Lower limit"
+
+#: src/features/chart-settings/ui/ControlLimitSettings.tsx
+msgid "함수"
+msgstr "Function"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "홀트-윈터스 지수 평활"

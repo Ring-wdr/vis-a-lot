@@ -3,7 +3,14 @@
 
 import type { ChartSpec } from "../api/types";
 import type { LogicalType } from "../data/dataset-schema";
+import {
+  type LimitAxis,
+  type LimitKind,
+  type LimitLine,
+  MAX_LIMIT_LINES,
+} from "../render/options";
 import { CHART_FIELDS, legendColumnOf } from "./chart-fields";
+import { controlLimitSupport } from "./chart-options";
 
 export type SpecColumn = {
   name: string;
@@ -74,5 +81,94 @@ export function specError(
         ? need(f.column, "범위 필터", "numeric", "datetime")
         : need(f.column, "값 필터", "categorical");
     if (error) return error;
+  }
+  return controlLimitError(
+    spec,
+    spec.common.options?.controlLimit?.lines,
+    columns,
+  );
+}
+
+const AXIS_NAMES: Record<LimitAxis, string> = {
+  left: "Left",
+  bottom: "Bottom",
+};
+const KIND_NAMES: Record<LimitKind, string> = {
+  reference: "기준선",
+  column: "컬럼 선",
+  band: "띠",
+};
+
+/**
+ * 관리선 목록 검사. 공통 속성은 draw(specError)와 공통 속성 변경에서, item 속성은 PATCH …/props에서 부른다.
+ * 그린 차트가 관리선을 쓰지 않으면(controlLimitSupport가 null) 선은 무시되므로 보지 않는다.
+ * 문제가 있으면 사용자에게 그대로 보여줄 문장, 없으면 undefined
+ */
+export function controlLimitError(
+  spec: Pick<ChartSpec, "chartType" | "subType" | "x">,
+  lines: readonly LimitLine[] | undefined,
+  columns: readonly SpecColumn[],
+): string | undefined {
+  if (!lines?.length) return;
+  const xType = columns.find((c) => c.name === spec.x)?.type;
+  const support = controlLimitSupport(spec, xType);
+  if (!support) return;
+  if (lines.length > MAX_LIMIT_LINES) {
+    return `관리선은 ${MAX_LIMIT_LINES}개까지입니다.`;
+  }
+  const byName = new Map(columns.map((c) => [c.name, c]));
+  const numeric = (name: string, line: string) => {
+    const column = byName.get(name);
+    if (!column)
+      return `관리선 '${line}'의 컬럼 '${name}'이 데이터에 없습니다.`;
+    if (column.type !== "numeric") {
+      return `관리선에는 numeric 컬럼만 쓸 수 있습니다 ('${column.label}'은 ${column.type}).`;
+    }
+  };
+
+  const names = new Set<string>();
+  /** 축마다 usl·lsl은 하나씩: 영역 채우기와 Score 상·하한이 한 쌍을 기준으로 한다. */
+  const specs = new Set<string>();
+  for (const line of lines) {
+    const name = line.name.trim();
+    if (!name) return "관리선 이름을 적어 주세요.";
+    if (names.has(name)) return `관리선 이름 '${name}'이 두 번 있습니다.`;
+    names.add(name);
+
+    if (!support[line.axis].includes(line.kind)) {
+      return `관리선 '${name}': 이 차트의 ${AXIS_NAMES[line.axis]} 축에는 ${KIND_NAMES[line.kind]} 종류를 쓸 수 없습니다.`;
+    }
+    if (line.kind !== "reference" && line.multi) {
+      if (!support.multi || line.axis !== "left") {
+        return `관리선 '${name}': 구간별 값은 scatter·line의 Left 축에서만 쓸 수 있습니다.`;
+      }
+    }
+    if (line.kind === "reference") {
+      const time = line.axis === "bottom" && xType === "datetime";
+      const ok = time
+        ? typeof line.value === "string" &&
+          !Number.isNaN(Date.parse(line.value))
+        : typeof line.value === "number" && Number.isFinite(line.value);
+      if (!ok) {
+        return time
+          ? `관리선 '${name}': 시계열 x축 기준선의 값은 시각이어야 합니다.`
+          : `관리선 '${name}': 기준선의 값은 숫자여야 합니다.`;
+      }
+    } else {
+      const error =
+        numeric(line.column, name) ??
+        (line.kind === "band" ? numeric(line.column2, name) : undefined);
+      if (error) return error;
+      if (line.kind === "band" && line.column === line.column2) {
+        return `관리선 '${name}': 띠에는 서로 다른 두 컬럼을 골라 주세요.`;
+      }
+    }
+    if (line.kind !== "band" && line.type !== "none") {
+      const key = `${line.axis}:${line.type}`;
+      if (specs.has(key)) {
+        return `USL·LSL은 축마다 하나씩만 정할 수 있습니다 (${AXIS_NAMES[line.axis]} 축 ${line.type.toUpperCase()}가 두 번 있습니다).`;
+      }
+      specs.add(key);
+    }
   }
 }

@@ -25,6 +25,7 @@ import { aggLabel } from "@/shared/config/dataset";
 import { formatValue } from "@/shared/lib/format";
 import "../config/messages";
 import { groupSlot } from "./group-slot";
+import { limitRows, outOfSpec, outRow } from "./limit-hit";
 import { PointIndex } from "./point-index";
 import { hitSankey, linkOutline } from "./sankey-hit";
 
@@ -149,6 +150,8 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
         label: text("cursorY"),
         value: formatValue(y, meta.y.kind),
       },
+      // 커서 가까이의 관리선 이름·값
+      ...limitRows(meta, px, py),
     ];
     // 가까운 점을 끄면 tooltip 컬럼도 가져오지 않는다 (가까운 점의 행에서 읽는 값이다).
     if (!nearest) return { rows };
@@ -178,6 +181,8 @@ export const scatterStrategy: TooltipStrategy<ScatterMeta> = {
         emphasis: true,
       });
     }
+    const out = outOfSpec(meta.limits, points.x[index], points.y[index]);
+    if (out) rows.push(outRow(out));
     return {
       marker: {
         px: points.px[index],
@@ -322,8 +327,13 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
     if (inLegendBox(meta, px, py)) return null;
     const hit = hitCategory(meta, px, py);
     const value = hit && meta.bars?.[hit.index]?.[hit.g];
-    if (!hit || value === undefined || value === null) return null;
+    // 막대 밖이어도 관리선 가까이면 선 이름·값만 보인다.
+    const limits = inPlot(meta, px, py) ? limitRows(meta, px, py) : [];
+    if (!hit || value === undefined || value === null)
+      return limits.length > 0 ? { rows: limits } : null;
     const seg = meta.segments?.[hit.index]?.[hit.g];
+    // 쌓은 막대는 그려진 끝(누적 값, stack100이면 %)을 선 값과 비교한다.
+    const out = outOfSpec(meta.limits, hit.index, seg ? seg[1] : value);
     return {
       highlight: highlightRect(
         meta,
@@ -350,10 +360,22 @@ export const barStrategy: TooltipStrategy<CategoryMeta> = {
               },
             ]
           : []),
+        ...(out ? [outRow(out)] : []),
+        ...limits,
       ],
     };
   },
 };
+
+function inPlot(meta: ItemMeta, px: number, py: number) {
+  const { plot } = meta;
+  return (
+    px >= plot.left &&
+    px <= plot.left + plot.width &&
+    py >= plot.top &&
+    py <= plot.top + plot.height
+  );
+}
 
 export const boxplotStrategy: TooltipStrategy<CategoryMeta> = {
   prepare: () => undefined,

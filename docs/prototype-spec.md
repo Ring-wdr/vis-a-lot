@@ -35,6 +35,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
                [DB Worker: PGlite]  ──열 단위 숫자 배열 전달──▶ [Render Worker 1..N]
                 · 데이터 생성 + COPY 적재                         · OffscreenCanvas
                 · IndexedDB에 저장                                · convertToBlob → PNG
+                · 차트 데이터·관리선 값 집계(limitValues)           · DB를 모른다 (job이 값을 실어 보냄)
                                                                    │
                                                        [Cache API: PNG 보관]
                                                         `<img>` 요청은 MSW가 Cache에서 응답
@@ -47,6 +48,7 @@ data?.url && <img src={data.url} width={data.width} height={data.height} />
 | 렌더 | Render Worker N개 (`hardwareConcurrency - 1`, 최대 4) | 렌더가 쿼리보다 무겁다 |
 | 차트 그리기 | 차트 라이브러리 없이 `d3-scale` + Canvas 2D로 직접 그리기 | metadata, 도형 좌표 변환, 픽셀 기준 점 줄이기가 같은 축 계산을 공유해야 한다 |
 | 데이터 전달 | 쿼리 결과를 `Float64Array` 같은 열 단위 숫자 배열로 transfer | 수십만 개 점을 복사 없이 넘긴다 |
+| 집계 값 | 렌더에 필요한 집계(관리선의 컬럼 선·띠 값 등)는 Job Manager가 DB op(`limitValues`)로 조회해 차트 데이터 캐시 옆에 두고, 렌더 입력에 값으로 싣는다 | Render Worker는 DB에 연결하지 않는다. 다시 그리기·크게 보기·resize·내려받기용 light PNG가 같은 값을 다시 조회하지 않는다 |
 | 앱 | Next.js 정적 사이트 내보내기(static export), 화면은 전부 클라이언트에서 동작 | 무료 정적 호스팅. 나중에 실서버로 옮길 때 Route Handler로 이전할 수 있다 |
 | PNG 제공 | Cache API에 `/charts/:chartId/items/:key/png?v=` 주소로 저장하고, MSW가 이 주소의 요청에 응답 | 화면 코드를 원본과 똑같이 유지한다. `<img>` 요청이 MSW까지 오지 않으면 `blob:` URL로 대체 (구현 초기에 검증) |
 
@@ -228,6 +230,9 @@ gantt는 legend(예: 상태)가 있으면 행마다 시간순으로 같은 legen
 | 사각형/자유형 삭제 | O | X | X | O | X | X | X | X | X | X | X | X | X | X |
 | 페인트 | O | O | O | O | X | O | X | O | O | X | X | O | O | X |
 | 체크박스 표시 | O | O | O | O | O | X | O | O | O | O | O | O | O | O |
+| 관리선 | O | O | X | O | X | X | X | X | X | X | X | X | X | X |
+
+관리선 버튼은 전체 설정 팝업을 관리선 메뉴로 연다. 그린 차트나 다음 draw의 차트(draft)가 관리선을 쓰지 않으면 비활성이다. line의 분포 서브 차트(ECDF·NCDF·Probability)와 bar의 쓸 수 있는 선 종류는 아래 '관리선'에 적었다.
 
 sankey는 x 범주(출발 노드, 왼쪽 열) → y 범주(도착 노드, 오른쪽 열) 흐름을 z 숫자 컬럼의 통계 함수로 집계해 굵기로 그린다 (x와 y는 다른 컬럼). 출발 노드는 흐름이 큰 상위 7개 + 기타, 도착 노드는 상위 11개 + 기타로 묶고, '기타'는 원래 행 단위로 다시 집계한다. legend 컬럼을 고르지 않고 출발 노드를 legend로 그리며, 체크박스로 끈 출발 노드의 흐름은 빼고 다시 배치한다. 흐름 색은 출발 노드 색이다. 이동·확대가 없어 좌표 공간이 고정이고(x 0..그림 폭, y 0..그림 높이, 픽셀과 1:1), 선택은 흐름 곡선 가운데점·노드 가운데가 영역 안이면 고르고 바깥은 흐리게 그린다. 툴팁은 흐름이면 출발 → 도착과 값, 노드면 이름과 들어오고 나가는 합을 보이고 가리킨 흐름 띠/노드를 강조한다.
 
@@ -240,6 +245,8 @@ histogram은 x 숫자 컬럼 하나의 분포다(y 없음, 세로축 = 개수). 
 waterfall은 x 범주, y 숫자 집계(통계 함수)다. 범주 순서대로 누적해 막대마다 이전 누적에서 시작해 값만큼 오르거나 내리고, 마지막에 0부터 최종 누적까지의 합계 막대를 둔다. legend 컬럼은 고르지 않고(`legend: false`) 증가·감소·합계를 legend 항목으로 그려 색 변경·체크박스로 끄고 켠다. 끈 종류도 누적에는 들어간다. 선택 필드는 선택된 막대의 범주 행이며, 합계 막대가 선택에 들면 모든 범주다. 툴팁은 범주·값·누적이다.
 
 funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 값 큰 순으로 위에서 아래로 가운데 맞춘 막대를 놓고, 이웃 막대를 사다리꼴로 이어 이전 단계 대비 전환율을, 막대에는 값과 첫 단계 대비 비율을 적는다. 단계가 8개를 넘으면 위 7개 + '기타'(나머지 행을 다시 집계하므로 평균·중앙값도 맞다). 단계가 곧 legend라 legend 컬럼은 고르지 않고(`legend: false`, 기본 위치 오른쪽) 체크박스로 숨기며, 숨긴 단계를 빼고 전환율을 다시 계산한다. 이동·확대가 없어 그림 영역 픽셀과 1:1인 고정 좌표(x 0..그림 폭, y 0..그림 높이)를 쓰고, 선택은 막대 가운데로 판정한다. 툴팁은 단계·값·이전 단계 대비·첫 단계 대비다.
+
+관리선(차트 속성 `controlLimit` 구역)은 scatter·line·bar 위에 기준선(고정 값)·컬럼 선(item 행의 평균·최댓값·중앙값·최솟값)·띠(두 컬럼 평균 사이)를 그리고, USL·LSL로 정한 선을 벗어난 점·막대를 이탈 색으로 다시 칠한다. 쓸 수 있는 선은 차트·축마다 다르다: scatter·line은 Left 축에 셋 다, Bottom 축은 x가 숫자면 셋 다·시계열이면 기준선(ISO 시각, 화면은 KST `+09:00`으로 저장)만, bar Side는 Left 축 기준선·컬럼 선, bar Stack·Stack 100은 Left 축 기준선만이다. line의 분포 서브 차트는 구역을 끈다. 선은 10개까지, USL·LSL은 축마다 하나씩이다. 컬럼 선·띠는 split 조합 + draw 필터의 행으로 집계하고(끈 legend 값·지운 점도 넣는다), scatter·line의 Left 축 선은 구간별(필터를 건 전체 데이터의 x 범위를 240구간으로 나눈 계단)로 그릴 수 있다. 영역 채우기(규격 안쪽·바깥쪽), 이름 글자, 축 범위 넓히기, 이탈 수(제목 줄 `이탈 N`, metadata `limits.out`)를 둔다. 축 식을 쓰면 컬럼 선·띠 값과 구간 경계에 식을 적용하고 기준선은 그대로 그린다. Score의 상·하한이 비어 있으면 구간별이 아닌 Left 축 USL·LSL을 쓴다. 자세한 동작은 `docs/control-limit-spec.md`.
 
 ### 4.3 Split by와 grid
 - 여러 컬럼을 고를 수 있는 selectbox이고, 클릭한 순서를 보장한다. 예: `a`(숫자) → `b` → `c` 순서로 고르면 item 이름은 `a-b-c`가 된다. 구분 기호는 전체 설정에서 바꿀 수 있다.
@@ -269,10 +276,12 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
   - 축 범위와 축 종류 (선형/시계열/범주)
   - 픽셀 기준으로 줄인 점 (같은 픽셀 칸에 겹친 점은 대표 점 하나만 남김) + 각 점의 x, y, 행 id
   - bar / boxplot의 통계값
+  - 관리선을 그렸으면 `limits`: 그린 선마다 이름·축·규격(USL·LSL·없음)과 그린 좌표의 값(식 적용, 시계열 x는 epoch ms, 구간별이면 `steps` `[x0, x1, v(, v2)]`), 이탈 수
 - x, y 값과 가장 가까운 점은 metadata만으로 서버 호출 없이 바로 보여준다. tooltip에서 다른 컬럼을 고른 경우에만 서버를 호출한다.
 - 차트 종류별 툴팁 렌더링은 strategy pattern으로 만든다.
   - scatter·line: 커서 위치의 좌표값 + 가장 가까운 점. 가까운 점 표시는 전체 설정 · 툴팁에서 끌 수 있다(기본 켬). 끄면 커서 좌표값만 보이고, tooltip 컬럼은 가까운 점의 행 값이라 함께 숨기며 서버도 호출하지 않는다. 화면 표시만 바꾸는 설정이라 탭 상태에 두고 차트 설정(spec)에는 넣지 않는다
   - bar: 막대의 집계값
+  - 관리선(scatter·line·bar): 커서가 선에서 4px 안이면 `이름: 값` 줄을 더하고(bar는 막대 밖이어도), 가까운 점·막대가 규격을 벗어났으면 '규격 이탈: 선 이름' 줄을 더한다. 판정은 metadata의 선 값으로 화면이 렌더러와 같은 규칙(경계 값은 이탈이 아님, 뒤집힌 규격의 축은 보지 않음, 누적 막대는 쌓은 끝 값)으로 한다
   - boxplot: 사분위수 등 통계값
 
 ### 4.5 확대/축소
@@ -338,7 +347,8 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - 모든 item은 기본적으로 공통 속성을 따른다.
 - 개별 속성은 split 조합을 키로 서버에 저장한다. 다시 불러와도 유지된다.
 - 공통 속성을 바꾸면 개별 속성까지 덮어쓰고 전체를 다시 그린다.
-- 이번 범위에서 개별 속성은 색상과 legend 위치를 지원한다.
+- 개별 속성은 색상, legend 위치·값별 색·체크박스로 숨긴 값, 차트 속성 구역 전체(`options`, 15구역)를 지원한다. 합치는 순서는 전체 기본값 → 테마 → 차트 종류 → 공통 → item이다.
+- 배열 칸(관리선 선 목록 `controlLimit.lines`)은 합칠 때 통째로 바뀐다. item에 목록을 정하면 공통 목록 대신 그 목록을 쓰고, 빈 목록이면 그 item만 선이 없다. 관리선 목록은 저장할 때 데이터 스키마로 검사한다(공통은 draw·`PATCH …/common`, item은 `PATCH …/props`). history·공유로 복원한 item 속성은 job이 맞지 않는 선만 빼고 그린다.
 
 ---
 
@@ -469,7 +479,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
 | chart | 취소 | `POST /jobs/:jobId/cancel` | 남은 item을 `cancelled`로 기록 |
 | chart | PNG | `GET /charts/:chartId/items/:key/png?v=` | `image/png` |
-| chart | metadata | `GET /charts/:chartId/items/:key/meta?size=` | 4.4 참고. `size=WxH`면 크게 보기 PNG의 metadata |
+| chart | metadata | `GET /charts/:chartId/items/:key/meta?size=` | 4.4 참고. `size=WxH`면 크게 보기 PNG의 metadata. scatter·line·bar는 관리선을 그렸으면 `limits`(`LimitsMeta`: 그린 선의 값, 이탈 수) |
 | chart | 크게 보기 | `POST /charts/:chartId/items/:key/detail` | `{ itemSize }` 그려 둔 PNG가 있으면 `{ image }`, 없으면 그 한 장만 그리는 `{ jobId }` |
 | chart | 툴팁 추가 컬럼 | `POST /charts/:chartId/items/:key/tooltip` | 점의 행 id + 고른 컬럼 → 값 |
 | chart | 확대/축소 | `POST /charts/:chartId/items/:key/view` | `{ type: 'zoomIn', x, y }` (데이터 범위) \| `{ type: 'zoomOut', ratio }` \| `{ type: 'reset' }` \| `{ type: 'pan', dx, dy }` |
@@ -480,13 +490,13 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | 새 범례 | `POST .../items/:key/legend-groups`<br>`DELETE .../items/:key/legend-groups/:name` | 지금 선택 영역을 새 legend 항목으로 / 삭제 |
 | chart | 데이터 표 | `POST .../items/:key/rows` | `{ offset, limit(≤500), sort? }` → `{ columns, rows, total, selected }` (4.7.2) |
 | chart | 데이터 다운로드 | `POST .../items/:key/rows/export` | 대상 행 전체 `text/csv` |
-| chart | 개별 색상 | `PATCH .../items/:key/props` | `{ color }` 또는 `{ legendColor: { value, color } }`, `null`이면 공통 색으로 |
+| chart | 개별 속성 | `PATCH .../items/:key/props` | `{ color }` · `{ legendColor: { value, color } }` · `{ legendPosition }` · `{ legendVisible }` · `{ options }` · `{ settings }`(여럿을 한 번에), `null`이면 공통 속성으로. 관리선 선 목록이 스키마·차트와 맞지 않으면 400과 사유 |
 | data | legend 값 목록 | `GET /datasets/:id/legend-values?column=` | 전체 데이터 기준 legend 값 (공통 속성 popover용) |
-| chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409) |
+| chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409). 관리선 선 목록이 맞지 않으면 400과 사유 (draw에서는 job 실패 사유) |
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
 | chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
-| chart | 차트 기본값 | `GET /defaults` | 모든 차트에 쓰는 값(차트 속성 전체 값 `options`, 새 차트 공통 색, split 구분 문자, legend 위치)과 차트 종류마다 다른 값만 담은 `charts[type]`(`legendPosition`, `options` 부분 값. 예: funnel legend 오른쪽). 종류별 기본값은 전체 값 위에 `charts[type]`을 덮은 값이고, draw는 그 위에 공통 → item 개별 속성을 덮는다. 서버 draw와 전체 설정·item 속성 팝업·새 탭 draft가 같은 값(`server/charts/chart-defaults.ts`)을 쓴다. 어드민 기본값이 생기면 이 모듈을 바꾼다 |
+| chart | 차트 기본값 | `GET /defaults` | 모든 차트에 쓰는 값(차트 속성 전체 값 `options`(관리선 `controlLimit` 포함, 기본은 선 없음), 새 차트 공통 색, split 구분 문자, legend 위치)과 차트 종류마다 다른 값만 담은 `charts[type]`(`legendPosition`, `options` 부분 값. 예: funnel legend 오른쪽). 종류별 기본값은 전체 값 위에 `charts[type]`을 덮은 값이고, draw는 그 위에 공통 → item 개별 속성을 덮는다. 서버 draw와 전체 설정·item 속성 팝업·새 탭 draft가 같은 값(`server/charts/chart-defaults.ts`)을 쓴다. 어드민 기본값이 생기면 이 모듈을 바꾼다 |
 | chart | history 삭제 | `DELETE /history/:id` | 204, 모르는 건이면 404. 그 건에 기록 중인 차트는 더 기록하지 않는다(지운 건을 되살리지 않음) |
 | chart | 공유 | `POST /shares`, `GET /shares`(내 공유), `GET /shares/:shareId`, `DELETE /shares/:shareId` | `{ chartId, itemKey?, title }`로 지금 설정·바뀐 item 상태·대표 PNG를 스냅숏으로 고정(PGlite). 이후 차트를 고쳐도 그대로다. 지우기는 만든 사용자만 |
 | chart | 공유 PNG | `GET /shares/:shareId/png` | 인증 없음(item PNG와 같은 이유, shareId는 UUID) |

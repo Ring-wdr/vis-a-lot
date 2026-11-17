@@ -81,15 +81,18 @@ y の作業行ごとに時間の棒を描きます。legend(例: 状態)を選�
 
 ## チャートごとに使えるツール
 
-タブツールバーのモードとチェックボックス表示には、チャートの種類によって使えないものがあります。使えないボタンは薄く表示され、カーソルを合わせると理由が表示されます。
+タブツールバーのモード、チェックボックス表示、管理線には、チャートの種類によって使えないものがあります。使えないボタンは薄く表示され、カーソルを合わせると理由が表示されます。
 
-| チャート | 移動・拡大 | 選択 | 点の削除 | ペイント | チェックボックス表示 |
-| --- | --- | --- | --- | --- | --- |
-| Scatter, Line | O | O | O | O | O |
-| Bar, Boxplot, Histogram, Waterfall | O | O | | O | O |
-| Heatmap | O | O | | O | |
-| Treemap | O | O | | | O |
-| Candle, Gantt | O | O | | O | O |
-| Pie, Radar, Funnel, Sankey | | O | | | O |
+| チャート | 移動・拡大 | 選択 | 点の削除 | ペイント | チェックボックス表示 | 管理線 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Scatter, Line | O | O | O | O | O | O |
+| Bar | O | O | | O | O | O |
+| Boxplot, Histogram, Waterfall | O | O | | O | O | |
+| Heatmap | O | O | | O | | |
+| Treemap | O | O | | | O | |
+| Candle, Gantt | O | O | | O | O | |
+| Pie, Radar, Funnel, Sankey | | O | | | O | |
+
+Line の ECDF・NCDF・Probability は管理線を使いません。管理線は [装飾](/help/vis/customize#ja-管理線) で説明します。
 
 各ツールは [チャートを調べる](/help/vis/explore) で説明します。

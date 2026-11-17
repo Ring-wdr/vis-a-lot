@@ -2,6 +2,7 @@
 
 import { Trans, useLingui } from "@lingui/react/macro";
 import {
+  AlignVerticalSpaceAround,
   Calculator,
   Crosshair,
   Grid3x3,
@@ -27,6 +28,7 @@ import type {
 import type { ChartType } from "@/shared/api/types";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import "../config/messages";
+import type { LimitSource } from "../model/control-limit-form";
 import type { OrderSource } from "../model/order-values";
 import { OptionSectionForm } from "./OptionSectionForm";
 
@@ -47,6 +49,8 @@ export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
   focus: Crosshair,
   tooltip: MessageSquareText,
   expression: Calculator,
+  // 규격 상·하한 두 선 사이
+  controlLimit: AlignVerticalSpaceAround,
 };
 
 /**
@@ -58,6 +62,7 @@ export function CommonOptionSettings({
   part,
   chartType,
   orderSource,
+  limitSource,
   supported,
   original,
   defaults,
@@ -71,6 +76,8 @@ export function CommonOptionSettings({
   chartType: ChartType | undefined;
   /** 순서 필드의 값 목록을 받을 곳 (draft의 데이터셋·컬럼) */
   orderSource: OrderSource;
+  /** 관리선 선 목록이 아는 차트·컬럼 (draft의 차트·데이터셋) */
+  limitSource: LimitSource;
   /** false면 이 차트가 쓰지 않는 구역이라 children(같은 구역의 기존 설정)만 보인다. */
   supported: boolean;
   /** 저장돼 있던 공통 속성의 차트 속성 */
@@ -88,6 +95,7 @@ export function CommonOptionSettings({
         part={part}
         chartType={chartType}
         orderSource={orderSource}
+        limitSource={limitSource}
         original={original}
         base={defaults}
         disabled={readOnly}

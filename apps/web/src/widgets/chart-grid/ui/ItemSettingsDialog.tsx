@@ -9,6 +9,7 @@ import {
   useDefaultOptions,
 } from "@/entities/chart/model/chart-options";
 import { useWorkspace } from "@/entities/workspace/model/workspace-scope";
+import { limitSourceOf } from "@/features/chart-settings/model/control-limit-form";
 import { buildPatch } from "@/features/chart-settings/model/option-fields";
 import type { OptionsFormValues } from "@/features/chart-settings/model/options-form";
 import { orderSourceOf } from "@/features/chart-settings/model/order-values";
@@ -23,7 +24,11 @@ import {
   ItemColorSettings,
   ItemLegendPositionSettings,
 } from "@/features/item-actions/ui/ItemSettings";
-import { useChartDefaults, useDatasetState } from "@/shared/api/queries";
+import {
+  useChartDefaults,
+  useDatasetSchema,
+  useDatasetState,
+} from "@/shared/api/queries";
 import type {
   ChartOptionsBody,
   DatasetId,
@@ -61,6 +66,13 @@ export function ItemSettingsDialog({
   const orderSource = useMemo(
     () => (spec ? orderSourceOf(spec, datasetReady) : undefined),
     [spec, datasetReady],
+  );
+  // 관리선 선 목록은 그린 차트·x와 그 데이터셋의 숫자 컬럼으로 고르고 검사한다.
+  const columns = useDatasetSchema(spec?.dataset ?? ("" as DatasetId)).data
+    ?.columns;
+  const limitSource = useMemo(
+    () => (spec ? limitSourceOf(spec, columns) : undefined),
+    [spec, columns],
   );
   // item을 다시 그리는 중인지. 팝업(ItemOptionsDialog)은 store를 읽지 않으므로 여기서 골라 넘긴다.
   const busy = useWorkspace((s) => s.itemJobs[item.key] !== undefined);
@@ -111,6 +123,7 @@ export function ItemSettingsDialog({
       <ItemOptionsDialog
         chartType={chartType}
         orderSource={orderSource}
+        limitSource={limitSource}
         readOnly={readOnly}
         busy={busy}
         label={item.label}

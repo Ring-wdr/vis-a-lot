@@ -3,7 +3,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { useLocale } from "@vis-a-lot/shared/lib/i18n";
 import { X } from "lucide-react";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useId } from "react";
 import {
   Controller,
   type FieldPath,
@@ -30,12 +30,15 @@ import {
   sectionPaths,
 } from "../model/option-fields";
 import "../config/messages";
+import type { LimitSource } from "../model/control-limit-form";
 import {
   type OptionsBase,
   type OptionsFormValues,
   useOptionsPatch,
 } from "../model/options-form";
 import { type OrderSource, useOrderValues } from "../model/order-values";
+import { ControlLimitSettings } from "./ControlLimitSettings";
+import { DraftInput, parseNumber } from "./DraftInput";
 import { OrderField } from "./OrderField";
 
 const row =
@@ -53,6 +56,7 @@ export function OptionSectionForm({
   part,
   chartType,
   orderSource,
+  limitSource,
   original,
   base,
   resetLabel,
@@ -65,6 +69,8 @@ export function OptionSectionForm({
   chartType: ChartType | undefined;
   /** 순서 필드가 값 목록을 받을 곳. 없으면 순서 필드에 늘어놓을 값이 없다. */
   orderSource?: OrderSource;
+  /** 관리선 선 목록이 아는 차트·컬럼. 관리선 구역에서만 쓴다. */
+  limitSource?: LimitSource;
   /** 하위 항목이 있는 구역(축)에서 보일 항목. 없으면 첫 항목 */
   part?: string;
   /** 구역 되돌리기 버튼 글자 (기본값으로 되돌리기, 공통 속성 따르기) */
@@ -149,6 +155,9 @@ export function OptionSectionForm({
             ),
           )}
         </div>
+      )}
+      {showFields && section === "controlLimit" && (
+        <ControlLimitSettings source={limitSource} disabled={disabled} />
       )}
       {showFields && hasSection(patch, section) && (
         <button
@@ -457,56 +466,4 @@ function ColorsInput({
   );
 }
 
-/** 숫자 칸의 글자를 값으로. 비우면 null(자동, nullable일 때만), 잘못된 값이면 INVALID */
-export const INVALID = Symbol("invalid");
-export function parseNumber(
-  text: string,
-  field: { min: number; max: number; nullable?: boolean },
-): number | null | typeof INVALID {
-  const trimmed = text.trim();
-  if (trimmed === "") return field.nullable ? null : INVALID;
-  const n = Number(trimmed);
-  if (!Number.isFinite(n)) return INVALID;
-  return Math.min(field.max, Math.max(field.min, n));
-}
-
-/**
- * 입력한 글자는 그대로 두고, 값으로 읽히면 바로 폼에 넣는다. 입력 도중의 글자('1.', '-')를
- * 정리하지 않도록, 폼 값이 글자와 다르게 바뀌었을 때(되돌리기)만 글자를 따라 바꾼다.
- */
-function DraftInput({
-  value,
-  parse,
-  onCommit,
-  ...inputProps
-}: {
-  value: string;
-  parse: (text: string) => unknown;
-  onCommit: (value: unknown) => void;
-} & Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  "value" | "onChange" | "onBlur"
->) {
-  const [text, setText] = useState(value);
-  const [prevValue, setPrevValue] = useState(value);
-  // 글자가 바뀔 때가 아니라 폼 값이 바뀔 때만 맞춘다.
-  if (value !== prevValue) {
-    setPrevValue(value);
-    const parsed = parse(text);
-    if (value !== (parsed === INVALID ? undefined : String(parsed ?? "")))
-      setText(value);
-  }
-
-  return (
-    <input
-      {...inputProps}
-      className={control}
-      value={text}
-      onChange={(e) => {
-        setText(e.target.value);
-        const next = parse(e.target.value);
-        if (next !== INVALID) onCommit(next);
-      }}
-    />
-  );
-}
+export { INVALID, parseNumber } from "./DraftInput";

@@ -4,6 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
+import { fitControlLimit } from "@/entities/chart/model/control-limit";
 import { ChartIcon } from "@/entities/chart/ui/ChartIcon";
 import {
   columnsOfTypes,
@@ -77,7 +78,8 @@ const controlFields = ({ draft: d }: WorkspaceState) => ({
 
 /**
  * 스키마를 처음 받았거나 데이터셋을 바꿨으면, 맞지 않는 설정을 기본값으로 바로잡는다.
- * 필터도 바로잡으므로 draft 전체를 구독한다. 패널 본문과 떼어 두어 필터를 고쳐도 패널은 다시 그리지 않는다.
+ * 필터와 공통 속성의 관리선(차트 종류·하위 차트·x에도 따른다)도 바로잡으므로 draft 전체를 구독한다.
+ * 패널 본문과 떼어 두어 필터를 고쳐도 패널은 다시 그리지 않는다.
  */
 function FitDraftToSchema({
   columns,
@@ -91,7 +93,9 @@ function FitDraftToSchema({
   useEffect(() => {
     if (readOnly || !columns) return;
     const patch = fitSpecToSchema(draft, columns);
-    if (patch) updateDraft(patch);
+    // 관리선은 바로잡은 x로 본다 (x 타입에 따라 Bottom 축에 쓸 수 있는 선이 다르다).
+    const limits = fitControlLimit({ ...draft, ...patch }, columns);
+    if (patch || limits) updateDraft({ ...patch, ...limits });
   }, [readOnly, columns, draft, updateDraft]);
   return null;
 }

@@ -60,8 +60,8 @@ msgid "알아 두기"
 msgstr "Good to know"
 
 #: src/shared/config/help.ts
-msgid "전체 설정, 순서 바꾸기·강조 방식, legend 색·위치, item 개별 속성"
-msgstr "Global settings, order and highlight methods, legend colors and position, per-item settings"
+msgid "전체 설정, 순서 바꾸기·강조 방식, 관리선, legend 색·위치, item 개별 속성"
+msgstr "Global settings, order and highlight methods, control limits, legend colors and position, per-item settings"
 
 #: src/shared/config/help.ts
 msgid "차트 그리기"

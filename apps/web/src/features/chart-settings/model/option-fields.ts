@@ -93,6 +93,7 @@ const TEXT = {
     focus: msg({ message: "강조", context: "chart option section" }),
     tooltip: msg({ message: "툴팁", context: "chart option section" }),
     expression: msg({ message: "식", context: "chart option section" }),
+    controlLimit: msg({ message: "관리선", context: "chart option section" }),
   } satisfies Record<OptionSection, MessageDescriptor>,
   hint: {
     title: msg`글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다.`,
@@ -101,6 +102,7 @@ const TEXT = {
     value: msg`빈 칸 값은 그 조합에 데이터가 없는 칸에 씁니다.`,
     focus: msg`방식에 맞는 점(막대·상자·캔들·작업)을 강조합니다. 순위는 item 전체 값으로 매기고 확대 범위와 상관없습니다.`,
     expression: msg`변수 x, y와 + - * / ^, 함수 abs log ln sqrt exp round floor ceil min max pow를 씁니다. 예: log(y), x * 2 + 1. 비우면 원래 값입니다.`,
+    controlLimit: msg`USL·LSL로 정한 선을 벗어난 점(막대)을 강조합니다. 컬럼 선·띠의 값은 split 조합과 draw 필터의 행으로 집계하며, 범례로 끈 값과 지운 점도 넣습니다.`,
   } satisfies Partial<Record<OptionSection, MessageDescriptor>>,
   left: msg({ message: "왼쪽", context: "chart option" }),
   center: msg({ message: "가운데", context: "chart option" }),
@@ -292,6 +294,26 @@ const TEXT = {
   exprY: msg`Y 값`,
   exprXPlaceholder: msg`예: x * 2`,
   exprYPlaceholder: msg`예: log(y)`,
+  limitOut: msg`규격 이탈`,
+  highlightOut: msg`규격 이탈 강조`,
+  outColor: msg`이탈 색`,
+  limitArea: msg`규격 영역`,
+  areaVisible: msg`영역 채우기`,
+  areaSide: msg({ message: "채울 쪽", context: "control limit area" }),
+  areaIn: msg({
+    message: "규격 안쪽",
+    comment: "관리선 영역 채우기: USL과 LSL 사이",
+  }),
+  areaOut: msg({
+    message: "규격 바깥쪽",
+    comment: "관리선 영역 채우기: USL 위와 LSL 아래",
+  }),
+  areaColor: msg`영역 색`,
+  limitText: msg`이름 글자`,
+  limitTextVisible: msg`선 이름·값 보이기`,
+  limitTextColor: msg`글자 색 (비우면 눈금 글자 색)`,
+  limitAxis: msg({ message: "축 범위", context: "control limit" }),
+  fitAxis: msg`선이 보이도록 축 범위 넓히기`,
 };
 
 type Labels = Omit<typeof TEXT, "section" | "hint">;
@@ -1146,6 +1168,61 @@ function buildTables(m: Text) {
         placeholder: m.exprYPlaceholder,
       },
     ],
+    // 선 목록(controlLimit.lines)은 배열이라 전용 컴포넌트가 그린다 (LIST_PATHS).
+    controlLimit: [
+      { kind: "heading", label: m.limitOut },
+      {
+        kind: "boolean",
+        path: "controlLimit.highlightOut",
+        label: m.highlightOut,
+      },
+      { kind: "color", path: "controlLimit.outColor", label: m.outColor },
+      { kind: "heading", label: m.limitArea },
+      {
+        kind: "boolean",
+        path: "controlLimit.area.visible",
+        label: m.areaVisible,
+      },
+      {
+        kind: "select",
+        path: "controlLimit.area.side",
+        label: m.areaSide,
+        options: [
+          { value: "in", label: m.areaIn },
+          { value: "out", label: m.areaOut },
+        ],
+      },
+      { kind: "color", path: "controlLimit.area.color", label: m.areaColor },
+      {
+        kind: "number",
+        path: "controlLimit.area.transparency",
+        label: m.transparency,
+        min: 0,
+        max: 1,
+        step: 0.05,
+      },
+      { kind: "heading", label: m.limitText },
+      {
+        kind: "boolean",
+        path: "controlLimit.text.visible",
+        label: m.limitTextVisible,
+      },
+      {
+        kind: "number",
+        path: "controlLimit.text.fontSize",
+        label: m.fontSize,
+        min: 6,
+        max: 40,
+      },
+      {
+        kind: "color",
+        path: "controlLimit.text.color",
+        label: m.limitTextColor,
+        optional: true,
+      },
+      { kind: "heading", label: m.limitAxis },
+      { kind: "boolean", path: "controlLimit.fitAxis", label: m.fitAxis },
+    ],
   };
 
   return { labels: m.section, hints: m.hint, parts, fields };
@@ -1263,11 +1340,22 @@ export function hasSection(
   return patch?.[section] !== undefined;
 }
 
-/** 구역의 모든 입력 필드 경로 (하위 항목까지) */
+/**
+ * 필드 표 밖에서 전용 컴포넌트가 편집하는 배열 칸. 배열은 합칠 때 통째로 바뀌므로 경로 하나로 저장·되돌린다.
+ * 관리선 선 목록은 ControlLimitSettings가 그린다.
+ */
+export const LIST_PATHS: Readonly<
+  Partial<Record<OptionSection, readonly string[]>>
+> = { controlLimit: ["controlLimit.lines"] };
+
+/** 구역의 모든 입력 경로 (하위 항목과 전용 컴포넌트의 배열 칸까지) */
 export function sectionPaths(section: OptionSection): string[] {
-  return sectionFields()[section].flatMap((f) =>
-    f.kind === "heading" ? [] : [f.path],
-  );
+  return [
+    ...sectionFields()[section].flatMap((f) =>
+      f.kind === "heading" ? [] : [f.path],
+    ),
+    ...(LIST_PATHS[section] ?? []),
+  ];
 }
 
 const sameValue = (a: unknown, b: unknown) =>
