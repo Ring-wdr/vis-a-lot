@@ -93,6 +93,7 @@ const TEXT = {
     focus: msg({ message: "강조", context: "chart option section" }),
     tooltip: msg({ message: "툴팁", context: "chart option section" }),
     expression: msg({ message: "식", context: "chart option section" }),
+    controlLimit: msg({ message: "관리선", context: "chart option section" }),
   } satisfies Record<OptionSection, MessageDescriptor>,
   hint: {
     title: msg`글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다.`,
@@ -1146,6 +1147,8 @@ function buildTables(m: Text) {
         placeholder: m.exprYPlaceholder,
       },
     ],
+    // 관리선 칸과 선 목록 표는 아직 없다 (관리선 스펙 단위 4).
+    controlLimit: [],
   };
 
   return { labels: m.section, hints: m.hint, parts, fields };

@@ -7,11 +7,17 @@ import { useMemo } from "react";
 import { useChartDefaults } from "@/shared/api/queries";
 import type {
   ChartDefaults,
+  ChartSpec,
   ChartTheme,
   ChartType,
+  ColumnType,
   LegendPosition,
 } from "@/shared/api/types";
-import { CHART_FIELDS } from "@/shared/config/chart-kinds";
+import {
+  CHART_FIELDS,
+  isDistributionLine,
+  subTypeOf,
+} from "@/shared/config/chart-kinds";
 
 export const OPTION_SECTIONS = [
   "title",
@@ -28,6 +34,7 @@ export const OPTION_SECTIONS = [
   "focus",
   "tooltip",
   "expression",
+  "controlLimit",
 ] as const;
 export type OptionSection = (typeof OPTION_SECTIONS)[number];
 
@@ -307,6 +314,85 @@ export type ExpressionOptions = {
   y: string;
 };
 
+/** reference: 고정 값, column: 컬럼 집계 값, band: 두 컬럼 평균 사이 띠 */
+export const LIMIT_KINDS = ["reference", "column", "band"] as const;
+export type LimitKind = (typeof LIMIT_KINDS)[number];
+
+/** 규격 종류. usl·lsl로 정한 선이 이탈 강조·영역 채우기·Score 상하한의 기준이 된다. */
+export const LIMIT_TYPES = ["none", "usl", "lsl"] as const;
+export type LimitType = (typeof LIMIT_TYPES)[number];
+
+/** 컬럼 선의 집계 함수 */
+export const LIMIT_FNS = ["avg", "max", "median", "min"] as const;
+export type LimitFn = (typeof LIMIT_FNS)[number];
+
+/** left: 값(y) 축에 수평선, bottom: x축에 수직선 */
+export const LIMIT_AXES = ["left", "bottom"] as const;
+export type LimitAxis = (typeof LIMIT_AXES)[number];
+
+export const LIMIT_STYLES = ["solid", "dash", "dot"] as const;
+export type LimitStyle = (typeof LIMIT_STYLES)[number];
+
+/** 선 목록에 둘 수 있는 선 수 */
+export const MAX_LIMIT_LINES = 10;
+/** 선 이름 글자 수 */
+export const MAX_LIMIT_NAME = 40;
+/** 구간별(multi) 선은 x 전체 범위를 이 수만큼 나눠 구간마다 집계한다. */
+export const LIMIT_BUCKETS = 240;
+
+/** 관리선 하나. 목록은 배열이라 합칠 때 통째로 바뀌므로 저장하는 선은 늘 모든 칸이 있다. */
+export type LimitLine = {
+  /** 필수. 목록 안에서 겹치지 않는다. PNG에 적은 그대로 그린다. */
+  name: string;
+  axis: LimitAxis;
+  color: string;
+  width: number;
+  style: LimitStyle;
+} & (
+  | {
+      kind: "reference";
+      /** 시계열 x의 bottom 선이면 ISO 시각 문자열, 그 밖은 숫자 */
+      value: number | string;
+      type: LimitType;
+    }
+  | {
+      kind: "column";
+      /** 숫자 컬럼 */
+      column: string;
+      fn: LimitFn;
+      type: LimitType;
+      /** 구간별: x 구간마다 집계해 계단선으로. left 축의 scatter·line에서만 쓴다. */
+      multi: boolean;
+    }
+  | {
+      kind: "band";
+      /** 두 숫자 컬럼을 각각 평균한 값 사이를 채운다. 띠는 규격 종류가 없다. */
+      column: string;
+      column2: string;
+      multi: boolean;
+    }
+);
+
+export type ControlLimitOptions = {
+  /** 그릴 선. 기본 []이라 아무것도 그리지 않는다. */
+  lines: LimitLine[];
+  /** usl·lsl을 벗어난 점(막대)을 outColor로 맨 위에 다시 그린다. */
+  highlightOut: boolean;
+  outColor: string;
+  /** 규격 영역 채우기. in: usl과 lsl 사이(하나뿐이면 선에서 그림 영역 끝까지 규격 안쪽), out: 그 반대쪽 */
+  area: {
+    visible: boolean;
+    color: string;
+    /** 0(불투명)..1(투명) */
+    transparency: number;
+    side: "in" | "out";
+  };
+  /** 선 끝의 `이름 값` 글자. color를 비우면 눈금 글자 색 */
+  text: { visible: boolean; fontSize: number; color: string };
+  /** 확대하지 않았을 때 선 값이 보이도록 축 범위를 넓힌다. */
+  fitAxis: boolean;
+};
+
 export type ChartOptions = {
   title: TitleOptions;
   axes: { x: XAxisOptions; y: AxisOptions };
@@ -322,6 +408,7 @@ export type ChartOptions = {
   focus: FocusOptions;
   tooltip: TooltipOptions;
   expression: ExpressionOptions;
+  controlLimit: ControlLimitOptions;
 };
 
 type DeepPartial<T> = T extends readonly unknown[]
@@ -418,11 +505,37 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
   scatter: ALL,
   line: ALL,
   bar: without("score", "prediction"),
-  boxplot: without("score", "prediction", "tooltip", "expression"),
-  histogram: without("score", "prediction", "focus", "expression"),
-  pie: without("axes", "score", "prediction", "focus", "expression"),
-  gantt: without("score", "prediction", "expression"),
-  treemap: without("axes", "score", "prediction", "focus", "expression"),
+  boxplot: without(
+    "score",
+    "prediction",
+    "tooltip",
+    "expression",
+    "controlLimit",
+  ),
+  histogram: without(
+    "score",
+    "prediction",
+    "focus",
+    "expression",
+    "controlLimit",
+  ),
+  pie: without(
+    "axes",
+    "score",
+    "prediction",
+    "focus",
+    "expression",
+    "controlLimit",
+  ),
+  gantt: without("score", "prediction", "expression", "controlLimit"),
+  treemap: without(
+    "axes",
+    "score",
+    "prediction",
+    "focus",
+    "expression",
+    "controlLimit",
+  ),
   heatmap: without(
     "legend",
     "shape",
@@ -430,6 +543,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "prediction",
     "focus",
     "expression",
+    "controlLimit",
   ),
   candle: without(
     "legend",
@@ -438,6 +552,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "prediction",
     "value",
     "expression",
+    "controlLimit",
   ),
   waterfall: without(
     "legend",
@@ -446,6 +561,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "prediction",
     "focus",
     "expression",
+    "controlLimit",
   ),
   funnel: without(
     "axes",
@@ -454,6 +570,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "prediction",
     "focus",
     "expression",
+    "controlLimit",
   ),
   radar: without(
     "axes",
@@ -462,6 +579,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "prediction",
     "focus",
     "expression",
+    "controlLimit",
   ),
   sankey: without(
     "axes",
@@ -470,6 +588,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "prediction",
     "focus",
     "expression",
+    "controlLimit",
   ),
 };
 
@@ -494,4 +613,41 @@ export function supportsOption(
   section: OptionSection,
 ) {
   return type !== undefined && OPTION_SUPPORT[type].includes(section);
+}
+
+/** 축마다 쓸 수 있는 선 종류와 구간별(multi)을 쓸 수 있는지 */
+export type LimitSupport = {
+  left: readonly LimitKind[];
+  bottom: readonly LimitKind[];
+  /** 구간별 선. left 축에서만 쓴다. */
+  multi: boolean;
+};
+
+/**
+ * 그린 차트에서 관리선을 어떻게 쓸 수 있는지. null이면 구역을 끈다 (메뉴·도구 줄 버튼을 쓰지 않는다).
+ * 서버 controlLimitSupport와 같은 규칙이다 (chart-options.test.ts가 확인한다).
+ * xType은 x 컬럼의 타입이다. 모르면 숫자로 본다.
+ */
+export function controlLimitSupport(
+  spec: Pick<ChartSpec, "chartType" | "subType">,
+  xType?: ColumnType,
+): LimitSupport | null {
+  if (!supportsOption(spec.chartType, "controlLimit")) return null;
+  if (spec.chartType === "bar") {
+    const sub = subTypeOf(spec);
+    return {
+      left:
+        sub === "stack" || sub === "stack100"
+          ? ["reference"]
+          : ["reference", "column"],
+      bottom: [],
+      multi: false,
+    };
+  }
+  if (isDistributionLine(spec)) return null;
+  return {
+    left: LIMIT_KINDS,
+    bottom: xType === "datetime" ? ["reference"] : LIMIT_KINDS,
+    multi: true,
+  };
 }

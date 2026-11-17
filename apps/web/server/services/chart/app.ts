@@ -21,6 +21,7 @@ import {
 import { chartRestore } from "../../charts/item-restore";
 import { itemRowsScope, scopeSelected } from "../../charts/item-scope";
 import { pan, zoomIn, zoomOut } from "../../charts/item-view";
+import { controlLimitError } from "../../charts/validate-spec";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
@@ -357,6 +358,13 @@ export const chartApp = createServiceApp()
               },
             }
           : body;
+    // 관리선은 컬럼을 쓰므로 draw 때 받은 스키마로 확인한다.
+    const limitError = controlLimitError(
+      target.chart.spec,
+      changes.options?.controlLimit?.lines,
+      target.chart.columns ?? [],
+    );
+    if (limitError) return apiError(c, 400, limitError);
     item.props = applyItemChanges(
       item.props,
       changes,
@@ -379,6 +387,12 @@ export const chartApp = createServiceApp()
     if ("error" in target) return reject(c, target);
     const { chart, items } = target;
     const common = c.req.valid("json").common;
+    const limitError = controlLimitError(
+      chart.spec,
+      common.options?.controlLimit?.lines,
+      chart.columns ?? [],
+    );
+    if (limitError) return apiError(c, 400, limitError);
     chart.spec = {
       ...chart.spec,
       common: {

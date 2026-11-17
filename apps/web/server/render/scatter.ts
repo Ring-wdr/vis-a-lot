@@ -17,6 +17,7 @@ import {
   timeFormat,
   valueScale,
 } from "./axis-style";
+import type { LimitsMeta, ResolvedLimit } from "./control-limit";
 import { drawTitle, labelWidth } from "./frame";
 import {
   drawLegendAround,
@@ -93,6 +94,8 @@ export type ScatterMeta = {
   legend?: LegendMeta;
   /** score 구역을 켰을 때 계산한 점수 (그린 점 기준) */
   scores?: ScoreResult[];
+  /** 그린 관리선과 이탈 수. 그린 선이 없으면 없다. */
+  limits?: LimitsMeta;
 };
 
 export type ScatterInput = {
@@ -127,6 +130,8 @@ export type ScatterInput = {
   /** 축 제목(axes.title.visible이고 글자를 비웠을 때)으로 쓰는 컬럼 이름. 없으면 x, y */
   xTitle?: string;
   yTitle?: string;
+  /** 값을 채운 관리선 (job-manager가 만든다). 없으면 그리지 않는다. */
+  limits?: readonly ResolvedLimit[];
 };
 
 export type ItemView = { x: [number, number]; y: [number, number] };

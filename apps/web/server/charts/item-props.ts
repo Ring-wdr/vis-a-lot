@@ -13,7 +13,11 @@ export type ItemPropChanges = {
   /** legend 값별 색. 값이 null이면 그 값만 되돌린다. */
   legendColors?: Record<string, string | null>;
   legendPosition?: LegendPosition | null;
-  /** 차트 속성 전체. 차트가 쓰지 않는 구역은 버린다. */
+  /**
+   * 차트 속성 전체. 차트가 쓰지 않는 구역은 버린다.
+   * 관리선 목록(controlLimit.lines)은 배열이라 적으면 공통 목록을 통째로 바꾼다 (빈 목록이면 그 item만 선이 없다).
+   * 적지 않으면 공통 목록을 따른다. 목록의 컬럼은 부르는 쪽이 controlLimitError로 먼저 확인한다.
+   */
   options?: ChartOptionsPatch | null;
   /** legend 체크박스: 값 하나를 보이거나 숨긴다. */
   legendVisible?: { value: string; visible: boolean };

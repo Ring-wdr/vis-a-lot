@@ -855,6 +855,9 @@
                 "maxLength": 120
               }
             }
+          },
+          "controlLimit": {
+            "$ref": "#/components/schemas/ControlLimitOptions"
           }
         }
       },
@@ -1028,6 +1031,232 @@
           "hexagon",
           "star"
         ]
+      },
+      "ControlLimitOptions": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LimitLine"
+            },
+            "maxItems": 10
+          },
+          "highlightOut": {
+            "type": "boolean"
+          },
+          "outColor": {
+            "$ref": "#/components/schemas/HexColor"
+          },
+          "area": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "transparency": {
+                "type": "number"
+              },
+              "side": {
+                "type": "string",
+                "enum": ["in", "out"]
+              }
+            }
+          },
+          "text": {
+            "type": "object",
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/HexColor"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [""]
+                  }
+                ]
+              }
+            }
+          },
+          "fitAxis": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LimitLine": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "axis": {
+                "$ref": "#/components/schemas/LimitAxis"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "width": {
+                "type": "number"
+              },
+              "style": {
+                "type": "string",
+                "enum": ["solid", "dash", "dot"]
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["reference"]
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 40
+                  }
+                ]
+              },
+              "type": {
+                "$ref": "#/components/schemas/LimitType"
+              }
+            },
+            "required": [
+              "name",
+              "axis",
+              "color",
+              "width",
+              "style",
+              "kind",
+              "value",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "axis": {
+                "$ref": "#/components/schemas/LimitAxis"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "width": {
+                "type": "number"
+              },
+              "style": {
+                "type": "string",
+                "enum": ["solid", "dash", "dot"]
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["column"]
+              },
+              "column": {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              "fn": {
+                "type": "string",
+                "enum": ["avg", "max", "median", "min"]
+              },
+              "type": {
+                "$ref": "#/components/schemas/LimitType"
+              },
+              "multi": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "axis",
+              "color",
+              "width",
+              "style",
+              "kind",
+              "column",
+              "fn",
+              "type",
+              "multi"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "axis": {
+                "$ref": "#/components/schemas/LimitAxis"
+              },
+              "color": {
+                "$ref": "#/components/schemas/HexColor"
+              },
+              "width": {
+                "type": "number"
+              },
+              "style": {
+                "type": "string",
+                "enum": ["solid", "dash", "dot"]
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["band"]
+              },
+              "column": {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              "column2": {
+                "$ref": "#/components/schemas/ColumnName"
+              },
+              "multi": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "axis",
+              "color",
+              "width",
+              "style",
+              "kind",
+              "column",
+              "column2",
+              "multi"
+            ]
+          }
+        ]
+      },
+      "LimitAxis": {
+        "type": "string",
+        "enum": ["left", "bottom"]
+      },
+      "LimitType": {
+        "type": "string",
+        "enum": ["none", "usl", "lsl"]
+      },
+      "ColumnName": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 63,
+        "example": "factory"
       },
       "GridRequest": {
         "type": "object",
@@ -1481,12 +1710,6 @@
           "pie3d",
           "sunburst"
         ]
-      },
-      "ColumnName": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 63,
-        "example": "factory"
       },
       "AggFn": {
         "type": "string",
@@ -2295,6 +2518,9 @@
           },
           "legend": {
             "$ref": "#/components/schemas/LegendMeta"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsMeta"
           }
         },
         "required": ["chartType", "plot", "x", "y", "points", "total"]
@@ -2494,6 +2720,77 @@
         },
         "required": ["title", "values", "colors", "box", "entries", "hidden"]
       },
+      "LimitsMeta": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "axis": {
+                  "$ref": "#/components/schemas/LimitAxis"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/LimitType"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "value2": {
+                  "type": "number"
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": ["name", "axis", "type"]
+            }
+          },
+          "out": {
+            "type": "number"
+          }
+        },
+        "required": ["lines", "out"]
+      },
       "CategoryMeta": {
         "type": "object",
         "properties": {
@@ -2607,6 +2904,9 @@
           },
           "legend": {
             "$ref": "#/components/schemas/LegendMeta"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsMeta"
           }
         },
         "required": [

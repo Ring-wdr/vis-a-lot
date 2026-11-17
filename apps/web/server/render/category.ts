@@ -10,6 +10,7 @@ import { compileExpression } from "./analytics/expression";
 import { focusMatcher } from "./analytics/focus";
 import { keepsValue, outlierBounds } from "./analytics/outlier";
 import { drawAxisTitles, drawYAxis, valueScale } from "./axis-style";
+import type { LimitsMeta, ResolvedLimit } from "./control-limit";
 import {
   drawBaseline,
   drawCategoryLabels,
@@ -81,6 +82,8 @@ export type CategoryMeta = {
   /** 선택 영역 안에 든 막대/상자 수. 선택이 없으면 없다. */
   selected?: number;
   legend?: LegendMeta;
+  /** 그린 관리선과 이탈 막대 수 (bar만). 그린 선이 없으면 없다. */
+  limits?: LimitsMeta;
 };
 
 /** bar 누적 방식: stack은 값 그대로, stack100은 범주 합계 대비 % */
@@ -111,6 +114,8 @@ export type CategoryInput = {
   compact?: boolean;
   /** 축 제목(axes.*.title.visible)에 쓰는 이름. 보통 x·y 컬럼 라벨 */
   axisTitles?: { x?: string; y?: string };
+  /** 값을 채운 관리선 (bar만, job-manager가 만든다). 없으면 그리지 않는다. */
+  limits?: readonly ResolvedLimit[];
 };
 
 type Ctx = OffscreenCanvasRenderingContext2D;

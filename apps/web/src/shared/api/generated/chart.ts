@@ -3011,6 +3011,7 @@ export type components = {
         x?: string;
         y?: string;
       };
+      controlLimit?: components["schemas"]["ControlLimitOptions"];
     };
     XAxisOptions: components["schemas"]["AxisOptions"] & {
       categorySort?: components["schemas"]["OrderSort"];
@@ -3065,6 +3066,71 @@ export type components = {
       | "rightTriangle"
       | "hexagon"
       | "star";
+    ControlLimitOptions: {
+      lines?: components["schemas"]["LimitLine"][];
+      highlightOut?: boolean;
+      outColor?: components["schemas"]["HexColor"];
+      area?: {
+        visible?: boolean;
+        color?: components["schemas"]["HexColor"];
+        transparency?: number;
+        /** @enum {string} */
+        side?: "in" | "out";
+      };
+      text?: {
+        visible?: boolean;
+        fontSize?: number;
+        color?: components["schemas"]["HexColor"] | "";
+      };
+      fitAxis?: boolean;
+    };
+    LimitLine:
+      | {
+          name: string;
+          axis: components["schemas"]["LimitAxis"];
+          color: components["schemas"]["HexColor"];
+          width: number;
+          /** @enum {string} */
+          style: "solid" | "dash" | "dot";
+          /** @enum {string} */
+          kind: "reference";
+          value: number | string;
+          type: components["schemas"]["LimitType"];
+        }
+      | {
+          name: string;
+          axis: components["schemas"]["LimitAxis"];
+          color: components["schemas"]["HexColor"];
+          width: number;
+          /** @enum {string} */
+          style: "solid" | "dash" | "dot";
+          /** @enum {string} */
+          kind: "column";
+          column: components["schemas"]["ColumnName"];
+          /** @enum {string} */
+          fn: "avg" | "max" | "median" | "min";
+          type: components["schemas"]["LimitType"];
+          multi: boolean;
+        }
+      | {
+          name: string;
+          axis: components["schemas"]["LimitAxis"];
+          color: components["schemas"]["HexColor"];
+          width: number;
+          /** @enum {string} */
+          style: "solid" | "dash" | "dot";
+          /** @enum {string} */
+          kind: "band";
+          column: components["schemas"]["ColumnName"];
+          column2: components["schemas"]["ColumnName"];
+          multi: boolean;
+        };
+    /** @enum {string} */
+    LimitAxis: "left" | "bottom";
+    /** @enum {string} */
+    LimitType: "none" | "usl" | "lsl";
+    /** @example factory */
+    ColumnName: string;
     GridRequest: {
       grid: components["schemas"]["Grid"];
       itemSize: components["schemas"]["ItemSize"];
@@ -3196,8 +3262,6 @@ export type components = {
       | "doughnut"
       | "pie3d"
       | "sunburst";
-    /** @example factory */
-    ColumnName: string;
     /** @enum {string} */
     AggFn:
       | "avg"
@@ -3451,6 +3515,7 @@ export type components = {
       total: number;
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
+      limits?: components["schemas"]["LimitsMeta"];
     };
     AxisMeta: {
       /** @enum {string} */
@@ -3507,6 +3572,17 @@ export type components = {
         };
       };
     };
+    LimitsMeta: {
+      lines: {
+        name: string;
+        axis: components["schemas"]["LimitAxis"];
+        type: components["schemas"]["LimitType"];
+        value?: number;
+        value2?: number;
+        steps?: ([number, number, number] | [number, number, number, number])[];
+      }[];
+      out: number;
+    };
     CategoryMeta: {
       /** @enum {string} */
       chartType: "bar" | "boxplot";
@@ -3531,6 +3607,7 @@ export type components = {
       segments?: ([number, number] | null)[][];
       selected?: number;
       legend?: components["schemas"]["LegendMeta"];
+      limits?: components["schemas"]["LimitsMeta"];
     };
     BoxSummary: {
       n: number;

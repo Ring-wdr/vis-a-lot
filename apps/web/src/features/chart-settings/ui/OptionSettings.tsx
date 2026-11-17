@@ -10,6 +10,7 @@ import {
   type LucideIcon,
   Maximize2,
   MessageSquareText,
+  Minus,
   Paintbrush,
   Shapes,
   Sigma,
@@ -47,6 +48,7 @@ export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
   focus: Crosshair,
   tooltip: MessageSquareText,
   expression: Calculator,
+  controlLimit: Minus,
 };
 
 /**
