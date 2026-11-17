@@ -1,0 +1,146 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 22:42+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#. 칸 연결로 걸린 범위: 방식(강조)과 범위 안 행 수
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "{rows, plural, other {강조 #행}}"
+msgstr "{rows, plural, one {Highlight # row} other {Highlight # rows}}"
+
+#. 칸 연결로 걸린 범위: 방식(거르기)과 범위 안 행 수
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "{rows, plural, other {거르기 #행}}"
+msgstr "{rows, plural, one {Filter # row} other {Filter # rows}}"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgctxt "link mode"
+msgid "강조"
+msgstr "Highlight"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "강조는 scatter·line(분포 제외) 차트에서만 쓸 수 있습니다."
+msgstr "Highlight works only on scatter and line charts (not distributions)."
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgctxt "link mode"
+msgid "거르기"
+msgstr "Filter"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgctxt "link column placeholder"
+msgid "고르기"
+msgstr "Choose"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "데이터가 달라, 따를 칸에서 고른 행의 값과 이 칸의 컬럼 값이 같은 행을 따릅니다."
+msgstr "The data differ, so this panel follows rows whose column value matches the selected rows in the followed panel."
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "두 칸의 데이터가 달라 연결 컬럼을 골라야 범위가 걸립니다."
+msgstr "The two panels use different data. Choose link columns to apply the range."
+
+#. list: 이 칸을 따르는 칸 번호들 (예: 2, 3)
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "따르는 칸: {list}"
+msgstr "Followed by panels: {list}"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "따를 수 있는 다른 칸이 없습니다. 칸을 더해 주세요."
+msgstr "No other panel to follow. Add a panel."
+
+#. 왼쪽 패널 필드 이름: 이 칸이 선택을 따라갈 다른 칸
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgctxt "panel link field"
+msgid "따를 칸"
+msgstr "Follows"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "따를 칸 컬럼"
+msgstr "Followed column"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "따를 칸: 칸 {follow}"
+msgstr "Follows: panel {follow}"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸에서 영역을 선택하면 범위가 걸립니다."
+msgstr "Select an area in the followed panel to apply a range."
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸을 그리면 범위가 걸립니다."
+msgstr "The range applies once the followed panel is drawn."
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸을 그리지 못해 범위가 풀렸습니다. 따를 칸을 다시 그리면 그 선택으로 걸립니다."
+msgstr "The followed panel failed to draw, so the range was cleared. Draw it again to apply its selection."
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "따를 칸의 차트는 선택을 행으로 바꿀 수 없어 범위가 걸리지 않습니다."
+msgstr "The followed chart's selection can't map to rows, so no range applies."
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "모든 행을 그리고 범위 밖 점을 흐리게 합니다."
+msgstr "Draws all rows and dims points outside the range."
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgctxt "link mode label"
+msgid "방식"
+msgstr "Mode"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "범위 안의 행만으로 그립니다."
+msgstr "Draws only the rows in the range."
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgctxt "no linked panel"
+msgid "없음"
+msgstr "None"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "연결 컬럼"
+msgstr "Link columns"
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "연결 풀기"
+msgstr "Unlink"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "이 차트의 선택은 행으로 바꿀 수 없어 따를 수 없습니다."
+msgstr "This chart's selection can't map to rows, so it can't be followed."
+
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "이 칸 컬럼"
+msgstr "This panel's column"
+
+#: src/features/link-panel/ui/LinkPopover.tsx
+msgid "지금 걸린 범위: {summary}"
+msgstr "Current range: {summary}"
+
+#. follow: 따를 칸의 번호
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "칸 {follow}"
+msgstr "Panel {follow}"
+
+#. number: 따를 칸 목록의 칸 번호
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "칸 {number}"
+msgstr "Panel {number}"
+
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "칸 {number} 연결"
+msgstr "Panel {number} link"
+
+#. number: 연결을 고치는 칸의 번호
+#: src/features/link-panel/ui/LinkSettings.tsx
+msgid "칸 {number}의 따를 칸"
+msgstr "Panel {number} follows"
+
+#. 연결 버튼 title: 연결이 없을 때
+#: src/features/link-panel/ui/PanelLinkButton.tsx
+msgid "칸 연결"
+msgstr "Panel link"

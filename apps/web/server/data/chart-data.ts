@@ -30,6 +30,8 @@ export type ChartData = {
   ids: Float64Array;
   /** legend 값 목록(전체 데이터 기준)과 행별 legend 인덱스 */
   legend?: LegendData;
+  /** 강조 범위(highlight)를 주면 행마다 범위 안이면 1, 밖이면 0 */
+  highlight?: Uint8Array;
 };
 
 export type LegendData = { values: string[]; index: Uint8Array };
@@ -42,6 +44,8 @@ export type ChartDataParams = {
   splitBy: string[];
   legend: string | null;
   filters?: ChartFilter[];
+  /** 칸 연결 강조: 거르지 않고 행마다 이 조건에 맞는지(1·0)를 함께 받는다. */
+  highlight?: ChartFilter;
 };
 
 /** ctid → 숫자. 테이블을 다시 만들기 전까지 행을 가리키는 값으로 안정적이다 (Postgres 계열 전용). */
@@ -128,7 +132,7 @@ const joined = (value: Sql) => sql`string_agg((${value})::text, ',')`;
 export async function queryChartData(
   db: Db,
   schema: DatasetSchema,
-  { table, x, y, splitBy, legend, filters }: ChartDataParams,
+  { table, x, y, splitBy, legend, filters, highlight }: ChartDataParams,
 ): Promise<ChartData> {
   const xCol = columnOf(schema, x, "numeric", "datetime");
   const yCol = columnOf(schema, y, "numeric", "datetime");
@@ -140,6 +144,10 @@ export async function queryChartData(
   const legendIndex = legend
     ? sql`coalesce(array_position(array(select jsonb_array_elements_text(${JSON.stringify(legendValues)}::jsonb)), ${textSql(columnOf(schema, legend, "categorical"))}) - 1, 0)`
     : null;
+  // 강조 범위: 조건이 null(비교할 값 없음)이어도 0이 되게 case로 받는다.
+  const highlightFlag = highlight
+    ? sql`(case when ${allOf(filterSql(schema, [highlight]))} then 1 else 0 end)`
+    : null;
   const select = [
     ...splitCols.map(textSql),
     sql`count(*)::int`,
@@ -147,6 +155,7 @@ export async function queryChartData(
     joined(sql`${numericSql(yCol)}::float8`),
     joined(ROW_ID_EXPR),
     ...(legendIndex ? [joined(legendIndex)] : []),
+    ...(highlightFlag ? [joined(highlightFlag)] : []),
   ];
   const keys = list(splitCols.map((c) => ident(c.name)));
   const grouping =
@@ -168,6 +177,9 @@ export async function queryChartData(
   const ids = new Float64Array(n);
   const legendIndexes = new Uint8Array(legend ? n : 0);
   const legendScratch = legend ? new Float64Array(n) : undefined;
+  const highlightScratch = highlight ? new Float64Array(n) : undefined;
+  // 강조 열은 legend 열 뒤에 온다.
+  const highlightAt = k + 4 + (legend ? 1 : 0);
   const groups: SplitGroup[] = [];
   let at = 0;
   for (const row of rows) {
@@ -178,6 +190,8 @@ export async function queryChartData(
     parseFloats(row[k + 2] as string, ys, at);
     parseFloats(row[k + 3] as string, ids, at);
     if (legendScratch) parseFloats(row[k + 4] as string, legendScratch, at);
+    if (highlightScratch)
+      parseFloats(row[highlightAt] as string, highlightScratch, at);
     groups.push({
       values: row.slice(0, k) as string[],
       start: at,
@@ -186,6 +200,7 @@ export async function queryChartData(
     at += count;
   }
   if (legendScratch) legendIndexes.set(legendScratch);
+  const highlightFlags = highlightScratch && Uint8Array.from(highlightScratch);
   // 조건에 맞는 행이 없어도 split 없는 차트는 빈 item 하나를 그린다.
   if (groups.length === 0 && k === 0)
     groups.push({ values: [], start: 0, end: 0 });
@@ -195,5 +210,6 @@ export async function queryChartData(
     ys,
     ids,
     legend: legend ? { values: legendValues, index: legendIndexes } : undefined,
+    ...(highlightFlags ? { highlight: highlightFlags } : {}),
   };
 }

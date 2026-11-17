@@ -1,7 +1,7 @@
 "use client";
 
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { CHART_LABELS } from "@/entities/chart/lib/title";
 import { fitControlLimit } from "@/entities/chart/model/control-limit";
@@ -106,9 +106,12 @@ function FitDraftToSchema({
  */
 export function ControlPanel({
   split = true,
+  footer,
 }: {
   /** grid·split by를 보인다. analytics 칸은 차트 한 장이라 감춘다. */
   split?: boolean;
+  /** 맨 아래에 더 둘 필드 (analytics 칸의 `따를 칸`) */
+  footer?: ReactNode;
 } = {}) {
   // 통계 함수·축·하위 차트 이름(aggLabel 등)도 지금 언어로 읽으므로 useLingui가 언어 변경을 구독한다.
   const { t } = useLingui();
@@ -272,6 +275,7 @@ export function ControlPanel({
         placeholder={t`x, y 외 컬럼 추가…`}
         onChange={(tooltip) => updateDraft({ tooltip })}
       />
+      {footer}
     </fieldset>
   );
 }

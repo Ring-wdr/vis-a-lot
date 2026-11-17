@@ -12,6 +12,7 @@ import type {
   AnalyticsDrawn,
   AnalyticsPanelLink,
   ChartDefaults,
+  ChartLinkRequest,
   ChartSpec,
   SaveAnalyticsBoardRequest,
 } from "@/shared/api/types";
@@ -32,6 +33,11 @@ import {
   removePanel as removeLeaf,
   setSplitRatios,
 } from "../lib/layout-tree";
+import {
+  canFollow,
+  effectiveLinkMode,
+  PANEL_ITEM_KEY,
+} from "../lib/panel-link";
 import {
   createWorkspaceStore,
   defaultSpec,
@@ -68,8 +74,15 @@ export type BoardState = {
   busy: Record<string, true>;
   /** 보드의 모드. 모든 칸에 적용하고, 칸의 차트가 지원하지 않으면 그 칸만 기본 모드다. */
   mode: Mode;
-  /** 칸 연결 (칸 id → 따를 칸). 둘째 PR에서 쓴다. 저장 모양만 지금 맞춰 둔다. */
+  /**
+   * 칸 연결 (따르는 칸 id → 따를 칸과 방식·연결 컬럼). 한 칸은 따를 칸을 하나만 고르고, 한 칸을 여러 칸이 따를 수 있다.
+   * 칸이 지워지면 그 칸의 연결과 그 칸을 따르던 연결을 함께 뺀다. 범위를 걸고 푸는 요청은 연결 전파(features/link-panel)가 한다.
+   */
   links: Record<string, AnalyticsPanelLink>;
+  /** 연결이 서버에서 거절된 사유 (따르는 칸 id → 사유). 연결을 바꾸거나 다시 걸리면 지운다. */
+  linkErrors: Record<string, string>;
+  /** 연결 버튼에 커서를 올린 칸. 그 칸과 연결된 상대 칸의 테두리를 강조한다. */
+  linkHover: string | null;
   /** 서버에 저장한 보드를 받아 채웠는지 (없어서 빈 보드로 시작한 것도 포함). 세션 동안 다시 받지 않는다. */
   hydrated: boolean;
 
@@ -100,8 +113,12 @@ export type BoardState = {
   setPanelBusy: (panelId: string, busy: boolean) => void;
   /** 보드의 모드를 바꾸고 모든 칸에 적용한다 (그 칸의 차트가 지원하지 않으면 기본 모드). */
   setMode: (mode: Mode) => void;
-  /** 칸 연결을 걸거나(link) 푼다(null). 자기 자신이나 없는 칸은 따를 수 없다. */
+  /** 칸 연결을 걸거나(link) 푼다(null). 자기 자신이나 없는 칸은 따를 수 없다. 같은 연결이면 바꾸지 않는다. */
   setLink: (panelId: string, link: AnalyticsPanelLink | null) => void;
+  /** 연결이 거절된 사유를 남기거나(message) 지운다(null). */
+  setLinkError: (panelId: string, message: string | null) => void;
+  /** 연결 버튼에 커서를 올리거나(panelId) 내린다(null). */
+  setLinkHover: (panelId: string | null) => void;
   /**
    * 서버에서 받은 보드로 채운다. null이면(저장한 보드가 없음) 지금 빈 보드 그대로 둔다.
    * 이미 채웠으면 아무것도 하지 않고 빈 배열이다. 그린 적이 있는 칸을 돌려준다: 화면이 칸 크기를 안 뒤
@@ -135,6 +152,73 @@ export const selectIsMaximized = (panelId: string) => (s: BoardState) =>
   s.maximizedPanelId === panelId;
 export const selectPanelBusy = (panelId: string) => (s: BoardState) =>
   s.busy[panelId] === true;
+/** 이 칸이 따르는 칸의 번호. 따르지 않으면 0 */
+export const selectFollowNumber = (panelId: string) => (s: BoardState) => {
+  const follow = s.links[panelId]?.follow;
+  return follow ? s.panelIds.indexOf(follow) + 1 : 0;
+};
+/** 이 칸을 따르는 칸들의 번호 (작은 순). 새 배열이므로 useShallow로 감싼다. */
+export const selectFollowerNumbers = (panelId: string) => (s: BoardState) =>
+  s.panelIds.flatMap((id, i) =>
+    s.links[id]?.follow === panelId ? [i + 1] : [],
+  );
+/** 연결 버튼에 커서를 올린 칸과 이 칸이 연결돼 있는지 (테두리 강조) */
+export const selectLinkPeer = (panelId: string) => (s: BoardState) => {
+  const hover = s.linkHover;
+  if (!hover || hover === panelId) return false;
+  return (
+    s.links[hover]?.follow === panelId || s.links[panelId]?.follow === hover
+  );
+};
+
+/** 연결이 걸리지 않는 까닭: 따를 칸이 그린 차트가 없음, 따를 칸 차트의 선택을 행으로 바꿀 수 없음, 연결 컬럼을 고르지 않음 */
+export type LinkIssue =
+  | "sourceNotDrawn"
+  | "sourceCannotFollow"
+  | "needsColumns";
+
+type LinkTarget = Pick<ChartSpec, "dataset" | "chartType" | "subType">;
+
+/**
+ * 이 칸의 연결로 보낼 요청 (PUT …/link, POST /charts의 link). target은 이 칸이 그린(PUT) 또는 그릴(POST) 설정이다.
+ * 연결이 없으면 request가 null이다. 걸 수 없으면(issue) 범위를 지우도록 null을 돌려준다.
+ * 따를 칸의 범위는 그 칸이 그린 차트에서 정하므로 따를 칸 쪽은 그린 설정(current)을 본다.
+ */
+export function linkRequestOf(
+  s: BoardState,
+  panelId: string,
+  target: LinkTarget,
+): { request: ChartLinkRequest | null; issue?: LinkIssue } {
+  const link = s.links[panelId];
+  if (!link) return { request: null };
+  const source = s.panels[link.follow]?.getState().current;
+  if (!source) return { request: null, issue: "sourceNotDrawn" };
+  if (!canFollow(source.spec))
+    return { request: null, issue: "sourceCannotFollow" };
+  const same = source.spec.dataset === target.dataset;
+  if (!same && !link.on) return { request: null, issue: "needsColumns" };
+  return {
+    request: {
+      source: { chartId: source.chartId, itemKey: PANEL_ITEM_KEY },
+      mode: effectiveLinkMode(link.mode, target),
+      ...(!same && link.on ? { on: link.on } : {}),
+    },
+  };
+}
+
+/** 칸을 새로 그릴 때 함께 걸 연결. 따를 칸이 그리는 중이면 걸지 않는다(끝난 뒤 연결 전파가 건다). */
+function drawLinkRequest(s: BoardState, panelId: string, spec: ChartSpec) {
+  const follow = s.links[panelId]?.follow;
+  if (!follow || s.busy[follow] || s.panels[follow]?.getState().opening)
+    return undefined;
+  return linkRequestOf(s, panelId, spec).request ?? undefined;
+}
+
+const sameLink = (a: AnalyticsPanelLink, b: AnalyticsPanelLink) =>
+  a.follow === b.follow &&
+  a.mode === b.mode &&
+  a.on?.source === b.on?.source &&
+  a.on?.target === b.on?.target;
 
 /**
  * 자동 저장에 보낼 모양 (PUT /analytics/board). 칸 store의 지금 draft와 그린 차트 id를 읽는다.
@@ -178,33 +262,51 @@ function withoutLinks(
   return changed ? next : links;
 }
 
+/** 남은 연결의 거절 사유만 둔다. */
+function errorsOf(
+  errors: Record<string, string>,
+  links: Record<string, AnalyticsPanelLink>,
+) {
+  const ids = Object.keys(errors);
+  if (ids.every((id) => links[id])) return errors;
+  return Object.fromEntries(Object.entries(errors).filter(([id]) => links[id]));
+}
+
 /** 서버 기본값(GET /defaults)으로 빈 칸 하나인 보드를 만든다. */
 export function createBoardStore(defaults: ChartDefaults) {
   const base = defaultSpec(defaults);
-  const panelStore = (id: string, draft: Partial<ChartSpec>, mode: Mode) => {
-    const store = createWorkspaceStore({
-      kind: "panel",
-      id,
-      draft: { ...base, ...draft },
-    });
-    if (mode !== "normal") store.setState({ mode });
-    return store;
-  };
-  const emptyBoard = (mode: Mode) => {
-    const id = crypto.randomUUID();
-    return {
-      layout: leaf(id) as LayoutNode,
-      panelIds: [id],
-      panels: { [id]: panelStore(id, {}, mode) },
-      activePanelId: id,
-      maximizedPanelId: null,
-      busy: {},
-      mode,
-      links: {},
-    };
-  };
 
   return createStore<BoardState>((set, get) => {
+    const panelStore = (id: string, draft: Partial<ChartSpec>, mode: Mode) => {
+      const store = createWorkspaceStore({
+        kind: "panel",
+        id,
+        draft: { ...base, ...draft },
+        // 칸을 새로 그릴 때 따를 칸의 지금 범위를 함께 건다.
+        drawLink: {
+          request: (spec) => drawLinkRequest(get(), id, spec),
+          settled: (error) => get().setLinkError(id, error),
+        },
+      });
+      if (mode !== "normal") store.setState({ mode });
+      return store;
+    };
+    const emptyBoard = (mode: Mode) => {
+      const id = crypto.randomUUID();
+      return {
+        layout: leaf(id) as LayoutNode,
+        panelIds: [id],
+        panels: { [id]: panelStore(id, {}, mode) },
+        activePanelId: id,
+        maximizedPanelId: null,
+        busy: {},
+        mode,
+        links: {},
+        linkErrors: {},
+        linkHover: null,
+      };
+    };
+
     /** 새 레이아웃과 칸 목록. 칸 번호 순서는 layout에서 다시 읽는다. */
     const relayout = (layout: LayoutNode) => ({
       layout,
@@ -227,6 +329,7 @@ export function createBoardStore(defaults: ChartDefaults) {
         delete busy[id];
       }
       const next = relayout(layout);
+      const links = withoutLinks(s.links, gone);
       const activePanelId = gone.has(s.activePanelId)
         ? next.panelIds[
             Math.min(
@@ -240,7 +343,9 @@ export function createBoardStore(defaults: ChartDefaults) {
         panels,
         busy,
         activePanelId,
-        links: withoutLinks(s.links, gone),
+        links,
+        linkErrors: errorsOf(s.linkErrors, links),
+        linkHover: s.linkHover && gone.has(s.linkHover) ? null : s.linkHover,
       };
     };
 
@@ -340,14 +445,32 @@ export function createBoardStore(defaults: ChartDefaults) {
       setLink: (panelId, link) =>
         set((s) => {
           if (!s.panels[panelId]) return s;
+          const { [panelId]: _error, ...linkErrors } = s.linkErrors;
           if (link === null) {
             if (!s.links[panelId]) return s;
             const { [panelId]: _removed, ...rest } = s.links;
-            return { links: rest };
+            return { links: rest, linkErrors };
           }
           if (link.follow === panelId || !s.panels[link.follow]) return s;
-          return { links: { ...s.links, [panelId]: link } };
+          const prev = s.links[panelId];
+          if (prev && sameLink(prev, link)) return s;
+          return { links: { ...s.links, [panelId]: link }, linkErrors };
         }),
+
+      setLinkError: (panelId, message) =>
+        set((s) => {
+          if ((s.linkErrors[panelId] ?? null) === message) return s;
+          if (message === null) {
+            const { [panelId]: _done, ...rest } = s.linkErrors;
+            return { linkErrors: rest };
+          }
+          return s.links[panelId]
+            ? { linkErrors: { ...s.linkErrors, [panelId]: message } }
+            : s;
+        }),
+
+      setLinkHover: (panelId) =>
+        set((s) => (s.linkHover === panelId ? s : { linkHover: panelId })),
 
       hydrate: (board) => {
         if (get().hydrated) return [];
@@ -362,7 +485,9 @@ export function createBoardStore(defaults: ChartDefaults) {
         for (const panel of board.panels) {
           const store = panelStore(panel.id, panel.draft, s.mode);
           panels[panel.id] = store;
-          if (panel.link) links[panel.id] = panel.link;
+          // 지운 칸을 따르던 연결은 버린다 (저장할 때 검증하지만 예전 보드일 수 있다).
+          if (panel.link && panel.link.follow !== panel.id)
+            links[panel.id] = panel.link;
           if (panel.drawn)
             reopen.push({ panelId: panel.id, store, drawn: panel.drawn });
         }
@@ -370,10 +495,14 @@ export function createBoardStore(defaults: ChartDefaults) {
         for (const store of Object.values(s.panels)) cancelPanel(store);
         const layout = normalizeLayout(board.layout);
         const ids = panelIdsOf(layout);
+        for (const [id, link] of Object.entries(links))
+          if (!panels[link.follow]) delete links[id];
         set({
           ...relayout(layout),
           panels,
           links,
+          linkErrors: {},
+          linkHover: null,
           busy: {},
           activePanelId: panels[board.activePanelId]
             ? board.activePanelId

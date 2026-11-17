@@ -55,7 +55,8 @@ export function useAutoResize(
     mutationFn: ({ chartId, size, keys }: ResizeRequest) =>
       api.resizeItems(chartId, size, keys),
     onSuccess: ({ jobId }, { keys }) => {
-      for (const key of keys) setItemJob(key, jobId);
+      // 크기만 바뀌므로 그린 행의 범위는 그대로다.
+      for (const key of keys) setItemJob(key, jobId, { look: true });
     },
     // 실패하면 잠시 뒤 같은 요청을 몇 번 더 보낸다. 그래도 실패하면 요청이 끝나 아래 effect가 다시 확인한다.
     retry: (count, err) => {

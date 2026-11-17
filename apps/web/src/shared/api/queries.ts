@@ -13,6 +13,7 @@ import {
 import { linguiFor, useLocale } from "@vis-a-lot/shared/lib/i18n";
 import { useMemo } from "react";
 import {
+  type ChartLinkRequest,
   type ColumnName,
   type CsvOptions,
   type DatasetId,
@@ -606,5 +607,24 @@ export function useClearBoard() {
     mutationKey: ["analytics-board", "clear"],
     mutationFn: api.clearBoard,
     onSuccess: () => client.removeQueries({ queryKey: queryKeys.board }),
+  });
+}
+
+// ── 칸 연결 ───────────────────────────────────────────────────
+
+/**
+ * 칸 연결 범위 걸기·풀기 (PUT /charts/{chartId}/link). 결과의 jobId는 따르는 칸을 다시 그리는 job이고,
+ * 범위가 그대로면 null이다. 409(그리는 중)·404·422는 status를 담은 ApiRequestError로 끝난다.
+ */
+export function useSetLink() {
+  return useMutation({
+    mutationKey: ["chart-link"],
+    mutationFn: ({
+      chartId,
+      link,
+    }: {
+      chartId: string;
+      link: ChartLinkRequest | null;
+    }) => api.setLink(chartId, link),
   });
 }

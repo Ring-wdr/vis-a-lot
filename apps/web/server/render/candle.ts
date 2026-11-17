@@ -72,6 +72,8 @@ export type CandleInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   interval: number;
   candles: CandleSeries;
   /** 상승/하락 두 항목 + 새 범례 항목 */
@@ -271,6 +273,7 @@ export function renderCandle(
       plot,
       input.title,
       [
+        input.note,
         `${intervalLabel(interval)} 간격`,
         `${n.toLocaleString()}개 구간`,
         inSelection ? `${selectedCount.toLocaleString()}개 선택` : "",

@@ -77,6 +77,8 @@ export type SankeyInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   /** 출발 노드 이름. 순서가 legend 인덱스다. */
   sources: string[];
   targets: string[];
@@ -339,6 +341,7 @@ export function renderSankey(
       frame,
       input.title,
       [
+        input.note,
         AGG_LABELS[input.agg],
         `${layout.links.length}개 흐름`,
         inSelection ? `${selectedCount}개 선택` : "",

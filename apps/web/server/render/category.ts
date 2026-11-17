@@ -110,6 +110,8 @@ export type CategoryInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   categories: string[];
   bars?: (number | null)[][];
   boxes?: (BoxStats | null)[][];
@@ -632,6 +634,7 @@ export function renderCategory(
       plot,
       input.title,
       [
+        input.note,
         input.chartType === "bar" && input.agg ? AGG_LABELS[input.agg] : "",
         stack === "stack" ? "누적" : stack === "stack100" ? "100% 누적" : "",
         `${n}개 범주`,

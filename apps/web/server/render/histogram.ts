@@ -63,6 +63,8 @@ export type HistogramInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   bins: HistogramBins;
   counts: number[][];
   color: string;
@@ -218,6 +220,7 @@ export function renderHistogram(
       plot,
       input.title,
       [
+        input.note,
         `${total.toLocaleString()}개 값`,
         `${bins.count}개 구간`,
         inSelection && `${selectedCount}개 선택`,

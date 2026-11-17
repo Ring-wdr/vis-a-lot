@@ -32,6 +32,8 @@ import {
   SampleRowsResponseSchema,
   SaveAnalyticsBoardRequestSchema,
   SelectionRequestSchema,
+  SetLinkRequestSchema,
+  SetLinkResponseSchema,
   ShareListResponseSchema,
   ShareSchema,
   TooltipRequestSchema,
@@ -61,6 +63,15 @@ const ItemParams = z.object({
 });
 const JobParams = z.object({ jobId: pathParam("jobId") });
 
+/** 칸 연결(link)의 오류. PUT …/link와 POST /charts의 link가 같은 사유로 거절한다. */
+const linkErrors = {
+  404: errorResponse("따를 칸의 차트나 item을 모름"),
+  409: errorResponse("따를 칸이 아직 그려지지 않음"),
+  422: errorResponse(
+    "따를 수 없는 연결: 선택을 행으로 바꿀 수 없는 차트, 강조를 쓸 수 없는 차트, 데이터셋이 다른데 연결 컬럼이 없거나 스키마에 없음, 자기 자신",
+  ),
+};
+
 // ── 그리기 job ─────────────────────────────────────────────────
 
 export const createChart = createRoute({
@@ -75,6 +86,7 @@ export const createChart = createRoute({
     202: jsonResponse(CreateChartResponseSchema, "차트와 job id"),
     ...badRequest,
     ...authErrors,
+    ...linkErrors,
   },
 });
 
@@ -289,6 +301,30 @@ export const resize = createRoute({
   ...read,
   request: { params: ChartParams, body: jsonBody(ResizeRequestSchema) },
   responses: { 202: accepted, ...chartErrors },
+});
+
+export const setLink = createRoute({
+  method: "put",
+  path: "/charts/{chartId}/link",
+  tags: ["charts"],
+  summary:
+    "칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없거나 따를 칸을 그리지 못했으면(실패·취소) 범위를 푼다",
+  ...write,
+  request: { params: ChartParams, body: jsonBody(SetLinkRequestSchema) },
+  responses: {
+    202: jsonResponse(SetLinkResponseSchema, "다시 그리는 job"),
+    200: jsonResponse(
+      SetLinkResponseSchema,
+      "범위가 그대로라 다시 그리지 않음 (jobId null)",
+    ),
+    ...badRequest,
+    ...authErrors,
+    ...linkErrors,
+    404: errorResponse("모르는 차트, 또는 따를 칸의 차트나 item을 모름"),
+    409: errorResponse(
+      "이 차트가 그리는 중이거나 그리지 못함(실패·취소), 또는 따를 칸이 아직 그리는 중",
+    ),
+  },
 });
 
 // ── 크게 보기 ──────────────────────────────────────────────────

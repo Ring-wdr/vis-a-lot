@@ -3,6 +3,7 @@
 import { createStore } from "zustand";
 import {
   type ChartDefaults,
+  type ChartLinkRequest,
   type ChartSpec,
   type CreateChartResponse,
   type ItemSearch,
@@ -50,6 +51,17 @@ export const PAINT_TOOLS = ["rect", "line", "freehand", "text"] as const;
 export type PaintTool = (typeof PAINT_TOOLS)[number];
 
 export type DrawnChart = CreateChartResponse & { spec: ChartSpec };
+
+/**
+ * 칸을 그릴 때(POST /charts) 함께 거는 칸 연결. 보드가 칸 store를 만들 때 넣는다 (탭에는 없다).
+ * draw·다시 열기가 이 칸의 차트를 만들 때 request로 연결을 받아 함께 보낸다.
+ */
+export type DrawLink = {
+  /** 이 설정으로 그릴 때 걸 연결. 걸 것이 없거나 따를 칸이 그리는 중이면 undefined (범위 없이 그린다) */
+  request: (spec: ChartSpec) => ChartLinkRequest | undefined;
+  /** 연결을 걸었으면 null, 서버가 거절했으면(422) 그 사유 */
+  settled: (error: string | null) => void;
+};
 
 type Size = { width: number; height: number };
 
@@ -113,10 +125,17 @@ export type WorkspaceState = {
   gridArea?: Size;
   /** item 단위로 다시 그리는 중인 job (item 키 → job id) */
   itemJobs: Record<string, string>;
+  /**
+   * itemJobs 중 그린 행의 범위를 바꾸지 않는 다시 그리기(확대·이동·크기·색·도형·즐겨찾기)의 job id.
+   * analytics 칸 연결이 따르는 칸에 범위를 다시 보낼지 가리는 데 쓴다.
+   */
+  lookJobs: Record<string, true>;
   /** 이 세션에서 추가한 도형 수. undo는 이 범위 안에서만 된다. */
   undoCounts: Record<string, number>;
   /** 이 탭에서 난 오류 중 아직 보여주지 않은 것. 다른 탭을 보는 동안 쌓였다가 돌아오면 뜬다. */
   notices: string[];
+  /** analytics 칸이면 그릴 때 함께 거는 칸 연결. 만들 때 정해지고 바뀌지 않는다. */
+  drawLink?: DrawLink;
   updateDraft: (patch: Partial<ChartSpec>) => void;
   setDraft: (spec: ChartSpec) => void;
   setCurrent: (chart: DrawnChart) => void;
@@ -132,7 +151,12 @@ export type WorkspaceState = {
   setShowNearest: (show: boolean) => void;
   toggleLegendCheckboxes: () => void;
   setGridArea: (size: Size) => void;
-  setItemJob: (key: string, jobId: string | undefined) => void;
+  /** look: 그린 행의 범위를 바꾸지 않는 다시 그리기 (lookJobs) */
+  setItemJob: (
+    key: string,
+    jobId: string | undefined,
+    options?: { look?: boolean },
+  ) => void;
   changeUndo: (key: string, delta: number | "reset") => void;
   notify: (message: string) => void;
 };
@@ -158,6 +182,7 @@ export function createWorkspaceStore({
   draft,
   kind = "tab",
   id = crypto.randomUUID(),
+  drawLink,
 }: {
   readOnly?: boolean;
   draft: ChartSpec;
@@ -165,6 +190,8 @@ export function createWorkspaceStore({
   kind?: WorkspaceKind;
   /** 칸이면 보드의 칸 id를 넘긴다. 없으면 새로 만든다. */
   id?: string;
+  /** 칸이면 그릴 때 함께 거는 칸 연결 (보드가 넣는다) */
+  drawLink?: DrawLink;
 }) {
   // 칸은 draft를 어떤 길로 바꿔도(패널, 다시 열기) split·grid가 생기지 않게 한다.
   const fitDraft = kind === "panel" ? panelDraft : (spec: ChartSpec) => spec;
@@ -183,8 +210,10 @@ export function createWorkspaceStore({
     showNearest: true,
     showLegendCheckboxes: false,
     itemJobs: {},
+    lookJobs: {},
     undoCounts: {},
     notices: [],
+    drawLink,
     updateDraft: (patch) =>
       set((s) => ({ draft: fitDraft({ ...s.draft, ...patch }) })),
     setDraft: (draft) => set({ draft: fitDraft(draft) }),
@@ -196,6 +225,7 @@ export function createWorkspaceStore({
         search: NO_SEARCH,
         selectedItem: null,
         itemJobs: {},
+        lookJobs: {},
         undoCounts: {},
         // 새 차트가 지원하지 않는 모드(예: pie의 이동)였으면 기본 모드로 돌린다.
         ...(modeSupported(s.mode, current.spec)
@@ -208,6 +238,7 @@ export function createWorkspaceStore({
           ? {
               current: { ...s.current, jobId, spec },
               itemJobs: {},
+              lookJobs: {},
               page: page ?? s.page,
             }
           : {},
@@ -235,12 +266,19 @@ export function createWorkspaceStore({
           ? s
           : { gridArea },
       ),
-    setItemJob: (key, jobId) =>
+    setItemJob: (key, jobId, options) =>
       set((s) => {
         const itemJobs = { ...s.itemJobs };
-        if (jobId) itemJobs[key] = jobId;
-        else delete itemJobs[key];
-        return { itemJobs };
+        const lookJobs = { ...s.lookJobs };
+        const prev = itemJobs[key];
+        if (jobId) {
+          itemJobs[key] = jobId;
+          if (options?.look) lookJobs[jobId] = true;
+        } else delete itemJobs[key];
+        // 크기 다시 그리기는 여러 item이 job 하나를 함께 쓴다. 남은 item이 없을 때 뺀다.
+        if (prev && prev !== jobId && !Object.values(itemJobs).includes(prev))
+          delete lookJobs[prev];
+        return { itemJobs, lookJobs };
       }),
     changeUndo: (key, delta) =>
       set((s) => ({

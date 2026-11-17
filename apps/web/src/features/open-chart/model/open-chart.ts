@@ -3,12 +3,12 @@
 import { t } from "@lingui/core/macro";
 import { useMutation } from "@tanstack/react-query";
 import { drawSizeFor } from "@/entities/chart/lib/grid-layout";
+import { createChartIn } from "@/entities/workspace/model/create-chart";
 import { useWorkspaceStore } from "@/entities/workspace/model/workspace-scope";
 import {
   recordsHistory,
   type WorkspaceStore,
 } from "@/entities/workspace/model/workspace-store";
-import { api } from "@/shared/api/api";
 import type { ChartSpec, ItemRestore } from "@/shared/api/types";
 import "../config/messages";
 
@@ -42,7 +42,8 @@ export async function openChartIn(
   // 여는 동안 그 탭에서 따로 draw하면 늦게 온 쪽이 앞의 차트를 덮으므로 막는다.
   store.setState({ opening: true });
   try {
-    const res = await api.createChart({
+    // analytics 칸이면 칸 연결을 함께 건다 (다시 열 때 따를 칸을 먼저 그린 뒤 이 칸을 연다).
+    const res = await createChartIn(store, {
       spec,
       itemSize: drawSizeFor(area, spec.grid, state.kind === "panel"),
       restore,

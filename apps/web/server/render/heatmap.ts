@@ -69,6 +69,8 @@ export type HeatmapInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   xTitle: string;
   yTitle: string;
   xCategories: string[];
@@ -411,6 +413,7 @@ export function renderHeatmap(
       legendFrame,
       input.title,
       [
+        input.note,
         AGG_LABELS[input.agg],
         `${nx} × ${ny} 칸`,
         inSelection ? `${selectedCount}개 선택` : "",

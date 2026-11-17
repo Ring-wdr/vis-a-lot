@@ -6,13 +6,16 @@ import { type ItemSize, isTerminal } from "../../api/types";
 import { type DrawnChart, resolvePanels } from "../../charts/board-store";
 import { CHART_DEFAULTS } from "../../charts/chart-defaults";
 import { canDelete } from "../../charts/chart-fields";
+import { resolveLink } from "../../charts/chart-link";
 import { pickSupported } from "../../charts/chart-options";
 import {
   createChart,
   detachHistory,
+  dropChartData,
   getChart,
   getDetail,
   getItem,
+  queryFilters,
 } from "../../charts/chart-store";
 import {
   applyItemChanges,
@@ -26,6 +29,7 @@ import { controlLimitError } from "../../charts/validate-spec";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
+  fillLinkRows,
   getJob,
   type ItemSelection,
   lightPng,
@@ -127,6 +131,12 @@ function panelDrawn(chartId: string): DrawnChart | undefined {
   return { spec: chart.spec, restore: chartRestore(chart) };
 }
 
+/** 차트의 draw(primary job)가 끝났는지. 그린 것이 없으면 실패·취소한 것이다. */
+function drawEnded(chart: Chart) {
+  const primary = chart.primaryJobId ? getJob(chart.primaryJobId) : undefined;
+  return primary !== undefined && isTerminal(primary.status);
+}
+
 function redrawJob(
   chart: Chart,
   keys: string[],
@@ -138,12 +148,18 @@ function redrawJob(
 export const chartApp = createServiceApp()
   .openapi(routes.createChart, async (c) => {
     const body = c.req.valid("json");
+    // 칸 연결은 따를 칸의 지금 범위로 고정한다. 이 칸 쪽 연결 컬럼은 job이 스키마를 안 뒤 확인한다.
+    const linked =
+      body.link && resolveLink({ spec: body.spec }, body.link, drawEnded);
+    if (linked && "error" in linked)
+      return apiError(c, linked.status, linked.error);
     // 컬럼과 타입은 데이터셋마다 달라 job이 데이터 준비 뒤 스키마로 확인한다.
     const chart = createChart(
       body.spec,
       roundSize(body.itemSize),
       body.restore,
     );
+    chart.link = linked?.link;
     // draw마다 history 한 건. history에서 불러온 차트면 그 건에 이어서 기록한다.
     // 다시 보기(record: false)는 기록하지 않아 history 목록 순서와 썸네일이 그대로다.
     if (body.record !== false) await attachHistory(chart, body.historyId);
@@ -438,6 +454,42 @@ export const chartApp = createServiceApp()
       202,
     );
   })
+  // 칸 연결: 따를 칸의 지금 범위를 고정해 걸고 전체를 다시 그린다. 범위가 그대로면 그리지 않는다.
+  .openapi(routes.setLink, async (c) => {
+    const chartId = c.req.valid("param").chartId;
+    const failed = getChart(chartId);
+    // 이 칸을 그리지 못했으면(실패·취소) 걸 그림이 없다. 다시 draw할 때 POST /charts의 link로 건다.
+    if (failed && !failed.items && drawEnded(failed))
+      return apiError(c, 409, "이 칸을 그리지 못해 범위를 걸 수 없습니다.");
+    const target = idleChart(chartId);
+    if ("error" in target) return reject(c, target);
+    const { chart } = target;
+    const request = c.req.valid("json").link;
+    const resolved = request
+      ? resolveLink(chart, request, drawEnded)
+      : { link: undefined };
+    if ("error" in resolved)
+      return apiError(c, resolved.status, resolved.error);
+    const next = resolved.link;
+    if (next?.key === chart.link?.key) return c.json({ jobId: null }, 200);
+    // 요약 글자의 행 수를 먼저 센다. 세는 사이 다른 조작이 그리기를 시작했으면 거절한다.
+    await fillLinkRows({ ...chart, link: next });
+    const still = idleChart(chartId);
+    if ("error" in still) return reject(c, still);
+    chart.link = next;
+    // 범위가 바뀌면 조회 결과(관리선 값 포함)를 버리고 다시 조회해 그린다.
+    dropChartData(chart.id);
+    // item 다시 그리기로 그린다(primary job을 바꾸지 않는다). 화면이 보는 draw job의 item 상태에 새 PNG·범위가
+    // 반영되므로, 화면은 다시 그리는 동안 이전 PNG 위에 진행을 얹고 끝나면 새 PNG로 바꾼다 (선택·확대와 같은 길).
+    return c.json(
+      redrawJob(
+        chart,
+        still.items.map((i) => i.key),
+        { record: false },
+      ),
+      202,
+    );
+  })
   // 화면 크기 변경: 요청한 item(현재 페이지)만 새 크기로 다시 그린다. history에는 남기지 않는다.
   .openapi(routes.resize, (c) => {
     const chart = getChart(c.req.valid("param").chartId);
@@ -519,7 +571,8 @@ export const chartApp = createServiceApp()
     if (!chart) return apiError(c, 404, "unknown chart");
     const page = await getRuntime().db.call("sampleRows", {
       dataset: chart.spec.dataset,
-      filters: chart.spec.filters,
+      // 거르기 연결 범위도 건다 (그린 행과 같은 범위).
+      filters: queryFilters(chart),
       page: c.req.valid("json"),
     });
     if (!page) return apiError(c, 404, "unknown dataset");

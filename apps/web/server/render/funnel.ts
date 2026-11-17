@@ -61,6 +61,8 @@ export type FunnelInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   /** 위에서 아래 순서의 단계 이름 */
   stages: string[];
   values: (number | null)[];
@@ -179,6 +181,7 @@ export function renderFunnel(
       plot,
       input.title,
       [
+        input.note,
         input.agg && AGG_LABELS[input.agg],
         `${input.stages.length}개 단계`,
         inSelection && `${selectedCount}개 선택`,

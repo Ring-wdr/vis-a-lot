@@ -1109,6 +1109,33 @@ export type paths = {
             "application/json": components["schemas"]["ApiError"];
           };
         };
+        /** @description 따를 칸의 차트나 item을 모름 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 따를 칸이 아직 그려지지 않음 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 따를 수 없는 연결: 선택을 행으로 바꿀 수 없는 차트, 강조를 쓸 수 없는 차트, 데이터셋이 다른데 연결 컬럼이 없거나 스키마에 없음, 자기 자신 */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
       };
     };
     delete?: never;
@@ -2528,6 +2555,111 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/charts/{chartId}/link": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** 칸 연결 범위 걸기·풀기. 따를 칸 item의 지금 행 범위를 고정해 걸고 전체를 다시 그린다. 따를 칸에 선택이 없거나 따를 칸을 그리지 못했으면(실패·취소) 범위를 푼다 */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SetLinkRequest"];
+        };
+      };
+      responses: {
+        /** @description 범위가 그대로라 다시 그리지 않음 (jobId null) */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SetLinkResponse"];
+          };
+        };
+        /** @description 다시 그리는 job */
+        202: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SetLinkResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 차트, 또는 따를 칸의 차트나 item을 모름 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 이 차트가 그리는 중이거나 그리지 못함(실패·취소), 또는 따를 칸이 아직 그리는 중 */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 따를 수 없는 연결: 선택을 행으로 바꿀 수 없는 차트, 강조를 쓸 수 없는 차트, 데이터셋이 다른데 연결 컬럼이 없거나 스키마에 없음, 자기 자신 */
+        422: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts/{chartId}/items/{itemKey}/selection": {
     parameters: {
       query?: never;
@@ -3362,6 +3494,7 @@ export type components = {
       };
       historyId?: string;
       record?: boolean;
+      link?: components["schemas"]["ChartLinkRequest"];
     };
     ChartSpec: {
       dataset: components["schemas"]["DatasetId"];
@@ -3468,6 +3601,20 @@ export type components = {
       name: string;
       color: components["schemas"]["HexColor"];
       region: components["schemas"]["Region"];
+    };
+    ChartLinkRequest: {
+      source: {
+        chartId: string;
+        itemKey: string;
+      };
+      mode: components["schemas"]["LinkMode"];
+      on?: components["schemas"]["LinkColumns"];
+    };
+    /** @enum {string} */
+    LinkMode: "filter" | "highlight";
+    LinkColumns: {
+      source: components["schemas"]["ColumnName"];
+      target: components["schemas"]["ColumnName"];
     };
     Share: {
       id: string;
@@ -3593,12 +3740,8 @@ export type components = {
     };
     AnalyticsPanelLink: {
       follow: string;
-      /** @enum {string} */
-      mode: "filter" | "highlight";
-      on?: {
-        source: components["schemas"]["ColumnName"];
-        target: components["schemas"]["ColumnName"];
-      };
+      mode: components["schemas"]["LinkMode"];
+      on?: components["schemas"]["LinkColumns"];
     };
     ChartHealth: {
       /** @enum {string} */
@@ -4191,9 +4334,14 @@ export type components = {
         color: string;
       }[];
       deletionCount: number;
+      link?: components["schemas"]["ItemLink"];
     };
     /** @enum {string} */
     ItemStage: "query" | "aggregate" | "render" | "encode";
+    ItemLink: {
+      rows: number;
+      mode: components["schemas"]["LinkMode"];
+    };
     ShareListResponse: {
       shares: components["schemas"]["Share"][];
     };
@@ -4223,6 +4371,12 @@ export type components = {
       draft: components["schemas"]["AnalyticsPanelDraft"];
       chartId?: string;
       link?: components["schemas"]["AnalyticsPanelLink"];
+    };
+    SetLinkResponse: {
+      jobId: string | null;
+    };
+    SetLinkRequest: {
+      link: components["schemas"]["ChartLinkRequest"] | null;
     };
     SelectionRequest: {
       region:

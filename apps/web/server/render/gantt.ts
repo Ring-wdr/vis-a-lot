@@ -65,6 +65,8 @@ export type GanttInput = {
   width: number;
   height: number;
   title: string;
+  /** 제목 줄 요약 맨 앞 글자 (칸 연결 범위). 없으면 없다 */
+  note?: string;
   rowTitle: string;
   rows: string[];
   bars: GanttBars;
@@ -369,6 +371,7 @@ export function renderGantt(
       plot,
       input.title,
       [
+        input.note,
         `${rowCount.toLocaleString()}개 행`,
         `${n.toLocaleString()}개 구간`,
         inSelection ? `${selectedCount.toLocaleString()}개 선택` : "",

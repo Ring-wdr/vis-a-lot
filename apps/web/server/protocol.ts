@@ -18,7 +18,7 @@ import type { ChartData, ChartDataParams } from "./data/chart-data";
 import type { ColumnSummary } from "./data/column-summary";
 import type { CsvOptions, CsvPreview } from "./data/csv-import";
 import type { ColumnInfo } from "./data/datasets";
-import type { ChartFilter } from "./data/filters";
+import type { ChartFilter, RowsFilter } from "./data/filters";
 import type { GanttData, GanttDataParams } from "./data/gantt-data";
 import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
 import type { HistogramData, HistogramDataParams } from "./data/histogram-data";
@@ -118,6 +118,11 @@ export type DbMethods = {
   chartData: {
     params: Omit<ChartDataParams, "table"> & { dataset: string };
     result: ChartData;
+  };
+  /** 칸 연결: 이 데이터셋에서 행 범위에 맞는 행 수 (요약 글자) */
+  linkRows: {
+    params: { dataset: string; filter: RowsFilter };
+    result: number;
   };
   /** bar / boxplot: SQL로 집계한 split 조합 × 범주 값 */
   categoryData: {

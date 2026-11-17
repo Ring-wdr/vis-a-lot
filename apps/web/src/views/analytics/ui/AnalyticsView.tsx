@@ -23,6 +23,11 @@ import { ClearBoardButton } from "@/features/arrange-panels/ui/ClearBoardButton"
 import { LayoutPresetButton } from "@/features/arrange-panels/ui/LayoutPresetButton";
 import { SettingsButton } from "@/features/chart-settings/ui/SettingsButton";
 import { DrawButton } from "@/features/draw-chart/ui/DrawButton";
+import { LinkSync } from "@/features/link-panel/ui/LinkSync";
+import {
+  LinkField,
+  PanelLinkButton,
+} from "@/features/link-panel/ui/PanelLinkButton";
 import { useOpenInGallery } from "@/features/open-chart/model/open-in-gallery";
 import { useDatasets, useSaveBoard } from "@/shared/api/queries";
 import { useCallbackRef } from "@/shared/lib/use-callback-ref";
@@ -83,6 +88,11 @@ const renderPanel: RenderPanel = (panelId) => (
   <PanelContent panelId={panelId} />
 );
 const renderLabel: RenderPanel = (panelId) => <PanelLabel panelId={panelId} />;
+const renderLink: RenderPanel = (panelId) => (
+  <PanelLinkButton panelId={panelId} />
+);
+/** 왼쪽 패널 맨 아래의 `따를 칸` (활성 칸의 연결) */
+const LINK_FIELD: ReactNode = <LinkField />;
 
 /** 도구 줄의 칸 배치 버튼: 칸 추가, 레이아웃, 보드 비우기 */
 const ARRANGE: ReactNode = (
@@ -162,7 +172,7 @@ function PanelSettings() {
     >
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
         <PanelHeading />
-        <ControlPanel split={false} />
+        <ControlPanel split={false} footer={LINK_FIELD} />
       </div>
       <div className="flex flex-col gap-2 border-t border-line bg-panel px-4 py-3">
         <SettingsButton />
@@ -235,13 +245,18 @@ export function AnalyticsView() {
           <FilterDrawer />
         </ActivePanelScope>
         <main className="col-2 row-3 min-h-0 min-w-0 p-2 max-lg:col-1">
-          <AnalyticsBoard renderPanel={renderPanel} renderLabel={renderLabel} />
+          <AnalyticsBoard
+            renderPanel={renderPanel}
+            renderLabel={renderLabel}
+            renderLink={renderLink}
+          />
         </main>
         <div className="col-2 row-4 min-w-0 max-lg:col-1">
           <BoardStatusBar />
         </div>
         <PanelJobs />
         <BoardAutosave />
+        <LinkSync />
       </BoardGate>
     </div>
   );

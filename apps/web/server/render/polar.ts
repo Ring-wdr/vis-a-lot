@@ -33,7 +33,7 @@ export function drawHeader(
   ctx: Ctx,
   plot: Plot,
   title: string,
-  summary: readonly string[],
+  summary: readonly (string | false | undefined)[],
   options: ChartOptions = DEFAULT_OPTIONS,
 ) {
   drawTitle(ctx, plot, title, [...summary], options);

@@ -364,6 +364,7 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - gallery는 탭 하나에 데이터 하나를 걸고 split 조합마다 같은 차트를 grid로 늘어놓는다. analytics는 반대로 보드 하나에 칸(최대 9개)을 두고 **칸마다 데이터·차트·필터가 따로**인 차트 한 장씩을 함께 본다. 여러 데이터를 한 화면에서 쓰므로 gallery 탭의 모드가 아니라 자기 경로(`/analytics`)와 화면 틀을 갖는 별도 서비스다. 같은 세션 범위(`(session)` layout)에 있어 `/`와 오가도 보드가 남는다.
 - 칸 추가·삭제, 레이아웃 preset 17개, 손잡이로 끌어 재배치(키보드 포함), 경계 끌어 크기 조절, 칸 최대화, 칸별 draw와 `draw all`·`cancel all`, 보드 전체 모드 바, 그리는 중 레이아웃 잠금, 좁은 화면의 한 줄 쌓기.
 - 칸은 split 없는 차트 하나(grid 1×1, item 1개)로 그리고 PNG는 칸 크기다. 칸 draw는 history에 남기지 않는다(`POST /charts`의 `record: false`). 대신 보드를 사용자마다 하나 서버(PGlite)에 자동 저장하고(`/analytics/board`, 6.4), 다시 열면 그린 칸을 저장한 설정과 item 상태로 다시 그린다.
+- **칸 연결:** 칸은 따를 칸 하나를 고를 수 있다(칸 틀의 연결 버튼, 왼쪽 패널 `따를 칸`). 따를 칸에서 영역을 선택하면 그 선택의 행 범위(draw 필터 + 끈 legend 값 + 지운 영역 + 선택 영역)를 서버가 그 순간의 값으로 고정해 따르는 칸에 걸고 다시 그린다. 방식은 거르기(범위 안 행만 그린다, 14종 모두)와 강조(모두 그리고 범위 밖 점을 흐리게, scatter·line(분포 제외))다. 따를 칸이 될 수 있는 차트는 선택 필드를 지원하는 차트(scatter, line(분포 제외), bar, boxplot, histogram, waterfall)다. 데이터셋이 다르면 연결 컬럼 한 쌍으로 값을 잇는다(기본값은 두 스키마에 이름·타입이 같은 첫 범주 컬럼). 전파는 한 단계라 서로 따라도 된다. 선택을 풀거나 따를 칸을 새로 draw하면(실패 포함) 범위가 풀린다. 확대·크기·색·도형처럼 범위를 바꾸지 않는 다시 그리기는 따르는 칸에 보내지 않는다. 걸린 범위는 PNG 제목 줄 요약(`연결 N행`, `연결 강조 N행`)과 이름표(`← 1`, `→ 2, 3`)로 보인다. 거르기일 때 데이터 표·다운로드·관리선 집계도 범위를 따른다. 공유 스냅숏과 `gallery에서 열기`에는 범위가 없다.
 - datastore의 `analytics에서 열기`, 칸 우클릭의 `gallery에서 열기`, 시작 화면 카드로 오간다.
 - 화면·저장·연결(칸끼리 선택을 잇는 A3)의 자세한 규칙과 작업 단위는 [analytics-spec.md](analytics-spec.md)에 있다.
 
@@ -479,8 +480,8 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | data | 스키마 | `GET /datasets/:id/schema` | 적재된 테이블의 컬럼: 이름, 라벨(주석), 타입(categorical / numeric / datetime), null 허용, 고유값 수(적재 후). 등록 전이면 409 |
 | data | split 개수 확인 | `POST /datasets/:id/split-count` | `{ cols, filters }` → 조합 수 (30,000개 초과 검사, 필터 적용) |
 | data | 컬럼 요약 | `GET /datasets/:id/columns/:column/summary` | 필터용. 숫자·시계열은 min/max/null 수, 범주는 값별 행 수 |
-| chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기, analytics 칸)<br>응답: `chartId`, `jobId`, `historyId` |
-| chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }`, job 전체의 상태별 item 수·시간·worker 수 |
+| chart | 그리기 시작 | `POST /charts` | 요청: 차트 설정, item 크기, (복원 시) 키별 확대·도형·개별 색, 이어 쓸 `historyId`, `record: false`면 history에 남기지 않음(다시 보기, analytics 칸), (analytics 칸) 칸 연결 `link?`(아래 연결 범위와 같은 `ChartLinkRequest`, 그릴 때 함께 건다. 거절 사유도 같다)<br>응답: `chartId`, `jobId`, `historyId` |
+| chart | 진행 상태 | `GET /jobs/:jobId?page=&pageSize=&since=` | long polling. 페이지 item 상태·단계·진행률·`{ url, width, height }`, 칸 연결 범위가 걸려 있으면 `link: { rows, mode }`(범위 안 행 수, 방식), job 전체의 상태별 item 수·시간·worker 수 |
 | chart | 진행 상태 (검색) | `GET /jobs/:jobId?page=&pageSize=&offset=&search=&since=` | `search`는 `[{ keyword, match }]` JSON 문자열(`match`: `contains`·`startsWith`·`endsWith`·`exact`, 10개·100자까지, 잘못되면 400). item 이름(label)을 대소문자 무시로 비교해 하나라도 맞는 item만 남기고, `page`·`offset`은 거른 순서 기준이다. 응답 `matchedItems`는 맞는 item 수(`search`가 없으면 `totalItems`, split 조합을 아직 모르면 null). 거른 순서는 job마다 조건 하나만 기억한다. `items=`에는 적용하지 않는다. handler는 `server/services/chart/app.ts` |
 | chart | 진행 상태 (job 전체) | `GET /jobs/:jobId?pageSize=0&since=` | item 없이 상태·하단 진행률만, job이 끝날 때까지 long polling |
 | chart | 진행 상태 (item 지정) | `GET /jobs/:jobId?items=k1,k2&since=` | item 단위 다시 그리기에서 그 item 상태만 |
@@ -502,11 +503,12 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | 공통 속성 | `PATCH /charts/:chartId/common` | 개별 속성을 덮어쓰고 전체 다시 그리기 (렌더링 중 409). 관리선 선 목록이 맞지 않으면 400과 사유 (draw에서는 job 실패 사유) |
 | chart | grid 변경 | `PATCH /charts/:chartId/grid` | `{ grid, itemSize }` 전체 다시 그리기 (렌더링 중 409) |
 | chart | analytics 보드 | `GET /analytics/board`, `PUT /analytics/board`, `DELETE /analytics/board` | 사용자(토큰 `sub`)마다 하나인 보드. 받기는 `{ layout, activePanelId, panels: [{ id, draft, drawn?: { spec, restore }, link? }], updatedAt }`(없으면 404). 저장은 `{ layout, activePanelId, panels: [{ id, draft, chartId?, link? }] }` → 204이고, `chartId`가 있으면 서버가 그 차트의 지금 설정·item 상태를 `drawn`으로 고정한다(모르는 차트면 이전 `drawn`을 둔다). 트리와 칸 id가 1:1, 칸 1~9개, 비율 합 1, 칸 draft는 split 없음·grid 1×1이 아니면 400. 비우기는 204. PGlite `analytics_boards`, scope `chart:read`/`chart:write`. 자세한 것은 [analytics-spec.md](analytics-spec.md) 5.1 |
+| chart | 칸 연결 범위 | `PUT /charts/:chartId/link` | `{ link: { source: { chartId, itemKey }, mode: 'filter' \| 'highlight', on?: { source, target } } \| null }`. 따를 칸 item의 지금 행 범위를 고정해 이 차트에 걸고 모든 item을 item 다시 그리기 job으로 그린다 → 202 `{ jobId }`. `null`이거나 따를 칸에 선택이 없거나 따를 칸의 draw가 끝났는데 그린 것이 없으면(실패·취소) 범위를 지운다. 범위가 그대로면 200 `{ jobId: null }`. 이 차트가 그리는 중·따를 칸이 아직 그리는 중 409, 이 차트를 그리지 못했으면 409와 사유, 모르는 차트·item 404, 따를 수 없는 차트·강조를 쓸 수 없는 차트·연결 컬럼 없음/스키마에 없음·자기 자신 422. 거르기 범위는 데이터 표·다운로드·관리선 집계에도 걸린다. 자세한 것은 [analytics-spec.md](analytics-spec.md) 5.2 |
 | chart | resize | `POST /charts/:chartId/resize` | `{ itemSize, keys }` 요청한 item만 다시 그리기, history 미기록 |
 | chart | history | `GET /history`, `GET /history/:id` | 목록(썸네일·이벤트 수·상태별 item 수), 상세(키별 확대·도형·개별 색·최종 상태) |
 | chart | 차트 기본값 | `GET /defaults` | 모든 차트에 쓰는 값(차트 속성 전체 값 `options`(관리선 `controlLimit` 포함, 기본은 선 없음), 새 차트 공통 색, split 구분 문자, legend 위치)과 차트 종류마다 다른 값만 담은 `charts[type]`(`legendPosition`, `options` 부분 값. 예: funnel legend 오른쪽). 종류별 기본값은 전체 값 위에 `charts[type]`을 덮은 값이고, draw는 그 위에 공통 → item 개별 속성을 덮는다. 서버 draw와 전체 설정·item 속성 팝업·새 탭 draft가 같은 값(`server/charts/chart-defaults.ts`)을 쓴다. 어드민 기본값이 생기면 이 모듈을 바꾼다 |
 | chart | history 삭제 | `DELETE /history/:id` | 204, 모르는 건이면 404. 그 건에 기록 중인 차트는 더 기록하지 않는다(지운 건을 되살리지 않음) |
-| chart | 공유 | `POST /shares`, `GET /shares`(내 공유), `GET /shares/:shareId`, `DELETE /shares/:shareId` | `{ chartId, itemKey?, title }`로 지금 설정·바뀐 item 상태·대표 PNG를 스냅숏으로 고정(PGlite). 이후 차트를 고쳐도 그대로다. 지우기는 만든 사용자만 |
+| chart | 공유 | `POST /shares`, `GET /shares`(내 공유), `GET /shares/:shareId`, `DELETE /shares/:shareId` | `{ chartId, itemKey?, title }`로 지금 설정·바뀐 item 상태·대표 PNG를 스냅숏으로 고정(PGlite). 이후 차트를 고쳐도 그대로다. analytics 칸의 연결 범위는 담지 않는다(PNG는 칸에 보이던 그대로라 요약 글자가 남지만, `gallery에서 열기`는 범위 없이 그린다). 지우기는 만든 사용자만 |
 | chart | 공유 PNG | `GET /shares/:shareId/png` | 인증 없음(item PNG와 같은 이유, shareId는 UUID) |
 | data / chart | 상태 | `GET /health` | 인증 없음 |
 

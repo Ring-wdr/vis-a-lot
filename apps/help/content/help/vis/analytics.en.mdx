@@ -28,7 +28,7 @@ analytics shows several charts together on one screen, split into panels. Open i
 
 - The **left panel** shows the settings of the selected panel (the one with the highlighted border). Its number and chart name are at the top. It is gallery's left panel without grid and split by.
 - Click a panel or move focus into it to select it.
-- Hover the top left of a panel to see its frame tools: the move handle, the label (number · chart · data), maximize and remove.
+- Hover the top left of a panel to see its frame tools: the move handle, the label (number · chart · data), the link button, maximize and remove.
 
 ## Adding and removing panels
 
@@ -96,12 +96,60 @@ While a panel is drawing (including redraws to fit its size), adding, removing, 
 - **Chart tools** (downloads, data tables, etc.), **Copy link** and **Post to feed** act on the selected panel's chart. There is no Excel download of all charts.
 - Inside a panel (tooltip, pan and zoom, shapes, selection, delete, paint, legend, right-click menu) everything works as for a gallery item.
 
+## Panel links
+
+A panel can follow the area you select in another panel. For example, select a period in a scatter panel and a bar panel that follows it is redrawn from the rows of that period only.
+
+### Choosing the panel to follow
+
+- Click the link button (chain icon) in the panel frame, or **Follows** at the bottom of the left panel, to open the link window. Both open the same window.
+- Pick the one panel this panel follows. A panel can't follow itself, and several panels can follow the same panel.
+- Panels that can be followed are charts whose selected area can be turned into rows: Scatter, Line (except distribution sub charts), Bar, Boxplot, Histogram and Waterfall. Other charts are dimmed in the list with the reason.
+- **Unlink** removes the link. Any range that was applied is cleared and the panel is redrawn as before.
+
+### Filter and highlight
+
+| Mode | Drawing | Charts |
+| --- | --- | --- |
+| Filter | Draws only the rows in the range. Axes, aggregates and legend values are based on those rows | All charts |
+| Highlight | Draws every row and dims points outside the range. Axes stay the same | Scatter, Line (except distribution sub charts) |
+
+- A new link starts as highlight if the chart supports it, otherwise as filter. If you change the chart so it can't highlight, the link switches to filter.
+- How dim the points get follows **Shape › Unselected opacity**.
+- When a range is applied, the summary at the right of the PNG title row starts with `연결 1,204행` (filter) or `연결 강조 1,204행` (highlight). The summary text drawn on the PNG is always in Korean. The row count is the number of rows in this panel's data that match the range (before this panel's filters).
+
+### Panels with different data
+
+- If both panels use the same data, the selected rows are followed as they are.
+- If the data differ, choose a pair of **link columns** (followed panel's column, this panel's column). This panel follows rows whose value matches a value of the rows selected in the followed panel.
+- The default is the first categorical column with the same name and type in both data. Between the samples (IoT sensors 100k ↔ 500k rows) the default is factory (`factory`); switch to machine (`machine`) to follow by machine. If no column matches, no range applies until you choose one.
+- Changing the data on either side resets the link columns to the default.
+
+### What the panels show
+
+- The link button in the label shows `← 1` (follows panel 1) and `→ 2, 3` (panels 2 and 3 follow this one). When a range is applied the button is in the accent color; hover it to see a summary such as `Filter 1,204 rows` and the border of the other panel highlighted.
+- The applied range also appears to the right of **Follows** in the left panel.
+- If the range can't be applied, the button turns to the warning color and shows why. The status line in the link window also gives the reason (the followed panel isn't drawn, no link columns chosen, and so on).
+
+### When the range changes
+
+- Selecting an area, deleting, or changing legend checkboxes in the followed panel redraws the panels that follow it. Zooming or panning the followed panel, or changing its colors or shapes, doesn't change the range.
+- The range is fixed to the rows at the moment of the selection. **Clearing the selection or drawing the followed panel again** (a new draw clears the selection) clears the range. If the followed panel fails to draw, the range is cleared and the reason is shown.
+- Links go one step only. If panel 3 follows panel 2 and panel 2 follows panel 1, a selection in panel 1 changes only panel 2. Panel 3 follows only what you select in panel 2 itself, so two panels can follow each other.
+- If a following panel is still drawing, it is redrawn once with the latest selection when it finishes. While it redraws, progress is shown over the previous picture and the layout can't be changed.
+- Removing the followed panel removes the link.
+
+### Data tables and sharing
+
+- With filter, the data table, full data table and data download contain only the rows in the range. With highlight they contain all drawn rows.
+- **Copy link** and **Post to feed** use the picture as shown in the panel (including the summary), but the shared chart doesn't carry the link range. Opening it from the share page or with **Open in gallery** from the panel's right-click menu draws it without the range.
+
 ## Autosave and reopening
 
 Each user has one board, saved automatically whenever it changes (1 second after the last change). You don't need to save it yourself.
 
-- What is saved: the arrangement, the selected panel, the settings you were editing in each panel, the last drawn settings and that chart's state (zoom, shapes, selection, deleted areas, item colors, control limits and so on).
-- When you reload or sign in again and open analytics, the saved board is loaded and panels that had been drawn are redrawn in number order.
+- What is saved: the arrangement, the selected panel, the settings you were editing in each panel, the last drawn settings and that chart's state (zoom, shapes, selection, deleted areas, item colors, control limits and so on), and panel links (followed panel, mode, link columns).
+- When you reload or sign in again and open analytics, the saved board is loaded and panels that had been drawn are redrawn in number order. If panels are linked, the followed panel is drawn first so its selection comes back, and the following panel is drawn with the range after that.
 - If you go to gallery or history and come back, the board is still there and isn't loaded again. Panels that were drawing keep going.
 - If a panel used data you uploaded and later deleted, that panel opens as failed with the reason. Pick other data and draw again.
 

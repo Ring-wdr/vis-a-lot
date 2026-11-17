@@ -14,6 +14,7 @@ import {
 import {
   selectIsActive,
   selectIsMaximized,
+  selectLinkPeer,
   selectPanelNumber,
 } from "@/entities/workspace/model/board-store";
 import {
@@ -103,6 +104,8 @@ export type PanelSlotProps = {
   renderPanel: RenderPanel;
   /** 이름표에서 번호 뒤에 붙일 것 (차트 · 데이터셋). 없으면 번호만 */
   renderLabel?: RenderPanel;
+  /** 이름표 뒤의 칸 연결 버튼. 없으면 두지 않는다 */
+  renderLink?: RenderPanel;
   /** 끄는 칸이 이 칸 위에 있을 때 놓을 변 */
   dropEdge?: DropEdge;
   /** 이 칸을 끄는 중 */
@@ -121,6 +124,7 @@ export const PanelSlot = memo(function PanelSlot({
   panelId,
   renderPanel,
   renderLabel,
+  renderLink,
   dropEdge,
   dragging,
   wide,
@@ -130,6 +134,7 @@ export const PanelSlot = memo(function PanelSlot({
   const number = useBoard(selectPanelNumber(panelId));
   const active = useBoard(selectIsActive(panelId));
   const maximized = useBoard(selectIsMaximized(panelId));
+  const linkPeer = useBoard(selectLinkPeer(panelId));
   const moveBlock = useBoard(layoutBlock);
   const removeBlock = useBoard(removePanelBlock);
   const activate = useBoard((s) => s.activate);
@@ -137,15 +142,18 @@ export const PanelSlot = memo(function PanelSlot({
 
   const content = useMemo(() => renderPanel(panelId), [renderPanel, panelId]);
   const label = useMemo(() => renderLabel?.(panelId), [renderLabel, panelId]);
+  const link = useMemo(() => renderLink?.(panelId), [renderLink, panelId]);
 
   return (
     <PanelFrame
       number={number}
       active={active}
       maximized={maximized}
+      linkPeer={linkPeer}
       dragging={dragging}
       wide={wide}
       label={label}
+      link={link}
       removeBlock={removeBlock}
       onActivate={() => activate(panelId)}
       onToggleMaximize={() => setMaximized(maximized ? null : panelId)}
@@ -179,9 +187,11 @@ function PanelFrame({
   number,
   active,
   maximized,
+  linkPeer,
   dragging,
   wide,
   label,
+  link,
   removeBlock,
   onActivate,
   onToggleMaximize,
@@ -193,9 +203,12 @@ function PanelFrame({
   number: number;
   active: boolean;
   maximized: boolean;
+  /** 연결 버튼에 커서를 올린 칸과 연결된 칸 (테두리 강조) */
+  linkPeer: boolean;
   dragging: boolean;
   wide: boolean;
   label: ReactNode;
+  link: ReactNode;
   removeBlock: ArrangeBlock | undefined;
   onActivate: () => void;
   onToggleMaximize: () => void;
@@ -210,7 +223,8 @@ function PanelFrame({
       aria-label={t`칸 ${number}`}
       aria-current={active || undefined}
       data-dragging={dragging || undefined}
-      className="group/panel relative flex size-full min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface data-dragging:opacity-50 aria-current:border-accent aria-current:shadow-card"
+      data-link-peer={linkPeer || undefined}
+      className="group/panel relative flex size-full min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-surface data-dragging:opacity-50 data-link-peer:ring-2 data-link-peer:ring-accent aria-current:border-accent aria-current:shadow-card"
       onPointerDown={onActivate}
       onFocus={onActivate}
       onDoubleClick={(e) => {
@@ -229,6 +243,7 @@ function PanelFrame({
           </span>
           {label && <span className="min-w-0 truncate">{label}</span>}
         </span>
+        {link}
         {wide && (
           <button
             type="button"

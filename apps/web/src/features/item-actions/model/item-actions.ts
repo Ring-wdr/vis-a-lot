@@ -33,6 +33,20 @@ export type ItemAction =
   | { type: "removeLegendGroup"; name: string };
 
 /**
+ * 그린 행의 범위(analytics 칸 연결이 따르는 범위)를 바꾸지 않는 조작. 확대·이동, 색, 도형, 즐겨찾기다.
+ * 선택·지우기·legend 체크·개별 속성(정렬·구간 수가 막대를 바꾼다)·새 범례는 범위를 바꿀 수 있다.
+ */
+const LOOK_ACTIONS = new Set<ItemAction["type"]>([
+  "view",
+  "addShape",
+  "undoShape",
+  "clearShapes",
+  "legendColor",
+  "addFavorite",
+  "removeFavorite",
+]);
+
+/**
  * item 단위 조작. 서버는 바뀐 상태를 저장하고 그 item만 다시 그리는 job id를 돌려준다.
  * job이 끝날 때까지 그 item은 조작이 막힌다.
  */
@@ -88,7 +102,7 @@ export function useItemAction(chartId: string, itemKey: string) {
       }
     },
     onSuccess: ({ jobId }, action) => {
-      setItemJob(itemKey, jobId);
+      setItemJob(itemKey, jobId, { look: LOOK_ACTIONS.has(action.type) });
       if (action.type === "addShape") changeUndo(itemKey, 1);
       if (action.type === "undoShape") changeUndo(itemKey, -1);
       if (action.type === "clearShapes") changeUndo(itemKey, "reset");
