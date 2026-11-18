@@ -229,6 +229,12 @@ msgstr "区間ごとの値(階段線)"
 msgid "구간별 값은 scatter·line의 Left 축에서만 쓸 수 있습니다."
 msgstr "区間ごとの値は scatter・line の Left 軸でのみ使えます。"
 
+#. 필드 값 사이에 넣는 글자. 예: 설비-lot
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "selection values"
+msgid "구분자"
+msgstr "区切り文字"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "굵게"
@@ -716,8 +722,17 @@ msgid "선이 없습니다. 종류를 골라 더하세요. 이름과 값은 PNG�
 msgstr "線がありません。種類を選んで追加してください。名前と値は入力したとおり PNG に描きます。"
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "선택 값"
+msgstr "選択値"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "선택 밖 진하기"
 msgstr "選択外の濃さ"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선택 영역 안의 행마다 고른 필드 값을 구분자로 이어 선택 값을 만듭니다. 우클릭 메뉴의 선택 값 복사가 씁니다. 그림에는 영향이 없습니다."
+msgstr "選択範囲内の行ごとに、選んだフィールドの値を区切り文字でつないで選択値を作ります。右クリックメニューの「選択値をコピー」で使います。グラフの画像には影響しません。"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "설명 보이기"
@@ -1238,6 +1253,11 @@ msgstr "列 2"
 msgid "컬럼 고르기"
 msgstr "列を選択"
 
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "selection values"
+msgid "컬럼 고르기 (최대 3개)…"
+msgstr "列を選択（最大3つ）…"
+
 #: src/features/chart-settings/ui/ControlLimitSettings.tsx
 msgctxt "control limit kind"
 msgid "컬럼 선"
@@ -1321,6 +1341,12 @@ msgstr "パネル"
 msgctxt "control limit fn"
 msgid "평균"
 msgstr "平均"
+
+#. 선택 값을 만들 때 이을 컬럼 (최대 3개, 고른 순서대로)
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "selection values"
+msgid "필드"
+msgstr "フィールド"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"

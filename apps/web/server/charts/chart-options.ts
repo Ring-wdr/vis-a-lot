@@ -23,7 +23,8 @@ const without = (...omit: OptionSection[]) =>
 
 /**
  * 원본 표 대비 차이
- * - Wafer, Selection, Multi Axis: 해당 차트·기능이 없어 구역 자체를 두지 않는다.
+ * - Wafer, Multi Axis: 해당 차트·기능이 없어 구역 자체를 두지 않는다.
+ * - Selection(선택 필드 값 묶기): 선택 영역을 행으로 바꿀 수 있는 차트(SELECTION_ROW_CHARTS)만 쓴다.
  * - Axes: pie·treemap·funnel은 원본 O지만 축을 그리지 않는 차트라 X.
  * - Color(legend 모양): 원본 표의 Color 행을 legend 구역으로 본다.
  */
@@ -52,8 +53,15 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
-  gantt: without("score", "prediction", "expression", "controlLimit"),
+  gantt: without(
+    "score",
+    "prediction",
+    "expression",
+    "controlLimit",
+    "selection",
+  ),
   treemap: without(
     "axes",
     "score",
@@ -61,6 +69,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   heatmap: without(
     "legend",
@@ -70,6 +79,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   candle: without(
     "legend",
@@ -79,6 +89,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "value",
     "expression",
     "controlLimit",
+    "selection",
   ),
   waterfall: without(
     "legend",
@@ -97,6 +108,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   radar: without(
     "axes",
@@ -106,6 +118,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   sankey: without(
     "axes",
@@ -115,6 +128,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
 };
 

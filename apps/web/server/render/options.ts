@@ -19,6 +19,7 @@ export const OPTION_SECTIONS = [
   "tooltip",
   "expression",
   "controlLimit",
+  "selection",
 ] as const;
 export type OptionSection = (typeof OPTION_SECTIONS)[number];
 
@@ -377,6 +378,21 @@ export type ControlLimitOptions = {
   fitAxis: boolean;
 };
 
+/** selection.fields에 고를 수 있는 컬럼 수 */
+export const MAX_SELECTION_FIELDS = 3;
+/** selection.separator 글자 수 */
+export const MAX_SELECTION_SEPARATOR = 5;
+
+/**
+ * 선택 필드 값 묶기. 선택 영역 안의 행마다 fields 값을 separator로 이어 식별 값 하나로 만든다
+ * (POST …/selection-values, gallery 우클릭 메뉴의 `선택 값 복사`). PNG에는 영향이 없다.
+ */
+export type SelectionOptions = {
+  /** 이을 컬럼. 순서대로 잇는다. 비면 값을 만들지 않는다. */
+  fields: string[];
+  separator: string;
+};
+
 export type ChartOptions = {
   title: TitleOptions;
   axes: { x: XAxisOptions; y: AxisOptions };
@@ -393,6 +409,7 @@ export type ChartOptions = {
   tooltip: TooltipOptions;
   expression: ExpressionOptions;
   controlLimit: ControlLimitOptions;
+  selection: SelectionOptions;
 };
 
 type DeepPartial<T> = T extends readonly unknown[]
@@ -578,6 +595,7 @@ export const DEFAULT_OPTIONS: ChartOptions = {
     text: { visible: true, fontSize: 10, color: "" },
     fitAxis: true,
   },
+  selection: { fields: [], separator: "-" },
 };
 
 const darkAxis = {

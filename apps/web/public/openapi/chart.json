@@ -858,6 +858,22 @@
           },
           "controlLimit": {
             "$ref": "#/components/schemas/ControlLimitOptions"
+          },
+          "selection": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ColumnName"
+                },
+                "maxItems": 3
+              },
+              "separator": {
+                "type": "string",
+                "maxLength": 5
+              }
+            }
           }
         }
       },
@@ -4740,6 +4756,37 @@
         },
         "required": ["id", "draft"]
       },
+      "SelectionValuesResponse": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": ["values", "total", "truncated", "count"]
+      },
+      "SelectionValuesRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        }
+      },
       "SetLinkResponse": {
         "type": "object",
         "properties": {
@@ -7647,6 +7694,107 @@
           },
           "404": {
             "description": "모르는 차트, 또는 지운 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/charts/{chartId}/items/{itemKey}/selection-values": {
+      "post": {
+        "tags": ["data"],
+        "summary": "선택 영역 안의 행마다 차트 속성 selection.fields 값을 selection.separator로 이은 값 목록 (겹치지 않게, 최대 1,000개). 대상 행은 데이터 표와 같다. fields가 비었거나 선택 영역이 없으면 빈 목록",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "chartId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "itemKey",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectionValuesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "선택 값",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectionValuesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "토큰 없음, 만료, 위조",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "scope 부족",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "모르는 item, 또는 지운 데이터셋",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아직 그려지지 않음, 또는 선택 필드를 쓰지 않는 차트 (scatter·line·bar·boxplot·histogram·waterfall 밖, 분포 line)",
             "content": {
               "application/json": {
                 "schema": {

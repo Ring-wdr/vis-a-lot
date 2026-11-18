@@ -35,6 +35,7 @@ import {
   usesControlLimit,
 } from "../model/control-limit-form";
 import { orderSourceOf } from "../model/order-values";
+import { selectionSourceOf } from "../model/selection-form";
 import { ColorSettings } from "./ColorSettings";
 import { LegendSettings } from "./LegendSettings";
 import { CommonOptionSettings } from "./OptionSettings";
@@ -95,6 +96,8 @@ function SettingsBody({
     () => limitSourceOf(draft, columns),
     [draft, columns],
   );
+  // 선택 값 필드는 다음 draw의 데이터셋 컬럼에서 고른다.
+  const selectionSource = selectionSourceOf(draft, columns);
   // 열 때의 값. 폼은 이 값에서 시작하고, 확인을 누르면 바뀐 것만 draft로 옮긴다.
   const [opened] = useState(() => {
     const { draft, showNearest } = store.getState();
@@ -140,11 +143,12 @@ function SettingsBody({
     onClose();
   });
 
-  // 차트 속성 구역은 고른 차트 종류가 쓰는 것만 보인다. 관리선은 분포 line에서도 끈다.
+  // 차트 속성 구역은 고른 차트 종류가 쓰는 것만 보인다. 관리선·선택 값은 분포 line에서도 끈다.
   const sections = OPTION_SECTIONS.filter(
     (s) =>
       (supportsOption(chartType, s) &&
-        (s !== "controlLimit" || usesControlLimit(draft))) ||
+        (s !== "controlLimit" || usesControlLimit(draft)) &&
+        (s !== "selection" || selectionSource.enabled)) ||
       ALWAYS_SHOWN.includes(s),
   );
   const [menu, setMenu] = useState<MenuTarget | undefined>(initial);
@@ -172,6 +176,7 @@ function SettingsBody({
               chartType={chartType}
               orderSource={orderSource}
               limitSource={limitSource}
+              columns={selectionSource.columns}
               supported={supportsOption(chartType, active.section)}
               original={opened.common.options as ChartOptionsPatch | undefined}
               defaults={defaults}

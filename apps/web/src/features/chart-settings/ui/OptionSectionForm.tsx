@@ -14,10 +14,11 @@ import type {
   OptionSection,
   OrderSort,
 } from "@/entities/chart/model/chart-options";
-import type { ChartType, DatasetId } from "@/shared/api/types";
+import type { ChartType, ColumnInfo, DatasetId } from "@/shared/api/types";
 import { defaultLegendColor } from "@/shared/lib/palette";
 import { linkButton } from "@/shared/ui/button";
 import { ColorPickerButton } from "@/shared/ui/ColorPickerButton";
+import { OrderedSelect } from "@/shared/ui/OrderedSelect";
 import {
   fieldsOf,
   getPath,
@@ -57,6 +58,7 @@ export function OptionSectionForm({
   chartType,
   orderSource,
   limitSource,
+  columns,
   original,
   base,
   resetLabel,
@@ -71,6 +73,8 @@ export function OptionSectionForm({
   orderSource?: OrderSource;
   /** 관리선 선 목록이 아는 차트·컬럼. 관리선 구역에서만 쓴다. */
   limitSource?: LimitSource;
+  /** 컬럼 칸(선택 값 필드)이 고를 데이터셋 컬럼. 받기 전이면 없다. */
+  columns?: readonly ColumnInfo[];
   /** 하위 항목이 있는 구역(축)에서 보일 항목. 없으면 첫 항목 */
   part?: string;
   /** 구역 되돌리기 버튼 글자 (기본값으로 되돌리기, 공통 속성 따르기) */
@@ -139,6 +143,14 @@ export function OptionSectionForm({
                       source={orderSource}
                       value={input.value as unknown as string[]}
                       sort={getPath(values, field.sortPath) as OrderSort}
+                      disabled={disabled}
+                      onCommit={input.onChange}
+                    />
+                  ) : field.kind === "columns" ? (
+                    <ColumnsInput
+                      field={field}
+                      columns={columns}
+                      value={input.value as unknown as string[]}
                       disabled={disabled}
                       onCommit={input.onChange}
                     />
@@ -214,13 +226,52 @@ function OrderInput({
   );
 }
 
+/**
+ * 컬럼 칸(선택 값 필드). 고른 순서가 잇는 순서다. max개를 넘겨 고르면 더하지 않는다.
+ * 데이터셋에 없는 컬럼(데이터셋을 바꾸기 전에 고른 값)도 목록에 남겨 뺄 수 있게 한다.
+ */
+function ColumnsInput({
+  field,
+  columns,
+  value,
+  disabled,
+  onCommit,
+}: {
+  field: Extract<OptionField, { kind: "columns" }>;
+  columns: readonly ColumnInfo[] | undefined;
+  value: string[];
+  disabled: boolean;
+  onCommit: (fields: string[]) => void;
+}) {
+  const selected = value ?? NO_VALUES;
+  const known = new Set(columns?.map((c) => c.name));
+  const options = [
+    ...(columns ?? []).map((c) => ({ value: c.name, label: c.label })),
+    ...selected
+      .filter((name) => !known.has(name))
+      .map((name) => ({ value: name, label: name })),
+  ];
+  return (
+    <OrderedSelect
+      label={field.label}
+      options={options}
+      value={selected}
+      placeholder={field.placeholder}
+      disabled={disabled}
+      onChange={(next) => {
+        if (next.length <= field.max) onCommit(next);
+      }}
+    />
+  );
+}
+
 function FieldInput({
   field,
   value,
   disabled,
   onCommit,
 }: {
-  field: Exclude<OptionField, { kind: "heading" | "order" }>;
+  field: Exclude<OptionField, { kind: "heading" | "order" | "columns" }>;
   value: unknown;
   disabled: boolean;
   onCommit: (value: unknown) => void;

@@ -32,6 +32,8 @@ import {
   SampleRowsResponseSchema,
   SaveAnalyticsBoardRequestSchema,
   SelectionRequestSchema,
+  SelectionValuesRequestSchema,
+  SelectionValuesResponseSchema,
   SetLinkRequestSchema,
   SetLinkResponseSchema,
   ShareListResponseSchema,
@@ -404,6 +406,28 @@ export const itemRows = createRoute({
   responses: {
     200: jsonResponse(ItemRowsResponseSchema, "행"),
     ...rowsErrors,
+  },
+});
+
+export const selectionValues = createRoute({
+  method: "post",
+  path: "/charts/{chartId}/items/{itemKey}/selection-values",
+  tags: ["data"],
+  summary:
+    "선택 영역 안의 행마다 차트 속성 selection.fields 값을 selection.separator로 이은 값 목록 (겹치지 않게, 최대 1,000개). 대상 행은 데이터 표와 같다. fields가 비었거나 선택 영역이 없으면 빈 목록",
+  ...read,
+  request: {
+    params: ItemParams,
+    body: jsonBody(SelectionValuesRequestSchema),
+  },
+  responses: {
+    200: jsonResponse(SelectionValuesResponseSchema, "선택 값"),
+    ...badRequest,
+    ...authErrors,
+    404: errorResponse("모르는 item, 또는 지운 데이터셋"),
+    ...conflict(
+      "아직 그려지지 않음, 또는 선택 필드를 쓰지 않는 차트 (scatter·line·bar·boxplot·histogram·waterfall 밖, 분포 line)",
+    ),
   },
 });
 

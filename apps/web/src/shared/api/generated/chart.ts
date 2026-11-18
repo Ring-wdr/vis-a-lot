@@ -2555,6 +2555,94 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  "/charts/{chartId}/items/{itemKey}/selection-values": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 선택 영역 안의 행마다 차트 속성 selection.fields 값을 selection.separator로 이은 값 목록 (겹치지 않게, 최대 1,000개). 대상 행은 데이터 표와 같다. fields가 비었거나 선택 영역이 없으면 빈 목록 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          chartId: string;
+          itemKey: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SelectionValuesRequest"];
+        };
+      };
+      responses: {
+        /** @description 선택 값 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["SelectionValuesResponse"];
+          };
+        };
+        /** @description 요청 형식 오류 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 토큰 없음, 만료, 위조 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description scope 부족 */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 모르는 item, 또는 지운 데이터셋 */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+        /** @description 아직 그려지지 않음, 또는 선택 필드를 쓰지 않는 차트 (scatter·line·bar·boxplot·histogram·waterfall 밖, 분포 line) */
+        409: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ApiError"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/charts/{chartId}/link": {
     parameters: {
       query?: never;
@@ -3292,6 +3380,10 @@ export type components = {
         y?: string;
       };
       controlLimit?: components["schemas"]["ControlLimitOptions"];
+      selection?: {
+        fields?: components["schemas"]["ColumnName"][];
+        separator?: string;
+      };
     };
     XAxisOptions: components["schemas"]["AxisOptions"] & {
       categorySort?: components["schemas"]["OrderSort"];
@@ -4371,6 +4463,15 @@ export type components = {
       draft: components["schemas"]["AnalyticsPanelDraft"];
       chartId?: string;
       link?: components["schemas"]["AnalyticsPanelLink"];
+    };
+    SelectionValuesResponse: {
+      values: string[];
+      total: number;
+      truncated: boolean;
+      count: number;
+    };
+    SelectionValuesRequest: {
+      limit?: number;
     };
     SetLinkResponse: {
       jobId: string | null;

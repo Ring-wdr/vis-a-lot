@@ -11,6 +11,8 @@ import {
   MAX_LIMIT_NAME,
   MAX_ORDER_VALUES,
   MAX_PALETTE_COLORS,
+  MAX_SELECTION_FIELDS,
+  MAX_SELECTION_SEPARATOR,
   ORDER_SORTS,
   OUTLIER_MODES,
   POINT_SHAPES,
@@ -190,6 +192,18 @@ const ControlLimitOptionsSchema = opt({
   fitAxis: z.boolean(),
 }).openapi("ControlLimitOptions");
 
+/**
+ * 선택 필드 값 묶기. 선택 영역 안의 행마다 fields 값을 separator로 이어 식별 값 하나로 만든다
+ * (POST …/selection-values). PNG에는 영향이 없다. 컬럼은 draw 때 받은 스키마로 확인한다.
+ */
+const SelectionOptionsSchema = opt({
+  fields: z
+    .array(ColumnNameSchema)
+    .max(MAX_SELECTION_FIELDS)
+    .refine((f) => new Set(f).size === f.length, "duplicate selection field"),
+  separator: text(MAX_SELECTION_SEPARATOR),
+});
+
 export const ChartOptionsSchema = opt({
   title: opt({
     visible: z.boolean(),
@@ -338,6 +352,7 @@ export const ChartOptionsSchema = opt({
   }),
   expression: opt({ x: text(120), y: text(120) }),
   controlLimit: ControlLimitOptionsSchema,
+  selection: SelectionOptionsSchema,
 }).openapi("ChartOptions");
 
 export const LegendPositionSchema = z
@@ -846,6 +861,32 @@ export const ItemRowsResponseSchema = z
     filterCount: z.number().int(),
   })
   .openapi("ItemRowsResponse");
+
+/** 선택 값 목록의 최대 개수 (limit의 기본값·상한) */
+export const MAX_SELECTION_VALUES = 1000;
+
+export const SelectionValuesRequestSchema = z
+  .object({
+    /** 돌려줄 값 수. 없으면 1,000 */
+    limit: z.number().int().min(1).max(MAX_SELECTION_VALUES).optional(),
+  })
+  .openapi("SelectionValuesRequest");
+
+export const SelectionValuesResponseSchema = z
+  .object({
+    /**
+     * 선택 영역 안의 행마다 selection.fields 값을 selection.separator로 이은 값. 겹치지 않고, 저장된 행 순서에서
+     * 처음 나온 순서다. null은 빈 문자열, 시각은 ISO 8601(UTC, 밀리초), 숫자는 Postgres 글자 표기다.
+     */
+    values: z.array(z.string()),
+    /** 겹치지 않는 값의 전체 수 (limit으로 자르기 전) */
+    total: z.number().int(),
+    /** values가 limit에서 잘렸는지 (total > values.length) */
+    truncated: z.boolean(),
+    /** 선택 영역 안의 행 수 (데이터 표의 행 수와 같다). 선택이 없으면 0 */
+    count: z.number().int(),
+  })
+  .openapi("SelectionValuesResponse");
 
 export const SampleRowsResponseSchema = z
   .object({

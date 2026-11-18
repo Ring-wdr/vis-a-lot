@@ -23,6 +23,7 @@ import type {
   JobStateResponse,
   Region,
   SaveAnalyticsBoardRequest,
+  SelectionValuesRequest,
   Shape,
   Share,
   TooltipRequest,
@@ -378,6 +379,25 @@ export const api = {
   ) =>
     unwrap(
       chartClient.POST("/charts/{chartId}/items/{itemKey}/rows", {
+        params: { path: item(chartId, itemKey) },
+        body,
+        signal,
+      }),
+    ),
+
+  /**
+   * 선택 값: 선택 영역 안의 행마다 차트 속성 selection.fields 값을 selection.separator로 이은 값 목록
+   * (겹치지 않게, 행 순서에서 처음 나온 순서, 최대 1,000개)과 선택된 행 수. fields가 비었거나 선택이 없으면 빈 목록이다.
+   * 선택 필드를 쓰지 않는 차트는 409 (ApiRequestError).
+   */
+  selectionValues: (
+    chartId: string,
+    itemKey: string,
+    body: SelectionValuesRequest = {},
+    signal?: AbortSignal,
+  ) =>
+    unwrap(
+      chartClient.POST("/charts/{chartId}/items/{itemKey}/selection-values", {
         params: { path: item(chartId, itemKey) },
         body,
         signal,

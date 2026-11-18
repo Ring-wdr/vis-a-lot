@@ -67,6 +67,7 @@ function NamedSubmenu({
 
 /**
  * item 우클릭 메뉴: 선택 영역을 즐겨찾기나 새 범례로 남기고, 남긴 즐겨찾기를 다시 선택한다.
+ * 차트 속성에 선택 값 필드(selection.fields)를 정했으면 선택 영역의 값을 복사하는 항목을 둔다.
  * analytics 칸에서는 그 칸의 설정으로 gallery 탭을 여는 항목도 둔다.
  * 다시 보기 전용 화면이나 다시 그리는 중에는 메뉴를 열지 않는다.
  */
@@ -75,6 +76,7 @@ export function ItemContextMenu({
   disabled,
   className,
   onAction,
+  onCopySelectionValues,
   onOpenInGallery,
   children,
 }: {
@@ -82,6 +84,8 @@ export function ItemContextMenu({
   disabled: boolean;
   className: string;
   onAction: (action: ItemAction) => void;
+  /** 선택 값을 복사한다. 선택 값 필드가 비어 있으면 없고, 메뉴에 두지 않는다. */
+  onCopySelectionValues?: () => void;
   /** 이 차트의 설정으로 새 gallery 탭을 연다 (analytics 칸). 없으면 메뉴에 두지 않는다. */
   onOpenInGallery?: () => void;
   children: ReactNode;
@@ -152,6 +156,15 @@ export function ItemContextMenu({
               >
                 <Trans>새 범례…</Trans>
               </ContextMenu.Item>
+              {onCopySelectionValues && (
+                <ContextMenu.Item
+                  className={menuItem}
+                  disabled={!selected}
+                  onClick={onCopySelectionValues}
+                >
+                  <Trans>선택 값 복사</Trans>
+                </ContextMenu.Item>
+              )}
               <ContextMenu.Item
                 className={menuItem}
                 disabled={!selected}

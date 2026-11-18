@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ChartSpec } from "../api/types";
 import type { LimitLine } from "../render/options";
-import { controlLimitError, specError } from "./validate-spec";
+import {
+  controlLimitError,
+  selectionFieldsError,
+  specError,
+} from "./validate-spec";
 
 // 고정 이름이 아닌, 아무 공장의 raw data 같은 컬럼들
 const columns = [
@@ -206,6 +210,28 @@ describe("관리선 검사", () => {
     expect(check({ chartType: "line" }, broken)).toContain("데이터에 없습니다");
     expect(
       check({ chartType: "boxplot", x: "Line No" }, broken),
+    ).toBeUndefined();
+  });
+});
+
+describe("선택 값 필드", () => {
+  it("데이터에 없는 컬럼이면 draw를 막는다", () => {
+    const spec = (fields: string[]): ChartSpec => ({
+      ...base,
+      common: { ...base.common, options: { selection: { fields } } },
+    });
+    expect(specError(spec(["lot", "Line No"]), columns)).toBeUndefined();
+    expect(specError(spec(["lot", "없는 컬럼"]), columns)).toContain(
+      "없는 컬럼",
+    );
+  });
+
+  it("구역을 쓰지 않는 차트나 컬럼을 모를 때는 보지 않는다", () => {
+    expect(
+      selectionFieldsError({ chartType: "pie" }, ["없는 컬럼"], columns),
+    ).toBeUndefined();
+    expect(
+      selectionFieldsError({ chartType: "scatter" }, ["없는 컬럼"], []),
     ).toBeUndefined();
   });
 });
