@@ -304,6 +304,7 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - 선택 모드에서 끌지 않고 클릭하면 선택을 푼다. item마다 선택 영역은 하나다.
 - 우클릭 메뉴(Base UI ContextMenu): `즐겨찾기에 추가…`(이름 붙여 영역을 남김), `새 범례…`(영역 안의 점을 새 legend 항목으로 칠하고 선택을 푼다. legend 컬럼이 없으면 나머지는 '기타'), `선택 해제`, `즐겨찾기 선택 ▸`(남긴 영역을 다시 선택), `즐겨찾기 삭제 ▸`, `새 범례 삭제 ▸`. 새 범례 색은 legend 항목처럼 PNG의 legend를 눌러 바꾼다.
 - 선택·즐겨찾기·새 범례는 item 상태라 history와 공유 링크로 되살아난다.
+- **선택 값:** 차트 속성 `selection` 구역(선택 필드를 쓰는 scatter·line·bar·boxplot·histogram·waterfall, 분포 line 제외)에 컬럼을 최대 3개(순서 있음, 겹치지 않음)와 구분 문자(`separator`, 기본 `-`, 5자 이하)를 정하면, 선택 영역 안 행의 그 컬럼 값을 행마다 구분 문자로 이어 겹치지 않는 목록으로 받는다(예: `설비-lot`). 대상 행은 데이터 표의 선택 필드 규칙과 같고, 순서는 저장된 행 순서에서 처음 나온 순서, 최대 1,000개다. 값의 글자 모양은 시각이 ISO 8601 UTC(밀리초), 숫자는 DB의 text 표현, null은 빈 문자열이다. 우클릭 메뉴 `선택 값 복사`가 값을 줄바꿈으로 이어 복사한다(선택이 없으면 막고, 그린 item의 `fields`가 비면 숨긴다. 잘렸거나 값이 없거나 실패하면 알림). 컬럼은 draw·공통 속성·item 속성 변경 때 스키마로 확인한다(없으면 400). PNG에는 영향이 없다. API는 6.4 `selection-values`.
 
 ### 4.6.2 점 삭제 (scatter, line)
 - 사각형 삭제 / 자유형 삭제 모드에서 고른 영역의 점을 그 item에서 뺀다. 데이터는 그대로 두고, 지운 영역(데이터 좌표)을 item 상태로 쌓아 서버가 그릴 때 빼고 점 수·툴팁·선택 수에서도 뺀다.
@@ -347,7 +348,7 @@ funnel은 x 범주(단계), y 숫자 집계(통계 함수)다. split item마다 
 - 모든 item은 기본적으로 공통 속성을 따른다.
 - 개별 속성은 split 조합을 키로 서버에 저장한다. 다시 불러와도 유지된다.
 - 공통 속성을 바꾸면 개별 속성까지 덮어쓰고 전체를 다시 그린다.
-- 개별 속성은 색상, legend 위치·값별 색·체크박스로 숨긴 값, 차트 속성 구역 전체(`options`, 15구역)를 지원한다. 합치는 순서는 전체 기본값 → 테마 → 차트 종류 → 공통 → item이다.
+- 개별 속성은 색상, legend 위치·값별 색·체크박스로 숨긴 값, 차트 속성 구역 전체(`options`, 16구역)를 지원한다. 합치는 순서는 전체 기본값 → 테마 → 차트 종류 → 공통 → item이다.
 - 배열 칸(관리선 선 목록 `controlLimit.lines`)은 합칠 때 통째로 바뀐다. item에 목록을 정하면 공통 목록 대신 그 목록을 쓰고, 빈 목록이면 그 item만 선이 없다. 관리선 목록은 저장할 때 데이터 스키마로 검사한다(공통은 draw·`PATCH …/common`, item은 `PATCH …/props`). history·공유로 복원한 item 속성은 job이 맞지 않는 선만 빼고 그린다.
 
 ---
@@ -494,6 +495,7 @@ type ItemStage = 'query' | 'aggregate' | 'render' | 'encode';
 | chart | 도형 | `POST .../items/:key/shapes`<br>`DELETE .../items/:key/shapes/last`<br>`DELETE .../items/:key/shapes` | 추가 / undo / 전체 삭제 |
 | chart | 점 삭제 | `POST .../items/:key/deletions`<br>`DELETE .../items/:key/deletions/last`<br>`DELETE .../items/:key/deletions` | `{ region }` 영역 안 점 빼기 (scatter만, 아니면 409) / 되돌리기 / 모두 되돌리기 |
 | chart | 선택 영역 | `PUT .../items/:key/selection` | `{ region }` (사각형 또는 자유형, 데이터 좌표), `null`이면 해제 |
+| chart | 선택 값 | `POST .../items/:key/selection-values` | `{ limit? }`(기본·상한 1,000) → `{ values, total, truncated, count }`. 선택 영역 안 행의 `selection.fields` 값을 `separator`로 이은 겹치지 않는 목록(4.6.1). `fields`가 비면 `values: []`와 `count`, 선택이 없으면 모두 0. 선택 필드를 쓰지 않는 차트·분포 line·아직 그리지 않은 item 409, 모르는 item 404 |
 | chart | 즐겨찾기 | `POST .../items/:key/favorites`<br>`DELETE .../items/:key/favorites/:name` | 지금 선택 영역을 이름 붙여 남김 / 삭제 |
 | chart | 새 범례 | `POST .../items/:key/legend-groups`<br>`DELETE .../items/:key/legend-groups/:name` | 지금 선택 영역을 새 legend 항목으로 / 삭제 |
 | chart | 데이터 표 | `POST .../items/:key/rows` | `{ offset, limit(≤500), sort? }` → `{ columns, rows, total, selected }` (4.7.2) |

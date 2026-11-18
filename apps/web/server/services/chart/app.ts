@@ -5,9 +5,9 @@ import type { Context } from "hono";
 import { type ItemSize, isTerminal } from "../../api/types";
 import { type DrawnChart, resolvePanels } from "../../charts/board-store";
 import { CHART_DEFAULTS } from "../../charts/chart-defaults";
-import { canDelete } from "../../charts/chart-fields";
+import { canDelete, filtersRowsBySelection } from "../../charts/chart-fields";
 import { resolveLink } from "../../charts/chart-link";
-import { pickSupported } from "../../charts/chart-options";
+import { pickSupported, resolveOptions } from "../../charts/chart-options";
 import {
   createChart,
   detachHistory,
@@ -25,7 +25,10 @@ import {
 import { chartRestore } from "../../charts/item-restore";
 import { itemRowsScope, scopeSelected } from "../../charts/item-scope";
 import { pan, zoomIn, zoomOut } from "../../charts/item-view";
-import { controlLimitError } from "../../charts/validate-spec";
+import {
+  controlLimitError,
+  selectionFieldsError,
+} from "../../charts/validate-spec";
 import { attachHistory, recordEvent } from "../../history/recorder";
 import {
   cancelJob as cancel,
@@ -45,6 +48,7 @@ import { defaultLegendColor } from "../../render/theme";
 import { getRuntime } from "../../runtime";
 import { apiError, createServiceApp } from "../common/http";
 import * as routes from "./routes";
+import { MAX_SELECTION_VALUES } from "./schemas";
 
 const LONG_POLL_TIMEOUT_MS = 25_000;
 const MAX_FAVORITES = 20;
@@ -383,11 +387,17 @@ export const chartApp = createServiceApp()
             }
           : body;
     // 관리선은 컬럼을 쓰므로 draw 때 받은 스키마로 확인한다.
-    const limitError = controlLimitError(
-      target.chart.spec,
-      changes.options?.controlLimit?.lines,
-      target.chart.columns ?? [],
-    );
+    const limitError =
+      controlLimitError(
+        target.chart.spec,
+        changes.options?.controlLimit?.lines,
+        target.chart.columns ?? [],
+      ) ??
+      selectionFieldsError(
+        target.chart.spec,
+        changes.options?.selection?.fields,
+        target.chart.columns ?? [],
+      );
     if (limitError) return apiError(c, 400, limitError);
     item.props = applyItemChanges(
       item.props,
@@ -411,11 +421,17 @@ export const chartApp = createServiceApp()
     if ("error" in target) return reject(c, target);
     const { chart, items } = target;
     const common = c.req.valid("json").common;
-    const limitError = controlLimitError(
-      chart.spec,
-      common.options?.controlLimit?.lines,
-      chart.columns ?? [],
-    );
+    const limitError =
+      controlLimitError(
+        chart.spec,
+        common.options?.controlLimit?.lines,
+        chart.columns ?? [],
+      ) ??
+      selectionFieldsError(
+        chart.spec,
+        common.options?.selection?.fields,
+        chart.columns ?? [],
+      );
     if (limitError) return apiError(c, 400, limitError);
     chart.spec = {
       ...chart.spec,
@@ -564,6 +580,30 @@ export const chartApp = createServiceApp()
       },
       200,
     );
+  })
+  // 선택 필드 값 묶기: 데이터 표와 같은 행에서 selection.fields 값을 이은 목록. 다시 그리는 중이어도 된다.
+  .openapi(routes.selectionValues, async (c) => {
+    const target = drawnItem(c.req.valid("param"));
+    if ("error" in target) return reject(c, target);
+    const { chart, item } = target;
+    if (!filtersRowsBySelection(chart.spec))
+      return apiError(c, 409, "this chart does not map a selection to rows");
+    if (!item.selection)
+      return c.json({ values: [], total: 0, truncated: false, count: 0 }, 200);
+    const { fields, separator } = resolveOptions(
+      chart.spec.chartType,
+      chart.spec.common.options,
+      item.props?.options,
+    ).selection;
+    const result = await getRuntime().db.call("selectionValues", {
+      dataset: chart.spec.dataset,
+      scope: itemRowsScope(chart, item),
+      fields,
+      separator,
+      limit: c.req.valid("json").limit ?? MAX_SELECTION_VALUES,
+    });
+    if (!result) return apiError(c, 404, "unknown dataset");
+    return c.json(result, 200);
   })
   // 전체 데이터 표: 데이터셋 전체를 그 차트의 draw 시점 필터로 거른 샘플. 그린 item이 없어도 된다.
   .openapi(routes.sampleRows, async (c) => {

@@ -10,7 +10,7 @@ import {
   MAX_LIMIT_LINES,
 } from "../render/options";
 import { CHART_FIELDS, legendColumnOf } from "./chart-fields";
-import { controlLimitSupport } from "./chart-options";
+import { controlLimitSupport, supportsOption } from "./chart-options";
 
 export type SpecColumn = {
   name: string;
@@ -82,11 +82,31 @@ export function specError(
         : need(f.column, "값 필터", "categorical");
     if (error) return error;
   }
-  return controlLimitError(
-    spec,
-    spec.common.options?.controlLimit?.lines,
-    columns,
+  return (
+    controlLimitError(
+      spec,
+      spec.common.options?.controlLimit?.lines,
+      columns,
+    ) ??
+    selectionFieldsError(spec, spec.common.options?.selection?.fields, columns)
   );
+}
+
+/**
+ * 선택 필드 값 묶기의 컬럼(selection.fields) 검사. 개수·겹침은 요청 스키마가 본다. 데이터에 없는 컬럼이면 문장을 돌려준다.
+ * 컬럼을 모르면(columns가 비면) 보지 않는다. 차트가 이 구역을 쓰지 않으면 저장할 때 버려지므로 보지 않는다.
+ */
+export function selectionFieldsError(
+  spec: Pick<ChartSpec, "chartType">,
+  fields: readonly string[] | undefined,
+  columns: readonly SpecColumn[],
+): string | undefined {
+  if (!fields?.length || columns.length === 0) return;
+  if (!supportsOption(spec.chartType, "selection")) return;
+  const names = new Set(columns.map((c) => c.name));
+  const missing = fields.find((name) => !names.has(name));
+  if (missing !== undefined)
+    return `선택 값 필드 '${missing}'이 데이터에 없습니다.`;
 }
 
 const AXIS_NAMES: Record<LimitAxis, string> = {

@@ -26,7 +26,12 @@ import { queryFunnelData } from "../data/funnel-data";
 import { queryGanttData } from "../data/gantt-data";
 import { queryHeatmapData } from "../data/heatmap-data";
 import { queryHistogramData } from "../data/histogram-data";
-import { countRows, exportItemRows, queryItemRows } from "../data/item-rows";
+import {
+  countRows,
+  exportItemRows,
+  queryItemRows,
+  querySelectionValues,
+} from "../data/item-rows";
 import { queryLimitData } from "../data/limit-data";
 import {
   attachSunburst,
@@ -472,6 +477,19 @@ serveRpc<DbMethods>({
     if (!(await datasets.table(dataset))) return null;
     const { db, schema, table } = await datasetOf(dataset);
     return exportItemRows(db, table, schema, await withSources(scope));
+  },
+
+  async selectionValues({ dataset, scope, ...request }) {
+    const { datasets } = await ready;
+    if (!(await datasets.table(dataset))) return null;
+    const { db, schema, table } = await datasetOf(dataset);
+    return querySelectionValues(
+      db,
+      table,
+      schema,
+      await withSources(scope),
+      request,
+    );
   },
 
   async rowValues({ dataset, rowId, columns }) {

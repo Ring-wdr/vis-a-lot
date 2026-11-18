@@ -229,6 +229,12 @@ msgstr "Per interval (step line)"
 msgid "구간별 값은 scatter·line의 Left 축에서만 쓸 수 있습니다."
 msgstr "Per-interval values are only available on the Left axis of scatter and line."
 
+#. 필드 값 사이에 넣는 글자. 예: 설비-lot
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "selection values"
+msgid "구분자"
+msgstr "Separator"
+
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"
 msgid "굵게"
@@ -716,8 +722,17 @@ msgid "선이 없습니다. 종류를 골라 더하세요. 이름과 값은 PNG�
 msgstr "No lines yet. Choose a type and add one. Names and values are drawn on the PNG as entered."
 
 #: src/features/chart-settings/model/option-fields.ts
+msgctxt "chart option section"
+msgid "선택 값"
+msgstr "Selection values"
+
+#: src/features/chart-settings/model/option-fields.ts
 msgid "선택 밖 진하기"
 msgstr "Unselected opacity"
+
+#: src/features/chart-settings/model/option-fields.ts
+msgid "선택 영역 안의 행마다 고른 필드 값을 구분자로 이어 선택 값을 만듭니다. 우클릭 메뉴의 선택 값 복사가 씁니다. 그림에는 영향이 없습니다."
+msgstr "Joins the chosen field values of each row in the selection with the separator to make a selection value. Used by Copy selection values in the right-click menu. Does not change the chart image."
 
 #: src/features/chart-settings/model/option-fields.ts
 msgid "설명 보이기"
@@ -1238,6 +1253,11 @@ msgstr "Column 2"
 msgid "컬럼 고르기"
 msgstr "Choose a column"
 
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "selection values"
+msgid "컬럼 고르기 (최대 3개)…"
+msgstr "Choose columns (up to 3)…"
+
 #: src/features/chart-settings/ui/ControlLimitSettings.tsx
 msgctxt "control limit kind"
 msgid "컬럼 선"
@@ -1321,6 +1341,12 @@ msgstr "Panel"
 msgctxt "control limit fn"
 msgid "평균"
 msgstr "Mean"
+
+#. 선택 값을 만들 때 이을 컬럼 (최대 3개, 고른 순서대로)
+#: src/features/chart-settings/model/option-fields.ts
+msgctxt "selection values"
+msgid "필드"
+msgstr "Fields"
 
 #: src/features/chart-settings/model/option-fields.ts
 msgctxt "chart option"

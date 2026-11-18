@@ -399,3 +399,50 @@ describe("새 칸 (순서·강조 방식·이상치·팔레트·부제목)", () 
     }
   });
 });
+
+describe("선택 값 구역", () => {
+  it("필드(컬럼 최대 3개)와 구분자(5자) 칸이 있다", () => {
+    const fields = sectionFields().selection;
+    expect(fields.map((f) => [f.kind, "path" in f && f.path])).toEqual([
+      ["columns", "selection.fields"],
+      ["text", "selection.separator"],
+    ]);
+    expect(fields[0]).toMatchObject({ max: 3 });
+    expect(fields[1]).toMatchObject({ maxLength: 5 });
+    expect(sectionPaths("selection")).toEqual([
+      "selection.fields",
+      "selection.separator",
+    ]);
+  });
+
+  it("기본값은 필드 없음·구분자 '-'이다", () => {
+    expect(DEFAULT_OPTIONS.selection).toEqual({ fields: [], separator: "-" });
+  });
+
+  it("고른 필드는 순서대로 통째로 저장하고, 구역을 되돌리면 지운다", () => {
+    const values = setPath(
+      setPath(DEFAULT_OPTIONS, "selection.fields", ["lot", "machine"]),
+      "selection.separator",
+      "/",
+    ) as ChartOptions;
+    const patch = buildPatch({
+      original: undefined,
+      opened: DEFAULT_OPTIONS,
+      base: DEFAULT_OPTIONS,
+      values,
+      resets: [],
+    });
+    expect(patch).toEqual({
+      selection: { fields: ["lot", "machine"], separator: "/" },
+    });
+    expect(
+      buildPatch({
+        original: patch,
+        opened: values,
+        base: DEFAULT_OPTIONS,
+        values: DEFAULT_OPTIONS,
+        resets: ["selection"],
+      }),
+    ).toBeUndefined();
+  });
+});

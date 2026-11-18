@@ -16,6 +16,8 @@ import {
   type FocusType,
   LEGEND_ORDER_CHARTS,
   MAX_PALETTE_COLORS,
+  MAX_SELECTION_FIELDS,
+  MAX_SELECTION_SEPARATOR,
   type OptionSection,
   POINT_SHAPES,
 } from "@/entities/chart/model/chart-options";
@@ -62,6 +64,12 @@ export type OptionField =
       sortPath: string;
     })
   | (Base & {
+      /** 데이터셋 컬럼을 고른 순서대로 max개까지 (OrderedSelect). 컬럼 목록은 여는 쪽이 넘긴다. */
+      kind: "columns";
+      max: number;
+      placeholder?: string;
+    })
+  | (Base & {
       /** 색 목록 (팔레트 색). 비우면 기본 팔레트 */
       kind: "colors";
       max: number;
@@ -94,6 +102,7 @@ const TEXT = {
     tooltip: msg({ message: "툴팁", context: "chart option section" }),
     expression: msg({ message: "식", context: "chart option section" }),
     controlLimit: msg({ message: "관리선", context: "chart option section" }),
+    selection: msg({ message: "선택 값", context: "chart option section" }),
   } satisfies Record<OptionSection, MessageDescriptor>,
   hint: {
     title: msg`글자 크기는 크기 › 글자 크기 자동을 끈 때만 씁니다.`,
@@ -103,6 +112,7 @@ const TEXT = {
     focus: msg`방식에 맞는 점(막대·상자·캔들·작업)을 강조합니다. 순위는 item 전체 값으로 매기고 확대 범위와 상관없습니다.`,
     expression: msg`변수 x, y와 + - * / ^, 함수 abs log ln sqrt exp round floor ceil min max pow를 씁니다. 예: log(y), x * 2 + 1. 비우면 원래 값입니다.`,
     controlLimit: msg`USL·LSL로 정한 선을 벗어난 점(막대)을 강조합니다. 컬럼 선·띠의 값은 split 조합과 draw 필터의 행으로 집계하며, 범례로 끈 값과 지운 점도 넣습니다.`,
+    selection: msg`선택 영역 안의 행마다 고른 필드 값을 구분자로 이어 선택 값을 만듭니다. 우클릭 메뉴의 선택 값 복사가 씁니다. 그림에는 영향이 없습니다.`,
   } satisfies Partial<Record<OptionSection, MessageDescriptor>>,
   left: msg({ message: "왼쪽", context: "chart option" }),
   center: msg({ message: "가운데", context: "chart option" }),
@@ -314,6 +324,20 @@ const TEXT = {
   limitTextColor: msg`글자 색 (비우면 눈금 글자 색)`,
   limitAxis: msg({ message: "축 범위", context: "control limit" }),
   fitAxis: msg`선이 보이도록 축 범위 넓히기`,
+  selectionFields: msg({
+    message: "필드",
+    context: "selection values",
+    comment: "선택 값을 만들 때 이을 컬럼 (최대 3개, 고른 순서대로)",
+  }),
+  selectionFieldsPlaceholder: msg({
+    message: "컬럼 고르기 (최대 3개)…",
+    context: "selection values",
+  }),
+  selectionSeparator: msg({
+    message: "구분자",
+    context: "selection values",
+    comment: "필드 값 사이에 넣는 글자. 예: 설비-lot",
+  }),
 };
 
 type Labels = Omit<typeof TEXT, "section" | "hint">;
@@ -1222,6 +1246,21 @@ function buildTables(m: Text) {
       },
       { kind: "heading", label: m.limitAxis },
       { kind: "boolean", path: "controlLimit.fitAxis", label: m.fitAxis },
+    ],
+    selection: [
+      {
+        kind: "columns",
+        path: "selection.fields",
+        label: m.selectionFields,
+        placeholder: m.selectionFieldsPlaceholder,
+        max: MAX_SELECTION_FIELDS,
+      },
+      {
+        kind: "text",
+        path: "selection.separator",
+        label: m.selectionSeparator,
+        maxLength: MAX_SELECTION_SEPARATOR,
+      },
     ],
   };
 

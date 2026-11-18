@@ -42,6 +42,7 @@ In select mode, clicking without dragging clears the selection. Each item has on
 
 | Menu | What it does |
 | --- | --- |
+| Copy selection values | Copies the selection values of the rows in the selection → [Selection values](#en-selection-values) |
 | Add to favorites… | Saves the current area under a name |
 | New legend… | Colors the points in the area as a new legend entry (up to 8) |
 | Clear selection | Clears the selection |
@@ -51,6 +52,19 @@ In select mode, clicking without dragging clears the selection. Each item has on
 | Delete new legend ▸ | Deletes a legend entry you made |
 
 When there is a selection, the data table and data download include only the rows inside it (scatter, line, bar, boxplot, histogram, waterfall).
+
+### Selection values
+
+Get what you picked as a list of identifying values instead of whole rows. For example, with `machine` and `lot_id` chosen, each row in the selection becomes a value like `machine-LOT`, and duplicates are merged into one.
+
+1. In the **Selection values** section of **Settings** (or item settings), choose up to 3 **Fields**. They are joined in the order you chose them. The **Separator** is `-` by default and can be up to 5 characters. → [Customizing](/help/vis/customize#en-settings)
+2. Select an area in select mode, right-click inside it and choose **Copy selection values**. The values are copied one per line.
+
+- Works on scatter, line, bar, boxplot, histogram and waterfall. Distribution lines (ECDF, NCDF, Probability) don't have this section.
+- The rows are the same as the data table: the split combination, filters at draw time, hidden legend values and deleted points are reflected.
+- Values come in the order they first appear in the data table, up to **1,000**. If there are more, a notice says only the first 1,000 were copied.
+- Without chosen fields the menu item is hidden; without a selection it is disabled.
+- It doesn't change the chart image. Settings apply at the next draw; item settings apply when you press OK, redrawing that item.
 
 ### Deleting points
 

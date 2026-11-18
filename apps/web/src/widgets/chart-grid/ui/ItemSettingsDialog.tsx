@@ -13,6 +13,7 @@ import { limitSourceOf } from "@/features/chart-settings/model/control-limit-for
 import { buildPatch } from "@/features/chart-settings/model/option-fields";
 import type { OptionsFormValues } from "@/features/chart-settings/model/options-form";
 import { orderSourceOf } from "@/features/chart-settings/model/order-values";
+import { selectionSourceOf } from "@/features/chart-settings/model/selection-form";
 import { ItemOptionsDialog } from "@/features/chart-settings/ui/ItemOptionsDialog";
 import type { ItemAction } from "@/features/item-actions/model/item-actions";
 import {
@@ -74,6 +75,11 @@ export function ItemSettingsDialog({
     () => (spec ? limitSourceOf(spec, columns) : undefined),
     [spec, columns],
   );
+  // 선택 값 필드는 그린 데이터셋의 컬럼에서 고른다.
+  const selectionSource = useMemo(
+    () => (spec ? selectionSourceOf(spec, columns) : undefined),
+    [spec, columns],
+  );
   // item을 다시 그리는 중인지. 팝업(ItemOptionsDialog)은 store를 읽지 않으므로 여기서 골라 넘긴다.
   const busy = useWorkspace((s) => s.itemJobs[item.key] !== undefined);
   const defaults = useDefaultOptions(chartType);
@@ -124,6 +130,7 @@ export function ItemSettingsDialog({
         chartType={chartType}
         orderSource={orderSource}
         limitSource={limitSource}
+        selectionSource={selectionSource}
         readOnly={readOnly}
         busy={busy}
         label={item.label}

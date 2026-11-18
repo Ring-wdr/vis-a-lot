@@ -8,6 +8,7 @@ import {
   mergeOptions,
 } from "../render/options";
 import { CHART_DEFAULTS, defaultsFor } from "./chart-defaults";
+import { SELECTION_ROW_CHARTS } from "./chart-fields";
 import {
   CATEGORY_ORDER_CHARTS,
   controlLimitSupport,
@@ -234,5 +235,30 @@ describe("관리선 구역", () => {
           expect(
             client.controlLimitSupport({ chartType, subType }, xType),
           ).toEqual(controlLimitSupport({ chartType, subType }, xType));
+  });
+});
+
+describe("선택 값 구역", () => {
+  it("선택 영역을 행으로 바꾸는 차트만 구역을 쓰고, 나머지는 저장하지 않는다", () => {
+    const supported = (Object.keys(OPTION_SUPPORT) as ChartType[]).filter((t) =>
+      supportsOption(t, "selection"),
+    );
+    expect(supported.sort()).toEqual([...SELECTION_ROW_CHARTS].sort());
+    const patch = { selection: { fields: ["lot"] } };
+    expect(pickSupported("pie", patch)).toBeUndefined();
+    expect(resolveOptions("bar", patch, undefined).selection).toEqual({
+      fields: ["lot"],
+      separator: "-",
+    });
+  });
+
+  it("item 개별 fields는 공통 목록을 통째로 바꾼다", () => {
+    expect(
+      resolveOptions(
+        "scatter",
+        { selection: { fields: ["a", "b"], separator: "/" } },
+        { selection: { fields: ["c"] } },
+      ).selection,
+    ).toEqual({ fields: ["c"], separator: "/" });
   });
 });

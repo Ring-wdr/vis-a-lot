@@ -205,6 +205,82 @@ export async function queryItemRows(
   };
 }
 
+/** 선택 필드 값 묶기의 결과 (POST …/selection-values) */
+export type SelectionValues = {
+  /** 겹치지 않는 값. 저장된 행 순서에서 처음 나온 순서, 최대 limit개 */
+  values: string[];
+  /** 겹치지 않는 값의 전체 수 */
+  total: number;
+  truncated: boolean;
+  /** 조건에 맞는 행 수 */
+  count: number;
+};
+
+const ISO_UTC = 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"';
+
+/** 선택 값에 넣는 컬럼 값 글자. null은 빈 문자열, 시각은 ISO 8601(UTC, 밀리초), 나머지는 Postgres 글자 표기 */
+function valueTextSql(column: ColumnSchema): Sql {
+  const text =
+    column.type === "datetime"
+      ? sql`to_char(to_timestamp(${numericSql(column)} / 1000) at time zone 'UTC', ${ISO_UTC}::text)`
+      : textSql(column);
+  return sql`coalesce(${text}, '')`;
+}
+
+/**
+ * 선택 필드 값 묶기: 데이터 표와 같은 행(scope)에서 fields 값을 separator로 이은 값의 겹치지 않는 목록.
+ * 순서는 저장된 행 순서(ctid)에서 그 값이 처음 나온 순서라 같은 선택이면 늘 같다. fields가 비면 행 수만 센다.
+ */
+export async function querySelectionValues(
+  db: Db,
+  table: string,
+  schema: DatasetSchema,
+  scope: ItemRowsScope,
+  {
+    fields,
+    separator,
+    limit,
+  }: { fields: readonly string[]; separator: string; limit: number },
+): Promise<SelectionValues> {
+  const where = itemRowsWhere(schema, scope);
+  const from = tableSql(table);
+  if (fields.length === 0) {
+    const res = await sql<{
+      n: number;
+    }>`select count(*)::int as n from ${from} where ${where}`.execute(db);
+    return {
+      values: [],
+      total: 0,
+      truncated: false,
+      count: res.rows[0]?.n ?? 0,
+    };
+  }
+  const key = sql`concat_ws(${separator}::text, ${list(columnsOf(schema, [...fields]).map(valueTextSql))})`;
+  // 같은 컬럼을 두 번 고를 수 없으므로(스키마 검사) columnsOf가 겹침을 없애도 fields와 같은 순서다.
+  const res = await sql<{ count: number; total: number; vals: string[] }>`
+    with r as (
+      select ${key} as v, row_number() over (order by ctid) as n
+      from ${from} where ${where}
+    ),
+    g as (select v, min(n) as n from r group by v)
+    select
+      (select count(*) from r)::int as count,
+      (select count(*) from g)::int as total,
+      coalesce(
+        (select jsonb_agg(v order by n) from (select v, n from g order by n limit ${sql.lit(Math.trunc(limit))}) p),
+        '[]'::jsonb
+      ) as vals`.execute(db);
+  const row = res.rows[0];
+  const values = row?.vals ?? [];
+  const total = row?.total ?? 0;
+  return {
+    values,
+    total,
+    truncated: total > values.length,
+    count: row?.count ?? 0,
+  };
+}
+
 /** 필터에 맞는 행 수 (칸 연결 범위의 요약 글자) */
 export async function countRows(
   db: Db,

@@ -22,7 +22,11 @@ import type { ChartFilter, RowsFilter } from "./data/filters";
 import type { GanttData, GanttDataParams } from "./data/gantt-data";
 import type { HeatmapData, HeatmapDataParams } from "./data/heatmap-data";
 import type { HistogramData, HistogramDataParams } from "./data/histogram-data";
-import type { ItemRowsPage, ItemRowsScope } from "./data/item-rows";
+import type {
+  ItemRowsPage,
+  ItemRowsScope,
+  SelectionValues,
+} from "./data/item-rows";
 import type { LimitData, LimitDataParams } from "./data/limit-data";
 import type { PieData, RadarData } from "./data/polar-data";
 import type { SampleRowsPage } from "./data/sample-rows";
@@ -248,6 +252,17 @@ export type DbMethods = {
   exportItemRows: {
     params: { dataset: string; scope: ItemRowsScope };
     result: Blob | null;
+  };
+  /** 선택 필드 값 묶기: item이 그린 행(데이터 표와 같은 조건)의 fields 값 목록. 모르는 데이터셋이면 null */
+  selectionValues: {
+    params: {
+      dataset: string;
+      scope: ItemRowsScope;
+      fields: string[];
+      separator: string;
+      limit: number;
+    };
+    result: SelectionValues | null;
   };
   /** 툴팁 추가 컬럼 조회. 모르는 데이터셋(지운 업로드)이면 null */
   rowValues: {

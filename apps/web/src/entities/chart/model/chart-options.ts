@@ -17,6 +17,7 @@ import {
   CHART_FIELDS,
   isDistributionLine,
   subTypeOf,
+  supports,
 } from "@/shared/config/chart-kinds";
 
 export const OPTION_SECTIONS = [
@@ -35,6 +36,7 @@ export const OPTION_SECTIONS = [
   "tooltip",
   "expression",
   "controlLimit",
+  "selection",
 ] as const;
 export type OptionSection = (typeof OPTION_SECTIONS)[number];
 
@@ -393,6 +395,18 @@ export type ControlLimitOptions = {
   fitAxis: boolean;
 };
 
+/** selection.fields에 고를 수 있는 컬럼 수 */
+export const MAX_SELECTION_FIELDS = 3;
+/** selection.separator 글자 수 */
+export const MAX_SELECTION_SEPARATOR = 5;
+
+/** 선택 필드 값 묶기. 선택 영역 안의 행마다 fields 값을 separator로 잇는다. PNG에는 영향이 없다. */
+export type SelectionOptions = {
+  /** 이을 컬럼. 순서대로 잇는다. 비면 값을 만들지 않는다. */
+  fields: string[];
+  separator: string;
+};
+
 export type ChartOptions = {
   title: TitleOptions;
   axes: { x: XAxisOptions; y: AxisOptions };
@@ -409,6 +423,7 @@ export type ChartOptions = {
   tooltip: TooltipOptions;
   expression: ExpressionOptions;
   controlLimit: ControlLimitOptions;
+  selection: SelectionOptions;
 };
 
 type DeepPartial<T> = T extends readonly unknown[]
@@ -497,7 +512,8 @@ const without = (...omit: OptionSection[]) =>
 
 /**
  * 원본 표 대비 차이
- * - Wafer, Selection, Multi Axis: 해당 차트·기능이 없어 구역 자체를 두지 않는다.
+ * - Wafer, Multi Axis: 해당 차트·기능이 없어 구역 자체를 두지 않는다.
+ * - Selection(선택 필드 값 묶기): 선택 영역을 행으로 바꿀 수 있는 차트(SELECTION_ROW_CHARTS)만 쓴다.
  * - Axes: pie·treemap·funnel은 원본 O지만 축을 그리지 않는 차트라 X.
  * - Color(legend 모양): 원본 표의 Color 행을 legend 구역으로 본다.
  */
@@ -526,8 +542,15 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
-  gantt: without("score", "prediction", "expression", "controlLimit"),
+  gantt: without(
+    "score",
+    "prediction",
+    "expression",
+    "controlLimit",
+    "selection",
+  ),
   treemap: without(
     "axes",
     "score",
@@ -535,6 +558,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   heatmap: without(
     "legend",
@@ -544,6 +568,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   candle: without(
     "legend",
@@ -553,6 +578,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "value",
     "expression",
     "controlLimit",
+    "selection",
   ),
   waterfall: without(
     "legend",
@@ -571,6 +597,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   radar: without(
     "axes",
@@ -580,6 +607,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
   sankey: without(
     "axes",
@@ -589,6 +617,7 @@ export const OPTION_SUPPORT: Record<ChartType, readonly OptionSection[]> = {
     "focus",
     "expression",
     "controlLimit",
+    "selection",
   ),
 };
 
@@ -614,6 +643,24 @@ export function supportsOption(
 ) {
   return type !== undefined && OPTION_SUPPORT[type].includes(section);
 }
+
+/**
+ * 그린 item의 선택 값 필드 (selection.fields): item 개별 속성 → 공통 속성 → 기본값(빈 목록) 순.
+ * 선택 필드를 쓰지 않는 차트·분포 line이면 빈 목록이다. 서버 POST …/selection-values와 같은 규칙이다.
+ */
+export function selectionFieldsOf(
+  spec: Pick<ChartSpec, "chartType" | "subType" | "common"> | undefined,
+  itemOptions: ChartOptionsPatch | undefined,
+): readonly string[] {
+  if (!spec || !supports(spec, "selectField")) return [];
+  if (!supportsOption(spec.chartType, "selection")) return [];
+  const common = spec.common.options as ChartOptionsPatch | undefined;
+  return (
+    itemOptions?.selection?.fields ?? common?.selection?.fields ?? NO_FIELDS
+  );
+}
+
+const NO_FIELDS: readonly string[] = [];
 
 /** 축마다 쓸 수 있는 선 종류와 구간별(multi)을 쓸 수 있는지 */
 export type LimitSupport = {

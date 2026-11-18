@@ -68,6 +68,10 @@ msgstr "Type a note, then Enter"
 msgid "범례 값별 색"
 msgstr "Color per legend value"
 
+#: src/features/item-actions/model/copy-selection-values.ts
+msgid "복사할 선택 값이 없습니다."
+msgstr "There are no selection values to copy."
+
 #: src/features/item-actions/ui/PaintToolbar.tsx
 msgctxt "paint tool"
 msgid "사각형"
@@ -113,6 +117,19 @@ msgstr "Selection"
 #: src/features/item-actions/ui/ItemContextMenu.tsx
 msgid "선택 {count}개"
 msgstr "{count} selected"
+
+#: src/features/item-actions/ui/ItemContextMenu.tsx
+msgid "선택 값 복사"
+msgstr "Copy selection values"
+
+#: src/features/item-actions/model/copy-selection-values.ts
+msgid "선택 값을 복사하지 못했습니다: {reason}"
+msgstr "Could not copy selection values: {reason}"
+
+#. all: 겹치지 않는 선택 값의 전체 수, shown: 복사한 수 (최대 1,000)
+#: src/features/item-actions/model/copy-selection-values.ts
+msgid "선택 값이 {all}개라 앞의 {shown}개만 복사했습니다."
+msgstr "There are {all} selection values, so only the first {shown} were copied."
 
 #: src/features/item-actions/ui/ItemContextMenu.tsx
 msgid "선택 해제"

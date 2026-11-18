@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   type ChartOptionsPatch,
+  selectionFieldsOf,
   useDefaultLegendPosition,
 } from "@/entities/chart/model/chart-options";
 import { ChartLegend } from "@/entities/chart/ui/ChartLegend";
@@ -17,6 +18,7 @@ import {
   useWorkspace,
   useWorkspaceStore,
 } from "@/entities/workspace/model/workspace-scope";
+import { useCopySelectionValues } from "@/features/item-actions/model/copy-selection-values";
 import {
   useItemAction,
   useItemActionPending,
@@ -204,6 +206,7 @@ function DrawnItem({
     itemJobId,
     selected,
     undoCount,
+    copiesValues,
   } = useWorkspace(
     useShallow((s) => ({
       mode: s.mode,
@@ -217,6 +220,12 @@ function DrawnItem({
       itemJobId: s.itemJobs[item.key],
       selected: s.selectedItem === item.key,
       undoCount: s.undoCounts[item.key] ?? 0,
+      // 선택 값 필드(item 개별 → 공통)를 정했을 때만 우클릭 메뉴에 `선택 값 복사`를 둔다.
+      copiesValues:
+        selectionFieldsOf(
+          s.current?.spec,
+          item.options as ChartOptionsPatch | undefined,
+        ).length > 0,
     })),
   );
   // action은 store를 만들 때 정해져 바뀌지 않는다.
@@ -228,6 +237,7 @@ function DrawnItem({
   const commonPosition = legendPosition ?? defaultPosition;
   const client = useQueryClient();
   const action = useItemAction(chartId, item.key);
+  const copyValues = useCopySelectionValues(chartId, item.key);
   const itemJob = useJobItem(itemJobId, item.key);
   const redrawing = itemJob.data?.items[0];
   const pending = useItemActionPending(chartId, item.key);
@@ -292,6 +302,7 @@ function DrawnItem({
         disabled={readOnly || busy}
         className={itemBody}
         onAction={action.mutate}
+        onCopySelectionValues={copiesValues ? copyValues : undefined}
         onOpenInGallery={onOpenInGallery}
       >
         {mode === "normal" ? (

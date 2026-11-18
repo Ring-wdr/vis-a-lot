@@ -4,6 +4,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import {
   AlignVerticalSpaceAround,
   Calculator,
+  ClipboardList,
   Crosshair,
   Grid3x3,
   Hash,
@@ -25,7 +26,7 @@ import type {
   ChartOptionsPatch,
   OptionSection,
 } from "@/entities/chart/model/chart-options";
-import type { ChartType } from "@/shared/api/types";
+import type { ChartType, ColumnInfo } from "@/shared/api/types";
 import { settingsStyles } from "@/shared/ui/settings-styles";
 import "../config/messages";
 import type { LimitSource } from "../model/control-limit-form";
@@ -51,6 +52,7 @@ export const SECTION_ICONS: Record<OptionSection, LucideIcon> = {
   expression: Calculator,
   // 규격 상·하한 두 선 사이
   controlLimit: AlignVerticalSpaceAround,
+  selection: ClipboardList,
 };
 
 /**
@@ -63,6 +65,7 @@ export function CommonOptionSettings({
   chartType,
   orderSource,
   limitSource,
+  columns,
   supported,
   original,
   defaults,
@@ -78,6 +81,8 @@ export function CommonOptionSettings({
   orderSource: OrderSource;
   /** 관리선 선 목록이 아는 차트·컬럼 (draft의 차트·데이터셋) */
   limitSource: LimitSource;
+  /** 선택 값 필드가 고를 컬럼 (draft의 데이터셋) */
+  columns: readonly ColumnInfo[] | undefined;
   /** false면 이 차트가 쓰지 않는 구역이라 children(같은 구역의 기존 설정)만 보인다. */
   supported: boolean;
   /** 저장돼 있던 공통 속성의 차트 속성 */
@@ -96,6 +101,7 @@ export function CommonOptionSettings({
         chartType={chartType}
         orderSource={orderSource}
         limitSource={limitSource}
+        columns={columns}
         original={original}
         base={defaults}
         disabled={readOnly}
